@@ -1,5 +1,3 @@
-
-
 ;+
 ; NAME:
 ;     IRIS_RASTER_BROWSER
