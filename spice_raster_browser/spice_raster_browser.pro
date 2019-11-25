@@ -120,7 +120,7 @@
 ;-
 
 
-PRO iris_browser_base_event, event
+PRO spice_browser_base_event, event
   ;
   ; Event handler.
   ;
@@ -134,11 +134,11 @@ PRO iris_browser_base_event, event
     ; -------------------------------------
     CASE event.release OF
       1: BEGIN
-        widget_control,state.iris_browser_base,get_uvalue=state
+        widget_control,state.spice_browser_base,get_uvalue=state
         im_zoom=state.wid_data.im_zoom
         IF im_zoom LT 6 THEN im_zoom=im_zoom+1
         state.wid_data.im_zoom=im_zoom
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         ;
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
@@ -151,7 +151,7 @@ PRO iris_browser_base_event, event
       END
       ;
       2: BEGIN
-        widget_control,state.iris_browser_base,get_uvalue=state
+        widget_control,state.spice_browser_base,get_uvalue=state
         ;
         ; make sure coordinate conversion takes place on image plot, so need
         ; to re-plot the image
@@ -191,7 +191,7 @@ PRO iris_browser_base_event, event
           tt='Time: '+state.wid_data.midtime[xpix]
           widget_control,state.ttext,set_value=tt
           ;
-          widget_control,state.iris_browser_base,set_uvalue=state
+          widget_control,state.spice_browser_base,set_uvalue=state
           ;
           widget_control,/hourglass
           n=state.wid_data.n_plot_window
@@ -209,11 +209,11 @@ PRO iris_browser_base_event, event
       END
       ;
       4: BEGIN
-        widget_control,state.iris_browser_base,get_uvalue=state
+        widget_control,state.spice_browser_base,get_uvalue=state
         im_zoom=state.wid_data.im_zoom
         IF im_zoom gt 0 THEN im_zoom=im_zoom-1
         state.wid_data.im_zoom=im_zoom
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         ;
         ;
         widget_control,/hourglass
@@ -240,11 +240,11 @@ PRO iris_browser_base_event, event
     ; ----------------------------------------
     CASE event.release OF
       1: BEGIN
-        widget_control,state.iris_browser_base,get_uvalue=state
+        widget_control,state.spice_browser_base,get_uvalue=state
         spec_zoom=state.wid_data.spec_zoom[pwin]
         IF spec_zoom LT 6 THEN spec_zoom=spec_zoom+1
         state.wid_data.spec_zoom[pwin]=spec_zoom
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         ;
         spice_browser_calc_zoom_params,state,pwin
         spice_browser_plot_image,state,pwin
@@ -252,7 +252,7 @@ PRO iris_browser_base_event, event
       END
       ;
       2: BEGIN
-        widget_control,state.iris_browser_base,get_uvalue=state
+        widget_control,state.spice_browser_base,get_uvalue=state
         ;
         ; make sure coordinate conversion takes place on spectrum plot, so need
         ; to re-plot the spectrum
@@ -276,7 +276,7 @@ PRO iris_browser_base_event, event
         state.wid_data.lambda[pwin]=lambda
         state.wid_data.ilambda[pwin]=lpix
         ;
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         ;
         widget_control,/hourglass
         spice_browser_calc_zoom_params,state,pwin
@@ -289,11 +289,11 @@ PRO iris_browser_base_event, event
       END
       ;
       4: BEGIN
-        widget_control,state.iris_browser_base,get_uvalue=state
+        widget_control,state.spice_browser_base,get_uvalue=state
         spec_zoom=state.wid_data.spec_zoom[pwin]
         IF spec_zoom gt 0 THEN spec_zoom=spec_zoom-1
         state.wid_data.spec_zoom[pwin]=spec_zoom
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         ;
         spice_browser_calc_zoom_params,state,pwin
         spice_browser_plot_image,state,pwin
@@ -336,7 +336,7 @@ PRO iris_browser_base_event, event
         ;
         state.wid_data.spec_zoom[pwin]=0
         ;
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,/hourglass
         ;
         spice_browser_update_image,state,pwin
@@ -387,7 +387,7 @@ PRO iris_browser_base_event, event
   ;;    ;
   ;;     state.wid_data.spec_zoom[pwin]=0
   ;;    ;
-  ;;     widget_control,state.iris_browser_base,set_uvalue=state
+  ;;     widget_control,state.spice_browser_base,set_uvalue=state
   ;;     widget_control,/hourglass
   ;;    ;
   ;;     spice_browser_update_image,state,pwin
@@ -405,7 +405,7 @@ PRO iris_browser_base_event, event
   IF nk GT 0 THEN BEGIN
     pwin=k[0]
     state.wid_data.autoint[pwin]=0
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     spice_browser_plot_image,state,pwin
   END
 
@@ -418,7 +418,7 @@ PRO iris_browser_base_event, event
   IF nk GT 0 THEN BEGIN
     pwin=k[0]
     state.wid_data.autoint[pwin]=0
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     spice_browser_plot_image,state,pwin
   END
 
@@ -429,7 +429,7 @@ PRO iris_browser_base_event, event
   k=where(event.id EQ mintext,nk)
   IF nk GT 0 THEN BEGIN
     state.wid_data.autoint_sji=0
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     spice_browser_plot_sji,state
   ENDIF
 
@@ -440,7 +440,7 @@ PRO iris_browser_base_event, event
   k=where(event.id EQ maxtext,nk)
   IF nk GT 0 THEN BEGIN
     state.wid_data.autoint_sji=0
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     spice_browser_plot_sji,state
   ENDIF
 
@@ -452,7 +452,7 @@ PRO iris_browser_base_event, event
   k=where(event.id EQ autoint,nk)
   IF nk GT 0 THEN BEGIN
     state.wid_data.autoint_sji=1
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     spice_browser_plot_sji,state
   ENDIF
 
@@ -466,7 +466,7 @@ PRO iris_browser_base_event, event
   IF nk GT 0 THEN BEGIN
     pwin=k[0]
     state.wid_data.autoint[pwin]=1
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     spice_browser_plot_image,state,pwin
   END
 
@@ -514,7 +514,7 @@ PRO iris_browser_base_event, event
     widget_control,state.sji_frames_droplist,set_value=sji_droplist_options
     ;
     ;
-    widget_control,state.iris_browser_base,set_uval=state
+    widget_control,state.spice_browser_base,set_uval=state
     spice_browser_plot_sji, state
   ENDIF
 
@@ -528,7 +528,7 @@ PRO iris_browser_base_event, event
         state.wid_data.filestr.current=event.value
         state.data=iris_obj(filestr.filelist[event.value])
         ;      state.data=d
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         meta=spice_browser_get_metadata(state.data)
         spice_browser_update_widdata,state,meta
         spice_browser_update_info,state
@@ -553,7 +553,7 @@ PRO iris_browser_base_event, event
         state.wid_data.filestr.current=val
         d=iris_obj(filestr.filelist[val])
         state.data=d
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,state.file_slider,set_value=val
         meta=spice_browser_get_metadata(d)
         spice_browser_update_widdata,state,meta
@@ -579,7 +579,7 @@ PRO iris_browser_base_event, event
         state.wid_data.filestr.current=val
         d=iris_obj(filestr.filelist[val])
         state.data=d
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,state.file_slider,set_value=val
         meta=spice_browser_get_metadata(d)
         spice_browser_update_widdata,state,meta
@@ -627,7 +627,7 @@ PRO iris_browser_base_event, event
         widget_control,state.exp_slider,set_slider_max=slider_max
         ;
         spice_browser_update_info, state
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -658,7 +658,7 @@ PRO iris_browser_base_event, event
         state.wid_data.xpix=xpix_chunk+state.wid_data.ixpos
         widget_control,state.chunk_slider,set_value=ichunk
         spice_browser_update_info, state
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -689,7 +689,7 @@ PRO iris_browser_base_event, event
         state.wid_data.xpix=xpix_chunk+state.wid_data.ixpos
         widget_control,state.chunk_slider,set_value=ichunk
         spice_browser_update_info, state
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -708,7 +708,7 @@ PRO iris_browser_base_event, event
     state.wpix_sum: BEGIN
       wpix=[1,5,9,15]
       state.wid_data.lbin=wpix[event.value]
-      widget_control,state.iris_browser_base,set_uvalue=state
+      widget_control,state.spice_browser_base,set_uvalue=state
       ;
       ; I need the if below since two 'events' are registered when a button
       ; is selected. The first has select=0
@@ -729,7 +729,7 @@ PRO iris_browser_base_event, event
       widget_control,state.lids_butts,get_value=chck
       IF chck NE state.wid_data.line_ids THEN BEGIN
         state.wid_data.line_ids=event.value
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -745,7 +745,7 @@ PRO iris_browser_base_event, event
       widget_control,state.vel_butts,get_value=chck
       IF chck NE state.wid_data.velocity THEN BEGIN
         state.wid_data.velocity=event.value
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -762,7 +762,7 @@ PRO iris_browser_base_event, event
       widget_control,state.log_butts,get_value=chck
       IF chck NE state.wid_data.linlog THEN BEGIN
         state.wid_data.linlog=event.value
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -779,7 +779,7 @@ PRO iris_browser_base_event, event
       widget_control,state.im_type_butts,get_value=chck
       IF chck NE state.wid_data.im_type THEN BEGIN
         state.wid_data.im_type=event.value
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,state.exp_base,sens=event.value
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
@@ -805,7 +805,7 @@ PRO iris_browser_base_event, event
       ENDIF
       state.wid_data.xpix=xpix
       ;
-      widget_control,state.iris_browser_base,set_uvalue=state
+      widget_control,state.spice_browser_base,set_uvalue=state
       meta=spice_browser_get_metadata(state.data)
       spice_browser_update_widdata,state,meta
       spice_browser_update_info,state
@@ -828,7 +828,7 @@ PRO iris_browser_base_event, event
         meta=spice_browser_get_metadata(state.data)
         spice_browser_update_widdata,state,meta
         spice_browser_update_info,state
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,state.exp_slider,set_value=xpix_chunk
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -851,7 +851,7 @@ PRO iris_browser_base_event, event
         meta=spice_browser_get_metadata(state.data)
         spice_browser_update_widdata,state,meta
         spice_browser_update_info,state
-        widget_control,state.iris_browser_base,set_uvalue=state
+        widget_control,state.spice_browser_base,set_uvalue=state
         widget_control,state.exp_slider,set_value=xpix_chunk
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
@@ -869,9 +869,9 @@ PRO iris_browser_base_event, event
     ; Where nexp_prp>1, allows specific exp. time to be selected.
     ;
     state.nexp_prp_butts: BEGIN
-      widget_control,state.iris_browser_base,get_uval=state
+      widget_control,state.spice_browser_base,get_uval=state
       state.wid_data.nexp_prp=event.value
-      widget_control,state.iris_browser_base,set_uval=state
+      widget_control,state.spice_browser_base,set_uval=state
       ;
       wind=state.wind
       new_state=rem_tag(state,'wind')
@@ -883,7 +883,7 @@ PRO iris_browser_base_event, event
       ;
       state=0
       state=add_tag(new_state,wind,'wind')
-      widget_control,state.iris_browser_base,set_uval=state
+      widget_control,state.spice_browser_base,set_uval=state
       ;
       spice_browser_plot_image,state
       spice_browser_plot_spectrum,state
@@ -937,7 +937,7 @@ PRO iris_browser_base_event, event
       sji_dur_txt='Movie duration: '+sji_mov_dur_txt+' mins (approx)'
       widget_control,state.sji_dur_text,set_val=sji_dur_txt
       ;
-      widget_control,state.iris_browser_base,set_uval=state
+      widget_control,state.spice_browser_base,set_uval=state
     END
 
     state.eis_butt: BEGIN
@@ -1072,7 +1072,7 @@ END
 
 
 ;-----------------
-PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, $
+PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, $
   chunk_size=chunk_size, retina=retina, hcr=hcr, no_goes=no_goes, $
   flare_data=flare_data
 
@@ -1412,9 +1412,9 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
       extra_title=' -- '+trim(hcr.obstitle)
     ENDIF
   ENDIF
-  iris_browser_base=widget_base(/row,map=1,title='SPICE_RASTER_BROWSER'+extra_title)
+  spice_browser_base=widget_base(/row,map=1,title='SPICE_RASTER_BROWSER'+extra_title)
 
-  subbase1=widget_base(iris_browser_base,/col,map=1)
+  subbase1=widget_base(spice_browser_base,/col,map=1)
   ;; exit=cw_bgroup(subbase1,/row,['EXIT','HELP'], $
   ;;                font=bigfont)
 
@@ -1658,7 +1658,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   ;whisk_butt=lonarr(n_plot_window)
   ;
   FOR i=0,n_plot_window-1 DO BEGIN
-    plot_base[i]=widget_base(iris_browser_base,/col)
+    plot_base[i]=widget_base(spice_browser_base,/col)
     ;
     int_butt_base[i]=widget_base(plot_base[i],/row)
     min_lbl[i]=widget_label(int_butt_base[i],value='Min:',font=font)
@@ -1696,7 +1696,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   ; The following sets up the widgets for displaying the SJI images
   ;
   IF wid_data.sji EQ 1 THEN BEGIN
-    plot_base_sji=widget_base(iris_browser_base,/col)
+    plot_base_sji=widget_base(spice_browser_base,/col)
     ;
     int_butt_base_sji=widget_base(plot_base_sji,/row)
     min_lbl_sji=widget_label(int_butt_base_sji,value='Min:',font=font)
@@ -1865,7 +1865,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
     goes: g, $
     exit: exit, $
     wid_data: wid_data, $
-    iris_browser_base: iris_browser_base, $
+    spice_browser_base: spice_browser_base, $
     xtext: xtext, $
     ytext: ytext, $
     ttext: ttext, $
@@ -1912,7 +1912,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
     eis_butt: eis_butt, $
     goes_butt: goes_butt}
 
-  WIDGET_CONTROL, iris_browser_base, /REALIZE, set_uvalue=state
+  WIDGET_CONTROL, spice_browser_base, /REALIZE, set_uvalue=state
 
 
   ;
@@ -1957,7 +1957,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   widget_control,goes_plot,get_value=val
   state.wid_data.goes_plot_id=val
   ;
-  widget_control,iris_browser_base,set_uvalue=state
+  widget_control,spice_browser_base,set_uvalue=state
 
   ;
   ; Set initial value for SJI movie frames
@@ -1985,7 +1985,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   widget_control,state.ttext,set_value=tt
 
 
-  XMANAGER, 'iris_browser_base', iris_browser_base, group=group
+  XMANAGER, 'spice_browser_base', spice_browser_base, group=group
 
   IF datatype(g) EQ 'OBJ' THEN obj_destroy,g
   IF sji_file[0] NE '' THEN obj_destroy,sji_d
@@ -2161,7 +2161,7 @@ PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, 
 
 
 
-  iris_browser_widget,data,yoffsets=yoffsets, filestr=filestr, chunk_size=chunk_size, $
+  spice_browser_widget,data,yoffsets=yoffsets, filestr=filestr, chunk_size=chunk_size, $
     retina=retina, hcr=hcr, no_goes=no_goes, flare_data=flare_data
 
   ;

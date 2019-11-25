@@ -207,7 +207,7 @@ PRO spice_browser_plot_sji, state
       xticklen=1e-6,yticklen=1e-6,charsiz=1e-6
     xyouts,/normal,0.5,0.5,align=0.5, $
       'SJI and slit coordinates!cnot consistent',charsiz=2
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     return
   ENDIF
   ;
@@ -276,7 +276,7 @@ PRO spice_browser_plot_sji, state
     ENDELSE
     widget_control,state.min_text_sji,set_value=trim(string(format='(f10.1)',intmin))
     widget_control,state.max_text_sji,set_value=trim(string(format='(f10.1)',intmax))
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
   ENDELSE
 
 
@@ -295,7 +295,7 @@ PRO spice_browser_plot_sji, state
       intmax=alog10(max(image))
       widget_control,state.min_text_sji,set_value=trim(string(format='(f10.1)',10.^intmin))
       widget_control,state.max_text_sji,set_value=trim(string(format='(f10.1)',10.^intmax))
-      widget_control,state.iris_browser_base,set_uvalue=state
+      widget_control,state.spice_browser_base,set_uvalue=state
     ENDELSE
     image=alog10(image>1)
   ENDIF
@@ -333,6 +333,6 @@ PRO spice_browser_plot_sji, state
   ;
   plots,xp,yp,psym=6,symsiz=2
 
-  widget_control,state.iris_browser_base,set_uvalue=state
+  widget_control,state.spice_browser_base,set_uvalue=state
 
 END

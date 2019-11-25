@@ -122,7 +122,7 @@ PRO spice_browser_calc_zoom_params, state, pwin
     state.wid_data.lrange[*,pwin]=[0,nl-1]
   ENDELSE
 
-  widget_control,state.iris_browser_base,set_uvalue=state
+  widget_control,state.spice_browser_base,set_uvalue=state
 
 
 END

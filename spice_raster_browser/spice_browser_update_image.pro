@@ -125,7 +125,7 @@ PRO spice_browser_update_image, state, pwin
   state.images[*,*,pwin]=0
   state.images[0:nx-1,*,pwin]=img
 
-  widget_control,state.iris_browser_base,set_uvalue=state
+  widget_control,state.spice_browser_base,set_uvalue=state
 
   t2=systime(1)
   ;print,'Update image '+trim(pwin)+' takes '+trim(string(format='(f5.1)',t2-t1))+' s'

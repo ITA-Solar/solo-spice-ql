@@ -112,7 +112,7 @@ PRO spice_browser_plot_image, state, pwin, ps=ps
     ENDELSE
     widget_control,state.min_text[pwin],set_value=trim(string(format='(f10.1)',intmin))
     widget_control,state.max_text[pwin],set_value=trim(string(format='(f10.1)',intmax))
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
   ENDELSE
 
 

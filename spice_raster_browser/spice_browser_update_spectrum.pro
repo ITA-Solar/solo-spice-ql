@@ -97,6 +97,6 @@ PRO spice_browser_update_spectrum, state, pwin
   ;
   state.wid_data.exptime[pwin]=exptime[xpix]
 
-  widget_control,state.iris_browser_base,set_uvalue=state
+  widget_control,state.spice_browser_base,set_uvalue=state
 
 END

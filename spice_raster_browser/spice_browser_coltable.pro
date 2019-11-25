@@ -62,7 +62,7 @@ PRO spice_browser_coltable, desc=desc, state=state, set_value=set_value
 
   IF n_tags(state) NE 0 AND n_elements(set_value) NE 0 THEN BEGIN
     state.wid_data.coltable=set_value
-    widget_control,state.iris_browser_base,set_uvalue=state
+    widget_control,state.spice_browser_base,set_uvalue=state
     ;
     IF set_value EQ 0 THEN loadct,0
     IF set_value EQ 1 THEN loadct,1

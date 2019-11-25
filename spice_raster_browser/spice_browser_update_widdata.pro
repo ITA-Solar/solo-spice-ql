@@ -56,6 +56,6 @@ PRO spice_browser_update_widdata, state, meta
   wid_data.l1p5_ver=meta.l1p5_ver
 
   state.wid_data=wid_data
-  widget_control,state.iris_browser_base,set_uvalue=state
+  widget_control,state.spice_browser_base,set_uvalue=state
 
 END
