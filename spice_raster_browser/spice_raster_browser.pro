@@ -82,11 +82,11 @@
 ;     IDL> spice_raster_browser, file
 ;
 ; INTERNAL ROUTINES:
-;     IRIS_BROWSER_GOES_PLOT, IRIS_OPLOT_LINE_IDS,
-;     IRIS_BROWSER_PLOT_IMAGE, IRIS_BROWSER_PLOT_SPEC,
-;     IRIS_BROWSER_FONT, IRIS_BROWSER_EVENT, IRIS_BROWSER_WIDGET,
+;     spice_browser_goes_plot, spice_browser_oplot_line_ids,
+;     spice_browser_plot_image, IRIS_BROWSER_PLOT_SPEC,
+;     spice_browser_font, IRIS_BROWSER_EVENT, IRIS_BROWSER_WIDGET,
 ;     spice_browser_update_spectrum, spice_browser_update_image,
-;     IRIS_BROWSER_PLOT_SJI, spice_browser_coltable,
+;     spice_browser_plot_sji, spice_browser_coltable,
 ;     spice_browser_wvl_list, IRB_GET_FLARE_TEXT
 ;
 ; PROGRAMMING NOTES:
@@ -94,7 +94,7 @@
 ;     ------------------------
 ;     I decided to use the read_iris_l2 routine to access SJI images
 ;     as it was quicker than using the iris_sji object. The SJI images
-;     are loaded using the subroutine iris_browser_plot_sji.
+;     are loaded using the subroutine spice_browser_plot_sji.
 ;
 ;     Sit-and-stare chunking
 ;     ----------------------
@@ -120,690 +120,6 @@
 ;-
 
 
-;-------------------------
-PRO iris_browser_goes_plot, state
-  ;
-  ; This plots the GOES light curve for the time period for which the
-  ; EIS raster spans. It also overplots the time period for the
-  ; particular exposure that the user has selected.
-  ;
-  g=state.goes
-
-  IF datatype(g) EQ 'OBJ' THEN BEGIN
-    data=g->getdata(/struct)
-  ENDIF
-
-  wset,state.wid_data.goes_plot_id
-
-  IF n_tags(data) NE 0 THEN BEGIN
-    pos=[0.14,0.12,0.92,0.89]
-    g->plot,showclass=1,xsty=1,legend=0,position=pos,/low,/no_timestamp, $
-      xtit=''
-
-    IF state.wid_data.xpix LT state.wid_data.nx THEN BEGIN
-
-      ti1=state.data->getti_1()
-      ti2=state.data->getti_2()
-
-      ti1=state.data->sec_from_obs_start(ti1)
-      ti2=state.data->sec_from_obs_start(ti2)
-
-      ti1_tai=state.data->ti2tai(ti1)
-      ti2_tai=state.data->ti2tai(ti2)
-
-      ti1=anytim2utc(ti1_tai)
-      ti2=anytim2utc(ti2_tai)
-
-      IF state.wid_data.rast_direct EQ 0 THEN BEGIN
-        ti1=ti1[state.wid_data.nx-state.wid_data.xpix-1]
-        ti2=ti2[state.wid_data.nx-state.wid_data.xpix-1]
-      ENDIF ELSE BEGIN
-        ti1=ti1[state.wid_data.xpix]
-        ti2=ti2[state.wid_data.xpix]
-      ENDELSE
-
-      outplot,[ti1,ti1],[1e-10,1e10]
-      outplot,[ti2,ti2],[1e-10,1e10]
-
-    ENDIF
-
-    clear_utplot
-  ENDIF ELSE BEGIN
-    plot,/nodata,[0,1],[0,1],xsty=4,ysty=4,xmarg=0,ymarg=0
-    xyouts,0.5,0.5,align=0.5,'NO GOES DATA',charsiz=2
-  ENDELSE
-
-
-END
-
-
-;-----------------------
-FUNCTION iris_oplot_line_ids, wrange, yrange, idstr, velocity=velocity, refwvl=refwvl
-  ;
-  ; Overplots line IDs on the spectra
-  ;
-  n=n_elements(idstr)
-  FOR i=0,n-1 DO BEGIN
-    wvl=idstr[i].wvl
-    ion=idstr[i].ion
-    IF keyword_set(velocity) THEN wvl=lamb2v(wvl-refwvl,refwvl)
-    ;
-    IF wvl GE wrange[0] AND wvl LE wrange[1] THEN BEGIN
-      y75=0.75*yrange[1]+0.25*yrange[0]
-      y25=0.25*yrange[1]+0.75*yrange[0]
-      ypos=(10-(i MOD 10))*(y75-y25)/10. + y25
-      ;
-      xyouts,wvl,ypos,trim(ion),charsiz=1.2
-      oplot,[1,1]*wvl,[-(y75-y25)/15.,0]+ypos
-    ENDIF
-  ENDFOR
-
-  return,0
-
-END
-
-;--------------------
-PRO iris_browser_plot_sji, state
-  ;
-  ; This routine plots the SJI image.
-  ;
-
-  ;
-  ; Set the graphics window.
-  ;
-  wset,state.wid_data.sji_plot_id
-
-  ;
-  ; This is for the case of chunked sit-and-stare data, where xpix can
-  ; potentially be larger than nx. (Not a problem for other types of
-  ; data.)
-  ;
-  IF state.wid_data.xpix GE state.wid_data.nx THEN BEGIN
-    plot,[0,1],[0,1],/nodata, $
-      xticklen=1e-6,yticklen=1e-6,charsiz=1e-6
-    xyouts,/normal,0.5,0.5,align=0.5, $
-      'No data',charsiz=2
-    return
-  ENDIF
-
-  sji_file=state.wid_data.sji_file
-  xpix=state.wid_data.xpix
-  utc=state.wid_data.utc[xpix]
-
-
-  ;
-  ; Get the SJI file index from the drop-down list
-  ;
-  sji_ind=state.wid_data.sji_index
-
-
-  ;
-  ; Load the SJI data object.
-  ;
-  d=iris_sji(sji_file[sji_ind])
-
-  ;
-  ; Get time information from the SJI object. Note that sji_tai is the
-  ; time of the mid-point of the exposure.
-  ;
-  sji_ti=d->gettime()
-  sji_nexp=d->getnexp(0)
-  sji_exp=d->getexp(indgen(sji_nexp))
-  sji_ti=sji_ti+sji_exp/2.        ; get mid-time of exposure
-  sji_utc=d->ti2utc(sji_ti)
-  sji_tai=anytim2tai(sji_utc)
-  sji_start=d->getinfo('DATE_OBS')
-  sji_end=d->getinfo('DATE_END')
-
-  obj_destroy,d
-
-  ;
-  ; Update the SJI cadence stored in wid_data.sji_cadence
-  ;
-  t0_tai=anytim2tai(sji_start)
-  t1_tai=anytim2tai(sji_end)
-  state.wid_data.sji_cadence=(t1_tai-t0_tai)/float(sji_nexp)
-
-  ;
-  ; Update the SJI movie duration widget
-  ;
-  sji_dur=state.wid_data.sji_cadence*state.wid_data.sji_mov_frames/60.
-  sji_dur_str=trim(string(sji_dur,format='(f7.1)'))
-  dur_t='Movie duration: '+sji_dur_str+' mins (approx)'
-  widget_control,state.sji_dur_text,set_value=dur_t
-
-
-
-  ;
-  ; Find the image index that is closest to the raster exposure.
-  ;
-  utc_tai=anytim2tai(utc)   ; TAI for the raster exposure
-  getmin=min(abs(utc_tai-sji_tai),imin)
-
-  ;
-  ; sji_frame is the index of the image frame that will be displayed.
-  ; sji_nframe is the total no. of frames
-  ;
-  state.wid_data.sji_frame=imin
-  state.wid_data.sji_nframe=sji_nexp
-
-  ;
-  ; The following reads the SJI file. The input imagen requires an
-  ; array so I have to give two indices.
-  ;
-  IF imin EQ 0 THEN BEGIN
-    read_iris_l2,sji_file[sji_ind],index,data,imagen=[imin,imin+1], $
-      /keep_null,/silent
-    image=reform(data[*,*,0])
-    index=index[0]
-  ENDIF ELSE BEGIN
-    read_iris_l2,sji_file[sji_ind],index,data,imagen=[imin-1,imin], $
-      /keep_null,/silent
-    image=reform(data[*,*,1])
-    index=index[1]
-  ENDELSE
-
-
-  ;
-  ; Get SJI image coordinate information.
-  ;
-  ; When roll is +90 or -90, then xcen and ycen are the wrong way round
-  ; and so I need to swap them. However, crpix1, crpix2, fovx and fovy are not
-  ; reversed.
-  ;
-  ; For roll=90, I need to reverse cdelt1.
-  ;
-  xcen=index.xcen
-  ycen=index.ycen
-  cdelt1=index.cdelt1
-  cdelt2=index.cdelt2
-  crpix1=index.crpix1
-  crpix2=index.crpix2
-  fovx=index.fovx
-  fovy=index.fovy
-  ;
-  IF abs(state.wid_data.roll) GE 85 THEN BEGIN
-    xc_temp=xcen
-    xcen=ycen
-    ycen=xc_temp
-    ;
-    IF state.wid_data.roll GE 85 THEN cdelt1=-cdelt1
-    IF state.wid_data.roll LE -85 THEN cdelt2=-cdelt2
-  ENDIF
-
-  ;
-  ; Get image scale (used for plot_image call); also get aspect_ratio
-  ; (y-scale/x-scale) [updated, 13-Sep-2017]
-  ;
-  scale=[cdelt1,cdelt2]
-  aspect_ratio=cdelt2/cdelt1
-
-  ;
-  ; The following lines of code set up the field-of-view to be displayed
-  ; for the SJI images. The X-range and Y-range of the FOV will be
-  ; stored in XR and YR.
-  ;
-  ; Since the SJI and raster are registered with each other then we can
-  ; take the raster yrange and apply it to the SJI images.
-  ;
-  yr=state.wid_data.yrange
-  ;
-  ; Get the (X,Y) position of the selected raster pixel.
-  ;
-  ;xpos=state.data->getxpos()
-  ;ypos=state.data->getypos()
-  xpos=state.wid_data.xpos
-  ypos=state.wid_data.ypos
-  xpix=state.wid_data.xpix
-  ypix=state.wid_data.ypix
-  xp=xpos[xpix]
-  yp=ypos[ypix]
-  ;
-  ; The X-direction is more tricky. First of all I need to do a sanity
-  ; check to make sure the raster X-position lies within the SJI
-  ; field-of-view (I've found one file for which this isn't the case,
-  ; 11:26 on 6-Sep-2014).
-  ;
-  sji_xr=xcen+[-fovx,fovx]/2.
-  IF xp LT sji_xr[0] OR xp GT sji_xr[1] THEN badfile=1 ELSE badfile=0
-  ;
-  ; If we have a bad file, then print a message to the SJI window, and
-  ; exit.
-  ;
-  IF badfile EQ 1 THEN BEGIN
-    plot,[0,1],[0,1],/nodata, $
-      xticklen=1e-6,yticklen=1e-6,charsiz=1e-6
-    xyouts,/normal,0.5,0.5,align=0.5, $
-      'SJI and slit coordinates!cnot consistent',charsiz=2
-    widget_control,state.iris_browser_base,set_uvalue=state
-    return
-  ENDIF
-  ;
-  ;
-  ; Use XP to determine the X-pixel index for the selected pixel within
-  ; the SJI image.
-  ;  (note: crpix1 is pixel x-position of image center; cdelt1 is size of
-  ;         pixel in x-direction.)
-  ;
-  mid_x=round(crpix1-(xcen-xp)/cdelt1)
-  ;
-  ; Now derive the X-range (XR).
-  ;  13-Sep-2017: I've added aspect_ratio as some images have 1x2 binning.
-  ;
-  ny=yr[1]-yr[0]+1
-  s=size(image,/dim)
-  nx=s[0]
-  nx=round(min([nx,ny*aspect_ratio]))
-  x0=max([mid_x-nx/2,0])
-  x1=min([mid_x+nx/2,s[0]-1])
-  xr=[x0,x1]
-
-
-  ;
-  ; Create 'origin' for plot_image.
-  ;
-  origin=[ xcen - ( (crpix1-xr[0])*cdelt1), $
-    ycen - ( (crpix2-yr[0])*cdelt2) ]
-
-  ;
-  ; Extract the sub-image to be plotted.
-  ;
-  image=image[xr[0]:xr[1],yr[0]:yr[1]]
-
-  state.wid_data.sji_xrange=xr
-  state.wid_data.sji_yrange=yr
-
-  ;
-  ; Update the X-range and Y-range pixel labels.
-  ;
-  sji_xrange_txt='X-range (pixels): '+trim(xr[0])+' to '+trim(xr[1])
-  widget_control,state.sji_xrange_text,set_value=sji_xrange_txt
-  ;
-  sji_yrange_txt='Y-range (pixels): '+trim(yr[0])+' to '+trim(yr[1])
-  widget_control,state.sji_yrange_text,set_value=sji_yrange_txt
-
-  ;
-  ; This picks out the intensity min and max values for the
-  ; display. Note that the intmin value for the lambda-Y plots will be
-  ; modified later.
-  ;
-  IF state.wid_data.autoint_sji EQ 0 THEN BEGIN
-    widget_control,state.min_text_sji,get_value=intmin
-    widget_control,state.max_text_sji,get_value=intmax
-    intmin=float(intmin)
-    intmax=float(intmax)
-  ENDIF ELSE BEGIN
-    k=where(image GE 0,nk)
-    IF nk EQ 0 THEN BEGIN
-      intmin=0
-      intmax=10
-    ENDIF ELSE BEGIN
-      chck=sigrange(image[k],range=range,fraction=0.99,missing=-200)
-      intmin=range[0]
-      intmax=range[1]
-    ENDELSE
-    widget_control,state.min_text_sji,set_value=trim(string(format='(f10.1)',intmin))
-    widget_control,state.max_text_sji,set_value=trim(string(format='(f10.1)',intmax))
-    widget_control,state.iris_browser_base,set_uvalue=state
-  ENDELSE
-
-
-  ;
-  ; Now deal with the case when the logarithm of the intensity is
-  ; selected.
-  ;
-  missing=-200
-  k=where(image NE missing)
-  IF state.wid_data.linlog EQ 1 THEN BEGIN
-    IF state.wid_data.autoint_sji EQ 0 THEN BEGIN
-      intmin=alog10(max([intmin,1]))
-      intmax=alog10(intmax)
-    ENDIF ELSE BEGIN
-      intmin=alog10(max([intmin,1]))
-      intmax=alog10(max(image))
-      widget_control,state.min_text_sji,set_value=trim(string(format='(f10.1)',10.^intmin))
-      widget_control,state.max_text_sji,set_value=trim(string(format='(f10.1)',10.^intmax))
-      widget_control,state.iris_browser_base,set_uvalue=state
-    ENDELSE
-    image=alog10(image>1)
-  ENDIF
-
-  ;
-  ; Set the X and Y titles
-  ;
-  roll=state.wid_data.roll
-  CASE 1 OF
-    roll GE -5 AND roll LE 5: BEGIN
-      xtitle='X / arcsec'
-      ytitle='Y / arcsec'
-    END
-    roll GE 85 OR roll LE -85: BEGIN
-      ytitle='X / arcsec'
-      xtitle='Y / arcsec'
-    END
-    ELSE: BEGIN
-      xtitle='X-position / arcsec'
-      ytitle='Y-position / arcsec'
-    END
-  ENDCASE
-
-
-  ;
-  ; Plot the SJI image.
-  ;
-  texp_string=trim(string(sji_exp[state.wid_data.sji_frame],format='(f7.2)'))
-  title=anytim2utc(/ccsds,/time,/trunc,sji_utc[imin])+' UT (exp: '+texp_string+'s)'
-  plot_image,image,origin=origin,scale=scale,min=intmin,max=intmax, $
-    title=title, $
-    xtitle=xtitle, ytitle=ytitle
-  ;
-  ; Use a box to indicate the position of the raster pixel
-  ;
-  plots,xp,yp,psym=6,symsiz=2
-
-  widget_control,state.iris_browser_base,set_uvalue=state
-
-END
-
-
-;--------------------
-PRO iris_browser_plot_image, state, pwin, ps=ps
-  ;
-  ; Plots the image in the upper window. Setting /ps sends the plot to a
-  ; postscript file.
-  ;
-
-  iwin=state.wid_data.iwin[pwin]
-
-  xs=state.wid_data.nx
-  ys=state.wid_data.ny
-
-  xpos=state.wid_data.xpos
-  ypos=state.wid_data.ypos
-  nxpos=state.wid_data.nxpos
-
-  xpix=state.wid_data.xpix
-  ypix=state.wid_data.ypix
-  lpix=state.wid_data.ilambda[pwin]
-
-  origin=state.wid_data.origin
-  scale=state.wid_data.scale
-
-  zoom=state.wid_data.im_zoom
-
-  wset,state.wid_data.im_plot_id[pwin]
-
-  ;
-  ; This is the X-index offset used when "chunking" is being done on
-  ; sit-and-stare data.
-  ;
-  xoffset=state.wid_data.ichunk*nxpos
-
-  ;
-  ; This loads up the image to be plotted, depending if a X-Y plot or a
-  ; lambda-Y plot is to be shown.
-  ;
-  IF state.wid_data.im_type EQ 1 THEN BEGIN
-    lam=state.data->getlam(iwin)
-    nl=n_elements(lam)
-    im=state.expimages[0:nl-1,*,pwin]
-    i0=state.wid_data.lrange[0,pwin]
-    i1=state.wid_data.lrange[1,pwin]
-    j0=state.wid_data.yrange[0]
-    j1=state.wid_data.yrange[1]
-    im=im[i0:i1,j0:j1]
-  ENDIF ELSE BEGIN
-    im=state.images[*,*,pwin]
-    i0=state.wid_data.xrange[0]
-    i1=state.wid_data.xrange[1]
-    j0=state.wid_data.yrange[0]
-    j1=state.wid_data.yrange[1]
-    im=im[i0:i1,j0:j1]
-  ENDELSE
-
-
-  ;
-  ; This picks out the intensity min and max values for the
-  ; display. Note that the intmin value for the lambda-Y plots will be
-  ; modified later.
-  ;
-  IF state.wid_data.autoint[pwin] EQ 0 THEN BEGIN
-    widget_control,state.min_text[pwin],get_value=intmin
-    widget_control,state.max_text[pwin],get_value=intmax
-    intmin=float(intmin)
-    intmax=float(intmax)
-  ENDIF ELSE BEGIN
-    k=where(im GE 0,nk)
-    IF nk EQ 0 THEN BEGIN
-      intmin=0
-      intmax=10
-    ENDIF ELSE BEGIN
-      chck=sigrange(im[k],range=range,fraction=0.99,missing=0)
-      intmin=range[0]
-      intmax=range[1]
-    ENDELSE
-    widget_control,state.min_text[pwin],set_value=trim(string(format='(f10.1)',intmin))
-    widget_control,state.max_text[pwin],set_value=trim(string(format='(f10.1)',intmax))
-    widget_control,state.iris_browser_base,set_uvalue=state
-  ENDELSE
-
-
-  IF state.wid_data.im_type EQ 1 THEN BEGIN
-    ;
-    ;  This is for the lambda-Y images plots
-    ;
-    IF keyword_set(state.wid_data.linlog) THEN BEGIN
-      ;
-      ; The following tries to set intmin in such a way that the color table
-      ; is not wasted on noisy pixels in the background. If you need to
-      ; adjust, change the number 10 in n_im/10
-      ;
-      k=where(im GE 0,n_im)
-      IF n_im LT 100 THEN BEGIN
-        intmin=1
-      ENDIF ELSE BEGIN
-        ks=sort(im[k])
-        vals=im[k[ks[0:n_im/10]]]
-        intmin=alog10(max([mean(vals),intmin,1]))
-      ENDELSE
-      intmax=alog10(intmax)
-      ;
-      im=alog10(im>0)
-    ENDIF
-    ;
-    plot_image,im,xsty=5,ysty=5,min=intmin,max=intmax
-    ;
-    IF state.wid_data.velocity EQ 1 THEN BEGIN
-      rlambda=state.wid_data.lambda[pwin]
-      xra=[lam[i0],lam[i1]]
-      xra=lamb2v(xra-rlambda,rlambda)
-      axis,xaxis=0,xra=xra,xsty=1,xtitle='Velocity / km s!u-1!n'
-      axis,xaxis=1,xra=xra,xsty=1,charsiz=0.0001
-    ENDIF ELSE BEGIN
-      xra=[lam[i0],lam[i1]]
-      axis,xaxis=0,xra=xra,xsty=1,xtitle='Wavelength / A'
-      axis,xaxis=1,xra=xra,xsty=1,charsiz=0.0001
-    ENDELSE
-    ;
-    yra=ypos[[j0,j1]]
-    axis,yaxis=0,yra=yra,ytit='Y / arcsec',ysty=1
-    axis,yaxis=1,yra=yra,charsiz=0.00001,ysty=1
-    ;
-    usersym,[0,-1,1,0,1,-1,0],[0,-1,1,0,-1,1,0],th=2
-    plots,(lpix-i0),(ypix-j0),psym=8,symsiz=2,col=1
-    usersym,[0,0,0,0,1,-1,0],[0,-1,1,0,0,0,0],th=2
-    plots,(lpix-i0),(ypix-j0),psym=8,symsiz=2
-    ;
-  ENDIF ELSE BEGIN
-    ;
-    ; This is for the X-Y images plots.
-    ;
-    origin=origin+[scale[0]*i0,scale[1]*j0]
-    ;
-    IF keyword_set(state.wid_data.linlog) THEN BEGIN
-      ;
-      ; The following tries to set intmin in such a way that the color table
-      ; is not wasted on noisy pixels in the background. If you need to
-      ; adjust, change the number 100 in n_im/100
-      ;
-      k=where(im GE 0)
-      n_im=n_elements(im)
-      ks=sort(im[k])
-      vals=im[k[ks[0:n_im/100]]]
-      intmin=alog10(max([mean(vals),intmin,1]))
-      intmax=alog10(intmax)
-      ;
-      im=alog10(im>0)
-    ENDIF
-
-    IF abs(state.wid_data.roll) GE 85 THEN rswtch=1 ELSE rswtch=0
-    ;
-    IF state.wid_data.sit_stare EQ 1 THEN BEGIN
-      IF rswtch EQ 1 THEN BEGIN
-        ytitle='Time / mins'
-        xtitle='Y / arcsec'
-      ENDIF ELSE BEGIN
-        xtitle='Time / mins'
-        ytitle='Y / arcsec'
-      ENDELSE
-      xra=state.wid_data.tmid_min[[i0+xoffset,i1+xoffset]]
-    ENDIF ELSE BEGIN
-      IF rswtch EQ 1 THEN BEGIN
-        ytitle='X / arcsec'
-        xtitle='Y / arcsec'
-      ENDIF ELSE BEGIN
-        xtitle='X / arcsec'
-        ytitle='Y / arcsec'
-      ENDELSE
-      xra=xpos[[i0,i1]]
-    ENDELSE
-
-    ;
-    ; PLOT IMAGE
-    ; ----------
-    ;; plot_image,im,scale=scale,orig=origin, title='Zoom='+trim(2^zoom), $
-    ;;            min=intmin,max=intmax, $
-    ;;            xtitle=xtitle,ytitle=ytitle
-
-    plot_image,im, title='Zoom='+trim(2^zoom), $
-      min=intmin,max=intmax, xsty=5,ysty=5, $
-      scale=scale
-    axis,xaxis=0,xra=xra,xtit=xtitle,xsty=1
-    axis,xaxis=1,xra=xra,charsiz=0.00001,xsty=1
-    ;
-    yra=ypos[[j0,j1]]
-    axis,yaxis=0,yra=yra,ytit=ytitle,ysty=1
-    axis,yaxis=1,yra=yra,charsiz=0.00001,ysty=1
-    ;
-    usersym,[0,-1,1,0,1,-1,0],[0,-1,1,0,-1,1,0],th=2
-    plots,(xpix-i0-xoffset)*scale[0],(ypix-j0)*scale[1],psym=8,symsiz=2,col=1
-    usersym,[0,0,0,0,1,-1,0],[0,-1,1,0,0,0,0],th=2
-    plots,(xpix-i0-xoffset)*scale[0],(ypix-j0)*scale[1],psym=8,symsiz=2
-  ENDELSE
-
-
-END
-
-
-;------------------
-PRO iris_browser_plot_spectrum, state, pwin
-  ;
-  ; Plots the spectrum in the lower window.
-  ;
-  iwin=state.wid_data.iwin[pwin]
-
-  spec=state.spectra[*,pwin]
-
-  nl=state.data->getxw(iwin)
-  spec=spec[0:nl-1]
-
-
-  ;
-  ; Create WVL array, giving wavelengths as a function of exposure number.
-  ;
-  ll=state.data->getlam(iwin)
-  wvl=ll
-  nw=n_elements(wvl)
-
-  xpix=state.wid_data.xpix
-  ypix=state.wid_data.ypix
-
-  lambda=state.wid_data.lambda[pwin]
-  lpix=state.wid_data.ilambda[pwin]
-
-  irange=state.wid_data.lrange[*,pwin]
-  wrange=wvl[irange]
-
-
-  k=where(spec NE -100 AND wvl GE wrange[0] AND wvl LE wrange[1],nk)
-
-  IF nk NE 0 THEN yrange=[max([0,min(spec[k])*0.90]),max(spec[k])*1.10]
-
-  title='lpix='+trim(lpix)+', t_exp='+trim(string(format='(f6.2)',state.wid_data.exptime[pwin]))+' s'
-
-  ytitle='Intensity / DN s!u-1!n'
-
-  wset,state.wid_data.spec_plot_id[pwin]
-  IF state.wid_data.velocity EQ 1 THEN BEGIN
-    v=lamb2v(wvl-lambda,lambda)
-    wrange=lamb2v(wrange-lambda,lambda)
-    xtitle='Velocity / km s!u-1!n'
-    plot,v,spec,psym=10,/xsty,xrange=wrange, $
-      tit=title,ysty=1,yrange=yrange, $
-      xtitle=xtitle,ytitle=ytitle
-    usersym,[-1,1,0,-1,1,0],[-1,1,0,1,-1,0],th=2
-    plots,v[lpix],spec[lpix],psym=8,symsiz=2
-  ENDIF ELSE BEGIN
-    xtitle='Wavelength / angstroms'
-    plot,wvl,spec,psym=10,/xsty,xrange=wrange, $
-      tit=title,ysty=1,yrange=yrange, $
-      xtitle=xtitle,ytitle=ytitle
-    usersym,[-1,1,0,-1,1,0],[-1,1,0,1,-1,0],th=2
-    plots,wvl[lpix],spec[lpix],psym=8,symsiz=2
-  ENDELSE
-
-
-  IF state.wid_data.line_ids EQ 1 THEN result=iris_oplot_line_ids(wrange,!y.crange,state.wid_data.idstr,velocity=state.wid_data.velocity,refwvl=lambda)
-
-END
-
-
-
-;------------------
-PRO iris_browser_font, font, big=big, fixed=fixed, retina=retina
-  ;+
-  ;  Defines the fonts to be used in the widgets. Allows for Windows and Unix
-  ;  operating systems.
-  ;
-  ;  14-Jun-2015: I've added /retina to shrink the fonts for a
-  ;  Mac retina display.
-  ;-
-  CASE !version.os_family OF
-
-    'unix': BEGIN
-      IF keyword_set(fixed) THEN fstr='-*-courier-' ELSE $
-        fstr='-adobe-helvetica-'
-      IF keyword_set(retina) THEN BEGIN
-        IF keyword_set(big) THEN str='14' ELSE str='10'
-      ENDIF ELSE BEGIN
-        IF keyword_set(big) THEN str='18' ELSE str='12'
-      ENDELSE
-      font=fstr+'bold-r-*-*-'+str+'-*'
-    END
-
-    ELSE: BEGIN
-      IF keyword_set(fixed) THEN fstr='Courier' ELSE $
-        fstr='Arial'
-      IF keyword_set(big) THEN str='20' ELSE str='16'
-      font=fstr+'*bold*'+str
-    END
-
-  ENDCASE
-
-END
-
-
-;-----------------
 PRO iris_browser_base_event, event
   ;
   ; Event handler.
@@ -828,10 +144,10 @@ PRO iris_browser_base_event, event
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
           spice_browser_calc_zoom_params,state,i
-          iris_browser_plot_image,state,i
-          ;        iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          ;        spice_browser_plot_spectrum,state,i
         ENDFOR
-        IF state.wid_data.sji EQ 1 THEN iris_browser_plot_sji, state
+        IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
       END
       ;
       2: BEGIN
@@ -840,7 +156,7 @@ PRO iris_browser_base_event, event
         ; make sure coordinate conversion takes place on image plot, so need
         ; to re-plot the image
         ;
-        iris_browser_plot_image,state,pwin
+        spice_browser_plot_image,state,pwin
         ;
         xy=convert_coord(round(event.x),round(event.y), $
           /device,/to_data)
@@ -881,14 +197,14 @@ PRO iris_browser_base_event, event
           n=state.wid_data.n_plot_window
           FOR i=0,n-1 DO BEGIN
             spice_browser_calc_zoom_params,state,i
-            iris_browser_plot_image,state,i
+            spice_browser_plot_image,state,i
             spice_browser_update_spectrum,state,i
-            iris_browser_plot_spectrum,state,i
+            spice_browser_plot_spectrum,state,i
           ENDFOR
           IF state.wid_data.sji EQ 1 THEN BEGIN
-            iris_browser_plot_sji, state
+            spice_browser_plot_sji, state
           ENDIF
-          iris_browser_goes_plot,state
+          spice_browser_goes_plot,state
         ENDIF
       END
       ;
@@ -904,10 +220,10 @@ PRO iris_browser_base_event, event
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
           spice_browser_calc_zoom_params,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
-        IF state.wid_data.sji EQ 1 THEN iris_browser_plot_sji, state
+        IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
       END
 
       ELSE:
@@ -931,8 +247,8 @@ PRO iris_browser_base_event, event
         widget_control,state.iris_browser_base,set_uvalue=state
         ;
         spice_browser_calc_zoom_params,state,pwin
-        iris_browser_plot_image,state,pwin
-        iris_browser_plot_spectrum,state,pwin
+        spice_browser_plot_image,state,pwin
+        spice_browser_plot_spectrum,state,pwin
       END
       ;
       2: BEGIN
@@ -941,7 +257,7 @@ PRO iris_browser_base_event, event
         ; make sure coordinate conversion takes place on spectrum plot, so need
         ; to re-plot the spectrum
         ;
-        iris_browser_plot_spectrum,state,pwin
+        spice_browser_plot_spectrum,state,pwin
         ;
         ;      lpix=round(event.x+0.5)
         lpix=round(event.x)
@@ -966,10 +282,10 @@ PRO iris_browser_base_event, event
         spice_browser_calc_zoom_params,state,pwin
         ;
         spice_browser_update_image,state,pwin
-        iris_browser_plot_image,state,pwin
+        spice_browser_plot_image,state,pwin
         ;
         spice_browser_update_spectrum,state,pwin
-        iris_browser_plot_spectrum,state,pwin
+        spice_browser_plot_spectrum,state,pwin
       END
       ;
       4: BEGIN
@@ -980,8 +296,8 @@ PRO iris_browser_base_event, event
         widget_control,state.iris_browser_base,set_uvalue=state
         ;
         spice_browser_calc_zoom_params,state,pwin
-        iris_browser_plot_image,state,pwin
-        iris_browser_plot_spectrum,state,pwin
+        spice_browser_plot_image,state,pwin
+        spice_browser_plot_spectrum,state,pwin
       END
 
       ELSE:
@@ -1025,8 +341,8 @@ PRO iris_browser_base_event, event
         ;
         spice_browser_update_image,state,pwin
         spice_browser_update_spectrum,state,pwin
-        iris_browser_plot_image,state,pwin
-        iris_browser_plot_spectrum,state,pwin
+        spice_browser_plot_image,state,pwin
+        spice_browser_plot_spectrum,state,pwin
       END
       ;
       ; Button for whisker plot
@@ -1076,8 +392,8 @@ PRO iris_browser_base_event, event
   ;;    ;
   ;;     spice_browser_update_image,state,pwin
   ;;     spice_browser_update_spectrum,state,pwin
-  ;;     iris_browser_plot_image,state,pwin
-  ;;     iris_browser_plot_spectrum,state,pwin
+  ;;     spice_browser_plot_image,state,pwin
+  ;;     spice_browser_plot_spectrum,state,pwin
   ;;   ENDIF
   ;; END
 
@@ -1090,7 +406,7 @@ PRO iris_browser_base_event, event
     pwin=k[0]
     state.wid_data.autoint[pwin]=0
     widget_control,state.iris_browser_base,set_uvalue=state
-    iris_browser_plot_image,state,pwin
+    spice_browser_plot_image,state,pwin
   END
 
 
@@ -1103,7 +419,7 @@ PRO iris_browser_base_event, event
     pwin=k[0]
     state.wid_data.autoint[pwin]=0
     widget_control,state.iris_browser_base,set_uvalue=state
-    iris_browser_plot_image,state,pwin
+    spice_browser_plot_image,state,pwin
   END
 
   ;
@@ -1114,7 +430,7 @@ PRO iris_browser_base_event, event
   IF nk GT 0 THEN BEGIN
     state.wid_data.autoint_sji=0
     widget_control,state.iris_browser_base,set_uvalue=state
-    iris_browser_plot_sji,state
+    spice_browser_plot_sji,state
   ENDIF
 
   ;
@@ -1125,7 +441,7 @@ PRO iris_browser_base_event, event
   IF nk GT 0 THEN BEGIN
     state.wid_data.autoint_sji=0
     widget_control,state.iris_browser_base,set_uvalue=state
-    iris_browser_plot_sji,state
+    spice_browser_plot_sji,state
   ENDIF
 
 
@@ -1137,7 +453,7 @@ PRO iris_browser_base_event, event
   IF nk GT 0 THEN BEGIN
     state.wid_data.autoint_sji=1
     widget_control,state.iris_browser_base,set_uvalue=state
-    iris_browser_plot_sji,state
+    spice_browser_plot_sji,state
   ENDIF
 
 
@@ -1151,7 +467,7 @@ PRO iris_browser_base_event, event
     pwin=k[0]
     state.wid_data.autoint[pwin]=1
     widget_control,state.iris_browser_base,set_uvalue=state
-    iris_browser_plot_image,state,pwin
+    spice_browser_plot_image,state,pwin
   END
 
   ;
@@ -1199,7 +515,7 @@ PRO iris_browser_base_event, event
     ;
     ;
     widget_control,state.iris_browser_base,set_uval=state
-    iris_browser_plot_sji, state
+    spice_browser_plot_sji, state
   ENDIF
 
 
@@ -1220,13 +536,13 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
         IF state.wid_data.sji EQ 1 THEN BEGIN
-          iris_browser_plot_sji,state
+          spice_browser_plot_sji,state
         ENDIF
-        iris_browser_goes_plot,state
+        spice_browser_goes_plot,state
       ENDIF
     END
 
@@ -1246,13 +562,13 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
         IF state.wid_data.sji EQ 1 THEN BEGIN
-          iris_browser_plot_sji,state
+          spice_browser_plot_sji,state
         ENDIF
-        iris_browser_goes_plot,state
+        spice_browser_goes_plot,state
       ENDIF
     END
 
@@ -1272,13 +588,13 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
         IF state.wid_data.sji EQ 1 THEN BEGIN
-          iris_browser_plot_sji,state
+          spice_browser_plot_sji,state
         ENDIF
-        iris_browser_goes_plot,state
+        spice_browser_goes_plot,state
       ENDIF
     END
 
@@ -1317,13 +633,13 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
         IF state.wid_data.sji EQ 1 THEN BEGIN
-          iris_browser_plot_sji,state
+          spice_browser_plot_sji,state
         ENDIF
-        iris_browser_goes_plot,state
+        spice_browser_goes_plot,state
       ENDIF
     END
 
@@ -1348,13 +664,13 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
         IF state.wid_data.sji EQ 1 THEN BEGIN
-          iris_browser_plot_sji,state
+          spice_browser_plot_sji,state
         ENDIF
-        iris_browser_goes_plot,state
+        spice_browser_goes_plot,state
       ENDIF
     END
 
@@ -1379,13 +695,13 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
         IF state.wid_data.sji EQ 1 THEN BEGIN
-          iris_browser_plot_sji,state
+          spice_browser_plot_sji,state
         ENDIF
-        iris_browser_goes_plot,state
+        spice_browser_goes_plot,state
       ENDIF
     END
 
@@ -1402,8 +718,8 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
       ENDIF
 
@@ -1417,7 +733,7 @@ PRO iris_browser_base_event, event
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
       ENDIF
     END
@@ -1433,8 +749,8 @@ PRO iris_browser_base_event, event
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_plot_spectrum,state,i
-          IF state.wid_data.im_type EQ 1 THEN iris_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
+          IF state.wid_data.im_type EQ 1 THEN spice_browser_plot_image,state,i
         ENDFOR
       ENDIF
     END
@@ -1450,9 +766,9 @@ PRO iris_browser_base_event, event
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_plot_image,state,i
+          spice_browser_plot_image,state,i
         ENDFOR
-        IF state.wid_data.sji EQ 1 THEN iris_browser_plot_sji, state
+        IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
       ENDIF
     END
 
@@ -1468,7 +784,7 @@ PRO iris_browser_base_event, event
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_plot_image,state,i
+          spice_browser_plot_image,state,i
         ENDFOR
       ENDIF
     END
@@ -1497,11 +813,11 @@ PRO iris_browser_base_event, event
       FOR i=0,n-1 DO BEGIN
         spice_browser_update_image,state,i
         spice_browser_update_spectrum,state,i
-        iris_browser_plot_image,state,i
-        iris_browser_plot_spectrum,state,i
+        spice_browser_plot_image,state,i
+        spice_browser_plot_spectrum,state,i
       ENDFOR
-      IF state.wid_data.sji EQ 1 THEN iris_browser_plot_sji, state
-      iris_browser_goes_plot,state
+      IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
+      spice_browser_goes_plot,state
     END
     ;
     state.exp_butt1: BEGIN
@@ -1518,11 +834,11 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
-        IF state.wid_data.sji EQ 1 THEN iris_browser_plot_sji, state
-        iris_browser_goes_plot,state
+        IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
+        spice_browser_goes_plot,state
       ENDIF
     END
     ;
@@ -1541,11 +857,11 @@ PRO iris_browser_base_event, event
         FOR i=0,n-1 DO BEGIN
           spice_browser_update_image,state,i
           spice_browser_update_spectrum,state,i
-          iris_browser_plot_image,state,i
-          iris_browser_plot_spectrum,state,i
+          spice_browser_plot_image,state,i
+          spice_browser_plot_spectrum,state,i
         ENDFOR
-        IF state.wid_data.sji EQ 1 THEN iris_browser_plot_sji, state
-        iris_browser_goes_plot,state
+        IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
+        spice_browser_goes_plot,state
       ENDIF
     END
 
@@ -1569,8 +885,8 @@ PRO iris_browser_base_event, event
       state=add_tag(new_state,wind,'wind')
       widget_control,state.iris_browser_base,set_uval=state
       ;
-      iris_browser_plot_image,state
-      iris_browser_plot_spectrum,state
+      spice_browser_plot_image,state
+      spice_browser_plot_spectrum,state
     END
 
 
@@ -1628,8 +944,8 @@ PRO iris_browser_base_event, event
       t0=state.wid_data.filestr.t0
       t1=state.wid_data.filestr.t1
       iris_eis_obs_check,t0,t1,out_string=out_string,margin=30.
-      iris_browser_font,tfont,/fixed
-      iris_browser_font,bfont
+      spice_browser_font,tfont,/fixed
+      spice_browser_font,bfont
       len=strlen(out_string)
       xsiz=max(len)
       ysiz=min([n_elements(out_string),30])
@@ -1639,8 +955,8 @@ PRO iris_browser_base_event, event
 
     state.goes_butt: BEGIN
       out_string=irb_get_flare_text(state.wid_data.flare_data)
-      iris_browser_font,tfont,/fixed
-      iris_browser_font,bfont
+      spice_browser_font,tfont,/fixed
+      spice_browser_font,bfont
       len=strlen(out_string)
       xsiz=max(len)
       ysiz=min([n_elements(out_string),30])
@@ -1654,7 +970,7 @@ PRO iris_browser_base_event, event
 
         0: widget_control, event.top, /destroy
         1: BEGIN
-          iris_browser_font,font,retina=state.wid_data.retina
+          spice_browser_font,font,retina=state.wid_data.retina
           str1=['HELP FOR SPICE_RASTER_BROWSER',$
             '',$
             'spice_raster_browser is used to browse the 3D data cubes produced by the',$
@@ -1738,9 +1054,9 @@ PRO iris_browser_base_event, event
             ;
             n=state.wid_data.n_plot_window
             FOR i=0,n-1 DO BEGIN
-              iris_browser_plot_image,state,i
+              spice_browser_plot_image,state,i
             ENDFOR
-            IF state.wid_data.sji EQ 1 THEN iris_browser_plot_sji, state
+            IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
           ENDIF
         END
 
@@ -1780,9 +1096,9 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   ENDCASE
 
 
-  iris_browser_font,font, retina=retina
-  iris_browser_font,bigfont,/big, retina=retina
-  iris_browser_font,fixfont,/fixed, retina=retina
+  spice_browser_font,font, retina=retina
+  spice_browser_font,bigfont,/big, retina=retina
+  spice_browser_font,fixfont,/fixed, retina=retina
 
   ;
   ; Get metadata from the object.
@@ -2654,15 +1970,15 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   widget_control,/hourglass
   FOR i=0,n_plot_window-1 DO BEGIN
     spice_browser_update_image,state,i
-    iris_browser_plot_image, state, i
+    spice_browser_plot_image, state, i
     spice_browser_update_spectrum,state,i
-    iris_browser_plot_spectrum, state, i
+    spice_browser_plot_spectrum, state, i
   ENDFOR
   ;
-  iris_browser_goes_plot, state
+  spice_browser_goes_plot, state
 
   IF sji_file[0] NE '' THEN BEGIN
-    iris_browser_plot_sji, state
+    spice_browser_plot_sji, state
   ENDIF
 
   tt='Time: '+trim(midtime[state.wid_data.xpix-1])
