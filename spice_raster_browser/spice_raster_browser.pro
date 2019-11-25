@@ -85,8 +85,8 @@
 ;     IRIS_BROWSER_GOES_PLOT, IRIS_OPLOT_LINE_IDS,
 ;     IRIS_BROWSER_PLOT_IMAGE, IRIS_BROWSER_PLOT_SPEC,
 ;     IRIS_BROWSER_FONT, IRIS_BROWSER_EVENT, IRIS_BROWSER_WIDGET,
-;     IRIS_BROWSER_UPDATE_SPECTRUM, IRIS_BROWSER_UPDATE_IMAGE,
-;     IRIS_BROWSER_PLOT_SJI, IRIS_BROWSER_COLTABLE,
+;     spice_browser_update_spectrum, spice_browser_update_image,
+;     IRIS_BROWSER_PLOT_SJI, spice_browser_coltable,
 ;     spice_browser_wvl_list, IRB_GET_FLARE_TEXT
 ;
 ; PROGRAMMING NOTES:
@@ -118,560 +118,6 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-
-
-;------------------------------
-PRO iris_browser_coltable, desc=desc, state=state, set_value=set_value
-  ;
-  ; This provides the list of color tables for the color pull-down menu
-  ; (output 'desc'). It also sets the color table if 'state' and
-  ; 'set_value' are specified.
-  ;
-  ; **Be careful when adding new color tables. Need to update 'desc' and
-  ; **the if statements.
-
-  ;
-  ; This determines if the user has the aia_lct routine.
-  ;
-  swtch=have_proc('aia_lct')
-
-  desc=['1\COLOR', $
-    '0\B+W','0\Blue']
-
-  IF have_proc('aia_lct') THEN BEGIN
-    desc=[desc,'0\Red','2\AIA 193']
-  ENDIF ELSE BEGIN
-    desc=[desc,'2\Red']
-  ENDELSE
-
-  n_ct=n_elements(desc)
-
-  IF n_tags(state) NE 0 AND n_elements(set_value) NE 0 THEN BEGIN
-    state.wid_data.coltable=set_value
-    widget_control,state.iris_browser_base,set_uvalue=state
-    ;
-    IF set_value EQ 0 THEN loadct,0
-    IF set_value EQ 1 THEN loadct,1
-    IF set_value EQ 2 THEN loadct,3
-    IF set_value EQ 3 THEN aia_lct,r,g,b,wavelnth=193,/load
-  ENDIF
-
-
-END
-
-
-;------------------------------
-PRO iris_browser_update_widdata, state, meta
-  ;
-  ; This takes the metadata structure (see iris_browser_get_metadata)
-  ; and modifies entries in wid_data. (This is needed when a new object
-  ; is loaded.)
-  ;
-  wid_data=state.wid_data
-
-  wid_data.xpos=meta.xpos
-  wid_data.ypos=meta.ypos
-  wid_data.midtime=meta.midtime
-  wid_data.tmid=meta.midtime
-  wid_data.utc=meta.utc
-  wid_data.sit_stare=meta.sit_stare
-  wid_data.origin=meta.origin
-  wid_data.scale=meta.scale
-  wid_data.tmid_min=meta.tmid_min
-  wid_data.rast_direct=meta.rast_direct
-  wid_data.l1p5_ver=meta.l1p5_ver
-
-  state.wid_data=wid_data
-  widget_control,state.iris_browser_base,set_uvalue=state
-
-END
-
-
-
-;---------------------------------
-FUNCTION iris_browser_get_metadata, data
-  ;
-  ; This extracts various bits of metadata from the data object
-  ;
-  xpos=data->getxpos()
-  ypos=data->getypos()
-
-  ;
-  ; Pick out critical roll angles (allowing 5 degree uncertainty)
-  ;
-  roll=data->getinfo('SAT_ROT')
-  CASE 1 OF
-    roll GE 85: rswtch=1
-    roll LE -85: rswtch=-1
-    ELSE: rswtch=0
-  ENDCASE
-
-  ;
-  ; For roll angles -90 and +90, xpos and ypos get swapped by the object
-  ; software. I am always going to display the data with the scan
-  ; direction on the X-axis, so I need to swap xpos and ypos again. By
-  ; comparing with AIA images, I find that I need to reverse ypos for
-  ; -90 roll.
-  ;
-  ; Note: an example of a +90 data-set is 9-Jul-2014 08:00.
-  ;       an example of a -90 data-set is 25-Feb-2014 00:05.
-  ;       an example of a +45 data-set is 6-Sep-2014 11:24.
-  ;
-  IF n_elements(xpos) NE data->getinfo('NEXP') THEN BEGIN
-    xtemp=xpos
-    xpos=ypos
-    ypos=xtemp
-    ;
-    IF rswtch EQ -1 THEN ypos=reverse(ypos)
-    IF rswtch EQ 1 THEN BEGIN
-      ypos=reverse(ypos)
-      xpos=reverse(xpos)
-    ENDIF
-  ENDIF
-
-  nx=n_elements(xpos)
-  ny=n_elements(ypos)
-
-  ;
-  ; This is a bit of kluge for getting the pixel scale, but I
-  ; couldn't find the object method to get this .
-  ;
-  xscale=median(xpos[1:nx-1]-xpos[0:nx-2])
-  yscale=median(ypos[1:ny-1]-ypos[0:ny-2])
-  scale=[xscale,yscale]
-
-  ; Coordinates of bottom-left of raster
-  origin=[min(xpos),min(ypos)]
-
-  ;
-  ; sit_stare is 1 if it's a sit-and-stare observation and 0 otherwise.
-  ; 2-Nov-2016, PRY: The getsit_and_stare method has broken so I just
-  ; check STEPS_AV now.
-  ;
-  steps_av=data->getinfo('STEPS_AV')
-  sit_stare = steps_av EQ 0.
-  ;sit_stare=data->getsit_AND_stare()
-
-  ;
-  ; Gets the mid-point time of each exposure in '12:00:00' format. This
-  ; is stored in wid_data.
-  ;
-  ; The mid-time is the time shown on the GUI by "Time:"
-  ;
-  ; Since the FUV channel can have a different exposure time to the NUV
-  ; channel, then I specifically request the times for FUV.
-  ;
-  iwin=data->getwindx(1402)
-  IF iwin[0] EQ -1 THEN iwin=0 ELSE iwin=iwin[0]
-  ;
-  ti1=data->getti_1()
-  ti2=data->getti_2()
-  ti1=data->sec_from_obs_start(ti1)
-  ti2=data->sec_from_obs_start(ti2)
-  mid_ti=(ti2-ti1)/2.+ti1
-  t_tai=data->ti2tai(mid_ti)
-  utc=data->ti2utc(mid_ti)
-  midtime=anytim2utc(t_tai,/ccsds,/time_only,/trunc)
-  tmid_min=(t_tai-t_tai[0])/60.
-
-
-
-  ;
-  ; Modify things if it's a sit-and-stare observation
-  ;  - for the scale I set it so that a square image corresponds to
-  ;    about 60" in Y and 20 mins in time (hence factor
-  ;    3=60/20). I may need to adjust based on experience with
-  ;    sit-and-stare.
-  ;
-  IF sit_stare EQ 1 THEN BEGIN
-    scale[0]=3.*(tmid_min[1]-tmid_min[0])
-    origin[0]=0.0
-  ENDIF
-
-
-  ;
-  ; Get raster direction by using the getdx value.
-  ;   rast_direct=1  -> left-to-right (east-to-west)
-  ;   rast_direct=0  -> right-to-left (west-to-east)
-  ;
-  dx=data->getdx()
-  IF dx[0] GE 0 THEN rast_direct=1 ELSE rast_direct=0
-
-  IF sit_stare EQ 1 THEN BEGIN
-    rast_direct=1
-    obs_type='Sit-n-stare'
-  ENDIF ELSE BEGIN
-    obs_type='Raster'
-    IF rast_direct EQ 1 THEN obs_type='Raster (L-to-R)' ELSE obs_type='Raster (R-to-L)'
-  ENDELSE
-
-  IF rast_direct EQ 0 THEN midtime=reverse(midtime)
-
-  ;
-  ; This gets the level 1.5 version (i.e., the version of the iris_prep
-  ; used to derive the 1.5 file.
-  ;
-  history=data->getinfo('HISTORY')
-  chck=strpos(history,'VERSION:')
-  k=where(chck GE 0,nk)
-  IF nk GT 0 THEN BEGIN
-    i=k[0]
-    str=history[i]
-    l1p5_ver=trim(strmid(str,chck[k[0]]+8))
-  ENDIF
-
-  ;
-  ; Get xcen and ycen
-  ;
-  xcen=data->getxcen()
-  ycen=data->getycen()
-
-  ;
-  ; Exposure times can vary between NUV and FUV, and also over time. The
-  ; one constant is cadence with seems to be stored in the FITS keyword
-  ; STEPT_AV.
-  ;
-  cadence=data->getinfo('STEPT_AV')
-
-  outstr={ origin: origin, $
-    scale: scale, $
-    midtime: midtime, $
-    sit_stare: sit_stare, $
-    xpos: xpos, $
-    ypos: ypos, $
-    tmid_min: tmid_min, $
-    utc: utc, $
-    stud_acr: data->getinfo('OBSID'), $
-    date_obs: data->getinfo('DATE_OBS'), $
-    l1p5_ver: l1p5_ver, $
-    obs_type: obs_type, $
-    cadence: cadence, $
-    xcen: xcen, $
-    ycen: ycen, $
-    rast_direct: rast_direct }
-
-  return,outstr
-
-END
-
-
-;---------------------------
-PRO iris_browser_update_info, state
-  ;
-  ; This updates the metadata displayed on the left-side of the
-  ; widget. This is needed when browsing multiple files.
-  ;
-
-  xpix=state.wid_data.xpix
-  tmid=state.wid_data.midtime
-  widget_control,state.xtext,set_val='X-pixel: '+trim(xpix)
-  n=state.wid_data.nx
-  IF xpix GE n THEN tstr='Time: N/A' ELSE tstr='Time: '+tmid[xpix]
-  widget_control,state.ttext,set_val=tstr
-
-  date_obs=state.data->getinfo('DATE_OBS')
-  ex=anytim(/ex,date_obs)
-  val='TIME: '+strpad(trim(ex[0]),2,fill='0')+':'+strpad(trim(ex[1]),2,fill='0')
-  widget_control,state.text3,set_val=val
-
-END
-
-
-;----------------------------
-PRO iris_browser_make_windata, data, windata
-  ;
-  ; This is meant to reduce the size of the data files by extracting
-  ; narrow windows centered on key lines. Not implemented yet, though.
-  ;
-  str=[ {wvl: 1334.532, ion: 'c_2', wind: -1}, $
-    {wvl: 1335.708, ion: 'c_2', wind: -1}, $
-    {wvl: 1399.766, ion: 'o_4', wind: -1}, $
-    {wvl: 1401.158, ion: 'o_4', wind: -1}, $
-    {wvl: 1393.757, ion: 'si_4', wind: -1}, $
-    {wvl: 1402.772, ion: 'si_4', wind: -1}, $
-    {wvl: 2796.352, ion: 'mg_2', wind: -1}, $
-    {wvl: 2803.531, ion: 'mg_2', wind: -1}, $
-    {wvl: 1355.598, ion: 'o_1', wind: -1}, $
-    {wvl: 1354.067, ion: 'fe_21', wind: -1} ]
-
-  nwin=data->getnwin()
-  FOR i=0,nwin-1 DO BEGIN
-    lam=data->getlam(i)
-    k=where(str.wvl GE min(lam) AND str.wvl LE max(lam),nk)
-    IF nk NE 0 THEN str[k].wind=i
-  ENDFOR
-
-  k=where(str.wind NE -1,nk)
-  str=str[k]
-
-  FOR i=0,nk-1 DO BEGIN
-
-  ENDFOR
-
-END
-
-
-
-PRO iris_browser_calc_zoom_params, state, pwin
-  ;
-  ; Calculates the pixel ranges to be displayed given the zoom
-  ; parameters and selected pixels. The ranges are stored in
-  ; wid_data.xrange, .yrange, .lrange.
-  ;
-  iwin=state.wid_data.iwin[pwin]
-  lam=state.data->getlam(iwin)
-
-  nx=state.wid_data.nxpos
-  ny=state.wid_data.ny
-  nl=n_elements(lam)
-
-  xpix=state.wid_data.xpix - state.wid_data.ichunk*state.wid_data.nxpos
-  ypix=state.wid_data.ypix
-  lpix=state.wid_data.ilambda[pwin]
-
-  origin=state.wid_data.origin
-  scale=state.wid_data.scale
-
-
-  ;
-  ; Get x-range and y-range for images
-  ; ----------------------------------
-  zoom=state.wid_data.im_zoom
-  ;
-  ; The parameter zoom ranges from 0 to 7, and the zoom
-  ; factor is then 2^zoom. From the value of zoom we can work out the
-  ; pixel range of 'im' that is to be plotted. The pixel ranges are
-  ; [xlim1:xlim2,ylim1:ylim2].
-  ;
-  xlim1=0
-  ylim1=0
-  ;
-  IF zoom NE 0 THEN BEGIN
-    ix=nx*abs(scale[0])/2/2^zoom
-    iy=ny*abs(scale[1])/2/2^zoom
-    ixy=max([ix,iy])
-    ;
-    xlim1=xpix-fix(ixy/abs(scale[0]))
-    xlim2=xpix+fix(ixy/abs(scale[0]))
-    IF xlim1 LT 0 THEN BEGIN
-      xlim2=min([xlim2-xlim1,nx-1])
-      xlim1=0
-    ENDIF
-    ;
-    IF xlim2 GE nx THEN BEGIN
-      xlim1=max([xlim1-(xlim2-nx),0])
-      xlim2=nx-1
-    ENDIF
-    ;
-    ylim1=ypix-fix(ixy/abs(scale[1]))
-    ylim2=ypix+fix(ixy/abs(scale[1]))
-    IF ylim1 LT 0 THEN BEGIN
-      ylim2=min([ylim2-ylim1,ny-1])
-      ylim1=0
-    ENDIF
-    ;
-    IF ylim2 GE ny THEN BEGIN
-      ylim1=max([ylim1-(ylim2-ny),0])
-      ylim2=ny-1
-    ENDIF
-    ;
-    state.wid_data.xrange=[xlim1,xlim2]
-    state.wid_data.yrange=[ylim1,ylim2]
-  ENDIF ELSE BEGIN
-    state.wid_data.xrange=[0,nx-1]
-    state.wid_data.yrange=[0,ny-1]
-  ENDELSE
-
-
-  ;
-  ; Get range for wavelength window
-  ; -------------------------------
-  spec_zoom=state.wid_data.spec_zoom[pwin]
-  ;
-  IF spec_zoom NE 0 THEN BEGIN
-    nlz=nl/2/2^(spec_zoom)
-    ;
-    i0=lpix-nlz+max([0,lpix+nlz-nl])
-    i1=lpix+nlz+max([nlz-lpix,0])
-    ;
-    state.wid_data.lrange[*,pwin]=[max([i0,0]),min([i1,nl-1])]
-  ENDIF ELSE BEGIN
-    state.wid_data.lrange[*,pwin]=[0,nl-1]
-  ENDELSE
-
-  widget_control,state.iris_browser_base,set_uvalue=state
-
-
-END
-
-
-;-------------------------------
-PRO iris_browser_update_spectrum, state, pwin
-  ;
-  ; This routine updates the state.spectra (1D spectra) and
-  ; state.expimages (lambda-Y plots) tags for the window with index
-  ; pwin.
-  ;
-  ; MODIFIES: state.spectra, state.expimages, state.wid_data.exptime
-  ;
-  iwin=state.wid_data.iwin[pwin]
-  xpix=state.wid_data.xpix
-  ypix=state.wid_data.ypix
-  nl=state.data->getxw(iwin)
-
-  exptime=state.data->getexp(iwin=iwin)
-
-  ;
-  ; This is the X-offset (index number) used for "chunked" sit-and-stare data.
-  ;
-  xoff=state.wid_data.ichunk*state.wid_data.nxpos
-
-  nx=state.wid_data.nx
-  ny=state.wid_data.ny
-  scale=state.wid_data.scale
-
-  state.spectra[*,pwin]=0.
-  state.expimages[*,pwin]=0.
-
-  ;
-  ; Work out Y-offsets between the 3 channels.
-  ;
-  IF state.wid_data.yoffsets EQ 1 THEN BEGIN
-    reg=state.data->getregion(iwin,/full)
-    ;
-    CASE reg OF
-      'FUV1': yoff=round(6.0/scale[1])
-      'FUV2': yoff=round(2.0/scale[1])
-      'NUV': yoff=0
-    ENDCASE
-  ENDIF ELSE BEGIN
-    yoff=0
-  ENDELSE
-
-  ;
-  ; The following loads up the expimages and spectra tags with the new
-  ; data. Note that the exposure image is divided by the exposure time
-  ; to be consistent with the raster image.
-  ;
-  IF xpix LT nx THEN BEGIN
-    expimg=state.data->descale_array((state.data->getvar(iwin))[*,*,xpix])
-    IF exptime[xpix] NE 0. THEN expimg=expimg/exptime[xpix]
-    state.expimages[0:nl-1,yoff:yoff+ny-1,pwin]=expimg
-    state.spectra[0:nl-1,pwin]=expimg[*,ypix-yoff]
-  ENDIF ELSE BEGIN
-    state.expimages[*,*,pwin]=0
-    state.spectra[*,pwin]=0
-  ENDELSE
-
-  ;
-  ; Get exposure time for window.
-  ;
-  state.wid_data.exptime[pwin]=exptime[xpix]
-
-  widget_control,state.iris_browser_base,set_uvalue=state
-
-END
-
-
-
-;----------------------------
-PRO iris_browser_update_image, state, pwin
-  ;
-  ; Updates the state.images tag with the image for the window with
-  ; index pwin.
-  ;
-  wwidth=state.wid_data.lbin
-
-  t1=systime(1)
-
-  missing=[-200.,-199.]
-  nmiss=n_elements(missing)
-
-  iwin=state.wid_data.iwin[pwin]
-  nx=state.wid_data.nx
-  nxpos=state.wid_data.nxpos
-  ny=state.wid_data.ny
-  nl=state.data->getxw(iwin)
-
-  exptime=state.data->getexp(iwin=iwin)
-
-  ;
-  ; The following is used for breaking long sit-and-stare sequences into
-  ; more manageable chunks. X0 and X1 define the X-indices of the
-  ; start/end of the chunk.
-  ;
-  x0=state.wid_data.ixpos
-  x1=min([state.wid_data.jxpos,state.wid_data.nx-1])
-  nx=x1-x0+1
-
-  scale=state.wid_data.scale
-
-  lam=state.data->getlam(iwin)
-  getmin=min(abs(lam-state.wid_data.lambda[pwin]),imin)
-  wpix=imin
-
-  j0=max([0,wpix-wwidth/2])
-  j1=min([nl-1,wpix+wwidth/2])
-
-  ;
-  ; Work out Y-offsets between the 3 channels.
-  ;
-  IF state.wid_data.yoffsets EQ 1 THEN BEGIN
-    reg=state.data->getregion(iwin,/full)
-    ;
-    CASE reg OF
-      'FUV1': yoff=round(6.0/scale[1])
-      'FUV2': yoff=round(2.0/scale[1])
-      'NUV': yoff=0
-    ENDCASE
-  ENDIF ELSE BEGIN
-    yoff=0
-  ENDELSE
-
-  wd=fltarr(wwidth,nx,ny)
-  img=fltarr(nx,ny+40)
-  ;
-  IF state.wid_data.rast_direct EQ 0 THEN BEGIN
-    i0=x1
-    i1=x0
-    dx=-1
-  ENDIF ELSE BEGIN
-    i0=x0
-    i1=x1
-    dx=1
-  ENDELSE
-  ;
-  exptime=exptime[i0:i1]
-  ;
-  FOR i=i0,i1,dx DO BEGIN
-    expimg=state.data->descale_array((state.data->getvar(iwin))[*,*,i])
-    expt=exptime[i-i0]
-    IF expt NE 0. THEN wd[*,i-i0,*]=expimg[j0:j1,*]/expt ELSE wd[*,i-i0,*]=expimg[j0:j1,*]
-  ENDFOR
-  ;
-  FOR j=0,nmiss-1 DO BEGIN
-    k=where(wd EQ missing[j],nk)
-    IF nk GT 0 THEN wd[k]=0.
-  ENDFOR
-  ;
-  IF wwidth GT 1 THEN BEGIN
-    img[x0-i0:x1-i0,yoff:yoff+ny-1]=average(wd[0:wwidth-1,*,*],1,missing=0.)
-  ENDIF ELSE BEGIN
-    img[x0-i0:x1-i0,yoff:yoff+ny-1]=reform(wd[wpix-j0,*,*])
-  ENDELSE
-
-  wd=0
-
-  state.images[*,*,pwin]=0
-  state.images[0:nx-1,*,pwin]=img
-
-  widget_control,state.iris_browser_base,set_uvalue=state
-
-  t2=systime(1)
-  ;print,'Update image '+trim(pwin)+' takes '+trim(string(format='(f5.1)',t2-t1))+' s'
-
-END
-
 
 
 ;-------------------------
@@ -1381,7 +827,7 @@ PRO iris_browser_base_event, event
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_calc_zoom_params,state,i
+          spice_browser_calc_zoom_params,state,i
           iris_browser_plot_image,state,i
           ;        iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1434,9 +880,9 @@ PRO iris_browser_base_event, event
           widget_control,/hourglass
           n=state.wid_data.n_plot_window
           FOR i=0,n-1 DO BEGIN
-            iris_browser_calc_zoom_params,state,i
+            spice_browser_calc_zoom_params,state,i
             iris_browser_plot_image,state,i
-            iris_browser_update_spectrum,state,i
+            spice_browser_update_spectrum,state,i
             iris_browser_plot_spectrum,state,i
           ENDFOR
           IF state.wid_data.sji EQ 1 THEN BEGIN
@@ -1457,7 +903,7 @@ PRO iris_browser_base_event, event
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_calc_zoom_params,state,i
+          spice_browser_calc_zoom_params,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1484,7 +930,7 @@ PRO iris_browser_base_event, event
         state.wid_data.spec_zoom[pwin]=spec_zoom
         widget_control,state.iris_browser_base,set_uvalue=state
         ;
-        iris_browser_calc_zoom_params,state,pwin
+        spice_browser_calc_zoom_params,state,pwin
         iris_browser_plot_image,state,pwin
         iris_browser_plot_spectrum,state,pwin
       END
@@ -1517,12 +963,12 @@ PRO iris_browser_base_event, event
         widget_control,state.iris_browser_base,set_uvalue=state
         ;
         widget_control,/hourglass
-        iris_browser_calc_zoom_params,state,pwin
+        spice_browser_calc_zoom_params,state,pwin
         ;
-        iris_browser_update_image,state,pwin
+        spice_browser_update_image,state,pwin
         iris_browser_plot_image,state,pwin
         ;
-        iris_browser_update_spectrum,state,pwin
+        spice_browser_update_spectrum,state,pwin
         iris_browser_plot_spectrum,state,pwin
       END
       ;
@@ -1533,7 +979,7 @@ PRO iris_browser_base_event, event
         state.wid_data.spec_zoom[pwin]=spec_zoom
         widget_control,state.iris_browser_base,set_uvalue=state
         ;
-        iris_browser_calc_zoom_params,state,pwin
+        spice_browser_calc_zoom_params,state,pwin
         iris_browser_plot_image,state,pwin
         iris_browser_plot_spectrum,state,pwin
       END
@@ -1577,8 +1023,8 @@ PRO iris_browser_base_event, event
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,/hourglass
         ;
-        iris_browser_update_image,state,pwin
-        iris_browser_update_spectrum,state,pwin
+        spice_browser_update_image,state,pwin
+        spice_browser_update_spectrum,state,pwin
         iris_browser_plot_image,state,pwin
         iris_browser_plot_spectrum,state,pwin
       END
@@ -1628,8 +1074,8 @@ PRO iris_browser_base_event, event
   ;;     widget_control,state.iris_browser_base,set_uvalue=state
   ;;     widget_control,/hourglass
   ;;    ;
-  ;;     iris_browser_update_image,state,pwin
-  ;;     iris_browser_update_spectrum,state,pwin
+  ;;     spice_browser_update_image,state,pwin
+  ;;     spice_browser_update_spectrum,state,pwin
   ;;     iris_browser_plot_image,state,pwin
   ;;     iris_browser_plot_spectrum,state,pwin
   ;;   ENDIF
@@ -1767,13 +1213,13 @@ PRO iris_browser_base_event, event
         state.data=iris_obj(filestr.filelist[event.value])
         ;      state.data=d
         widget_control,state.iris_browser_base,set_uvalue=state
-        meta=iris_browser_get_metadata(state.data)
-        iris_browser_update_widdata,state,meta
-        iris_browser_update_info,state
+        meta=spice_browser_get_metadata(state.data)
+        spice_browser_update_widdata,state,meta
+        spice_browser_update_info,state
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1793,13 +1239,13 @@ PRO iris_browser_base_event, event
         state.data=d
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,state.file_slider,set_value=val
-        meta=iris_browser_get_metadata(d)
-        iris_browser_update_widdata,state,meta
-        iris_browser_update_info,state
+        meta=spice_browser_get_metadata(d)
+        spice_browser_update_widdata,state,meta
+        spice_browser_update_info,state
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1819,13 +1265,13 @@ PRO iris_browser_base_event, event
         state.data=d
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,state.file_slider,set_value=val
-        meta=iris_browser_get_metadata(d)
-        iris_browser_update_widdata,state,meta
-        iris_browser_update_info,state
+        meta=spice_browser_get_metadata(d)
+        spice_browser_update_widdata,state,meta
+        spice_browser_update_info,state
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1864,13 +1310,13 @@ PRO iris_browser_base_event, event
         ENDELSE
         widget_control,state.exp_slider,set_slider_max=slider_max
         ;
-        iris_browser_update_info, state
+        spice_browser_update_info, state
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1895,13 +1341,13 @@ PRO iris_browser_base_event, event
         state.wid_data.jxpos=(ichunk+1)*nxpos-1
         state.wid_data.xpix=xpix_chunk+state.wid_data.ixpos
         widget_control,state.chunk_slider,set_value=ichunk
-        iris_browser_update_info, state
+        spice_browser_update_info, state
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1926,13 +1372,13 @@ PRO iris_browser_base_event, event
         state.wid_data.jxpos=(ichunk+1)*nxpos-1
         state.wid_data.xpix=xpix_chunk+state.wid_data.ixpos
         widget_control,state.chunk_slider,set_value=ichunk
-        iris_browser_update_info, state
+        spice_browser_update_info, state
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -1954,8 +1400,8 @@ PRO iris_browser_base_event, event
         widget_control,/hourglass
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -2044,13 +1490,13 @@ PRO iris_browser_base_event, event
       state.wid_data.xpix=xpix
       ;
       widget_control,state.iris_browser_base,set_uvalue=state
-      meta=iris_browser_get_metadata(state.data)
-      iris_browser_update_widdata,state,meta
-      iris_browser_update_info,state
+      meta=spice_browser_get_metadata(state.data)
+      spice_browser_update_widdata,state,meta
+      spice_browser_update_info,state
       n=state.wid_data.n_plot_window
       FOR i=0,n-1 DO BEGIN
-        iris_browser_update_image,state,i
-        iris_browser_update_spectrum,state,i
+        spice_browser_update_image,state,i
+        spice_browser_update_spectrum,state,i
         iris_browser_plot_image,state,i
         iris_browser_plot_spectrum,state,i
       ENDFOR
@@ -2063,15 +1509,15 @@ PRO iris_browser_base_event, event
       IF xpix NE 0 THEN BEGIN
         state.wid_data.xpix=xpix-1
         xpix_chunk=state.wid_data.xpix - state.wid_data.ichunk*state.wid_data.nxpos
-        meta=iris_browser_get_metadata(state.data)
-        iris_browser_update_widdata,state,meta
-        iris_browser_update_info,state
+        meta=spice_browser_get_metadata(state.data)
+        spice_browser_update_widdata,state,meta
+        spice_browser_update_info,state
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,state.exp_slider,set_value=xpix_chunk
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -2086,15 +1532,15 @@ PRO iris_browser_base_event, event
       IF xpix NE state.wid_data.nx-1 THEN BEGIN
         state.wid_data.xpix=xpix+1
         xpix_chunk=state.wid_data.xpix - state.wid_data.ichunk*state.wid_data.nxpos
-        meta=iris_browser_get_metadata(state.data)
-        iris_browser_update_widdata,state,meta
-        iris_browser_update_info,state
+        meta=spice_browser_get_metadata(state.data)
+        spice_browser_update_widdata,state,meta
+        spice_browser_update_info,state
         widget_control,state.iris_browser_base,set_uvalue=state
         widget_control,state.exp_slider,set_value=xpix_chunk
         n=state.wid_data.n_plot_window
         FOR i=0,n-1 DO BEGIN
-          iris_browser_update_image,state,i
-          iris_browser_update_spectrum,state,i
+          spice_browser_update_image,state,i
+          spice_browser_update_spectrum,state,i
           iris_browser_plot_image,state,i
           iris_browser_plot_spectrum,state,i
         ENDFOR
@@ -2288,7 +1734,7 @@ PRO iris_browser_base_event, event
           new_coltable=event.value-3
           coltable=state.wid_data.coltable
           IF coltable NE event.value THEN BEGIN
-            iris_browser_coltable,state=state,set_value=new_coltable
+            spice_browser_coltable,state=state,set_value=new_coltable
             ;
             n=state.wid_data.n_plot_window
             FOR i=0,n-1 DO BEGIN
@@ -2341,7 +1787,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   ;
   ; Get metadata from the object.
   ;
-  meta=iris_browser_get_metadata(data)
+  meta=spice_browser_get_metadata(data)
 
   ;
   ; This takes a value of 0 or 1 (1=sit-and-stare).
@@ -2656,7 +2102,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   ;; exit=cw_bgroup(subbase1,/row,['EXIT','HELP'], $
   ;;                font=bigfont)
 
-  iris_browser_coltable,desc=desc
+  spice_browser_coltable,desc=desc
   desc=['0\EXIT','0\HELP',desc]
   exit=cw_pdmenu(subbase1,desc,font=bigfont)
 
@@ -3207,9 +2653,9 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
   ;
   widget_control,/hourglass
   FOR i=0,n_plot_window-1 DO BEGIN
-    iris_browser_update_image,state,i
+    spice_browser_update_image,state,i
     iris_browser_plot_image, state, i
-    iris_browser_update_spectrum,state,i
+    spice_browser_update_spectrum,state,i
     iris_browser_plot_spectrum, state, i
   ENDFOR
   ;
