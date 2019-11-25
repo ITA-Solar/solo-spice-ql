@@ -1,6 +1,6 @@
 ;+
 ; NAME:
-;     IRIS_RASTER_BROWSER
+;     SPICE_RASTER_BROWSER
 ;
 ; PURPOSE:
 ;     This routine is used to browse 3D IRIS data-cubes. It has been
@@ -19,7 +19,7 @@
 ;        RIGHT  Zoom out from spectrum (factor 2).
 ;
 ;     If you are using the *Mac trackpad*, then you can still use
-;     iris_raster_browser. Go to X11->Preferences...->Input and select
+;     spice_raster_browser. Go to X11->Preferences...->Input and select
 ;     the 'Emulate three button mouse' option. The GUI now accepts the
 ;     following inputs:
 ;
@@ -31,7 +31,7 @@
 ;     IRIS; quicklook.
 ;
 ; CALLING SEQUENCE:
-;     Iris_Raster_Browser, File
+;     spice_raster_browser, File
 ;
 ; INPUTS:
 ;     File:  Can be either the name of an IRIS data file, or an IRIS data
@@ -54,7 +54,7 @@
 ;               aligned. **There shouldn't be a need to use
 ;               this keyword any more.**
 ;
-;     NO_SJI: By default iris_raster_browser looks for SJI files that
+;     NO_SJI: By default spice_raster_browser looks for SJI files that
 ;             match FILE and displays the images in the 4th plot
 ;             column of the GUI. Setting /NO_SJI means that the 4th
 ;             column is used for displaying a fourth raster column
@@ -79,7 +79,7 @@
 ;     IDL> file=iris_find_file('29-Mar-2014 17:00')
 ;
 ;     Start the browser:
-;     IDL> iris_raster_browser, file
+;     IDL> spice_raster_browser, file
 ;
 ; INTERNAL ROUTINES:
 ;     IRIS_BROWSER_GOES_PLOT, IRIS_OPLOT_LINE_IDS,
@@ -115,8 +115,8 @@
 ;       degrees.
 ;
 ; HISTORY:
-;     Ver. 1, 22-Jul-2013, Peter Young
-;       modified from eis_raster_browser.
+;     Ver. 1, 22-Nov-2019, Martin Wiesmann
+;       modified from spice_raster_browser.
 ;     Ver. 2, 19-Aug-2013, Peter Young
 ;       use the getdx() value to determine which direction raster is,
 ;       and reverse X-direction of images if necessary; the text
@@ -2468,9 +2468,9 @@ PRO iris_browser_base_event, event
         0: widget_control, event.top, /destroy
         1: BEGIN
           iris_browser_font,font,retina=state.wid_data.retina
-          str1=['HELP FOR IRIS_RASTER_BROWSER',$
+          str1=['HELP FOR SPICE_RASTER_BROWSER',$
             '',$
-            'iris_raster_browser is used to browse the 3D data cubes produced by the',$
+            'spice_raster_browser is used to browse the 3D data cubes produced by the',$
             'IRIS instrument from narrow slit rasters. ',$
             '',$
             'It is recommended that you order your IRIS data files into a standard hierarchy', $
@@ -2537,7 +2537,7 @@ PRO iris_browser_base_event, event
             '']
 
           xpopup,str1,tfont=font,bfont=font,xsiz=70,ysiz=30, $
-            title='HELP file for iris_raster_browser'
+            title='HELP file for spice_raster_browser'
         END
 
         ELSE: BEGIN
@@ -2661,7 +2661,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
     ;
     ;
     IF nexp GT nxpos*1.5 THEN BEGIN
-      IF NOT keyword_set(quiet) THEN print,'% IRIS_RASTER_BROWSER: sit-and-stare chunking is switched on (chunk_size='+trim(nxpos)+').'
+      IF NOT keyword_set(quiet) THEN print,'% SPICE_RASTER_BROWSER: sit-and-stare chunking is switched on (chunk_size='+trim(nxpos)+').'
       ixpos=0
       jxpos=nxpos-1
     ENDIF ELSE BEGIN
@@ -2909,7 +2909,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
       extra_title=' -- '+trim(hcr.obstitle)
     ENDIF
   ENDIF
-  iris_browser_base=widget_base(/row,map=1,title='IRIS_RASTER_BROWSER'+extra_title)
+  iris_browser_base=widget_base(/row,map=1,title='SPICE_RASTER_BROWSER'+extra_title)
 
   subbase1=widget_base(iris_browser_base,/col,map=1)
   ;; exit=cw_bgroup(subbase1,/row,['EXIT','HELP'], $
@@ -3491,7 +3491,7 @@ END
 
 
 ;---------------------
-PRO iris_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, $
+PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, $
   chunk_size=chunk_size, retina=retina, no_hcr=no_hcr, $
   no_goes=no_goes
 
@@ -3542,7 +3542,7 @@ PRO iris_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, $
     chck=strpos(bname,strchck)
     k=where(chck LT 0,nk)
     IF nk GT 0 THEN BEGIN
-      print,'% IRIS_RASTER_BROWSER: multiple filenames have been specified, but they do not all belong to the'
+      print,'% SPICE_RASTER_BROWSER: multiple filenames have been specified, but they do not all belong to the'
       print,'                       same raster sequence. Please check your inputs.'
       print,'                       All files should have the same base-name: '+strchck
       return
@@ -3570,14 +3570,14 @@ PRO iris_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, $
   ;
   instrume=data->getinfo('INSTRUME')
   IF trim(instrume) EQ 'SJI' THEN BEGIN
-    print,'% IRIS_RASTER_BROWSER: this routine is not compatible with slit-jaw image data. Returning...'
+    print,'% SPICE_RASTER_BROWSER: this routine is not compatible with slit-jaw image data. Returning...'
     IF swtch EQ 1 THEN obj_destroy,data
     return
   ENDIF
 
   IF NOT keyword_set(quiet) THEN BEGIN
     print,''
-    print,' IRIS_RASTER_BROWSER was written by Peter Young (GMU/GSFC).'
+    print,' SPICE_RASTER_BROWSER was written by Peter Young (GMU/GSFC).'
     print,' Please report any errors to pyoung9@gmu.edu.'
     print,''
   ENDIF
