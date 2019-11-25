@@ -3494,14 +3494,17 @@ END
 PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, $
   chunk_size=chunk_size, retina=retina, no_hcr=no_hcr, $
   no_goes=no_goes
+  
+  
+  input = '/Users/mawiesma/data/iris/level2/20180706_155939_3600008058/iris_l2_20180706_155939_3600008058_raster_t000_r00001.fits'
 
 
-  IF n_params() EQ 0 THEN BEGIN
-    print,'Use:  IDL> iris_raster_browser, obj'
-    print,' or:  IDL> iris_raster_browser, filename'
-    print,'         multiple filenames can be specified if they belong to the same raster sequence.'
-    return
-  ENDIF
+;  IF n_params() EQ 0 THEN BEGIN
+;    print,'Use:  IDL> spice_raster_browser, obj'
+;    print,' or:  IDL> spice_raster_browser, filename'
+;    print,'         multiple filenames can be specified if they belong to the same raster sequence.'
+;    return
+;  ENDIF
 
   ;
   ; Below I check if INPUT is a string (i.e., a filename) or an object.
