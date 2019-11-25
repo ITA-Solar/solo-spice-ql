@@ -28,7 +28,7 @@
 ;        COMMAND+CLICK Zoom out from image.
 ;
 ; CATEGORY:
-;     IRIS; quicklook.
+;     Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
 ;     spice_raster_browser, File
@@ -87,7 +87,7 @@
 ;     IRIS_BROWSER_FONT, IRIS_BROWSER_EVENT, IRIS_BROWSER_WIDGET,
 ;     IRIS_BROWSER_UPDATE_SPECTRUM, IRIS_BROWSER_UPDATE_IMAGE,
 ;     IRIS_BROWSER_PLOT_SJI, IRIS_BROWSER_COLTABLE,
-;     IRIS_BROWSER_WVL_LIST, IRB_GET_FLARE_TEXT
+;     spice_browser_wvl_list, IRB_GET_FLARE_TEXT
 ;
 ; PROGRAMMING NOTES:
 ;     Incorporating SJI images
@@ -118,90 +118,6 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-
-
-FUNCTION irb_get_flare_text, input
-  ;
-  ; To get this far, we already know that input is define, so
-  ; don't have to check.
-  ;
-  n=n_elements(input)
-  out_string=strarr(n+1)
-  out_string[0]='    Date    Peak-time Class      X       Y'
-  FOR i=0,n-1 DO BEGIN
-    t_date=anytim2utc(input[i].peaktime,/vms,/date)
-    t_time=anytim2utc(input[i].peaktime,/ccsds,/truncate,/time)
-    xstr=string(format='(f8.1)',input[i].x)
-    ystr=string(format='(f8.1)',input[i].y)
-    out_string[i+1]=t_date+'  '+t_time+'  '+trim(input[i].fl_goescls)+xstr+ystr
-  ENDFOR
-
-  return,out_string
-
-END
-
-;--------------------------------------
-function iris_browser_sji_frame_options, state, default_option=default_option
-  ;
-  ; This works out the options for the droplist that shows the choices
-  ; for the number of SJI frames to display in the movie.
-  ;
-  ; DEFAULT_OPTION:  an index within the output specifying the default
-  ;                  option (one closest to 10 mins).
-  ; OUTPUT:  A string array containing the frame options.
-  ;
-
-  ;
-  ; Get number of exposures for the SJI channel
-  ;
-  sji_nexp=state.sji_d->getnexp(0)
-
-  sji_cadence=state.wid_data.sji_cadence
-
-  ;
-  ; These are the options for the number of frames to display. Note
-  ; that the max no. of frames is appended (although minus 1).
-  ;
-  value=[11,21,31,51,101,201,301,501,1001,2001,3001,5001]
-  k=where(value LT sji_nexp)
-  value=[value[k],sji_nexp]
-  value_string=string(value)
-
-  ;
-  ; Choose default value of no. of frames by choosing closest to 10mins
-  ;
-  getmin=min(abs(float(value)*sji_cadence-600.),imin)
-  default_option=imin
-
-  return,value_string
-
-END
-
-
-;
-function iris_browser_wvl_list, data, wid_data
-  ;
-  ; This creates the pull-down list of wavelength windows.
-  ;
-  id=data->getline_id()
-  n_id=n_elements(id)
-  choices='1\Choose a wavelength window'
-  FOR i=0,n_id-1 DO BEGIN
-    IF i NE n_id-1 THEN choices=[choices,'0\'+id[i]] ELSE choices=[choices,'2\'+id[i]]
-  ENDFOR
-  ;
-  ; PRY, 16-Mar-2017
-  ; The option below introduces an extra button that allows the Whisker
-  ; plot to be made. However, this requires a change to be made to the
-  ; whisker object, which hasn't been made yet. I've changed the check
-  ; below to 2 instead of 1 (no data-set will have a value of 2) so that
-  ; the button never appears. If the object does get fixed, then I can
-  ; change the check below back to 1.
-  ;
-  IF wid_data.sit_stare EQ 2 THEN choices=[choices,'0\Whisker (t-Y) plot']
-  return,choices
-
-END
 
 
 ;------------------------------
@@ -1827,7 +1743,7 @@ PRO iris_browser_base_event, event
     ;
     ; For the droplist with the number of frames options, I need to re-do
     ; the options since different channels may have different numbers of frames.
-    sji_droplist_options=iris_browser_sji_frame_options(state, $
+    sji_droplist_options=spice_browser_sji_frame_options(state, $
       default_option=default_option)
     state.wid_data.sji_mov_frames=fix(sji_droplist_options[default_option])
 
@@ -2996,7 +2912,7 @@ PRO iris_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, 
       value=lbl_text,/align_left,font=font, $
       /frame)
     ;
-    choices=iris_browser_wvl_list(data,wid_data)
+    choices=spice_browser_wvl_list(data,wid_data)
     cw_pd_window[i]=cw_pdmenu(plot_base[i],choices,font=font)
     ;
     ;  pd_window_base[i]=widget_base(/row,plot_base[i])
