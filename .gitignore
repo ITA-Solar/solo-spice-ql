@@ -22,3 +22,4 @@ sonar-project.*
 PAQA
 .scannerwork
 .idea
+.DS_Store
