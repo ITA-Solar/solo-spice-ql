@@ -46,13 +46,20 @@
 ;     Class definition procedure
 ;-
 PRO spice_data__define
+  COMPILE_OPT IDL2
+
   struct = {spice_data, $
     title:'', $
     nwin:0}
 END
 
+;+
+; :Description:
+;     Class initialisation function
+;-
 FUNCTION iris_data::init, file, verbose=verbose
-  ; initializes object, calls read if "file" parameter given
+  COMPILE_OPT IDL2
+
   self.title='SPICE'
   IF n_elements(file) NE 0 THEN BEGIN
     self->read, file, verbose=verbose
@@ -60,8 +67,14 @@ FUNCTION iris_data::init, file, verbose=verbose
   return, 1
 END
 
+;+
+; :Description:
+;     Class initialisation function
+;-
 pro iris_data::close
   ; frees pointer to main data array "w" and closes all associated files
+  COMPILE_OPT IDL2
+
   for i=0,self.nwin-1 do begin
     if ptr_valid(self.w[i]) then ptr_free,self.w[i]
   endfor
@@ -73,6 +86,8 @@ end
 
 pro iris_data::cleanup
   ; called by obj_destroy, frees all pointers and closes all associated files
+  COMPILE_OPT IDL2
+
   if ptr_valid(self.aux) then begin
     obj_destroy,*self.aux
     ptr_free,self.aux
@@ -118,8 +133,10 @@ end
 
 pro iris_data::help, description=description
   ;prints out this help, setting the 'description' keyword will also print the header info
+  COMPILE_OPT IDL2
+
   if arg_present(description) || keyword_set(description) then $
-    obj_help,self, description=description $
+    obj_help, self, description=description $
   else $
-    obj_help,self
+    obj_help, self
 end

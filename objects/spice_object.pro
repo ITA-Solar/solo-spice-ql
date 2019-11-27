@@ -39,10 +39,11 @@
 
 
 FUNCTION spice_object, file, verbose=verbose
-
+  COMPILE_OPT IDL2
+  
   IF N_ELEMENTS(file) NE 1 || $ 
     SIZE(file, /TYPE) NE 7 || $
-    NOT strmatch(file, '*.fits', /fold_case) THEN BEGIN
+    ~ strmatch(file, '*.fits', /fold_case) THEN BEGIN
       print, 'file input must be a scalar string ending with .fits'
       return, -1
   ENDIF ELSE BEGIN
