@@ -64,6 +64,7 @@ FUNCTION spice_data::init, file, verbose=verbose
   return, 1
 END
 
+
 ;+
 ; Description:
 ;     frees pointer to main data array "w" and closes all associated files.
@@ -80,6 +81,7 @@ pro spice_data::close
   ;    if self.lusji[lwin] ge 100 and self.lusji[lwin] le 128 then free_lun,self.lusji[lwin]
   ;  endfor
 end
+
 
 ;+
 ; Description:
@@ -130,6 +132,7 @@ pro spice_data::cleanup
   ;  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
 end
 
+
 ;+
 ; Description:
 ;     prints out information about the class, such as name, location of definition file
@@ -158,10 +161,45 @@ end
 
 ;+
 ; Description:
-;     Descales the array, using BSCALE and BZERO keywords in the header
+;     Returns the data of the specified window. If 'load' keyword is set,
+;     the function returns a copy of the array, otherwise a link to the
+;     array in the file.
 ;
 ; INPUTS:
-;     array : an numeric array
+;     window : the index of the desired window
+;
+; KEYWORD PARAMETERS:
+;     load : if set, the data is read from the file and returned as an array
+;     noscale : if set, does not call descale_array, ignored if 'load' is not set
+;
+; OUTPUTS:
+;     returns either a link to the data, or the array itself
+;-
+FUNCTION spice_data::get_window_data, window, load=load, noscale=noscale
+  ;Returns a link to the data of window, or the data itself if keyword load is set
+  COMPILE_OPT IDL2
+
+  IF keyword_set(load) THEN BEGIN
+    IF keyword_set(noscale) THEN BEGIN
+      data = (*(*self.window_data)[window])[0]
+    ENDIF ELSE BEGIN
+      data = self.descale_array((*(*self.window_data)[window])[0], window)
+    ENDELSE
+  ENDIF ELSE BEGIN
+    data = *(*self.window_data)[window]        
+  ENDELSE
+  return, data
+END
+
+
+;+
+; Description:
+;     Descales the array, using BSCALE and BZERO keywords in the header.
+;     If you get the data from this object via get_window_data() without
+;     setting the keyword 'load', you will have to call this method yourself.
+;
+; INPUTS:
+;     array : a numeric array
 ;     window : the index of the window this array belongs to
 ;
 ; OUTPUTS:
@@ -171,8 +209,8 @@ FUNCTION spice_data::descale_array, array, window
   ;Descales the array, using BSCALE and BZERO keywords in the header
   COMPILE_OPT IDL2
 
-  bscale = *(*self.window_headers)[window].BSCALE
-  bzero = *(*self.window_headers)[window].BZERO
+  bscale = (*(*self.window_headers)[window]).BSCALE
+  bzero = (*(*self.window_headers)[window]).BZERO
   return, array * bscale + bzero
 END
 
@@ -184,7 +222,8 @@ END
 
 ;+
 ; Description:
-;     Class initialisation function
+;     Reads a file and sets some variables of this instant of the object.
+;     If another file was read before, this link and its settings will be overwritten.
 ;
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
@@ -193,6 +232,7 @@ END
 ;     verbose : if set, the initiation of the object prints out some information
 ;-
 PRO spice_data::read_file, file, verbose=verbose
+  ;Reads a file, overwrites any existing data in this object.
   COMPILE_OPT IDL2
 
   IF n_elements(file) EQ 0 THEN BEGIN
@@ -219,17 +259,17 @@ PRO spice_data::read_file, file, verbose=verbose
     ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin    
     
     CASE hdr.BITPIX OF
-      16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4), position[iwin]))
-      -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4), position[iwin]))
+      16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
+      -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
       ELSE: message,'unsupported datatype '+self->getdatatype()
     ENDCASE
 
   ENDFOR ; iwin = 0, self.nwin-1
   self.window_data = ptr_new(assocs)
   self.window_headers = ptr_new(headers)
-  stop
 
 END
+
 
 ;+
 ; Description:
