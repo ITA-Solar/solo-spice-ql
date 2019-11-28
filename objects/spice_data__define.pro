@@ -215,6 +215,40 @@ FUNCTION spice_data::descale_array, array, window
 END
 
 
+;+
+; Description:
+;     Returns the specified keyword from the extension 'window', if the keyword
+;     does not exist 'missing_value' is returned if it is provided, !NULL otherwise.
+;
+; INPUTS:
+;     keyword : string, the header keyword to be returned
+;     window : the index of the window this keyword belongs to
+;     
+; OPTIONAL INPUTS:
+;     missing_value : the value that should be returned, if the keyword does not exist
+;                     if this is not provided !NULL is returned
+;                     
+; OPTIONAL OUTPUT:
+;     exists : boolean, True if keyword exists
+;
+; OUTPUTS:
+;     returns the descaled array (=array * bscale + bzero)
+;-
+FUNCTION spice_data::get_header_info, keyword, window, missing_value, exists=exists
+  ;Returns the specified keyword from the window, or 'missing_value' if provided, !NULL otherwise
+  COMPILE_OPT IDL2
+  
+  exists = TAG_EXIST(*(*self.window_headers)[window], keyword, index=index) 
+  IF exists THEN BEGIN
+    return, (*(*self.window_headers)[window]).(index)
+  ENDIF ELSE BEGIN
+    IF N_ELEMENTS(missing_value) EQ 0 THEN return, missing_value $
+    ELSE return, !NULL
+  ENDELSE
+
+END
+
+
 ;---------------------------------------------------------
 ; I/O and related methods for loading data
 ;---------------------------------------------------------
