@@ -72,13 +72,13 @@ END
 pro spice_data::close
   COMPILE_OPT IDL2
 
-;  for i=0,self.nwin-1 do begin
-;    if ptr_valid(self.w[i]) then ptr_free,self.w[i]
-;  endfor
-;  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
-;  for lwin=0,n_elements(self.lusji)-1 do begin
-;    if self.lusji[lwin] ge 100 and self.lusji[lwin] le 128 then free_lun,self.lusji[lwin]
-;  endfor
+  ;  for i=0,self.nwin-1 do begin
+  ;    if ptr_valid(self.w[i]) then ptr_free,self.w[i]
+  ;  endfor
+  ;  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
+  ;  for lwin=0,n_elements(self.lusji)-1 do begin
+  ;    if self.lusji[lwin] ge 100 and self.lusji[lwin] le 128 then free_lun,self.lusji[lwin]
+  ;  endfor
 end
 
 ;+
@@ -88,19 +88,19 @@ end
 pro spice_data::cleanup
   COMPILE_OPT IDL2
 
-;  if ptr_valid(self.aux) then begin
-;    obj_destroy,*self.aux
-;    ptr_free,self.aux
-;  endif
-;  if ptr_valid(self.cal) then begin
-;    obj_destroy,*self.cal
-;    ptr_free,self.cal
-;  endif
-;  for i=0,self.nwin do begin
-;    ptr_free,self.hdr[i]
-;  endfor
-;  self->close
-;  for i=0,self.nfiles-1 do begin
+  ;  if ptr_valid(self.aux) then begin
+  ;    obj_destroy,*self.aux
+  ;    ptr_free,self.aux
+  ;  endif
+  ;  if ptr_valid(self.cal) then begin
+  ;    obj_destroy,*self.cal
+  ;    ptr_free,self.cal
+  ;  endif
+  ;  for i=0,self.nwin do begin
+  ;    ptr_free,self.hdr[i]
+  ;  endfor
+  ;  self->close
+  ;  for i=0,self.nfiles-1 do begin
   ;  ptr_free,self.aux_info[i].time
   ;  ptr_free,self.aux_info[i].pztx
   ;  ptr_free,self.aux_info[i].pzty
@@ -125,9 +125,9 @@ pro spice_data::cleanup
   ;  ptr_free,self.obs_info[i].crsidf
   ;  ptr_free,self.obs_info[i].crsidn
   ;  ptr_free,self.obs_info[i].filef
-;    ptr_free,self.obs_info[i].filen
-;  endfor
-;  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
+  ;    ptr_free,self.obs_info[i].filen
+  ;  endfor
+  ;  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
 end
 
 ;+
@@ -141,7 +141,7 @@ end
 ;
 ;-
 pro spice_data::help, description=description
-  ;prints out this help, setting the 'description' keyword will also print the header info
+  ;Prints out this help, setting the 'description' keyword will also print the header info
   COMPILE_OPT IDL2
 
   if arg_present(description) || keyword_set(description) then $
@@ -149,6 +149,32 @@ pro spice_data::help, description=description
   else $
     obj_help, self
 end
+
+
+;---------------------------------------------------------
+; window data and information
+;---------------------------------------------------------
+
+
+;+
+; Description:
+;     Descales the array, using BSCALE and BZERO keywords in the header
+;
+; INPUTS:
+;     array : an numeric array
+;     window : the index of the window this array belongs to
+;
+; OUTPUTS:
+;     returns the descaled array (=array * bscale + bzero)
+;-
+FUNCTION spice_data::descale_array, array, window
+  ;Descales the array, using BSCALE and BZERO keywords in the header
+  COMPILE_OPT IDL2
+
+  bscale = *(*self.window_headers)[window].BSCALE
+  bzero = *(*self.window_headers)[window].BZERO
+  return, array * bscale + bzero
+END
 
 
 ;---------------------------------------------------------
@@ -178,24 +204,30 @@ PRO spice_data::read_file, file, verbose=verbose
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
   self.nwin = hdr.nwin
 
-; find location of line windows in fits file
-    openr, file_lun, file, /swap_if_little_endian, /get_lun
-    self.file_lun = file_lun
-    position = iris_find_winpos(file_lun, self.nwin)
-    self.file_position = ptr_new(position)
-stop
+  ; find location of line windows in fits file
+  openr, file_lun, file, /swap_if_little_endian, /get_lun
+  self.file_lun = file_lun
+  position = iris_find_winpos(file_lun, self.nwin)
+  self.file_position = ptr_new(position)
+  assocs = ptrarr(self.nwin)
+  headers = ptrarr(self.nwin)
+  dumbbells = bytarr(self.nwin)
   FOR iwin = 0, self.nwin-1 DO BEGIN
-    mrd_head, file, hdr, extension=iwin
-      CASE fxpar(hdr,'BITPIX') OF
-        16: self.w[iwin] = $
-          ptr_new(assoc(file_lun, intarr(self->getxw(iwin), self->getyw(iwin)), position[iwin]))
-        -32: self.w[iwin] = $
-          ptr_new(assoc(file_lun, fltarr(self->getxw(iwin), self->getyw(iwin)), position[iwin]))
-        ELSE: message,'unsupported datatype '+self->getdatatype()
-      ENDCASE
+    mreadfits_header, file, hdr, extension=iwin
+    headers[iwin] = ptr_new(hdr)
+    IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
+    ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin    
+    
+    CASE hdr.BITPIX OF
+      16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4), position[iwin]))
+      -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4), position[iwin]))
+      ELSE: message,'unsupported datatype '+self->getdatatype()
+    ENDCASE
 
   ENDFOR ; iwin = 0, self.nwin-1
-  
+  self.window_data = ptr_new(assocs)
+  self.window_headers = ptr_new(headers)
+  stop
 
 END
 
@@ -209,6 +241,9 @@ PRO spice_data__define
   struct = {spice_data, $
     title: '', $                ; instrument name
     nwin: 0, $                  ; number of windows
+    window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
+    window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
+    dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     file_lun: 0, $              ; Logical Unit Number of the file
     file_position: ptr_new()}   ; positions within the file where data block starts for each extension in bytes (lon64arr)
 END
