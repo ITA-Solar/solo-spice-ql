@@ -18,11 +18,10 @@
 ;     file : path of a SPICE FITS file.
 ;
 ; KEYWORD PARAMETERS:
-;     verbose : if set, the initiation of the object prints out some information
+;     verbose : if set, the initiation of the object prints out some information (not used)
 ;
 ; OUTPUT:
-;     Objects of type SPICE_DATA which describes and contains
-;     a SPICE raster
+;     Objects of type SPICE_DATA which describes and contains a SPICE raster
 ;
 ; CALLS:
 ;
