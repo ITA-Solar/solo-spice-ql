@@ -20,7 +20,7 @@
 ; KEYWORD PARAMETERS:
 ;     verbose : if set, the initiation of the object prints out some information
 ;
-; OUTPUTS:
+; OUTPUT:
 ;     Objects of type SPICE_DATA which describes and contains
 ;     a SPICE raster
 ;
@@ -49,16 +49,16 @@
 ;     file : path of a SPICE FITS file.
 ;
 ; KEYWORD PARAMETERS:
-;     verbose : if set, the initiation of the object prints out some information
+;     verbose : if set, the initiation of the object prints out some information (not used)
 ;
-; OUTPUTS:
+; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise (not implemented)
 ;-
 FUNCTION spice_data::init, file, verbose=verbose
   COMPILE_OPT IDL2
 
   self.title='SPICE'
-  IF n_elements(file) NE 0 THEN BEGIN
+  IF n_elements(file) EQ 1 THEN BEGIN
     self->read_file, file, verbose=verbose
   ENDIF
   return, 1
@@ -67,19 +67,22 @@ END
 
 ;+
 ; Description:
-;     frees pointer to main data array "w" and closes all associated files.
-;     used by cleanup and if object should be populated with new data
+;     frees pointer to main data array "window_data" and closes all associated files.
+;     used by cleanup and when object should be populated with new data
 ;-
 pro spice_data::close
   COMPILE_OPT IDL2
 
-  ;  for i=0,self.nwin-1 do begin
-  ;    if ptr_valid(self.w[i]) then ptr_free,self.w[i]
-  ;  endfor
-  ;  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
-  ;  for lwin=0,n_elements(self.lusji)-1 do begin
-  ;    if self.lusji[lwin] ge 100 and self.lusji[lwin] le 128 then free_lun,self.lusji[lwin]
-  ;  endfor
+  FOR i=0,self.nwin-1 DO BEGIN
+    ptr_free, (*self.window_data)[i]
+    ptr_free, (*self.window_headers)[i]
+  ENDFOR
+  ptr_free, self.window_data
+  ptr_free, self.window_headers
+  ptr_free, self.file_position
+  IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
+  self.dumbbells = [-1, -1]
+  self.nwin = 0
 end
 
 
@@ -90,47 +93,8 @@ end
 pro spice_data::cleanup
   COMPILE_OPT IDL2
 
-  ;  if ptr_valid(self.aux) then begin
-  ;    obj_destroy,*self.aux
-  ;    ptr_free,self.aux
-  ;  endif
-  ;  if ptr_valid(self.cal) then begin
-  ;    obj_destroy,*self.cal
-  ;    ptr_free,self.cal
-  ;  endif
-  ;  for i=0,self.nwin do begin
-  ;    ptr_free,self.hdr[i]
-  ;  endfor
-  ;  self->close
-  ;  for i=0,self.nfiles-1 do begin
-  ;  ptr_free,self.aux_info[i].time
-  ;  ptr_free,self.aux_info[i].pztx
-  ;  ptr_free,self.aux_info[i].pzty
-  ;  ptr_free,self.aux_info[i].exptimef
-  ;  ptr_free,self.aux_info[i].exptimen
-  ;  ptr_free,self.aux_info[i].sumsptrf
-  ;  ptr_free,self.aux_info[i].sumsptrn
-  ;  ptr_free,self.aux_info[i].sumspatf
-  ;  ptr_free,self.aux_info[i].sumspatn
-  ;  ptr_free,self.aux_info[i].dsrcf
-  ;  ptr_free,self.aux_info[i].dsrcn
-  ;  ptr_free,self.aux_info[i].lutidf
-  ;  ptr_free,self.aux_info[i].lutidn
-  ;  ptr_free,self.aux_info[i].xcen
-  ;  ptr_free,self.aux_info[i].ycen
-  ;  ptr_free,self.aux_info[i].obs_vr
-  ;  ptr_free,self.aux_info[i].ophase
-  ;  ;
-  ;  ptr_free,self.obs_info[i].frmid
-  ;  ptr_free,self.obs_info[i].fdbidf
-  ;  ptr_free,self.obs_info[i].fdbidn
-  ;  ptr_free,self.obs_info[i].crsidf
-  ;  ptr_free,self.obs_info[i].crsidn
-  ;  ptr_free,self.obs_info[i].filef
-  ;    ptr_free,self.obs_info[i].filen
-  ;  endfor
-  ;  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
-end
+  self->close
+END
 
 
 ;+
@@ -166,27 +130,32 @@ end
 ;     array in the file.
 ;
 ; INPUTS:
-;     window : the index of the desired window
+;     window_index : the index of the desired window
 ;
 ; KEYWORD PARAMETERS:
 ;     load : if set, the data is read from the file and returned as an array
-;     noscale : if set, does not call descale_array, ignored if 'load' is not set
+;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
 ;
-; OUTPUTS:
+; OUTPUT:
 ;     returns either a link to the data, or the array itself
 ;-
-FUNCTION spice_data::get_window_data, window, load=load, noscale=noscale
+FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale
   ;Returns a link to the data of window, or the data itself if keyword load is set
   COMPILE_OPT IDL2
 
+  IF N_PARAMS() LT 1 THEN BEGIN
+    message, 'missing input, usage: get_window_data, window_index [, load=load, nodescale=nodescale]', /info
+    return, !NULL
+  ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
+
   IF keyword_set(load) THEN BEGIN
-    IF keyword_set(noscale) THEN BEGIN
-      data = (*(*self.window_data)[window])[0]
+    IF keyword_set(nodescale) THEN BEGIN
+      data = (*(*self.window_data)[window_index])[0]
     ENDIF ELSE BEGIN
-      data = self.descale_array((*(*self.window_data)[window])[0], window)
+      data = self.descale_array((*(*self.window_data)[window_index])[0], window_index)
     ENDELSE
   ENDIF ELSE BEGIN
-    data = *(*self.window_data)[window]        
+    data = *(*self.window_data)[window_index]        
   ENDELSE
   return, data
 END
@@ -200,29 +169,34 @@ END
 ;
 ; INPUTS:
 ;     array : a numeric array
-;     window : the index of the window this array belongs to
+;     window_index : the index of the window this array belongs to
 ;
-; OUTPUTS:
+; OUTPUT:
 ;     returns the descaled array (=array * bscale + bzero)
 ;-
-FUNCTION spice_data::descale_array, array, window
+FUNCTION spice_data::descale_array, array, window_index
   ;Descales the array, using BSCALE and BZERO keywords in the header
   COMPILE_OPT IDL2
 
-  bscale = (*(*self.window_headers)[window]).BSCALE
-  bzero = (*(*self.window_headers)[window]).BZERO
+  IF N_PARAMS() LT 2 THEN BEGIN
+    message, 'missing input, usage: descale_array, array, window_index', /info
+    return, !NULL
+  ENDIF
+
+  bscale = self.get_header_info('BSCALE', window_index)
+  bzero = self.get_header_info('BZERO', window_index)
   return, array * bscale + bzero
 END
 
 
 ;+
 ; Description:
-;     Returns the specified keyword from the extension 'window', if the keyword
+;     Returns the specified keyword from the given window, if the keyword
 ;     does not exist 'missing_value' is returned if it is provided, !NULL otherwise.
 ;
 ; INPUTS:
 ;     keyword : string, the header keyword to be returned
-;     window : the index of the window this keyword belongs to
+;     window_index : the index of the window this keyword belongs to
 ;     
 ; OPTIONAL INPUTS:
 ;     missing_value : the value that should be returned, if the keyword does not exist
@@ -231,22 +205,55 @@ END
 ; OPTIONAL OUTPUT:
 ;     exists : boolean, True if keyword exists
 ;
-; OUTPUTS:
-;     returns the descaled array (=array * bscale + bzero)
+; OUTPUT:
+;     returns the keyword value, 'missing_value' or !NULL
 ;-
-FUNCTION spice_data::get_header_info, keyword, window, missing_value, exists=exists
+FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exists=exists
   ;Returns the specified keyword from the window, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
   
-  exists = TAG_EXIST(*(*self.window_headers)[window], keyword, index=index) 
+  IF N_PARAMS() LT 2 THEN BEGIN
+    message, 'missing input, usage: get_header_info, keyword, window_index [, missing_value, exists=exists]', /info
+    return, !NULL
+  ENDIF ELSE IF N_ELEMENTS(keyword) NE 1 || SIZE(keyword, /TYPE) NE 7 THEN BEGIN
+    message, 'keyword needs to be a scalar string', /info
+    return, !NULL
+  ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
+  
+  exists = TAG_EXIST(*(*self.window_headers)[window_index], keyword, index=index) 
   IF exists THEN BEGIN
-    return, (*(*self.window_headers)[window]).(index)
+    return, (*(*self.window_headers)[window_index]).(index)
   ENDIF ELSE BEGIN
-    IF N_ELEMENTS(missing_value) EQ 0 THEN return, missing_value $
-    ELSE return, !NULL
+    IF N_ELEMENTS(missing_value) EQ 0 THEN return, !NULL $
+    ELSE return, missing_value
   ENDELSE
 
 END
+
+
+;+
+; Description:
+;     Checks whether a given window index is valid
+;
+; INPUTS:
+;     window_index : the index of the window to be checked
+;     
+; OUTPUT:
+;     boolean, True if input is a valid window index
+;-
+FUNCTION spice_data::check_window_index, window_index
+  COMPILE_OPT IDL2
+
+  input_type = size(window_index, /type)
+  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
+  IF N_ELEMENTS(window_index) NE 1 || input_index EQ -1 || $
+    window_index LT 0 || window_index GE self.nwin THEN BEGIN
+    print, 'window_index needs to be a scalar number between 0 and '+strtrim(string(self.nwin-1),2)
+    return, 0
+  ENDIF ELSE return, 1
+  
+END
+
 
 
 ;---------------------------------------------------------
@@ -263,16 +270,17 @@ END
 ;     file : path of a SPICE FITS file.
 ;
 ; KEYWORD PARAMETERS:
-;     verbose : if set, the initiation of the object prints out some information
+;     verbose : if set, the initiation of the object prints out some information (not used)
 ;-
 PRO spice_data::read_file, file, verbose=verbose
   ;Reads a file, overwrites any existing data in this object.
   COMPILE_OPT IDL2
 
-  IF n_elements(file) EQ 0 THEN BEGIN
+  IF n_elements(file) NE 1 || size(file, /TYPE) NE 7 THEN BEGIN
     message, 'spice_data->read_file, file [, verbose=verbose]', /info
     return
   ENDIF
+  self.close
   IF keyword_set(verbose) THEN silent=1 ELSE silent=0
   message, 'reading file: ' + file, /info
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
