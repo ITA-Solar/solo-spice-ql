@@ -82,7 +82,7 @@ pro spice_data::close
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
-end
+END
 
 
 ;+
@@ -110,11 +110,11 @@ pro spice_data::help, description=description
   ;Prints out this help, setting the 'description' keyword will also print the header info
   COMPILE_OPT IDL2
 
-  if arg_present(description) || keyword_set(description) then $
+  IF arg_present(description) || keyword_set(description) THEN $
     obj_help, self, description=description $
-  else $
+  ELSE $
     obj_help, self
-end
+END
 
 
 ;---------------------------------------------------------
@@ -227,6 +227,118 @@ FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exis
     ELSE return, missing_value
   ENDELSE
 
+END
+
+
+;+
+; Description:
+;     returns the number of windows this file/object contains
+;
+; OUTPUT:
+;     number of windows
+;-
+FUNCTION spice_data::get_number_windows
+;returns the number of windows this file contains
+  COMPILE_OPT IDL2
+
+  return, self.nwin
+END
+
+
+;+
+; Description:
+;     returns 1 if raster is a sit-and-stare, 0 otherwise
+;
+; OUTPUT:
+;     boolean
+;-
+FUNCTION spice_data::get_sit_and_stare
+;returns 1 if raster is a sit-and-stare, 0 otherwise
+  COMPILE_OPT IDL2
+
+  sit_and_stare = self.get_header_info('STUDYTYP', 0) EQ 'Sit-and-stare'
+  return, sit_and_stare
+END
+
+
+;+
+; Description:
+;     returns the window ID
+;
+; INPUTS:
+;     window_index : the index of the window the ID is asked for
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_window_id, window_index
+;returns the window ID
+  COMPILE_OPT IDL2
+
+  window_id = self.get_header_info('EXTNAME', window_index)
+  return, window_id
+END
+
+
+;+
+; Description:
+;     returns the number of exposures in the window
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float
+;-
+FUNCTION spice_data::get_number_exposures, window_index
+;eturns the number of exposures in the window
+  COMPILE_OPT IDL2
+
+  IF self.get_sit_and_stare() then n_exp = self.get_header_info('NAXIS4', window_index) $
+  ELSE n_exp = self.get_header_info('NAXIS1', window_index)
+  return, n_exp
+END
+
+
+;+
+; Description:
+;     returns the exposure time of the given window per exposure
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float
+;-
+FUNCTION spice_data::get_exposure_time, window_index
+;returns the exposure time of the given window per exposure
+  COMPILE_OPT IDL2
+
+  exptime = self.get_header_info('XPOSURE', window_index)
+  return, exptime
+END
+
+
+;+
+; Description:
+;     returns a vector containting the wavelength for each pixel in third dimension
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float array, wavelength in nm
+;-
+FUNCTION spice_data::get_lambda_vector, window_index
+;returns a vector containting the wavelength for each pixel in third dimension
+  COMPILE_OPT IDL2
+
+  crval3 = self.get_header_info('crval3', window_index)
+  naxis3 = self.get_header_info('naxis3', window_index)
+  crpix3 = self.get_header_info('crpix3', window_index)
+  cdelt3 = self.get_header_info('cdelt3', window_index)
+  lambda_vector = crval3 + (findgen(naxis3)+0.5-crpix3) * cdelt3
+  return, lambda_vector
 END
 
 
