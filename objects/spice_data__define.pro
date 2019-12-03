@@ -162,6 +162,51 @@ END
 
 ;+
 ; Description:
+;     Returns the data of the specified window and exposure index. If 'nodescale' keyword is set,
+;     the function returns the data without applying 'descale_array' function.
+;     The exposure index is in the first dimension of the 4D cube in case the study type is 'Raster',
+;     and in the fourth dimension if study type is 'Sit-and-stare'.
+;     The array is also transposed, so that it can be directly plotted, i.e. 
+;     array = [lambda, instrument-Y]
+;
+; INPUTS:
+;     window_index : the index of the desired window
+;     exposure_index : the index of the desired exposure
+;
+; KEYWORD PARAMETERS:
+;     nodescale : if set, does not call descale_array
+;
+; OUTPUT:
+;     returns the desired 2-dimensional image, as an array
+;-
+FUNCTION spice_data::get_one_image, window_index, exposure_index, nodescale=nodescale
+  ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
+  COMPILE_OPT IDL2
+
+  IF N_PARAMS() LT 2 THEN BEGIN
+    message, 'missing input, usage: get_one_image, window_index, exposure_index [, nodescale=nodescale]', /info
+    return, !NULL
+  ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
+  IF self.get_sit_and_stare() THEN naxis = self.get_header_info('NAXIS4', window_index) $
+  ELSE naxis = self.get_header_info('NAXIS1', window_index)
+  IF exposure_index LT 0 || exposure_index GE naxis  THEN BEGIN
+    print, 'exposure_index needs to be a scalar number between 0 and '+strtrim(string(naxis-1),2)
+    return, !NULL
+  ENDIF
+  
+  data = self.get_window_data(window_index, /load, nodescale=nodescale)
+  IF self.get_sit_and_stare() THEN BEGIN
+    data = reform(data[0,*,*,exposure_index])
+  ENDIF ELSE BEGIN
+    data = reform(data[exposure_index,*,*])
+  ENDELSE
+  data = transpose(data)
+  return, data
+END
+
+
+;+
+; Description:
 ;     Descales the array, using BSCALE and BZERO keywords in the header.
 ;     If you get the data from this object via get_window_data() without
 ;     setting the keyword 'load', you will have to call this method yourself.
@@ -339,6 +384,41 @@ FUNCTION spice_data::get_lambda_vector, window_index
   cdelt3 = self.get_header_info('cdelt3', window_index)
   lambda_vector = crval3 + (findgen(naxis3)+0.5-crpix3) * cdelt3
   return, lambda_vector
+END
+
+
+;+
+; Description:
+;     returns a vector containting the resolution of each dimension, or a
+;     scalar number respresenting the resolution of one dimension.
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; KEYWORD PARAMETERS:
+;     x : only resolution in x-direction is returned (i.e. 'YLIF-TAN')
+;     y : only resolution in y-direction is returned (i.e. 'ZLIF-TAN')
+;     lambda : only spectral resolution is returned (i.e. 'WAVE')
+;     time : only temporal resolution is returned (i.e. 'TIME')
+;   these keyword parameters are exclusive, and if more than one is set, then the first one 
+;   in the list above is returned
+;
+; OUTPUT:
+;     float array or float
+;-
+FUNCTION spice_data::get_resolution, window_index, x=x, y=y, lambda=lambda, time=time
+;returns a vector containting the wavelength for each pixel in third dimension
+  COMPILE_OPT IDL2
+
+  cdelt1 = self.get_header_info('cdelt1', window_index)
+  IF keyword_set(x) then return, cdelt1
+  cdelt2 = self.get_header_info('cdelt2', window_index)
+  IF keyword_set(y) then return, cdelt2
+  cdelt3 = self.get_header_info('cdelt3', window_index)
+  IF keyword_set(lambda) then return, cdelt3
+  cdelt4 = self.get_header_info('cdelt4', window_index)
+  IF keyword_set(time) then return, cdelt4
+  return, [cdelt1, cdelt2, cdelt3, cdelt4]
 END
 
 
