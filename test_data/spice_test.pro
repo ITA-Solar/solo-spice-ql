@@ -6,12 +6,13 @@ PRO spice_test, file_number
   path = file_dirname(path, /mark_directory)
 
   CASE file_number of
-    1: file = path+'solo_LL01_spice-n-ras_0542899978_V201911131500I.fits'
-    2: file = path+'solo_LL01_spice-n-sit_0481295390_V201911131507C.fits'
-    3: file = path+'solo_LL01_spice-n-sit-db_0551626020_V201911131503I.fits'
+    1: file = path+'solo_L1_spice-n-ras_20210314T135349751_V01.fits'
+    2: file = path+'solo_L1_spice-n-sit-db_20210623T132924744_V01.fits'
     else: file = ''
    ENDCASE
    
   obj = spice_object(file, /verbose)
-  stop
+  ;stop
+  
+  spice_raster_browser, obj
 END
