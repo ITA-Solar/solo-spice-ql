@@ -193,7 +193,7 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, nodescale=node
     print, 'exposure_index needs to be a scalar number between 0 and '+strtrim(string(naxis-1),2)
     return, !NULL
   ENDIF
-  
+  , 
   data = self.get_window_data(window_index, /load, nodescale=nodescale)
   IF self.get_sit_and_stare() THEN BEGIN
     data = reform(data[0,*,*,exposure_index])
