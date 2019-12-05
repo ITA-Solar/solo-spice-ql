@@ -427,7 +427,7 @@ FUNCTION spice_data::get_instr_x_vector, window_index
   naxis = self.get_header_info('naxis1', window_index)
   crpix = self.get_header_info('crpix1', window_index)
   cdelt = self.get_header_info('cdelt1', window_index)
-  x_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
+  x_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
   return, x_vector
 END
 
@@ -450,7 +450,7 @@ FUNCTION spice_data::get_instr_y_vector, window_index
   naxis = self.get_header_info('naxis2', window_index)
   crpix = self.get_header_info('crpix2', window_index)
   cdelt = self.get_header_info('cdelt2', window_index)
-  y_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
+  y_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
   return, y_vector
 END
 
@@ -473,7 +473,7 @@ FUNCTION spice_data::get_lambda_vector, window_index
   naxis = self.get_header_info('naxis3', window_index)
   crpix = self.get_header_info('crpix3', window_index)
   cdelt = self.get_header_info('cdelt3', window_index)
-  lambda_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
+  lambda_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
   return, lambda_vector
 END
 
@@ -496,7 +496,7 @@ FUNCTION spice_data::get_time_vector, window_index
   naxis = self.get_header_info('naxis4', window_index)
   crpix = self.get_header_info('crpix4', window_index)
   cdelt = self.get_header_info('cdelt4', window_index)
-  time_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
+  time_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
   return, time_vector
 END
 
