@@ -106,14 +106,14 @@ END
 ;     description : if set, the header info of the class will also be printed.
 ;
 ;-
-pro spice_data::help, description=description
+pro spice_data::help, description=description, _extra=_extra
   ;Prints out this help, setting the 'description' keyword will also print the header info
   COMPILE_OPT IDL2
 
   IF arg_present(description) || keyword_set(description) THEN $
-    obj_help, self, description=description $
+    obj_help, self, description=description, _extra=_extra $
   ELSE $
-    obj_help, self
+    obj_help, self, _extra=_extra
 END
 
 
@@ -193,7 +193,7 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, nodescale=node
     print, 'exposure_index needs to be a scalar number between 0 and '+strtrim(string(naxis-1),2)
     return, !NULL
   ENDIF
-  , 
+
   data = self.get_window_data(window_index, /load, nodescale=nodescale)
   IF self.get_sit_and_stare() THEN BEGIN
     data = reform(data[0,*,*,exposure_index])
