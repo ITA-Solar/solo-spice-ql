@@ -31,17 +31,12 @@
 ;     Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;     spice_raster_browser, File
+;     spice_raster_browser, input [, quiet=quiet, yoffsets=yoffsets, $
+;       chunk_size=chunk_size, retina=retina, no_goes=no_goes]
 ;
 ; INPUTS:
-;     File:  Can be either the name of an IRIS data file, or an IRIS data
-;            object. Can also be an array of filenames if the files
-;            belong to a raster sequence. In this case an additional
-;            widget appears allowing the user to flick between
-;            rasters.
-;
-; OPTIONAL INPUTS:
-;     None.
+;     INPUT:  Can be either the name of a SPICE data file, or an SPICE data
+;            object.
 ;
 ; KEYWORDS:
 ;     QUIET:   If set, then do not print messages to the IDL command
@@ -63,11 +58,20 @@
 ;
 ;     NO_GOES: This disables the GOES plot.
 ;
+; OUTPUT:
+;     None
+;
 ; EXAMPLE:
 ;     Start the browser:
 ;     IDL> spice_raster_browser, file
 ;
-; INTERNAL ROUTINES:
+; DEPENDENCIES:
+;     spice_object
+;     have_network
+;     iris_hek_swpc_flares
+;     box_message
+;     spice_browser_widget
+;     
 ;     spice_browser_goes_plot, spice_browser_oplot_line_ids,
 ;     spice_browser_plot_image, IRIS_BROWSER_PLOT_SPEC,
 ;     spice_browser_font, IRIS_BROWSER_EVENT, IRIS_BROWSER_WIDGET,
@@ -99,6 +103,7 @@
 ;---------------------
 PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, $
   chunk_size=chunk_size, retina=retina, no_goes=no_goes
+  COMPILE_OPT IDL2
 
   IF n_params() EQ 0 THEN BEGIN
     print,'Use:  IDL> spice_raster_browser, obj'
@@ -152,9 +157,8 @@ PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, $
       'SOOPNAME = ' + data->get_header_info('SOOPNAME', 0)]
   ENDIF
 
-  stop
   spice_browser_widget, data, yoffsets=yoffsets, chunk_size=chunk_size, $
-    retina=retina, no_goes=no_goes, flare_data=flare_data
+    retina=retina, no_goes=no_goes, flare_data=flare_data, quiet=quiet
 
   ;
   ; Tidy up before exiting.
