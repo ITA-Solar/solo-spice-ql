@@ -1,45 +1,59 @@
 ;+
 ; NAME:
-;     spice_bspice_browser_widgetrowser_base_event
+;     SPICE_BROWSER_WIDGET
 ;
 ; PURPOSE:
-;     XXX
+;     Internal Use only.
+;     This procedure creates the widget interface for spice_raster_browser.
 ;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;     spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, $
-;       chunk_size=chunk_size, retina=retina, hcr=hcr, no_goes=no_goes, $
-;       flare_data=flare_data
+;     spice_browser_widget, data [, yoffsets=yoffsets, $
+;       chunk_size=chunk_size, retina=retina, no_goes=no_goes, $
+;       flare_data=flare_data]
 ;
 ; INPUTS:
-;     input:  XXX
-;
-; OPTIONAL INPUTS:
-;     None.
+;     DATA:  A spice_data object
 ;
 ; KEYWORDS:
-;     None.
+;     QUIET: If set, then do not print messages to the IDL command window.
+;
+;     YOFFSETS: If set, then the three wavelength channels will be
+;               adjusted for spatial offsets in Y. This should only be
+;               used if you notice that there are offsets in the
+;               images. Most data-sets should be
+;               aligned. **There shouldn't be a need to use
+;               this keyword any more.**
+;
+;     CHUNK_SIZE: Only applicable for sit-and-stare data. It defines the
+;                 size of the chunks (in number of exposures) to be
+;                 displayed.
+;
+;     RETINA: The widget was too big for my MacBook Pro retina screen,
+;             so I've added this keyword to shrink the fonts.
+;
+;     NO_GOES: This disables the GOES plot.
+;     
+;     FLARE_DATA: the structure returned by iris_hek_swpc_flares() or -1
 ;
 ; OUTPUT:
-;     XXX
+;     None
 ;
-; EXAMPLE:
-;
-; INTERNAL ROUTINES:
-;
-; PROGRAMMING NOTES:
+; DEPENDENCIES:
+;     spice_browser_font
+;     spice_browser_get_metadata
 ;
 ; HISTORY:
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
 
-PRO spice_browser_widget, data, yoffsets=yoffsets, $
+PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   chunk_size=chunk_size, retina=retina, no_goes=no_goes, $
   flare_data=flare_data
-
+  COMPILE_OPT IDL2
 
 ;  IF n_tags(filestr) EQ 0 THEN filestr=0
 ;
