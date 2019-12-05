@@ -86,11 +86,11 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   ; This takes a value of 0 or 1 (1=sit-and-stare).
   ;
-  sit_stare=meta.sit_stare
+  sit_stare = meta.sit_stare
 
 
-  obs_type=meta.obs_type
-
+  obs_type = meta.obs_type
+stop
   nexp=data->getnexp()    ; this is an array for IRIS
   nexp_prp=data->getnexp_prp()
   IF nexp_prp GT 1 THEN nexp=nexp/nexp_prp
