@@ -264,6 +264,11 @@ FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exis
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
   
+  ; keywords with a '-' in the name, will be renamed when they are transformed into structures (in fitshead2struct),
+  ; '-' becomes '_D$'
+  temp = strsplit(keyword, '-', count=count, /extract)
+  IF count GT 1 THEN keyword = strjoin(temp, '_D$')
+
   exists = TAG_EXIST(*(*self.window_headers)[window_index], keyword, index=index) 
   IF exists THEN BEGIN
     return, (*(*self.window_headers)[window_index]).(index)
