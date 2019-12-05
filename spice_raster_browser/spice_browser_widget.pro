@@ -36,16 +36,16 @@
 ;       modified from iris_raster_browser.
 ;-
 
-PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, $
-  chunk_size=chunk_size, retina=retina, hcr=hcr, no_goes=no_goes, $
+PRO spice_browser_widget, data, yoffsets=yoffsets, $
+  chunk_size=chunk_size, retina=retina, no_goes=no_goes, $
   flare_data=flare_data
 
 
-  IF n_tags(filestr) EQ 0 THEN filestr=0
-
-  id=data->getline_id()
-  i=where(id NE '')
-  nwind=n_elements(id[i])
+;  IF n_tags(filestr) EQ 0 THEN filestr=0
+;
+;  id=data->getline_id()
+;  i=where(id NE '')
+;  nwind=n_elements(id[i])
 
   ;
   ; Apply scale factors to the plot windows if the screen size is small
@@ -60,9 +60,9 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ENDCASE
 
 
-  spice_browser_font,font, retina=retina
-  spice_browser_font,bigfont,/big, retina=retina
-  spice_browser_font,fixfont,/fixed, retina=retina
+  spice_browser_font, font, retina=retina
+  spice_browser_font, bigfont, /big, retina=retina
+  spice_browser_font, fixfont, /fixed, retina=retina
 
   ;
   ; Get metadata from the object.

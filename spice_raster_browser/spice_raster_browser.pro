@@ -54,17 +54,6 @@
 ;               aligned. **There shouldn't be a need to use
 ;               this keyword any more.**
 ;
-;     NO_SJI: By default spice_raster_browser looks for SJI files that
-;             match FILE and displays the images in the 4th plot
-;             column of the GUI. Setting /NO_SJI means that the 4th
-;             column is used for displaying a fourth raster column
-;             (this was the original behavior, before Feb-2015).
-;
-;     NO_HCR: The routine queries the Heliophysics Coverage Registry
-;             (HCR) to retrieve some metadata, but sometimes this
-;             service crashes. By setting this keyword you can bypass
-;             the HCR.
-;
 ;     CHUNK_SIZE: Only applicable for sit-and-stare data. It defines the
 ;                 size of the chunks (in number of exposures) to be
 ;                 displayed.
@@ -75,9 +64,6 @@
 ;     NO_GOES: This disables the GOES plot.
 ;
 ; EXAMPLE:
-;     Find a raster file sequence:
-;     IDL> file=iris_find_file('29-Mar-2014 17:00')
-;
 ;     Start the browser:
 ;     IDL> spice_raster_browser, file
 ;
@@ -90,12 +76,6 @@
 ;     spice_browser_wvl_list, IRB_GET_FLARE_TEXT
 ;
 ; PROGRAMMING NOTES:
-;     Incorporating SJI images
-;     ------------------------
-;     I decided to use the read_iris_l2 routine to access SJI images
-;     as it was quicker than using the iris_sji object. The SJI images
-;     are loaded using the subroutine spice_browser_plot_sji.
-;
 ;     Sit-and-stare chunking
 ;     ----------------------
 ;     Sit-and-stare studies can run continuously for long periods
@@ -110,10 +90,6 @@
 ;       ichunk  Index of current chunk.
 ;     nxpos is computed automatically by the routine.
 ;
-; TO-DO LIST:
-;     - display SJI images correctly when the roll angle is not 0 or 90
-;       degrees.
-;
 ; HISTORY:
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
@@ -121,100 +97,25 @@
 
 
 ;---------------------
-PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, $
-  chunk_size=chunk_size, retina=retina, no_hcr=no_hcr, $
-  no_goes=no_goes
-  
-  
-  input = '/Users/mawiesma/data/iris/level2/20180706_155939_3600008058/iris_l2_20180706_155939_3600008058_raster_t000_r00001.fits'
+PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, $
+  chunk_size=chunk_size, retina=retina, no_goes=no_goes
 
-
-;  IF n_params() EQ 0 THEN BEGIN
-;    print,'Use:  IDL> spice_raster_browser, obj'
-;    print,' or:  IDL> spice_raster_browser, filename'
-;    print,'         multiple filenames can be specified if they belong to the same raster sequence.'
-;    return
-;  ENDIF
+  IF n_params() EQ 0 THEN BEGIN
+    print,'Use:  IDL> spice_raster_browser, obj'
+    print,' or:  IDL> spice_raster_browser, filename'
+    return
+  ENDIF
 
   ;
   ; Below I check if INPUT is a string (i.e., a filename) or an object.
   ;
   IF datatype(input) EQ 'STR' THEN BEGIN
-    data=iris_obj(input[0])
-    file=input
-    swtch=1
+    data = spice_object(input)
+    object_created = 1
   ENDIF ELSE BEGIN
-    data=input
-    swtch=0
+    data = input
+    object_created = 0
   ENDELSE
-
-
-  ;
-  ; The routine iris_sji_match looks for SJI files that match the raster
-  ; file. If an object has been input, then the routine makes uses of
-  ; iris_find_filea nd iris_sji_match to find the SJI files.
-  ;
-  IF NOT keyword_set(no_sji) AND swtch EQ 1 THEN BEGIN
-    sji_file=iris_sji_match(file[0])
-  ENDIF ELSE BEGIN
-    date_obs=data->getinfo('DATE_OBS')
-    file=iris_find_file(date_obs,count=count)
-    IF count NE 0 THEN sji_file=iris_sji_match(file[0]) ELSE sji_file=''
-  ENDELSE
-
-
-  ;
-  ; If multiple filenames are specified, then the following checks to
-  ; make sure they belong to the same raster sequence. I then create the
-  ; structure 'filestr' containing information about the sequence.
-  ;
-  nf=n_elements(file)
-  IF nf GT 1 THEN BEGIN
-    bname=file_basename(file)
-    strchck=strmid(bname[0],0,41)
-    chck=strpos(bname,strchck)
-    k=where(chck LT 0,nk)
-    IF nk GT 0 THEN BEGIN
-      print,'% SPICE_RASTER_BROWSER: multiple filenames have been specified, but they do not all belong to the'
-      print,'                       same raster sequence. Please check your inputs.'
-      print,'                       All files should have the same base-name: '+strchck
-      return
-    ENDIF
-    ;
-    ; The data object was loaded earlier, so extract info.
-    ;
-    t0=data->getinfo('DATE_OBS')
-    t1=data->getinfo('ENDOBS')
-    ;
-    ;; d=iris_obj(file[nf-1])
-    ;; t1=d->getinfo('DATE_END')
-    ;; obj_destroy,d
-    ;
-    filestr={nfiles: nf, filelist: file, current: 0, t0: t0, t1: t1, sji_file: sji_file}
-  ENDIF ELSE BEGIN
-    t0=data->getinfo('DATE_OBS')
-    t1=data->getinfo('DATE_END')
-    filestr={nfiles: 1, filelist: file, current: 0, t0: t0, t1: t1, sji_file: sji_file}
-  ENDELSE
-
-
-  ;
-  ; Check to make sure the data are not from the SJI.
-  ;
-  instrume=data->getinfo('INSTRUME')
-  IF trim(instrume) EQ 'SJI' THEN BEGIN
-    print,'% SPICE_RASTER_BROWSER: this routine is not compatible with slit-jaw image data. Returning...'
-    IF swtch EQ 1 THEN obj_destroy,data
-    return
-  ENDIF
-
-  IF NOT keyword_set(quiet) THEN BEGIN
-    print,''
-    print,' SPICE_RASTER_BROWSER was written by Peter Young (GMU/GSFC).'
-    print,' Please report any errors to pyoung9@gmu.edu.'
-    print,''
-  ENDIF
-
 
   ;
   ; Check if we have an internet connection.
@@ -222,81 +123,44 @@ PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, no_sji=no_sji, 
   net_chck=have_network()
 
   ;
-  ; Use the HCR to get the obstitle and AR number. Note the latter comes
-  ; from the metadata input by the IRIS planner.
-  ;
-  IF net_chck EQ 1 AND NOT keyword_set(no_hcr) THEN hcr=iris_obs2hcr(t0,t1)
-  IF n_tags(hcr) NE 0 THEN BEGIN
-    obstitle=hcr.obstitle
-    obs_desc=hcr.goal
-    noaanum=trim(hcr.noaanum)
-    iris_fov=[hcr.xfov,hcr.yfov]
-    iris_xcen=hcr.xcen
-    iris_ycen=hcr.ycen
-  ENDIF ELSE BEGIN
-    obstitle=''
-    obs_desc=data->getinfo('OBS_DESC')
-    noaanum=''
-    hcr=-1
-  ENDELSE
-
-  ;
   ; This retrieves a list of GOES flare for the observing period.
+  ; To be uncommented later. Commented it out for testing
   ;
-  IF net_chck EQ 1 THEN BEGIN
-    flare_data=iris_hek_swpc_flares(starttime=t0,endtime=t1)
-  ENDIF ELSE BEGIN
-    flare_data=-1
-  ENDELSE
+  ;  IF net_chck EQ 1 THEN BEGIN
+  ;    start_time = data->get_start_time()
+  ;    end_time = data->get_end_time()
+  ;    flare_data=iris_hek_swpc_flares(starttime=start_time, endtime=end_time)
+  ;  ENDIF ELSE BEGIN
+  flare_data=-1
+  ;  ENDELSE
 
-
-  IF net_chck EQ 1 THEN BEGIN
-    sock_list,'http://pyoung.org/iris/iris_raster_browser_check.html',page
-  ENDIF
-
-
-  ;
-  ; I'm thinking of adding a check to see if EIS was running. TBD...
-  ;
-  ;; IF have_proc('eis_obs_structure') THEN BEGIN
-  ;;   x0=iris_xcen-iris_fov[0]/2.
-  ;;   x1=iris_xcen+iris_fov[0]/2.
-  ;;   y0=iris_ycen-iris_fov[1]/2.
-  ;;   y1=iris_ycen+iris_fov[1]/2.
-  ;;   chck=eis_obs_structure(t0,t1,/quiet,count=count)
-  ;;   IF count NE 0 THEN BEGIN
-  ;;     FOR i=0,count-1 DO BEGIN
-  ;;       k=where(chck[i].xcen
-  ;;     ENDFOR
-  ;;   ENDIF
-  ;; ENDIF
-
+  ; something similar for spice_browser_raster?
+  ;  IF net_chck EQ 1 THEN BEGIN
+  ;    sock_list,'http://pyoung.org/iris/iris_raster_browser_check.html',page
+  ;  ENDIF
 
   IF NOT keyword_set(quiet) THEN BEGIN
-    print,'  OBSTITLE: '+obstitle
-    print,'  OBS_DESC: ',data->getinfo('OBS_DESC')
-    print,'  DATE_OBS: ',t0
-    print,'  DATE_END: ',t1
-    print,'  NOAA_NUM: ',noaanum
-    IF n_elements(iris_xcen) NE 0 THEN print,'      XCEN: ',string(format='(f6.1)',iris_xcen)
-    IF n_elements(iris_ycen) NE 0 THEN print,'      YCEN: ',string(format='(f6.1)',iris_ycen)
-    print,format='("  Raster: ",i4," of ",i4)',data->getinfo('RASRPT'), $
-      data->getinfo('RASNRPT')
-    print,format='("  Roll angle: ",f6.1)',data->getinfo('SAT_ROT')
-    print,''
+    box_message, ['FILENAME = ' + data->get_header_info('FILENAME', 0), $
+      'EXTNAME  = ' + data->get_header_info('EXTNAME', 0), $
+      'STUDYTYP = ' + data->get_header_info('STUDYTYP', 0), $
+      'STUDYDES = ' + data->get_header_info('STUDYDES', 0), $
+      'STUDY    = ' + data->get_header_info('STUDY', 0), $
+      'OBS_TYPE = ' + data->get_header_info('OBS_TYPE', 0), $
+      'OBS_ID   = ' + data->get_header_info('OBS_ID', 0), $
+      'SPIOBSID = ' + strtrim(string(data->get_header_info('SPIOBSID', 0)), 2), $
+      'PURPOSE  = ' + data->get_header_info('PURPOSE', 0), $
+      'SOOPNAME = ' + data->get_header_info('SOOPNAME', 0)]
   ENDIF
 
-
-
-  spice_browser_widget,data,yoffsets=yoffsets, filestr=filestr, chunk_size=chunk_size, $
-    retina=retina, hcr=hcr, no_goes=no_goes, flare_data=flare_data
+  stop
+  spice_browser_widget, data, yoffsets=yoffsets, chunk_size=chunk_size, $
+    retina=retina, no_goes=no_goes, flare_data=flare_data
 
   ;
   ; Tidy up before exiting.
   ;
-  IF swtch EQ 1 THEN BEGIN
-    obj_destroy,data
+  IF object_created EQ 1 THEN BEGIN
+    obj_destroy, data
   ENDIF
-
 
 END
