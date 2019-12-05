@@ -154,7 +154,7 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
       data = self.descale_array((*(*self.window_data)[window_index])[0], window_index)
     ENDELSE
   ENDIF ELSE BEGIN
-    data = *(*self.window_data)[window_index]        
+    data = *(*self.window_data)[window_index]
   ENDELSE
   return, data
 END
@@ -166,7 +166,7 @@ END
 ;     the function returns the data without applying 'descale_array' function.
 ;     The exposure index is in the first dimension of the 4D cube in case the study type is 'Raster',
 ;     and in the fourth dimension if study type is 'Sit-and-stare'.
-;     The array is also transposed, so that it can be directly plotted, i.e. 
+;     The array is also transposed, so that it can be directly plotted, i.e.
 ;     array = [lambda, instrument-Y]
 ;
 ; INPUTS:
@@ -241,11 +241,11 @@ END
 ; INPUTS:
 ;     keyword : string, the header keyword to be returned
 ;     window_index : the index of the window this keyword belongs to
-;     
+;
 ; OPTIONAL INPUTS:
 ;     missing_value : the value that should be returned, if the keyword does not exist
 ;                     if this is not provided !NULL is returned
-;                     
+;
 ; OPTIONAL OUTPUT:
 ;     exists : boolean, True if keyword exists
 ;
@@ -255,7 +255,7 @@ END
 FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exists=exists
   ;Returns the specified keyword from the window, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
-  
+
   IF N_PARAMS() LT 2 THEN BEGIN
     message, 'missing input, usage: get_header_info, keyword, window_index [, missing_value, exists=exists]', /info
     return, !NULL
@@ -263,13 +263,13 @@ FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exis
     message, 'keyword needs to be a scalar string', /info
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
-  
+
   ; keywords with a '-' in the name, will be renamed when they are transformed into structures (in fitshead2struct),
   ; '-' becomes '_D$'
   temp = strsplit(keyword, '-', count=count, /extract)
   IF count GT 1 THEN keyword = strjoin(temp, '_D$')
 
-  exists = TAG_EXIST(*(*self.window_headers)[window_index], keyword, index=index) 
+  exists = TAG_EXIST(*(*self.window_headers)[window_index], keyword, index=index)
   IF exists THEN BEGIN
     return, (*(*self.window_headers)[window_index]).(index)
   ENDIF ELSE BEGIN
@@ -288,7 +288,7 @@ END
 ;     number of windows
 ;-
 FUNCTION spice_data::get_number_windows
-;returns the number of windows this file contains
+  ;returns the number of windows this file contains
   COMPILE_OPT IDL2
 
   return, self.nwin
@@ -303,7 +303,7 @@ END
 ;     number of windows
 ;-
 FUNCTION spice_data::get_start_time
-;returns start date and time of observation in UTC format
+  ;returns start date and time of observation in UTC format
   COMPILE_OPT IDL2
 
   start_time = self.get_header_info('DATE-BEG', 0)
@@ -319,7 +319,7 @@ END
 ;     number of windows
 ;-
 FUNCTION spice_data::get_end_time
-;returns end date and time of observation in UTC format
+  ;returns end date and time of observation in UTC format
   COMPILE_OPT IDL2
 
   end_time = self.get_header_info('DATE-END', 0)
@@ -335,7 +335,7 @@ END
 ;     boolean
 ;-
 FUNCTION spice_data::get_sit_and_stare
-;returns 1 if raster is a sit-and-stare, 0 otherwise
+  ;returns 1 if raster is a sit-and-stare, 0 otherwise
   COMPILE_OPT IDL2
 
   sit_and_stare = self.get_header_info('STUDYTYP', 0) EQ 'Sit-and-stare'
@@ -354,7 +354,7 @@ END
 ;     string
 ;-
 FUNCTION spice_data::get_window_id, window_index
-;returns the window ID
+  ;returns the window ID
   COMPILE_OPT IDL2
 
   IF n_params() EQ 0 THEN BEGIN
@@ -365,7 +365,7 @@ FUNCTION spice_data::get_window_id, window_index
   ENDIF ELSE BEGIN
     window_id = self.get_header_info('EXTNAME', window_index)
   ENDELSE
-  
+
   return, window_id
 END
 
@@ -381,7 +381,7 @@ END
 ;     float
 ;-
 FUNCTION spice_data::get_number_exposures, window_index
-;eturns the number of exposures in the window
+  ;eturns the number of exposures in the window
   COMPILE_OPT IDL2
 
   IF self.get_sit_and_stare() then n_exp = self.get_header_info('NAXIS4', window_index) $
@@ -401,7 +401,7 @@ END
 ;     float
 ;-
 FUNCTION spice_data::get_exposure_time, window_index
-;returns the exposure time of the given window per exposure
+  ;returns the exposure time of the given window per exposure
   COMPILE_OPT IDL2
 
   exptime = self.get_header_info('XPOSURE', window_index)
@@ -420,7 +420,7 @@ END
 ;     float array, wavelength in nm
 ;-
 FUNCTION spice_data::get_lambda_vector, window_index
-;returns a vector containting the wavelength for each pixel in third dimension
+  ;returns a vector containting the wavelength for each pixel in third dimension
   COMPILE_OPT IDL2
 
   crval3 = self.get_header_info('crval3', window_index)
@@ -445,14 +445,14 @@ END
 ;     y : only resolution in y-direction is returned (i.e. 'ZLIF-TAN')
 ;     lambda : only spectral resolution is returned (i.e. 'WAVE')
 ;     time : only temporal resolution is returned (i.e. 'TIME')
-;   these keyword parameters are exclusive, and if more than one is set, then the first one 
+;   these keyword parameters are exclusive, and if more than one is set, then the first one
 ;   in the list above is returned
 ;
 ; OUTPUT:
 ;     float array or float
 ;-
 FUNCTION spice_data::get_resolution, window_index, x=x, y=y, lambda=lambda, time=time
-;returns a vector containting the wavelength for each pixel in third dimension
+  ;returns a vector containting the resolution of each dimension, or a scalar if a keyword is set
   COMPILE_OPT IDL2
 
   cdelt1 = self.get_header_info('cdelt1', window_index)
@@ -473,7 +473,7 @@ END
 ;
 ; INPUTS:
 ;     window_index : the index of the window to be checked
-;     
+;
 ; OUTPUT:
 ;     boolean, True if input is a valid window index
 ;-
@@ -487,7 +487,7 @@ FUNCTION spice_data::check_window_index, window_index
     print, 'window_index needs to be a scalar number between 0 and '+strtrim(string(self.nwin-1),2)
     return, 0
   ENDIF ELSE return, 1
-  
+
 END
 
 
@@ -534,8 +534,8 @@ PRO spice_data::read_file, file, verbose=verbose
     mreadfits_header, file, hdr, extension=iwin
     headers[iwin] = ptr_new(hdr)
     IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
-    ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin    
-    
+    ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
+
     CASE hdr.BITPIX OF
       16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
       -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))

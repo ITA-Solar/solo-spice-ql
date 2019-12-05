@@ -3,6 +3,7 @@
 ;     spice_browser_make_windata
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:

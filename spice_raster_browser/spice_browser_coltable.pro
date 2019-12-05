@@ -3,6 +3,7 @@
 ;     spice_browser_coltable
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:

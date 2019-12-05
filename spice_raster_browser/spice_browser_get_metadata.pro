@@ -3,7 +3,8 @@
 ;     spice_browser_get_metadata
 ;
 ; PURPOSE:
-;     XXX
+;     Used internally in spice_raster_browser.
+;     This extracts various bits of metadata from the data object
 ;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE; QuickLook.

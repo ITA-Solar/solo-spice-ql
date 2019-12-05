@@ -3,6 +3,7 @@
 ;     spice_browser_oplot_line_ids
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:

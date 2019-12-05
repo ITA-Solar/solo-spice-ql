@@ -3,6 +3,7 @@
 ;     irb_get_flare_text
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:

@@ -3,6 +3,7 @@
 ;     spice_browser_plot_image
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:

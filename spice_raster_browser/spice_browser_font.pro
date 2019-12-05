@@ -3,6 +3,7 @@
 ;     SPICE_BROWSER_FONT
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     Defines the fonts to be used in the widgets. Allows for Windows and Unix
 ;     operating systems.
 ;

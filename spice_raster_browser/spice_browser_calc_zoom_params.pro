@@ -3,6 +3,7 @@
 ;     spice_browser_calc_zoom_params
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:

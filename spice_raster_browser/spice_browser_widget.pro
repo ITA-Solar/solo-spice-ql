@@ -3,7 +3,7 @@
 ;     SPICE_BROWSER_WIDGET
 ;
 ; PURPOSE:
-;     Internal Use only.
+;     Used internally in spice_raster_browser.
 ;     This procedure creates the widget interface for spice_raster_browser.
 ;
 ; CATEGORY:
