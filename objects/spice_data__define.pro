@@ -357,7 +357,15 @@ FUNCTION spice_data::get_window_id, window_index
 ;returns the window ID
   COMPILE_OPT IDL2
 
-  window_id = self.get_header_info('EXTNAME', window_index)
+  IF n_params() EQ 0 THEN BEGIN
+    window_id = strarr(self.get_number_windows())
+    FOR i = 0, self.get_number_windows()-1 DO BEGIN
+      window_id[i] = self.get_header_info('EXTNAME', i)
+    ENDFOR
+  ENDIF ELSE BEGIN
+    window_id = self.get_header_info('EXTNAME', window_index)
+  ENDELSE
+  
   return, window_id
 END
 
