@@ -297,6 +297,38 @@ END
 
 ;+
 ; Description:
+;     returns start date and time of observation in UTC format
+;
+; OUTPUT:
+;     number of windows
+;-
+FUNCTION spice_data::get_start_time
+;returns start date and time of observation in UTC format
+  COMPILE_OPT IDL2
+
+  start_time = self.get_header_info('DATE-BEG', 0)
+  return, start_time
+END
+
+
+;+
+; Description:
+;     returns end date and time of observation in UTC format
+;
+; OUTPUT:
+;     number of windows
+;-
+FUNCTION spice_data::get_end_time
+;returns end date and time of observation in UTC format
+  COMPILE_OPT IDL2
+
+  end_time = self.get_header_info('DATE-END', 0)
+  return, end_time
+END
+
+
+;+
+; Description:
 ;     returns 1 if raster is a sit-and-stare, 0 otherwise
 ;
 ; OUTPUT:
