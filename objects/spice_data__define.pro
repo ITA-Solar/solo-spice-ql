@@ -411,6 +411,52 @@ END
 
 ;+
 ; Description:
+;     returns a vector containting the coordinate for each pixel in first dimension, instrument x-direction
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float array, coordinate in arcsec
+;-
+FUNCTION spice_data::get_instr_x_vector, window_index
+  ;returns a vector containting the coordinate for each pixel in instrument x-direction
+  COMPILE_OPT IDL2
+
+  crval = self.get_header_info('crval1', window_index)
+  naxis = self.get_header_info('naxis1', window_index)
+  crpix = self.get_header_info('crpix1', window_index)
+  cdelt = self.get_header_info('cdelt1', window_index)
+  x_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
+  return, x_vector
+END
+
+
+;+
+; Description:
+;     returns a vector containting the coordinate for each pixel in second dimension, instrument y-direction
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float array, coordinate in arcsec
+;-
+FUNCTION spice_data::get_instr_y_vector, window_index
+  ;returns a vector containting the coordinate for each pixel in instrument y-direction
+  COMPILE_OPT IDL2
+
+  crval = self.get_header_info('crval2', window_index)
+  naxis = self.get_header_info('naxis2', window_index)
+  crpix = self.get_header_info('crpix2', window_index)
+  cdelt = self.get_header_info('cdelt2', window_index)
+  y_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
+  return, y_vector
+END
+
+
+;+
+; Description:
 ;     returns a vector containting the wavelength for each pixel in third dimension
 ;
 ; INPUTS:
@@ -423,12 +469,35 @@ FUNCTION spice_data::get_lambda_vector, window_index
   ;returns a vector containting the wavelength for each pixel in third dimension
   COMPILE_OPT IDL2
 
-  crval3 = self.get_header_info('crval3', window_index)
-  naxis3 = self.get_header_info('naxis3', window_index)
-  crpix3 = self.get_header_info('crpix3', window_index)
-  cdelt3 = self.get_header_info('cdelt3', window_index)
-  lambda_vector = crval3 + (findgen(naxis3)+0.5-crpix3) * cdelt3
+  crval = self.get_header_info('crval3', window_index)
+  naxis = self.get_header_info('naxis3', window_index)
+  crpix = self.get_header_info('crpix3', window_index)
+  cdelt = self.get_header_info('cdelt3', window_index)
+  lambda_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
   return, lambda_vector
+END
+
+
+;+
+; Description:
+;     returns a vector containting the time for each pixel in fourth dimension
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float array, time in seconds
+;-
+FUNCTION spice_data::get_time_vector, window_index
+  ;returns a vector containting the time for each pixel in fourth dimension
+  COMPILE_OPT IDL2
+
+  crval = self.get_header_info('crval4', window_index)
+  naxis = self.get_header_info('naxis4', window_index)
+  crpix = self.get_header_info('crpix4', window_index)
+  cdelt = self.get_header_info('cdelt4', window_index)
+  time_vector = crval + (findgen(naxis)+0.5-crpix) * cdelt
+  return, time_vector
 END
 
 
