@@ -43,7 +43,7 @@ PRO spice_browser_calc_zoom_params, state, pwin
   ; wid_data.xrange, .yrange, .lrange.
   ;
   iwin=state.wid_data.iwin[pwin]
-  lam=state.data->getlam(iwin)
+  lam=state.data->get_lambda_vector(iwin)
 
   nx=state.wid_data.nxpos
   ny=state.wid_data.ny

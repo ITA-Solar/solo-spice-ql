@@ -608,7 +608,7 @@ PRO spice_data::read_file, file, verbose=verbose
     CASE hdr.BITPIX OF
       16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
       -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
-      ELSE: message,'unsupported datatype '+self->getdatatype()
+      ELSE: message,'unsupported datatype ' + strtrim(string(hdr.BITPIX), 2)
     ENDCASE
 
   ENDFOR ; iwin = 0, self.nwin-1

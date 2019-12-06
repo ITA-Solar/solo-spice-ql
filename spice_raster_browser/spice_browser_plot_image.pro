@@ -73,7 +73,7 @@ PRO spice_browser_plot_image, state, pwin, ps=ps
   ; lambda-Y plot is to be shown.
   ;
   IF state.wid_data.im_type EQ 1 THEN BEGIN
-    lam=state.data->getlam(iwin)
+    lam=state.data->get_lambda_vector(iwin)
     nl=n_elements(lam)
     im=state.expimages[0:nl-1,*,pwin]
     i0=state.wid_data.lrange[0,pwin]

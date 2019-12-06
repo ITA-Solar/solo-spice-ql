@@ -79,9 +79,9 @@ PRO spice_browser_plot_sji, state
   ; Get time information from the SJI object. Note that sji_tai is the
   ; time of the mid-point of the exposure.
   ;
-  sji_ti=d->gettime()
-  sji_nexp=d->getnexp(0)
-  sji_exp=d->getexp(indgen(sji_nexp))
+  sji_ti=d->get_time_vector(0)
+  sji_nexp=d->get_number_exposures(0)
+  sji_exp=d->get_exposure_time(indgen(sji_nexp))
   sji_ti=sji_ti+sji_exp/2.        ; get mid-time of exposure
   sji_utc=d->ti2utc(sji_ti)
   sji_tai=anytim2tai(sji_utc)
