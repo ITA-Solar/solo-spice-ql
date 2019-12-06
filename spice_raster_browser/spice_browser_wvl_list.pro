@@ -40,7 +40,7 @@ FUNCTION spice_browser_wvl_list, data, wid_data
   ;
   ; This creates the pull-down list of wavelength windows.
   ;
-  id=data->getline_id()
+  id=data->get_window_id()
   n_id=n_elements(id)
   choices='1\Choose a wavelength window'
   FOR i=0,n_id-1 DO BEGIN
