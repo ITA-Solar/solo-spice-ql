@@ -44,14 +44,14 @@ PRO spice_browser_plot_spectrum, state, pwin
 
   spec=state.spectra[*,pwin]
 
-  nl=state.data->getxw(iwin)
+  nl=state.data->get_header_info('NAXIS1', iwin)
   spec=spec[0:nl-1]
 
 
   ;
   ; Create WVL array, giving wavelengths as a function of exposure number.
   ;
-  ll=state.data->getlam(iwin)
+  ll=state.data->get_lambda_vector(iwin)
   wvl=ll
   nw=n_elements(wvl)
 
