@@ -71,7 +71,7 @@
 ;     iris_hek_swpc_flares
 ;     box_message
 ;     spice_browser_widget
-;     
+;
 ;     spice_browser_goes_plot, spice_browser_oplot_line_ids,
 ;     spice_browser_plot_image, IRIS_BROWSER_PLOT_SPEC,
 ;     spice_browser_font, IRIS_BROWSER_EVENT, IRIS_BROWSER_WIDGET,
