@@ -52,9 +52,9 @@ PRO spice_browser_update_image, state, pwin
   nx=state.wid_data.nx
   nxpos=state.wid_data.nxpos
   ny=state.wid_data.ny
-  nl=state.data->getxw(iwin)
+  nl=state.data->get_header_info('NAXIS1', iwin)
 
-  exptime=state.data->getexp(iwin=iwin)
+  exptime=replicate(state.data->get_exposure_time(iwin), state.data->get_number_exposures(iwin))
 
   ;
   ; The following is used for breaking long sit-and-stare sequences into
@@ -67,7 +67,7 @@ PRO spice_browser_update_image, state, pwin
 
   scale=state.wid_data.scale
 
-  lam=state.data->getlam(iwin)
+  lam=state.data->get_lambda_vector(iwin)
   getmin=min(abs(lam-state.wid_data.lambda[pwin]),imin)
   wpix=imin
 
@@ -77,17 +77,17 @@ PRO spice_browser_update_image, state, pwin
   ;
   ; Work out Y-offsets between the 3 channels.
   ;
-  IF state.wid_data.yoffsets EQ 1 THEN BEGIN
-    reg=state.data->getregion(iwin,/full)
-    ;
-    CASE reg OF
-      'FUV1': yoff=round(6.0/scale[1])
-      'FUV2': yoff=round(2.0/scale[1])
-      'NUV': yoff=0
-    ENDCASE
-  ENDIF ELSE BEGIN
-    yoff=0
-  ENDELSE
+  ;  IF state.wid_data.yoffsets EQ 1 THEN BEGIN
+  ;    reg=state.data->getregion(iwin,/full)
+  ;    ;
+  ;    CASE reg OF
+  ;      'FUV1': yoff=round(6.0/scale[1])
+  ;      'FUV2': yoff=round(2.0/scale[1])
+  ;      'NUV': yoff=0
+  ;    ENDCASE
+  ;  ENDIF ELSE BEGIN
+  yoff=0
+  ;  ENDELSE
 
   wd=fltarr(wwidth,nx,ny)
   img=fltarr(nx,ny+40)
@@ -105,7 +105,7 @@ PRO spice_browser_update_image, state, pwin
   exptime=exptime[i0:i1]
   ;
   FOR i=i0,i1,dx DO BEGIN
-    expimg=state.data->descale_array((state.data->getvar(iwin))[*,*,i])
+    expimg=state.data->get_one_image(iwin,i)
     expt=exptime[i-i0]
     IF expt NE 0. THEN wd[*,i-i0,*]=expimg[j0:j1,*]/expt ELSE wd[*,i-i0,*]=expimg[j0:j1,*]
   ENDFOR
