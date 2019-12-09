@@ -857,8 +857,8 @@ PRO spice_browser_base_event, event
     END
 
     state.eis_butt: BEGIN
-      t0=state.wid_data.filestr.t0
-      t1=state.wid_data.filestr.t1
+      t0=state.data->get_start_time()
+      t1=state.data->get_end_time()
       iris_eis_obs_check,t0,t1,out_string=out_string,margin=30.
       spice_browser_font,tfont,/fixed
       spice_browser_font,bfont
