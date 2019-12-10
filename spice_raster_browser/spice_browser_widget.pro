@@ -232,9 +232,11 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
 
 
   IF sji_file[0] EQ '' THEN BEGIN
-    n_plot_window=4
+    IF data->get_number_windows() LT 4 THEN n_plot_window=data->get_number_windows() $
+    ELSE n_plot_window=4
   ENDIF ELSE BEGIN
-    n_plot_window=3
+    IF data->get_number_windows() LT 3 THEN n_plot_window=data->get_number_windows() $
+    ELSE n_plot_window=3
     n=n_elements(sji_file)
     sji_id=strarr(n)
     FOR i=0,n-1 DO BEGIN
@@ -317,49 +319,63 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;               the weaker doublet line if the strong one isn't
   ;               available.
   ;
-  rlamb=    [2796.352,1335.708,1393.757,1401.158,1349.403,1334.532]
-  rl_backup=[2803.530,1334.532,1402.770,-1,-1,-1]
-  nwin=data->get_number_windows()
-  count=0
-
-  FOR j=0,n_elements(rlamb)-1 DO BEGIN
-    swtch=0
-    FOR i=0,nwin-1 DO BEGIN
-      lam=data->get_lambda_vector(i)
-      IF rlamb[j] GE min(lam) AND rlamb[j] LE max(lam) THEN BEGIN
-        wid_data.iwin[count]=i
-        wid_data.lambda[count]=rlamb[j]
-        getmin=min(abs(rlamb[j]-lam),imin)
-        wid_data.ilambda[count]=imin
-        nl=n_elements(lam)
-        wid_data.lrange[*,count]=[0,nl-1]
-        count=count+1
-        swtch=1
-        break
-      ENDIF
-    ENDFOR
-    ;
-    IF swtch EQ 0 THEN BEGIN
-      IF rl_backup[j] NE -1 THEN BEGIN
-        FOR i=0,nwin-1 DO BEGIN
-          lam=data->get_lambda_vector(i)
-          IF rl_backup[j] GE min(lam) AND rl_backup[j] LE max(lam) THEN BEGIN
-            wid_data.iwin[count]=i
-            wid_data.lambda[count]=rl_backup[j]
-            getmin=min(abs(rl_backup[j]-lam),imin)
-            wid_data.ilambda[count]=imin
-            nl=n_elements(lam)
-            wid_data.lrange[*,count]=[0,nl-1]
-            count=count+1
-            swtch=1
-            break
-          ENDIF
-        ENDFOR
-      ENDIF
-    ENDIF
-    ;
-    IF count EQ n_plot_window THEN break
+  ;  rlamb=    [2796.352,1335.708,1393.757,1401.158,1349.403,1334.532]
+  ;  rl_backup=[2803.530,1334.532,1402.770,-1,-1,-1]
+  ;  nwin=data->get_number_windows()
+  ;  count=0
+  ; This look up table doesn't work, because spice uses very differen wavelengths
+  ; So we just use the sfirst 3 or 4 windows
+  FOR i_plot_window=0,n_plot_window-1 DO BEGIN
+    wid_data.iwin[i_plot_window] = i_plot_window
+    wid_data.lambda[i_plot_window] = data->get_header_info('CRVAL3', i_plot_window)
+    lam = data->get_lambda_vector(i_plot_window)
+    getmin = min(abs(lam), imin)
+    wid_data.ilambda[i_plot_window] = imin
+    nl = n_elements(lam)
+    wid_data.lrange[*,i_plot_window] = [0,nl-1]
   ENDFOR
+  ;  FOR j=0,n_elements(rlamb)-1 DO BEGIN
+  ;    swtch=0
+  ;    stop
+  ;    FOR i=0,nwin-1 DO BEGIN
+  ;      lam=data->get_lambda_vector(i)
+  ;      print,lam
+  ;      IF rlamb[j] GE min(lam) AND rlamb[j] LE max(lam) THEN BEGIN
+  ;        wid_data.iwin[count]=i
+  ;        wid_data.lambda[count]=rlamb[j]
+  ;        getmin=min(abs(rlamb[j]-lam),imin)
+  ;        wid_data.ilambda[count]=imin
+  ;        nl=n_elements(lam)
+  ;        wid_data.lrange[*,count]=[0,nl-1]
+  ;        count=count+1
+  ;        swtch=1
+  ;        break
+  ;      ENDIF
+  ;    ENDFOR
+  ;    ;
+  ;    IF swtch EQ 0 THEN BEGIN
+  ;      IF rl_backup[j] NE -1 THEN BEGIN
+  ;        FOR i=0,nwin-1 DO BEGIN
+  ;          lam=data->get_lambda_vector(i)
+  ;          print,lam
+  ;          IF rl_backup[j] GE min(lam) AND rl_backup[j] LE max(lam) THEN BEGIN
+  ;            wid_data.iwin[count]=i
+  ;            wid_data.lambda[count]=rl_backup[j]
+  ;            getmin=min(abs(rl_backup[j]-lam),imin)
+  ;            wid_data.ilambda[count]=imin
+  ;            nl=n_elements(lam)
+  ;            wid_data.lrange[*,count]=[0,nl-1]
+  ;            count=count+1
+  ;            swtch=1
+  ;            break
+  ;          ENDIF
+  ;        ENDFOR
+  ;      ENDIF
+  ;    ENDIF
+  ;    ;
+  ;    IF count EQ n_plot_window THEN break
+  ;  ENDFOR
+  print,wid_data.lrange
 
   k=where(wid_data.iwin EQ -1,nk)
   IF nk GT 0 THEN BEGIN
@@ -780,7 +796,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ; 'spectra' contains the 1D spectrum for each window. Note that I pad
   ; each spectrum to be the maximum size of all of the spectrum windows
   ;
-  nl=data->get_header_info('NAXIS1', 0)
+  nl=data->get_header_info('NAXIS3', 0)
   spectra=fltarr(max(nl),n_plot_window)
 
   ;
