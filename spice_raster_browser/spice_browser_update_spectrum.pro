@@ -47,7 +47,7 @@ PRO spice_browser_update_spectrum, state, pwin
   iwin=state.wid_data.iwin[pwin]
   xpix=state.wid_data.xpix
   ypix=state.wid_data.ypix
-  nl=state.data->get_header_info('NAXIS1', 0)
+  nl=state.data->get_header_info('NAXIS3', iwin)
 
   exptime=replicate(state.data->get_exposure_time(iwin), state.data->get_number_exposures(iwin))
 

@@ -44,7 +44,7 @@ PRO spice_browser_plot_spectrum, state, pwin
 
   spec=state.spectra[*,pwin]
 
-  nl=state.data->get_header_info('NAXIS1', iwin)
+  nl=state.data->get_header_info('NAXIS3', iwin)
   spec=spec[0:nl-1]
 
 

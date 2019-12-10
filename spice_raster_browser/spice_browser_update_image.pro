@@ -52,7 +52,7 @@ PRO spice_browser_update_image, state, pwin
   nx=state.wid_data.nx
   nxpos=state.wid_data.nxpos
   ny=state.wid_data.ny
-  nl=state.data->get_header_info('NAXIS1', iwin)
+  nl=state.data->get_header_info('NAXIS3', iwin)
 
   exptime=replicate(state.data->get_exposure_time(iwin), state.data->get_number_exposures(iwin))
 
