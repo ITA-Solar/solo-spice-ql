@@ -73,9 +73,10 @@ FUNCTION spice_browser_get_metadata, data
   ;    about 60" in Y and 20 mins in time (hence factor
   ;    3=60/20). I may need to adjust based on experience with
   ;    sit-and-stare.
-  ;
+  ; 2019-12-10, Martin Wiesmann, disabled scaling for the moment
   IF sit_stare EQ 1 THEN BEGIN
-    scale[0]=3.*(tmid_min[1]-tmid_min[0])
+    ;scale[0]=3.*(tmid_min[1]-tmid_min[0])
+    scale[*] = 1
     origin[0]=0.0
   ENDIF
 

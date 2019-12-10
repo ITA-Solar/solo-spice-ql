@@ -139,7 +139,7 @@ PRO spice_browser_plot_image, state, pwin, ps=ps
       ;
       im=alog10(im>0)
     ENDIF
-    ;
+    
     plot_image,im,xsty=5,ysty=5,min=intmin,max=intmax
     ;
     IF state.wid_data.velocity EQ 1 THEN BEGIN
