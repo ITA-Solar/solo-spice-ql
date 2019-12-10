@@ -71,16 +71,9 @@ PRO spice_browser_update_image, state, pwin
   getmin=min(abs(lam-state.wid_data.lambda[pwin]),imin)
   wpix=imin
 
-  ; I don't quite understand what happens here,
-  ; but the original two lines give results that make setting wd
-  ; in the for loop to crash, because j1-j0+1 != wwidth
-  ; and it wouldn't work with even numbers, but that won't happen
-  ; since only one of [1,5,9,15] is set, for some reason
   j0=max([0,wpix-wwidth/2])
-  ;j1=min([nl-1,wpix+wwidth/2])
-  IF j0 EQ 0 THEN j1 = wwidth-1 $
-  ELSE j1 = min([nl-1,wpix+wwidth/2])
-  IF j1 eq nl-1 THEN j0 = nl-wwidth
+  j1=min([nl-1,wpix+wwidth/2])
+  wwidth = j1-j0+1
   
 
   ;
