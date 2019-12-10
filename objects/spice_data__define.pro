@@ -381,7 +381,7 @@ END
 ;     float
 ;-
 FUNCTION spice_data::get_number_exposures, window_index
-  ;eturns the number of exposures in the window
+  ;returns the number of exposures in the window
   COMPILE_OPT IDL2
 
   IF self.get_sit_and_stare() then n_exp = self.get_header_info('NAXIS4', window_index) $
@@ -427,7 +427,12 @@ FUNCTION spice_data::get_instr_x_vector, window_index
   naxis = self.get_header_info('naxis1', window_index)
   crpix = self.get_header_info('crpix1', window_index)
   cdelt = self.get_header_info('cdelt1', window_index)
-  x_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
+  pc1_1 = self.get_header_info('PC1_1', window_index)
+  x_vector = crval + cdelt * pc1_1 * (findgen(naxis)+1.0-crpix)
+  IF naxis EQ 1 THEN BEGIN
+    naxis = self.get_header_info('naxis4', window_index)
+    x_vector = replicate(x_vector, naxis)
+  ENDIF
   return, x_vector
 END
 
@@ -450,7 +455,8 @@ FUNCTION spice_data::get_instr_y_vector, window_index
   naxis = self.get_header_info('naxis2', window_index)
   crpix = self.get_header_info('crpix2', window_index)
   cdelt = self.get_header_info('cdelt2', window_index)
-  y_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
+  pc2_2 = self.get_header_info('PC2_2', window_index)
+  y_vector = crval + cdelt * pc2_2 * (findgen(naxis)+1.0-crpix)
   return, y_vector
 END
 
