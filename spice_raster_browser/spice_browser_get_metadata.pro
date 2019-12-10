@@ -120,7 +120,7 @@ FUNCTION spice_browser_get_metadata, data
     utc: utc, $
     stud_acr: data->get_header_info('SPIOBSID', 0), $
     date_obs: data->get_header_info('DATE-OBS', 0), $
-    l1p5_ver: 'l1p5_ver', $
+    l1p5_ver: 'NA', $
     obs_type: obs_type, $
     cadence: cadence, $
     xcen: xcen, $
