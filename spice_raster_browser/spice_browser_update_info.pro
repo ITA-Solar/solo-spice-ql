@@ -3,6 +3,7 @@
 ;     spice_browser_update_info
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:
@@ -48,7 +49,7 @@ PRO spice_browser_update_info, state
   IF xpix GE n THEN tstr='Time: N/A' ELSE tstr='Time: '+tmid[xpix]
   widget_control,state.ttext,set_val=tstr
 
-  date_obs=state.data->getinfo('DATE_OBS')
+  date_obs=state.data->get_header_info('DATE-BEG', 0)
   ex=anytim(/ex,date_obs)
   val='TIME: '+strpad(trim(ex[0]),2,fill='0')+':'+strpad(trim(ex[1]),2,fill='0')
   widget_control,state.text3,set_val=val

@@ -3,6 +3,7 @@
 ;     spice_browser_make_windata
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:
@@ -51,9 +52,9 @@ PRO spice_browser_make_windata, data, windata
     {wvl: 1355.598, ion: 'o_1', wind: -1}, $
     {wvl: 1354.067, ion: 'fe_21', wind: -1} ]
 
-  nwin=data->getnwin()
+  nwin=data->get_number_windows()
   FOR i=0,nwin-1 DO BEGIN
-    lam=data->getlam(i)
+    lam=data->get_lambda_vector(i)
     k=where(str.wvl GE min(lam) AND str.wvl LE max(lam),nk)
     IF nk NE 0 THEN str[k].wind=i
   ENDFOR

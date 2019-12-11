@@ -3,6 +3,7 @@
 ;     spice_browser_sji_frame_options
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:

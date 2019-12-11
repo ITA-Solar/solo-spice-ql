@@ -3,6 +3,7 @@
 ;     spice_browser_calc_zoom_params
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:
@@ -42,7 +43,7 @@ PRO spice_browser_calc_zoom_params, state, pwin
   ; wid_data.xrange, .yrange, .lrange.
   ;
   iwin=state.wid_data.iwin[pwin]
-  lam=state.data->getlam(iwin)
+  lam=state.data->get_lambda_vector(iwin)
 
   nx=state.wid_data.nxpos
   ny=state.wid_data.ny
@@ -114,8 +115,8 @@ PRO spice_browser_calc_zoom_params, state, pwin
   IF spec_zoom NE 0 THEN BEGIN
     nlz=nl/2/2^(spec_zoom)
     ;
-    i0=lpix-nlz+max([0,lpix+nlz-nl])
-    i1=lpix+nlz+max([nlz-lpix,0])
+    i0=max([lpix-nlz,0])
+    i1=min([lpix+nlz-1,nl-1])
     ;
     state.wid_data.lrange[*,pwin]=[max([i0,0]),min([i1,nl-1])]
   ENDIF ELSE BEGIN

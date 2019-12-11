@@ -1,51 +1,59 @@
 ;+
 ; NAME:
-;     spice_bspice_browser_widgetrowser_base_event
+;     SPICE_BROWSER_WIDGET
 ;
 ; PURPOSE:
-;     XXX
+;     Used internally in spice_raster_browser.
+;     This procedure creates the widget interface for spice_raster_browser.
 ;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;     spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, $
-;       chunk_size=chunk_size, retina=retina, hcr=hcr, no_goes=no_goes, $
-;       flare_data=flare_data
+;     spice_browser_widget, data [, yoffsets=yoffsets, $
+;       chunk_size=chunk_size, retina=retina, no_goes=no_goes, $
+;       flare_data=flare_data]
 ;
 ; INPUTS:
-;     input:  XXX
-;
-; OPTIONAL INPUTS:
-;     None.
+;     DATA:  A spice_data object
 ;
 ; KEYWORDS:
-;     None.
+;     QUIET: If set, then do not print messages to the IDL command window.
+;
+;     YOFFSETS: If set, then the three wavelength channels will be
+;               adjusted for spatial offsets in Y. This should only be
+;               used if you notice that there are offsets in the
+;               images. Most data-sets should be
+;               aligned. **There shouldn't be a need to use
+;               this keyword any more.**
+;
+;     CHUNK_SIZE: Only applicable for sit-and-stare data. It defines the
+;                 size of the chunks (in number of exposures) to be
+;                 displayed.
+;
+;     RETINA: The widget was too big for my MacBook Pro retina screen,
+;             so I've added this keyword to shrink the fonts.
+;
+;     NO_GOES: This disables the GOES plot.
+;
+;     FLARE_DATA: the structure returned by iris_hek_swpc_flares() or -1
 ;
 ; OUTPUT:
-;     XXX
+;     None
 ;
-; EXAMPLE:
-;
-; INTERNAL ROUTINES:
-;
-; PROGRAMMING NOTES:
+; DEPENDENCIES:
+;     spice_browser_font
+;     spice_browser_get_metadata
 ;
 ; HISTORY:
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
 
-PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr, $
-  chunk_size=chunk_size, retina=retina, hcr=hcr, no_goes=no_goes, $
+PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
+  chunk_size=chunk_size, retina=retina, no_goes=no_goes, $
   flare_data=flare_data
-
-
-  IF n_tags(filestr) EQ 0 THEN filestr=0
-
-  id=data->getline_id()
-  i=where(id NE '')
-  nwind=n_elements(id[i])
+  COMPILE_OPT IDL2
 
   ;
   ; Apply scale factors to the plot windows if the screen size is small
@@ -60,9 +68,9 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ENDCASE
 
 
-  spice_browser_font,font, retina=retina
-  spice_browser_font,bigfont,/big, retina=retina
-  spice_browser_font,fixfont,/fixed, retina=retina
+  spice_browser_font, font, retina=retina
+  spice_browser_font, bigfont, /big, retina=retina
+  spice_browser_font, fixfont, /fixed, retina=retina
 
   ;
   ; Get metadata from the object.
@@ -72,15 +80,9 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ;
   ; This takes a value of 0 or 1 (1=sit-and-stare).
   ;
-  sit_stare=meta.sit_stare
+  sit_stare = meta.sit_stare
 
-
-  obs_type=meta.obs_type
-
-  nexp=data->getnexp()    ; this is an array for IRIS
-  nexp_prp=data->getnexp_prp()
-  IF nexp_prp GT 1 THEN nexp=nexp/nexp_prp
-  nexp=nexp[0]
+  obs_type = meta.obs_type
 
   ;
   ; Gets the mid-point time of each exposure in '12:00:00' format. This
@@ -127,7 +129,7 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
     ENDIF
     ;
     ;
-    IF nexp GT nxpos*1.5 THEN BEGIN
+    IF data->get_number_exposures(0) GT nxpos*1.5 THEN BEGIN
       IF NOT keyword_set(quiet) THEN print,'% SPICE_RASTER_BROWSER: sit-and-stare chunking is switched on (chunk_size='+trim(nxpos)+').'
       ixpos=0
       jxpos=nxpos-1
@@ -161,8 +163,6 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ;
   yoffset=0
   origin[1]=origin[1]-yoffset
-
-
 
   ;
   ; By default I pick up the line ID file from my webpage, but if
@@ -209,32 +209,34 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ;
   ; Get slitjaw information
   ;
-  sji_file=filestr.sji_file
-  IF sji_file[0] NE '' THEN BEGIN
-    sji=1
-    sji_d=iris_sji(sji_file)
-    sji_ti=sji_d->gettime()
-    sji_nexp=sji_d->getnexp(0)
-    sji_exp=sji_d->getexp(indgen(sji_nexp))
-    sji_ti=sji_ti+sji_exp/2.    ; get mid-time of exposure
-    sji_id=sji_d->getsji_id()
-    sji_start=sji_d->getinfo('DATE_OBS')
-    sji_end=sji_d->getinfo('DATE_END')
-    duration=anytim2tai(sji_end)-anytim2tai(sji_start)
-    sji_cadence=duration/float(sji_nexp)
-  ENDIF ELSE BEGIN
-    sji=0
-    sji_file=''
-    sji_id=''
-    sji_d=0
-    sji_cadence=0.
-  ENDELSE
+  ;  sji_file=filestr.sji_file
+  ;  IF sji_file[0] NE '' THEN BEGIN
+  ;    sji=1
+  ;    sji_d=iris_sji(sji_file)
+  ;    sji_ti=sji_d->gettime()
+  ;    sji_nexp=sji_d->getnexp(0)
+  ;    sji_exp=sji_d->getexp(indgen(sji_nexp))
+  ;    sji_ti=sji_ti+sji_exp/2.    ; get mid-time of exposure
+  ;    sji_id=sji_d->getsji_id()
+  ;    sji_start=sji_d->getinfo('DATE_OBS')
+  ;    sji_end=sji_d->getinfo('DATE_END')
+  ;    duration=anytim2tai(sji_end)-anytim2tai(sji_start)
+  ;    sji_cadence=duration/float(sji_nexp)
+  ;  ENDIF ELSE BEGIN
+  sji=0
+  sji_file=''
+  sji_id=''
+  sji_d=0
+  sji_cadence=0.
+  ;  ENDELSE
 
 
   IF sji_file[0] EQ '' THEN BEGIN
-    n_plot_window=4
+    IF data->get_number_windows() LT 4 THEN n_plot_window=data->get_number_windows() $
+    ELSE n_plot_window=4
   ENDIF ELSE BEGIN
-    n_plot_window=3
+    IF data->get_number_windows() LT 3 THEN n_plot_window=data->get_number_windows() $
+    ELSE n_plot_window=3
     n=n_elements(sji_file)
     sji_id=strarr(n)
     FOR i=0,n-1 DO BEGIN
@@ -256,11 +258,11 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
     ypix: 0,  $
     nx: nx, $
     ny: ny, $
-    ccd: bytarr(nwind), $
+    ccd: bytarr(data->get_number_windows()), $
     lbin: 5, $
     origin: origin, $
     scale: scale, $
-    shifts: fltarr(nexp[0]), $
+    shifts: fltarr(data->get_number_exposures(0)), $
     shift_set: 1, $
     lambda: fltarr(n_plot_window), $
     ilambda: intarr(n_plot_window), $
@@ -287,7 +289,7 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
     tmid: midtime, $
     tmid_min: tmid_min, $
     rast_direct: rast_direct, $
-    roll: data->getinfo('SAT_ROT'), $
+    roll: data->get_header_info('CROTA', 0), $
     l1p5_ver: meta.l1p5_ver, $
     sji: sji, $
     sji_file: sji_file, $     ; array of all SJI filenames
@@ -301,12 +303,12 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
     sji_yrange: [0,0], $
     sji_cadence: sji_cadence, $
     autoint_sji: 1, $
-    filestr: filestr, $
+    ;filestr: filestr, $
     coltable: 0, $
     retina: keyword_set(retina), $
     exptime: fltarr(n_plot_window), $
     n_plot_window: n_plot_window, $
-    hcr: hcr, $
+    ;hcr: hcr, $
     flare_data: flare_data $
   }
 
@@ -317,55 +319,69 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ;               the weaker doublet line if the strong one isn't
   ;               available.
   ;
-  rlamb=    [2796.352,1335.708,1393.757,1401.158,1349.403,1334.532]
-  rl_backup=[2803.530,1334.532,1402.770,-1,-1,-1]
-  nwin=data->getnwin()
-  count=0
-
-  FOR j=0,n_elements(rlamb)-1 DO BEGIN
-    swtch=0
-    FOR i=0,nwin-1 DO BEGIN
-      lam=data->getlam(i)
-      IF rlamb[j] GE min(lam) AND rlamb[j] LE max(lam) THEN BEGIN
-        wid_data.iwin[count]=i
-        wid_data.lambda[count]=rlamb[j]
-        getmin=min(abs(rlamb[j]-lam),imin)
-        wid_data.ilambda[count]=imin
-        nl=n_elements(lam)
-        wid_data.lrange[*,count]=[0,nl-1]
-        count=count+1
-        swtch=1
-        break
-      ENDIF
-    ENDFOR
-    ;
-    IF swtch EQ 0 THEN BEGIN
-      IF rl_backup[j] NE -1 THEN BEGIN
-        FOR i=0,nwin-1 DO BEGIN
-          lam=data->getlam(i)
-          IF rl_backup[j] GE min(lam) AND rl_backup[j] LE max(lam) THEN BEGIN
-            wid_data.iwin[count]=i
-            wid_data.lambda[count]=rl_backup[j]
-            getmin=min(abs(rl_backup[j]-lam),imin)
-            wid_data.ilambda[count]=imin
-            nl=n_elements(lam)
-            wid_data.lrange[*,count]=[0,nl-1]
-            count=count+1
-            swtch=1
-            break
-          ENDIF
-        ENDFOR
-      ENDIF
-    ENDIF
-    ;
-    IF count EQ n_plot_window THEN break
+  ;  rlamb=    [2796.352,1335.708,1393.757,1401.158,1349.403,1334.532]
+  ;  rl_backup=[2803.530,1334.532,1402.770,-1,-1,-1]
+  ;  nwin=data->get_number_windows()
+  ;  count=0
+  ; This look up table doesn't work, because spice uses very differen wavelengths
+  ; So we just use the sfirst 3 or 4 windows
+  FOR i_plot_window=0,n_plot_window-1 DO BEGIN
+    wid_data.iwin[i_plot_window] = i_plot_window
+    wid_data.lambda[i_plot_window] = data->get_header_info('CRVAL3', i_plot_window)
+    lam = data->get_lambda_vector(i_plot_window)
+    getmin = min(abs(lam), imin)
+    wid_data.ilambda[i_plot_window] = imin
+    nl = n_elements(lam)
+    wid_data.lrange[*,i_plot_window] = [0,nl-1]
   ENDFOR
+  ;  FOR j=0,n_elements(rlamb)-1 DO BEGIN
+  ;    swtch=0
+  ;    stop
+  ;    FOR i=0,nwin-1 DO BEGIN
+  ;      lam=data->get_lambda_vector(i)
+  ;      print,lam
+  ;      IF rlamb[j] GE min(lam) AND rlamb[j] LE max(lam) THEN BEGIN
+  ;        wid_data.iwin[count]=i
+  ;        wid_data.lambda[count]=rlamb[j]
+  ;        getmin=min(abs(rlamb[j]-lam),imin)
+  ;        wid_data.ilambda[count]=imin
+  ;        nl=n_elements(lam)
+  ;        wid_data.lrange[*,count]=[0,nl-1]
+  ;        count=count+1
+  ;        swtch=1
+  ;        break
+  ;      ENDIF
+  ;    ENDFOR
+  ;    ;
+  ;    IF swtch EQ 0 THEN BEGIN
+  ;      IF rl_backup[j] NE -1 THEN BEGIN
+  ;        FOR i=0,nwin-1 DO BEGIN
+  ;          lam=data->get_lambda_vector(i)
+  ;          print,lam
+  ;          IF rl_backup[j] GE min(lam) AND rl_backup[j] LE max(lam) THEN BEGIN
+  ;            wid_data.iwin[count]=i
+  ;            wid_data.lambda[count]=rl_backup[j]
+  ;            getmin=min(abs(rl_backup[j]-lam),imin)
+  ;            wid_data.ilambda[count]=imin
+  ;            nl=n_elements(lam)
+  ;            wid_data.lrange[*,count]=[0,nl-1]
+  ;            count=count+1
+  ;            swtch=1
+  ;            break
+  ;          ENDIF
+  ;        ENDFOR
+  ;      ENDIF
+  ;    ENDIF
+  ;    ;
+  ;    IF count EQ n_plot_window THEN break
+  ;  ENDFOR
+  print,wid_data.lrange
 
   k=where(wid_data.iwin EQ -1,nk)
   IF nk GT 0 THEN BEGIN
     FOR i=0,nk-1 DO BEGIN
       wid_data.iwin[k[i]]=0
-      lam=data->getlam(i)
+      lam=data->get_lambda_vector(i)
       wid_data.lambda[k[i]]=mean(lam)
     ENDFOR
   ENDIF
@@ -408,18 +424,18 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ;
   ; The following adds a slider if multiple files have been input.
   ;
-  IF filestr.nfiles GT 1 THEN BEGIN
-    nf=filestr.nfiles
-    file_base=widget_base(opt_base,/row,frame=1)
-    title='File no. (0-'+trim(nf-1)+')'
-    file_slider=widget_slider(file_base,min=0,max=nf-1,font=font,title=title)
-    file_butt1=widget_button(file_base,value='-',font=bigfont)
-    file_butt2=widget_button(file_base,value='+',font=bigfont)
-  ENDIF ELSE BEGIN
-    file_slider=0
-    file_butt1=0
-    file_butt2=0
-  ENDELSE
+  ;  IF filestr.nfiles GT 1 THEN BEGIN
+  ;    nf=filestr.nfiles
+  ;    file_base=widget_base(opt_base,/row,frame=1)
+  ;    title='File no. (0-'+trim(nf-1)+')'
+  ;    file_slider=widget_slider(file_base,min=0,max=nf-1,font=font,title=title)
+  ;    file_butt1=widget_button(file_base,value='-',font=bigfont)
+  ;    file_butt2=widget_button(file_base,value='+',font=bigfont)
+  ;  ENDIF ELSE BEGIN
+  file_slider=0
+  file_butt1=0
+  file_butt2=0
+  ;  ENDELSE
 
 
   ;
@@ -501,33 +517,33 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ;
   ; NEXP_PRP > 1 BUTTONS
   ; --------------------
-  IF nexp_prp GT 1 THEN BEGIN
-    nexp_prp_base=widget_base(opt_base,/col,frame=1)
-    wid_data.nexp_prp=0
-    text=trim(indgen(nexp_prp))
-    exp=data->getexp()
-    exp=exp[0:nexp_prp-1]
-    expstr=trim(string(format='(f12.1)',exp))+' s'
-    nexp_prp_text=widget_label(nexp_prp_base,val='Choose exposure', $
-      font=font,/align_left)
-    nexp_prp_butts=cw_bgroup(nexp_prp_base,expstr,/exclusive, $
-      set_value=wid_data.nexp_prp,/col,font=font)
-
-  ENDIF ELSE BEGIN
-    nexp_prp_butts=0
-  ENDELSE
+  ;  IF nexp_prp GT 1 THEN BEGIN
+  ;    nexp_prp_base=widget_base(opt_base,/col,frame=1)
+  ;    wid_data.nexp_prp=0
+  ;    text=trim(indgen(nexp_prp))
+  ;    exp=data->getexp()
+  ;    exp=exp[0:nexp_prp-1]
+  ;    expstr=trim(string(format='(f12.1)',exp))+' s'
+  ;    nexp_prp_text=widget_label(nexp_prp_base,val='Choose exposure', $
+  ;      font=font,/align_left)
+  ;    nexp_prp_butts=cw_bgroup(nexp_prp_base,expstr,/exclusive, $
+  ;      set_value=wid_data.nexp_prp,/col,font=font)
+  ;
+  ;  ENDIF ELSE BEGIN
+  nexp_prp_butts=0
+  ;  ENDELSE
 
   ;
   ; The following contains meta-data that goes on the Metadata tab.
   ;
-  stud_acr=data->getinfo('OBSID')
-  IF n_tags(filestr) NE 0 THEN BEGIN
-    date_obs=filestr.t0
-    date_end=filestr.t1
-  ENDIF ELSE BEGIN
-    date_obs=data->getinfo('DATE_OBS')
-    date_end=data->getinfo('DATE_END')
-  ENDELSE
+  stud_acr=data->get_header_info('OBS_ID', 0)
+  ;  IF n_tags(filestr) NE 0 THEN BEGIN
+  ;    date_obs=filestr.t0
+  ;    date_end=filestr.t1
+  ;  ENDIF ELSE BEGIN
+  date_obs=data->get_header_info('DATE-BEG', 0)
+  date_end=data->get_header_info('DATE-END', 0)
+  ;  ENDELSE
   ;
   text1=widget_label(meta_base,val='OBSID: '+stud_acr,font=font, $
     /align_left)
@@ -548,15 +564,15 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   value='YCEN: '+trim(string(format='(f10.1)',meta.ycen))
   text7=widget_label(meta_base,val=value,font=font, $
     /align_left)
-  IF nexp_prp EQ 1 THEN BEGIN
-    cadence=meta.cadence
-    cadstr=trim(string(format='(f10.1)',cadence))+' s'
-    text4=widget_label(meta_base,val='CADENCE: '+cadstr,font=font, $
-      /align_left)
-  ENDIF
-  nuvbin=data->getinfo('SUMSPTRN')
-  fuvbin=data->getinfo('SUMSPTRF')
-  spatbin=data->getinfo('SUMSPAT')
+  ;  IF nexp_prp EQ 1 THEN BEGIN
+  cadence=meta.cadence
+  cadstr=trim(string(format='(f10.1)',cadence))+' s'
+  text4=widget_label(meta_base,val='CADENCE: '+cadstr,font=font, $
+    /align_left)
+  ;  ENDIF
+  nuvbin=data->get_header_info('NBIN3', 0)
+  fuvbin=data->get_header_info('NBIN3', 0)
+  spatbin=data->get_header_info('NBIN2', 0)
   text5a=widget_label(meta_base,val='FUV SPEC BIN: '+trim(fuvbin),font=font, $
     /align_left)
   text5b=widget_label(meta_base,val='NUV SPEC BIN: '+trim(nuvbin),font=font, $
@@ -602,7 +618,7 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   xsiz=fix(260*plot_scale)
   ysiz=fix(250*plot_scale)
 
-  choices=trim(id[0:nwind-1])
+  choices=trim(data->get_window_id())
   choices=['Choose a wavelength window',choices]
   nc=n_elements(choices)
 
@@ -633,7 +649,7 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
       font=font,xsiz=7,/editable)
     auto_int[i]=widget_button(int_butt_base[i],value='Auto',font=font)
     ;
-    lbl_text='Current window: '+trim(id[wid_data.iwin[i]])
+    lbl_text='Current window: '+trim(data->get_window_id(wid_data.iwin[i]))
     window_lbl[i]=widget_label(plot_base[i], $
       value=lbl_text,/align_left,font=font, $
       /frame)
@@ -780,7 +796,7 @@ PRO spice_browser_widget, data, group=group, yoffsets=yoffsets, filestr=filestr,
   ; 'spectra' contains the 1D spectrum for each window. Note that I pad
   ; each spectrum to be the maximum size of all of the spectrum windows
   ;
-  nl=data->getxw()
+  nl=data->get_header_info('NAXIS3', 0)
   spectra=fltarr(max(nl),n_plot_window)
 
   ;

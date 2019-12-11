@@ -1,33 +1,34 @@
 ;+
 ; NAME:
-;     spice_browser_font
+;     SPICE_BROWSER_FONT
 ;
 ; PURPOSE:
-;     XXX
+;     Used internally in spice_raster_browser.
+;     Defines the fonts to be used in the widgets. Allows for Windows and Unix
+;     operating systems.
 ;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;     spice_browser_font, font, big=big, fixed=fixed, retina=retina
+;     spice_browser_font, font [, big=big, fixed=fixed, retina=retina]
 ;
 ; INPUTS:
-;     input:  XXX
-;
-; OPTIONAL INPUTS:
-;     None.
-;
+;     None
+;     
 ; KEYWORDS:
-;     None.
+;     BIG: Bigger font
+;     FIXED: Font with fixed width-letters (Courier)
+;     RETINA: The widget was too big for my MacBook Pro retina screen,
+;             so I've added this keyword to shrink the fonts.
 ;
 ; OUTPUT:
-;     XXX
+;     font: string containing the font
 ;
 ; EXAMPLE:
 ;
-; INTERNAL ROUTINES:
-;
-; PROGRAMMING NOTES:
+; DEPENDENCIES:
+;     None
 ;
 ; HISTORY:
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
@@ -36,13 +37,8 @@
 
 
 PRO spice_browser_font, font, big=big, fixed=fixed, retina=retina
-  ;+
-  ;  Defines the fonts to be used in the widgets. Allows for Windows and Unix
-  ;  operating systems.
-  ;
-  ;  14-Jun-2015: I've added /retina to shrink the fonts for a
-  ;  Mac retina display.
-  ;-
+  COMPILE_OPT IDL2
+
   CASE !version.os_family OF
 
     'unix': BEGIN

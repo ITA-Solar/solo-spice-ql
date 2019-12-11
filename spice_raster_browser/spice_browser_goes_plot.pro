@@ -3,6 +3,7 @@
 ;     spice_browser_goes_plot
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:
@@ -55,6 +56,12 @@ PRO spice_browser_goes_plot, state
       xtit=''
 
     IF state.wid_data.xpix LT state.wid_data.nx THEN BEGIN
+
+; trying to do something like this?
+  ; mid_ti = data->get_time_vector(0)
+  ; t_tai = anytim2tai(data->get_start_time()) + mid_ti
+  ; utc = anytim2utc(t_tai)
+  ; midtime=anytim2utc(t_tai,/ccsds,/time_only,/trunc)
 
       ti1=state.data->getti_1()
       ti2=state.data->getti_2()

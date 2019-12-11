@@ -3,6 +3,7 @@
 ;     spice_browser_base_event
 ;
 ; PURPOSE:
+;     Used internally in spice_raster_browser.
 ;     XXX
 ;
 ; CATEGORY:
@@ -185,7 +186,7 @@ PRO spice_browser_base_event, event
         ENDIF
 
         iwin=state.wid_data.iwin[pwin]
-        wvl=state.data->getlam(iwin)
+        wvl=state.data->get_lambda_vector(iwin)
         ;
         getmin=min(abs(lambda-wvl),lpix)
         state.wid_data.lambda[pwin]=lambda
@@ -227,7 +228,7 @@ PRO spice_browser_base_event, event
   k=where(event.id EQ cw_pd_window,nk)
   IF nk GT 0 THEN BEGIN
     pwin=k[0]
-    window_list=state.data->getline_id()
+    window_list=state.data->get_window_id()
     nw=n_elements(window_list)
     iwin=event.value-1
     ;
@@ -241,7 +242,7 @@ PRO spice_browser_base_event, event
         ;
         ; Choose default wavelength pixel for new window
         ;
-        ll=state.data->getlam(iwin)
+        ll=state.data->get_lambda_vector(iwin)
         nl=n_elements(ll)
         state.wid_data.lambda[pwin]=ll[nl/2]
         state.wid_data.ilambda[pwin]=nl/2
@@ -285,14 +286,14 @@ PRO spice_browser_base_event, event
   ;;    ;
   ;;    ; change label for window
   ;;    ;
-  ;;     id=state.data->getline_id()
+  ;;     id=state.data->get_window_id()
   ;;     widget_control,state.window_lbl[pwin], $
   ;;          set_value='Current window: '+trim(id[event.index-1])
   ;;    ;
   ;;    ; Choose default wavelength pixel for new window
   ;;    ;
   ;;     iwin=event.index-1
-  ;;     ll=state.data->getlam(iwin)
+  ;;     ll=state.data->get_lambda_vector(iwin)
   ;;     nl=n_elements(ll)
   ;;     state.wid_data.lambda[pwin]=ll[nl/2]
   ;;     state.wid_data.ilambda[pwin]=nl/2
@@ -856,8 +857,8 @@ PRO spice_browser_base_event, event
     END
 
     state.eis_butt: BEGIN
-      t0=state.wid_data.filestr.t0
-      t1=state.wid_data.filestr.t1
+      t0=state.data->get_start_time()
+      t1=state.data->get_end_time()
       iris_eis_obs_check,t0,t1,out_string=out_string,margin=30.
       spice_browser_font,tfont,/fixed
       spice_browser_font,bfont
