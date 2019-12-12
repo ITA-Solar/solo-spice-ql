@@ -78,7 +78,6 @@ pro spice_data::close
   ENDFOR
   ptr_free, self.window_data
   ptr_free, self.window_headers
-  ptr_free, self.file_position
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -608,7 +607,6 @@ PRO spice_data::read_file, file, verbose=verbose
   openr, file_lun, file, /swap_if_little_endian, /get_lun
   self.file_lun = file_lun
   position = iris_find_winpos(file_lun, self.nwin)
-  self.file_position = ptr_new(position)
   assocs = ptrarr(self.nwin)
   headers = ptrarr(self.nwin)
   dumbbells = bytarr(self.nwin)
@@ -644,6 +642,5 @@ PRO spice_data__define
     window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
-    file_lun: 0, $              ; Logical Unit Number of the file
-    file_position: ptr_new()}   ; positions within the file where data block starts for each extension in bytes (lon64arr)
+    file_lun: 0}                ; Logical Unit Number of the file
 END
