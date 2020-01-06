@@ -574,6 +574,27 @@ END
 
 
 ;---------------------------------------------------------
+; dumbbell info
+;---------------------------------------------------------
+
+
+;+
+; Description:
+;     Returns 1 if data object contains one or two dumbbells
+;
+; OUTPUT:
+;     boolean, True if input is a valid window index
+;-
+FUNCTION spice_data::has_dumbbells
+  ;returns 1 if data object contains one or two dumbbells
+  COMPILE_OPT IDL2
+
+  return, self.dumbbells[0] ge 0 || self.dumbbells[1] ge 0
+END
+
+
+
+;---------------------------------------------------------
 ; I/O and related methods for loading data
 ;---------------------------------------------------------
 
