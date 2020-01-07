@@ -70,72 +70,76 @@ PRO spice_browser_plot_sji, state
   sji_ind=state.wid_data.sji_index
 
 
+  ;  ;
+  ;  ; Load the SJI data object.
+  ;  ;
+  ;  d=iris_sji(sji_file[sji_ind])
   ;
-  ; Load the SJI data object.
+  ;  ;
+  ;  ; Get time information from the SJI object. Note that sji_tai is the
+  ;  ; time of the mid-point of the exposure.
+  ;  ;
+  ;  sji_ti=d->get_time_vector(0)
+  ;  sji_nexp=d->get_number_exposures(0)
+  ;  sji_exp=d->get_exposure_time(indgen(sji_nexp))
+  ;  sji_ti=sji_ti+sji_exp/2.        ; get mid-time of exposure
+  ;  sji_utc=d->ti2utc(sji_ti)
+  ;  sji_tai=anytim2tai(sji_utc)
+  ;  sji_start=d->getinfo('DATE_OBS')
+  ;  sji_end=d->getinfo('DATE_END')
   ;
-  d=iris_sji(sji_file[sji_ind])
-
+  ;  obj_destroy,d
   ;
-  ; Get time information from the SJI object. Note that sji_tai is the
-  ; time of the mid-point of the exposure.
+  ;  ;
+  ;  ; Update the SJI cadence stored in wid_data.sji_cadence
+  ;  ;
+  ;  t0_tai=anytim2tai(sji_start)
+  ;  t1_tai=anytim2tai(sji_end)
+  ;  state.wid_data.sji_cadence=(t1_tai-t0_tai)/float(sji_nexp)
   ;
-  sji_ti=d->get_time_vector(0)
-  sji_nexp=d->get_number_exposures(0)
-  sji_exp=d->get_exposure_time(indgen(sji_nexp))
-  sji_ti=sji_ti+sji_exp/2.        ; get mid-time of exposure
-  sji_utc=d->ti2utc(sji_ti)
-  sji_tai=anytim2tai(sji_utc)
-  sji_start=d->getinfo('DATE_OBS')
-  sji_end=d->getinfo('DATE_END')
-
-  obj_destroy,d
-
-  ;
-  ; Update the SJI cadence stored in wid_data.sji_cadence
-  ;
-  t0_tai=anytim2tai(sji_start)
-  t1_tai=anytim2tai(sji_end)
-  state.wid_data.sji_cadence=(t1_tai-t0_tai)/float(sji_nexp)
-
-  ;
-  ; Update the SJI movie duration widget
-  ;
-  sji_dur=state.wid_data.sji_cadence*state.wid_data.sji_mov_frames/60.
-  sji_dur_str=trim(string(sji_dur,format='(f7.1)'))
-  dur_t='Movie duration: '+sji_dur_str+' mins (approx)'
-  widget_control,state.sji_dur_text,set_value=dur_t
+  ;  ;
+  ;  ; Update the SJI movie duration widget
+  ;  ;
+  ;  sji_dur=state.wid_data.sji_cadence*state.wid_data.sji_mov_frames/60.
+  ;  sji_dur_str=trim(string(sji_dur,format='(f7.1)'))
+  ;  dur_t='Movie duration: '+sji_dur_str+' mins (approx)'
+  ;  widget_control,state.sji_dur_text,set_value=dur_t
 
 
 
   ;
   ; Find the image index that is closest to the raster exposure.
   ;
-  utc_tai=anytim2tai(utc)   ; TAI for the raster exposure
-  getmin=min(abs(utc_tai-sji_tai),imin)
+  ;  utc_tai=anytim2tai(utc)   ; TAI for the raster exposure
+  ;  getmin=min(abs(utc_tai-sji_tai),imin)
 
   ;
   ; sji_frame is the index of the image frame that will be displayed.
   ; sji_nframe is the total no. of frames
   ;
-  state.wid_data.sji_frame=imin
-  state.wid_data.sji_nframe=sji_nexp
+  ;  state.wid_data.sji_frame=imin
+  ;  state.wid_data.sji_nframe=sji_nexp
 
   ;
   ; The following reads the SJI file. The input imagen requires an
   ; array so I have to give two indices.
   ;
-  IF imin EQ 0 THEN BEGIN
-    read_iris_l2,sji_file[sji_ind],index,data,imagen=[imin,imin+1], $
-      /keep_null,/silent
-    image=reform(data[*,*,0])
-    index=index[0]
-  ENDIF ELSE BEGIN
-    read_iris_l2,sji_file[sji_ind],index,data,imagen=[imin-1,imin], $
-      /keep_null,/silent
-    image=reform(data[*,*,1])
-    index=index[1]
-  ENDELSE
-
+  ;  IF imin EQ 0 THEN BEGIN
+  ;    read_iris_l2,sji_file[sji_ind],index,data,imagen=[imin,imin+1], $
+  ;      /keep_null,/silent
+  ;    image=reform(data[*,*,0])
+  ;    index=index[0]
+  ;  ENDIF ELSE BEGIN
+  ;    read_iris_l2,sji_file[sji_ind],index,data,imagen=[imin-1,imin], $
+  ;      /keep_null,/silent
+  ;    image=reform(data[*,*,1])
+  ;    index=index[1]
+  ;  ENDELSE
+  window_index = (state.data->get_dumbbells_index())[sji_ind]
+  ;data = state.data->get_window_data(window_index, /load)
+  ;help, data
+  ;stop
+  image = state.data->get_one_image(window_index, 0)
 
   ;
   ; Get SJI image coordinate information.
@@ -146,14 +150,14 @@ PRO spice_browser_plot_sji, state
   ;
   ; For roll=90, I need to reverse cdelt1.
   ;
-  xcen=index.xcen
-  ycen=index.ycen
-  cdelt1=index.cdelt1
-  cdelt2=index.cdelt2
-  crpix1=index.crpix1
-  crpix2=index.crpix2
-  fovx=index.fovx
-  fovy=index.fovy
+  xcen=state.data->get_header_info('CRVAL1', window_index)
+  ycen=state.data->get_header_info('CRVAL2', window_index)
+  cdelt1=state.data->get_resolution(window_index, /x)
+  cdelt2=state.data->get_resolution(window_index, /y)
+  crpix1=state.data->get_header_info('CRPIX1', window_index)
+  crpix2=state.data->get_header_info('CRPIX2', window_index)
+  fovx=cdelt1 * state.data->get_header_info('NAXIS1', window_index)
+  fovy=cdelt2 * state.data->get_header_info('NAXIS2', window_index)
   ;
   IF abs(state.wid_data.roll) GE 85 THEN BEGIN
     xc_temp=xcen
@@ -241,7 +245,7 @@ PRO spice_browser_plot_sji, state
   ;
   ; Extract the sub-image to be plotted.
   ;
-  image=image[xr[0]:xr[1],yr[0]:yr[1]]
+  ;image=image[xr[0]:xr[1],yr[0]:yr[1]]
 
   state.wid_data.sji_xrange=xr
   state.wid_data.sji_yrange=yr
@@ -249,11 +253,11 @@ PRO spice_browser_plot_sji, state
   ;
   ; Update the X-range and Y-range pixel labels.
   ;
-  sji_xrange_txt='X-range (pixels): '+trim(xr[0])+' to '+trim(xr[1])
-  widget_control,state.sji_xrange_text,set_value=sji_xrange_txt
-  ;
-  sji_yrange_txt='Y-range (pixels): '+trim(yr[0])+' to '+trim(yr[1])
-  widget_control,state.sji_yrange_text,set_value=sji_yrange_txt
+;  sji_xrange_txt='X-range (pixels): '+trim(xr[0])+' to '+trim(xr[1])
+;  widget_control,state.sji_xrange_text,set_value=sji_xrange_txt
+;  ;
+;  sji_yrange_txt='Y-range (pixels): '+trim(yr[0])+' to '+trim(yr[1])
+;  widget_control,state.sji_yrange_text,set_value=sji_yrange_txt
 
   ;
   ; This picks out the intensity min and max values for the
@@ -324,8 +328,8 @@ PRO spice_browser_plot_sji, state
   ;
   ; Plot the SJI image.
   ;
-  texp_string=trim(string(sji_exp[state.wid_data.sji_frame],format='(f7.2)'))
-  title=anytim2utc(/ccsds,/time,/trunc,sji_utc[imin])+' UT (exp: '+texp_string+'s)'
+  texp_string='xx';trim(string(sji_exp[state.wid_data.sji_frame],format='(f7.2)'))
+  title='title';anytim2utc(/ccsds,/time,/trunc,sji_utc[imin])+' UT (exp: '+texp_string+'s)'
   plot_image,image,origin=origin,scale=scale,min=intmin,max=intmax, $
     title=title, $
     xtitle=xtitle, ytitle=ytitle
