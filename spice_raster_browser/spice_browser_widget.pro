@@ -696,41 +696,41 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     ;
     sji_plot=widget_draw(plot_base_sji,xsiz=xsiz,ysiz=ysiz)
     ;
-    sji_movie_butt=widget_button(plot_base_sji,value='SHOW MOVIE',font=bigfont)
-    ;
-    sji_frames_base=widget_base(plot_base_sji,/row)
-
-    ;
-    ; These are the options for the number of frames to display. Note
-    ; that the max no. of frames is appended (although minus 1).
-    ;
-    value=[11,21,31,51,101,201,301,501,1001,2001,3001,5001]
-    k=where(value LT sji_nexp)
-    value=[value[k],sji_nexp]
-    value_string=string(value)
-    ;
-    ; Choose default value of no. of frames by choosing closest to 10mins
-    ;
-    getmin=min(abs(float(value)*sji_cadence-600.),imin)
-    set_droplist_select=imin
-    mov_duration=value[imin]*sji_cadence/60.   ; minutes
-    ;
-    ; Create the drop-list for no. of frames.
-    ;
-    sji_frames_lbl=widget_label(sji_frames_base,value='No. of frames:',font=font)
-    sji_frames_droplist=widget_droplist(sji_frames_base,value=value_string,font=font)
-    wid_data.sji_mov_frames=fix(value_string[set_droplist_select])
-    ;
-    ; Create label showing movie duration
-    ;
-    sji_dur_str=trim(string(mov_duration,format='(f7.1)'))
-    dur_t='Movie duration: '+sji_dur_str+' mins (approx)'
-    sji_dur_text=widget_label(plot_base_sji,value=dur_t,font=font,/align_left,xsiz=250)
-    ;
-    sji_xrange_text=widget_label(plot_base_sji,value='X-range (pixels):', $
-      font=font,/align_left,xsiz=250)
-    sji_yrange_text=widget_label(plot_base_sji,value='Y-range (pixels):', $
-      font=font,/align_left,xsiz=250)
+;    sji_movie_butt=widget_button(plot_base_sji,value='SHOW MOVIE',font=bigfont)
+;    ;
+;    sji_frames_base=widget_base(plot_base_sji,/row)
+;
+;    ;
+;    ; These are the options for the number of frames to display. Note
+;    ; that the max no. of frames is appended (although minus 1).
+;    ;
+;    value=[11,21,31,51,101,201,301,501,1001,2001,3001,5001]
+;    k=where(value LT sji_nexp)
+;    value=[value[k],sji_nexp]
+;    value_string=string(value)
+;    ;
+;    ; Choose default value of no. of frames by choosing closest to 10mins
+;    ;
+;    getmin=min(abs(float(value)*sji_cadence-600.),imin)
+;    set_droplist_select=imin
+;    mov_duration=value[imin]*sji_cadence/60.   ; minutes
+;    ;
+;    ; Create the drop-list for no. of frames.
+;    ;
+;    sji_frames_lbl=widget_label(sji_frames_base,value='No. of frames:',font=font)
+;    sji_frames_droplist=widget_droplist(sji_frames_base,value=value_string,font=font)
+;    wid_data.sji_mov_frames=fix(value_string[set_droplist_select])
+;    ;
+;    ; Create label showing movie duration
+;    ;
+;    sji_dur_str=trim(string(mov_duration,format='(f7.1)'))
+;    dur_t='Movie duration: '+sji_dur_str+' mins (approx)'
+;    sji_dur_text=widget_label(plot_base_sji,value=dur_t,font=font,/align_left,xsiz=250)
+;    ;
+;    sji_xrange_text=widget_label(plot_base_sji,value='X-range (pixels):', $
+;      font=font,/align_left,xsiz=250)
+;    sji_yrange_text=widget_label(plot_base_sji,value='Y-range (pixels):', $
+;      font=font,/align_left,xsiz=250)
   ENDIF ELSE BEGIN
     min_text_sji=0
     max_text_sji=0
@@ -738,11 +738,11 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     sji_window_lbl=0
     sji_pd_window=0
     sji_plot=0
-    sji_movie_butt=0
-    sji_frames_droplist=0
-    sji_dur_text=0
-    sji_xrange_text=0
-    sji_yrange_text=0
+;    sji_movie_butt=0
+;    sji_frames_droplist=0
+;    sji_dur_text=0
+;    sji_xrange_text=0
+;    sji_yrange_text=0
   ENDELSE
 
 
@@ -881,11 +881,11 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     sji_window_lbl: sji_window_lbl, $
     sji_pd_window: sji_pd_window, $
     sji_plot: sji_plot, $
-    sji_movie_butt: sji_movie_butt, $
-    sji_frames_droplist: sji_frames_droplist, $
-    sji_dur_text: sji_dur_text, $
-    sji_xrange_text: sji_xrange_text, $
-    sji_yrange_text: sji_yrange_text, $
+;    sji_movie_butt: sji_movie_butt, $
+;    sji_frames_droplist: sji_frames_droplist, $
+;    sji_dur_text: sji_dur_text, $
+;    sji_xrange_text: sji_xrange_text, $
+;    sji_yrange_text: sji_yrange_text, $
     spectra: spectra, $
     cw_pd_window: cw_pd_window, $
     ;       whisk_butt: whisk_butt, $
@@ -942,7 +942,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   ; Set initial value for SJI movie frames
   ;
-  IF wid_data.sji EQ 1 THEN widget_control,sji_frames_droplist,set_droplist_select=set_droplist_select
+;  IF wid_data.sji EQ 1 THEN widget_control,sji_frames_droplist,set_droplist_select=set_droplist_select
 
   ;
   ; Make initial plots
