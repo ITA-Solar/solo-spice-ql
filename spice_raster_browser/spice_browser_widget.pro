@@ -223,27 +223,30 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;    duration=anytim2tai(sji_end)-anytim2tai(sji_start)
   ;    sji_cadence=duration/float(sji_nexp)
   ;  ENDIF ELSE BEGIN
-  sji=0
+  ;  sji=0
   sji_file=''
-  sji_id=''
+  ;  sji_id=''
   sji_d=0
   sji_cadence=0.
   ;  ENDELSE
 
 
-  IF sji_file[0] EQ '' THEN BEGIN
+  IF ~data->has_dumbbells() THEN BEGIN
     IF data->get_number_windows() LT 4 THEN n_plot_window=data->get_number_windows() $
     ELSE n_plot_window=4
+    sji=0
+    sji_id=''
   ENDIF ELSE BEGIN
     IF data->get_number_windows() LT 3 THEN n_plot_window=data->get_number_windows() $
     ELSE n_plot_window=3
-    n=n_elements(sji_file)
-    sji_id=strarr(n)
-    FOR i=0,n-1 DO BEGIN
-      basename=file_basename(sji_file[i])
-      sji_id[i]=strmid(basename,35,8)
-    ENDFOR
+    sji=1
+    IF data->get_dumbbells_index(/lower) GE 0 THEN sji_id='Lower'
+    IF data->get_dumbbells_index(/upper) GE 0 THEN BEGIN
+      IF N_ELEMENTS(sji_id) EQ 0 THEN sji_id='Upper' $
+      ELSE sji_id = [sji_id, 'Upper']
+    ENDIF
   ENDELSE
+
 
   wid_data={iwin: intarr(n_plot_window)-1, $     ; index of wavelength window
     im_zoom: 0, $  ; image zoom factor (min=1, max=10)
@@ -957,7 +960,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   spice_browser_goes_plot, state
 
-  IF sji_file[0] NE '' THEN BEGIN
+  IF wid_data.sji EQ 1 THEN BEGIN
     spice_browser_plot_sji, state
   ENDIF
 

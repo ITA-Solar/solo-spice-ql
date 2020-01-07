@@ -413,22 +413,13 @@ PRO spice_browser_base_event, event
     ;
     ; the following replaces the sji_d tag with the new sji object
     ;
-    sji_file=state.wid_data.sji_file[event.index]
-    state_temp=rem_tag(state,'sji_d')
-    state=0
-    state=add_tag(state_temp,iris_sji(sji_file),'sji_d')
-    state_temp=0
-    ;
-    ; For the droplist with the number of frames options, I need to re-do
-    ; the options since different channels may have different numbers of frames.
-    sji_droplist_options=spice_browser_sji_frame_options(state, $
-      default_option=default_option)
-    state.wid_data.sji_mov_frames=fix(sji_droplist_options[default_option])
-
-    ;; sji_nexp=state.sji_d->getnexp(0)
-    ;; sji_droplist_value=[trim(1),trim(sji_nexp)]
-    widget_control,state.sji_frames_droplist,set_value=sji_droplist_options
-    ;
+    
+;    sji_file=state.wid_data.sji_file[event.index]
+;    state_temp=rem_tag(state,'sji_d')
+;    state=0
+;    state=add_tag(state_temp,iris_sji(sji_file),'sji_d')
+;    state_temp=0
+;    ;
 ;    ; For the droplist with the number of frames options, I need to re-do
 ;    ; the options since different channels may have different numbers of frames.
 ;    sji_droplist_options=spice_browser_sji_frame_options(state, $
