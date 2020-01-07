@@ -594,6 +594,29 @@ END
 
 
 
+;+
+; Description:
+;     Returns the indices of the windows that contain the dumbbells
+;     2-element vector, or scalar if /lower or /upper is set.
+;
+; KEYWORD PARAMETERS:
+;     lower : If set, only returns the index of the lower dumbbell
+;     upper : If set, only returns the index of the upper dumbbell
+;     
+; OUTPUT:
+;     boolean, True if input is a valid window index
+;-
+FUNCTION spice_data::get_dumbbells_index, lower=lower, upper=upper
+  ;returns the indices of the windows that contain the dumbbells
+  COMPILE_OPT IDL2
+
+  if keyword_set(lower) then return, self.dumbbells[0]
+  if keyword_set(upper) then return, self.dumbbells[1]
+  return, self.dumbbells
+END
+
+
+
 ;---------------------------------------------------------
 ; I/O and related methods for loading data
 ;---------------------------------------------------------
