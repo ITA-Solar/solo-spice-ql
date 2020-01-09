@@ -281,6 +281,28 @@ END
 
 ;+
 ; Description:
+;     Returns the header of the given window
+;
+; INPUTS:
+;     window_index : the index of the window this keyword belongs to
+;;
+; OUTPUT:
+;     returns the header as a structure
+;-
+FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell
+  ;Returns the header of the given window as a structure
+  COMPILE_OPT IDL2
+
+  IF keyword_set(lower_dumbbell) THEN window_index=self.get_dumbbells_index(/lower)
+  IF keyword_set(upper_dumbbell) THEN window_index=self.get_dumbbells_index(/upper)
+  IF ~self.check_window_index(window_index) THEN return, !NULL
+  return, *(*self.window_headers)[window_index]
+
+END
+
+
+;+
+; Description:
 ;     returns the number of windows this file/object contains
 ;
 ; OUTPUT:
