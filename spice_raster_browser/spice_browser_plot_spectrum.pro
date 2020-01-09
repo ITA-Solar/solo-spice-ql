@@ -84,7 +84,7 @@ PRO spice_browser_plot_spectrum, state, pwin
     usersym,[-1,1,0,-1,1,0],[-1,1,0,1,-1,0],th=2
     plots,v[lpix],spec[lpix],psym=8,symsiz=2
   ENDIF ELSE BEGIN
-    xtitle='Wavelength / angstroms'
+    xtitle='Wavelength / '+state.data->get_header_info('CUNIT3', iwin, '')
     plot,wvl,spec,psym=10,/xsty,xrange=wrange, $
       tit=title,ysty=1,yrange=yrange, $
       xtitle=xtitle,ytitle=ytitle

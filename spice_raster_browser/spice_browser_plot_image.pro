@@ -150,12 +150,12 @@ PRO spice_browser_plot_image, state, pwin, ps=ps
       axis,xaxis=1,xra=xra,xsty=1,charsiz=0.0001
     ENDIF ELSE BEGIN
       xra=[lam[i0],lam[i1]]
-      axis,xaxis=0,xra=xra,xsty=1,xtitle='Wavelength / A'
+      axis,xaxis=0,xra=xra,xsty=1,xtitle='Wavelength / '+state.data->get_header_info('CUNIT3', iwin, '')
       axis,xaxis=1,xra=xra,xsty=1,charsiz=0.0001
     ENDELSE
     ;
     yra=ypos[[j0,j1]]
-    axis,yaxis=0,yra=yra,ytit='Y / arcsec',ysty=1
+    axis,yaxis=0,yra=yra,ytit='Y / '+state.data->get_header_info('CUNIT2', iwin, ''),ysty=1
     axis,yaxis=1,yra=yra,charsiz=0.00001,ysty=1
     ;
     usersym,[0,-1,1,0,1,-1,0],[0,-1,1,0,-1,1,0],th=2
