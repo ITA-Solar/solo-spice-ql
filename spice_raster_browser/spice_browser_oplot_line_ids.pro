@@ -42,7 +42,7 @@ FUNCTION spice_browser_oplot_line_ids, wrange, yrange, idstr, velocity=velocity,
   ;
   n=n_elements(idstr)
   FOR i=0,n-1 DO BEGIN
-    wvl=idstr[i].wvl
+    wvl=idstr[i].wvl/10.0 ; id strings are Angstrom, but SPICE uses nm
     ion=idstr[i].ion
     IF keyword_set(velocity) THEN wvl=lamb2v(wvl-refwvl,refwvl)
     ;
