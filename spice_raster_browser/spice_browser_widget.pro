@@ -297,7 +297,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     sji: sji, $
     sji_file: sji_file, $     ; array of all SJI filenames
     sji_id: sji_id, $         ; array of IDs (e.g., 'SJI_1400')
-    sji_plot_id: -1, $
+    sji_plot_id: [-1,-1], $
     sji_index: -1, $
     sji_frame: 0, $           ; computed by plot_sji_image
     sji_mov_frames: 0, $
@@ -678,6 +678,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   ; The following sets up the widgets for displaying the SJI images
   ;
+  sji_plot=lonarr(2)
   IF wid_data.sji EQ 1 THEN BEGIN
     plot_base_sji=widget_base(spice_browser_base,/col)
     ;
@@ -697,7 +698,8 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
       /frame)
     sji_pd_window=widget_droplist(plot_base_sji,value=sji_id,font=font)
     ;
-    sji_plot=widget_draw(plot_base_sji,xsiz=xsiz,ysiz=ysiz)
+    sji_plot[0]=widget_draw(plot_base_sji,xsiz=xsiz,ysiz=ysiz)
+    sji_plot[1]=widget_draw(plot_base_sji,xsiz=xsiz,ysiz=ysiz)
     ;
 ;    sji_movie_butt=widget_button(plot_base_sji,value='SHOW MOVIE',font=bigfont)
 ;    ;
@@ -740,7 +742,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     auto_int_sji=0
     sji_window_lbl=0
     sji_pd_window=0
-    sji_plot=0
+    sji_plot=[-1,-1]
 ;    sji_movie_butt=0
 ;    sji_frames_droplist=0
 ;    sji_dur_text=0
@@ -933,8 +935,10 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ENDFOR
   ;
   IF wid_data.sji EQ 1 THEN BEGIN
-    widget_control,sji_plot,get_value=val
-    state.wid_data.sji_plot_id=val
+    widget_control,sji_plot[0],get_value=val
+    state.wid_data.sji_plot_id[0]=val
+    widget_control,sji_plot[1],get_value=val
+    state.wid_data.sji_plot_id[1]=val
   ENDIF
   ;
   widget_control,goes_plot,get_value=val
