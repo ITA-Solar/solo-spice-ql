@@ -537,6 +537,74 @@ END
 
 ;+
 ; Description:
+;     returns the coordinate(s) of one or more specified pixels, or if
+;     pixels is not provided, for all pixels. returns coordinate(s) either
+;     for all dimensions or just the one specified.
+;
+; INPUTS:
+;     window_index : the index of the window
+; 
+; OPTIONAL INPUTS:
+;     pixels : the pixel for which the coordinates should be returned. Values can be
+;              outside of the actual data volume and can be floating point numbers. 
+;              Must be either a 4-element vector, or a 2D array of the form (4,n)
+;              where n is the number of desired pixels.
+;
+; OPTIONAL KEYWORDS:
+;     x : if set, only coordinates of first dimension (x-direction) or returned
+;     y : if set, only coordinates of second dimension (y-direction) or returned
+;     lambda : if set, only coordinates of third dimension (wavelength) or returned
+;     time : if set, only coordinates of fourth dimension (time) or returned
+;
+; OUTPUT:
+;     float array, 
+;         scalar: if one pixel is provided and one of the keywords is set
+;         1D: - 1 pixel provided, no keywords set (4-element vector)
+;             - several (n) pixels provided, one of the keywords set (n-element vector)
+;         2D: several (n) pixels provided, no keywords set (4 x n array)
+;         4D: no pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
+;         5D: no pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
+;-
+FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambda, time=time
+  ;returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
+  COMPILE_OPT IDL2
+
+  IF ~self.check_window_index(window_index) THEN return, !NULL
+  size_pixels = size(pixels)
+  IF (size_pixels[0] GT 0 && size_pixels[1] NE 4) || size_pixels[0] GT 2 THEN BEGIN
+    message, 'pixels must have size (4,x) where x=any natural number', /info
+    return, !NULL
+  ENDIF
+  
+  coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
+  CASE 1 OF
+    keyword_set(x): axis_ind = 0
+    keyword_set(y): axis_ind = 1
+    keyword_set(lambda): axis_ind = 2
+    keyword_set(time): axis_ind = 3
+    ELSE: axis_ind = indgen(4) 
+  ENDCASE
+
+  IF size_pixels[0] EQ 0 THEN BEGIN
+    IF N_ELEMENTS(axis_ind) EQ 1 THEN BEGIN
+      naxis1 = self.get_header_info('naxis1', window_index)
+      naxis2 = self.get_header_info('naxis2', window_index)
+      naxis3 = self.get_header_info('naxis3', window_index)
+      naxis4 = self.get_header_info('naxis4', window_index)
+      return, reform(coords[axis_ind,*,*,*,*], [naxis1, naxis2, naxis3, naxis4])
+    ENDIF
+    return, coords
+
+  ENDIF ELSE IF size_pixels[0] EQ 1 THEN BEGIN
+    return, coords[axis_ind]
+  ENDIF ELSE BEGIN
+    return, reform(coords[axis_ind, *])
+  ENDELSE  
+END
+
+
+;+
+; Description:
 ;     returns a vector containting the resolution of each dimension, or a
 ;     scalar number respresenting the resolution of one dimension.
 ;
@@ -675,10 +743,12 @@ PRO spice_data::read_file, file, verbose=verbose
   position = iris_find_winpos(file_lun, self.nwin)
   assocs = ptrarr(self.nwin)
   headers = ptrarr(self.nwin)
+  wcs = ptrarr(self.nwin)
   dumbbells = bytarr(self.nwin)
   FOR iwin = 0, self.nwin-1 DO BEGIN
     mreadfits_header, file, hdr, extension=iwin
     headers[iwin] = ptr_new(hdr)
+    wcs[iwin] = ptr_new(fitshead2wcs(hdr))
     IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
     ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
 
@@ -691,7 +761,7 @@ PRO spice_data::read_file, file, verbose=verbose
   ENDFOR ; iwin = 0, self.nwin-1
   self.window_data = ptr_new(assocs)
   self.window_headers = ptr_new(headers)
-
+  self.window_wcs = ptr_new(wcs)
 END
 
 
@@ -707,6 +777,7 @@ PRO spice_data__define
     nwin: 0, $                  ; number of windows
     window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
+    window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     file_lun: 0}                ; Logical Unit Number of the file
 END
