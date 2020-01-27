@@ -78,7 +78,6 @@ pro spice_data::close
   ENDFOR
   ptr_free, self.window_data
   ptr_free, self.window_headers
-  ptr_free, self.file_position
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -276,6 +275,28 @@ FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exis
     IF N_ELEMENTS(missing_value) EQ 0 THEN return, !NULL $
     ELSE return, missing_value
   ENDELSE
+
+END
+
+
+;+
+; Description:
+;     Returns the header of the given window
+;
+; INPUTS:
+;     window_index : the index of the window this keyword belongs to
+;;
+; OUTPUT:
+;     returns the header as a structure
+;-
+FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell
+  ;Returns the header of the given window as a structure
+  COMPILE_OPT IDL2
+
+  IF keyword_set(lower_dumbbell) THEN window_index=self.get_dumbbells_index(/lower)
+  IF keyword_set(upper_dumbbell) THEN window_index=self.get_dumbbells_index(/upper)
+  IF ~self.check_window_index(window_index) THEN return, !NULL
+  return, *(*self.window_headers)[window_index]
 
 END
 
@@ -516,6 +537,74 @@ END
 
 ;+
 ; Description:
+;     returns the coordinate(s) of one or more specified pixels, or if
+;     pixels is not provided, for all pixels. returns coordinate(s) either
+;     for all dimensions or just the one specified.
+;
+; INPUTS:
+;     window_index : the index of the window
+; 
+; OPTIONAL INPUTS:
+;     pixels : the pixel for which the coordinates should be returned. Values can be
+;              outside of the actual data volume and can be floating point numbers. 
+;              Must be either a 4-element vector, or a 2D array of the form (4,n)
+;              where n is the number of desired pixels.
+;
+; OPTIONAL KEYWORDS:
+;     x : if set, only coordinates of first dimension (x-direction) or returned
+;     y : if set, only coordinates of second dimension (y-direction) or returned
+;     lambda : if set, only coordinates of third dimension (wavelength) or returned
+;     time : if set, only coordinates of fourth dimension (time) or returned
+;
+; OUTPUT:
+;     float array, 
+;         scalar: if one pixel is provided and one of the keywords is set
+;         1D: - 1 pixel provided, no keywords set (4-element vector)
+;             - several (n) pixels provided, one of the keywords set (n-element vector)
+;         2D: several (n) pixels provided, no keywords set (4 x n array)
+;         4D: no pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
+;         5D: no pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
+;-
+FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambda, time=time
+  ;returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
+  COMPILE_OPT IDL2
+
+  IF ~self.check_window_index(window_index) THEN return, !NULL
+  size_pixels = size(pixels)
+  IF (size_pixels[0] GT 0 && size_pixels[1] NE 4) || size_pixels[0] GT 2 THEN BEGIN
+    message, 'pixels must have size (4,x) where x=any natural number', /info
+    return, !NULL
+  ENDIF
+  
+  coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
+  CASE 1 OF
+    keyword_set(x): axis_ind = 0
+    keyword_set(y): axis_ind = 1
+    keyword_set(lambda): axis_ind = 2
+    keyword_set(time): axis_ind = 3
+    ELSE: axis_ind = indgen(4) 
+  ENDCASE
+
+  IF size_pixels[0] EQ 0 THEN BEGIN
+    IF N_ELEMENTS(axis_ind) EQ 1 THEN BEGIN
+      naxis1 = self.get_header_info('naxis1', window_index)
+      naxis2 = self.get_header_info('naxis2', window_index)
+      naxis3 = self.get_header_info('naxis3', window_index)
+      naxis4 = self.get_header_info('naxis4', window_index)
+      return, reform(coords[axis_ind,*,*,*,*], [naxis1, naxis2, naxis3, naxis4])
+    ENDIF
+    return, coords
+
+  ENDIF ELSE IF size_pixels[0] EQ 1 THEN BEGIN
+    return, coords[axis_ind]
+  ENDIF ELSE BEGIN
+    return, reform(coords[axis_ind, *])
+  ENDELSE  
+END
+
+
+;+
+; Description:
 ;     returns a vector containting the resolution of each dimension, or a
 ;     scalar number respresenting the resolution of one dimension.
 ;
@@ -575,6 +664,50 @@ END
 
 
 ;---------------------------------------------------------
+; dumbbell info
+;---------------------------------------------------------
+
+
+;+
+; Description:
+;     Returns 1 if data object contains one or two dumbbells
+;
+; OUTPUT:
+;     boolean, True if input is a valid window index
+;-
+FUNCTION spice_data::has_dumbbells
+  ;returns 1 if data object contains one or two dumbbells
+  COMPILE_OPT IDL2
+
+  return, self.dumbbells[0] ge 0 || self.dumbbells[1] ge 0
+END
+
+
+
+;+
+; Description:
+;     Returns the indices of the windows that contain the dumbbells
+;     2-element vector, or scalar if /lower or /upper is set.
+;
+; KEYWORD PARAMETERS:
+;     lower : If set, only returns the index of the lower dumbbell
+;     upper : If set, only returns the index of the upper dumbbell
+;     
+; OUTPUT:
+;     boolean, True if input is a valid window index
+;-
+FUNCTION spice_data::get_dumbbells_index, lower=lower, upper=upper
+  ;returns the indices of the windows that contain the dumbbells
+  COMPILE_OPT IDL2
+
+  if keyword_set(lower) then return, self.dumbbells[0]
+  if keyword_set(upper) then return, self.dumbbells[1]
+  return, self.dumbbells
+END
+
+
+
+;---------------------------------------------------------
 ; I/O and related methods for loading data
 ;---------------------------------------------------------
 
@@ -608,13 +741,14 @@ PRO spice_data::read_file, file, verbose=verbose
   openr, file_lun, file, /swap_if_little_endian, /get_lun
   self.file_lun = file_lun
   position = iris_find_winpos(file_lun, self.nwin)
-  self.file_position = ptr_new(position)
   assocs = ptrarr(self.nwin)
   headers = ptrarr(self.nwin)
+  wcs = ptrarr(self.nwin)
   dumbbells = bytarr(self.nwin)
   FOR iwin = 0, self.nwin-1 DO BEGIN
     mreadfits_header, file, hdr, extension=iwin
     headers[iwin] = ptr_new(hdr)
+    wcs[iwin] = ptr_new(fitshead2wcs(hdr))
     IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
     ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
 
@@ -627,7 +761,7 @@ PRO spice_data::read_file, file, verbose=verbose
   ENDFOR ; iwin = 0, self.nwin-1
   self.window_data = ptr_new(assocs)
   self.window_headers = ptr_new(headers)
-
+  self.window_wcs = ptr_new(wcs)
 END
 
 
@@ -643,7 +777,7 @@ PRO spice_data__define
     nwin: 0, $                  ; number of windows
     window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
+    window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
-    file_lun: 0, $              ; Logical Unit Number of the file
-    file_position: ptr_new()}   ; positions within the file where data block starts for each extension in bytes (lon64arr)
+    file_lun: 0}                ; Logical Unit Number of the file
 END
