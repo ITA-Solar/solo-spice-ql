@@ -246,7 +246,9 @@ PRO spice_browser_plot_sji, state
     ;
     ; Create 'origin' for plot_image.
     ;
-    origin=[ xcen - ( (crpix1-xr[0])*cdelt1), $
+    ;origin=[ xcen - ( (crpix1-xr[0])*cdelt1), $
+    ;  ycen - ( (crpix2-yr[0])*cdelt2) ]
+    origin=[ state.data->get_wcs_coord(window_index,[0,0,0,0], /x), $
       ycen - ( (crpix2-yr[0])*cdelt2) ]
 
     ;
