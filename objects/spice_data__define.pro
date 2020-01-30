@@ -306,7 +306,7 @@ END
 ;     returns the number of windows this file/object contains
 ;
 ; OUTPUT:
-;     number of windows
+;     int: number of windows
 ;-
 FUNCTION spice_data::get_number_windows
   ;returns the number of windows this file contains
@@ -318,10 +318,42 @@ END
 
 ;+
 ; Description:
+;     returns the title
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_title
+  ;returns the title, i.e. 'SPICE'
+  COMPILE_OPT IDL2
+
+  return, self.title
+END
+
+
+;+
+; Description:
+;     returns SPICE OBS ID
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_obs_id
+  ;returns SPICE OBS ID
+  COMPILE_OPT IDL2
+
+  obs_id = self.get_header_info('SPIOBSID', 0)
+  IF size(obs_id, /TYPE) NE 7 THEN obs_id = strtrim(string(obs_id),2)
+  return, obs_id
+END
+
+
+;+
+; Description:
 ;     returns start date and time of observation in UTC format
 ;
 ; OUTPUT:
-;     number of windows
+;     int: number of windows
 ;-
 FUNCTION spice_data::get_start_time
   ;returns start date and time of observation in UTC format
@@ -337,7 +369,7 @@ END
 ;     returns end date and time of observation in UTC format
 ;
 ; OUTPUT:
-;     number of windows
+;     string
 ;-
 FUNCTION spice_data::get_end_time
   ;returns end date and time of observation in UTC format
@@ -361,6 +393,38 @@ FUNCTION spice_data::get_sit_and_stare
 
   sit_and_stare = self.get_header_info('STUDYTYP', 0) EQ 'Sit-and-stare'
   return, sit_and_stare
+END
+
+
+;+
+; Description:
+;     returns BUNIT, physical units of the data
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_variable_unit
+  ;returns BUNIT, physical units of the data
+  COMPILE_OPT IDL2
+
+  bunit = self.get_header_info('BUNIT', 0)
+  return, bunit
+END
+
+
+;+
+; Description:
+;     returns S/C CCW roll relative to Solar north in degrees
+;
+; OUTPUT:
+;     float
+;-
+FUNCTION spice_data::get_satellite_rotation
+  ;returns S/C CCW roll relative to Solar north in degrees
+  COMPILE_OPT IDL2
+
+  crota = self.get_header_info('CROTA', 0)
+  return, crota
 END
 
 

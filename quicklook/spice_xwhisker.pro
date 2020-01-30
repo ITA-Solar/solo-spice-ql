@@ -671,7 +671,7 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
                      xsize = d_xsz, ysize = d_ysz, $
                        /button_events, event_pro='spice_xwhisker_zoom')
 ;
-  colorbar_title=data->gettitle()+' '+(data->getvariableunit())
+  colorbar_title=data->get_title()+' '+(data->get_variable_unit())
 ; create menu for controlling action in draw window
   dwoption = widget_base(lcol, /column, /frame)
   dwoption_title = widget_label(dwoption, value = 'Window action')
@@ -686,7 +686,7 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
                             /exclusive, set_value = 0, $
                             event_func = 'spice_xwhisker_dwoption')
 
-  titletext = widget_label(lcol,value = data->getdate_obs()+' '+data->getobsid(),/align_center)
+  titletext = widget_label(lcol,value = data->get_start_time()+' '+data->get_obs_id(),/align_center)
 
   lsubcol = widget_base(lcol, /row)
   sliderbase = widget_base(lsubcol,/col)
@@ -700,22 +700,22 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
                                  event_pro = 'spice_xwhisker_expprp_slider')
   endif
   
-  id = data->getline_id(line)
+  id = data->get_window_id(line)
   idbase = widget_base(lsubcol,/col)
   idtext = widget_label(idbase,value = strtrim(id,2),/align_left)
 
   exposurebase = widget_base(idbase,/col)
   exposuretext = widget_label(exposurebase, $
-    value = strtrim('Exp time: '+string((data->getexp(0,iwin=line)),format='(f7.1)')+' s',2), $
+    value = strtrim('Exp time: '+string((data->get_exposure_time(line)),format='(f7.1)')+' s',2), $
     /align_left)
      
   xycenbase = widget_base(exposurebase,/col)
   xycentext = widget_label(xycenbase, $
-      value = 'Xcen: '+ string((data->getxcen()),format='(f8.3)')+ $
-             ' Ycen: '+ string((data->getycen()),format='(f8.3)'), $
+      value = 'Xcen: '+ string((data->get_header_info('crval1', line)),format='(f8.3)')+ $
+             ' Ycen: '+ string((data->get_header_info('crval2', line)),format='(f8.3)'), $
       /align_left)
 
-  rot=round(data->getinfo('SAT_ROT'))
+  rot=round(data->get_satellite_rotation())
   if rot lt 0 then rot=360+rot
   if rot eq 90 or rot eq 270 then begin
     pzty=data->getxpos(line)
@@ -793,10 +793,8 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
           fmirrytext:fmirrytext, $
           xycentext:xycentext, $
           xticks:0, $
-          nslit:nslit,  $
           nlam:nlam, $
           nraster:nraster, $
-          nexp:nexp, $
           expindx:expindx, $
           nexpprp:nexpprp, $
           exprp:1, $
