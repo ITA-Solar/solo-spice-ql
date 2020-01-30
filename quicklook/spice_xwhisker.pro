@@ -640,7 +640,7 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   tv, bytscl(image, top = ncolors)
   pixid = !d.window
 ; base widget:
-  xwt = 'SPICE_Xwhisker - '+data->getfilename()   ; spice_xwhisker window title
+  xwt = 'SPICE_Xwhisker - '+data->get_filename()   ; spice_xwhisker window title
   tlb = widget_base(/row, title=xwt, tlb_size_events = 1, $
                     mbar=menubar, xoffset=100, yoffset=100,group_leader=group_leader)
   lcol = widget_base(tlb, /frame, /column)      ;left column.

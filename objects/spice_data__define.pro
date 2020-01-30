@@ -772,6 +772,7 @@ PRO spice_data::read_file, file, verbose=verbose
   self.close
   IF keyword_set(verbose) THEN silent=1 ELSE silent=0
   message, 'reading file: ' + file, /info
+  self.file = file
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
   self.nwin = hdr.nwin
 
@@ -805,12 +806,28 @@ END
 
 ;+
 ; Description:
+;     Returns the input filename
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_filename
+  ;returns the input filenam
+  COMPILE_OPT IDL2
+
+  return, self.file
+END
+
+
+;+
+; Description:
 ;     Class definition procedure
 ;-
 PRO spice_data__define
   COMPILE_OPT IDL2
 
   struct = {spice_data, $
+    file: '', $                 ; input filename
     title: '', $                ; instrument name
     nwin: 0, $                  ; number of windows
     window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
