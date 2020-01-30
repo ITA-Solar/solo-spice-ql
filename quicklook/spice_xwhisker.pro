@@ -598,11 +598,10 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   d_xsz = sz[1]/1.5
   d_ysz = sz[0]/1.4
 ;
-  sit_and_stare = data->getsit_and_stare(line)
-  nslit=data->getnslit(line)
-  nraster = data->getnraster(line)
-  nexp = data-> getnexp(line)
-  nexpprp = data->getnexp_prp(line)  ; number of exp pr. raster pos.
+  sit_and_stare = data->get_sit_and_stare()
+  nslit=data->get_header_info('NAXIS2', line)
+  nraster = data->get_number_exposures(line)
+  nexpprp = 1 ;data->getnexp_prp(line)  ; number of exp pr. raster pos.
   slitpos = 0
 ; so far QL can not handle sit-and-stare with different exposure times 
 ; (when it is run as "multiple exp pr rast. pos.)
@@ -612,7 +611,7 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   message = ['Loading data into memory...','...this may take some time']
   xmessage,message,wbase=wbase,font='helvetica'
   widget_control,/hourglass
-  data->getwin,line,wd,pos,/load
+  wd = data->get_window_data(line,/load)
   xkill,wbase
   if nexpprp le 1 then begin
     image = reform(wd[*,slitpos,*])
@@ -622,10 +621,10 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
     expindx = indgen(nraster)*nexpprp + expnr_at_rp - 1
     image = reform(wd[*, slitpos, expindx])
   endelse
-  wd=iris_histo_opt(wd,missing=data->missing())
+  wd=iris_histo_opt(wd)
   imin=min(wd)
   imax=max(wd)
-  image=iris_histo_opt(image,missing=data->missing())
+  image=iris_histo_opt(image)
 ; initialize size of draw window
   sz = size(wd)
   ndim = sz[0]
