@@ -432,6 +432,44 @@ END
 
 ;+
 ; Description:
+;     returns name of axis, if axis is not provided a string vector
+;     will be returned that contains the names of all axes.
+;     The name of the axis includes its unit in square brackets,
+;     except if the pixels keyword is set, then it says pixels instead
+;     of units, or if no_unit keyword is set.
+;
+; OPTIONAL INPUTS:
+;     axis : the index of the axis, may be a vector
+;
+; KEYWORD PARAMETERS:
+;     pixels : return 'pixels' as unit
+;     no_unit : do not include units in axis name
+;
+; OUTPUT:
+;     string or string array
+;-
+FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
+  ;eturns name of axis, if axis is not provided a string vector will be returned
+  COMPILE_OPT IDL2
+
+  axes = ['Solar X', 'Solar Y', 'Wavelength', 'Time']
+  IF ~keyword_set(no_unit) THEN BEGIN
+    IF keyword_set(pixels) THEN BEGIN
+      axes = axes + '[pixels]'
+    ENDIF ELSE BEGIN
+      axes[0] = axes[0] + ' [' + strtrim(self.get_header_info('CUNIT1', 0),2) +']'
+      axes[1] = axes[1] + ' [' + strtrim(self.get_header_info('CUNIT2', 0),2) +']'
+      axes[2] = axes[2] + ' [' + strtrim(self.get_header_info('CUNIT3', 0),2) +']'
+      axes[3] = axes[3] + ' [' + strtrim(self.get_header_info('CUNIT4', 0),2) +']'
+    ENDELSE
+  ENDIF
+  IF N_ELEMENTS(axis) eq 0 THEN return, axes
+  return, axes[axis]
+END
+
+
+;+
+; Description:
 ;     returns a vector containting the coordinate for each pixel in first dimension, instrument x-direction
 ;
 ; INPUTS:

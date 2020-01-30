@@ -632,10 +632,10 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   nlam = xsz
   ysz = sz[3]
 ;
-  xdim = 0
-  if sit_and_stare then ydim = 3 else ydim = 2
-  xtitle = data->getxytitle(xdim)
-  ytitle = data->getxytitle(ydim)
+  xdim = 3
+  if sit_and_stare then ydim = 2 else ydim = 2
+  xtitle = data->get_axis_title(xdim)
+  ytitle = data->get_axis_title(ydim)
   window, /pixmap, /free, xsize = xsz, ysize = ysz
   tv, bytscl(image, top = ncolors)
   pixid = !d.window
