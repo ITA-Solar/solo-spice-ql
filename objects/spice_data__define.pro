@@ -430,6 +430,22 @@ END
 
 ;+
 ; Description:
+;     returns the value for missing pixels
+;
+; OUTPUT:
+;     float
+;-
+FUNCTION spice_data::get_missing_value
+  ;returns the value for missing pixels
+  COMPILE_OPT IDL2
+
+  missing = self.get_header_info('BLANK', 0)
+  return, missing
+END
+
+
+;+
+; Description:
 ;     returns the window ID
 ;
 ; INPUTS:

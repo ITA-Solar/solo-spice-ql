@@ -817,13 +817,8 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
           histo_lim:histo_lim, $
           imin:imin, $
           imax:imax, $
-          missing:data->missing(), $
-          drawcolor:drawcolor, $
-          mainpixid:pixid, $
-          pixid:pixid, $
-          xtitle:xtitle, $
-          ytitle:ytitle, $
-          wid:wid}
+    missing:data->get_missing_value(), $
+    drawcolor:drawcolor, $
   info = ptr_new(info, /no_copy)
   (*info).data=ptr_new(data)
   ; set user value of tlb widget to be the info ptr
