@@ -414,6 +414,22 @@ END
 
 ;+
 ; Description:
+;     returns BTYPE, type of data in images
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_variable_type
+  ;returns BTYPE, type of data in images
+  COMPILE_OPT IDL2
+
+  btype = self.get_header_info('BTYPE', 0)
+  return, btype
+END
+
+
+;+
+; Description:
 ;     returns S/C CCW roll relative to Solar north in degrees
 ;
 ; OUTPUT:
