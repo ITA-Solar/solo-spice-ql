@@ -253,15 +253,17 @@ pro spice_xwhisker_slitslider, event
     sz=size((*info).image)
     image=fltarr(sz[1],sz[2])+(*info).missing
   endif
-  rot=round(*(*info).data->getinfo('SAT_ROT'))
+  rot=round(*(*info).data->get_satellite_rotation())
   if rot < 0 then rot=360+rot
   if rot eq 90 or rot eq 270 then begin
-    pzty=(*(*info).data->getxpos((*info).line))[(*info).slitpos]
+    pzty=data->get_instr_x_vector(line)
+    slittxt='X: '
   endif else begin
-    pzty=(*(*info).data->getypos((*info).line))[(*info).slitpos]
+    pzty=data->get_instr_y_vector(line)
+    slittxt='Y: '
   endelse
   widget_control,(*info).fmirrytext, $
-    set_value = 'Y: '+ string(pzty[0],format='(f8.3)')+' arcsec'
+    set_value = slittxt + string(pzty[0],format='(f8.3)')+' arcsec'
   ; display new raster position
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
@@ -345,7 +347,7 @@ pro spice_xwhisker_zoom, event
         end
         1:begin
           ;set up axis titles for line plots (options 1 or 2 below)
-          varname = *(*info).data->getvariablename()
+          varname = *(*info).data->get_variable_type()
           varname = varname[0] +': column average'
           dmean = total(image, 1)/sz[1]
           if sz[0] ge 2 then begin
@@ -358,7 +360,7 @@ pro spice_xwhisker_zoom, event
         end
         2:begin
           ;set up axis titles for line plots (options 1 or 2 below)
-          varname = *(*info).data->getvariablename()
+          varname = *(*info).data->get_variable_type()
           varname = varname[0] +': row average'
           dmean = total(image, 2)/sz[2]
           if sz[0] ge 2 then begin
@@ -392,7 +394,7 @@ end
 pro spice_xwhisker_anim, event
   widget_control, event.top, get_uvalue = info
   if 1.0 eq swap_endian(1.0,/swap_if_big_endian) then swap=1
-  iris_ximovie,*(*info).data->getfilename(),group_leader=(*info).tlb, $
+  iris_ximovie,*(*info).data->get_filename(),group_leader=(*info).tlb, $
     *(*info).data->getxw((*info).line),*(*info).data->getyw((*info).line), $
     nframes=*(*info).data->getnraster((*info).line), $
     offset=*(*info).data->getposition((*info).line),/float,swap=swap, $
@@ -459,7 +461,7 @@ end
 pro spice_xwhisker_wpix, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
-  (*info).xtitle = *(*info).data->get_axis_title((*info).ydim, /pixels)
+  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim, /pixels)
   (*info).xdim_unit = 0
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
@@ -470,7 +472,7 @@ end
 pro spice_xwhisker_wangstr, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
-  (*info).xtitle = *(*info).data->get_axis_title((*info).ydim)
+  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim)
   (*info).xdim_unit = 1
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
@@ -529,7 +531,7 @@ pro spice_xwhisker_lineplot, event
     else:
   endcase
   ; set up titles for plot
-  varname = *(*info).data-> getvariablename()
+  varname = *(*info).data->get_variable_type()
   varname = varname[0]
   case mode of
     0: begin
