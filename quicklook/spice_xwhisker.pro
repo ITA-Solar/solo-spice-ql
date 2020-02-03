@@ -392,6 +392,8 @@ end
 
 ; create animation widget and launch animation
 pro spice_xwhisker_anim, event
+  print,'does NOT work yet'
+  return
   widget_control, event.top, get_uvalue = info
   if 1.0 eq swap_endian(1.0,/swap_if_big_endian) then swap=1
   iris_ximovie,*(*info).data->get_filename(),group_leader=(*info).tlb, $
