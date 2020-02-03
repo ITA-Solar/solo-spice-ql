@@ -489,6 +489,27 @@ END
 
 ;+
 ; Description:
+;     returns the window ID
+;
+; INPUTS:
+;     window_index : the index of the window the ID is asked for
+;
+; OUTPUT:
+;     string
+;-
+PRO spice_data::show_lines
+  ;returns the window ID
+  COMPILE_OPT IDL2
+
+  window_id = self.get_window_id()
+  FOR i=0,self.get_number_windows()-1 DO BEGIN
+    print, i, ': ' + window_id[i]
+  ENDFOR
+END
+
+
+;+
+; Description:
 ;     returns the number of exposures in the window
 ;
 ; INPUTS:
