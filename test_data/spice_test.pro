@@ -1,7 +1,7 @@
 PRO spice_test, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=1
+  IF N_ELEMENTS(file_number) NE 1 then file_number=2
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
@@ -16,5 +16,6 @@ PRO spice_test, file_number
   ;stop
   
   ;spice_raster_browser, obj, /no_goes
-  spice_xwhisker, obj, 0
+  ;spice_xwhisker, obj, 0
+  d = spice_getwindata(obj)
 END
