@@ -97,12 +97,25 @@ pro spice_xwhisker_draw, event
     ysize = (*info).d_ysz
   ; make new drawimage and axes
   sz = size((*info).image)
+  ;region=*(*info).data->getregion((*info).line,/full)
+  ;px=*(*info).data->getlambda(region,wscale='pixels')
+  ;xscale=*(*info).data->getlambda(region)
+  ;pos=(*info).pos
   ;  pos[0]=pos[0]-(*(*info).data->getccd(region))[0]
   ;xscale=xscale[pos[0]-px[0]:pos[0]-px[0]+pos[1]-1]
+  sit_and_stare=(*info).sit_and_stare
+  if ~(*info).xdim_unit then begin
+    xpos=indgen(sz[1])
   endif else begin
-    if sit_and_stare then ypos=*(*info).data->gettime((*info).line) $
-    else ypos=*(*info).data->getxpos(iwin=(*info).line)
- endelse
+    xpos=*(*info).data->get_lambda_vector((*info).line)
+  endelse
+  xscale=xpos
+  if ~(*info).ydim_unit then begin
+    ypos=indgen(sz[2])
+  endif else begin
+    if sit_and_stare then ypos=*(*info).data->get_time_vector((*info).line) $
+    else ypos=*(*info).data->get_instr_x_vector((*info).line)
+  endelse
   yscale=ypos
   drawimage = congrid((*info).image, (*info).d_xsz, (*info).d_ysz)
   (*info).xticks=fix((*info).d_xsz/100)
@@ -123,7 +136,7 @@ pro spice_xwhisker_draw, event
     *(*info).xscale, *(*info).yscale, $
     xstyle = 1, ystyle = 1, position = (*info).imagepos, $
     xtitle = (*info).xtitle, ytitle = (*info).ytitle, $
-    xticks=(*info).xticks, xminor =(*info).xticks*2,bgblack=bgblack,ticklen=ticklen
+    xticks=(*info).xticks, xminor =(*info).xticks*2,bgblack=bgblack,ticklen=ticklen, /old
   ;create colorbar:
   ymin = (*info).imin
   ymax = (*info).imax
@@ -228,8 +241,6 @@ pro spice_xwhisker_slitslider, event
   ;  xmessage,message,wbase=wbase,font='helvetica'
   ;  wd=(*(*info).data)->getvar((*info).line,/load)
   wd=*(*info).wd
-  ;  xkill,wbase
-;  xkill,wbase  
   ;  xkill,wbase
   if (*info).nexpprp le 1 then begin
     (*info).image = reform(wd[*,(*info).slitpos,*])
@@ -422,34 +433,23 @@ pro spice_xwhisker_anim, event
   return
 end
 
+; change spatial scale to pixels
 pro spice_xwhisker_spix, event
   widget_control, event.top, get_uvalue = info
-; change titles in aux object
-  (*(*info).data->getaux())->setsscale,'step nr'
-  (*(*info).data->getaux())->setxytitle,sscale='step nr'
-; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
-
+  ; set titles for image plots
+  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim, /pixels)
+  (*info).ydim_unit = 0
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
   spice_xwhisker_draw, pseudoevent
 end
 
+; change spatial scale to arcsec
 pro spice_xwhisker_sarcsec, event
   widget_control, event.top, get_uvalue = info
-; change titles in aux object
-  if (*info).ydim eq 2 then begin
-    (*(*info).data->getaux())->setsscale,'arcsec'
-    (*(*info).data->getaux())->setxytitle,sscale='arcsec'
-  endif else begin
-    (*(*info).data->getaux())->setsscale,'sec'
-    (*(*info).data->getaux())->setxytitle,sscale='sec'
-  endelse
-; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
-
+  ; set titles for image plots
+  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim)
+  (*info).ydim_unit = 1
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
   spice_xwhisker_draw, pseudoevent
@@ -458,12 +458,9 @@ end
 ; change wavelength scale to pixels
 pro spice_xwhisker_wpix, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  (*(*info).data->getaux())->setwscale,'pixels'
-  (*(*info).data->getaux())->setxytitle,wscale='pixels'
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+  (*info).xtitle = *(*info).data->get_axis_title((*info).ydim, /pixels)
+  (*info).xdim_unit = 0
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
   spice_xwhisker_draw, pseudoevent
@@ -472,12 +469,9 @@ end
 ; change wavelength scale to Angstrom
 pro spice_xwhisker_wangstr, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  (*(*info).data->getaux())->setwscale,string("305B)
-  (*(*info).data->getaux())->setxytitle,wscale=string("305B)
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+  (*info).xtitle = *(*info).data->get_axis_title((*info).ydim)
+  (*info).xdim_unit = 1
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
   spice_xwhisker_draw, pseudoevent
@@ -596,8 +590,7 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   nslit=data->get_header_info('NAXIS2', line)
   nraster = data->get_number_exposures(line)
   nexpprp = 1 ;data->getnexp_prp(line)  ; number of exp pr. raster pos.
-  ; so far QL can not handle sit-and-stare with different exposure times
-; so far QL can not handle sit-and-stare with different exposure times 
+  slitpos = nslit/2
   ; so far QL can not handle sit-and-stare with different exposure times
   ; (when it is run as "multiple exp pr rast. pos.)
   ; Will have to deal with that...
@@ -609,7 +602,7 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   wd = data->get_window_data(line,/load)
   xkill,wbase
   if nexpprp le 1 then begin
-    image = reform(wd[*,slitpos,*])
+    image = reform(wd[*,slitpos,*,*])
     expindx = 0
   endif else begin
     expnr_at_rp = 1 ; intitialize first exp at each raster pos.
@@ -627,8 +620,8 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   nlam = xsz
   ysz = sz[3]
   ;
-  xdim = 3
-  if sit_and_stare then ydim = 2 else ydim = 2
+  xdim = 2
+  if sit_and_stare then ydim = 3 else ydim = 1
   xtitle = data->get_axis_title(xdim)
   ytitle = data->get_axis_title(ydim)
   window, /pixmap, /free, xsize = xsz, ysize = ysz
@@ -776,49 +769,56 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
   imagepos = [0.15, 0.10, 0.77, 0.95]
   ; set up default display mode:
   info = {drawimage:ptr_new(), $
-          wd:ptr_new(wd,/no_copy), $
-          image:image, $
-          xdim:xdim, $
-          ydim:ydim, $
-          xscale:ptr_new(), $
-          yscale:ptr_new(), $
-          ypscale:ptr_new(), $
-          data:ptr_new(), $
-          exposuretext:exposuretext, $
-          fmirrytext:fmirrytext, $
-          xycentext:xycentext, $
-          xticks:0, $
-          nlam:nlam, $
-          nraster:nraster, $
-          expindx:expindx, $
-          nexpprp:nexpprp, $
-          exprp:1, $
-          ndim:ndim, $
-          line:line, $
-          pos:pos, $
-          screensize:screensize, $
-          lcol_xsz:lcol_xsz, $
-          d_xsz:d_xsz, $
-          d_ysz:d_ysz, $
-          tlb:tlb, $
-          r:r, g:g, b:b, $
-          imagepos:imagepos, $
-          bottom:bottom, $
-          ncolors:ncolors, $
-          sx:0, $
-          sy:0, $
-          dwoption:0, $
-          dwoption_menu:dwoption_menu, $
-          drawid:drawid, $
-          colorbar_title:colorbar_title,$
-          lineplot:lineplot,  $
-          slitpos:slitpos, $
-          gamma:gamma, $
-          histo_lim:histo_lim, $
-          imin:imin, $
-          imax:imax, $
+    wd:ptr_new(wd,/no_copy), $
+    image:image, $
+    xdim:xdim, $
+    ydim:ydim, $
+    xscale:ptr_new(), $
+    yscale:ptr_new(), $
+    ypscale:ptr_new(), $
+    data:ptr_new(), $
+    sit_and_stare:sit_and_stare, $
+    xdim_unit:1, $
+    ydim_unit:1, $
+    exposuretext:exposuretext, $
+    fmirrytext:fmirrytext, $
+    xycentext:xycentext, $
+    xticks:0, $
+    nlam:nlam, $
+    nraster:nraster, $
+    expindx:expindx, $
+    nexpprp:nexpprp, $
+    exprp:1, $
+    ndim:ndim, $
+    line:line, $
+    screensize:screensize, $
+    lcol_xsz:lcol_xsz, $
+    d_xsz:d_xsz, $
+    d_ysz:d_ysz, $
+    tlb:tlb, $
+    r:r, g:g, b:b, $
+    imagepos:imagepos, $
+    bottom:bottom, $
+    ncolors:ncolors, $
+    sx:0, $
+    sy:0, $
+    dwoption:0, $
+    dwoption_menu:dwoption_menu, $
+    drawid:drawid, $
+    colorbar_title:colorbar_title,$
+    lineplot:lineplot,  $
+    slitpos:slitpos, $
+    gamma:gamma, $
+    histo_lim:histo_lim, $
+    imin:imin, $
+    imax:imax, $
     missing:data->get_missing_value(), $
     drawcolor:drawcolor, $
+    mainpixid:pixid, $
+    pixid:pixid, $
+    xtitle:xtitle, $
+    ytitle:ytitle, $
+    wid:wid}
   info = ptr_new(info, /no_copy)
   (*info).data=ptr_new(data)
   ; set user value of tlb widget to be the info ptr
