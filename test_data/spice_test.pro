@@ -15,5 +15,6 @@ PRO spice_test, file_number
   obj = spice_object(file, /verbose)
   ;stop
   
-  spice_raster_browser, obj, /no_goes
+  ;spice_raster_browser, obj, /no_goes
+  spice_xwhisker, obj, 0
 END
