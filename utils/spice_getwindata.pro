@@ -181,7 +181,7 @@ ENDELSE
 ;
 IF n_params() EQ 1 THEN BEGIN
   print,'% SPICE_GETWINDATA: Please choose a window from the following:'
-  nwin=d->getnwin()
+  nwin=d->get_number_windows()
   d->show_lines
   ans=''
   read,ans,prompt='Choose number from 0 to '+trim(nwin-1)+': '
@@ -198,10 +198,9 @@ IF n_params() EQ 1 THEN BEGIN
 ENDIF 
   
 ;
-; IRIS missing data are assigned value of -200. Ideally I should get
-; this from the data object rather than defining it.
-;
-missing_val=-200.
+; SPICE missing data are assigned value given in header keyword 'BLANK' in level 0
+; and level 1. Level 2, NAN
+missing_val=d->get_missing_value()
 
 ;
 ; Get spatial binning factor
