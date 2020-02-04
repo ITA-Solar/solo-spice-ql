@@ -244,6 +244,60 @@ END
 
 ;+
 ; Description:
+;     Returns window index of a given wavelength or window name
+;
+; INPUTS:
+;     input : scalar or array of numbers or string
+;             if input is one or more numbers, it is interpreted as wavelenghts
+;             and indices of windows including those wavelengths are returned
+;             if input is one or more string, it is interpreted as the window ID
+;             and indices of the corresponding windows are returned
+;
+; OUTPUT:
+;     int array, with as many elements as input
+;-
+FUNCTION spice_data::get_window_index, input
+  ;Returns window index of a given wavelength or window name
+  IF n_params() EQ 0 THEN BEGIN
+    message,'getwindx,input',/info
+    return,-1
+  ENDIF
+  iwin=intarr(n_elements(input))
+  FOR iw=0,n_elements(input)-1 DO BEGIN
+    IF datatype(input[iw]) EQ 'STR' THEN BEGIN
+      iwin[iw]=(where((strupcase(self->get_window_id())) EQ $
+        strupcase(input[iw]),c))[0]
+      IF c EQ 0 THEN BEGIN
+        message,'Line_id not found : '+input[iw],/info
+        iwin[iw]=-1
+      ENDIF
+    ENDIF ELSE BEGIN
+      IF input[iw] GE 0 && input[iw] LE (self->get_number_windows())-1 THEN BEGIN
+        iwin[iw]=input[iw]
+      ENDIF ELSE BEGIN
+        ;   else e.g. input=1334.
+        nwin=self->getnwin()
+        winmax=fltarr(nwin)
+        winmin=fltarr(nwin)
+        FOR i=0,nwin-1 DO BEGIN
+          winmax[i]=max(self->get_lambda_vector(i), min=mintemp)
+          winmin[i]=mintemp
+        ENDFOR
+        prod=(winmax-input[iw])*(input[iw]-winmin)
+        iwin[iw]=(where(prod gt 0,c))[0]
+        IF c EQ 0 THEN BEGIN
+          message,'wavelength not found '+trim(input[iw],'(f10.2)'),/info
+          iwin[iw]=-1
+        ENDIF
+      ENDELSE
+    ENDELSE
+  ENDFOR
+  return,iwin
+END
+
+
+;+
+; Description:
 ;     Returns the specified keyword from the given window, if the keyword
 ;     does not exist 'missing_value' is returned if it is provided, !NULL otherwise.
 ;
