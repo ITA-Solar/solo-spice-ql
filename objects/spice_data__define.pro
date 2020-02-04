@@ -73,11 +73,16 @@ pro spice_data::close
   COMPILE_OPT IDL2
 
   FOR i=0,self.nwin-1 DO BEGIN
-    ptr_free, (*self.window_data)[i]
+    ptr_free, (*self.window_assoc)[i]
     ptr_free, (*self.window_headers)[i]
+    ptr_free, (*self.window_wcs)[i]
+    IF ptr_valid((*self.window_data)[i]) THEN ptr_free, (*self.window_data)[i]
   ENDFOR
-  ptr_free, self.window_data
+  ptr_free, self.window_assoc
   ptr_free, self.window_headers
+  ptr_free, self.window_wcs
+  ptr_free, self.window_descaled
+  ptr_free, self.window_data
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -147,13 +152,18 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
 
   IF keyword_set(load) THEN BEGIN
-    IF keyword_set(nodescale) THEN BEGIN
-      data = (*(*self.window_data)[window_index])[0]
+    IF keyword_set(nodescale) THEN descaled=2 ELSE descaled=1
+    IF (*self.window_descaled)[window_index] EQ descaled THEN BEGIN
+      data = *(*self.window_data)[window_index]
     ENDIF ELSE BEGIN
-      data = self.descale_array((*(*self.window_data)[window_index])[0], window_index)
+      data = (*(*self.window_assoc)[window_index])[0]
+      IF ~keyword_set(nodescale) THEN data = self.descale_array(data, window_index)
+      (*self.window_descaled)[window_index] = descaled
+      IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
+      (*self.window_data)[window_index] = ptr_new(data)
     ENDELSE
   ENDIF ELSE BEGIN
-    data = *(*self.window_data)[window_index]
+    data = *(*self.window_assoc)[window_index]
   ENDELSE
   return, data
 END
@@ -915,7 +925,9 @@ PRO spice_data::read_file, file, verbose=verbose
     ENDCASE
 
   ENDFOR ; iwin = 0, self.nwin-1
-  self.window_data = ptr_new(assocs)
+  self.window_assoc = ptr_new(assocs)
+  self.window_data = ptr_new(ptrarr(self.nwin))
+  self.window_descaled = ptr_new(bytarr(self.nwin))
   self.window_headers = ptr_new(headers)
   self.window_wcs = ptr_new(wcs)
 END
@@ -947,7 +959,9 @@ PRO spice_data__define
     file: '', $                 ; input filename
     title: '', $                ; instrument name
     nwin: 0, $                  ; number of windows
-    window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
+    window_assoc: ptr_new(), $  ; pointers to window data in the file using assoc (ptrarr)
+    window_data: ptr_new(), $   ; loaded window data (ptrarr)
+    window_descaled: ptr_new(), $; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
