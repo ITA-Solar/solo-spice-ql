@@ -306,7 +306,7 @@ END
 ;     returns the number of windows this file/object contains
 ;
 ; OUTPUT:
-;     number of windows
+;     int: number of windows
 ;-
 FUNCTION spice_data::get_number_windows
   ;returns the number of windows this file contains
@@ -318,10 +318,42 @@ END
 
 ;+
 ; Description:
+;     returns the title
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_title
+  ;returns the title, i.e. 'SPICE'
+  COMPILE_OPT IDL2
+
+  return, self.title
+END
+
+
+;+
+; Description:
+;     returns SPICE OBS ID
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_obs_id
+  ;returns SPICE OBS ID
+  COMPILE_OPT IDL2
+
+  obs_id = self.get_header_info('SPIOBSID', 0)
+  IF size(obs_id, /TYPE) NE 7 THEN obs_id = strtrim(string(obs_id),2)
+  return, obs_id
+END
+
+
+;+
+; Description:
 ;     returns start date and time of observation in UTC format
 ;
 ; OUTPUT:
-;     number of windows
+;     int: number of windows
 ;-
 FUNCTION spice_data::get_start_time
   ;returns start date and time of observation in UTC format
@@ -337,7 +369,7 @@ END
 ;     returns end date and time of observation in UTC format
 ;
 ; OUTPUT:
-;     number of windows
+;     string
 ;-
 FUNCTION spice_data::get_end_time
   ;returns end date and time of observation in UTC format
@@ -361,6 +393,70 @@ FUNCTION spice_data::get_sit_and_stare
 
   sit_and_stare = self.get_header_info('STUDYTYP', 0) EQ 'Sit-and-stare'
   return, sit_and_stare
+END
+
+
+;+
+; Description:
+;     returns BUNIT, physical units of the data
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_variable_unit
+  ;returns BUNIT, physical units of the data
+  COMPILE_OPT IDL2
+
+  bunit = self.get_header_info('BUNIT', 0)
+  return, bunit
+END
+
+
+;+
+; Description:
+;     returns BTYPE, type of data in images
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_variable_type
+  ;returns BTYPE, type of data in images
+  COMPILE_OPT IDL2
+
+  btype = self.get_header_info('BTYPE', 0)
+  return, btype
+END
+
+
+;+
+; Description:
+;     returns S/C CCW roll relative to Solar north in degrees
+;
+; OUTPUT:
+;     float
+;-
+FUNCTION spice_data::get_satellite_rotation
+  ;returns S/C CCW roll relative to Solar north in degrees
+  COMPILE_OPT IDL2
+
+  crota = self.get_header_info('CROTA', 0)
+  return, crota
+END
+
+
+;+
+; Description:
+;     returns the value for missing pixels
+;
+; OUTPUT:
+;     float
+;-
+FUNCTION spice_data::get_missing_value
+  ;returns the value for missing pixels
+  COMPILE_OPT IDL2
+
+  missing = self.get_header_info('BLANK', 0)
+  return, missing
 END
 
 
@@ -427,6 +523,44 @@ FUNCTION spice_data::get_exposure_time, window_index
 
   exptime = self.get_header_info('XPOSURE', window_index)
   return, exptime
+END
+
+
+;+
+; Description:
+;     returns name of axis, if axis is not provided a string vector
+;     will be returned that contains the names of all axes.
+;     The name of the axis includes its unit in square brackets,
+;     except if the pixels keyword is set, then it says pixels instead
+;     of units, or if no_unit keyword is set.
+;
+; OPTIONAL INPUTS:
+;     axis : the index of the axis, may be a vector
+;
+; KEYWORD PARAMETERS:
+;     pixels : return 'pixels' as unit
+;     no_unit : do not include units in axis name
+;
+; OUTPUT:
+;     string or string array
+;-
+FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
+  ;eturns name of axis, if axis is not provided a string vector will be returned
+  COMPILE_OPT IDL2
+
+  axes = ['Solar X', 'Solar Y', 'Wavelength', 'Time']
+  IF ~keyword_set(no_unit) THEN BEGIN
+    IF keyword_set(pixels) THEN BEGIN
+      axes = axes + '[pixels]'
+    ENDIF ELSE BEGIN
+      axes[0] = axes[0] + ' [' + strtrim(self.get_header_info('CUNIT1', 0),2) +']'
+      axes[1] = axes[1] + ' [' + strtrim(self.get_header_info('CUNIT2', 0),2) +']'
+      axes[2] = axes[2] + ' [' + strtrim(self.get_header_info('CUNIT3', 0),2) +']'
+      axes[3] = axes[3] + ' [' + strtrim(self.get_header_info('CUNIT4', 0),2) +']'
+    ENDELSE
+  ENDIF
+  IF N_ELEMENTS(axis) eq 0 THEN return, axes
+  return, axes[axis]
 END
 
 
@@ -734,6 +868,7 @@ PRO spice_data::read_file, file, verbose=verbose
   self.close
   IF keyword_set(verbose) THEN silent=1 ELSE silent=0
   message, 'reading file: ' + file, /info
+  self.file = file
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
   self.nwin = hdr.nwin
 
@@ -767,12 +902,28 @@ END
 
 ;+
 ; Description:
+;     Returns the input filename
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_filename
+  ;returns the input filenam
+  COMPILE_OPT IDL2
+
+  return, self.file
+END
+
+
+;+
+; Description:
 ;     Class definition procedure
 ;-
 PRO spice_data__define
   COMPILE_OPT IDL2
 
   struct = {spice_data, $
+    file: '', $                 ; input filename
     title: '', $                ; instrument name
     nwin: 0, $                  ; number of windows
     window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
