@@ -14,9 +14,9 @@
 ;       FILE: input SPICE fits file or data object. See restrictions.
 ;
 ; OPT. INPUT:
-;       IWIN: scalar with the index of the desired windows. This can
-;             also be a wavelength or as a string that
-;             matches one of the line ids.
+;       IWIN: scalar with the index of the desired window. This can
+;             also be a wavelength or a string that
+;             matches one of the window ids.
 ;       Wrange: A 2-element array specifying a wavelength range to be
 ;               returned. It is intended for use with full-CCD
 ;               data-sets for which only a specific wavelength range
@@ -25,10 +25,12 @@
 ;       Ixrange:  A 2-element array specifying a X-pixel range to be
 ;                 returned. This is principally intended for speeding
 ;                 up the routine when working with long sit-and-stare
-;                 sequences.
+;                 sequences. For sit-and-stare this range will be applied
+;                 to the time dimension.
 ;
 ; KEYWORDS:
-;       KEEP_SAT:  If set, then saturated data are retained rather
+;       KEEP_SAT:  Ignored for now
+;                  If set, then saturated data are retained rather
 ;                  than set to the missing value. (This can be useful
 ;                  when making pretty pictures.)
 ;       CLEAN:     If set, then the NEW_SPIKE routine is used to clean
@@ -167,10 +169,11 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
       print,'                   Returning...'
       return,-1
     ENDIF
-    d=iris_obj(input_file[0])
+    d=spice_object(input_file[0])
   ENDIF ELSE BEGIN
     swtch=1
     d=input_file
+    input_file=d->get_filename()
   ENDELSE
 
 
@@ -186,8 +189,8 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
     ans=''
     read,ans,prompt='Choose number from 0 to '+trim(nwin-1)+': '
     IF is_number(ans) THEN BEGIN
-      ans=float(ans)
-      IF ans GE 0 AND ans LE nwin-1 THEN input_iwin=round(ans) ELSE input_iwin=-1
+      ans=fix(ans)
+      IF ans GE 0 && ans LT nwin THEN input_iwin=round(ans) ELSE input_iwin=-1
     ENDIF ELSE BEGIN
       input_iwin=-1
     ENDELSE
@@ -200,12 +203,12 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ;
   ; SPICE missing data are assigned value given in header keyword 'BLANK' in level 0
   ; and level 1. Level 2, NAN
-  missing_val=d->get_missing_value()
+  missing_val = d->get_missing_value()
 
   ;
   ; Get spatial binning factor
   ;
-  ybin=d->getinfo('SUMSPAT')
+  ;ybin=d->getinfo('SUMSPAT')
 
 
   ;
@@ -213,7 +216,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; to an index, so the line below defines the index iwin based on what
   ; the user has input. Therefore input_iwin will not be modified.
   ;
-  IF input_iwin GT 1000 THEN iwin=d->getwindx(input_iwin) ELSE iwin=input_iwin
+  iwin = (d->get_window_index(input_iwin))[0]
 
   IF iwin EQ -1 THEN BEGIN
     print,'% SPICE_GETWINDATA:  wavelength not found in data-set. Returning...'
@@ -221,18 +224,8 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ENDIF
 
   ;
-  ; Get the "label" for the chosen wavelength window (this is needed for
-  ; read_iris_l2).
-  ;
-  lbl=d->getline_id(iwin)
-
-  ;
   ; Extract the data array.
-  ; 9-Sep-2015: I've switched to using read_iris_l2 as this is
-  ; factors 2-3 quicker than the object method.
-  ;
-  ;wd=d->getvar(iwin,/load)
-  read_iris_l2,input_file[0],index,wd,wave=lbl,/silent
+  wd = d->get_window_data(iwin, /load)
 
   t1=systime(1)
 
@@ -241,15 +234,15 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; in WD (this is fixed later).
   ;
   s=size(wd,/dim)
-  nl=s[0]
-  nx=s[2]
+  nl=s[2]
+  IF d->get_sit_and_stare() THEN nx=s[3] ELSE nx=s[0]
   ny=s[1]
 
 
   IF n_elements(ixrange) NE 0 THEN BEGIN
-    ix0=ixrange[0]
+    ix0=max([0,ixrange[0]])
     ix1=min([nx-1,ixrange[1]])
-    wd=wd[*,*,ix0:ix1]
+    IF d->get_sit_and_stare() THEN wd=wd[*,*,*,ix0:ix1] ELSE wd=wd[ix0:ix1,*,*,*]
     nx=ix1-ix0+1
     IF NOT keyword_set(quiet) THEN print,'% SPICE_GETWINDATA: Warning - the windata.xcen tag does not take account of the sub-range selected by IXRANGE.'
   ENDIF ELSE BEGIN
@@ -271,13 +264,13 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; modifies WD making the routine significantly quicker from this point
   ; on.
   ;
-  lam=d->getlam(iwin)
+  lam=d->get_lambda_vector(iwin)
   IF n_elements(wrange) NE 0 THEN BEGIN
     k=where(lam GE wrange[0] AND lam LE wrange[1],nk)
     IF nk NE 0 THEN BEGIN
       lam=lam[k]
       nl=nk
-      wd=wd[k,*,*]
+      wd=wd[*,*,k,*]
     ENDIF ELSE BEGIN
       print,'% SPICE_GETWINDATA: the input WRANGE is not consistent with the wavelength window. Returning...'
       return,-1
@@ -288,14 +281,14 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   FOR i=0,nx-1 DO wvl_arr[*,i,*]=wvl_arr_2d
 
 
-
   ;
   ; Need to swap the X and Y dimensions in the array.
   ; For large files this can be very slow, but transpose is about a
   ; factor two quicker than rearrange (SSW routine).
   ;
   ;wd=rearrange(temporary(wd),[1,3,2])
-  wd=transpose(temporary(wd),[0,2,1])
+  IF d->get_sit_and_stare() THEN wd=transpose(temporary(wd),[2,3,1]) $
+  ELSE wd=transpose(temporary(wd),[2,0,1])
 
 
   IF keyword_set(clean) THEN BEGIN
@@ -306,30 +299,27 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ;
   ; Identify which wavelength region we have ('fuv' or 'nuv')
   ;
-  reg=d->getregion(iwin)
+  ;reg=d->getregion(iwin)
 
 
 
   ;
-  ; There are quite a few pixels that get a assigned a large negative
-  ; value (between -199 and -10). I'm not sure how these come
-  ; about but I'm going to set them to be missing. Note that a
-  ; pixel with negative DN is not assigned a photon noise error: it will
-  ; only get a read noise error.
+  ; Note that a pixel with negative DN is not assigned a photon noise error: 
+  ; it will only get a read noise error.
   ;
-  k=where(wd GT missing_val AND wd LT -10,nk)
+  k=where(wd GT missing_val AND wd LT -1000,nk)
   IF nk NE 0 THEN wd[k]=missing_val
 
 
   ;
   ; Saturated data seem to be set at 16183 DN so I will flag these
   ; values as missing
+  ; Not (yet) defined in SPICE
   ;
-  IF NOT keyword_set(keep_sat) THEN BEGIN
-    k=where(wd EQ 16183,nk)
-    IF nk NE 0 THEN wd[k]=missing_val
-  ENDIF
-
+  ;IF ~keyword_set(keep_sat) THEN BEGIN
+  ;  k=where(wd EQ 16183,nk)
+  ;  IF nk NE 0 THEN wd[k]=missing_val
+  ;ENDIF
 
 
   ;
@@ -339,6 +329,8 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; Set the values for the gain (g) and dark current noise
   ; (dark_unc). The values have been taken from the IRIS instrument
   ; paper. Note that dark_unc is specified in DN.
+  ; 
+  ; UPDATE for SPICE needed !!!!!!
   ;
   ; The quantum yield is the number of electrons released by a single
   ; incident photon on the detector. The theoretical yield is
@@ -349,15 +341,15 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; the NUV channel it is 1.0. Note that these are the numbers given in
   ; the IRIS instrument paper.
   ;
-  IF trim(reg) EQ 'FUV' THEN BEGIN
-    yield=1.5
-    g=6.0
-    dark_unc=3.1
-  ENDIF ELSE BEGIN
+;  IF trim(reg) EQ 'FUV' THEN BEGIN
+;    yield=1.5
+;    g=6.0
+;    dark_unc=3.1
+;  ENDIF ELSE BEGIN
     yield=1.0
     g=18.0
     dark_unc=1.2
-  ENDELSE
+;  ENDELSE
 
   ;
   ; Compute the DN to photon conversion factor.
@@ -404,37 +396,33 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ;   - ti2 is the shutter close time, but I don't actually put
   ;     it in the windata output.
   ;
-  ti1=d->getti_1(iwin)
-  ti2=d->getti_2(iwin)
-
-  ti1=d->sec_from_obs_start(ti1)
-  ti2=d->sec_from_obs_start(ti2)
+  ti1=d->get_time_vector(iwin)
+  ;ti2=d->getti_2(iwin)
 
   time=ti1
 
-  ti1=d->ti2tai(ti1)
-  ti2=d->ti2tai(ti2)
+  ti1=anytim2tai(d->get_start_time()+ti1)
+  ;ti2=d->ti2tai(ti2)
 
   ti1=anytim2utc(ti1,/ccsds)
-  ti2=anytim2utc(ti2,/ccsds)
+  ;ti2=anytim2utc(ti2,/ccsds)
 
   ;
   ; The following adds some EIS tags to the header structure. Some are
   ; just set to zero, but others have real values that are used in the
   ; software.
   ;
-  header=d->gethdr()
-  hdr=fitshead2struct(header)
+  hdr=d->get_header(iwin)
   hdr2=add_tag(hdr,0,'YWS')
   hdr=temporary(hdr2)
   hdr2=add_tag(hdr,0,'RAST_ID')
   hdr=temporary(hdr2)
   hdr2=add_tag(hdr,0,'NRASTER')
   hdr=temporary(hdr2)
-  hdr.nraster=1-(d->getsit_AND_stare())
+  hdr.nraster=1-(d->get_sit_and_stare())
   hdr2=add_tag(hdr,0,'SLIT_IND')
   hdr=temporary(hdr2)
-  hdr.slit_ind=4    ; note EIS slits are numbered 0-3
+  hdr.slit_ind=5    ; note EIS slits are numbered 0-3, IRIS is 4
   hdr2=add_tag(hdr,ny,'YW')
   hdr=temporary(hdr2)
 
@@ -442,15 +430,18 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; The keyword 'nexp_prp' is not consistent with EIS, as a 100 exposure
   ; sit-and-stare will be set to nexp_prp=100 whereas for EIS it would
   ; be 1. It seems nexp_prp is always 1 for IRIS so I'm just
-  ; going to set it to 1.
+  ; going to set it to 1. This keyword does not exist in SPICE, so we 
+  ; have to add it.
   ;
+  hdr2=add_tag(hdr,0,'NEXP_PRP')
+  hdr=temporary(hdr2)
   hdr.nexp_prp=1
 
 
   ;
   ; Get satellite roll angle
   ;
-  roll_angle=d->getinfo('SAT_ROT')
+  roll_angle=d->get_satellite_rotation()
 
   ;
   ; The satellite roll angle potentially messes up xpos, ypos, etc. My
@@ -465,24 +456,24 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; caused problems for other routines.)
   ;
   IF abs(roll_angle) LT 5.0 THEN BEGIN
-    xpos=d->getxpos(iwin=iwin)
-    ypos=d->getypos(iwin=iwin)
-    IF d->getsit_AND_stare() EQ 1 THEN xscale=0.33 ELSE xscale=median(xpos[1:nx-1]-xpos[0:nx-2])
+    xpos=d->get_instr_x_vector(iwin)
+    ypos=d->get_instr_y_vector(iwin)
+    IF d->get_sit_AND_stare() EQ 1 THEN xscale=1.0 ELSE xscale=median(xpos[1:nx-1]-xpos[0:nx-2])
     yscale=median(ypos[1:ny-1]-ypos[0:ny-2])
     scale=[xscale,yscale]
     xpos=xpos[ix0:ix1]
   ENDIF ELSE BEGIN
-    dx=d->getinfo('CDELT3',iwin)   ; perpendicular to slit
-    dy=d->getinfo('CDELT2',iwin)   ; along slit
-    IF d->getsit_AND_stare() EQ 1 THEN xpos=fltarr(nx)+0 ELSE xpos=findgen(nx)*dx
+    dx=d->get_header_info('CDELT1',iwin)   ; perpendicular to slit
+    dy=d->get_header_info('CDELT2',iwin)   ; along slit
+    IF d->get_sit_AND_stare() EQ 1 THEN xpos=fltarr(nx)+0 ELSE xpos=findgen(nx)*dx
     ypos=findgen(ny)*dy
     scale=[dx,dy]
   ENDELSE
 
 
-  exp_time=d->getexp(iwin=iwin)
+  exp_time = make_array(d->get_number_exposures(iwin), value=d->get_exposure_time(iwin))
 
-  units=d->getinfo('bunit')
+  units=d->get_variable_unit()
 
 
   ;
@@ -507,7 +498,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; simply creating the windata structure can take about 30secs.
   ;
   windata= { filename: file_basename(input_file[0]), $
-    line_id: d->getline_id(iwin), $
+    line_id: d->get_window_id(iwin), $
     int: wd, $
     err: err, $
     wvl: lam, $
@@ -521,12 +512,12 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
     scale: scale, $
     solar_x: xpos, $
     solar_y: ypos, $
-    xcen: d->getinfo('xcen'), $
-    ycen: d->getinfo('ycen'), $
+    xcen: d->get_header_info('CRVAL1',0), $
+    ycen: d->get_header_info('CRVAL2',0), $
     units: units, $
     missing: missing_val, $
     iwin: iwin, $
-    sit_AND_stare: d->getsit_AND_stare(), $
+    sit_AND_stare: d->get_sit_AND_stare(), $
     wave_corr_set: 0, $
     wave_corr: dblarr(nx,ny), $
     wave_corr_tilt: dblarr(ny), $
@@ -562,7 +553,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   IF keyword_set(verbose) THEN BEGIN
     print,format='("  Time taken (s): ",f6.2)',t3-t0
     print,format='("       Load data: ",f6.2)',t1-t0
-    print,format='("   Prepare arays: ",f6.2)',t2-t1
+    print,format='("  Prepare arrays: ",f6.2)',t2-t1
     print,format='("  Make structure: ",f6.2)',t3-t2
   ENDIF
 
