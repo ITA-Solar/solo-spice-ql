@@ -170,10 +170,11 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
       return,-1
     ENDIF
     d=spice_object(input_file[0])
+    filename=input_file[0]
   ENDIF ELSE BEGIN
     swtch=1
     d=input_file
-    input_file=d->get_filename()
+    filename=d->get_filename()
   ENDELSE
 
 
@@ -497,7 +498,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; Note for data-sets with very large windows (e.g., 2053x400x1093),
   ; simply creating the windata structure can take about 30secs.
   ;
-  windata= { filename: file_basename(input_file[0]), $
+  windata= { filename: file_basename(filename), $
     line_id: d->get_window_id(iwin), $
     int: wd, $
     err: err, $
