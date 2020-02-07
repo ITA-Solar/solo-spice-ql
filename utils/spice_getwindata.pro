@@ -41,7 +41,8 @@
 ;                  printed.
 ;       NORMALIZE: If set, then the intensity is divided by the
 ;                  exposure time.
-;       CALIB:     If set, then intensities (and errors) will be
+;       CALIB:     Ignored for now
+;                  If set, then intensities (and errors) will be
 ;                  returned in calibrated units of
 ;                  erg/cm2/s/sr/pixel.
 ;       PERANG:    If set, the intensities are returned in units of
@@ -529,7 +530,8 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   IF swtch EQ 0 THEN obj_destroy,d
 
 
-  IF keyword_set(calib) THEN BEGIN
+  ;ignore calibration for now
+  IF keyword_set(calib) && 0 THEN BEGIN
     cal=iris_get_calib(windata.wvl,windata.hdr.date_obs,ybin=ybin,units=units, $
       perang=perang)
     ;
