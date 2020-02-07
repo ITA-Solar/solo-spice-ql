@@ -73,11 +73,16 @@ pro spice_data::close
   COMPILE_OPT IDL2
 
   FOR i=0,self.nwin-1 DO BEGIN
-    ptr_free, (*self.window_data)[i]
+    ptr_free, (*self.window_assoc)[i]
     ptr_free, (*self.window_headers)[i]
+    ptr_free, (*self.window_wcs)[i]
+    IF ptr_valid((*self.window_data)[i]) THEN ptr_free, (*self.window_data)[i]
   ENDFOR
-  ptr_free, self.window_data
+  ptr_free, self.window_assoc
   ptr_free, self.window_headers
+  ptr_free, self.window_wcs
+  ptr_free, self.window_descaled
+  ptr_free, self.window_data
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -147,13 +152,18 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
 
   IF keyword_set(load) THEN BEGIN
-    IF keyword_set(nodescale) THEN BEGIN
-      data = (*(*self.window_data)[window_index])[0]
+    IF keyword_set(nodescale) THEN descaled=2 ELSE descaled=1
+    IF (*self.window_descaled)[window_index] EQ descaled THEN BEGIN
+      data = *(*self.window_data)[window_index]
     ENDIF ELSE BEGIN
-      data = self.descale_array((*(*self.window_data)[window_index])[0], window_index)
+      data = (*(*self.window_assoc)[window_index])[0]
+      IF ~keyword_set(nodescale) THEN data = self.descale_array(data, window_index)
+      (*self.window_descaled)[window_index] = descaled
+      IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
+      (*self.window_data)[window_index] = ptr_new(data)
     ENDELSE
   ENDIF ELSE BEGIN
-    data = *(*self.window_data)[window_index]
+    data = *(*self.window_assoc)[window_index]
   ENDELSE
   return, data
 END
@@ -229,6 +239,60 @@ FUNCTION spice_data::descale_array, array, window_index
   bscale = self.get_header_info('BSCALE', window_index)
   bzero = self.get_header_info('BZERO', window_index)
   return, array * bscale + bzero
+END
+
+
+;+
+; Description:
+;     Returns window index of a given wavelength or window name
+;
+; INPUTS:
+;     input : scalar or array of numbers or string
+;             if input is one or more numbers, it is interpreted as wavelenghts
+;             and indices of windows including those wavelengths are returned
+;             if input is one or more string, it is interpreted as the window ID
+;             and indices of the corresponding windows are returned
+;
+; OUTPUT:
+;     int array, with as many elements as input
+;-
+FUNCTION spice_data::get_window_index, input
+  ;Returns window index of a given wavelength or window name
+  IF n_params() EQ 0 THEN BEGIN
+    message,'getwindx,input',/info
+    return,-1
+  ENDIF
+  iwin=intarr(n_elements(input))
+  FOR iw=0,n_elements(input)-1 DO BEGIN
+    IF datatype(input[iw]) EQ 'STR' THEN BEGIN
+      iwin[iw]=(where((strupcase(self->get_window_id())) EQ $
+        strupcase(input[iw]),c))[0]
+      IF c EQ 0 THEN BEGIN
+        message,'Line_id not found : '+input[iw],/info
+        iwin[iw]=-1
+      ENDIF
+    ENDIF ELSE BEGIN
+      IF input[iw] GE 0 && input[iw] LE (self->get_number_windows())-1 THEN BEGIN
+        iwin[iw]=input[iw]
+      ENDIF ELSE BEGIN
+        ;   else e.g. input=1334.
+        nwin=self->getnwin()
+        winmax=fltarr(nwin)
+        winmin=fltarr(nwin)
+        FOR i=0,nwin-1 DO BEGIN
+          winmax[i]=max(self->get_lambda_vector(i), min=mintemp)
+          winmin[i]=mintemp
+        ENDFOR
+        prod=(winmax-input[iw])*(input[iw]-winmin)
+        iwin[iw]=(where(prod gt 0,c))[0]
+        IF c EQ 0 THEN BEGIN
+          message,'wavelength not found '+trim(input[iw],'(f10.2)'),/info
+          iwin[iw]=-1
+        ENDIF
+      ENDELSE
+    ENDELSE
+  ENDFOR
+  return,iwin
 END
 
 
@@ -484,6 +548,27 @@ FUNCTION spice_data::get_window_id, window_index
   ENDELSE
 
   return, window_id
+END
+
+
+;+
+; Description:
+;     returns the window ID
+;
+; INPUTS:
+;     window_index : the index of the window the ID is asked for
+;
+; OUTPUT:
+;     string
+;-
+PRO spice_data::show_lines
+  ;returns the window ID
+  COMPILE_OPT IDL2
+
+  window_id = self.get_window_id()
+  FOR i=0,self.get_number_windows()-1 DO BEGIN
+    print, i, ': ' + window_id[i]
+  ENDFOR
 END
 
 
@@ -894,7 +979,9 @@ PRO spice_data::read_file, file, verbose=verbose
     ENDCASE
 
   ENDFOR ; iwin = 0, self.nwin-1
-  self.window_data = ptr_new(assocs)
+  self.window_assoc = ptr_new(assocs)
+  self.window_data = ptr_new(ptrarr(self.nwin))
+  self.window_descaled = ptr_new(bytarr(self.nwin))
   self.window_headers = ptr_new(headers)
   self.window_wcs = ptr_new(wcs)
 END
@@ -926,7 +1013,9 @@ PRO spice_data__define
     file: '', $                 ; input filename
     title: '', $                ; instrument name
     nwin: 0, $                  ; number of windows
-    window_data: ptr_new(), $   ; pointers to window data in the file using assoc (ptrarr)
+    window_assoc: ptr_new(), $  ; pointers to window data in the file using assoc (ptrarr)
+    window_data: ptr_new(), $   ; loaded window data (ptrarr)
+    window_descaled: ptr_new(), $; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
