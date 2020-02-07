@@ -256,10 +256,10 @@ pro spice_xwhisker_slitslider, event
   rot=round(*(*info).data->get_satellite_rotation())
   if rot < 0 then rot=360+rot
   if rot eq 90 or rot eq 270 then begin
-    pzty=data->get_instr_x_vector(line)
+    pzty=*(*info).data->get_instr_x_vector((*info).line)
     slittxt='X: '
   endif else begin
-    pzty=data->get_instr_y_vector(line)
+    pzty=*(*info).data->get_instr_y_vector((*info).line)
     slittxt='Y: '
   endelse
   widget_control,(*info).fmirrytext, $

@@ -638,10 +638,10 @@ FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
     IF keyword_set(pixels) THEN BEGIN
       axes = axes + '[pixels]'
     ENDIF ELSE BEGIN
-      axes[0] = axes[0] + ' [' + strtrim(self.get_header_info('CUNIT1', 0),2) +']'
-      axes[1] = axes[1] + ' [' + strtrim(self.get_header_info('CUNIT2', 0),2) +']'
-      axes[2] = axes[2] + ' [' + strtrim(self.get_header_info('CUNIT3', 0),2) +']'
-      axes[3] = axes[3] + ' [' + strtrim(self.get_header_info('CUNIT4', 0),2) +']'
+      axes[0] = axes[0] + ' [' + strtrim(self.get_header_info('CUNIT1', 0),2) + ']'
+      axes[1] = axes[1] + ' [' + strtrim(self.get_header_info('CUNIT2', 0),2) + ']'
+      axes[2] = axes[2] + ' [' + strtrim(self.get_header_info('CUNIT3', 0),2) + ']'
+      axes[3] = axes[3] + ' [' + strtrim(self.get_header_info('CUNIT4', 0),2) + ']'
     ENDELSE
   ENDIF
   IF N_ELEMENTS(axis) eq 0 THEN return, axes
