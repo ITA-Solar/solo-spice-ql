@@ -332,7 +332,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; (dark_unc). The values have been taken from the IRIS instrument
   ; paper. Note that dark_unc is specified in DN.
   ; 
-  ; UPDATE for SPICE needed !!!!!!
+  ; TODO: UPDATE for SPICE needed !!!!!!
   ;
   ; The quantum yield is the number of electrons released by a single
   ; incident photon on the detector. The theoretical yield is
@@ -348,11 +348,13 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
 ;    g=6.0
 ;    dark_unc=3.1
 ;  ENDIF ELSE BEGIN
-    yield=1.0
-    g=18.0
-    dark_unc=1.2
+;    yield=1.0
+;    g=18.0
+;    dark_unc=1.2
 ;  ENDELSE
-
+yield = 1
+g = 0
+dark_unc=0
   ;
   ; Compute the DN to photon conversion factor.
   ;
