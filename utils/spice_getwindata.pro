@@ -56,39 +56,49 @@
 ;       data-set is given below. Please see the 'Programming notes'
 ;       section for notable differences with the EIS version.
 ;
-;  ** Structure <3156e08>, 27 tags, length=171829752, data length=171829684, refs=1:
-;     FILENAME        STRING    'iris_l2_20131022_205938_3820259443_raster_t000_r00000.fits'
-;     LINE_ID         STRING    'Si IV 1403'
-;     INT             FLOAT     Array[306, 64, 1093]
-;     ERR             FLOAT     Array[306, 64, 1093]
-;     WVL             DOUBLE    Array[306]
-;     DATA_QUALITY    BYTE      Array[306]
-;     EXPOSURE_TIME   DOUBLE    Array[64]
-;     TIME            DOUBLE    Array[64]
-;     TIME_CCSDS      STRING    Array[64]
-;     NL              LONG               306
-;     NX              LONG                64
-;     NY              LONG              1093
-;     SCALE           DOUBLE    Array[2]
-;     SOLAR_X         DOUBLE    Array[64]
-;     SOLAR_Y         DOUBLE    Array[1093]
-;     XCEN            DOUBLE          -172.95100
-;     YCEN            DOUBLE           30.754500
-;     UNITS           STRING    'Corrected DN'
-;     MISSING         FLOAT          -200.000
-;     IWIN            INT              4
-;     SIT_AND_STARE   INT              0
-;     WAVE_CORR_SET   INT              0
-;     WAVE_CORR       DOUBLE    Array[64, 1093]
-;     WAVE_CORR_TILT  DOUBLE    Array[1093]
-;     WAVE_CORR_T     DOUBLE    Array[64]
-;     HDR             STRUCT    -> <Anonymous> Array[1]
-;     TIME_STAMP      STRING    'Wed Sep  9 13:58:30 2015'
+;    ** Structure <23e2008>, 27 tags, length=12791848, data length=12791811, refs=1:
+;       FILENAME        STRING    'solo_L1_spice-n-sit-db_20210623T132924744_V01.fits'
+;       LINE_ID         STRING    'WINDOW2_73.06'
+;       INT             DOUBLE    Array[32, 128, 192]
+;       ERR             DOUBLE    Array[32, 128, 192]
+;       WVL             DOUBLE    Array[32]
+;       DATA_QUALITY    BYTE      Array[32]
+;       EXPOSURE_TIME   DOUBLE    Array[128]
+;       TIME            DOUBLE    Array[128]
+;       TIME_CCSDS      STRING    Array[128]
+;       NL              LONG                32
+;       NX              LONG               128
+;       NY              LONG               192
+;       SCALE           DOUBLE    Array[2]
+;       SOLAR_X         DOUBLE    Array[128]
+;       SOLAR_Y         DOUBLE    Array[192]
+;       XCEN            DOUBLE      -0.00099686645
+;       YCEN            DOUBLE       1.2970974e-05
+;       UNITS           STRING    'adu'
+;       MISSING         LONG             32767
+;       IWIN            INT              2
+;       SIT_AND_STARE   BYTE         1
+;       WAVE_CORR_SET   INT              0
+;       WAVE_CORR       DOUBLE    Array[128, 192]
+;       WAVE_CORR_TILT  DOUBLE    Array[192]
+;       WAVE_CORR_T     DOUBLE    Array[128]
+;       TIME_STAMP      STRING    'Fri Feb  7 10:24:15 2020'
+;       HDR             STRUCT    -> <Anonymous> Array[1]
 ;
 ; EXAMPLES:
 ;       Get window containing Si IV 1393 line:
 ;
 ;       IDL> wd = spice_getwindata(file,1393)
+;
+; TODO:
+;     - get numbers for gain, yield and dark current noise
+;       The gain is the number of electrons released in the detector that
+;       yield 1 DN.
+;       Note that dark_unc is specified in DN.
+;       The quantum yield is the number of electrons released by a single
+;       incident photon on the detector.
+;     - calibration procedure to be run when /calib has been set
+;     - hot to handle axes for rolled cases?
 ;
 ; PROGRAMMING NOTES:
 ;     - The level-2 IRIS files return intensities in "corrected DN"
@@ -101,34 +111,25 @@
 ;     - The WAVE_CORR tags are not used by IRIS, but are retained to
 ;       ensure compatibility with the EIS IDL routines.
 ;
-;     - The WINDATA.HDR structure is just a copy of the IRIS header
+;     - The WINDATA.HDR structure is just a copy of the SPICE header
 ;       structure, but a few extra tags have been added to ensure
 ;       compatibility with the EIS routines. Perhaps the most
-;       significant is SLIT_IND, which takes a value of 4 (the EIS
-;       slits had values between 0 and 3).
+;       significant is SLIT_IND, which takes a value of 5 (the EIS
+;       slits had values between 0 and 3, and IRIS had 4).
 ;
 ;     - The SOLAR_X and SOLAR_Y tags lose their meaning when the roll
 ;       angle is not 0 degrees. In this case Y is interpreted as
 ;       arcsec along the slit, with zero at the bottom of the slit. X
 ;       is interpreted as arcsec perpendicular to the slit, with the
-;       initial position set to zero.
+;       initial position set to zero. Might change that behaviour.
 ;
 ;     - The tag SIT_N_STARE has been added to flag sit-and-stare data
 ;       (0-no, 1-yes). This tag was not present for EIS.
 ;
-;     - Missing data are set to -200 for IRIS, but for this routine we
-;       consider any pixels with values of -10 or lower as being
-;       missing (and thus set to -200).
-;
 ;     - The tag 'data_quality' is just set to zeros.
 ;
-;     - One difference from EIS is that different wavelength windows
-;       can have different exposure times (specifically FUV can be
-;       different from NUV) so it's important to pass the
-;       window index to some of the methods.
-;
 ; CALLS:
-;       IRIS_GET_CALIB, IRIS_OBJ, READ_IRIS_L2, NEW_SPIKE
+;       IRIS_GET_CALIB, SPICE_OBJ, NEW_SPIKE
 ;
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
@@ -458,6 +459,8 @@ dark_unc=0
   ; degrees to now take the X and Y step-sizes from CDELT3 and CDELT2,
   ; respectively. (Previously I was setting the step sizes to 1, which
   ; caused problems for other routines.)
+  ; 
+  ; TODO: use wcs to get xpos and ypos?
   ;
   IF abs(roll_angle) LT 5.0 THEN BEGIN
     xpos=d->get_instr_x_vector(iwin)
