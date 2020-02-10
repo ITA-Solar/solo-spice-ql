@@ -40,7 +40,8 @@ In general, all functionalities in the heritage routines will be preserved as fa
 * Intensity map viewer (iris_xmap)
 * Interactive line fitting (xcfit)
 * “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
-* S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file, iris_xfiles)
+* S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file)
+* GUI for selection of files and quicklook tools (iris_xfiles, iris_xcontrol)
 * Display EUI/PHI images similar to IRIS SJI images (iris_raster_browser)
 * Display STIX data similar to GOES data (iris_raster_browser)
 
