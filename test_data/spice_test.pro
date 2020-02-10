@@ -18,12 +18,16 @@ PRO spice_test, file_number
   window_index = 0
   
   ;spice_raster_browser, obj, /no_goes
-  spice_xwhisker, obj, window_index
+  
+  ;spice_xwhisker, obj, window_index
+  
   ;d = spice_getwindata(obj, window_index)
   ;help,d
   obj->show_lines
-  print, 'NAXIS1 : ' + strtrim(string(obj->get_header_info('NAXIS1', window_index)),2)
-  print, 'NAXIS2 : ' + strtrim(string(obj->get_header_info('NAXIS2', window_index)),2)
-  print, 'NAXIS3 : ' + strtrim(string(obj->get_header_info('NAXIS3', window_index)),2)
-  print, 'NAXIS4 : ' + strtrim(string(obj->get_header_info('NAXIS4', window_index)),2)
+  ;print, 'NAXIS1 : ' + strtrim(string(obj->get_header_info('NAXIS1', window_index)),2)
+  ;print, 'NAXIS2 : ' + strtrim(string(obj->get_header_info('NAXIS2', window_index)),2)
+  ;print, 'NAXIS3 : ' + strtrim(string(obj->get_header_info('NAXIS3', window_index)),2)
+  ;print, 'NAXIS4 : ' + strtrim(string(obj->get_header_info('NAXIS4', window_index)),2)
+  
+  spice_xdetector, obj, window_index
 END
