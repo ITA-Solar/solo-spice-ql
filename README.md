@@ -1,27 +1,55 @@
-# solo-spice-ql
-Quicklook software for Solar Orbiter SPICE
+# SPICE Quicklook and Data Analysis Software
+## Currently planned software
+The plan is to provide approximately the same functionality for SPICE data as what is already available for IRIS/EIS data. Much of this is achieved by ensuring that SPICE data are stored and handled in IDL in a similar way to data from IRIS/EIS. Nevertheless, significant changes to the existing software may be necessary to account for differences in instrument data.
+Below is a top-level listing of functionalities, in a rough and preliminary prioritized order, with reference to corresponding heritage routines in parentheses (where appropriate). Note that not all software will necessarily be available for the first remote sensing window, hence the prioritization is important.
+In general, all functionalities in the heritage routines will be preserved as far as technically possible.
 
-## Includes:
-
-- spice object 'spice_data'
-```
+* SPICE object (iris_data)
+    * Implemented, continuous improvement
+    ```
+    obj = obj_new('spice_data', spice_file)
+    ```
+* Routine to read SPICE FITS file into an object (iris_obj).
+    * Done
+    ```
     obj = spice_object(spice_file)
-```
-- spice_raster_browser
-```
+    ```
+* A 3D data-cube viewer (iris_raster_browser)
+    * Initial working version
+    * Dumbbells are shown
+    ```
     spice_raster_browser, spice_file/spice_object [, quiet=quiet, yoffsets=yoffsets, $
         chunk_size=chunk_size, retina=retina, no_goes=no_goes]
-```
-- spice_xhwisker
-```
+    ```
+* Whisker plot viewer (iris_xwhisker)
+    * Initial working version
+    * Animation with ximovie doesn’t work yet, might be a bigger change
+    ```
     spice_xwhisker, spice_object, line [, group_leader=group_leader, ncolors = ncolors]
-```
-- spice_getwindata
-```
-    spice_getwindata, input_file, input_iwin [, keep_sat=keep_sat, clean=clean,
-        wrange=wrange, ixrange=ixrange, normalize=normalize,
+    ```
+* Detector data extraction (iris_getwindata)
+    * Initial working version
+    * Keywords _keep_sat_, _calib_ and _perang_ are ignored for now
+    ```
+    data = spice_getwindata, spice_file/spice_object, window_index [, keep_sat=keep_sat, 
+        clean=clean, wrange=wrange, ixrange=ixrange, normalize=normalize,
         calib=calib, perang=perang, verbose=verbose, quiet=quiet]
-```
+    ```
+* Detector viewer (iris_xdetector)
+* Spectroheliogram viewer (iris_xraster)
+* Intensity map viewer (iris_xmap)
+* Interactive line fitting (xcfit)
+* “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
+* S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file, iris_xfiles)
+* Display EUI/PHI images similar to IRIS SJI images (iris_raster_browser)
+* Display STIX data similar to GOES data (iris_raster_browser)
+
+## Level-3 data products
+Level-2 data for SPICE will be fully-calibrated data-sets, with instrumental effects removed. Level-3 data products will be physical quantities derived from integrated emission line intensities. For example, temperature, density and FIP bias maps. The first step in generating such maps will be automatic Gaussian fitting of the observed emission lines. This will be done with the CFIT software in Solarsoft.
+Level 3 data products will be produced in the standard data pipeline, and the set of products will be determined by the SPICE consortium. It will be possible for users to run the pipeline, starting at level 1, with modified parameters, flatfields, etc. when desired.
+The output format for Level 3 data will be fits files, with individual data products stored in separate extensions that may be read using standard fits software. Direct products from line fits (intensity/velocity/widths) will be viewable and modifiable using XCFIT.
+Specialised routines for displaying secondary derived products such as temperature maps, etc., are not planned at this point.
+
 
 ## TODO: 
 
