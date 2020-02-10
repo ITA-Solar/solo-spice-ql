@@ -590,20 +590,30 @@ END
 
 ;+
 ; Description:
-;     returns the number of exposures in the window
+;     returns the number of exposures in the window, or if window_index 
+;     is not provided, a vector containing the numbers of exposures
+;     for each window
 ;
-; INPUTS:
+; OPTIONAL INPUTS:
 ;     window_index : the index of the window
 ;
 ; OUTPUT:
-;     float
+;     int or int-array
 ;-
 FUNCTION spice_data::get_number_exposures, window_index
   ;returns the number of exposures in the window
   COMPILE_OPT IDL2
 
-  IF self.get_sit_and_stare() then n_exp = self.get_header_info('NAXIS4', window_index) $
-  ELSE n_exp = self.get_header_info('NAXIS1', window_index)
+  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
+    n_exp = intarr(self.get_number_windows)
+    FOR iwin=0,self.get_number_windows-1 DO BEGIN
+      IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_info('NAXIS4', iwin) $
+      ELSE n_exp[iwin] = self.get_header_info('NAXIS1', iwin)
+    ENDFOR
+  ENDIF ELSE BEGIN
+    IF self.get_sit_and_stare() THEN n_exp = self.get_header_info('NAXIS4', window_index) $
+    ELSE n_exp = self.get_header_info('NAXIS1', window_index)
+  ENDELSE
   return, n_exp
 END
 
