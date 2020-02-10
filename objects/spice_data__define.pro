@@ -527,6 +527,21 @@ END
 
 ;+
 ; Description:
+;     returns the 2-element vector containing the CCD size
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_ccd_size
+  ;returns the 2-element vector containing the CCD size
+  COMPILE_OPT IDL2
+
+  return, self.ccd_size
+END
+
+
+;+
+; Description:
 ;     returns the window ID
 ;
 ; INPUTS:
