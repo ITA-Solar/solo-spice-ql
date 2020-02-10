@@ -57,3 +57,4 @@ Specialised routines for displaying secondary derived products such as temperatu
 - make it possible to view movies using ximovie (e.g. in xwhisker and/or directly in object)
 - implement calibration in object and/or getwindata
 - get some numbers for gain, yield and dark current for error calculation in getwindata
+- check position keywords for axis, when those are displayed in pixels (PXBEGx, PXENDx)
