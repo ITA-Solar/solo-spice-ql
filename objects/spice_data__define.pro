@@ -56,7 +56,8 @@
 FUNCTION spice_data::init, file, verbose=verbose
   COMPILE_OPT IDL2
 
-  self.title='SPICE'
+  self.title = 'SPICE'
+  self.ccd_size = [1024, 1024]
   IF n_elements(file) EQ 1 THEN BEGIN
     self->read_file, file, verbose=verbose
   ENDIF
@@ -1012,6 +1013,7 @@ PRO spice_data__define
   struct = {spice_data, $
     file: '', $                 ; input filename
     title: '', $                ; instrument name
+    ccd_size: [0,0], $          ; size of the detector, set in init
     nwin: 0, $                  ; number of windows
     window_assoc: ptr_new(), $  ; pointers to window data in the file using assoc (ptrarr)
     window_data: ptr_new(), $   ; loaded window data (ptrarr)
