@@ -620,6 +620,34 @@ END
 
 ;+
 ; Description:
+;     returns the number of pixels in y in the window, or if window_index 
+;     is not provided, a vector containing the numbers of pixels in y
+;     for each window
+;
+; OPTIONAL INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     int or int-array
+;-
+FUNCTION spice_data::get_number_y_pixels, window_index
+  ;returns the number of pixels in y in the window
+  COMPILE_OPT IDL2
+
+  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
+    n_slit = intarr(self.get_number_windows)
+    FOR iwin=0,self.get_number_windows-1 DO BEGIN
+      n_slit[iwin] = self.get_header_info('NAXIS2', iwin)
+    ENDFOR
+  ENDIF ELSE BEGIN
+    n_slit = self.get_header_info('NAXIS2', window_index)
+  ENDELSE
+  return, n_slit
+END
+
+
+;+
+; Description:
 ;     returns the exposure time of the given window per exposure
 ;
 ; INPUTS:
