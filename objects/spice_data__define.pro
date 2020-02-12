@@ -593,7 +593,14 @@ FUNCTION spice_data::get_window_id, window_index
       window_id[i] = self.get_header_info('EXTNAME', i)
     ENDFOR
   ENDIF ELSE BEGIN
-    window_id = self.get_header_info('EXTNAME', window_index)
+    IF N_ELEMENTS(window_index) eq 1 THEN BEGIN
+      window_id = self.get_header_info('EXTNAME', window_index)
+    ENDIF ELSE BEGIN
+      window_id = strarr(N_ELEMENTS(window_index))
+      FOR i = 0,N_ELEMENTS(window_index)-1 DO BEGIN
+        window_id[i] = self.get_header_info('EXTNAME', window_index[i])
+      ENDFOR
+    ENDELSE
   ENDELSE
 
   return, window_id
