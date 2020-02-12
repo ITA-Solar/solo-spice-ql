@@ -319,7 +319,9 @@ FUNCTION spice_data::get_window_positions, window_index, idl_coord=idl_coord
   PXEND3 = self.get_header_info('PXEND3', 0)
   PXBEG2 = self.get_header_info('PXBEG2', 0)
   PXEND2 = self.get_header_info('PXEND2', 0)
-  return, [PXBEG3, PXEND3, PXBEG2, PXEND2]
+  positions = [PXBEG3, PXEND3, PXBEG2, PXEND2]
+  IF keyword_set(idl_coord) THEN positions = positions - 1
+  return, positions
 END
 
 
