@@ -308,10 +308,14 @@ END
 ; INPUTS:
 ;     window_index : the index of the window
 ;
+; KEYWORD PARAMETERS:
+;     idl_coord : if set, the coordinates start with zero, instead of with 1
+;     reverse_y : y-coordinates are given as CCD-size +1 - (original y-coords)
+;
 ; OUTPUT:
 ;     int array
 ;-
-FUNCTION spice_data::get_window_positions, window_index, idl_coord=idl_coord
+FUNCTION spice_data::get_window_positions, window_index, idl_coord=idl_coord, reverse_y=reverse_y
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
 
@@ -320,6 +324,7 @@ FUNCTION spice_data::get_window_positions, window_index, idl_coord=idl_coord
   PXBEG2 = self.get_header_info('PXBEG2', 0)
   PXEND2 = self.get_header_info('PXEND2', 0)
   positions = [PXBEG3, PXEND3, PXBEG2, PXEND2]
+  IF keyword_set(reverse_y) THEN positions[2:3] = (self.get_ccd_size())[1] + 1 - positions[2:3]
   IF keyword_set(idl_coord) THEN positions = positions - 1
   return, positions
 END
