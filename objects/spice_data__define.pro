@@ -259,7 +259,9 @@ END
 ;-
 FUNCTION spice_data::get_window_index, input
   ;Returns window index of a given wavelength or window name
-  IF n_params() EQ 0 THEN BEGIN
+  COMPILE_OPT IDL2
+
+ IF n_params() EQ 0 THEN BEGIN
     message,'getwindx,input',/info
     return,-1
   ENDIF
@@ -294,6 +296,30 @@ FUNCTION spice_data::get_window_index, input
     ENDELSE
   ENDFOR
   return,iwin
+END
+
+
+;+
+; Description:
+;     Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
+;     position is given as a 4-element vector, with [lambda0, lambda1, y0, y1].
+;     Note: y0 > y1, but lambda0 < lambda1
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_window_positions, window_index, idl_coord=idl_coord
+  ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
+  COMPILE_OPT IDL2
+
+  PXBEG3 = self.get_header_info('PXBEG3', 0)
+  PXEND3 = self.get_header_info('PXEND3', 0)
+  PXBEG2 = self.get_header_info('PXBEG2', 0)
+  PXEND2 = self.get_header_info('PXEND2', 0)
+  return, [PXBEG3, PXEND3, PXBEG2, PXEND2]
 END
 
 
