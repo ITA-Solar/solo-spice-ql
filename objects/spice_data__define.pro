@@ -315,18 +315,18 @@ END
 ; OUTPUT:
 ;     int array
 ;-
-FUNCTION spice_data::get_window_positions, window_index, idl_coord=idl_coord, reverse_y=reverse_y
+FUNCTION spice_data::get_window_position, window_index, idl_coord=idl_coord, reverse_y=reverse_y
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
 
-  PXBEG3 = self.get_header_info('PXBEG3', 0)
-  PXEND3 = self.get_header_info('PXEND3', 0)
-  PXBEG2 = self.get_header_info('PXBEG2', 0)
-  PXEND2 = self.get_header_info('PXEND2', 0)
-  positions = [PXBEG3, PXEND3, PXBEG2, PXEND2]
-  IF keyword_set(reverse_y) THEN positions[2:3] = (self.get_ccd_size())[1] + 1 - positions[2:3]
-  IF keyword_set(idl_coord) THEN positions = positions - 1
-  return, positions
+  PXBEG3 = self.get_header_info('PXBEG3', window_index)
+  PXEND3 = self.get_header_info('PXEND3', window_index)
+  PXBEG2 = self.get_header_info('PXBEG2', window_index)
+  PXEND2 = self.get_header_info('PXEND2', window_index)
+  position = [PXBEG3, PXEND3, PXBEG2, PXEND2]
+  IF keyword_set(reverse_y) THEN position[2:3] = (self.get_ccd_size())[1] + 1 - position[2:3]
+  IF keyword_set(idl_coord) THEN position = position - 1
+  return, position
 END
 
 
