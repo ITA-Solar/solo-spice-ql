@@ -575,16 +575,20 @@ END
 
 ;+
 ; Description:
-;     returns the window ID
+;     returns the window ID of one or more windows. window_index is optional
+;     if not provided, window IDs of all windows are returned, if it is
+;     scalar, the result will be a scalar string, and if window_index is
+;     an array, the result will be a string array of same size.
 ;
 ; INPUTS:
 ;     window_index : the index of the window the ID is asked for
+;                    scalar or 1D-int-array
 ;
 ; OUTPUT:
-;     string
+;     string or string array
 ;-
 FUNCTION spice_data::get_window_id, window_index
-  ;returns the window ID
+  ;returns the window ID, as string or string array
   COMPILE_OPT IDL2
 
   IF n_params() EQ 0 THEN BEGIN
