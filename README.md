@@ -8,11 +8,13 @@ In general, all functionalities in the heritage routines will be preserved as fa
     * Implemented, continuous improvement
     ```
     obj = obj_new('spice_data', spice_file)
+    obj->help
     ```
 * Routine to read SPICE FITS file into an object (iris_obj).
     * Done
     ```
     obj = spice_object(spice_file)
+    obj->help
     ```
 * A 3D data-cube viewer (iris_raster_browser)
     * Initial working version
