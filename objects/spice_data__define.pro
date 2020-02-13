@@ -314,17 +314,49 @@ END
 ;
 ; OUTPUT:
 ;     int array
+;
+; OPTIONAL OUTPUT:
+;     detector : int, 1 or 2 to indicate on which detector the winodow is
 ;-
-FUNCTION spice_data::get_window_position, window_index, idl_coord=idl_coord, reverse_y=reverse_y
+FUNCTION spice_data::get_window_position, window_index, detector=detector, $
+  idl_coord=idl_coord, reverse_y=reverse_y
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
 
+  ccd_size = self.get_ccd_size()
+
   PXBEG3 = self.get_header_info('PXBEG3', window_index)
+  IF PXBEG3 LT 0 THEN BEGIN
+    message, 'PXBEG3 < 0: '+strtrim(string(PXBEG3))+' < 0', /info
+    detector = 1
+  ENDIF ELSE IF PXBEG3 GT 2*ccd_size[0] THEN BEGIN
+    message, 'PXBEG3 > 2 * CCD-size: '+strtrim(string(PXBEG3))+' > '+strtrim(string(2*ccd_size[0])), /info
+    detector = 2
+  ENDIF ELSE IF PXBEG3 GT ccd_size[0] THEN BEGIN
+    detector = 2
+  ENDIF ELSE BEGIN
+    detector = 1
+  ENDELSE
+
   PXEND3 = self.get_header_info('PXEND3', window_index)
+  IF PXEND3 LT 0 THEN message, 'PXEND3 < 0: '+strtrim(string(PXEND3))+' < 0', /info
+  IF PXEND3 LT PXBEG3 THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
+  IF PXEND3 GT 2*ccd_size[0] THEN $
+    message, 'PXEND3 > 2 * CCD-size: '+strtrim(string(PXEND3))+' > '+strtrim(string(2*ccd_size[0])), /info
+
   PXBEG2 = self.get_header_info('PXBEG2', window_index)
+  IF PXBEG2 LT 0 THEN message, 'PXBEG2 < 0: '+strtrim(string(PXBEG2))+' < 0', /info
+  IF PXBEG2 GT ccd_size[1] THEN $
+    message, 'PXBEG2 > CCD-size: '+strtrim(string(PXBEG2))+' > '+strtrim(string(ccd_size[1])), /info
+
   PXEND2 = self.get_header_info('PXEND2', window_index)
+  IF PXEND2 LT 0 THEN message, 'PXEND2 < 0: '+strtrim(string(PXEND2))+' < 0', /info
+  IF PXEND2 GT PXBEG2 THEN message, 'PXEND2 > PXBEG2: '+strtrim(string(PXEND2))+' > '+strtrim(string(PXBEG2)), /info
+  IF PXEND2 GT ccd_size[1] THEN $
+    message, 'PXEND2 > CCD-size: '+strtrim(string(PXEND2))+' > '+strtrim(string(ccd_size[1])), /info
+
   position = [PXBEG3, PXEND3, PXBEG2, PXEND2]
-  IF keyword_set(reverse_y) THEN position[2:3] = (self.get_ccd_size())[1] + 1 - position[2:3]
+  IF keyword_set(reverse_y) THEN position[2:3] = ccd_size[1] + 1 - position[2:3]
   IF keyword_set(idl_coord) THEN position = position - 1
   return, position
 END
