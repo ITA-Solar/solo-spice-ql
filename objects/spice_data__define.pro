@@ -810,22 +810,33 @@ END
 ;+
 ; Description:
 ;     returns a vector containting the coordinate for each pixel in second dimension, instrument y-direction
+;     for the selected window, or the full CCD this window belongs to
 ;
 ; INPUTS:
 ;     window_index : the index of the window
 ;
+; OPTIONAL KEYWORDS:
+;     full_ccd : if set, a vector of size CCD-size[1] is returned with coordinate values
+;                for the whole detector
+;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_y_vector, window_index
+FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   ;returns a vector containting the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval2', window_index)
-  naxis = self.get_header_info('naxis2', window_index)
   crpix = self.get_header_info('crpix2', window_index)
   cdelt = self.get_header_info('cdelt2', window_index)
   pc2_2 = self.get_header_info('PC2_2', window_index)
+  IF keyword_set(full_ccd) THEN BEGIN
+    PXBEG3 = (self.get_window_position(window_index, /reverse_y))[2]
+    cripx = crpix + PXBEG3
+    naxis = (self.get_ccd_size())[1]
+  ENDIF ELSE BEGIN
+    naxis = self.get_header_info('naxis2', window_index)
+  ENDELSE
   y_vector = crval + cdelt * pc2_2 * (findgen(naxis)+1.0-crpix)
   return, y_vector
 END
@@ -833,22 +844,33 @@ END
 
 ;+
 ; Description:
-;     returns a vector containting the wavelength for each pixel in third dimension
+;     returns a vector containting the wavelength for each pixel in third dimension for
+;     the selected window, or the full CCD this window belongs to
 ;
 ; INPUTS:
 ;     window_index : the index of the window
 ;
+; OPTIONAL KEYWORDS:
+;     full_ccd : if set, a vector of size CCD-size[0] is returned with lamda values
+;                for the whole detector
+;
 ; OUTPUT:
 ;     float array, wavelength in nm
 ;-
-FUNCTION spice_data::get_lambda_vector, window_index
-  ;returns a vector containting the wavelength for each pixel in third dimension
+FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
+  ;returns a vector containting the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval3', window_index)
-  naxis = self.get_header_info('naxis3', window_index)
-  crpix = self.get_header_info('crpix3', window_index)
   cdelt = self.get_header_info('cdelt3', window_index)
+  crpix = self.get_header_info('crpix3', window_index)
+  IF keyword_set(full_ccd) THEN BEGIN
+    PXBEG3 = self.get_header_info('PXBEG3', window_index)
+    cripx = crpix + PXBEG3
+    naxis = (self.get_ccd_size())[0]
+  ENDIF ELSE BEGIN
+    naxis = self.get_header_info('naxis3', window_index)
+  ENDELSE
   lambda_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
   return, lambda_vector
 END
