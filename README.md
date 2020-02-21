@@ -38,6 +38,14 @@ In general, all functionalities in the heritage routines will be preserved as fa
         calib=calib, perang=perang, verbose=verbose, quiet=quiet]
     ```
 * Detector viewer (iris_xdetector)
+    * Initial working version
+    * Animation with ximovie doesn’t work yet, might be a bigger change
+    * Some bugs to fix:
+        * windows from second detector crash due to too high pxbeg
+        * crash with file 3 windows 4 and higher (data 1D)
+    ```
+    spice_xdetector, spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
+    ```
 * Spectroheliogram viewer (iris_xraster)
 * Intensity map viewer (iris_xmap)
 * Interactive line fitting (xcfit)
