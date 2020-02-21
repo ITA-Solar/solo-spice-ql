@@ -93,18 +93,17 @@ pro spice_xdetector_draw, event
   endelse
   erase
   if (*info).log then begin
-    im_min=*(*info).data->datamin()>1.
-    ymax = alog10(max(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing())))
-    ymin = alog10(min(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing())))
-    mplot_image,alog10(*(*info).drawimage>im_min), $
+    ;im_min=*(*info).data->datamin()>1.
+    ymin = alog10(min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value(), low_limit=0.5), max=ymax, /nan))
+    ymax = alog10(ymax)
+    mplot_image,alog10(*(*info).drawimage), $
       *(*info).xscale, *(*info).yscale, $
       min=ymin,max=ymax, $
       xstyle = 1, ystyle = 1, pos=(*info).imagepos, $
       xtitle = (*info).xtitle, ytitle = (*info).ytitle,bgblack=bgblack,ticklen=ticklen
   endif else begin
-    im_min=*(*info).data->datamin()
-    ymin = min(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing()))
-    ymax = max(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing()))
+    ;im_min=*(*info).data->datamin()
+    ymin = min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value()), max=ymax, /nan)
     mplot_image, *(*info).drawimage, $
       *(*info).xscale, *(*info).yscale, $
       min=ymin,max=ymax, $
@@ -122,6 +121,7 @@ pro spice_xdetector_draw, event
   if ymax-ymin eq 0.0 then ymax=ymin+1
   format='(f10.1)'
   if ymax-ymin lt 10 then format='(f7.4)'
+  print,ymax,ymin
   hw_colorbar, position = [((*info).imagepos)[2]+0.01, $
     ((*info).imagepos)[1], $
     ((*info).imagepos)[2]+0.02, $
@@ -131,6 +131,7 @@ end
 
 ; get the value of the draw window option menu:
 function spice_xdetector_dwoption, event
+  if event.select eq 0 then return,0
   widget_control, event.top, get_uvalue = info
   (*info).dwoption = event.value
   return, 0
@@ -138,6 +139,7 @@ end
 
 ; wavelength selection buttons
 function spice_xdetector_wloption, event
+  if event.select eq 0 then return,0
   widget_control, event.top,get_uvalue=info
   case event.value of
     0: spice_xdetector_wpix, event
@@ -148,6 +150,7 @@ end
 
 ; slit scale selection buttons
 function spice_xdetector_sloption, event
+  if event.select eq 0 then return,0
   widget_control, event.top,get_uvalue=info
   case event.value of
     0: spice_xdetector_spix, event
@@ -160,171 +163,137 @@ end
 pro spice_xdetector_expslider, event
   widget_control, event.top,get_uvalue=info
   (*info).expnr=event.value
-  nr=(*info).expnr
+  current_exp_ind=(*info).expnr
+  (*info).detector[*] = !Values.F_NAN
   ; read new data (for selected position) into detector variable
-  yw=*(*info).data->getyw()
-  ywmax=max(*(*info).data->getyw(),ic)
-  ysmax=*(*info).data->getys(ic)
-  xw=*(*info).data->getxw()
-  xs=*(*info).data->getxs()
-  ys=*(*info).data->getys()-ysmax
   for i=0,(*info).nwin-1 do begin
-    lindxi=(*info).lindx[i]
-    wd=*(*info).data->getvar(lindxi)
-    xss=0
-    if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
-    bin_sp=*(*info).data->binning_spectral(lindxi)
-    ;    bin_sp=*(*info).data->getinfo('SUMSPTRL')
-    pos0 = (xs[lindxi]-1)*bin_sp mod (*(*info).data->getccd_sz('FUV1'))[0]
-    pos1 = xw[lindxi]
-    pos2 = ys[lindxi]
-    pos3 = yw[lindxi]
-    ; assuming that all slit positions (on each CCD) start at same
-    ; position: if this is not the case more logic is needed above
-    (*info).detector[pos0:pos0+pos1*bin_sp-1,0:pos3-1]= $
-      congrid(*(*info).data->descale_array(wd[xss:xss+pos1-1, *, nr]),pos1*bin_sp,pos3)
+    (*info).detector[(*info).win_positions[i,0]:(*info).win_positions[i,1], $
+      (*info).win_positions[i,2]:(*info).win_positions[i,3]] $
+      = *(*info).data->get_one_image((*info).lindx[i], current_exp_ind)
   endfor
-
-  ; update exposure time and fine mirror
-
-  widget_control,(*info).exposuretext, $
-    set_value=strtrim('Exp time: '+string((*(*info).data->getexp())[nr], $
-    format='(f7.1)')+' s',2)
-  time=*(*info).data->gettime()
-  widget_control,(*info).timetext, $
-    set_value=strtrim('Time    : '+string(time[nr], $
-    format='(f7.1)')+' s',2)
-  pztx=*(*info).data->getpztx()
-  widget_control,(*info).fmirrxtext, $
-    set_value = 'PZTX: '+ string(pztx[nr],format='(f7.2)')+' arcsec'
-  pzty=*(*info).data->getpzty()
-  widget_control,(*info).fmirrytext, $
-    set_value = 'PZTY: '+ string(pzty[nr],format='(f7.2)')+' arcsec'
-
   ; display new raster position
-
   pseudoevent={widget_base,id:0L, $
     top:event.top, handler:0l, x:(*info).tlb_xsz,  y:(*info).tlb_ysz}
   widget_control, event.top, set_uvalue=info
   spice_xdetector_resize, pseudoevent
 end
 
-; slider to select exposure within a raster pos (if multiple)
-pro spice_xdetector_expprp_slider, event
-  widget_control, event.top,get_uvalue=info
-  (*info).exprp=event.value
-  (*info).expnr = (*info).nexpprp*((*info).rpos - 1) + (*info).exprp - 1
-  nr=(*info).expnr
-  ; read new data (for selected exposure) into detector variable
-  yw=*(*info).data->getyw()
-  ywmax=max(*(*info).data->getyw(),ic)
-  ysmax=*(*info).data->getys(ic)
-  xw=*(*info).data->getxw()
-  xs=*(*info).data->getxs()
-  ys=*(*info).data->getys()-ysmax
-  for i=0,(*info).nwin-1 do begin
-    lindxi=(*info).lindx[i]
-    wd=*(*info).data->getvar(lindxi)
-    xss=0
-    if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
-    pos0 = xs[lindxi] mod (*(*info).data->getccd_sz('FUV1'))[0]
-    pos1 = xw[lindxi]
-    pos2 = ys[lindxi]
-    pos3 = yw[lindxi]
-    (*info).detector[pos0:pos0+pos1-1,pos2:pos2+pos3-1] = $
-      *(*info).data->descale_array(wd[xss:xss+pos1-1, *, (*info).expnr])
-  endfor
-
-  ; update exposure time and fine mirror
-
-  widget_control,(*info).exposuretext, $
-    set_value=strtrim('Exp time: '+string((*(*info).data->getexp())[nr], $
-    format='(f7.1)')+' ms',2)
-  time=*(*info).data->gettime()
-  widget_control,(*info).timetext, $
-    set_value=strtrim('Time    : '+string(time[nr]/1000., $
-    format='(f7.1)'+' s'),2)
-  pztx=*(*info).data->getpztx()
-  widget_control,(*info).fmirrxtext, $
-    set_value = 'PZTX: '+ string(pztx[nr],format='(f7.2)')+' arcsec'
-  pzty=*(*info).data->getpzty()
-  widget_control,(*info).fmirrytext, $
-    set_value = 'PZTY: '+ string(pzty[nr],format='(f7.2)')+' arcsec'
-
-  ; display new raster position
-
-  pseudoevent={widget_base,id:0L, $
-    top:event.top, handler:0l, x:(*info).tlb_xsz,  y:(*info).tlb_ysz}
-  widget_control, event.top, set_uvalue=info
-  spice_xdetector_resize, pseudoevent
-end
+;; slider to select exposure within a raster pos (if multiple)
+;pro spice_xdetector_expprp_slider, event
+;  widget_control, event.top,get_uvalue=info
+;  (*info).exprp=event.value
+;  (*info).expnr = (*info).nexpprp*((*info).rpos - 1) + (*info).exprp - 1
+;  nr=(*info).expnr
+;  ; read new data (for selected exposure) into detector variable
+;  yw=*(*info).data->getyw()
+;  ywmax=max(*(*info).data->getyw(),ic)
+;  ysmax=*(*info).data->getys(ic)
+;  xw=*(*info).data->getxw()
+;  xs=*(*info).data->getxs()
+;  ys=*(*info).data->getys()-ysmax
+;  for i=0,(*info).nwin-1 do begin
+;    lindxi=(*info).lindx[i]
+;    wd=*(*info).data->getvar(lindxi)
+;    xss=0
+;    if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
+;    pos0 = xs[lindxi] mod (*(*info).data->getccd_sz('FUV1'))[0]
+;    pos1 = xw[lindxi]
+;    pos2 = ys[lindxi]
+;    pos3 = yw[lindxi]
+;    (*info).detector[pos0:pos0+pos1-1,pos2:pos2+pos3-1] = $
+;      *(*info).data->descale_array(wd[xss:xss+pos1-1, *, (*info).expnr])
+;  endfor
+;
+;  ; update exposure time and fine mirror
+;
+;  widget_control,(*info).exposuretext, $
+;    set_value=strtrim('Exp time: '+string((*(*info).data->getexp())[nr], $
+;    format='(f7.1)')+' ms',2)
+;  time=*(*info).data->gettime()
+;  widget_control,(*info).timetext, $
+;    set_value=strtrim('Time    : '+string(time[nr]/1000., $
+;    format='(f7.1)'+' s'),2)
+;  pztx=*(*info).data->getpztx()
+;  widget_control,(*info).fmirrxtext, $
+;    set_value = 'PZTX: '+ string(pztx[nr],format='(f7.2)')+' arcsec'
+;  pzty=*(*info).data->getpzty()
+;  widget_control,(*info).fmirrytext, $
+;    set_value = 'PZTY: '+ string(pzty[nr],format='(f7.2)')+' arcsec'
+;
+;  ; display new raster position
+;
+;  pseudoevent={widget_base,id:0L, $
+;    top:event.top, handler:0l, x:(*info).tlb_xsz,  y:(*info).tlb_ysz}
+;  widget_control, event.top, set_uvalue=info
+;  spice_xdetector_resize, pseudoevent
+;end
 
 ; set screen size to preset value
 function spice_xdetector_drawsizeoption, event
+  if event.select eq 0 then return,0
   widget_control, event.top, get_uvalue = info
   w_ysz=(*info).tlb_ysz-(*info).d_ysz
   case event.value of
-    0: sizemode='standard'
-    1: sizemode='big'
+    0: xysz = (*info).standard_size
+    1: xysz = (*info).big_size
   endcase
-  aspect=float((*info).screensize[0])/float((*info).screensize[1])
-  xysz=(*(*info).data->getaux())->getdrawsize(sizemode,aspect=aspect)
   pseudoevent={widget_base,id:0l,top:(*info).tlb, handler:0l, $
     x:xysz[0]+(*info).lcol_xsz, y:xysz[1]+w_ysz}
   spice_xdetector_resize, pseudoevent
   return, 0
 end
-; slider to select raster position (used only when multiple exp
-; pr. rast. pos)
-pro spice_xdetector_rast_slider, event
-  widget_control, event.top,get_uvalue=info
-  (*info).rpos = event.value
-  (*info).expnr = (*info).nexpprp*((*info).rpos - 1) + (*info).exprp - 1
-  nr=(*info).expnr
 
-  ; read new data (for selected exposure) into detector variable
-
-  yw=*(*info).data->getyw()
-  ywmax=max(*(*info).data->getyw(),ic)
-  ysmax=*(*info).data->getys(ic)
-  xw=*(*info).data->getxw()
-  xs=*(*info).data->getxs()
-  ys=*(*info).data->getys()-ysmax
-  for i=0,(*info).nwin-1 do begin
-    lindxi=(*info).lindx[i]
-    wd=*(*info).data->getvar(lindxi)
-    xss=0
-    if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
-    pos0 = xs[lindxi] mod (*(*info).data->getccd_sz('FUV1'))[0]
-    pos1 = xw[lindxi]
-    pos2 = ys[lindxi]
-    pos3 = yw[lindxi]
-    (*info).detector[pos0:pos0+pos1-1,pos2:pos2+pos3-1] = $
-      *(*info).data->descale_array(wd[xss:xss+pos1-1,*,(*info).expnr])
-  endfor
-
-  ; update exposure time and fine mirror
-
-  widget_control,(*info).exposuretext, $
-    set_value=strtrim('Exp. time: '+string((*(*info).data->getexp())[nr], $
-    format='(f5.2)'+' ms'),2)
-  time=*(*info).data->gettime()
-  widget_control,(*info).timetext, $
-    set_value=strtrim('Time     : '+string(time[nr], $
-    format='(f5.2)')+' ms',2)
-  pztx=*(*info).data->getpztx()
-  widget_control,(*info).fmirrxtext, $
-    set_value = 'PZTX: '+ string(pztx[nr],format='(f7.2)')+' arcsec'
-  pzty=*(*info).data->getpzty()
-  widget_control,(*info).fmirrytext, $
-    set_value = 'PZTY: '+ string(pzty[nr],format='(f7.2)')+' arcsec'
-
-  ; display new raster position
-  pseudoevent={widget_base,id:0L, $
-    top:event.top, handler:0l, x:(*info).tlb_xsz,  y:(*info).tlb_ysz}
-  widget_control, event.top, set_uvalue=info
-  spice_xdetector_resize, pseudoevent
-end
+;; slider to select raster position (used only when multiple exp
+;; pr. rast. pos)
+;pro spice_xdetector_rast_slider, event
+;  widget_control, event.top,get_uvalue=info
+;  (*info).rpos = event.value
+;  (*info).expnr = (*info).nexpprp*((*info).rpos - 1) + (*info).exprp - 1
+;  nr=(*info).expnr
+;
+;  ; read new data (for selected exposure) into detector variable
+;
+;  yw=*(*info).data->getyw()
+;  ywmax=max(*(*info).data->getyw(),ic)
+;  ysmax=*(*info).data->getys(ic)
+;  xw=*(*info).data->getxw()
+;  xs=*(*info).data->getxs()
+;  ys=*(*info).data->getys()-ysmax
+;  for i=0,(*info).nwin-1 do begin
+;    lindxi=(*info).lindx[i]
+;    wd=*(*info).data->getvar(lindxi)
+;    xss=0
+;    if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
+;    pos0 = xs[lindxi] mod (*(*info).data->getccd_sz('FUV1'))[0]
+;    pos1 = xw[lindxi]
+;    pos2 = ys[lindxi]
+;    pos3 = yw[lindxi]
+;    (*info).detector[pos0:pos0+pos1-1,pos2:pos2+pos3-1] = $
+;      *(*info).data->descale_array(wd[xss:xss+pos1-1,*,(*info).expnr])
+;  endfor
+;
+;  ; update exposure time and fine mirror
+;
+;  widget_control,(*info).exposuretext, $
+;    set_value=strtrim('Exp. time: '+string((*(*info).data->getexp())[nr], $
+;    format='(f5.2)'+' ms'),2)
+;  time=*(*info).data->gettime()
+;  widget_control,(*info).timetext, $
+;    set_value=strtrim('Time     : '+string(time[nr], $
+;    format='(f5.2)')+' ms',2)
+;  pztx=*(*info).data->getpztx()
+;  ;  widget_control,(*info).fmirrxtext, $
+;  ;    set_value = 'PZTX: '+ string(pztx[nr],format='(f7.2)')+' arcsec'
+;  ;  pzty=*(*info).data->getpzty()
+;  ;  widget_control,(*info).fmirrytext, $
+;  ;    set_value = 'PZTY: '+ string(pzty[nr],format='(f7.2)')+' arcsec'
+;
+;  ; display new raster position
+;  pseudoevent={widget_base,id:0L, $
+;    top:event.top, handler:0l, x:(*info).tlb_xsz,  y:(*info).tlb_ysz}
+;  widget_control, event.top, set_uvalue=info
+;  spice_xdetector_resize, pseudoevent
+;end
 
 ; zoom in draw window:
 pro spice_xdetector_zoom, event
@@ -332,7 +301,7 @@ pro spice_xdetector_zoom, event
   if event.type gt 2 then return
 
   ;set up axis titles for line plots (options 1 or 2 below)
-  varname = *(*info).data->getvariablename()
+  varname = *(*info).data->get_variable_type()
   varname = varname[0] +': column average'
   ;
   events=['down','up','motion']
@@ -348,18 +317,17 @@ pro spice_xdetector_zoom, event
     ys = ((*info).imagepos)[1]*(*info).d_ysz
   endelse
   if (*info).log then begin
-    im_min=*(*info).data->datamin()>1.
-    ymax = alog10(max(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing())))
-    ymin = alog10(min(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing())))
+    ;im_min=*(*info).data->datamin()>1.
+    ymin = alog10(min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value(), low_limit=0.5), max=ymax, /nan))
+    ymax = alog10(ymax)
     mplot_image,alog10(*(*info).drawimage), $
       *(*info).xscale, *(*info).yscale, $
       min=ymin,max=ymax, $
       xstyle = 1, ystyle = 1, pos=(*info).imagepos, $
       xtitle = (*info).xtitle, ytitle = (*info).ytitle,/bgblack
   endif else begin
-    im_min=*(*info).data->datamin()
-    ymin = min(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing()))
-    ymax = max(iris_histo_opt(*(*info).drawimage>im_min,missing=*(*info).data->missing()))
+    ;im_min=*(*info).data->datamin()
+    ymin = min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value()), max=ymax, /nan)
     mplot_image,*(*info).drawimage, $
       *(*info).xscale, *(*info).yscale, $
       min=ymin,max=ymax, $
@@ -432,9 +400,9 @@ pro spice_xdetector_zoom, event
         end
         1:begin
           ;set up axis titles for line plots (options 1 or 2 below)
-          varname = *(*info).data->getvariablename()
+          varname = *(*info).data->get_variable_type()
           varname = varname[0] +': column average'
-          dmean = total(image, 1)/sz[1]
+          dmean = total(image, 1, /nan)/sz[1]
           iris_xlineplot, dmean, xscale = yscale, $
             title = varname, $
             xtitle = (*info).ytitle, $
@@ -443,9 +411,9 @@ pro spice_xdetector_zoom, event
         end
         2:begin
           ;set up axis titles for line plots (options 1 or 2 below)
-          varname = *(*info).data->getvariablename()
+          varname = *(*info).data->get_variable_type()
           varname = varname[0] +': row average'
-          if y1 eq y2 then dmean=image else dmean = total(image, 2)/sz[2]
+          if y1 eq y2 then dmean=image else dmean = total(image, 2, /nan)/sz[2]
           iris_xlineplot, dmean, xscale = xscale, $
             title = varname, $
             xtitle = (*info).xtitle, $
@@ -493,6 +461,7 @@ end
 
 ; get the value of the selected line from the line list:
 function spice_xdetector_pickline_pick, event
+  if event.select eq 0 then return,0
   widget_control, event.top, get_uvalue = info
   defdir = ''
   (*info).line = event.value + (*info).lindx[0]
@@ -521,6 +490,8 @@ end
 
 ; create animation widget and launch animation
 pro spice_xdetector_anim, event
+  print,'does NOT work yet'
+  return
   widget_control, event.top, get_uvalue = info
   magnification=0.95
   minsize=400.0
@@ -589,15 +560,10 @@ end
 ; change wavelength scale to pixels
 pro spice_xdetector_wpix, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  (*(*info).data->getaux())->setwscale,'pixels'
-  (*(*info).data->getaux())->setxytitle,wscale='pixels'
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim, /pixels)
   ; set scale for images
-  xscale = *(*info).data->getlambda(*(*info).data->getregion((*info).lindx[0],/full))
-  (*info).lambda = xscale
+  (*info).lambda = (*info).xscale_pixels
   pseudoevent={widget_base,id:0L, $
     top:event.top, handler:0l, x:(*info).tlb_xsz, y:(*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -606,44 +572,34 @@ end
 ; change wavelength scale to Angstrom
 pro spice_xdetector_wangstr, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  (*(*info).data->getaux())->setwscale,string("305B)
-  (*(*info).data->getaux())->setxytitle,wscale=string("305B)
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
-
-  xscale = *(*info).data->getlambda(*(*info).data->getregion((*info).lindx[0],/full))
-  (*info).lambda = xscale
-
+  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim)
+  ; set scale for images
+  (*info).lambda = (*info).xscale_physical
   pseudoevent={widget_base,id:0L, $
     top:event.top, handler:0l, x:(*info).tlb_xsz, y:(*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
 end
 
+; change spatial scale to pixels
 pro spice_xdetector_spix, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  (*(*info).data->getaux())->setsscale,'pixels'
-  (*(*info).data->getaux())->setxytitle,sscale='pixels'
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
-
+  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim, /pixels)
+  ; set scale for images
+  (*info).spatial = (*info).yscale_pixels
   pseudoevent={widget_base,id:0L, $
     top:event.top, handler:0l, x:(*info).tlb_xsz, y:(*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
 end
 
+; change spatial scale to arcsec
 pro spice_xdetector_sarcsec, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  (*(*info).data->getaux())->setsscale,'arcsec'
-  (*(*info).data->getaux())->setxytitle,sscale='arcsec'
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
-
+  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim)
+  ; set scale for images
+  (*info).spatial = (*info).yscale_physical
   pseudoevent={widget_base,id:0L, $
     top:event.top, handler:0l, x:(*info).tlb_xsz, y:(*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -689,9 +645,9 @@ pro spice_xdetector_resize, event
   (*info).d_xsz = (event.x - (*info).lcol_xsz) > 0
   (*info).d_ysz = (event.y-w_ysz)
   if(*info).realsize then begin
-    (*info).imagepos = [0.03, 0.15, 0.95, 0.95]
+    (*info).imagepos = [0.05, 0.05, 0.93, 0.99]
     xvs = (*info).ccd_xsz*(1.+(*info).imagepos[0]+(1.-(*info).imagepos[2]))
-    yvs = (*info).ccd_ysz*(1.+(*info).imagepos[2]+(1.-(*info).imagepos[3]))
+    yvs = (*info).ccd_ysz*(1.+(*info).imagepos[1]+(1.-(*info).imagepos[3]))
     widget_control, (*info).drawid, $
       xsize = (*info).d_xsz, ysize = (*info).d_ysz, $
       draw_xsize = xvs,  draw_ysize = yvs
@@ -701,10 +657,11 @@ pro spice_xdetector_resize, event
     (*info).yps = (*info).ccd_ysz  ; y-plot-size
     drawimage = (*info).detector
     xscale = (*info).lambda
-    ywmax=max(*(*info).data->getyw(),ic)
-    ysmax=*(*info).data->getys(ic)
-    if (*(*info).data->getaux())->getsscale() eq 'pixels' then yscale = findgen((*info).ccd_ysz)+ysmax $
-    else yscale=*(*info).data->getypos()
+    yscale = (*info).spatial
+    ;ywmax=max(*(*info).data->getyw(),ic)
+    ;ysmax=*(*info).data->getys(ic)
+    ;if (*(*info).data->getaux())->getsscale() eq 'pixels' then yscale = findgen((*info).ccd_ysz)+ysmax $
+    ;else yscale=*(*info).data->getypos()
     ptr_free,(*info).xscale
     ptr_free,(*info).yscale
     ptr_free,(*info).drawimage
@@ -724,23 +681,23 @@ pro spice_xdetector_resize, event
     (*info).xvs = (*info).d_xsz
     (*info).yvs = (*info).d_ysz
     xscale = (*info).lambda
-    ywmax=max(*(*info).data->getyw(),ic)
-    ysmax=*(*info).data->getys(ic)
-    if (*(*info).data->getaux())->getsscale() eq 'pixels' then $
-      yscale = findgen((*info).ccd_ysz)+ysmax $
-    else yscale=*(*info).data->getypos()
-    if (*info).ccd_ysz gt 1024 then begin
-      detector=congrid((*info).detector[*, *],(*info).ccd_xsz/4, $
-        (*info).ccd_ysz/4)
-    endif else begin
-      detector = (*info).detector
-    endelse
+    ;ywmax=max(*(*info).data->getyw(),ic)
+    ;ysmax=*(*info).data->getys(ic)
+    ;if (*(*info).data->getaux())->getsscale() eq 'pixels' then $
+    yscale = (*info).spatial
+    ;else yscale=*(*info).data->getypos()
+    ;if (*info).ccd_ysz gt 1024 then begin
+    ;  detector=congrid((*info).detector[*, *],(*info).ccd_xsz/4, $
+    ;    (*info).ccd_ysz/4)
+    ;endif else begin
+    detector = (*info).detector
+    ;endelse
     ptr_free,(*info).xscale
     ptr_free,(*info).yscale
     ptr_free,(*info).drawimage
     drawimage = congrid(detector, (*info).xps, (*info).yps)
-    (*info).xscale = ptr_new((*info).yps)
-    (*info).yscale = ptr_new((*info).xps)
+    (*info).xscale = ptr_new((*info).xps)
+    (*info).yscale = ptr_new((*info).yps)
     *(*info).xscale = interpol(xscale, (*info).xps)
     *(*info).yscale = interpol(yscale, (*info).yps)
     (*info).drawimage = ptr_new(uintarr((*info).xps, (*info).yps))
@@ -762,7 +719,7 @@ pro spice_xdetector_lineplot, event
     else:
   endcase
   ; set up titles for plot
-  varname = *(*info).data-> getvariablename()
+  varname = *(*info).data->get_variable_type()
   varname = varname[0]
   case mode of
     0:begin
@@ -791,9 +748,9 @@ pro spice_xdetector_log,event
   widget_control, event.top, get_uvalue = info
   (*info).log=event.select
   if (*info).log then begin
-    (*info).colorbar_title=*(*info).data->gettitle()+' '+'!3log!D10!N('+(*(*info).data->getvariableunit())+')'
+    (*info).colorbar_title=*(*info).data->get_title()+' '+(*(*info).data->get_variable_unit())
   endif else begin
-    (*info).colorbar_title=*(*info).data->gettitle()+' '+(*(*info).data->getvariableunit())
+    (*info).colorbar_title=*(*info).data->get_title()+' '+(*(*info).data->get_variable_unit())
   endelse
   pseudoevent={widget_button,id:0L, $
     top:(*info).tlb, handler:0l, select:1}
@@ -841,7 +798,7 @@ pro spice_xdetector_cleanup, tlb
 end
 
 pro spice_xdetector, data, lindx, group_leader = group_leader, $
-  ncolors = ncolors, filename = filename
+  ncolors = ncolors
   if n_params() lt 2 then begin
     message, $
       'spice_xdetector: A data object and line index array must be given', $
@@ -852,66 +809,109 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   if n_elements(ncolors) eq 0 then ncolors = (!d.n_colors < 256)
   if n_elements(drawcolor) eq 0 then drawcolor=!p.color
   ; drawing window size in relation to screen
-  screensize=get_screen_size()
-  aspect=float(screensize[0])/float(screensize[1])
-  xysz=(data->getaux())->getdrawsize('standard',aspect=aspect)
-  d_xsz = xysz[0]
-  d_ysz = xysz[1]
+  if n_elements(scfac) eq 0 then scfac=0.8
+  if n_elements(standard_size) eq 0 then standard_size=700
   nwin = n_elements(lindx)
-  nslit = max(data->getnslit())
-  nraster = data->getnraster(0)   ; number of raster positions
-  nexp = data->getnexp(0)
-  ntime = data->getntime(0)      ;
-  nexpprp = data->getnexp_prp(0)  ; number of exp pr. raster pos.
+  ;nslit = max(data->get_number_y_pixels())
+  nraster = data->get_number_exposures(0)   ; number of raster positions
+  nexp = nraster
+  ntime = nraster
+  nexpprp = 1  ; number of exp pr. raster pos.
+  current_exp_ind = 0 ;index of currently shown exposure
   ; so far QL can not handle sit-and-stare with different exposure times
   ; (when it is run as "multiple exp pr rast. pos.
   ; Will have to deal with that...
   ; OW 14-april 2005.
-  sit_and_stare = data->getsit_and_stare()
-  if sit_and_stare then nexpprp = 1
   ;
-  yw=data->getyw()
-  ywmax=max(data->getyw(),ic)
-  ysmax=data->getys(ic)
-  xw=data->getxw()
-  xs=data->getxs()
-  ys=data->getys()-ysmax
-  ; Find out which detector is being viewed.
-  ccd_sz=data->getccd_sz(data->getregion(lindx[0],/full))
-  ccd_sz[1]=ywmax
-  detector = fltarr(ccd_sz[0], ywmax)
-  detector[*] = data->missing()
+
   ;
+  ; get all window information that won't change
+  ;
+  ccd_size = data->get_ccd_size()
+  win_positions = intarr(nwin,4)
+  open_new_window = 0
   for i=0,nwin-1 do begin
-    wd=data->getvar(lindx[i])
-    xss=0
-    if data->getline_id(lindx[i]) eq 'FULL CCD FUV2' then xss=xs[lindx[i]]-xs[lindx[i-1]]-1
-    bin_sp=data->binning_spectral(lindx[i])
-    ;    bin_sp=data->getinfo('SUMSPTRL')
-    ; assuming that this routine will look at FUV windows seperately
-    pos0 = (xs[lindx[i]]*bin_sp+1) mod (data->getccd_sz('FUV1'))[0]
-    pos1 = xw[lindx[i]]
-    pos2 = ys[lindx[i]]
-    pos3 = yw[lindx[i]]
-    ; assuming that all slit positions (on each CCD) start at same
-    ; position: if this is not the case more logic is needed above
-    detector[pos0:pos0+pos1*bin_sp-1,0:pos3-1]= $
-      congrid(data->descale_array(wd[xss:xss+pos1-1, *, 0]),pos1*bin_sp,pos3)
+    win_positions[i,*] = data->get_window_position(lindx[i], detector=detectornr, /idl_coord, /reverse_y)
+    if i eq 0 then begin
+      detector_shown = detectornr
+    endif
+    if detectornr ne detector_shown then begin
+      open_new_window = 1
+      if N_ELEMENTS(lindx_new) eq 0 then lindx_new = lindx[i] $
+      else lindx_new = [lindx_new, lindx[i]]
+    endif else begin
+      if N_ELEMENTS(lindx_old) eq 0 then begin
+        lindx_old = lindx[i]
+        win_ind_old = i
+      endif else begin
+        lindx_old = [lindx_old, lindx[i]]
+        win_ind_old = [win_ind_old, i]
+      endelse
+    endelse
   endfor
-  lambda=data->getlambda(data->getregion(lindx[0],/full),wscale=data->getwscale())
-  wnames=data->getline_id(lindx)
+  if open_new_window then begin
+    ;In case not all windows lie on the same detector, open a new window or ignore those windows
+    lindx = lindx_old
+    nwin = n_elements(lindx)
+    win_positions = win_positions[win_ind_old, *]
+    spice_xdetector, data, lindx_new, group_leader = group_leader, $
+      ncolors = ncolors
+  endif
+  xscale_pixels = indgen(ccd_size[0])+1
+  if detector_shown eq 2 then xscale_pixels = xscale_pixels + ccd_size[0]
+  xscale_physical = data->get_lambda_vector(lindx[0], /full_ccd)
+  ymin = min(win_positions[*,2])
+  ymax = max(win_positions[*,3])
+  win_positions[*,2:3] = win_positions[*,2:3] - ymin
+  yscale_pixels = indgen(ymax+1)+1+ymin
+  yscale_physical = (data->get_instr_y_vector(lindx[0], /full_ccd))[ymin:ymax]
+
   ; x and y titles for axis plots:
-  xdim = 0   ; wavelength
+  xdim = 2   ; wavelength
   ydim = 1   ; slit pos
-  xtitle = data->getxytitle(xdim) ; wavelength
-  ytitle = data->getxytitle(ydim) ; slit position
+  xtitle = data->get_axis_title(xdim, /pixels) ; wavelength
+  ytitle = data->get_axis_title(ydim, /pixels) ; slit position
+  wnames=data->get_window_id(lindx)
+
   ; initialize size of draw window (ccd display):
+  ccd_size[1]=max(yscale_pixels)
+  detector = fltarr(ccd_size)
+  detector[*] = !Values.F_NAN
+  aspect=float(ccd_size[0])/float(ccd_size[1])
+  d_xsz = standard_size
+  d_ysz = standard_size
+  if aspect gt 1.0 then d_ysz = fix(d_ysz/aspect) $
+  else d_xsz = fix(d_xsz*aspect)
+  standard_size = [d_xsz, d_ysz]
   window,/pixmap,/free,xsize=d_xsz,ysize = d_ysz
   pixid = !d.window
+
+  ; initialize window size for big-option
+  screensize=spice_get_screen_size()
+  screensize=screensize*scfac
+  big_size = fix(max(screensize))
+  big_size = [big_size,big_size]
+  if aspect gt 1.0 then big_size[1] = fix(big_size[1]/aspect) $
+  else big_size[0] = fix(big_size[0]*aspect)
+  if big_size[0] gt screensize[0] then begin
+    big_size[1] = fix( float(big_size[1]) * screensize[0] / float(big_size[0]))
+    big_size[0] = fix(screensize[0])
+  endif
+  if big_size[1] gt screensize[1] then begin
+    big_size[0] = fix( float(big_size[0]) * screensize[1] / float(big_size[1]))
+    big_size[1] = fix(screensize[1])
+  endif
+  
+  ;build the initial image
+  for i=0,nwin-1 do begin
+    detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = data->get_one_image(lindx[i], current_exp_ind)
+  endfor
+
+
   ; =======================================================================================
   ; Set up the widgets
   ; base widget:
-  xwt = 'spice_xdetector - ' + data->getregion(lindx[0],/full) + ' '+data->getfilename()  ; spice_xdetector window title
+  xwt = 'spice_xdetector  -  '+data->get_filename()  ; spice_xdetector window title
   tlb = widget_base(/row, title=xwt, tlb_size_events = 1, mbar=menubar, $
     xoffset = 100, yoffset=100, group_leader=group_leader)
 
@@ -943,7 +943,7 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
     xsize = d_xsz, ysize = d_ysz, $
     x_scroll_size = d_xsz, y_scroll_size = d_ysz, $
     /button_events, event_pro='spice_xdetector_zoom')
-  colorbar_title=data->gettitle()+' '+(data->getvariableunit())
+  colorbar_title=data->get_title()+' '+(data->get_variable_unit())
   ; create menu for controlling action in draw window
   dwoption = widget_base(lcol, /column, /frame)
   dwoption_title = widget_label(dwoption, value = 'Window action')
@@ -952,64 +952,65 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
     /exclusive, set_value = 0, $
     event_func = 'spice_xdetector_dwoption')
 
-  titletext = widget_label(lcol,value = data->getdate_obs()+' '+data->getobsid(),/align_center)
+  titletext = widget_label(lcol,value = data->get_start_time()+' '+data->get_obs_id(),/align_center)
 
   lsubcol0 = widget_base(lcol, /row)
   sliderbase = widget_base(lsubcol0,/col)
-  expslider = -1
+  ;  expslider = -1
   if nexp gt 1 then begin
-    if nexpprp le 1 then begin
-      nr = nexp
-      title = 'Exposure nr'
-      expslider = widget_slider(sliderbase, xsize=90, $
-        minimum=0, maximum=nr-1, $
-        title='Exp # ', $
-        value=0, $
-        event_pro='spice_xdetector_expslider',/drag)
-    endif else begin
-      exprp = 1
-      expprpslider = widget_slider(sliderbase, xsize = 120, $
-        minimum = 1, maximum = nexpprp, $
-        title = 'Exp # at rast. pos.', $
-        value = 1, $
-        event_pro = 'spice_xdetector_expprp_slider')
-
-      rpos = 1
-      rastposslider = widget_slider(sliderbase, xsize = 120, $
-        minimum = 1, maximum = nraster, $
-        title = 'Raster position', $
-        value = 1, $
-        event_pro = 'spice_xdetector_rast_slider')
-    endelse
+    ;    if nexpprp le 1 then begin
+    nr = nexp
+    title = 'Exposure nr'
+    expslider = widget_slider(sliderbase, xsize=90, $
+      minimum=0, maximum=nr-1, $
+      title='Exp # ', $
+      value=0, $
+      event_pro='spice_xdetector_expslider',/drag)
+    ;    endif else begin
+    ;      exprp = 1
+    ;      expprpslider = widget_slider(sliderbase, xsize = 120, $
+    ;        minimum = 1, maximum = nexpprp, $
+    ;        title = 'Exp # at rast. pos.', $
+    ;        value = 1, $
+    ;        event_pro = 'spice_xdetector_expprp_slider')
+    ;
+    ;      rpos = 1
+    ;      rastposslider = widget_slider(sliderbase, xsize = 120, $
+    ;        minimum = 1, maximum = nraster, $
+    ;        title = 'Raster position', $
+    ;        value = 1, $
+    ;        event_pro = 'spice_xdetector_rast_slider')
+    ;    endelse
   endif
 
   exposurebase = widget_base(lsubcol0,/col)
   exposuretext = widget_label(exposurebase, $
-    value = strtrim('Exp time: '+string(data->getexp(0),format='(f7.1)')+' s',2), $
+    value = strtrim('Exp time: '+string(data->get_exposure_time(0),format='(f7.1)')+' s',2), $
     /align_left)
 
-  time=data->gettime()
+  time=data->get_time_vector(0)
   timebase = widget_base(exposurebase,/col)
   timetext = widget_label(timebase, $
     value = strtrim('Time    : '+string(time[0],format='(f7.1)')+' s',2), $
     /align_left)
 
-  pztx=data->getpztx()
-  fmirrbase = widget_base(exposurebase,/col)
-  fmirrxtext = widget_label(fmirrbase, $
-    value = strtrim('PZTX: '+ string(pztx[0],format='(f7.2)'),2)+' arcsec', $
-    /align_left)
+  ;  pztx=data->getpztx()
+  ;  fmirrbase = widget_base(exposurebase,/col)
+  ;  fmirrxtext = widget_label(fmirrbase, $
+  ;    value = strtrim('PZTX: '+ string(pztx[0],format='(f7.2)'),2)+' arcsec', $
+  ;    /align_left)
+  ;
+  ;  pzty=data->getpzty()
+  ;  fmirrytext = widget_label(fmirrbase, $
+  ;    value = strtrim('PZTY: '+ string(pzty[0],format='(f7.2)'),2)+' arcsec', $
+  ;    /align_left)
 
-  pzty=data->getpzty()
-  fmirrytext = widget_label(fmirrbase, $
-    value = strtrim('PZTY: '+ string(pzty[0],format='(f7.2)'),2)+' arcsec', $
-    /align_left)
-
-  xycenbase = widget_base(exposurebase,/col)
-  xycentext = widget_label(xycenbase, $
-    value = 'Xcen: '+ string((data->getxcen()),format='(i4)')+ $
-    ' Ycen: '+ string((data->getycen()),format='(i4)'), $
-    /align_left)
+  ; TODO
+  ;  xycenbase = widget_base(exposurebase,/col)
+  ;  xycentext = widget_label(xycenbase, $
+  ;    value = 'Xcen: '+ string((data->getxcen()),format='(i4)')+ $
+  ;    ' Ycen: '+ string((data->getycen()),format='(i4)'), $
+  ;    /align_left)
 
   pixplotfield = widget_base(lcol, /column, /frame)
   pixnames = ['Not active', 'Row plot', 'Column plot']
@@ -1099,41 +1100,64 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
     b = b[bottom:ncolors-1+bottom]
   endif
 
-  ; define the info structure, used send information around
+  ; define the info structure, used to send information around
   info = {detector:detector, $
     drawimage:ptr_new(), $
     xscale:ptr_new(), $
     yscale:ptr_new(), $
     data:ptr_new(), $
+    win_positions:win_positions, $
+    xscale_pixels:xscale_pixels, $
+    xscale_physical:xscale_physical, $
+    yscale_pixels:yscale_pixels, $
+    yscale_physical:yscale_physical, $
+    lambda:float(xscale_pixels), $
+    spatial:float(yscale_pixels), $
+
+    ; Widgets
     exposuretext:exposuretext, $
     timetext:timetext, $
-    fmirrxtext:fmirrxtext, $
-    fmirrytext:fmirrytext, $
-    xycentext:xycentext, $
-    ccd_xsz:ccd_sz[0], $
-    ccd_ysz:ccd_sz[1], $
-    xdim:0, $
-    ydim:1, $
-    nwin:nwin, $
-    lindx:lindx, $
+    ;    fmirrxtext:fmirrxtext, $
+    ;    fmirrytext:fmirrytext, $
+    ;    xycentext:xycentext, $
+    dwoption_menu:dwoption_menu, $
+    drawsizeoption_menu:drawsizeoption_menu, $
+    animenu:animenu, $
+    drawid:drawid, $
+    wid:wid, $
+    colorbar_title:colorbar_title,$
+    pixelplot:pixelplot,  $
+
+    ; Options
+    log:0, $
+    lineplot:0, $
+    realsize:0, $
+    ;x_axis_physical_unit:0, $
+    ;y_axis_physical_unit:0, $
+
+    standard_size:standard_size, $
+    big_size:big_size, $
+
+    ccd_xsz:ccd_size[0], $
+    ccd_ysz:ccd_size[1], $
+    xdim:xdim, $ ; dimension of x (i.e. lambda) in original data
+    ydim:ydim, $ ; dimension of y in original data
+    nwin:nwin, $ ; number or windows/lines to be shown
+    lindx:lindx, $ ; line indices to be shown
     line:0, $
-    nraster:nraster, $
-    nexp:0, $
+    ;nraster:nraster, $
+    ;nexp:nexp, $
     nexpprp:nexpprp, $
     exprp:1, $
     rpos:1, $
     ntime:ntime,  $
-    nslit:nslit, $
-    expnr:0, $
+    ;nslit:nslit, $
+    expnr:current_exp_ind, $
     imagepos:imagepos, $
-    lambda:lambda, $
     screensize:screensize, $
-    log:0, $
-    lineplot:0, $
-    realsize:0, $
-    lcol_xsz:lcol_xsz, $
-    d_xsz:d_xsz, $
-    d_ysz:d_ysz, $
+    lcol_xsz:lcol_xsz, $ ; size of widget minus size of draw widget in x-direction
+    d_xsz:d_xsz, $ ; draw-window size
+    d_ysz:d_ysz, $ ; draw-window size
     xps:0, $
     yps:0, $
     xvs:0, $
@@ -1150,18 +1174,12 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
     sy:0, $
     linelist:wnames, $
     dwoption:0, $
-    dwoption_menu:dwoption_menu, $
-    drawsizeoption_menu:drawsizeoption_menu, $
-    animenu:animenu, $
-    drawid:drawid, $
-    colorbar_title:colorbar_title,$
-    pixelplot:pixelplot,  $
     drawcolor:drawcolor, $
     mainpixid:pixid, $
     pixid:pixid, $
     xtitle:xtitle, $
-    ytitle :ytitle, $
-    wid:wid}
+    ytitle :ytitle $
+  }
 
   info = ptr_new(info, /no_copy)
   (*info).data=ptr_new(data)
