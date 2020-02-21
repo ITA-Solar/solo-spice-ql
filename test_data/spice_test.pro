@@ -23,11 +23,15 @@ PRO spice_test, file_number
   
   ;d = spice_getwindata(obj, window_index)
   ;help,d
+  
   obj->show_lines
   ;print, 'NAXIS1 : ' + strtrim(string(obj->get_header_info('NAXIS1', window_index)),2)
   ;print, 'NAXIS2 : ' + strtrim(string(obj->get_header_info('NAXIS2', window_index)),2)
   ;print, 'NAXIS3 : ' + strtrim(string(obj->get_header_info('NAXIS3', window_index)),2)
   ;print, 'NAXIS4 : ' + strtrim(string(obj->get_header_info('NAXIS4', window_index)),2)
   
-  spice_xdetector, obj, window_index
+  for i=0,obj->get_number_windows()-1 do begin
+    print,obj->get_window_position(i)
+  endfor
+  spice_xdetector, obj, indgen(6)
 END
