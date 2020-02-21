@@ -630,7 +630,7 @@ FUNCTION spice_data::get_window_id, window_index
     ENDFOR
   ENDIF ELSE BEGIN
     IF N_ELEMENTS(window_index) eq 1 THEN BEGIN
-      window_id = self.get_header_info('EXTNAME', window_index)
+      window_id = self.get_header_info('EXTNAME', window_index[0])
     ENDIF ELSE BEGIN
       window_id = strarr(N_ELEMENTS(window_index))
       FOR i = 0,N_ELEMENTS(window_index)-1 DO BEGIN
@@ -766,7 +766,7 @@ FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
   axes = ['Solar X', 'Solar Y', 'Wavelength', 'Time']
   IF ~keyword_set(no_unit) THEN BEGIN
     IF keyword_set(pixels) THEN BEGIN
-      axes = axes + '[pixels]'
+      axes = axes + ' [pixels]'
     ENDIF ELSE BEGIN
       axes[0] = axes[0] + ' [' + strtrim(self.get_header_info('CUNIT1', 0),2) + ']'
       axes[1] = axes[1] + ' [' + strtrim(self.get_header_info('CUNIT2', 0),2) + ']'
