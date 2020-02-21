@@ -858,7 +858,10 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
       ncolors = ncolors
   endif
   xscale_pixels = indgen(ccd_size[0])+1
-  if detector_shown eq 2 then xscale_pixels = xscale_pixels + ccd_size[0]
+  if detector_shown eq 2 then begin
+    xscale_pixels = xscale_pixels + ccd_size[0]
+    win_positions[*,0:1] = win_positions[*,0:1] - ccd_size[0]
+  endif
   xscale_physical = data->get_lambda_vector(lindx[0], /full_ccd)
   ymin = min(win_positions[*,2])
   ymax = max(win_positions[*,3])

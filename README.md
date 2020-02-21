@@ -41,8 +41,8 @@ In general, all functionalities in the heritage routines will be preserved as fa
     * Initial working version
     * Animation with ximovie doesn’t work yet, might be a bigger change
     * Some bugs to fix:
-        * windows from second detector crash due to too high pxbeg
-        * crash with file 3 windows 4 and higher (data 1D)
+        * crashes with file 3 windows 4 and higher (data 1D, i.e. Intensity window)
+        * crashes with file 2, binned window, and dumbbells flipped x-axis?
     ```
     spice_xdetector, spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
     ```
@@ -64,7 +64,8 @@ Specialised routines for displaying secondary derived products such as temperatu
 
 ## TODO: 
 
-- make it possible to view movies using ximovie (e.g. in xwhisker and/or directly in object)
+- make it possible to view movies using ximovie (e.g. in xwhisker, xdetector and/or directly in object)
 - implement calibration in object and/or getwindata
 - get some numbers for gain, yield and dark current for error calculation in getwindata
 - check position keywords for axis, when those are displayed in pixels (PXBEGx, PXENDx)
+- check for windows with binned data, including Intensity windows
