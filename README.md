@@ -71,11 +71,11 @@ Specialised routines for displaying secondary derived products such as temperatu
 - check for windows with binned data, including Intensity windows
 
 ## For Developers
-This repository includes a pre-commit git hook, that updates the first line of each modified file with the current date and time. The first line has this format:
+This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; Id: 24.02.2020_13:22:02 \
+; $Id: 24.02.2020 20:37 CET $
 ```
-If the file you modified, does not contain this line yet, please add (i.e. prepend) it. 
+If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
 To make git aware of this hook, run this command after cloning the repository:
 ```
@@ -83,10 +83,4 @@ cd path_of_repository
 git config --local core.hooksPath .githooks/
 chmod +x .githooks/*
 ```
-Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check each modified file whether the first line is of the above format, and if yes, updates date and time and adds these changes to the commit.
-
-Note: Preferably, this line should have the same format as CVS did, e.g. something like:
-```
-; $Id: iris_xdetector.pro,v 1.37 2015/08/19 13:13:36 mawiesma Exp $
-```
-Maybe, you have too much time and can edit the pre-commit hook to do exactly this?
+Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check each modified file whether there is a line with the above format, and if yes, updates date and time and adds these changes to the commit.
