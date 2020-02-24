@@ -1,0 +1,12 @@
+#!/bin/sh
+TMPFILE="/tmp/${0##*/}.$$"
+for f in $( git diff --cached --name-only --diff-filter=ACM ); do
+  # XXX broken: if space in filename(s)
+  echo "Modifying version date of file" "$f"
+  cp "$f" "$TMPFILE" || continue
+  awk -v new="; Id: $(date +%d.%m.%Y_%H:%M:%S) \\" \
+    'NR==1{sub("^; Id: .* \\\\$",new)}1' \
+    < "$TMPFILE" > "$f"
+  git add -u -- "$f"
+ done
+ 

@@ -10,7 +10,7 @@ In general, all functionalities in the heritage routines will be preserved as fa
     obj = obj_new('spice_data', spice_file)
     obj->help
     ```
-* Routine to read SPICE FITS file into an object (iris_obj).
+* Routine to read SPICE FITS file into an object (iris_obj)
     * Done
     ```
     obj = spice_object(spice_file)
@@ -33,8 +33,8 @@ In general, all functionalities in the heritage routines will be preserved as fa
     * Initial working version
     * Keywords _keep_sat_, _calib_ and _perang_ are ignored for now
     ```
-    data = spice_getwindata, spice_file/spice_object, window_index [, keep_sat=keep_sat, 
-        clean=clean, wrange=wrange, ixrange=ixrange, normalize=normalize,
+    data = spice_getwindata, spice_file/spice_object, window_index [, keep_sat=keep_sat, $
+        clean=clean, wrange=wrange, ixrange=ixrange, normalize=normalize, $
         calib=calib, perang=perang, verbose=verbose, quiet=quiet]
     ```
 * Detector viewer (iris_xdetector)
@@ -69,3 +69,24 @@ Specialised routines for displaying secondary derived products such as temperatu
 - get some numbers for gain, yield and dark current for error calculation in getwindata
 - check position keywords for axis, when those are displayed in pixels (PXBEGx, PXENDx)
 - check for windows with binned data, including Intensity windows
+
+## For Developers
+This repository includes a pre-commit git hook, that updates the first line of each modified file with the current date and time. The first line has this format:
+```
+; Id: 24.02.2020_13:22:02 \
+```
+If the file you modified, does not contain this line yet, please add (i.e. prepend) it. 
+
+To make git aware of this hook, run this command after cloning the repository:
+```
+cd path_of_repository
+git config --local core.hooksPath .githooks/
+chmod +x .githooks/*
+```
+Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check each modified file whether the first line is of the above format, and if yes, updates date and time and adds these changes to the commit.
+
+Note: Preferably, this line should have the same format as CVS did, e.g. something like:
+```
+; $Id: iris_xdetector.pro,v 1.37 2015/08/19 13:13:36 mawiesma Exp $
+```
+Maybe, you have too much time and can edit the pre-commit hook to do exactly this?
