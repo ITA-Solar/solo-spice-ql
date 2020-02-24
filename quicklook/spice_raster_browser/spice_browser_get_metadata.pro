@@ -35,6 +35,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
+; $Id: 24.02.2020 20:49 CET $
 
 
 FUNCTION spice_browser_get_metadata, data

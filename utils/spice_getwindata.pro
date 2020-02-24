@@ -135,6 +135,8 @@
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;         modified from iris_getwindata
 ;-
+; $Id: 24.02.2020 20:49 CET $
+
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
