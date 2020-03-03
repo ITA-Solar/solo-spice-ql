@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 25.02.2020 20:59 CET $
+; $Id: 03.03.2020 10:43 CET $
 
 
 ;+
@@ -1032,6 +1032,31 @@ FUNCTION spice_data::get_spatial_binning, window_index
     bin2[i] = self.get_header_info('NBIN2', window_index[i])
   ENDFOR
   return, bin2
+END
+
+
+;+
+; Description:
+;     returns the binning factor in spectral direction.
+;     If window_index is not provided a vector with binning factors for all
+;     windows is returned.
+;
+; OPTIONAL INPUTS:
+;     window_index : the index of the window (can be a list of indices)
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_spectral_binning, window_index
+  ;returns the binning factor in the spectral direction (vector if window_index not provided)
+  COMPILE_OPT IDL2
+
+  IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
+  bin3 = N_ELEMENTS(window_index)
+  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
+    bin3[i] = self.get_header_info('NBIN3', window_index[i])
+  ENDFOR
+  return, bin3
 END
 
 
