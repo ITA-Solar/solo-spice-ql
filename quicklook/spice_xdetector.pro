@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 24.02.2020 20:37 CET $
+; $Id: 03.03.2020 11:39 CET $
 
 
 ; save as postscript file
@@ -868,7 +868,7 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   ymin = min(win_positions[*,2])
   ymax = max(win_positions[*,3])
   win_positions[*,2:3] = win_positions[*,2:3] - ymin
-  yscale_pixels = indgen(ymax+1)+1+ymin
+  yscale_pixels = indgen(ymax-ymin+1)+1+ymin
   yscale_physical = (data->get_instr_y_vector(lindx[0], /full_ccd))[ymin:ymax]
 
   ; x and y titles for axis plots:
@@ -879,7 +879,7 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   wnames=data->get_window_id(lindx)
 
   ; initialize size of draw window (ccd display):
-  ccd_size[1]=max(yscale_pixels)
+  ccd_size[1]=N_ELEMENTS(yscale_pixels)
   detector = fltarr(ccd_size)
   detector[*] = !Values.F_NAN
   aspect=float(ccd_size[0])/float(ccd_size[1])
@@ -909,7 +909,7 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   
   ;build the initial image
   for i=0,nwin-1 do begin
-    detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = data->get_one_image(lindx[i], current_exp_ind)
+    detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = data->get_one_image(lindx[i], current_exp_ind, /debin)
   endfor
 
 
