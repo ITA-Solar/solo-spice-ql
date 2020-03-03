@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 03.03.2020 11:39 CET $
+; $Id: 03.03.2020 21:04 CET $
 
 
 ; save as postscript file
@@ -123,7 +123,6 @@ pro spice_xdetector_draw, event
   if ymax-ymin eq 0.0 then ymax=ymin+1
   format='(f10.1)'
   if ymax-ymin lt 10 then format='(f7.4)'
-  print,ymax,ymin
   hw_colorbar, position = [((*info).imagepos)[2]+0.01, $
     ((*info).imagepos)[1], $
     ((*info).imagepos)[2]+0.02, $
