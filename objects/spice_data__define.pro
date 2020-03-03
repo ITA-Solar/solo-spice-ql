@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 03.03.2020 10:43 CET $
+; $Id: 03.03.2020 11:38 CET $
 
 
 ;+
@@ -186,11 +186,13 @@ END
 ;
 ; KEYWORD PARAMETERS:
 ;     nodescale : if set, does not call descale_array
+;     debin : if set, the image will be expanded if binning is GT 1, and data values
+;             will be divided by the binning value
 ;
 ; OUTPUT:
 ;     returns the desired 2-dimensional image, as an array
 ;-
-FUNCTION spice_data::get_one_image, window_index, exposure_index, nodescale=nodescale
+FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale
   ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
   COMPILE_OPT IDL2
 
@@ -212,6 +214,35 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, nodescale=node
     data = reform(data[exposure_index,*,*])
   ENDELSE
   data = transpose(data)
+  IF keyword_set(debin) THEN BEGIN
+    size_data = size(data)
+    bin_y = (self.get_spatial_binning(window_index))[0]
+    IF bin_y GT 1 THEN BEGIN
+      new_data = rebin(data,size_data[1],size_data[2]*bin_y)
+      FOR i=0,size_data[2]-1 DO BEGIN
+        one_line = data[*,i]/bin_y
+        FOR j=0,bin_y-1 DO BEGIN
+          index = i*bin_y+j
+          new_data[*,index] = one_line
+        ENDFOR
+      ENDFOR
+      data = new_data
+      size_data = size(data)
+    ENDIF
+
+    bin_l = (self.get_spectral_binning(window_index))[0]
+    IF bin_l GT 1 THEN BEGIN
+      new_data = rebin(data,size_data[1]*bin_l,size_data[2])
+      FOR i=0,size_data[1]-1 DO BEGIN
+        one_line = data[i,*]/bin_l
+        FOR j=0,bin_l-1 DO BEGIN
+          index = i*bin_l+j
+          new_data[index,*] = one_line
+        ENDFOR
+      ENDFOR
+      data = new_data
+    ENDIF
+  ENDIF
   return, data
 END
 
@@ -1027,7 +1058,7 @@ FUNCTION spice_data::get_spatial_binning, window_index
   COMPILE_OPT IDL2
 
   IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
-  bin2 = N_ELEMENTS(window_index)
+  bin2 = intarr(N_ELEMENTS(window_index))
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
     bin2[i] = self.get_header_info('NBIN2', window_index[i])
   ENDFOR
@@ -1052,7 +1083,7 @@ FUNCTION spice_data::get_spectral_binning, window_index
   COMPILE_OPT IDL2
 
   IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
-  bin3 = N_ELEMENTS(window_index)
+  bin3 = intarr(N_ELEMENTS(window_index))
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
     bin3[i] = self.get_header_info('NBIN3', window_index[i])
   ENDFOR
