@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 03.03.2020 11:38 CET $
+; $Id: 04.03.2020 15:02 CET $
 
 
 ;+
@@ -504,7 +504,7 @@ FUNCTION spice_data::get_obs_id
   ;returns SPICE OBS ID
   COMPILE_OPT IDL2
 
-  obs_id = self.get_header_info('SPIOBSID', 0)
+  obs_id = self.get_header_info('SPIOBSID', 0, -1)
   IF size(obs_id, /TYPE) NE 7 THEN obs_id = strtrim(string(obs_id),2)
   return, obs_id
 END
@@ -521,7 +521,7 @@ FUNCTION spice_data::get_start_time
   ;returns start date and time of observation in UTC format
   COMPILE_OPT IDL2
 
-  start_time = self.get_header_info('DATE-BEG', 0)
+  start_time = self.get_header_info('DATE-BEG', 0, '')
   return, start_time
 END
 
@@ -537,7 +537,7 @@ FUNCTION spice_data::get_end_time
   ;returns end date and time of observation in UTC format
   COMPILE_OPT IDL2
 
-  end_time = self.get_header_info('DATE-END', 0)
+  end_time = self.get_header_info('DATE-END', 0, '')
   return, end_time
 END
 
@@ -569,7 +569,7 @@ FUNCTION spice_data::get_variable_unit
   ;returns BUNIT, physical units of the data
   COMPILE_OPT IDL2
 
-  bunit = self.get_header_info('BUNIT', 0)
+  bunit = self.get_header_info('BUNIT', 0, '')
   return, bunit
 END
 
@@ -585,7 +585,7 @@ FUNCTION spice_data::get_variable_type
   ;returns BTYPE, type of data in images
   COMPILE_OPT IDL2
 
-  btype = self.get_header_info('BTYPE', 0)
+  btype = self.get_header_info('BTYPE', 0, '')
   return, btype
 END
 
@@ -927,7 +927,7 @@ FUNCTION spice_data::get_time_vector, window_index
   IF naxis EQ 1  THEN BEGIN
     naxis = self.get_header_info('naxis1', window_index)
     crpix = self.get_header_info('crpix1', window_index)
-    factor = self.get_header_info('PC4_1', window_index)
+    factor = self.get_header_info('PC4_1', window_index, 1)
   ENDIF ELSE BEGIN
     crpix = self.get_header_info('crpix4', window_index)
     factor = 1
