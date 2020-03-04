@@ -1,7 +1,7 @@
 PRO spice_test, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=1
+  IF N_ELEMENTS(file_number) NE 1 then file_number=4
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
@@ -9,6 +9,7 @@ PRO spice_test, file_number
     1: file = path+'solo_L1_spice-n-ras_20210314T135349751_V01.fits'
     2: file = path+'solo_L1_spice-n-sit-db_20210623T132924744_V01.fits'
     3: file = path+'solo_L1_spice-n-ras-int_20210314T135349751_V01.fits'
+    4: file = path+'solo_LL01_spice-n-exp_0542902641_V202001130934I.fits'
     else: file = ''
    ENDCASE
    
@@ -33,5 +34,8 @@ PRO spice_test, file_number
   for i=0,obj->get_number_windows()-1 do begin
     print,obj->get_window_position(i)
   endfor
-  spice_xdetector, obj, indgen(6)
+  print,obj->get_spatial_binning()
+  print,obj->get_spectral_binning()
+  ;stop
+  spice_xdetector, obj, indgen(obj->get_number_windows())
 END
