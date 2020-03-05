@@ -73,7 +73,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 ## For Developers
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 03.03.2020 21:04 CET $
+; $Id: 05.03.2020 11:57 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
@@ -83,4 +83,4 @@ cd path_of_repository
 git config --local core.hooksPath .githooks/
 chmod +x .githooks/*
 ```
-Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check each modified file whether there is a line with the above format, and if yes, updates date and time and adds these changes to the commit.
+Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check each modified and staged file whether there is a line with the above format, and if yes, updates date and time and adds these changes to the commit.
