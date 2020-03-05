@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 05.03.2020 11:56 CET $
+; $Id: 05.03.2020 12:12 CET $
 
 
 ; save as postscript file
@@ -912,7 +912,9 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   
   ;build the initial image
   for i=0,nwin-1 do begin
-    detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = data->get_one_image(lindx[i], current_exp_ind, /debin)
+    window_image = data->get_one_image(lindx[i], current_exp_ind, /debin)
+    if data->has_dumbbells(lindx[i]) then window_image = rotate(window_image, 5)
+    detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = window_image
   endfor
 
 

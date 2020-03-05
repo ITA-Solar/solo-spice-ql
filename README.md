@@ -40,9 +40,8 @@ In general, all functionalities in the heritage routines will be preserved as fa
 * Detector viewer (iris_xdetector)
     * Initial working version
     * binned images including intensity (1D) images expanded correctly
+    * Dumbbells shown correctly
     * Animation with ximovie doesn’t work yet, might be a bigger change
-    * Some bugs to fix:
-        * crashes with file 2, dumbbells flipped x-axis?
     ```
     spice_xdetector, spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
     ```
@@ -73,7 +72,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 ## For Developers
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 05.03.2020 11:57 CET $
+; $Id: 05.03.2020 12:12 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
