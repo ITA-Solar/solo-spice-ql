@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 04.03.2020 15:02 CET $
+; $Id: 05.03.2020 11:54 CET $
 
 
 ;+
@@ -342,7 +342,10 @@ END
 ;
 ; KEYWORD PARAMETERS:
 ;     idl_coord : if set, the coordinates start with zero, instead of with 1
-;     reverse_y : y-coordinates are given as CCD-size +1 - (original y-coords)
+;     reverse_y : y-coordinates are given as (CCD-size +1 - (original y-coords))
+;     reverse_x : for dumbbells x-coordinates are flipped, if this keyowrd is set, the coordinates will 
+;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped
+;     no_warning: if set, warnings about x-flipping will be suppressed
 ;
 ; OUTPUT:
 ;     int array
@@ -351,7 +354,7 @@ END
 ;     detector : int, 1 or 2 to indicate on which detector the winodow is
 ;-
 FUNCTION spice_data::get_window_position, window_index, detector=detector, $
-  idl_coord=idl_coord, reverse_y=reverse_y
+  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, no_warning=no_warning
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
 
@@ -372,7 +375,15 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
 
   PXEND3 = self.get_header_info('PXEND3', window_index)
   IF PXEND3 LT 0 THEN message, 'PXEND3 < 0: '+strtrim(string(PXEND3))+' < 0', /info
-  IF PXEND3 LT PXBEG3 THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
+  IF PXEND3 LT PXBEG3 THEN BEGIN
+    IF self.has_dumbbells(window_index) && keyword_set(reverse_x) THEN BEGIN
+      beg_temp = PXEND3
+      PXEND3 = PXBEG3
+      PXBEG3 = beg_temp
+    ENDIF ELSE BEGIN
+      IF ~keyword_set(no_warning) THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
+    ENDELSE
+  ENDIF
   IF PXEND3 GT 2*ccd_size[0] THEN $
     message, 'PXEND3 > 2 * CCD-size: '+strtrim(string(PXEND3))+' > '+strtrim(string(2*ccd_size[0])), /info
 
@@ -863,7 +874,7 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_info('cdelt2', window_index)
   pc2_2 = self.get_header_info('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG3 = (self.get_window_position(window_index, /reverse_y))[2]
+    PXBEG3 = (self.get_window_position(window_index, /reverse_y, /no_warning))[2]
     cripx = crpix + PXBEG3
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
@@ -1123,18 +1134,29 @@ END
 
 ;+
 ; Description:
-;     Returns 1 if data object contains one or two dumbbells
+;     Returns 1 if data object contains one or two dumbbells.
+;     If window_index is provided, 1 is returned if the given
+;     given window contains a dumbbell
+;
+; OPTIONAL INPUT:
+;     window_index : if provided, the method checks whether
+;                    this specific window or these specific
+;                    windows contain a dumbbell
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid window index
+;     boolean
 ;-
-FUNCTION spice_data::has_dumbbells
-  ;returns 1 if data object contains one or two dumbbells
+FUNCTION spice_data::has_dumbbells, window_index
+  ;returns 1 if data object contains one or two dumbbells, or if window_index is dumbbell
   COMPILE_OPT IDL2
 
-  return, self.dumbbells[0] ge 0 || self.dumbbells[1] ge 0
+  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
+    IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
+      return, 1
+    ENDIF
+  ENDFOR
+  return, self.dumbbells[0] GE 0 || self.dumbbells[1] GE 0
 END
-
 
 
 ;+
