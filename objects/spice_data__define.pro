@@ -38,6 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
+; $Id: 05.03.2020 11:54 CET $
 
 
 ;+
@@ -56,7 +57,8 @@
 FUNCTION spice_data::init, file, verbose=verbose
   COMPILE_OPT IDL2
 
-  self.title='SPICE'
+  self.title = 'SPICE'
+  self.ccd_size = [1024, 1024]
   IF n_elements(file) EQ 1 THEN BEGIN
     self->read_file, file, verbose=verbose
   ENDIF
@@ -184,11 +186,13 @@ END
 ;
 ; KEYWORD PARAMETERS:
 ;     nodescale : if set, does not call descale_array
+;     debin : if set, the image will be expanded if binning is GT 1, and data values
+;             will be divided by the binning value
 ;
 ; OUTPUT:
 ;     returns the desired 2-dimensional image, as an array
 ;-
-FUNCTION spice_data::get_one_image, window_index, exposure_index, nodescale=nodescale
+FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale
   ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
   COMPILE_OPT IDL2
 
@@ -210,6 +214,35 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, nodescale=node
     data = reform(data[exposure_index,*,*])
   ENDELSE
   data = transpose(data)
+  IF keyword_set(debin) THEN BEGIN
+    size_data = size(data)
+    bin_y = (self.get_spatial_binning(window_index))[0]
+    IF bin_y GT 1 THEN BEGIN
+      new_data = rebin(data,size_data[1],size_data[2]*bin_y)
+      FOR i=0,size_data[2]-1 DO BEGIN
+        one_line = data[*,i]/bin_y
+        FOR j=0,bin_y-1 DO BEGIN
+          index = i*bin_y+j
+          new_data[*,index] = one_line
+        ENDFOR
+      ENDFOR
+      data = new_data
+      size_data = size(data)
+    ENDIF
+
+    bin_l = (self.get_spectral_binning(window_index))[0]
+    IF bin_l GT 1 THEN BEGIN
+      new_data = rebin(data,size_data[1]*bin_l,size_data[2])
+      FOR i=0,size_data[1]-1 DO BEGIN
+        one_line = data[i,*]/bin_l
+        FOR j=0,bin_l-1 DO BEGIN
+          index = i*bin_l+j
+          new_data[index,*] = one_line
+        ENDFOR
+      ENDFOR
+      data = new_data
+    ENDIF
+  ENDIF
   return, data
 END
 
@@ -258,7 +291,9 @@ END
 ;-
 FUNCTION spice_data::get_window_index, input
   ;Returns window index of a given wavelength or window name
-  IF n_params() EQ 0 THEN BEGIN
+  COMPILE_OPT IDL2
+
+ IF n_params() EQ 0 THEN BEGIN
     message,'getwindx,input',/info
     return,-1
   ENDIF
@@ -293,6 +328,80 @@ FUNCTION spice_data::get_window_index, input
     ENDELSE
   ENDFOR
   return,iwin
+END
+
+
+;+
+; Description:
+;     Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
+;     position is given as a 4-element vector, with [lambda0, lambda1, y0, y1].
+;     Note: y0 > y1, but lambda0 < lambda1
+;
+; INPUTS:
+;     window_index : the index of the window
+;
+; KEYWORD PARAMETERS:
+;     idl_coord : if set, the coordinates start with zero, instead of with 1
+;     reverse_y : y-coordinates are given as (CCD-size +1 - (original y-coords))
+;     reverse_x : for dumbbells x-coordinates are flipped, if this keyowrd is set, the coordinates will 
+;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped
+;     no_warning: if set, warnings about x-flipping will be suppressed
+;
+; OUTPUT:
+;     int array
+;
+; OPTIONAL OUTPUT:
+;     detector : int, 1 or 2 to indicate on which detector the winodow is
+;-
+FUNCTION spice_data::get_window_position, window_index, detector=detector, $
+  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, no_warning=no_warning
+  ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
+  COMPILE_OPT IDL2
+
+  ccd_size = self.get_ccd_size()
+
+  PXBEG3 = self.get_header_info('PXBEG3', window_index)
+  IF PXBEG3 LT 0 THEN BEGIN
+    message, 'PXBEG3 < 0: '+strtrim(string(PXBEG3))+' < 0', /info
+    detector = 1
+  ENDIF ELSE IF PXBEG3 GT 2*ccd_size[0] THEN BEGIN
+    message, 'PXBEG3 > 2 * CCD-size: '+strtrim(string(PXBEG3))+' > '+strtrim(string(2*ccd_size[0])), /info
+    detector = 2
+  ENDIF ELSE IF PXBEG3 GT ccd_size[0] THEN BEGIN
+    detector = 2
+  ENDIF ELSE BEGIN
+    detector = 1
+  ENDELSE
+
+  PXEND3 = self.get_header_info('PXEND3', window_index)
+  IF PXEND3 LT 0 THEN message, 'PXEND3 < 0: '+strtrim(string(PXEND3))+' < 0', /info
+  IF PXEND3 LT PXBEG3 THEN BEGIN
+    IF self.has_dumbbells(window_index) && keyword_set(reverse_x) THEN BEGIN
+      beg_temp = PXEND3
+      PXEND3 = PXBEG3
+      PXBEG3 = beg_temp
+    ENDIF ELSE BEGIN
+      IF ~keyword_set(no_warning) THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
+    ENDELSE
+  ENDIF
+  IF PXEND3 GT 2*ccd_size[0] THEN $
+    message, 'PXEND3 > 2 * CCD-size: '+strtrim(string(PXEND3))+' > '+strtrim(string(2*ccd_size[0])), /info
+
+  PXBEG2 = self.get_header_info('PXBEG2', window_index)
+  IF PXBEG2 LT 0 THEN message, 'PXBEG2 < 0: '+strtrim(string(PXBEG2))+' < 0', /info
+  IF PXBEG2 GT ccd_size[1] THEN $
+    message, 'PXBEG2 > CCD-size: '+strtrim(string(PXBEG2))+' > '+strtrim(string(ccd_size[1])), /info
+
+  PXEND2 = self.get_header_info('PXEND2', window_index)
+  IF PXEND2 LT 0 THEN message, 'PXEND2 < 0: '+strtrim(string(PXEND2))+' < 0', /info
+  IF PXEND2 GT PXBEG2 THEN message, 'PXEND2 > PXBEG2: '+strtrim(string(PXEND2))+' > '+strtrim(string(PXBEG2)), /info
+  IF PXEND2 GT ccd_size[1] THEN $
+    message, 'PXEND2 > CCD-size: '+strtrim(string(PXEND2))+' > '+strtrim(string(ccd_size[1])), /info
+
+  position = [PXBEG3, PXEND3, PXBEG2, PXEND2]
+  IF keyword_set(reverse_y) THEN position[2:3] = ccd_size[1] + 1 - position[2:3]
+  IF keyword_set(idl_coord) THEN position = position - 1
+  return, position
 END
 
 
@@ -406,7 +515,7 @@ FUNCTION spice_data::get_obs_id
   ;returns SPICE OBS ID
   COMPILE_OPT IDL2
 
-  obs_id = self.get_header_info('SPIOBSID', 0)
+  obs_id = self.get_header_info('SPIOBSID', 0, -1)
   IF size(obs_id, /TYPE) NE 7 THEN obs_id = strtrim(string(obs_id),2)
   return, obs_id
 END
@@ -423,7 +532,7 @@ FUNCTION spice_data::get_start_time
   ;returns start date and time of observation in UTC format
   COMPILE_OPT IDL2
 
-  start_time = self.get_header_info('DATE-BEG', 0)
+  start_time = self.get_header_info('DATE-BEG', 0, '')
   return, start_time
 END
 
@@ -439,7 +548,7 @@ FUNCTION spice_data::get_end_time
   ;returns end date and time of observation in UTC format
   COMPILE_OPT IDL2
 
-  end_time = self.get_header_info('DATE-END', 0)
+  end_time = self.get_header_info('DATE-END', 0, '')
   return, end_time
 END
 
@@ -471,7 +580,7 @@ FUNCTION spice_data::get_variable_unit
   ;returns BUNIT, physical units of the data
   COMPILE_OPT IDL2
 
-  bunit = self.get_header_info('BUNIT', 0)
+  bunit = self.get_header_info('BUNIT', 0, '')
   return, bunit
 END
 
@@ -487,7 +596,7 @@ FUNCTION spice_data::get_variable_type
   ;returns BTYPE, type of data in images
   COMPILE_OPT IDL2
 
-  btype = self.get_header_info('BTYPE', 0)
+  btype = self.get_header_info('BTYPE', 0, '')
   return, btype
 END
 
@@ -526,16 +635,35 @@ END
 
 ;+
 ; Description:
-;     returns the window ID
+;     returns the 2-element vector containing the CCD size
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_ccd_size
+  ;returns the 2-element vector containing the CCD size
+  COMPILE_OPT IDL2
+
+  return, self.ccd_size
+END
+
+
+;+
+; Description:
+;     returns the window ID of one or more windows. window_index is optional
+;     if not provided, window IDs of all windows are returned, if it is
+;     scalar, the result will be a scalar string, and if window_index is
+;     an array, the result will be a string array of same size.
 ;
 ; INPUTS:
 ;     window_index : the index of the window the ID is asked for
+;                    scalar or 1D-int-array
 ;
 ; OUTPUT:
-;     string
+;     string or string array
 ;-
 FUNCTION spice_data::get_window_id, window_index
-  ;returns the window ID
+  ;returns the window ID, as string or string array
   COMPILE_OPT IDL2
 
   IF n_params() EQ 0 THEN BEGIN
@@ -544,7 +672,14 @@ FUNCTION spice_data::get_window_id, window_index
       window_id[i] = self.get_header_info('EXTNAME', i)
     ENDFOR
   ENDIF ELSE BEGIN
-    window_id = self.get_header_info('EXTNAME', window_index)
+    IF N_ELEMENTS(window_index) eq 1 THEN BEGIN
+      window_id = self.get_header_info('EXTNAME', window_index[0])
+    ENDIF ELSE BEGIN
+      window_id = strarr(N_ELEMENTS(window_index))
+      FOR i = 0,N_ELEMENTS(window_index)-1 DO BEGIN
+        window_id[i] = self.get_header_info('EXTNAME', window_index[i])
+      ENDFOR
+    ENDELSE
   ENDELSE
 
   return, window_id
@@ -574,21 +709,59 @@ END
 
 ;+
 ; Description:
-;     returns the number of exposures in the window
+;     returns the number of exposures in the window, or if window_index 
+;     is not provided, a vector containing the numbers of exposures
+;     for each window
 ;
-; INPUTS:
+; OPTIONAL INPUTS:
 ;     window_index : the index of the window
 ;
 ; OUTPUT:
-;     float
+;     int or int-array
 ;-
 FUNCTION spice_data::get_number_exposures, window_index
   ;returns the number of exposures in the window
   COMPILE_OPT IDL2
 
-  IF self.get_sit_and_stare() then n_exp = self.get_header_info('NAXIS4', window_index) $
-  ELSE n_exp = self.get_header_info('NAXIS1', window_index)
+  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
+    n_exp = intarr(self.get_number_windows)
+    FOR iwin=0,self.get_number_windows-1 DO BEGIN
+      IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_info('NAXIS4', iwin) $
+      ELSE n_exp[iwin] = self.get_header_info('NAXIS1', iwin)
+    ENDFOR
+  ENDIF ELSE BEGIN
+    IF self.get_sit_and_stare() THEN n_exp = self.get_header_info('NAXIS4', window_index) $
+    ELSE n_exp = self.get_header_info('NAXIS1', window_index)
+  ENDELSE
   return, n_exp
+END
+
+
+;+
+; Description:
+;     returns the number of pixels in y in the window, or if window_index 
+;     is not provided, a vector containing the numbers of pixels in y
+;     for each window
+;
+; OPTIONAL INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     int or int-array
+;-
+FUNCTION spice_data::get_number_y_pixels, window_index
+  ;returns the number of pixels in y in the window
+  COMPILE_OPT IDL2
+
+  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
+    n_slit = intarr(self.get_number_windows)
+    FOR iwin=0,self.get_number_windows-1 DO BEGIN
+      n_slit[iwin] = self.get_header_info('NAXIS2', iwin)
+    ENDFOR
+  ENDIF ELSE BEGIN
+    n_slit = self.get_header_info('NAXIS2', window_index)
+  ENDELSE
+  return, n_slit
 END
 
 
@@ -636,7 +809,7 @@ FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
   axes = ['Solar X', 'Solar Y', 'Wavelength', 'Time']
   IF ~keyword_set(no_unit) THEN BEGIN
     IF keyword_set(pixels) THEN BEGIN
-      axes = axes + '[pixels]'
+      axes = axes + ' [pixels]'
     ENDIF ELSE BEGIN
       axes[0] = axes[0] + ' [' + strtrim(self.get_header_info('CUNIT1', 0),2) + ']'
       axes[1] = axes[1] + ' [' + strtrim(self.get_header_info('CUNIT2', 0),2) + ']'
@@ -680,22 +853,33 @@ END
 ;+
 ; Description:
 ;     returns a vector containting the coordinate for each pixel in second dimension, instrument y-direction
+;     for the selected window, or the full CCD this window belongs to
 ;
 ; INPUTS:
 ;     window_index : the index of the window
 ;
+; OPTIONAL KEYWORDS:
+;     full_ccd : if set, a vector of size CCD-size[1] is returned with coordinate values
+;                for the whole detector
+;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_y_vector, window_index
+FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   ;returns a vector containting the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval2', window_index)
-  naxis = self.get_header_info('naxis2', window_index)
   crpix = self.get_header_info('crpix2', window_index)
   cdelt = self.get_header_info('cdelt2', window_index)
   pc2_2 = self.get_header_info('PC2_2', window_index)
+  IF keyword_set(full_ccd) THEN BEGIN
+    PXBEG3 = (self.get_window_position(window_index, /reverse_y, /no_warning))[2]
+    cripx = crpix + PXBEG3
+    naxis = (self.get_ccd_size())[1]
+  ENDIF ELSE BEGIN
+    naxis = self.get_header_info('naxis2', window_index)
+  ENDELSE
   y_vector = crval + cdelt * pc2_2 * (findgen(naxis)+1.0-crpix)
   return, y_vector
 END
@@ -703,22 +887,33 @@ END
 
 ;+
 ; Description:
-;     returns a vector containting the wavelength for each pixel in third dimension
+;     returns a vector containting the wavelength for each pixel in third dimension for
+;     the selected window, or the full CCD this window belongs to
 ;
 ; INPUTS:
 ;     window_index : the index of the window
 ;
+; OPTIONAL KEYWORDS:
+;     full_ccd : if set, a vector of size CCD-size[0] is returned with lamda values
+;                for the whole detector
+;
 ; OUTPUT:
 ;     float array, wavelength in nm
 ;-
-FUNCTION spice_data::get_lambda_vector, window_index
-  ;returns a vector containting the wavelength for each pixel in third dimension
+FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
+  ;returns a vector containting the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval3', window_index)
-  naxis = self.get_header_info('naxis3', window_index)
-  crpix = self.get_header_info('crpix3', window_index)
   cdelt = self.get_header_info('cdelt3', window_index)
+  crpix = self.get_header_info('crpix3', window_index)
+  IF keyword_set(full_ccd) THEN BEGIN
+    PXBEG3 = self.get_header_info('PXBEG3', window_index)
+    cripx = crpix + PXBEG3
+    naxis = (self.get_ccd_size())[0]
+  ENDIF ELSE BEGIN
+    naxis = self.get_header_info('naxis3', window_index)
+  ENDELSE
   lambda_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
   return, lambda_vector
 END
@@ -743,7 +938,7 @@ FUNCTION spice_data::get_time_vector, window_index
   IF naxis EQ 1  THEN BEGIN
     naxis = self.get_header_info('naxis1', window_index)
     crpix = self.get_header_info('crpix1', window_index)
-    factor = self.get_header_info('PC4_1', window_index)
+    factor = self.get_header_info('PC4_1', window_index, 1)
   ENDIF ELSE BEGIN
     crpix = self.get_header_info('crpix4', window_index)
     factor = 1
@@ -859,6 +1054,56 @@ END
 
 ;+
 ; Description:
+;     returns the binning factor in spatial y-direction.
+;     If window_index is not provided a vector with binning factors for all
+;     windows is returned.
+;
+; OPTIONAL INPUTS:
+;     window_index : the index of the window (can be a list of indices)
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_spatial_binning, window_index
+  ;returns the binning factor in spatial y-direction (vector if window_index not provided)
+  COMPILE_OPT IDL2
+
+  IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
+  bin2 = intarr(N_ELEMENTS(window_index))
+  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
+    bin2[i] = self.get_header_info('NBIN2', window_index[i])
+  ENDFOR
+  return, bin2
+END
+
+
+;+
+; Description:
+;     returns the binning factor in spectral direction.
+;     If window_index is not provided a vector with binning factors for all
+;     windows is returned.
+;
+; OPTIONAL INPUTS:
+;     window_index : the index of the window (can be a list of indices)
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_spectral_binning, window_index
+  ;returns the binning factor in the spectral direction (vector if window_index not provided)
+  COMPILE_OPT IDL2
+
+  IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
+  bin3 = intarr(N_ELEMENTS(window_index))
+  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
+    bin3[i] = self.get_header_info('NBIN3', window_index[i])
+  ENDFOR
+  return, bin3
+END
+
+
+;+
+; Description:
 ;     Checks whether a given window index is valid
 ;
 ; INPUTS:
@@ -889,18 +1134,29 @@ END
 
 ;+
 ; Description:
-;     Returns 1 if data object contains one or two dumbbells
+;     Returns 1 if data object contains one or two dumbbells.
+;     If window_index is provided, 1 is returned if the given
+;     given window contains a dumbbell
+;
+; OPTIONAL INPUT:
+;     window_index : if provided, the method checks whether
+;                    this specific window or these specific
+;                    windows contain a dumbbell
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid window index
+;     boolean
 ;-
-FUNCTION spice_data::has_dumbbells
-  ;returns 1 if data object contains one or two dumbbells
+FUNCTION spice_data::has_dumbbells, window_index
+  ;returns 1 if data object contains one or two dumbbells, or if window_index is dumbbell
   COMPILE_OPT IDL2
 
-  return, self.dumbbells[0] ge 0 || self.dumbbells[1] ge 0
+  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
+    IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
+      return, 1
+    ENDIF
+  ENDFOR
+  return, self.dumbbells[0] GE 0 || self.dumbbells[1] GE 0
 END
-
 
 
 ;+
@@ -1012,6 +1268,7 @@ PRO spice_data__define
   struct = {spice_data, $
     file: '', $                 ; input filename
     title: '', $                ; instrument name
+    ccd_size: [0,0], $          ; size of the detector, set in init
     nwin: 0, $                  ; number of windows
     window_assoc: ptr_new(), $  ; pointers to window data in the file using assoc (ptrarr)
     window_data: ptr_new(), $   ; loaded window data (ptrarr)

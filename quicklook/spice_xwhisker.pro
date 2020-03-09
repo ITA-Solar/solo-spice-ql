@@ -49,7 +49,9 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-;
+; $Id: 24.02.2020 20:49 CET $
+
+
 ; save as postscript file
 pro spice_xwhisker_ps,event
   thisfile=dialog_pickfile(/write,file='spice_xwhisker.ps')

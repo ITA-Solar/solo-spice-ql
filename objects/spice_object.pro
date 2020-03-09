@@ -36,6 +36,7 @@
 ; HISTORY:
 ;     27-Nov-2019: Martin Wiesmann
 ;-
+; $Id: 24.02.2020 20:49 CET $
 
 
 FUNCTION spice_object, file, verbose=verbose

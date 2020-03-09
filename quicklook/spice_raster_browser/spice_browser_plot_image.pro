@@ -34,6 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
+; $Id: 24.02.2020 20:49 CET $
 
 
 PRO spice_browser_plot_image, state, pwin, ps=ps
