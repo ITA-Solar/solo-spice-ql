@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 05.03.2020 11:54 CET $
+; $Id: 25.04.2020 21:41 CEST $
 
 
 ;+
@@ -1212,11 +1212,11 @@ PRO spice_data::read_file, file, verbose=verbose
   self.file = file
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
   self.nwin = hdr.nwin
-
+stop
   ; find location of line windows in fits file
   openr, file_lun, file, /swap_if_little_endian, /get_lun
   self.file_lun = file_lun
-  position = iris_find_winpos(file_lun, self.nwin)
+  position = iris_find_winpos(file_lun, self.nwin-1)
   assocs = ptrarr(self.nwin)
   headers = ptrarr(self.nwin)
   wcs = ptrarr(self.nwin)
