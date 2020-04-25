@@ -135,7 +135,7 @@
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;         modified from iris_getwindata
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 25.04.2020 21:39 CEST $
 
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
@@ -449,6 +449,7 @@ dark_unc=0
   ; Get satellite roll angle
   ;
   roll_angle=d->get_satellite_rotation()
+  if N_ELEMENTS(roll_angle) eq 0 then roll_angle=0
 
   ;
   ; The satellite roll angle potentially messes up xpos, ypos, etc. My
