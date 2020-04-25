@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 25.04.2020 21:57 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -294,7 +294,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     tmid: midtime, $
     tmid_min: tmid_min, $
     rast_direct: rast_direct, $
-    roll: data->get_header_info('CROTA', 0), $
+    roll: data->get_header_info('CROTA', 0, 0), $
     l1p5_ver: meta.l1p5_ver, $
     sji: sji, $
     sji_file: sji_file, $     ; array of all SJI filenames
@@ -541,13 +541,13 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   ; The following contains meta-data that goes on the Metadata tab.
   ;
-  stud_acr=data->get_header_info('OBS_ID', 0)
+  stud_acr=data->get_header_info('OBS_ID', 0, '')
   ;  IF n_tags(filestr) NE 0 THEN BEGIN
   ;    date_obs=filestr.t0
   ;    date_end=filestr.t1
   ;  ENDIF ELSE BEGIN
-  date_obs=data->get_header_info('DATE-BEG', 0)
-  date_end=data->get_header_info('DATE-END', 0)
+  date_obs=data->get_header_info('DATE-BEG', 0, '')
+  date_end=data->get_header_info('DATE-END', 0, '')
   ;  ENDELSE
   ;
   text1=widget_label(meta_base,val='OBSID: '+stud_acr,font=font, $

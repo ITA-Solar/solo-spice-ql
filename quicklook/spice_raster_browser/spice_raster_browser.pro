@@ -98,7 +98,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 25.04.2020 21:57 CEST $
 
 
 ;---------------------
@@ -149,13 +149,13 @@ PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, $
     box_message, ['FILENAME = ' + data->get_header_info('FILENAME', 0), $
       'EXTNAME  = ' + data->get_header_info('EXTNAME', 0), $
       'STUDYTYP = ' + data->get_header_info('STUDYTYP', 0), $
-      'STUDYDES = ' + data->get_header_info('STUDYDES', 0), $
-      'STUDY    = ' + data->get_header_info('STUDY', 0), $
-      'OBS_TYPE = ' + data->get_header_info('OBS_TYPE', 0), $
-      'OBS_ID   = ' + data->get_header_info('OBS_ID', 0), $
+      'STUDYDES = ' + data->get_header_info('STUDYDES', 0, ''), $
+      'STUDY    = ' + data->get_header_info('STUDY', 0, ''), $
+      'OBS_TYPE = ' + data->get_header_info('OBS_TYPE', 0, ''), $
+      'OBS_ID   = ' + data->get_header_info('OBS_ID', 0, ''), $
       'SPIOBSID = ' + strtrim(string(data->get_header_info('SPIOBSID', 0)), 2), $
-      'PURPOSE  = ' + data->get_header_info('PURPOSE', 0), $
-      'SOOPNAME = ' + data->get_header_info('SOOPNAME', 0)]
+      'PURPOSE  = ' + data->get_header_info('PURPOSE', 0, ''), $
+      'SOOPNAME = ' + data->get_header_info('SOOPNAME', 0, '')]
   ENDIF
 
   spice_browser_widget, data, yoffsets=yoffsets, chunk_size=chunk_size, $
