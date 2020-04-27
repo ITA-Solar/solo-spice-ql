@@ -135,7 +135,7 @@
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;         modified from iris_getwindata
 ;-
-; $Id: 25.04.2020 21:39 CEST $
+; $Id: 27.04.2020 11:38 CEST $
 
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
@@ -468,7 +468,13 @@ dark_unc=0
   IF abs(roll_angle) LT 5.0 THEN BEGIN
     xpos=d->get_instr_x_vector(iwin)
     ypos=d->get_instr_y_vector(iwin)
-    IF d->get_sit_AND_stare() EQ 1 THEN xscale=1.0 ELSE xscale=median(xpos[1:nx-1]-xpos[0:nx-2])
+    IF d->get_sit_AND_stare() EQ 1 THEN xscale=1.0 ELSE BEGIN
+      IF nx GT 1 THEN BEGIN
+        xscale=median(xpos[1:nx-1]-xpos[0:nx-2])
+      ENDIF ELSE BEGIN
+        xscale=1.0
+      ENDELSE
+    ENDELSE
     yscale=median(ypos[1:ny-1]-ypos[0:ny-2])
     scale=[xscale,yscale]
     xpos=xpos[ix0:ix1]
