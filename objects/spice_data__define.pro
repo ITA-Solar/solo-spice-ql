@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 25.04.2020 21:41 CEST $
+; $Id: 27.04.2020 11:27 CEST $
 
 
 ;+
@@ -1212,7 +1212,7 @@ PRO spice_data::read_file, file, verbose=verbose
   self.file = file
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
   self.nwin = hdr.nwin
-stop
+
   ; find location of line windows in fits file
   openr, file_lun, file, /swap_if_little_endian, /get_lun
   self.file_lun = file_lun
