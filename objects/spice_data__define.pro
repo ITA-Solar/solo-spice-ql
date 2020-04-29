@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 27.04.2020 11:27 CEST $
+; $Id: 29.04.2020 11:21 CEST $
 
 
 ;+
@@ -724,8 +724,8 @@ FUNCTION spice_data::get_number_exposures, window_index
   COMPILE_OPT IDL2
 
   IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
-    n_exp = intarr(self.get_number_windows)
-    FOR iwin=0,self.get_number_windows-1 DO BEGIN
+    n_exp = intarr(self.get_number_windows())
+    FOR iwin=0,self.get_number_windows()-1 DO BEGIN
       IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_info('NAXIS4', iwin) $
       ELSE n_exp[iwin] = self.get_header_info('NAXIS1', iwin)
     ENDFOR
