@@ -35,7 +35,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 25.04.2020 21:57 CEST $
 
 
 FUNCTION spice_browser_get_metadata, data
@@ -121,7 +121,7 @@ FUNCTION spice_browser_get_metadata, data
     tmid_min: tmid_min, $
     utc: utc, $
     stud_acr: data->get_header_info('SPIOBSID', 0), $
-    date_obs: data->get_header_info('DATE-OBS', 0), $
+    date_obs: data->get_header_info('DATE-OBS', 0, ''), $
     l1p5_ver: 'NA', $
     obs_type: obs_type, $
     cadence: cadence, $

@@ -49,7 +49,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 25.04.2020 21:56 CEST $
 
 
 ; save as postscript file
@@ -709,7 +709,9 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
     ' Ycen: '+ string((data->get_header_info('crval2', line)),format='(f8.3)'), $
     /align_left)
 
-  rot=round(data->get_satellite_rotation())
+  rot=data->get_satellite_rotation()
+  if N_ELEMENTS(rot) eq 0 then rot=0
+  rot=round(rot)
   if rot lt 0 then rot=360+rot
   if rot eq 90 or rot eq 270 then begin
     pzty=data->get_instr_x_vector(line)
