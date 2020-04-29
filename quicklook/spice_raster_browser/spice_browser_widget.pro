@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 29.04.2020 11:22 CEST $
+; $Id: 29.04.2020 11:42 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -968,8 +968,8 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   widget_control,/hourglass
   FOR i=0,n_plot_window-1 DO BEGIN
     spice_browser_update_image,state,i
-    spice_browser_plot_image, state, i
     spice_browser_update_spectrum,state,i
+    spice_browser_plot_image, state, i
     spice_browser_plot_spectrum, state, i
   ENDFOR
   ;
