@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 18.05.2020 11:33 CEST $
 
 
 PRO spice_browser_update_info, state
@@ -51,8 +51,12 @@ PRO spice_browser_update_info, state
   widget_control,state.ttext,set_val=tstr
 
   date_obs=state.data->get_header_info('DATE-BEG', 0)
-  ex=anytim(/ex,date_obs)
-  val='TIME: '+strpad(trim(ex[0]),2,fill='0')+':'+strpad(trim(ex[1]),2,fill='0')
+  if N_ELEMENTS(date_obs) eq 0 then begin
+    val='TIME: N/A'
+  endif else begin
+    ex=anytim(/ex,date_obs)
+    val='TIME: '+strpad(trim(ex[0]),2,fill='0')+':'+strpad(trim(ex[1]),2,fill='0')
+  endelse
   widget_control,state.text3,set_val=val
 
 END
