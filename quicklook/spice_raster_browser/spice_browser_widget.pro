@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 29.04.2020 11:42 CEST $
+; $Id: 18.05.2020 11:33 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -563,11 +563,16 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     /align_left)
   text1a=widget_label(meta_base,val='TYPE: '+obs_type,font=font, $
     /align_left)
-  ex=anytim(/ex,date_obs)
-  date=trim(ex[4])+'-'+trim(get_month(ex[5]-1,/trunc))+'-'+trim(ex[6])
+  if date_obs ne '' then begin
+    ex=anytim(/ex,date_obs)
+    date=trim(ex[4])+'-'+trim(get_month(ex[5]-1,/trunc))+'-'+trim(ex[6])
+    time=strpad(trim(ex[0]),2,fill='0')+':'+strpad(trim(ex[1]),2,fill='0')
+  endif else begin
+    date='N/A'
+    time='N/A'
+  endelse
   text2=widget_label(meta_base,val='DATE: '+date,font=font, $
     /align_left)
-  time=strpad(trim(ex[0]),2,fill='0')+':'+strpad(trim(ex[1]),2,fill='0')
   text3=widget_label(meta_base,val='START TIME: '+time,font=font, $
     /align_left)
   ;
