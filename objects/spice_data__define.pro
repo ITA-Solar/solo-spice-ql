@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 27.05.2020 14:11 CEST $
+; $Id: 27.05.2020 14:52 CEST $
 
 
 ;+
@@ -281,7 +281,7 @@ END
 ;
 ; INPUTS:
 ;     input : scalar or array of numbers or string
-;             if input is one or more numbers, it is interpreted as wavelenghts
+;             if input is one or more numbers, it is interpreted as wavelengths
 ;             and indices of windows including those wavelengths are returned
 ;             if input is one or more string, it is interpreted as the window ID
 ;             and indices of the corresponding windows are returned
