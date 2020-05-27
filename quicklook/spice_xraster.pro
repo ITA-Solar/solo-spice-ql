@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 27.05.2020 14:12 CEST $
+; $Id: 27.05.2020 14:54 CEST $
 ;-
 ;
 ; save as postscript file
@@ -151,7 +151,7 @@ pro spice_xraster_draw, event
       wdmin[i]=min(var, max=maxtemp)
       wdmax[i]=maxtemp
     endif
-    sz = size(wd)
+    sz = size(var)
 
     ; wavelength scale of NUV/FUV1/FUV2
     if ~(*info).xdim_unit then begin
@@ -260,6 +260,8 @@ end
 
 ; create animation widget and launch animation
 pro spice_xraster_anim, event
+  print,'does NOT work yet'
+  return
   widget_control, event.top, get_uvalue = info
   magnification=0.95
   minsize=400.0
