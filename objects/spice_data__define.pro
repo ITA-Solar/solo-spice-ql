@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 27.05.2020 14:08 CEST $
+; $Id: 27.05.2020 14:11 CEST $
 
 
 ;+
@@ -934,15 +934,16 @@ FUNCTION spice_data::get_time_vector, window_index
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval4', window_index)
-  crpix = self.get_header_info('crpix4', window_index)
-  cdelt = self.get_header_info('cdelt4', window_index)
   naxis = self.get_header_info('naxis4', window_index)
   IF naxis EQ 1  THEN BEGIN
     naxis = self.get_header_info('naxis1', window_index)
+    crpix = self.get_header_info('crpix1', window_index)
     factor = self.get_header_info('PC4_1', window_index, 1)
   ENDIF ELSE BEGIN
+    crpix = self.get_header_info('crpix4', window_index)
     factor = 1
   ENDELSE
+  cdelt = self.get_header_info('cdelt4', window_index)
   time_vector = crval + factor * (findgen(naxis)+1.0-crpix) * cdelt
   return, time_vector
 END
