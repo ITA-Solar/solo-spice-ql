@@ -10,7 +10,7 @@
 ;
 ; CALLING SEQUENCE:
 ;     The SPICE_DATA__DEFINE procedure is not called directly. An
-;     object of class IRIS_DATA is created with the following
+;     object of class SPICE_DATA is created with the following
 ;     statement:
 ;                 spice_data = obj_new('spice_data', file, verbose=verbose)
 ;
@@ -21,7 +21,7 @@
 ;     verbose : if set, the initiation of the object prints out some information (not used)
 ;
 ; OUTPUT:
-;     Objects of type SPICE_DATA which describes and contains a SPICE raster
+;     Object of type SPICE_DATA which describes and contains a SPICE raster
 ;
 ; CALLS:
 ;
@@ -29,7 +29,7 @@
 ;
 ; PROCEDURE:
 ;     The procedure opens an object of class SPICE_DATA.
-;     This procedure includes various functions (methods of
+;     This procedure includes various functions/methods of
 ;     class  'spice_data' whose purpose is to get and/or manipulate
 ;     the different fields of the object.
 ;
@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 29.04.2020 11:21 CEST $
+; $Id: 27.05.2020 14:52 CEST $
 
 
 ;+
@@ -281,7 +281,7 @@ END
 ;
 ; INPUTS:
 ;     input : scalar or array of numbers or string
-;             if input is one or more numbers, it is interpreted as wavelenghts
+;             if input is one or more numbers, it is interpreted as wavelengths
 ;             and indices of windows including those wavelengths are returned
 ;             if input is one or more string, it is interpreted as the window ID
 ;             and indices of the corresponding windows are returned
@@ -293,7 +293,7 @@ FUNCTION spice_data::get_window_index, input
   ;Returns window index of a given wavelength or window name
   COMPILE_OPT IDL2
 
- IF n_params() EQ 0 THEN BEGIN
+  IF n_params() EQ 0 THEN BEGIN
     message,'getwindx,input',/info
     return,-1
   ENDIF
@@ -343,7 +343,7 @@ END
 ; KEYWORD PARAMETERS:
 ;     idl_coord : if set, the coordinates start with zero, instead of with 1
 ;     reverse_y : y-coordinates are given as (CCD-size +1 - (original y-coords))
-;     reverse_x : for dumbbells x-coordinates are flipped, if this keyowrd is set, the coordinates will 
+;     reverse_x : for dumbbells x-coordinates are flipped, if this keyword is set, the coordinates will
 ;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped
 ;     no_warning: if set, warnings about x-flipping will be suppressed
 ;
@@ -709,7 +709,7 @@ END
 
 ;+
 ; Description:
-;     returns the number of exposures in the window, or if window_index 
+;     returns the number of exposures in the window, or if window_index
 ;     is not provided, a vector containing the numbers of exposures
 ;     for each window
 ;
@@ -739,7 +739,7 @@ END
 
 ;+
 ; Description:
-;     returns the number of pixels in y in the window, or if window_index 
+;     returns the number of pixels in y in the window, or if window_index
 ;     is not provided, a vector containing the numbers of pixels in y
 ;     for each window
 ;
@@ -803,7 +803,7 @@ END
 ;     string or string array
 ;-
 FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
-  ;eturns name of axis, if axis is not provided a string vector will be returned
+  ;returns name of axis, if axis is not provided a string vector will be returned
   COMPILE_OPT IDL2
 
   axes = ['Solar X', 'Solar Y', 'Wavelength', 'Time']
@@ -901,7 +901,7 @@ END
 ;     float array, wavelength in nm
 ;-
 FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
-  ;returns a vector containting the wavelength for each pixel in third dimension for window or full CCD
+  ;returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval3', window_index)
@@ -921,7 +921,7 @@ END
 
 ;+
 ; Description:
-;     returns a vector containting the time for each pixel in fourth dimension
+;     returns a vector containing the time for each pixel in fourth dimension
 ;
 ; INPUTS:
 ;     window_index : the index of the window
@@ -930,7 +930,7 @@ END
 ;     float array, time in seconds
 ;-
 FUNCTION spice_data::get_time_vector, window_index
-  ;returns a vector containting the time for each pixel in fourth dimension
+  ;returns a vector containing the time for each pixel in fourth dimension
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval4', window_index)
@@ -957,10 +957,10 @@ END
 ;
 ; INPUTS:
 ;     window_index : the index of the window
-; 
+;
 ; OPTIONAL INPUTS:
 ;     pixels : the pixel for which the coordinates should be returned. Values can be
-;              outside of the actual data volume and can be floating point numbers. 
+;              outside of the actual data volume and can be floating point numbers.
 ;              Must be either a 4-element vector, or a 2D array of the form (4,n)
 ;              where n is the number of desired pixels.
 ;
@@ -971,7 +971,7 @@ END
 ;     time : if set, only coordinates of fourth dimension (time) or returned
 ;
 ; OUTPUT:
-;     float array, 
+;     float array,
 ;         scalar: if one pixel is provided and one of the keywords is set
 ;         1D: - 1 pixel provided, no keywords set (4-element vector)
 ;             - several (n) pixels provided, one of the keywords set (n-element vector)
@@ -989,14 +989,14 @@ FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambd
     message, 'pixels must have size (4,x) where x=any natural number', /info
     return, !NULL
   ENDIF
-  
+
   coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
   CASE 1 OF
     keyword_set(x): axis_ind = 0
     keyword_set(y): axis_ind = 1
     keyword_set(lambda): axis_ind = 2
     keyword_set(time): axis_ind = 3
-    ELSE: axis_ind = indgen(4) 
+    ELSE: axis_ind = indgen(4)
   ENDCASE
 
   IF size_pixels[0] EQ 0 THEN BEGIN
@@ -1013,14 +1013,14 @@ FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambd
     return, coords[axis_ind]
   ENDIF ELSE BEGIN
     return, reform(coords[axis_ind, *])
-  ENDELSE  
+  ENDELSE
 END
 
 
 ;+
 ; Description:
-;     returns a vector containting the resolution of each dimension, or a
-;     scalar number respresenting the resolution of one dimension.
+;     returns a vector containing the resolution of each dimension, or a
+;     scalar number representing the resolution of one dimension.
 ;
 ; INPUTS:
 ;     window_index : the index of the window
@@ -1037,7 +1037,7 @@ END
 ;     float array or float
 ;-
 FUNCTION spice_data::get_resolution, window_index, x=x, y=y, lambda=lambda, time=time
-  ;returns a vector containting the resolution of each dimension, or a scalar if a keyword is set
+  ;returns a vector containing the resolution of each dimension, or a scalar if a keyword is set
   COMPILE_OPT IDL2
 
   cdelt1 = self.get_header_info('cdelt1', window_index)
@@ -1167,7 +1167,7 @@ END
 ; KEYWORD PARAMETERS:
 ;     lower : If set, only returns the index of the lower dumbbell
 ;     upper : If set, only returns the index of the upper dumbbell
-;     
+;
 ; OUTPUT:
 ;     boolean, True if input is a valid window index
 ;-

@@ -46,6 +46,11 @@ In general, all functionalities in the heritage routines will be preserved as fa
     spice_xdetector, spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
     ```
 * Spectroheliogram viewer (iris_xraster)
+    * Initial working version
+    * Animation with ximovie doesn’t work yet, might be a bigger change
+    ```
+    spice_xraster, spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
+    ```
 * Intensity map viewer (iris_xmap)
 * Interactive line fitting (xcfit)
 * “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
@@ -72,7 +77,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 ## For Developers
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 05.03.2020 12:12 CET $
+; $Id: 27.05.2020 14:56 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
