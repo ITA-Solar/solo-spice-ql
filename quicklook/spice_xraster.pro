@@ -11,7 +11,7 @@
 ;       are added as extra rows of display windows.
 ;
 ; CATEGORY:
-;       Hansteen/Wikst�l Data analysis SW
+;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
 ;       spice_xraster, data_obj, windows, ncolors=ncolors, $
@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 27.05.2020 14:54 CEST $
+; $Id: 28.05.2020 11:43 CEST $
 ;-
 ;
 ; save as postscript file

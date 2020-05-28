@@ -6,7 +6,7 @@
 ;     spice_object returns a 'spice_data' object.
 ;
 ; CATEGORY:
-;     Solar Orbiter - SPICE; QuickLook.
+;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
 ;     spice_object, file [, verbose=verbose]
@@ -36,7 +36,7 @@
 ; HISTORY:
 ;     27-Nov-2019: Martin Wiesmann
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 28.05.2020 11:43 CEST $
 
 
 FUNCTION spice_object, file, verbose=verbose

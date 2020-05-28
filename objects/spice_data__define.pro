@@ -6,7 +6,7 @@
 ;     spice_data__define defines the class structure 'spice_data'.
 ;
 ; CATEGORY:
-;     Solar Orbiter - SPICE; QuickLook.
+;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
 ;     The SPICE_DATA__DEFINE procedure is not called directly. An
@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 27.05.2020 14:52 CEST $
+; $Id: 28.05.2020 11:43 CEST $
 
 
 ;+
