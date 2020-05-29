@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 28.05.2020 11:43 CEST $
+; $Id: 29.05.2020 14:36 CEST $
 
 
 ;+
@@ -833,7 +833,7 @@ END
 ;     float array, coordinate in arcsec
 ;-
 FUNCTION spice_data::get_instr_x_vector, window_index
-  ;returns a vector containting the coordinate for each pixel in instrument x-direction
+  ;returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval1', window_index)
@@ -866,7 +866,7 @@ END
 ;     float array, coordinate in arcsec
 ;-
 FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
-  ;returns a vector containting the coordinate for each pixel in instrument y-direction
+  ;returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
   crval = self.get_header_info('crval2', window_index)
