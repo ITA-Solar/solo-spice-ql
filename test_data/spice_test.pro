@@ -43,5 +43,5 @@ PRO spice_test, file_number
 
   ;spice_xraster, obj, [0]
 
-  spice_xmap, obj
+  spice_xmap, obj, linelist=window_index
 END
