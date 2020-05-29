@@ -37,5 +37,7 @@ PRO spice_test, file_number
   print,obj->get_spatial_binning()
   print,obj->get_spectral_binning()
   ;stop
-  spice_xdetector, obj, indgen(obj->get_number_windows())
+  ;spice_xdetector, obj, indgen(obj->get_number_windows())
+  
+  spice_xmap, obj, linelist=[0,1]
 END
