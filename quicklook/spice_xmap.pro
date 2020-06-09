@@ -70,7 +70,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 09.06.2020 11:42 CEST $
+; $Id: 09.06.2020 12:08 CEST $
 ;-
 ;
 ; save as postscript file
@@ -195,12 +195,9 @@ pro spice_xmap_draw, event
   xscale=[min(*(*info).xscale),max(*(*info).xscale)]
   dx=xscale[1]-xscale[0]
   if (*info).aspect lt 0.05 then xtickinterval=(dx/2.) else xtickinterval=(dx/3.)
-  print,'draw'
-  help,(*(*info).drawimage)^gamma,xscale,*(*info).yscale
-  stop
   mplot_image,(*(*info).drawimage)^gamma,xscale,*(*info).yscale,$
     bgblack=bgblack,xtickformat='(f7.1)',xtickinterval=xtickinterval,ticklen=ticklen, $
-    xtitle = (*info).xtitle, ytitle = (*info).ytitle, color=(*info).color,min=imin,max=imax, pos=(*info).imagepos
+    xtitle = (*info).xtitle, ytitle = (*info).ytitle, color=(*info).color,min=imin,max=imax
   if imax-imin eq 0.0 then imax=imin+1
   if imax-imin lt 10 then format='(f7.3)' else format='(f10.1)'
   if(!p.charsize ne 0) then pcharsize=!p.charsize else pcharsize=1.0
@@ -222,7 +219,6 @@ function spice_xmap_dwoption, event
 end
 ; set screen size to preset value
 function spice_xmap_drawsizeoption, event
-help,event
 if event.select eq 0 then return, 0
   widget_control, event.top, get_uvalue = info
   w_ysz=(*info).tlb_ysz-(*info).d_ysz
@@ -237,9 +233,6 @@ if event.select eq 0 then return, 0
 ;  endelse
   pseudoevent={widget_base,id:0l,top:(*info).tlb, handler:0l, $
     x:xysz[0]+(*info).lcol_xsz, y:xysz[1]+w_ysz}
-  print,'draw_size_option'
-  print,xysz,w_ysz,(*info).lcol_xsz
-  help,pseudoevent
   spice_xmap_resize, pseudoevent
   return, 0
 end
@@ -557,8 +550,6 @@ end
 
 ; resize main window and set up drawimage
 pro spice_xmap_resize, event
-  print,'-- resize --'
-  help,event
   widget_control, event.top ,get_uvalue = info
   ; set up image in it`s original size:
   if (*info).xdim eq 2 or (*info).xdim eq 1 or (*info).xdim eq 3 then rotate=4 else rotate=1
@@ -835,7 +826,6 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   ysz = standard_size
   if aspect gt 1.0 then ysz = fix(ysz/aspect) $
   else xsz = fix(xsz*aspect)
-  standard_size = [xsz, ysz]
   ;xysz=(data->getaux())->getdrawsize('standard',aspect=aspect)
   ;xsz = xysz[0]
   ;ysz = xysz[1]
@@ -883,6 +873,9 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
 
   !x.margin[1]=15 ; space for colorbar
   calc_xysize,xsz,ysz,d_xsz,d_ysz,nxchar=total(!x.margin)
+  standard_size = [d_xsz, d_ysz]
+  calc_xysize,big_size[0],big_size[1],d_xsz_big,d_ysz_big,nxchar=total(!x.margin)
+  big_size = [d_xsz_big, d_ysz_big]
   ; initialize size of draw window:
   window, /pixmap, /free, xsize = d_xsz, ysize = d_ysz
   pixid = !d.window
