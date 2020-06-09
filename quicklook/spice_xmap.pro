@@ -70,7 +70,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 09.06.2020 15:03 CEST $
+; $Id: 09.06.2020 20:28 CEST $
 ;-
 ;
 ; save as postscript file
@@ -208,7 +208,7 @@ pro spice_xmap_draw, event
   hw_colorbar, position = [xpos_cb_0,ypos_cb_0,xpos_cb_1,ypos_cb_1], $
     /vertical , /right, format=format, title=(*info).colorbar_title, $
     range=[imin,imax],color=(*info).color,charsize=pcharsize
-  if (*info).defcol then (*(*info).data->getaux())->loadct,'int'
+  if (*info).defcol then loadct,0
 end
 
 ; get the value of the draw window option menu:
@@ -682,7 +682,7 @@ pro spice_xmap_pixplot, event
     else:
   endcase
   ; set up titles for plot
-  xytitle = *(*info).data->getxytitle()
+  xytitle = *(*info).data->get_axis_title()
   varname = (*info).colorbar_title
   case mode of
     0: begin
@@ -718,16 +718,16 @@ end
 pro spice_xmap_linedef, event
   widget_control, event.top, get_uvalue = info
   widget_control,/hourglass
-  if *(*info).data->getcomment() eq 'IRIS_moment' then begin
-    lambda=*(*info).data->getwavelength((*info).line)
-    mspec=*(*info).data->getmspec((*info).line)
-    wlref=1
-  endif else begin
-    wd=*(*info).wd
-    lambda=*(*info).data->getlam((*info).line)
-    mspec = iris_mean_spec(wd,missing=*(*info).data->missing())
-    wlref=0
-  endelse
+  ;  if *(*info).data->getcomment() eq 'IRIS_moment' then begin
+  ;    lambda=*(*info).data->getwavelength((*info).line)
+  ;    mspec=*(*info).data->getmspec((*info).line)
+  ;    wlref=1
+  ;  endif else begin
+  wd=*(*info).wd
+  lambda=*(*info).data->get_lambda_vector((*info).line)
+  mspec = iris_mean_spec(wd,missing=*(*info).data->get_missing_value())
+  wlref=0
+  ;  endelse
   xmoment_moment,*(*info).data, mspec, (*info).line, lambda, wlref=wlref, groupl = event.top
   if not (ptr_valid(info)) then return ; if spice_xmap window closes
   pseudoevent={widget_base,id:0l, $
@@ -908,8 +908,8 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   optmenu=widget_button(menubar,value='Options', uvalue='options')
   colmenu=widget_button(optmenu, value='Colour table', $
     event_pro='spice_xmap_colors')
-  colmenu=widget_button(optmenu, value='Color table BGR', $
-    event_pro='spice_xmap_bgr')
+  ;colmenu=widget_button(optmenu, value='Color table BGR', $
+  ;  event_pro='spice_xmap_bgr')
   ; display window:
   displaybase = widget_base(rcol, /row)
   drawid=widget_draw(displaybase, retain = 2,$
