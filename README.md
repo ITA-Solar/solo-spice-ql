@@ -52,6 +52,10 @@ In general, all functionalities in the heritage routines will be preserved as fa
     spice_xraster, spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
     ```
 * Intensity map viewer (iris_xmap)
+    * Initial working version
+    ```
+    spice_xmap, spice_object [, linelist = window_index, group_leader=group_leader, ncolors = ncolors, filename = filename]
+    ```
 * Interactive line fitting (xcfit)
 * “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
 * S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file)
@@ -77,7 +81,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 ## For Developers
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 27.05.2020 14:56 CEST $
+; $Id: 09.06.2020 11:44 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
