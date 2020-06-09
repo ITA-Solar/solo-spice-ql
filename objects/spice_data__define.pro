@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 29.05.2020 14:36 CEST $
+; $Id: 09.06.2020 11:40 CEST $
 
 
 ;+
@@ -269,8 +269,8 @@ FUNCTION spice_data::descale_array, array, window_index
     return, !NULL
   ENDIF
 
-  bscale = self.get_header_info('BSCALE', window_index)
-  bzero = self.get_header_info('BZERO', window_index)
+  bscale = self.get_header_info('BSCALE', window_index, 1)
+  bzero = self.get_header_info('BZERO', window_index, 0)
   return, array * bscale + bzero
 END
 
