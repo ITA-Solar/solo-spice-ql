@@ -70,7 +70,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 29.05.2020 14:37 CEST $
+; $Id: 09.06.2020 11:42 CEST $
 ;-
 ;
 ; save as postscript file
@@ -195,9 +195,12 @@ pro spice_xmap_draw, event
   xscale=[min(*(*info).xscale),max(*(*info).xscale)]
   dx=xscale[1]-xscale[0]
   if (*info).aspect lt 0.05 then xtickinterval=(dx/2.) else xtickinterval=(dx/3.)
+  print,'draw'
+  help,(*(*info).drawimage)^gamma,xscale,*(*info).yscale
+  stop
   mplot_image,(*(*info).drawimage)^gamma,xscale,*(*info).yscale,$
     bgblack=bgblack,xtickformat='(f7.1)',xtickinterval=xtickinterval,ticklen=ticklen, $
-    xtitle = (*info).xtitle, ytitle = (*info).ytitle, color=(*info).color,min=imin,max=imax
+    xtitle = (*info).xtitle, ytitle = (*info).ytitle, color=(*info).color,min=imin,max=imax, pos=(*info).imagepos
   if imax-imin eq 0.0 then imax=imin+1
   if imax-imin lt 10 then format='(f7.3)' else format='(f10.1)'
   if(!p.charsize ne 0) then pcharsize=!p.charsize else pcharsize=1.0
@@ -219,19 +222,24 @@ function spice_xmap_dwoption, event
 end
 ; set screen size to preset value
 function spice_xmap_drawsizeoption, event
+help,event
+if event.select eq 0 then return, 0
   widget_control, event.top, get_uvalue = info
   w_ysz=(*info).tlb_ysz-(*info).d_ysz
   case event.value of
-    0: sizemode='standard'
-    1: sizemode='big'
+    0: xysz=(*info).standard_size
+    1: xysz=(*info).big_size
   endcase
-  if (*info).keep_aspect then begin
-    xysz=(*(*info).data->getaux())->getdrawsize(sizemode,aspect=(*info).aspect)
-  endif else begin
-    xysz=(*(*info).data->getaux())->getdrawsize(sizemode)
-  endelse
+;  if (*info).keep_aspect then begin
+;    xysz=(*(*info).data->getaux())->getdrawsize(sizemode,aspect=(*info).aspect)
+;  endif else begin
+;    xysz=(*(*info).data->getaux())->getdrawsize(sizemode)
+;  endelse
   pseudoevent={widget_base,id:0l,top:(*info).tlb, handler:0l, $
     x:xysz[0]+(*info).lcol_xsz, y:xysz[1]+w_ysz}
+  print,'draw_size_option'
+  print,xysz,w_ysz,(*info).lcol_xsz
+  help,pseudoevent
   spice_xmap_resize, pseudoevent
   return, 0
 end
@@ -365,9 +373,9 @@ pro spice_xmap_zoom, event
   if event.type gt 2 then return
 
   ;set up axis titles for line plots (options 1 or 2 below)
-  varname = *(*info).data->getvariablename()
-  varname = varname[0] +': column average'
-  xytitle = *(*info).data->getxytitle()
+  ;varname = *(*info).data->getvariablename()
+  ;varname = varname[0] +': column average'
+  ;xytitle = *(*info).data->getxytitle()
 
   events=['down','up','motion']
   thisevent=events[event.type]
@@ -444,9 +452,9 @@ pro spice_xmap_zoom, event
         end
         1:begin
           ;set up axis titles for line plots (options 1 or 2 below)
-          varname = *(*info).data->getvariablename()
+          varname = *(*info).data->get_variable_unit()
           varname = varname[0]
-          xytitle = *(*info).data->getxytitle()
+          xytitle = *(*info).data->get_axis_title()
           dmean = total(image, 2)/sz[2]
           if sz[0] ge 2 then begin
             iris_xlineplot, dmean, xscale = xscale, $
@@ -458,9 +466,9 @@ pro spice_xmap_zoom, event
         end
         2:begin
           ;set up axis titles for line plots (options 1 or 2 below)
-          varname = *(*info).data->getvariablename()
+          varname = *(*info).data->get_variable_unit()
           varname = varname[0]
-          xytitle = *(*info).data->getxytitle()
+          xytitle = *(*info).data->get_axis_title()
           dmean = total(image, 1)/sz[1]
           if sz[0] ge 2 then begin
             iris_xlineplot, dmean, xscale = yscale, $
@@ -549,6 +557,8 @@ end
 
 ; resize main window and set up drawimage
 pro spice_xmap_resize, event
+  print,'-- resize --'
+  help,event
   widget_control, event.top ,get_uvalue = info
   ; set up image in it`s original size:
   if (*info).xdim eq 2 or (*info).xdim eq 1 or (*info).xdim eq 3 then rotate=4 else rotate=1
@@ -601,6 +611,7 @@ pro spice_xmap_resize, event
     set_slider_max=255, $
     set_value=255
   ; resize if necessary:
+  stop
   w_ysz=(*info).tlb_ysz-(*info).d_ysz
   m_xsz=total(!x.margin)*!d.x_ch_size
   m_ysz=total(!y.margin)*!d.y_ch_size
@@ -828,6 +839,26 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   ;xysz=(data->getaux())->getdrawsize('standard',aspect=aspect)
   ;xsz = xysz[0]
   ;ysz = xysz[1]
+ 
+  ; initialize window size for big-option
+  screensize=screensize*scfac
+  big_size = fix(max(screensize))
+  big_size = [big_size,big_size]
+  if aspect gt 1.0 then big_size[1] = fix(big_size[1]/aspect) $
+  else big_size[0] = fix(big_size[0]*aspect)
+  if big_size[0] gt screensize[0] then begin
+    big_size[1] = fix( float(big_size[1]) * screensize[0] / float(big_size[0]))
+    big_size[0] = fix(screensize[0])
+  endif
+  if big_size[1] gt screensize[1] then begin
+    big_size[0] = fix( float(big_size[0]) * screensize[1] / float(big_size[1]))
+    big_size[1] = fix(screensize[1])
+  endif
+
+ 
+ 
+ 
+ 
   ;
   if nexpprp gt 1 then begin
     exprp = 1 ; intitialize first exp at each raster pos.
@@ -1103,6 +1134,8 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
     ;comment:comment, $
     screensize:screensize, $
     keep_aspect:0, $
+    standard_size:standard_size, $
+    big_size:big_size, $
     imagepos:imagepos, $
     lcol_xsz:lcol_xsz, $
     d_xsz:d_xsz, $
