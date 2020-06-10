@@ -70,7 +70,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 09.06.2020 11:42 CEST $
+; $Id: 09.06.2020 20:28 CEST $
 ;-
 ;
 ; save as postscript file
@@ -189,18 +189,15 @@ pro spice_xmap_draw, event
     ticklen=-0.02
     (*info).color=0
   endelse
-  xytitle = *(*info).data->get_axis_title()
-  (*info).xtitle = xytitle[(*info).xdim]
-  (*info).ytitle = xytitle[(*info).ydim]
+  ;xytitle = *(*info).data->get_axis_title()
+  ;(*info).xtitle = xytitle[(*info).xdim]
+  ;(*info).ytitle = xytitle[(*info).ydim]
   xscale=[min(*(*info).xscale),max(*(*info).xscale)]
   dx=xscale[1]-xscale[0]
   if (*info).aspect lt 0.05 then xtickinterval=(dx/2.) else xtickinterval=(dx/3.)
-  print,'draw'
-  help,(*(*info).drawimage)^gamma,xscale,*(*info).yscale
-  stop
-  mplot_image,(*(*info).drawimage)^gamma,xscale,*(*info).yscale,$
-    bgblack=bgblack,xtickformat='(f7.1)',xtickinterval=xtickinterval,ticklen=ticklen, $
-    xtitle = (*info).xtitle, ytitle = (*info).ytitle, color=(*info).color,min=imin,max=imax, pos=(*info).imagepos
+  mplot_image, (*(*info).drawimage)^gamma, *(*info).xscale, *(*info).yscale,$
+    bgblack=bgblack, xtickformat='(f7.1)', xtickinterval=xtickinterval, ticklen=ticklen, $
+    xtitle=(*info).xtitle, ytitle=(*info).ytitle, color=(*info).color, min=imin, max=imax
   if imax-imin eq 0.0 then imax=imin+1
   if imax-imin lt 10 then format='(f7.3)' else format='(f10.1)'
   if(!p.charsize ne 0) then pcharsize=!p.charsize else pcharsize=1.0
@@ -211,7 +208,7 @@ pro spice_xmap_draw, event
   hw_colorbar, position = [xpos_cb_0,ypos_cb_0,xpos_cb_1,ypos_cb_1], $
     /vertical , /right, format=format, title=(*info).colorbar_title, $
     range=[imin,imax],color=(*info).color,charsize=pcharsize
-  if (*info).defcol then (*(*info).data->getaux())->loadct,'int'
+  if (*info).defcol then loadct,0
 end
 
 ; get the value of the draw window option menu:
@@ -222,24 +219,20 @@ function spice_xmap_dwoption, event
 end
 ; set screen size to preset value
 function spice_xmap_drawsizeoption, event
-help,event
-if event.select eq 0 then return, 0
+  if event.select eq 0 then return, 0
   widget_control, event.top, get_uvalue = info
   w_ysz=(*info).tlb_ysz-(*info).d_ysz
   case event.value of
     0: xysz=(*info).standard_size
     1: xysz=(*info).big_size
   endcase
-;  if (*info).keep_aspect then begin
-;    xysz=(*(*info).data->getaux())->getdrawsize(sizemode,aspect=(*info).aspect)
-;  endif else begin
-;    xysz=(*(*info).data->getaux())->getdrawsize(sizemode)
-;  endelse
+  ;  if (*info).keep_aspect then begin
+  ;    xysz=(*(*info).data->getaux())->getdrawsize(sizemode,aspect=(*info).aspect)
+  ;  endif else begin
+  ;    xysz=(*(*info).data->getaux())->getdrawsize(sizemode)
+  ;  endelse
   pseudoevent={widget_base,id:0l,top:(*info).tlb, handler:0l, $
     x:xysz[0]+(*info).lcol_xsz, y:xysz[1]+w_ysz}
-  print,'draw_size_option'
-  print,xysz,w_ysz,(*info).lcol_xsz
-  help,pseudoevent
   spice_xmap_resize, pseudoevent
   return, 0
 end
@@ -247,6 +240,7 @@ end
 ; wavelength selection buttons
 function spice_xmap_dsoption, event
   widget_control, event.top,get_uvalue=info
+  if event.select eq 0 then return,0
   case event.value of
     0: spice_xmap_wpix, event
     1: spice_xmap_warcsec, event
@@ -257,15 +251,12 @@ end
 ; change x/y axes scale to pixels
 pro spice_xmap_wpix, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  (*(*info).data->getaux())->setwscale,'pixels'
-  (*(*info).data->getaux())->setxytitle,wscale='step',sscale='pixels'
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim, /pixels)
+  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim, /pixels)
   ; set scale for images
-  *(*info).xscale=findgen(n_elements(*(*info).xscale))
-  *(*info).yscale=findgen(n_elements(*(*info).yscale))
+  *(*info).xscale = (*info).xscale_pixels
+  *(*info).yscale = (*info).yscale_pixels
   pseudoevent={widget_base,id:0L, $
     top:event.top, handler:0l, x:(*info).tlb_xsz, y:(*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -274,19 +265,12 @@ end
 ; change x/y scale to arcsec
 pro spice_xmap_warcsec, event
   widget_control, event.top, get_uvalue = info
-  ; change titles in aux object
-  sit_and_stare=(*(*info).data->getsit_and_stare())
-  if sit_and_stare then tscale='sec'
-  (*(*info).data->getaux())->setwscale,'arcsec'
-  (*(*info).data->getaux())->setxytitle,sscale='arcsec',tscale=tscale
   ; set titles for image plots
-  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
-  xscale = *(*info).xscale
-  dx=(max(xscale)-min(xscale))/(n_elements(xscale)-1)
-  yscale = *(*info).data->getypos((*info).line)
-  dy=(max(yscale)-min(yscale))/(n_elements(yscale)-1)
-  *(*info).yscale=yscale
+  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim)
+  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim)
+  ; set scale for images
+  *(*info).xscale = (*info).xscale_physical
+  *(*info).yscale = (*info).yscale_physical
   pseudoevent={widget_base,id:0L, $
     top:event.top, handler:0l, x:(*info).tlb_xsz, y:(*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -557,8 +541,6 @@ end
 
 ; resize main window and set up drawimage
 pro spice_xmap_resize, event
-  print,'-- resize --'
-  help,event
   widget_control, event.top ,get_uvalue = info
   ; set up image in it`s original size:
   if (*info).xdim eq 2 or (*info).xdim eq 1 or (*info).xdim eq 3 then rotate=4 else rotate=1
@@ -611,7 +593,6 @@ pro spice_xmap_resize, event
     set_slider_max=255, $
     set_value=255
   ; resize if necessary:
-  stop
   w_ysz=(*info).tlb_ysz-(*info).d_ysz
   m_xsz=total(!x.margin)*!d.x_ch_size
   m_ysz=total(!y.margin)*!d.y_ch_size
@@ -634,18 +615,22 @@ pro spice_xmap_resize, event
     (*info).tlb_ysz=tlb_sz[1]
   endif
   ; resize image and axis if not original image size
-  if *(*info).data->get_sit_and_stare() then begin
-    xscale=*(*info).data->get_time((*info).line)
-    angle=round(*(*info).data->get_satellite_rotation())
-    if angle lt 0 then angle=360+angle
-    if angle eq 90 or angle eq 270 then begin
-      yscale=*(*info).data->get_instr_x_vector()
-    endif else yscale=*(*info).data->get_instr_y_vector()
-    sx={xtitle:'Time [s]',rot:0}
-  endif else begin
-    xscale=*(*info).data->get_instr_x_vector((*info).line)
-    yscale=*(*info).data->get_instr_y_vector((*info).line)
-  endelse
+  ;  if *(*info).data->get_sit_and_stare() then begin
+  ;    xscale=*(*info).data->get_time((*info).line)
+  ;    angle=round(*(*info).data->get_satellite_rotation())
+  ;    if angle lt 0 then angle=360+angle
+  ;    if angle eq 90 or angle eq 270 then begin
+  ;      yscale=*(*info).data->get_instr_x_vector()
+  ;    endif else yscale=*(*info).data->get_instr_y_vector()
+  ;    sx={xtitle:'Time [s]',rot:0}
+  ;  endif else begin
+  ;    xscale=*(*info).data->get_instr_x_vector((*info).line)
+  ;    yscale=*(*info).data->get_instr_y_vector((*info).line)
+  ;  endelse
+  ;  xscale_pixels = findgen(N_ELEMENTS(xscale))
+  ;  xscale_physical = xscale
+  ;  yscale_pixels = findgen(N_ELEMENTS(yscale))
+  ;  yscale_physical = yscale
   ;drawimage=rotate(drawimage,sx.rot)
   sz = size(drawimage)
   nx = sz[1]
@@ -655,29 +640,29 @@ pro spice_xmap_resize, event
   ;    xscale=findgen(nx)
   ;    yscale=findgen(ny)
   ;  endif
-  dx=(max(xscale)-min(xscale))/(nx)
-  dy=(max(yscale)-min(yscale))/(ny)
-  if (*info).realsize then begin
-    ptr_free,(*info).drawimage
-    (*info).drawimage = ptr_new(uintarr(nx, ny))
-    *(*info).drawimage = drawimage
-    ptr_free,(*info).xscale
-    (*info).xscale = ptr_new(nx)
-    *(*info).xscale = interpol(xscale,nx)
-    ptr_free,(*info).yscale
-    (*info).yscale = ptr_new(ny)
-    *(*info).yscale = yscale
-  endif else begin
-    ptr_free,(*info).xscale
-    (*info).xscale = ptr_new(nx)
-    *(*info).xscale = interpol(xscale,nx)
-    ptr_free,(*info).yscale
-    (*info).yscale = ptr_new(ny)
-    *(*info).yscale = interpol(yscale,ny)
-    ptr_free,(*info).drawimage
-    (*info).drawimage = ptr_new(uintarr(nx,ny))
-    *(*info).drawimage = drawimage
-  endelse
+  ;dx=(max(xscale)-min(xscale))/(nx)
+  ;dy=(max(yscale)-min(yscale))/(ny)
+  ;  if (*info).realsize then begin
+  ;    ptr_free,(*info).drawimage
+  ;    (*info).drawimage = ptr_new(uintarr(nx, ny))
+  ;    *(*info).drawimage = drawimage
+  ;    ptr_free,(*info).xscale
+  ;    (*info).xscale = ptr_new(nx)
+  ;    *(*info).xscale = interpol(xscale,nx)
+  ;    ptr_free,(*info).yscale
+  ;    (*info).yscale = ptr_new(ny)
+  ;    *(*info).yscale = yscale
+  ;  endif else begin
+  ;    ptr_free,(*info).xscale
+  ;    (*info).xscale = ptr_new(nx)
+  ;    *(*info).xscale = interpol(xscale,nx)
+  ;    ptr_free,(*info).yscale
+  ;    (*info).yscale = ptr_new(ny)
+  ;    *(*info).yscale = interpol(yscale,ny)
+  ptr_free,(*info).drawimage
+  (*info).drawimage = ptr_new(uintarr(nx,ny))
+  *(*info).drawimage = drawimage
+  ;  endelse
   (*info).tlb_xsz = event.x
   (*info).tlb_ysz = event.y
   ; draw image
@@ -697,7 +682,7 @@ pro spice_xmap_pixplot, event
     else:
   endcase
   ; set up titles for plot
-  xytitle = *(*info).data->getxytitle()
+  xytitle = *(*info).data->get_axis_title()
   varname = (*info).colorbar_title
   case mode of
     0: begin
@@ -733,16 +718,16 @@ end
 pro spice_xmap_linedef, event
   widget_control, event.top, get_uvalue = info
   widget_control,/hourglass
-  if *(*info).data->getcomment() eq 'IRIS_moment' then begin
-    lambda=*(*info).data->getwavelength((*info).line)
-    mspec=*(*info).data->getmspec((*info).line)
-    wlref=1
-  endif else begin
-    wd=*(*info).wd
-    lambda=*(*info).data->getlam((*info).line)
-    mspec = iris_mean_spec(wd,missing=*(*info).data->missing())
-    wlref=0
-  endelse
+  ;  if *(*info).data->getcomment() eq 'IRIS_moment' then begin
+  ;    lambda=*(*info).data->getwavelength((*info).line)
+  ;    mspec=*(*info).data->getmspec((*info).line)
+  ;    wlref=1
+  ;  endif else begin
+  wd=*(*info).wd
+  lambda=*(*info).data->get_lambda_vector((*info).line)
+  mspec = iris_mean_spec(wd,missing=*(*info).data->get_missing_value())
+  wlref=0
+  ;  endelse
   xmoment_moment,*(*info).data, mspec, (*info).line, lambda, wlref=wlref, groupl = event.top
   if not (ptr_valid(info)) then return ; if spice_xmap window closes
   pseudoevent={widget_base,id:0l, $
@@ -835,11 +820,10 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   ysz = standard_size
   if aspect gt 1.0 then ysz = fix(ysz/aspect) $
   else xsz = fix(xsz*aspect)
-  standard_size = [xsz, ysz]
   ;xysz=(data->getaux())->getdrawsize('standard',aspect=aspect)
   ;xsz = xysz[0]
   ;ysz = xysz[1]
- 
+
   ; initialize window size for big-option
   screensize=screensize*scfac
   big_size = fix(max(screensize))
@@ -855,10 +839,25 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
     big_size[1] = fix(screensize[1])
   endif
 
- 
- 
- 
- 
+  if data->get_sit_and_stare() then begin
+    xscale=data->get_time(line)
+    angle=round(data->get_satellite_rotation())
+    if angle lt 0 then angle=360+angle
+    if angle eq 90 or angle eq 270 then begin
+      yscale=data->get_instr_x_vector()
+    endif else yscale=data->get_instr_y_vector()
+    sx={xtitle:'Time [s]',rot:0}
+  endif else begin
+    xscale=data->get_instr_x_vector(line)
+    yscale=data->get_instr_y_vector(line)
+  endelse
+  xscale_pixels = findgen(N_ELEMENTS(xscale))
+  xscale_physical = xscale
+  yscale_pixels = findgen(N_ELEMENTS(yscale))
+  yscale_physical = yscale
+
+
+
   ;
   if nexpprp gt 1 then begin
     exprp = 1 ; intitialize first exp at each raster pos.
@@ -883,6 +882,9 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
 
   !x.margin[1]=15 ; space for colorbar
   calc_xysize,xsz,ysz,d_xsz,d_ysz,nxchar=total(!x.margin)
+  standard_size = [d_xsz, d_ysz]
+  calc_xysize,big_size[0],big_size[1],d_xsz_big,d_ysz_big,nxchar=total(!x.margin)
+  big_size = [d_xsz_big, d_ysz_big]
   ; initialize size of draw window:
   window, /pixmap, /free, xsize = d_xsz, ysize = d_ysz
   pixid = !d.window
@@ -906,8 +908,8 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   optmenu=widget_button(menubar,value='Options', uvalue='options')
   colmenu=widget_button(optmenu, value='Colour table', $
     event_pro='spice_xmap_colors')
-  colmenu=widget_button(optmenu, value='Color table BGR', $
-    event_pro='spice_xmap_bgr')
+  ;colmenu=widget_button(optmenu, value='Color table BGR', $
+  ;  event_pro='spice_xmap_bgr')
   ; display window:
   displaybase = widget_base(rcol, /row)
   drawid=widget_draw(displaybase, retain = 2,$
@@ -984,7 +986,7 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   if n_elements(linelist) gt 1 then begin
     ll = widget_base(lcol, /column, /frame)
     ll_title = 'Select line'
-    ll_names = data->getline_id(linelist)
+    ll_names = data->get_window_id(linelist)
     ll_menu = widget_droplist(ll, value = ll_names, title = ll_title, $
       event_pro = 'spice_xmap_lineselect')
   endif
@@ -1113,8 +1115,12 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   info = {drawimage:ptr_new(), $
     wd:ptr_new(wd,/no_copy), $
     ;pos:pos, $
-    xscale:ptr_new(), $
-    yscale:ptr_new(), $
+    xscale:ptr_new(xscale_physical), $
+    yscale:ptr_new(yscale_physical), $
+    xscale_pixels:xscale_pixels, $
+    xscale_physical:xscale_physical, $
+    yscale_pixels:yscale_pixels, $
+    yscale_physical:yscale_physical, $
     max:0.0,$
     min:0.0,$
     ct:0,$
@@ -1165,8 +1171,8 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
     drawcolor:drawcolor, $
     mainpixid:pixid, $
     pixid:pixid, $
-    xtitle:' ', $
-    ytitle:' ', $
+    xtitle:data->get_axis_title(xdim), $
+    ytitle:data->get_axis_title(ydim), $
     gamma_slider:gamma_slider, $
     gamma:gamma, $
     histo_lim:histo_lim, $
