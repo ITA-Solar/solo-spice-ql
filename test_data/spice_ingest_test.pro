@@ -17,7 +17,7 @@
 ; HISTORY:
 ;      15-Jun-2020 : Martin Wiesmann : first version
 ;-
-; $Id: 15.06.2020 14:19 CEST $
+; $Id: 15.06.2020 14:21 CEST $
 
 
 function spice_ingest_test_create_fits_file, spiobsid, level, datetime, repetition, startobs=startobs
@@ -174,11 +174,10 @@ pro spice_ingest_test
   message, 'L2 - single file move, with STARTOBS in header, to existing directory, same', /info
   file = spice_ingest_test_create_fits_file(111333008, 2, '1976-01-17T19:40:11', 1, startobs='1976-01-17T19:40:10')
   spice_ingest, file, /debug
-  ;stop
+  stop
 
   file_delete, concat_dir(concat_dir(topdir, 'level0'), '1976'), /ALLOW_NONEXISTENT, /RECURSIVE
   file_delete, concat_dir(concat_dir(topdir, 'level1'), '1976'), /ALLOW_NONEXISTENT, /RECURSIVE
   file_delete, concat_dir(concat_dir(topdir, 'level2'), '1976'), /ALLOW_NONEXISTENT, /RECURSIVE
-
 
 end
