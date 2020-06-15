@@ -1,3 +1,25 @@
+;+
+; NAME:
+;      SPICE_INGEST_TEST
+;
+; PURPOSE:
+;      This routine tests spice_ingest in various ways
+;
+; CATEGORY:
+;      SPICE -- unit test
+;
+; CALLING SEQUENCE:
+;      SPICE_INGEST_TEST
+;
+; RESTRICTIONS:
+;      The environment variable SPICE_DATA must be defined.
+;
+; HISTORY:
+;      15-Jun-2020 : Martin Wiesmann : first version
+;-
+; $Id: 15.06.2020 14:19 CEST $
+
+
 function spice_ingest_test_create_fits_file, spiobsid, level, datetime, repetition, startobs=startobs
 
   spiobsid_string = strtrim(string(spiobsid), 2)
