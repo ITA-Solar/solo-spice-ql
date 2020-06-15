@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 09.06.2020 11:40 CEST $
+; $Id: 15.06.2020 14:33 CEST $
 
 
 ;+
@@ -1251,7 +1251,7 @@ END
 ;     string
 ;-
 FUNCTION spice_data::get_filename
-  ;returns the input filenam
+  ;returns the input filename
   COMPILE_OPT IDL2
 
   return, self.file
