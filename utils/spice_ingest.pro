@@ -47,11 +47,15 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 10.06.2020 14:53 CEST $
+; $Id: 15.06.2020 14:04 CEST $
 
 
-PRO spice_ingest, filename, force=force, index=index, help=help
+PRO spice_ingest, filename, force=force, index=index, help=help, $
+  debug=debug
 
+  ;filename='/Users/mawiesma/spice/data/first_images/solo_L0_spice-n-exp_0637083015_V202003091733C_12583153-000.fits'
+  ;filename='/Users/mawiesma/spice/data/level2/solo_L2_spice-n-exp_20200421T135817961_V01_12583408-000.fits'
+  
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
     print,''
     print,'Use:  IDL> spice_ingest, filename [, /force ]'
@@ -61,15 +65,21 @@ PRO spice_ingest, filename, force=force, index=index, help=help
     return
   ENDIF
 
-  n=n_elements(filename)
+  nfiles=n_elements(filename)
+  IF nfiles Gt 1 THEN BEGIN
+    files = filename[sort(filename)]
+  ENDIF ELSE BEGIN
+    files = filename
+  ENDELSE
 
   topdir=getenv('SPICE_DATA')
   IF topdir EQ '' THEN BEGIN
     print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
-      PRINT,'               top level of your directory structure. Returning...'
+      print,'               top level of your directory structure. Returning...'
     return
   ENDIF
 
+  debug = keyword_set(debug)
 
   spice_paths=BREAK_path(topdir,/nocurrent)
   np=n_elements(spice_paths)
@@ -78,7 +88,12 @@ PRO spice_ingest, filename, force=force, index=index, help=help
     topdir=spice_paths[0]
   ENDIF ELSE BEGIN
     IF n_elements(index) NE 0 THEN BEGIN
-      IF index LT np THEN topdir=spice_paths[index]
+      IF index LT np THEN BEGIN
+        topdir=spice_paths[index]
+      ENDIF ELSE BEGIN
+        print, 'index is out of bounds: ' + strtrim(string(index),2) + ' >= ' + strtrim(string(np),2)
+        return
+      ENDELSE
     ENDIF ELSE BEGIN
       topdir=spice_paths[0]
     ENDELSE
@@ -95,44 +110,147 @@ PRO spice_ingest, filename, force=force, index=index, help=help
   ENDIF
 
 
-  FOR i=0,n-1 DO BEGIN
-    fname=file_basename(filename[i])
-    ;
-    chck=strpos(fname,'_l2_')
-    IF chck[0] GT 0 THEN BEGIN
-      outdir=concat_dir(topdir,'level2')
-      ;
-      datestr=strmid(fname,8,8)
-      dateex=anytim2utc(datestr,/ex)
-      outdir=concat_dir(outdir,trim(dateex.year))
-      outdir=concat_dir(outdir,strpad(trim(dateex.month),2,fill='0'))
-      outdir=concat_dir(outdir,strpad(trim(dateex.day),2,fill='0'))
-      ;
-      fileid=strmid(fname,8,26)
-      outdir=concat_dir(outdir,fileid)
-      ;
-      chck=file_info(outdir)
-      IF chck.directory EQ 1 THEN BEGIN
-        ;
-        ; Check if file already exists in directory
-        ;
-        dirlist=file_search(outdir,'*.fits')
-        filechck=where(file_basename(dirlist) EQ fname,nf)
-        IF nf EQ 0 OR keyword_set(force) THEN BEGIN
-          file_move,filename[i],outdir,/overwrite
+  FOR ifiles=0,nfiles-1 DO BEGIN
+    fname=file_basename(files[ifiles])
+    chck=strpos(fname,'solo_L2_spice-')
+    IF chck[0] NE 0 THEN BEGIN
+      chck=strpos(fname,'solo_L1_spice-')
+      IF chck[0] NE 0 THEN BEGIN
+        chck=strpos(fname,'solo_L0_spice-')
+        IF chck[0] NE 0 THEN BEGIN
+          print,'% SPICE_INGEST: File '+fname+' has not been moved as it is not a spice file.'
+          continue
         ENDIF ELSE BEGIN
-          print,'% SPICE_INGEST: file '+fname+' was not moved '
-          print,'               as it already exists in the data directory.'
-          print,'               Use the keyword /FORCE to overwrite the existing file.'
+          level=0
+          outdir=concat_dir(topdir,'level0')
         ENDELSE
       ENDIF ELSE BEGIN
-        file_mkdir,outdir
-        print,'% SPICE_INGEST:  created new directory '+outdir
-        file_move,filename[i],outdir
+        level=1
+        outdir=concat_dir(topdir,'level1')
       ENDELSE
     ENDIF ELSE BEGIN
-      print,'% SPICE_INGEST: File '+fname+' has not been moved as it is not a level-2 file.'
+      level=2
+      outdir=concat_dir(topdir,'level2')
     ENDELSE
-  ENDFOR
+
+    mreadfits_header, files[ifiles], hdr, extension=0, only_tags='SPIOBSID,STARTOBS' ;;;;;;
+
+    IF ~tag_exist(hdr, 'SPIOBSID') THEN BEGIN
+      message, 'SPIOBSID not found in fits header, file '+files[ifiles]+' not moved.', /informational
+      continue
+    ENDIF
+    spiobsid = strtrim(string(hdr.spiobsid), 2)
+
+    IF ~tag_exist(hdr, 'STARTOBS') THEN BEGIN
+      message, 'STARTOBS not found in fits header, file '+files[ifiles]+'. Extracting date/time from filename.', /informational
+      startobs_defined=0
+      temp = strsplit(files[ifiles], '_', /extract)
+      IF level EQ 0 THEN BEGIN
+        startobs_date = strmid(temp[4], 1, 8)
+        startobs_time = strmid(temp[4], 9, 4)
+      ENDIF ELSE BEGIN ; level EQ 0
+        startobs_date = strmid(temp[3], 0, 8)
+        startobs_time = strmid(temp[3], 9, 6)
+      ENDELSE ; level EQ 0
+      startobs_datetime = startobs_date+'_'+startobs_time
+      startobs = fid2time('_'+startobs_datetime)
+      startobs = anytim2utc(startobs)
+    ENDIF ELSE BEGIN ; ~tag_exist(hdr, 'STARTOBS')
+      startobs_defined=1
+      ;may have to transform date and time
+      startobs = anytim2utc(hdr.STARTOBS)
+      startobs_datetime = time2fid(startobs, /full_year, /time, /seconds)
+    ENDELSE ; ~tag_exist(hdr, 'STARTOBS')
+    startobs_dir = time2fid(startobs, /full_year, delim=path_sep())
+    if debug then begin
+    print,'startobs: ', startobs
+    print,'startobs_dir: ',startobs_dir
+    print,'startobs_datetime: ',startobs_datetime
+    endif
+
+    ; we have to check whether a directory for this SPIOBSID already exists
+    ; with another date/time, in case a file was ingested before STARTOBS keyword
+    ; was included in the FITS header
+    ; we check +- 2 days
+    old_dirs = []
+    if debug then print, 'searching +-2 days'
+    for day=-2,2 do begin
+      tempday = startobs
+      tempday.mjd = tempday.mjd+day
+      tempdir = concat_dir(outdir, time2fid(tempday, /full_year, delim=path_sep()))
+      if debug then print,tempdir
+      IF file_test(tempdir, /directory) THEN BEGIN
+        if debug then print,'exists'
+        tempdirs = file_search(tempdir+path_sep()+'*', /test_directory, count=count_dir)
+        IF count_dir GT 0 THEN BEGIN
+          if debug then print,'subdirectories'
+          if debug then print,tempdirs
+          ind = where(strmatch(tempdirs, '*'+spiobsid+'*') eq 1, count_match)
+          FOR i=0,count_match-1 DO BEGIN
+            IF file_basename(tempdirs[ind[i]]) NE startobs_datetime+'_'+spiobsid THEN old_dirs = [old_dirs, tempdirs[ind[i]]]
+          ENDFOR
+          if debug then print,'old_dirs: ', old_dirs
+        ENDIF
+      ENDIF
+    endfor
+
+    new_file_exists=0
+    IF startobs_defined || N_ELEMENTS(old_dirs) EQ 0 THEN BEGIN
+
+      outdir = concat_dir(outdir, startobs_dir)
+      outdir = concat_dir(outdir, startobs_datetime+'_'+spiobsid)
+
+    ENDIF ELSE BEGIN ; startobs_defined
+
+      ; we don't know exactly when the obs started
+      ;  so we have to move the file to the folder with the same
+      ;  SPIOBSID and the lowest date/time stamp, if an older directory exists
+      old_times = []
+      FOR i=0,N_ELEMENTS(old_dirs)-1 DO BEGIN
+        old_times = [old_times, utc2tai(file2time(old_dirs[i]))]
+      ENDFOR
+      oldest = min(old_times, oldest_ind)
+      new_time = utc2tai(startobs)
+      IF new_time LT oldest THEN BEGIN
+        outdir = concat_dir(outdir, startobs_dir)
+        outdir = concat_dir(outdir, startobs_datetime+'_'+spiobsid)
+      ENDIF ELSE BEGIN
+        outdir = old_dirs[oldest_ind]
+        IF N_ELEMENTS(old_dirs) eq 1 THEN BEGIN
+          old_dirs=[]
+        ENDIF ELSE BEGIN
+          remove, oldest_ind, old_dirs
+        ENDELSE
+      ENDELSE
+
+    ENDELSE ; startobs_defined
+
+    ; create directory, if it doesn' exist yet
+    IF ~file_test(outdir, /directory) THEN BEGIN
+      message, 'created new directory: ' + outdir, /informational
+      file_mkdir, outdir
+    ENDIF
+
+    ; move files from older directories to the new one
+    FOR i=0,N_ELEMENTS(old_dirs)-1 DO BEGIN
+      old_files = file_search(old_dirs[i], 'solo*.fits')
+      ;      filechck=where(file_basename(old_files) EQ fname,nf)
+      ;      IF nf GT 0 THEN new_file_exists=1
+      file_move, old_files, outdir, /overwrite
+      file_delete, old_dirs[i]
+    ENDFOR
+
+    ;check if file to be moved already exists
+    old_files = file_search(outdir, 'solo*.fits')
+    filechck=where(file_basename(old_files) EQ fname,nf)
+    IF nf EQ 0 OR keyword_set(force) THEN BEGIN
+      file_move,files[ifiles], outdir, /overwrite
+    ENDIF ELSE BEGIN
+      print,'% SPICE_INGEST: file '+fname+' was not moved '
+      print,'               as it already exists in the data directory.'
+      print,'               Use the keyword /FORCE to overwrite the existing file.'
+    ENDELSE
+
+  ENDFOR ; ifiles=0,nfiles-1
 
 END
