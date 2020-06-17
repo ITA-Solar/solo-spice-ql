@@ -47,7 +47,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 17.06.2020 11:25 CEST $
+; $Id: 17.06.2020 14:56 CEST $
 
 
 PRO spice_ingest, filename, force=force, index=index, help=help, $
@@ -55,7 +55,7 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
 
   ;filename='/Users/mawiesma/spice/data/first_images/solo_L0_spice-n-exp_0637083015_V202003091733C_12583153-000.fits'
   ;filename='/Users/mawiesma/spice/data/level2/solo_L2_spice-n-exp_20200421T135817961_V01_12583408-000.fits'
-  
+
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
     print,''
     print,'Use:  IDL> spice_ingest, filename [, /force ]'
@@ -133,7 +133,7 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
       outdir=concat_dir(topdir,'level2')
     ENDELSE
 
-    mreadfits_header, files[ifiles], hdr, extension=0, only_tags='SPIOBSID,SEQ_BEG' ;;;;;;
+    mreadfits_header, files[ifiles], hdr, extension=0, only_tags='SPIOBSID,SEQ_BEG'
 
     IF ~tag_exist(hdr, 'SPIOBSID') THEN BEGIN
       message, 'SPIOBSID not found in fits header, file '+files[ifiles]+' not moved.', /informational
@@ -163,9 +163,9 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
     ENDELSE ; ~tag_exist(hdr, 'SEQ_BEG')
     seq_beg_dir = time2fid(seq_beg, /full_year, delim=path_sep())
     if debug then begin
-    print,'seq_beg: ', seq_beg
-    print,'seq_beg_dir: ',seq_beg_dir
-    print,'seq_beg_datetime: ',seq_beg_datetime
+      print,'seq_beg: ', seq_beg
+      print,'seq_beg_dir: ',seq_beg_dir
+      print,'seq_beg_datetime: ',seq_beg_datetime
     endif
 
     ; we have to check whether a directory for this SPIOBSID already exists
