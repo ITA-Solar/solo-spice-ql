@@ -47,7 +47,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 15.06.2020 14:04 CEST $
+; $Id: 17.06.2020 11:25 CEST $
 
 
 PRO spice_ingest, filename, force=force, index=index, help=help, $
@@ -133,7 +133,7 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
       outdir=concat_dir(topdir,'level2')
     ENDELSE
 
-    mreadfits_header, files[ifiles], hdr, extension=0, only_tags='SPIOBSID,STARTOBS' ;;;;;;
+    mreadfits_header, files[ifiles], hdr, extension=0, only_tags='SPIOBSID,SEQ_BEG' ;;;;;;
 
     IF ~tag_exist(hdr, 'SPIOBSID') THEN BEGIN
       message, 'SPIOBSID not found in fits header, file '+files[ifiles]+' not moved.', /informational
@@ -141,41 +141,41 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
     ENDIF
     spiobsid = strtrim(string(hdr.spiobsid), 2)
 
-    IF ~tag_exist(hdr, 'STARTOBS') THEN BEGIN
-      message, 'STARTOBS not found in fits header, file '+files[ifiles]+'. Extracting date/time from filename.', /informational
-      startobs_defined=0
+    IF ~tag_exist(hdr, 'SEQ_BEG') THEN BEGIN
+      message, 'SEQ_BEG not found in fits header, file '+files[ifiles]+'. Extracting date/time from filename.', /informational
+      seq_beg_defined=0
       temp = strsplit(files[ifiles], '_', /extract)
       IF level EQ 0 THEN BEGIN
-        startobs_date = strmid(temp[4], 1, 8)
-        startobs_time = strmid(temp[4], 9, 4)
+        seq_beg_date = strmid(temp[4], 1, 8)
+        seq_beg_time = strmid(temp[4], 9, 4)
       ENDIF ELSE BEGIN ; level EQ 0
-        startobs_date = strmid(temp[3], 0, 8)
-        startobs_time = strmid(temp[3], 9, 6)
+        seq_beg_date = strmid(temp[3], 0, 8)
+        seq_beg_time = strmid(temp[3], 9, 6)
       ENDELSE ; level EQ 0
-      startobs_datetime = startobs_date+'_'+startobs_time
-      startobs = fid2time('_'+startobs_datetime)
-      startobs = anytim2utc(startobs)
-    ENDIF ELSE BEGIN ; ~tag_exist(hdr, 'STARTOBS')
-      startobs_defined=1
+      seq_beg_datetime = seq_beg_date+'_'+seq_beg_time
+      seq_beg = fid2time('_'+seq_beg_datetime)
+      seq_beg = anytim2utc(seq_beg)
+    ENDIF ELSE BEGIN ; ~tag_exist(hdr, 'SEQ_BEG')
+      seq_beg_defined=1
       ;may have to transform date and time
-      startobs = anytim2utc(hdr.STARTOBS)
-      startobs_datetime = time2fid(startobs, /full_year, /time, /seconds)
-    ENDELSE ; ~tag_exist(hdr, 'STARTOBS')
-    startobs_dir = time2fid(startobs, /full_year, delim=path_sep())
+      seq_beg = anytim2utc(hdr.SEQ_BEG)
+      seq_beg_datetime = time2fid(seq_beg, /full_year, /time, /seconds)
+    ENDELSE ; ~tag_exist(hdr, 'SEQ_BEG')
+    seq_beg_dir = time2fid(seq_beg, /full_year, delim=path_sep())
     if debug then begin
-    print,'startobs: ', startobs
-    print,'startobs_dir: ',startobs_dir
-    print,'startobs_datetime: ',startobs_datetime
+    print,'seq_beg: ', seq_beg
+    print,'seq_beg_dir: ',seq_beg_dir
+    print,'seq_beg_datetime: ',seq_beg_datetime
     endif
 
     ; we have to check whether a directory for this SPIOBSID already exists
-    ; with another date/time, in case a file was ingested before STARTOBS keyword
+    ; with another date/time, in case a file was ingested before SEQ_BEG keyword
     ; was included in the FITS header
     ; we check +- 2 days
     old_dirs = []
     if debug then print, 'searching +-2 days'
     for day=-2,2 do begin
-      tempday = startobs
+      tempday = seq_beg
       tempday.mjd = tempday.mjd+day
       tempdir = concat_dir(outdir, time2fid(tempday, /full_year, delim=path_sep()))
       if debug then print,tempdir
@@ -187,7 +187,7 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
           if debug then print,tempdirs
           ind = where(strmatch(tempdirs, '*'+spiobsid+'*') eq 1, count_match)
           FOR i=0,count_match-1 DO BEGIN
-            IF file_basename(tempdirs[ind[i]]) NE startobs_datetime+'_'+spiobsid THEN old_dirs = [old_dirs, tempdirs[ind[i]]]
+            IF file_basename(tempdirs[ind[i]]) NE seq_beg_datetime+'_'+spiobsid THEN old_dirs = [old_dirs, tempdirs[ind[i]]]
           ENDFOR
           if debug then print,'old_dirs: ', old_dirs
         ENDIF
@@ -195,12 +195,12 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
     endfor
 
     new_file_exists=0
-    IF startobs_defined || N_ELEMENTS(old_dirs) EQ 0 THEN BEGIN
+    IF seq_beg_defined || N_ELEMENTS(old_dirs) EQ 0 THEN BEGIN
 
-      outdir = concat_dir(outdir, startobs_dir)
-      outdir = concat_dir(outdir, startobs_datetime+'_'+spiobsid)
+      outdir = concat_dir(outdir, seq_beg_dir)
+      outdir = concat_dir(outdir, seq_beg_datetime+'_'+spiobsid)
 
-    ENDIF ELSE BEGIN ; startobs_defined
+    ENDIF ELSE BEGIN ; seq_beg_defined
 
       ; we don't know exactly when the obs started
       ;  so we have to move the file to the folder with the same
@@ -210,10 +210,10 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
         old_times = [old_times, utc2tai(file2time(old_dirs[i]))]
       ENDFOR
       oldest = min(old_times, oldest_ind)
-      new_time = utc2tai(startobs)
+      new_time = utc2tai(seq_beg)
       IF new_time LT oldest THEN BEGIN
-        outdir = concat_dir(outdir, startobs_dir)
-        outdir = concat_dir(outdir, startobs_datetime+'_'+spiobsid)
+        outdir = concat_dir(outdir, seq_beg_dir)
+        outdir = concat_dir(outdir, seq_beg_datetime+'_'+spiobsid)
       ENDIF ELSE BEGIN
         outdir = old_dirs[oldest_ind]
         IF N_ELEMENTS(old_dirs) eq 1 THEN BEGIN
@@ -223,7 +223,7 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
         ENDELSE
       ENDELSE
 
-    ENDELSE ; startobs_defined
+    ENDELSE ; seq_beg_defined
 
     ; create directory, if it doesn' exist yet
     IF ~file_test(outdir, /directory) THEN BEGIN

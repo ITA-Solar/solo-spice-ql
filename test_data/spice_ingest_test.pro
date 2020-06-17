@@ -17,10 +17,10 @@
 ; HISTORY:
 ;      15-Jun-2020 : Martin Wiesmann : first version
 ;-
-; $Id: 15.06.2020 14:21 CEST $
+; $Id: 17.06.2020 11:25 CEST $
 
 
-function spice_ingest_test_create_fits_file, spiobsid, level, datetime, repetition, startobs=startobs
+function spice_ingest_test_create_fits_file, spiobsid, level, datetime, repetition, seq_beg=seq_beg
 
   spiobsid_string = strtrim(string(spiobsid), 2)
   level_string = strtrim(string(level), 2)
@@ -39,7 +39,7 @@ function spice_ingest_test_create_fits_file, spiobsid, level, datetime, repetiti
   data = intarr(3,3,/nozero)
   mkhdr, mainheader, data
   sxaddpar, mainheader, 'SPIOBSID', spiobsid
-  if keyword_set(startobs) then sxaddpar, mainheader, 'STARTOBS', startobs
+  if keyword_set(seq_beg) then sxaddpar, mainheader, 'SEQ_BEG', seq_beg
   writefits, file, data, mainheader
 
   return, file
@@ -58,7 +58,7 @@ pro spice_ingest_test
   file_delete, concat_dir(concat_dir(topdir, 'level1'), '1976'), /ALLOW_NONEXISTENT, /RECURSIVE
   file_delete, concat_dir(concat_dir(topdir, 'level2'), '1976'), /ALLOW_NONEXISTENT, /RECURSIVE
 
-  ; tests with old fits files (no STARTOBS keyword in header)
+  ; tests with old fits files (no SEQ_BEG keyword in header)
 
   message, 'L0 - single file move in new directory', /info
   file = spice_ingest_test_create_fits_file(111333001, 0, '1976-01-17T10:23:33', 4)
@@ -159,20 +159,20 @@ pro spice_ingest_test
   ;stop
 
 
-  ; tests with new fits files (STARTOBS keyword in header)
+  ; tests with new fits files (SEQ_BEG keyword in header)
 
-  message, 'L2 - single file move, with STARTOBS in header, to new directory', /info
-  file = spice_ingest_test_create_fits_file(111333008, 2, '1976-01-17T19:41:11', 2, startobs='1976-01-17T19:40:10')
+  message, 'L2 - single file move, with SEQ_BEG in header, to new directory', /info
+  file = spice_ingest_test_create_fits_file(111333008, 2, '1976-01-17T19:41:11', 2, seq_beg='1976-01-17T19:40:10')
   spice_ingest, file, /debug
   ;stop
 
-  message, 'L2 - single file move, with STARTOBS in header, to existsing directory, newer', /info
-  file = spice_ingest_test_create_fits_file(111333008, 2, '1976-01-17T19:42:11', 3, startobs='1976-01-17T19:40:10')
+  message, 'L2 - single file move, with SEQ_BEG in header, to existsing directory, newer', /info
+  file = spice_ingest_test_create_fits_file(111333008, 2, '1976-01-17T19:42:11', 3, seq_beg='1976-01-17T19:40:10')
   spice_ingest, file, /debug
   ;stop
 
-  message, 'L2 - single file move, with STARTOBS in header, to existing directory, same', /info
-  file = spice_ingest_test_create_fits_file(111333008, 2, '1976-01-17T19:40:11', 1, startobs='1976-01-17T19:40:10')
+  message, 'L2 - single file move, with SEQ_BEG in header, to existing directory, same', /info
+  file = spice_ingest_test_create_fits_file(111333008, 2, '1976-01-17T19:40:11', 1, seq_beg='1976-01-17T19:40:10')
   spice_ingest, file, /debug
   stop
 
