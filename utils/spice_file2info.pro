@@ -15,28 +15,27 @@
 ; INPUTS:
 ;      file: The name of a SPICE file. Can be an array of names.
 ;
-;
 ; OUTPUTS:
 ;      Either a structure or an array of structures. The structure
 ;      contains the extracted information.
 ;      info = { $
-;       is_spice_file: boolean, 1 if the file is a spice file, 0 otherwise
-;       level:         int,     data level (0, 1, 2 or 3), -1 if unknown
-;       study_type:    str,     type of study
-;       sat_time:      str,     internal satellite time of observation, 
+;         is_spice_file: byte,  1 if the file is a spice file, 0 otherwise
+;         level:         int,   data level (0, 1 or 2), -1 if unknown
+;         study_type:    str,   type of study
+;         sat_time:      str,   internal satellite time of observation, 
 ;                               only available for level 0
-;       datetime:      str,     date and time in CCSDS format of observation, 
+;         datetime:      str,   date and time in CCSDS format of observation, 
 ;                               for level 0, this is the time the file was downlinked
-;       version:       int,     version number (version of what?),
-;                               not available for level 0, -1 if unknown
-;       spiobsid:      long,    SPICE OBS ID
-;       rasterno:      int,     raster repetition number
+;         version:       int,   version number (version of what?),
+;                               not available for level 0
+;         spiobsid:      long,  SPICE OBS ID
+;         rasterno:      int,   raster repetition number
 ;       }
 ;
 ; HISTORY:
 ;      Ver. 1, 17-Jun-2020, Martin Wiesmann
 ;-
-; $Id: 18.06.2020 10:24 CEST $
+; $Id: 18.06.2020 10:30 CEST $
 
 
 FUNCTION spice_file2info, file
@@ -54,7 +53,7 @@ FUNCTION spice_file2info, file
     sat_time:'', $
     datetime:'', $
     version:-1, $
-    spiobsid:0L, $
+    spiobsid:-1L, $
     rasterno:-1}
 
   FOR ifile=0,nfile-1 DO BEGIN
@@ -72,7 +71,6 @@ FUNCTION spice_file2info, file
         'L0': info_temp.level=0
         'L1': info_temp.level=1
         'L2': info_temp.level=2
-        'L3': info_temp.level=3
         ELSE: BEGIN
           message, 'Cannot determine level of data in file: ' + file[ifile], /info
         END
