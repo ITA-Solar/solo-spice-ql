@@ -10,7 +10,8 @@
 ;      SPICE -- file management.
 ;
 ; CALLING SEQUENCE:
-;      Result = SPICE_FIND_SEQ_DIR( Start_Date, Stop_Date [,level=level, top_dir=top_dir, count=count, files=files, compressed=compresse] )
+;      Result = SPICE_FIND_SEQ_DIR( Start_Date, Stop_Date [ , top_dir=top_dir, level=level, $
+;                                   files=files, n_files=n_files, directories=directories, n_directories=n_directories ] )
 ;
 ; INPUTS:
 ;      Start_Date:  A start date in a standard SSW format. For
@@ -21,31 +22,29 @@
 ; OPTIONAL INPUTS:
 ;      level:    The desired level of the directories, or files (0, 1 or 2)
 ;                level 2 is default.
-;      Top_Dir:  A string (or string array) containing the name(s) of
+;      top_dir:  A string (or string array) containing the name(s) of
 ;                a top-level directory containing the data. For
 ;                example, '$HOME/spice/data'. If not set, then the routine
 ;                uses the top-level directories defined by the
 ;                $SPICE_DATA environment variable.
-;
-; OPTIONAL INPUTS:
-;      Count:  An integer containing the number of directories that
-;              have been found.
 ;
 ; KEYWORD PARAMETERS:
 ;      FILES:  If set, then the routine finds all of the FITS files in the
 ;              directories, and returns the filenames. Note that the
 ;              filenames must end in '.fits' (so they can't be
 ;              compressed, for example).
-;     COMPRESSED: If set, then the routine will look in the
-;              level2_compressed directory rather than level2.
 ;
 ; OUTPUTS:
 ;      The full names of the directories that have been found. If no
-;      directories are found, then an empty string is returned.
+;      directories are found, then an empty string is returned. If keyword FILES
+;      is set, then full names of all files are returned instead of the directories.
 ;
 ; OPTIONAL OUTPUTS:
 ;      directories: a named variable, contains full names of the directories
-;      that have been found.
+;                   that have been found.
+;      n_directories: a named variable, contains the number of directories found
+;      n_files: a named variable, contains the number of files found, undefined 
+;               if keyword FILES has not been set.
 ;
 ; EXAMPLE:
 ;      IDL> dir=spice_find_seq_dir('1-jan-2015','31-dec-2015')
@@ -55,14 +54,14 @@
 ;      Ver.1, 16-Jun-2020, Martin Wiesmann
 ;             iris_find_obs_dir rewritten for SPICE
 ;-
-; $Id: 18.06.2020 10:36 CEST $
+; $Id: 18.06.2020 11:06 CEST $
 
 
-FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, count=count, $
-  files=files, compressed=compressed, directories=directories, level=level
+FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level, $
+  files=files, n_files=n_files, directories=directories, n_directories=n_directories
 
   IF n_params() LT 2 THEN BEGIN
-    print,'Use:  IDL> dir = spice_find_seq_dir( start_date, stop_date [, level=, top_dir=, count=, /files, /compressed ]'
+    print,'Use:  IDL> dir = spice_find_seq_dir( start_date, stop_date  [ , top_dir=top_dir, level=level, files=files, n_files=n_files, directories=directories, n_directories=n_directories ] )'
     return,''
   ENDIF
 
@@ -135,6 +134,7 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, count=count
   ; within them.
   ;
   output=file_search(date_dir,'*',/test_directory,count=count)
+  n_directories = count
   directories = output
 
   ;
@@ -142,9 +142,10 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, count=count
   ; files.
   ;
   IF keyword_set(files) THEN BEGIN
-    IF keyword_set(compressed) THEN search_str='*.gz' ELSE search_str='*.fits'
+    search_str='*.fits'
     search_str=concat_dir(output,search_str)
     output=file_search(search_str,count=count)
+    n_files = count
   ENDIF
 
   return,output
