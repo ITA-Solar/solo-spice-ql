@@ -43,7 +43,7 @@
 ;      directories: a named variable, contains full names of the directories
 ;                   that have been found.
 ;      n_directories: a named variable, contains the number of directories found
-;      n_files: a named variable, contains the number of files found, undefined 
+;      n_files: a named variable, contains the number of files found, undefined
 ;               if keyword FILES has not been set.
 ;
 ; EXAMPLE:
@@ -54,11 +54,15 @@
 ;      Ver.1, 16-Jun-2020, Martin Wiesmann
 ;             iris_find_obs_dir rewritten for SPICE
 ;-
-; $Id: 18.06.2020 11:06 CEST $
+; $Id: 19.06.2020 12:04 CEST $
 
 
 FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level, $
   files=files, n_files=n_files, directories=directories, n_directories=n_directories
+
+  n_files = 0
+  n_directories = 0
+  directories = ''
 
   IF n_params() LT 2 THEN BEGIN
     print,'Use:  IDL> dir = spice_find_seq_dir( start_date, stop_date  [ , top_dir=top_dir, level=level, files=files, n_files=n_files, directories=directories, n_directories=n_directories ] )'
@@ -70,6 +74,7 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level
     spice_data=getenv('SPICE_DATA')
     IF spice_data EQ '' THEN BEGIN
       print,'%SPICE_FIND_SEQ_DIR: $SPICE_DATA is not defined. Please specify a top-level directory using the input TOP_DIR='
+        print,'                  Note that e.g. level-2 files are expected to be in $SPICE_DATA/level2.'
         print,'                    Returning...'
       return,''
     ENDIF
@@ -79,7 +84,10 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level
       0: level_string = 'level0'
       1: level_string = 'level1'
       2: level_string = 'level2'
-      else: level_string = 'level2'
+      else: BEGIN
+        message, 'level ' + strtrim(string(level),2) + ' not defined, returning.'
+        return,''
+      END
     endcase
     top_dir=concat_dir(spice_paths,level_string)
   ENDIF
