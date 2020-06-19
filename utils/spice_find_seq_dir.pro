@@ -54,7 +54,7 @@
 ;      Ver.1, 16-Jun-2020, Martin Wiesmann
 ;             iris_find_obs_dir rewritten for SPICE
 ;-
-; $Id: 19.06.2020 12:04 CEST $
+; $Id: 19.06.2020 14:07 CEST $
 
 
 FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level, $
@@ -85,7 +85,7 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level
       1: level_string = 'level1'
       2: level_string = 'level2'
       else: BEGIN
-        message, 'level ' + strtrim(string(level),2) + ' not defined, returning.'
+        message, 'level ' + strtrim(string(level),2) + ' not defined, returning.', /info
         return,''
       END
     endcase

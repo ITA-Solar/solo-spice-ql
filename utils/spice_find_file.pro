@@ -4,24 +4,12 @@
 ;
 ; PURPOSE:
 ;     This routine returns the name (or names) of SPICE raster files
-;     (or optional SJI files) that correspond to the specified
-;     time. The logic for what filename(s) is returned is as follows.
-;
-;     The data for a given observation can either be contained in a
-;     single file for sit-and-stare or single raster observations, or
-;     in multiple files corresponding to multiple raster repeats. In
-;     the latter case, the routine will return the complete list of
-;     rasters for the observation. Note that these are files with
-;     r00000, r00001, r00002, etc. in their filenames.
-;
-;     A given observation has a start time (t0) and an end time
-;     (t1). If TTIME lies between these two times, and the files are
-;     present in the user's $SPICE_DATA directory, then the
-;     raster files for this period are returned.
-;
-;     If the files are not present on the computer, then the user can
-;     search for the nearest file sequence to the input time by
-;     setting /NEAREST.
+;     that correspond to the specified time. The logic for what 
+;     filename(s) is returned is as follows.
+;     
+;     If time lies between two files of the same sequence, the older
+;     one is returned. Otherwise, the file that is nearest time
+;     is returned.
 ;
 ;     The routine only checks the specified day and the previous day
 ;     for the existence of files.
@@ -30,14 +18,17 @@
 ;      SPICE -- file management.
 ;
 ; CALLING SEQUENCE:
-;     Result = SPICE_FIND_FILE(Time)
+;     Result = SPICE_FIND_FILE(Time [, LEVEL=LEVEL, TOP_DIR=TOP_DIR, COUNT=COUNT, /SEQUENCE, /ALL, /QUIET ] )
 ;
 ; INPUTS:
 ;     Time:  This can be in any format accepted by the ANYTIM suite of
 ;            routines. For example, '1-jan-2010', '2010-01-01 05:00'.
 ;
 ; OPTIONAL INPUT:
-;     TOP_DIR:  top directory xxxxx
+;     LEVEL:    desired level of the data (0, 1 or 2 (default))
+;     TOP_DIR:  top directory in which the SPICE data lies.
+;               It is assumed that under this TOP_DIR, the data is organized
+;               in subfolders like: /YYYY/MM/DD/
 ;     
 ; KEYWORD PARAMETERS:
 ;     SEQUENCE: If set, then all files of the sequence that the
@@ -51,12 +42,12 @@
 ;     there are no matches, then an empty string is returned.
 ;
 ; OPTIONAL OUTPUTS:
-;     Count: An integer containing the number of matching files.
+;     COUNT: An integer containing the number of matching files.
 ;
 ; EXAMPLE:
 ;     IDL> file=spice_find_file('2020/05/28 16:04:00.000')
-;     IDL> file=spice_find_file('3-oct-2014 23:30',/sji)
-;     IDL> file=spice_find_file('3-oct-2014 23:30',sji=2832)
+;     IDL> file=spice_find_file('28-may-2020 16:04',/all)
+;     IDL> file=spice_find_file('2020-05-28T16:04:00.000', /sequence)
 ;
 ; CALLS:
 ;     TIME2FID, ANYTIM2UTC
@@ -66,11 +57,12 @@
 ;         iris_find_file rewritten for SPICE
 ;
 ;-
-; $Id: 19.06.2020 12:08 CEST $
+; $Id: 19.06.2020 14:07 CEST $
 
 
 FUNCTION spice_find_file, ttime, $
   top_dir=top_dir, $
+  level=level, $
   count=count, quiet=quiet, $
   all=all, $
   sequence=sequence
@@ -78,14 +70,16 @@ FUNCTION spice_find_file, ttime, $
   count = 0
 
   IF n_params() LT 1 THEN BEGIN
-    print,'Use:  IDL> file=spice_find_file(time [, /quiet, /all, /nearest, count= ])'
+    print,'Use:  IDL> file=spice_find_file(time [, top_dir=top_dir, level=level, /quiet, /all, /sequence, count=count ])'
     print,''
-    print," Example time formats:  '1-jan-2010 05:00', '2010-01-01 05:00'"
+    print," Example time formats:  '28-may-2020 05:00', '2020-05-28 05:00'"
     print,' Keywords:'
-    print,'   /quiet Do not print messages.'
+    print,'   top_dir= The top directory in which the SPICE data lies'
+    print,'   level= The desired data level (default=2)'
+    print,'   /sequence  Return all files of the sequence
     print,'   /all   Return all files for the specified day.'
+    print,'   /quiet Do not print messages.'
     print,'   count= The number of files found.'
-    print,'   /nearest Search for nearest file sequence.'
     return,''
   ENDIF
 
@@ -108,9 +102,9 @@ FUNCTION spice_find_file, ttime, $
   ENDELSE
 
 
-  files=spice_find_seq_dir(date_start, date_end, /files, top_dir=top_dir, directories=directories, n_directories=n_directories, n_files=n_files)
+  files=spice_find_seq_dir(date_start, date_end, /files, level=level, top_dir=top_dir, directories=directories, n_directories=n_directories, n_files=n_files)
   IF n_files EQ 0 THEN BEGIN
-    IF NOT keyword_set(quiet) THEN print,'%SPICE_FIND_FILE: no files found.'
+    IF NOT keyword_set(quiet) THEN print,'% SPICE_FIND_FILE: no files found.'
     return,''
   ENDIF
   count=n_files
