@@ -59,6 +59,11 @@ In general, all functionalities in the heritage routines will be preserved as fa
 * Interactive line fitting (xcfit)
 * “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
 * S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file)
+    * Implemented
+    ```
+    spice_ingest, Filename [, force=force, index=index, help=help]
+    Result = spice_find_file(Time [, LEVEL=LEVEL, TOP_DIR=TOP_DIR, COUNT=COUNT, /SEQUENCE, /ALL, /QUIET ] )
+    ```
 * GUI for selection of files and quicklook tools (iris_xfiles, iris_xcontrol)
 * Display EUI/PHI images similar to IRIS SJI images (iris_raster_browser)
 * Display STIX data similar to GOES data (iris_raster_browser)
@@ -81,7 +86,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 ## For Developers
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 09.06.2020 11:44 CEST $
+; $Id: 19.06.2020 14:42 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
