@@ -38,8 +38,8 @@
 ;     QUIET:    If set, then no information messages are printed.
 ;
 ; OUTPUTS:
-;     A string containing the full path to a SPICE file or files. If
-;     there are no matches, then an empty string is returned.
+;     A string or string array containing the full path to a SPICE file or files.
+;     If there are no matches, then an empty string is returned.
 ;
 ; OPTIONAL OUTPUTS:
 ;     COUNT: An integer containing the number of matching files.
@@ -57,7 +57,7 @@
 ;         iris_find_file rewritten for SPICE
 ;
 ;-
-; $Id: 19.06.2020 14:07 CEST $
+; $Id: 19.06.2020 14:09 CEST $
 
 
 FUNCTION spice_find_file, ttime, $
