@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 15.06.2020 14:33 CEST $
+; $Id: 24.06.2020 15:17 CEST $
 
 
 ;+
@@ -571,6 +571,41 @@ END
 
 ;+
 ; Description:
+;     returns the level of the file
+;
+; OUTPUT:
+;     int: level number (0, 1 or 2)
+;
+; OPTIONAL OUTPUT:
+;     low_latency: boolean, 1 if this file is a low latency file (i.e. LL0x)
+;-
+FUNCTION spice_data::get_level, low_latency=low_latency
+  ;returns the level of the file
+  COMPILE_OPT IDL2
+
+  level_string = self.get_header_info('LEVEL', 0)
+      low_latency = 0
+  CASE level_string OF
+    'LL01': BEGIN
+      low_latency = 1
+      level = 1
+    END
+    'LL02': BEGIN
+      low_latency = 1
+      level = 2
+    END
+    'L0': level = 0
+    'L1': level = 1
+    'L2': level = 2
+    'L3': level = 3
+    else: level = -1
+    ENDCASE
+  return, level
+END
+
+
+;+
+; Description:
 ;     returns BUNIT, physical units of the data
 ;
 ; OUTPUT:
@@ -629,6 +664,7 @@ FUNCTION spice_data::get_missing_value
   COMPILE_OPT IDL2
 
   missing = self.get_header_info('BLANK', 0)
+  if N_ELEMENTS(missing) EQ 0 && self->get_level() EQ 2 THEN missing = !values.f_nan
   return, missing
 END
 
@@ -1119,7 +1155,7 @@ FUNCTION spice_data::check_window_index, window_index
   input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
   IF N_ELEMENTS(window_index) NE 1 || input_index EQ -1 || $
     window_index LT 0 || window_index GE self.nwin THEN BEGIN
-    print, 'window_index needs to be a scalar number between 0 and '+strtrim(string(self.nwin-1),2)
+    message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2), /info
     return, 0
   ENDIF ELSE return, 1
 
