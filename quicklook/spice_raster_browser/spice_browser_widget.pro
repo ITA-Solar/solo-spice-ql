@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 18.05.2020 11:33 CEST $
+; $Id: 01.07.2020 10:56 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -380,7 +380,6 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;    ;
   ;    IF count EQ n_plot_window THEN break
   ;  ENDFOR
-  print,wid_data.lrange
 
   k=where(wid_data.iwin EQ -1,nk)
   IF nk GT 0 THEN BEGIN
