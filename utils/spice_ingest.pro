@@ -47,7 +47,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 17.06.2020 14:56 CEST $
+; $Id: 01.07.2020 13:37 CEST $
 
 
 PRO spice_ingest, filename, force=force, index=index, help=help, $
@@ -141,8 +141,8 @@ PRO spice_ingest, filename, force=force, index=index, help=help, $
     ENDIF
     spiobsid = strtrim(string(hdr.spiobsid), 2)
 
-    IF ~tag_exist(hdr, 'SEQ_BEG') THEN BEGIN
-      message, 'SEQ_BEG not found in fits header, file '+files[ifiles]+'. Extracting date/time from filename.', /informational
+    IF ~tag_exist(hdr, 'SEQ_BEG') || ~valid_time(hdr.SEQ_BEG) THEN BEGIN
+      message, 'SEQ_BEG not found in fits header or invalid date/time, file '+files[ifiles]+'. Extracting date/time from filename.', /informational
       seq_beg_defined=0
       temp = strsplit(files[ifiles], '_', /extract)
       IF level EQ 0 THEN BEGIN
