@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 01.07.2020 10:55 CEST $
 
 
 PRO spice_browser_plot_image, state, pwin, ps=ps
@@ -141,7 +141,9 @@ PRO spice_browser_plot_image, state, pwin, ps=ps
       im=alog10(im>0)
     ENDIF
     
-    plot_image,im,xsty=5,ysty=5,min=intmin,max=intmax
+    plot_image,im, title='Zoom='+trim(2^zoom), $
+      min=intmin,max=intmax, xsty=5,ysty=5, $
+      scale=scale
     ;
     IF state.wid_data.velocity EQ 1 THEN BEGIN
       rlambda=state.wid_data.lambda[pwin]
