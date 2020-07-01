@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 05.03.2020 12:12 CET $
+; $Id: 01.07.2020 11:58 CEST $
 
 
 ; save as postscript file
@@ -830,11 +830,9 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   ;
   ccd_size = data->get_ccd_size()
   win_positions = intarr(nwin,4)
-  win_positions_orig = intarr(nwin,4)
   open_new_window = 0
   for i=0,nwin-1 do begin
-    win_positions[i,*] = data->get_window_position(lindx[i], detector=detectornr, /idl_coord, /reverse_y, /reverse_x)
-    win_positions_orig[i,*] = data->get_window_position(lindx[i], detector=detectornr, /idl_coord, /no_warning)
+    win_positions[i,*] = data->get_window_position(lindx[i], detector=detectornr, /idl_coord);, /reverse_y, /reverse_x)
     if i eq 0 then begin
       detector_shown = detectornr
     endif
@@ -869,9 +867,7 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   ymin = min(win_positions[*,2])
   ymax = max(win_positions[*,3])
   win_positions[*,2:3] = win_positions[*,2:3] - ymin
-  ymin_orig = min(win_positions_orig[*,3])
-  ymax_orig = max(win_positions_orig[*,2])
-  yscale_pixels = reverse(indgen(ymax_orig-ymin_orig+1)+1+ymin_orig)
+  yscale_pixels = indgen(ymax-ymin+1)+1+ymin
   yscale_physical = (data->get_instr_y_vector(lindx[0], /full_ccd))[ymin:ymax]
 
   ; x and y titles for axis plots:
