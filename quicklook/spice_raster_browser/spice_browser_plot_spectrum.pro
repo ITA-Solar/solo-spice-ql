@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 28.07.2020 21:20 CEST $
 
 
 PRO spice_browser_plot_spectrum, state, pwin
@@ -66,7 +66,7 @@ PRO spice_browser_plot_spectrum, state, pwin
   wrange=wvl[irange]
 
 
-  k=where(spec NE -100 AND wvl GE wrange[0] AND wvl LE wrange[1],nk)
+  k=where(spec NE -100 AND spec EQ spec AND wvl GE wrange[0] AND wvl LE wrange[1],nk)
 
   IF nk NE 0 THEN yrange=[max([0,min(spec[k])*0.90]),max(spec[k])*1.10]
 
