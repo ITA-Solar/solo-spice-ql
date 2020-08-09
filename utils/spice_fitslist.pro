@@ -1,28 +1,27 @@
 ;+
-; Project     : SOHO - CDS     
+; Project     : SOHO - SPICE     
 ;                   
-; Name        : SFITSLIST
+; Name        : SPICE_FITSLIST
 ;               
-; Purpose     : Create/update the lfitslist.txt file.
+; Purpose     : Create/update the spice_fitslist.txt file.
 ;               
-; Explanation : CDS fits file names don't tell you much about their 
-;               content. This program creates/updates a file
-;               called lfitslist.txt in the fits file directory, with
+; Explanation : This program creates/updates a file
+;               called spice_fitslist.txt in the fits file directory, with
 ;               various information on the content of the files.
 ;               This file is used by PICKFITS in order to search
 ;               the list of files for those files that the user wants.
 ;
-; Use         : SFITSLIST [,FITSDIR [,LISTDIR]]
+; Use         : SPICE_FITSLIST [,FITSDIR [,LISTDIR]]
 ;    
 ; Inputs      : None required.
 ;               
 ; Opt. Inputs : FITSDIR : The directory with the fits files to be in
-;                         the list. Default "CDS_FITS_DATA"
+;                         the list. Default "SPICE_FITS_DATA"
 ;
 ;               LISTDIR : The directory to place the list in. This is
-;                         also the directory where the lfitslist.txt
+;                         also the directory where the spice_fitslist.txt
 ;                         file is created/updated. The default is
-;                         "$CDS_FITS_DATA_W".
+;                         "$SPICE_FITS_DATA_W".
 ;               
 ; Outputs     : None.
 ;               
@@ -37,40 +36,22 @@
 ; Common      : None.
 ;               
 ; Restrictions: Expects to find fits files in the specified directory.
-;               If there is already a lfitslist.txt file in the same
+;               If there is already a spice_fitslist.txt file in the same
 ;               directory, it has to have one or more entries.
 ;               
-; Side effects: Creates/updates the file "sfitslist.txt" in the
+; Side effects: Creates/updates the file "spice_fitslist.txt" in the
 ;               specified directory.
 ;               
-; Category    : CDS_Utility
+; Category    : SPICE_Utility
 ;               
 ; Prev. Hist. :
 ;
-; Written     : Stein Vidar H. Haugan, UiO, 22 March 1996
+; Written     : Stein Vidar H. Haugan, UiO, 9 August 2020
 ;               
-; Modified    : Version 2, SVHH, 18 April 1996
-;                          Changed format of fitslist.txt -> lfitslist.txt
-;                          Generic format.
-;               Version 3, SVHH, 19 April 1996
-;                          Added check for errors after FXBOPEN call.
-;               Version 4, SVHH, 22 April 1996
-;                          TITLE expanded to 80 chars max
-;               Version 5, SVHH, 23 April 1996
-;                          Using find_files for multi-path CDS_FITS_DATA.
-;                          Allowing both FITSDIR and LISTDIR to be 
-;                          specified.
-;                          For updates the new list is collected before
-;                          it's written -- direct overwrite, no spawns.
-;               Version 6, SVHH, 29 April 1996
-;                          Wrote fitslist_add, fitslist_addtx to shorten
-;                          sfitslist_prop. These are identical in sfitslist
-;                          Tested on VMS (suman1), caught an error in the
-;                          use of CATCH.
-;               Version 7, Using lowercase fits file names, since that's what
-;                          is used on soho-archive disks.
+; Modified    : Version 1, SVHH, 9 August 2020
+;                          Initial version based on sfitslist.pro
 ;
-; Version     : 7, 6 August 1996
+; Version     : Version 1, SVHH, 9 August 2020
 ;-            
 
 
@@ -102,7 +83,7 @@ END
 ; Calculate form when CALCFORM is set present
 ;
 
-PRO sfitslist_prop,f,calcform=calcform,out=out
+PRO spice_fitslist_prop,f,calcform=calcform,out=out
   errmsg = ''
   
   IF NOT test_open(f) THEN begin
@@ -203,7 +184,7 @@ PRO sfitslist_prop,f,calcform=calcform,out=out
 END
 
 
-FUNCTION sfitslist_srnumber,filename
+FUNCTION spice_fitslist_srnumber,filename
   ON_ERROR,0
   ;; Sumer version.
   bfilename = byte(STRMID(filename,4,13))
@@ -216,7 +197,7 @@ END
 ;
 ; Incremental update
 ;
-PRO incsfitslist,fitsdir,file
+PRO incspice_fitslist,fitsdir,file
   
   default,maxfiles,300
   
@@ -228,7 +209,7 @@ PRO incsfitslist,fitsdir,file
   break_file,a_filelist,disk,dir,a_filename
   
   ;; Calculate srnum
-  a_srnum = sfitslist_srnumber(a_filename)
+  a_srnum = spice_fitslist_srnumber(a_filename)
   
   ;; Sort actual file list according to snum
   ix = SORT(a_srnum)
@@ -240,7 +221,7 @@ PRO incsfitslist,fitsdir,file
   ;; Find the original file list (assumed sorted)
   
   IF NOT file_exist(file) THEN  $
-     MESSAGE,"There's no lfitslist.txt file here"
+     MESSAGE,"There's no spice_fitslist.txt file here"
   o_list = rd_ascii(file)
   
   IF N_ELEMENTS(o_list) LT 2 THEN  $
@@ -250,7 +231,7 @@ PRO incsfitslist,fitsdir,file
   head = o_list(0)
   o_list = o_list(1:*)
   namelen = FIX((str_sep(head,'='))(2))-1
-  o_srnum = sfitslist_srnumber(STRMID(o_list,0,namelen))
+  o_srnum = spice_fitslist_srnumber(STRMID(o_list,0,namelen))
   
   ;; Loop variable initialization
   
@@ -267,7 +248,7 @@ PRO incsfitslist,fitsdir,file
         ix = (WHERE(o_srnum GT a_srnum(i)))(0)
         IF ix EQ -1 THEN ix = N_ELEMENTS(o_list)
         ;; Create the text entry
-        sfitslist_prop,a_filelist(i),out=out
+        spice_fitslist_prop,a_filelist(i),out=out
         IF out(0) NE '' THEN begin
            ;; Place it in the new list, along with all higher-ranking 
            ;; existing entries
@@ -312,15 +293,16 @@ END
 
 
 
-PRO sfitslist,fitsdir,listdir
-  ON_ERROR,2
+PRO spice_fitslist,fitsdir,listdir
+  ON_ERROR,0
   
   default,maxfiles,20  ;; Testing purposes at GODDARD
   
 ;  Does SUMER have !DEBUG ?
 ;  IF !debug GT 0 THEN ON_ERROR,0
   
-  sfitsdata = getenv("SUM_FITS_DATA")
+  spice_data =  '/mn/acubens/u1/steinhh/tmp/spice_data/level2'
+  sfitsdata = spice_data
   
   vms = !version.os EQ 'vms'
   
@@ -340,17 +322,17 @@ PRO sfitslist,fitsdir,listdir
   parcheck,listdir,2,typ(/str),0,'LISTDIR'
   
   ;; This is where the list should be
-  file = concat_dir(listdir,'sfitslist.txt')
+  file = concat_dir(listdir,'spice_fitslist.txt')
   
   ;; Do an incremental update if it's not there.
   IF file_exist(file) THEN BEGIN
-     incsfitslist,fitsdir,file
+     incspice_fitslist,fitsdir,file
      RETURN
   END
   PRINT,"No file "+file+" found"
   ;; Get the full list
   PRINT,"Getting file list"
-  filelist = find_files("sum_*_*.fits",fitsdir)     ;*
+  filelist = find_files("*.fits",fitsdir)     ;*
   IF filelist(0) EQ '' THEN MESSAGE,"No files found"
   
   PRINT,"About to create new "+file+" with "+ $
@@ -359,7 +341,7 @@ PRO sfitslist,fitsdir,listdir
   break_file,filelist,disk,path,filename
   
   ;; Calculate srnum and sort accordingly
-  n = sfitslist_srnumber(filename)
+  n = spice_fitslist_srnumber(filename)
   filelist = filelist(SORT(n))
   
   ;; Just do it.
@@ -368,7 +350,7 @@ PRO sfitslist,fitsdir,listdir
   calcform = 1
   filesdone = 0
   FOR i = 0,N_ELEMENTS(filelist)-1 DO BEGIN
-     sfitslist_prop,filelist(i),calcform=calcform,out=out
+     spice_fitslist_prop,filelist(i),calcform=calcform,out=out
      IF out(0) NE '' THEN BEGIN
         PRINTF,flun,out,FORMAT='(A)'
         calcform = 0
