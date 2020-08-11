@@ -1,5 +1,5 @@
 ;+
-; Project     : SOHO - SPICE     
+; Project     : SOLAR ORBITER - SPICE     
 ;                   
 ; Name        : SPICE_FITSLIST
 ;               
@@ -29,9 +29,7 @@
 ;               
 ; Keywords    : None.
 ;
-; Calls       : ANYTIM2UTC(), BREAK_FILE, CONCAT_DIR(), DEFAULT, FILE_EXIST()
-;               FIND_FILES(), FXBCLOSE, FXBOPEN, FXBTDIM(), FXPAR(), RD_ASCII()
-;               STRPAD(), TRIM()
+; Calls       : ?
 ;
 ; Common      : None.
 ;               
@@ -44,7 +42,7 @@
 ;               
 ; Category    : SPICE_Utility
 ;               
-; Prev. Hist. :
+; Prev. Hist. : 
 ;
 ; Written     : Stein Vidar H. Haugan, UiO, 9 August 2020
 ;               
@@ -53,316 +51,86 @@
 ;
 ; Version     : Version 1, SVHH, 9 August 2020
 ;-            
-
+compile_opt idl2
 
 ;
 ; Standard procedures for adding entries to the line
 ;
 
-PRO fitslist_add,entry,name,text,length,form,line
+
+FUNCTION fitslist_line,header,keywords
+  line = []
+  keyword_array = keywords.split(",")
+  foreach keyword,keyword_array DO BEGIN
+     print,keyword,fxpar(header,keyword)
+     line =  [line, fxpar(header,keyword)]
+  END
+  RETURN,strjoin(line,string(2b)+" | "+string(2b))
+END
+
+
+FUNCTION spice_fitslist_key,line
+  return, line.extract("solo_.*spice.*[0-9]{8}T[0-9]{6}.*V[0-9]+")
+END
+
+FUNCTION spice_fitslist_stash_in_hash,lines
+  keys = spice_fitslist_key(lines)
+  return,hash(keys,lines) ;; Wow....
+END
+
+
+PRO spice_fitslist,spice_datadir,listdir,reset=reset
   ON_ERROR,0
-  IF N_PARAMS() NE 6 THEN MESSAGE,"Wrong number of parameters"
-  line = line + strpad(STRMID(entry,0,length-1),length,/after)
-  IF N_elements(form) GT 0 THEN BEGIN
-     IF STRLEN(text) GT length-1 THEN MESSAGE,"Text longer than entry"
-     new = name+'='+text+'='+trim(length)
-     IF datatype(form) NE 'STR' THEN form = [new] $
-     ELSE                            form = [form,new]
-  END
-END
-
-PRO fitslist_addtx,header,name,text,length,form,line
-  ON_ERROR,0
-  IF N_PARAMS() NE 6 THEN MESSAGE,"Wrong number of parameters"
-  entry = fxpar(header,name)
-  fitslist_add,entry,name,text,length,form,line
-END
-
-;
-; Make one line of text out of one fits file name.
-; Calculate form when CALCFORM is set present
-;
-
-PRO spice_fitslist_prop,f,calcform=calcform,out=out
-  errmsg = ''
   
-  IF NOT test_open(f) THEN begin
-     MESSAGE,"File "+f+" could not be processed",/continue
-     out = ''
-     RETURN
-  END
-  CATCH,ERROR
-  IF error NE 0 THEN GOTO,PROCESS_ERROR
-
-  header = headfits(f)
+  keywords = "FILENAME,NWIN,NWIN,NWIN_PRF,NWIN_DUM,NWIN_INT,STUDY_ID"
   
-  break_file,f,disk,dir,filnam
+  default,reset,1
+  default,maxfiles,2000
+  default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
+  default,listfiledir,spice_datadir
   
-  calcform = KEYWORD_SET(calcform)
-  IF calcform THEN form = 0
+  listfilename = concat_dir(listfiledir,'spice_fitslist.txt')
   
-  n = ''
+  IF keyword_set(reset) THEN file_delete,listfilename,/allow_nonexistent
   
-  fitslist_add,filnam,'FILENAME','Filename',18,form,n
-  
-  ;;
-  ;; Lengths etc. should be adjusted later
-  ;;
-  
-  fitslist_addtx,header,'DETECTOR','det',9,form,n
-  
-  
-  pointing = ("(" + STRING(FIX(fxpar(header,"XCEN")),'(I5)') $
-              + ","+STRING(FIX(fxpar(header,"YCEN")),'(I5)') + ") ")
-  fitslist_add,pointing,'POINTING','  pointing',14,form,n
-  
-  ;; Field width
-  widths = ("(" + STRING(FIX(fxpar(header,"IXWIDTH")),'(I4)') $
-            + ","+STRING(FIX(fxpar(header,"IYWIDTH")),'(I3)') + ") ")
-  fitslist_add,widths,'WIDTH','Fieldwidth',11,form,n
-  
-  slit = STRMID(STRCOMPRESS(fxpar(header,"SLIT"),/remove_all),0,14)
-  fitslist_add,slit,'SLIT','Slit',15,form,n
-  
-  exptime = STRING(fxpar(header,"EXPTIME"),'(f7.1)')
-  fitslist_add,exptime,'EXPTIME','Exptime',8,form,n
-  
-  waverange =  ("[" + STRING(FLOAT(fxpar(header,"WAVEMIN")),'(f6.1)') $
-                +","+STRING(FLOAT(fxpar(header,"WAVEMAX")),'(f6.1)') + "]")
-  fitslist_add,waverange,'WAVELNTH','Wavlnth range',6+6+4,form,n
-  
-  fitslist_addtx,header,'OBS_SEQ','Obs.seq',9,form,n
-  
-  fitslist_addtx,header,'STUDY_NM','Studynam',9,form,n
-  
-  fitslist_addtx,header,'OBJECT','Object',25,form,n
-  
-  fitslist_addtx,header,'SCI_OBJ','Sci.obj',9,form,n
-  
-  fitslist_addtx,header,'OBS_PROG','Obs.prog',9,form,n
-  
-  fitslist_addtx,header,'CMP_NAME','Cmp.name',9,form,n
-  
-  fitslist_addtx,header,'SCIENTIS','Scientist',21,form,n
-  
-  fitslist_addtx,header,'PHYSCOM','Phys.comment',21,form,n
-  
-  fitslist_addtx,header,'PHYSDAT','Phys.data',21,form,n
-  
-  fitslist_addtx,header,'PROC_COM','Proc.comment',21,form,n
-  
-  fitslist_addtx,header,'SC_COM','Scient.comment',21,form,n
-  
-  fitslist_addtx,header,'T_QUAL','Target quality',21,form,n
-  
-  fitslist_addtx,header,'I_QUAL','Abs. quality',21,form,n
-  
-  fitslist_addtx,header,'ININSE','Inter.ins.event',21,form,n
-  
-  fitslist_addtx,header,'PROCESS','Processing',21,form,n
-  
-  fitslist_addtx,header,'COMPRESS','Compression',12,form,n
-  
-  fitslist_addtx,header,'RASTYPE','Ras.type',9,form,n
-  
-  fitslist_addtx,header,'PROG_NM','Progname',9,form,n
-  
-  IF calcform THEN begin
-     frm = ''
-     FOR ii = 0,N_ELEMENTS(FORM)-2 DO frm = frm + form(ii) + '='
-     frm = frm + form(ii)
-  END
-  out = n
-  IF calcform THEN out = [frm,out]
-  RETURN
-  
-  PROCESS_ERROR:
-  catch,/cancel
-  MESSAGE,"File "+f+" could not be processed",/continue
-  out = ''
-  RETURN
-END
-
-
-FUNCTION spice_fitslist_srnumber,filename
-  ON_ERROR,0
-  ;; Sumer version.
-  bfilename = byte(STRMID(filename,4,13))
-  bfilename(WHERE(bfilename EQ (byte('_'))(0) )) = (byte('.'))(0)
-  num = dblarr(N_ELEMENTS(filename))
-  READS,STRING(bfilename),num
-  RETURN, num
-END
-
-;
-; Incremental update
-;
-PRO incspice_fitslist,fitsdir,file
-  
-  default,maxfiles,300
-  
-  ;;----------------------------------------------------
-  ;; Find the actual file list
-  
-  a_filelist = find_files("sum_*_*.fits",fitsdir)  ;*
-  
-  break_file,a_filelist,disk,dir,a_filename
-  
-  ;; Calculate srnum
-  a_srnum = spice_fitslist_srnumber(a_filename)
-  
-  ;; Sort actual file list according to snum
-  ix = SORT(a_srnum)
-  a_filelist = a_filelist(ix)
-  a_filename = a_filename(ix)
-  a_srnum = a_srnum(ix)
-  
-  ;;---------------------------------------------------
-  ;; Find the original file list (assumed sorted)
-  
-  IF NOT file_exist(file) THEN  $
-     MESSAGE,"There's no spice_fitslist.txt file here"
-  o_list = rd_ascii(file)
-  
-  IF N_ELEMENTS(o_list) LT 2 THEN  $
-     MESSAGE,"I need an existing, nonempty cds fitslist"
-  
-  ;; Chop it's head off and calculate srnum (for identification)
-  head = o_list(0)
-  o_list = o_list(1:*)
-  namelen = FIX((str_sep(head,'='))(2))-1
-  o_srnum = spice_fitslist_srnumber(STRMID(o_list,0,namelen))
-  
-  ;; Loop variable initialization
-  
-  changed = 0
-  currenti = 0 
-  newlist = [head]
-  
-  ;; Check each existing file if it's in the list
-  filesdone = 0
-  FOR i = 0L,N_ELEMENTS(a_filelist)-1 DO BEGIN
-     IF (WHERE(o_srnum EQ a_srnum(i)))(0) EQ -1 THEN BEGIN
-        changed = 1
-        ;; Find out where to place it to keep list sorted
-        ix = (WHERE(o_srnum GT a_srnum(i)))(0)
-        IF ix EQ -1 THEN ix = N_ELEMENTS(o_list)
-        ;; Create the text entry
-        spice_fitslist_prop,a_filelist(i),out=out
-        IF out(0) NE '' THEN begin
-           ;; Place it in the new list, along with all higher-ranking 
-           ;; existing entries
-           IF ix EQ currenti THEN newlist = [newlist,out] $
-           ELSE newlist = [newlist,o_list(currenti:ix-1),out]
-           ;; These have been accounted for
-           currenti = ix
-           PRINT,"Added "+a_filelist(i)
-        END
-        filesdone = filesdone+1
-        IF filesdone EQ maxfiles THEN GOTO,ENOUGH_FILES
-     END
+  stash = hash()
+  IF file_exist(listfilename) THEN BEGIN
+     list =  rd_ascii(listfilename)
+     stash = spice_fitslist_stash_in_hash(list)
+     print,"Found list, with "+trim(stash.count())+" elements"
+  END ELSE BEGIN
+     PRINT,"No file "+listfilename+" found"
+     PRINT,"Creating one from scratch"
   END
   
-  enough_files:
-  PRINT,"Finished processing list"
-  
-  IF NOT changed THEN BEGIN
-     ;; Njet, nada nothing
-     PRINT,"No changes"
+  filelist = file_search(spice_datadir,"*.fits")
+  IF filelist(0) EQ '' THEN BEGIN
+     MESSAGE,"No fits files found, exiting"
      RETURN
   END
   
-  ;; Add the rest of the original list that wasn't already copied
-  
-  IF currenti LT N_ELEMENTS(o_list) THEN  $
-     newlist = [newlist,o_list(currenti:*)]
-  
-  ;; Write new list
-  
-  OPENW,flun,file,/GET_LUN,error = error
-  IF error NE 0 THEN BEGIN
-     MESSAGE,"Could not open "+file+" for writing -- aborting", $
-        /continue
-     RETURN
-  END
-  ;; The format is necessary to avoid a space in front lines
-  PRINTF,flun,newlist,FORMAT='(A)'
-  CLOSE,flun
-  FREE_LUN,flun
-END
-
-
-
-PRO spice_fitslist,fitsdir,listdir
-  ON_ERROR,0
-  
-  default,maxfiles,20  ;; Testing purposes at GODDARD
-  
-;  Does SUMER have !DEBUG ?
-;  IF !debug GT 0 THEN ON_ERROR,0
-  
-  spice_data =  '/mn/acubens/u1/steinhh/tmp/spice_data/level2'
-  sfitsdata = spice_data
-  
-  vms = !version.os EQ 'vms'
-  
-  IF sfitsdata EQ '' THEN BEGIN
-     IF vms THEN sfitsdata = "fits_nfs,fits30"  $
-     ELSE sfitsdata = $
-        "/mn/rigil/u1/paalb/sumer/afits,/mn/rigil/u1/paalb/sumer/mats"
-  END
-   
-  
-  default,fitsdir,sfitsdata
-  
-  IF vms THEN default,listdir,"sys$login"
-  default,listdir,"$HOME"       ;*
-  
-  parcheck,fitsdir,1,typ(/str),0,'FITSDIR'
-  parcheck,listdir,2,typ(/str),0,'LISTDIR'
-  
-  ;; This is where the list should be
-  file = concat_dir(listdir,'spice_fitslist.txt')
-  
-  ;; Do an incremental update if it's not there.
-  IF file_exist(file) THEN BEGIN
-     incspice_fitslist,fitsdir,file
-     RETURN
-  END
-  PRINT,"No file "+file+" found"
-  ;; Get the full list
-  PRINT,"Getting file list"
-  filelist = find_files("*.fits",fitsdir)     ;*
-  IF filelist(0) EQ '' THEN MESSAGE,"No files found"
-  
-  PRINT,"About to create new "+file+" with "+ $
+  PRINT,"About to create new " + listfilename + " with "+ $
      trim(N_ELEMENTS(filelist))+" elements"
   
-  break_file,filelist,disk,path,filename
-  
-  ;; Calculate srnum and sort accordingly
-  n = spice_fitslist_srnumber(filename)
-  filelist = filelist(SORT(n))
-  
-  ;; Just do it.
-  
-  OPENW,flun,file,/GET_LUN
-  calcform = 1
-  filesdone = 0
-  FOR i = 0,N_ELEMENTS(filelist)-1 DO BEGIN
-     spice_fitslist_prop,filelist(i),calcform=calcform,out=out
-     IF out(0) NE '' THEN BEGIN
-        PRINTF,flun,out,FORMAT='(A)'
-        calcform = 0
-     END
-     PRINT,"Files done :",filesdone
-     filesdone = filesdone + 1
-     IF filesdone EQ maxfiles THEN GOTO,ENOUGH_FILES
+  FOREACH filename, filelist, index DO BEGIN
+     key = spice_fitslist_key(filename,/scalar)
+     IF stash.haskey(key) THEN CONTINUE
+     
+     openr,lun,filename,/get_lun
+     fxhread,lun,header
+     free_lun,lun
+     
+     stash[key] = fitslist_line(header,keywords)
+     PRINT,"Files done :",index+1,key
+     IF index EQ maxfiles-1 THEN BREAK
   END
   
-  ENOUGH_FILES:
-  
-  CLOSE,flun
-  FREE_LUN,flun
+  keys = (stash.keys()).sort()
+  OPENW,fitslist_lun,listfilename,/get_lun
+  printf,fitslist_lun,keywords
+  foreach key,keys DO BEGIN
+     print,"Writing: "+stash[key]
+     printf,fitslist_lun,stash[key],format="(a)"
+  END
+  FREE_LUN,fitslist_lun
 END
-
