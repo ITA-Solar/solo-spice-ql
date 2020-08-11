@@ -51,56 +51,55 @@
 ;
 ; Version     : Version 1, SVHH, 9 August 2020
 ;-            
-compile_opt idl2
 
-;
-; Standard procedures for adding entries to the line
-;
-
-
-FUNCTION fitslist_line,header,keywords
+FUNCTION spice_fitslist__line,header,keywords
   line = []
   keyword_array = keywords.split(",")
-  foreach keyword,keyword_array DO BEGIN
-     print,keyword,fxpar(header,keyword)
-     line =  [line, fxpar(header,keyword)]
-  END
-  RETURN,strjoin(line,string(2b)+" | "+string(2b))
+  foreach keyword,keyword_array DO line =  [line, trim(fxpar(header,keyword))]
+  RETURN,strjoin(line,string(9b))
 END
 
 
-FUNCTION spice_fitslist_key,line
+FUNCTION spice_fitslist__key,line
   return, line.extract("solo_.*spice.*[0-9]{8}T[0-9]{6}.*V[0-9]+")
 END
 
-FUNCTION spice_fitslist_stash_in_hash,lines
-  keys = spice_fitslist_key(lines)
+
+FUNCTION spice_fitslist__stash_in_hash,lines
+  keys = spice_fitslist__key(lines)
   return,hash(keys,lines) ;; Wow....
 END
 
 
-PRO spice_fitslist,spice_datadir,listdir,reset=reset
+FUNCTION spice_fitslist__get_header,filename
+     openr,lun,filename,/get_lun
+     fxhread,lun,header
+     free_lun,lun
+     return,header
+END
+
+
+PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
   ON_ERROR,0
   
-  keywords = "FILENAME,NWIN,NWIN,NWIN_PRF,NWIN_DUM,NWIN_INT,STUDY_ID"
+  keywords = "FILENAME,COMPRESS,STUDY_ID,OBS_ID,STUDYTYP,STUDYDES,STUDY,AUTHOR,PURPOSE,READMODE,SOOPNAME,NWIN,NWIN,NWIN_PRF,NWIN_DUM,NWIN_INT,STUDY_ID"
   
   default,reset,1
   default,maxfiles,2000
-  default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   default,listfiledir,spice_datadir
   
   listfilename = concat_dir(listfiledir,'spice_fitslist.txt')
   
   IF keyword_set(reset) THEN file_delete,listfilename,/allow_nonexistent
   
-  stash = hash()
   IF file_exist(listfilename) THEN BEGIN
      list =  rd_ascii(listfilename)
-     stash = spice_fitslist_stash_in_hash(list)
+     stash = spice_fitslist__stash_in_hash(list[1:*])
      print,"Found list, with "+trim(stash.count())+" elements"
   END ELSE BEGIN
      PRINT,"No file "+listfilename+" found"
      PRINT,"Creating one from scratch"
+     stash = hash()
   END
   
   filelist = file_search(spice_datadir,"*.fits")
@@ -113,24 +112,22 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset
      trim(N_ELEMENTS(filelist))+" elements"
   
   FOREACH filename, filelist, index DO BEGIN
-     key = spice_fitslist_key(filename,/scalar)
-     IF stash.haskey(key) THEN CONTINUE
+     key = spice_fitslist__key(filename)
+     IF stash.haskey(key) THEN BEGIN
+        print,"Skipping "+key
+        CONTINUE
+     END
      
-     openr,lun,filename,/get_lun
-     fxhread,lun,header
-     free_lun,lun
+     header = spice_fitslist__get_header(filename)
      
-     stash[key] = fitslist_line(header,keywords)
+     stash[key] = spice_fitslist__line(header,keywords)
      PRINT,"Files done :",index+1,key
-     IF index EQ maxfiles-1 THEN BREAK
+     IF index GE maxfiles-1 THEN BREAK
   END
   
   keys = (stash.keys()).sort()
   OPENW,fitslist_lun,listfilename,/get_lun
   printf,fitslist_lun,keywords
-  foreach key,keys DO BEGIN
-     print,"Writing: "+stash[key]
-     printf,fitslist_lun,stash[key],format="(a)"
-  END
+  foreach key,keys DO printf,fitslist_lun,stash[key],format="(a)"
   FREE_LUN,fitslist_lun
 END
