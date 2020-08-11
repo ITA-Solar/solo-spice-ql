@@ -82,10 +82,11 @@ END
 PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
   ON_ERROR,0
   
-  keywords = "FILENAME,COMPRESS,STUDY_ID,OBS_ID,STUDYTYP,STUDYDES,STUDY,AUTHOR,PURPOSE,READMODE,SOOPNAME,NWIN,NWIN,NWIN_PRF,NWIN_DUM,NWIN_INT,STUDY_ID"
+  keywords = "FILENAME,COMPRESS,STUDY_ID,OBS_ID,STUDYTYP,STUDYDES,STUDY,AUTHOR,PURPOSE,READMODE,SOOPNAME,NWIN,NWIN_PRF,NWIN_DUM,NWIN_INT"
   
   default,reset,1
   default,maxfiles,2000
+  default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   default,listfiledir,spice_datadir
   
   listfilename = concat_dir(listfiledir,'spice_fitslist.txt')
@@ -121,7 +122,7 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
      header = spice_fitslist__get_header(filename)
      
      stash[key] = spice_fitslist__line(header,keywords)
-     PRINT,"Files done :",index+1,key
+     PRINT,"Files done :",index+1," "+key
      IF index GE maxfiles-1 THEN BREAK
   END
   
@@ -130,4 +131,7 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
   printf,fitslist_lun,keywords
   foreach key,keys DO printf,fitslist_lun,stash[key],format="(a)"
   FREE_LUN,fitslist_lun
+END
+
+spice_fitslist
 END
