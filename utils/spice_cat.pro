@@ -1,4 +1,4 @@
-FUNCTION spice_pickfile__read_fitslist,filename,headers=headers
+FUNCTION spice_cat__read_fitslist,filename,headers=headers
   openr,lun,filename,/get_lun
   t = ''
   readf,lun,t
@@ -30,7 +30,7 @@ FUNCTION spice_p ickfile__values
          }
 END
 
-FUNCTION spice_pickfile__table,base,props
+FUNCTION spice_cat__table,base,props
   extra = {}
   foreach value,props,key DO BEGIN
      extra = create_struct(extra,key,value)
@@ -40,7 +40,7 @@ FUNCTION spice_pickfile__table,base,props
   return,table
 END
 
-FUNCTION spice_pickfile__column_widths,headers
+FUNCTION spice_cat__column_widths,headers
   h = "FILENAME,COMPRESS,STUDY_ID,OBS_ID,STUDYTYP,STUDYDES,STUDY,"
   w = "      20,       5,       2,    10,       5,      10,   10,"
   
@@ -59,12 +59,12 @@ FUNCTION spice_pickfile__column_widths,headers
   return, widths * 12
 END
 
-PRO spice_pickfile__table_event,event
+PRO spice_cat__table_event,event
   help,event
 END
 
-FUNCTION spice_pickfile__headers,base,headers
-  widths = spice_pickfile__column_widths(headers)
+FUNCTION spice_cat__headers,base,headers
+  widths = spice_cat__column_widths(headers)
   offset = 70
   foreach heading, headers, index DO BEGIN
 ;     text = widget_text(base,value=heading,scr_xsize=widths[index]+4,units=0b,frame=1b,$
@@ -74,11 +74,11 @@ FUNCTION spice_pickfile__headers,base,headers
   END
 END
 
-PRO spice_pickfile
-  v = spice_pickfile__values()
+PRO spice_cat
+  v = spice_cat__values()
   p = hash()
   
-  list = spice_pickfile__read_fitslist(v.listfilename,headers=headers)
+  list = spice_cat__read_fitslist(v.listfilename,headers=headers)
   
   ; /row_major table means every struct => one row
   ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
@@ -89,13 +89,13 @@ PRO spice_pickfile
   editable[*,0] = 1b
   background_color = replicate(230b,3,num_columns,num_rows)
   background_color[*,*,0] = 255b
-  column_widths = spice_pickfile__column_widths(headers)
+  column_widths = spice_cat__column_widths(headers)
   
   base = widget_base(/column,xpad=0,ypad=0)
   
   headers_base = widget_base(base,frame=0b,xpad=0,ypad=0)
   
-  table_base = widget_base(base,/column,/frame,event_pro="spice_pickfile__table_event",xpad=0,ypad=0)
+  table_base = widget_base(base,/column,/frame,event_pro="spice_cat__table_event",xpad=0,ypad=0)
   
   p = hash()
   p['value'] = list
@@ -109,11 +109,11 @@ PRO spice_pickfile
   p['all_events'] = 1b
   p['context_events'] = 1b
   
-  headers_widget = spice_pickfile__headers(headers_base,headers)
-  table = spice_pickfile__table(table_base,p)
+  headers_widget = spice_cat__headers(headers_base,headers)
+  table = spice_cat__table(table_base,p)
   
   widget_control,base,/realize
-  xmanager,"spice_pickfile",base
+  xmanager,"spice_cat",base
 END
 
 spice_pickfile
