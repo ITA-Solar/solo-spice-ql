@@ -8,10 +8,10 @@ FUNCTION spice_cat__read_fitslist,filename,headers=headers
      readf,lun,t
      values = strsplit(/extract,t,string(9b))
      struct = { }
-     name = ""
+     struct_name = ""
      foreach value,values,index DO BEGIN
-        name += fields[index]
-        struct = create_struct(name=name, struct,fields[index],value)
+        struct_name += fields[index]
+        struct = create_struct(name=struct_name, struct,fields[index],value)
      END
      list = [list,struct]
   END
@@ -19,7 +19,7 @@ FUNCTION spice_cat__read_fitslist,filename,headers=headers
   return,list
 END 
 
-FUNCTION spice_p ickfile__values
+FUNCTION spice_cat__values
   default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   default,listfiledir,spice_datadir
   listfilename = concat_dir(listfiledir,'spice_fitslist.txt')
@@ -30,14 +30,10 @@ FUNCTION spice_p ickfile__values
          }
 END
 
-FUNCTION spice_cat__table,base,props
-  extra = {}
-  foreach value,props,key DO BEGIN
-     extra = create_struct(extra,key,value)
-  END
-  
-  table = widget_table(base,_strict_extra=extra)
-  return,table
+FUNCTION hash_to_struct,stash
+  struct = {}
+  foreach value,stash,key DO struct = create_struct(struct,key,value)
+  return,struct
 END
 
 FUNCTION spice_cat__column_widths,headers
@@ -63,22 +59,14 @@ PRO spice_cat__table_event,event
   help,event
 END
 
-FUNCTION spice_cat__headers,base,headers
-  widths = spice_cat__column_widths(headers)
-  offset = 70
-  foreach heading, headers, index DO BEGIN
-;     text = widget_text(base,value=heading,scr_xsize=widths[index]+4,units=0b,frame=1b,$
-;                        xoffset=offset,/editable)
-     button = widget_button(base,value=heading,scr_xsize=widths[index]+4,xoffset=offset,frame=0,tooltip=heading)
-     offset += widths[index]
-  END
-END
-
 PRO spice_cat
   v = spice_cat__values()
   p = hash()
   
   list = spice_cat__read_fitslist(v.listfilename,headers=headers)
+  filter = list[0]
+  foreach tag, tag_names(filter), index DO filter.(index) = ""
+  list = [filter,list]
   
   ; /row_major table means every struct => one row
   ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
@@ -109,12 +97,11 @@ PRO spice_cat
   p['all_events'] = 1b
   p['context_events'] = 1b
   
-  headers_widget = spice_cat__headers(headers_base,headers)
-  table = spice_cat__table(table_base,p)
+  table = widget_table(table_base,_extra=hash_to_struct(p))
   
   widget_control,base,/realize
   xmanager,"spice_cat",base
 END
 
-spice_pickfile
+spice_cat
 END
