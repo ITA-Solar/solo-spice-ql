@@ -15,9 +15,9 @@
 ;
 ; INPUTS:
 ;      Start_Date:  A start date in a standard SSW format. For
-;                   example, '1-Jan-2015'.
+;                   example, '2020/05/15 13:00:00'.
 ;      Stop_Date:   A stop date in a standard SSW format. For
-;                   example, '1-Jan-2015'.
+;                   example, '2020/05/15 13:00:00'.
 ;
 ; OPTIONAL INPUTS:
 ;      level:    The desired level of the directories, or files (0, 1 or 2)
@@ -54,7 +54,7 @@
 ;      Ver.1, 16-Jun-2020, Martin Wiesmann
 ;             iris_find_obs_dir rewritten for SPICE
 ;-
-; $Id: 19.06.2020 14:07 CEST $
+; $Id: 18.08.2020 13:02 CEST $
 
 
 FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level, $
@@ -141,7 +141,16 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level
   ; Now go through the date directories and find the sub-directories
   ; within them.
   ;
+  start_tai = utc2tai(start_date)
+  stop_tai = utc2tai(stop_date)
   output=file_search(date_dir,'*',/test_directory,count=count)
+  if count eq 0 then return,''
+  
+  folder_date =  utc2tai(file2time(file_basename(output)))
+  ind = where(folder_date GE start_tai AND folder_date LE stop_tai, count)
+  if count eq 0 then return,''
+  
+  output = output[ind]
   n_directories = count
   directories = output
 
