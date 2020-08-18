@@ -70,7 +70,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 09.06.2020 20:28 CEST $
+; $Id: 18.08.2020 13:06 CEST $
 ;-
 ;
 ; save as postscript file
@@ -558,16 +558,17 @@ pro spice_xmap_resize, event
   csz = size(wd[cpx[0]:cpx[1],*,*])
   ;
   ;  if (*info).nexpprp eq 1 then begin
-  if csz[1] gt 1 then begin
+  if csz[3] gt 1 then begin
     var=wd[cpx[0]:cpx[1],*,*]
     bad=where(var eq *(*info).data->get_missing_value(),nbad)
     if nbad ne 0 then var[bad]=!values.f_nan
-    cont = total(var,1,/nan)/csz[1]
+    cont = total(var,3,/nan)/csz[3]
   endif else cont=0.0
   var=wd
   bad=where(var eq *(*info).data->get_missing_value(),nbad)
   if nbad ne 0 then var[bad]=!values.f_nan
-  drawimage = rotate(total(var,1,/nan)/sz[1]-cont,rotate)
+  stop
+  drawimage = rotate(total(var,3,/nan)/sz[3]-cont,rotate)
   ;  endif else begin
   ;    if csz[1] gt 1 then begin
   ;      var=wd[cpx[0]:cpx[1],*,(*info).expindx]
@@ -766,7 +767,6 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   if n_elements(linelist) eq 0 then linelist = 0
   line = linelist[0]
   ; get axis titles:
-  ydim = 1
   sit_and_stare = data->get_sit_and_stare()
   ;
   nwin=data->get_number_windows()
@@ -774,6 +774,7 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   nslit = data->get_number_y_pixels(line)         ; number of slit positions
   nexp = data->get_number_exposures(line)
   nexpprp = 1  ; number of exp pr. raster pos.
+  ydim = 1
   ;
   ; so far QL can not handle sit-and-stare with different exposure times
   ; (when it is run as "multiple exp pr rast. pos.
@@ -794,7 +795,7 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
     ;(data->getaux())->setxytitle,sscale='arcsec',tscale='sec'
     xscale = data->get_time_vector(line)/1000.
     aspect=1.0
-    xdim = 4
+    xdim = 3
   endif else begin
     if nraster le 1 then begin
       warning = 'Less than 2 raster pos. in raster. Can not build map. Returning'
@@ -807,8 +808,8 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
     yscale=data->get_instr_y_vector(line)
     aspect = (max(xscale)-min(xscale))/(max(yscale)-min(yscale))
     ;if sx.rot eq 3 or sx.rot eq 1 then begin
-    xdim=1
-    ydim=2
+    xdim=0
+    ;ydim=2
     ;endif else begin
     ;  xdim=2
     ;  ydim=1
@@ -840,12 +841,12 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
   endif
 
   if data->get_sit_and_stare() then begin
-    xscale=data->get_time(line)
+    xscale=data->get_time_vector(line)
     angle=round(data->get_satellite_rotation())
     if angle lt 0 then angle=360+angle
     if angle eq 90 or angle eq 270 then begin
-      yscale=data->get_instr_x_vector()
-    endif else yscale=data->get_instr_y_vector()
+      yscale=data->get_instr_x_vector(line)
+    endif else yscale=data->get_instr_y_vector(line)
     sx={xtitle:'Time [s]',rot:0}
   endif else begin
     xscale=data->get_instr_x_vector(line)
@@ -999,7 +1000,7 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
       event_func = 'spice_xmap_dsoption')
   endif
 
-  missing=data->get_missing_value()
+  ;missing=data->get_missing_value()
   gammacol = widget_base(lcol, /row)
   gamma=1.0
   gamma_slider = cw_fslider(gammacol,/edit,format='(f6.2)',/frame, $
@@ -1178,7 +1179,7 @@ pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
     histo_lim:histo_lim, $
     imin:imin,$
     imax:imax,$
-    missing:missing,$
+    ;missing:missing,$
     momminslider:momminslider,$
     mommaxslider:mommaxslider,$
     wid:wid}
