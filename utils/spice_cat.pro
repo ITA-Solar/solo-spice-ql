@@ -155,6 +155,13 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   command_base = widget_base(base,/row)
   command_button = widget_button(command_base,value="Return selection",uvalue="RETURN_SELECTION:")
   command_button = widget_button(command_base,value="Regenerate fits list",uvalue="REGENERATE:")
+  label = widget_label(command_base,value='                     ')
+  label = widget_label(command_base,value='                     ')
+  label = widget_label(command_base,value='                     ')
+  label = widget_label(command_base,value='                     ')
+  label = widget_label(command_base,value='                     ')
+  label = widget_label(command_base,value='                     ')
+  
   params = spice_cat.parameters(example_param1,example_param2,_extra = extra)
   
   list = spice_cat.read_fitslist(params.listfilename,headers=headers)
@@ -193,6 +200,8 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   table = widget_table(table_base,_extra=hash_to_struct(t))
   *self.state = create_struct(*self.state,'table_id',table)
   widget_control,base,/realize
+  widget_control,base,tlb_get_size=tlb
+  widget_control,table,scr_xsize=tlb[0],scr_ysize=tlb[1]-50
   xmanager,"spice_cat",base,/no_block,event_handler="spice_cat__event"
   return,1
 END
