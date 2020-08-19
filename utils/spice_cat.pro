@@ -1,4 +1,5 @@
-FUNCTION spice_cat__read_fitslist,filename,headers=headers
+FUNCTION spice_cat::read_fitslist,filename,headers=headers
+  compile_opt static
   openr,lun,filename,/get_lun
   t = ''
   readf,lun,t
@@ -9,12 +10,12 @@ FUNCTION spice_cat__read_fitslist,filename,headers=headers
      readf,lun,t
      values = strsplit(/extract,t,string(9b))
      struct = { }
-     struct_name = ""
+     structure_name = ""
      foreach value,values,index DO BEGIN
-        struct_name += keywords[index]
+        structure_name += keywords[index]
         IF keyword_info[keywords[index]].type EQ "i" THEN value = long(value)
         IF keyword_info[keywords[index]].type EQ "d" THEN value = double(value)
-        struct = create_struct(name=struct_name, struct,keywords[index],value)
+        struct = create_struct(name=structure_name, struct,keywords[index],value)
      END
      list = [list,struct]
   END
@@ -24,19 +25,23 @@ FUNCTION spice_cat__read_fitslist,filename,headers=headers
 END 
 
 
-PRO spice_cat__context_menu_event,event
+PRO spice_cat::context_menu_event,event
   widget_control,event.id,get_uvalue=uvalue
   print,"UVALUE: "+uvalue
 END
 
-
-PRO spice_cat__make_heading_context_menu,base,column_name
-  button = widget_button(base,value="Remove column",uvalue="REMOVE-COLUMN:"+column_name)
-  button = widget_button(base,value="Sort ascending",uvalue="ASCENDING:"+column_name)
-  button = widget_button(base,value="Sort descending",uvalue="DESCENDING:"+column_name)
+PRO spice_cat::remove_column_event,event,parts
+  print,"SORT on: ",parts[1]
 END
 
-PRO spice_cat__make_datacell_contet_menu,base,state,row,col,column_name
+PRO spice_cat::make_heading_context_menu,base,column_name
+  button = widget_button(base,value="Remove column",uvalue="REMOVE-COLUMN:"+column_name)
+  button = widget_button(base,value="Sort ascending",uvalue="SORT:ASCENDING:"+column_name)
+  button = widget_button(base,value="Sort descending",uvalue="SORT:DESCENDING:"+column_name)
+END
+
+PRO spice_cat::make_datacell_context_menu,base,state,row,col,column_name
+  state = *self.state
   column_name = (tag_names(state.displayed))[col]
   cell_value = trim(state.displayed[row].(col))
   filename = state.displayed[row].filename
@@ -45,36 +50,85 @@ PRO spice_cat__make_datacell_contet_menu,base,state,row,col,column_name
   button = widget_button(base,value=name_and_value,uvalue="NAME-AND-VALUE")
 END
 
-FUNCTION spice_cat__table_make_context_menu,state,ev
-  IF ev.row EQ 0 THEN return,-1 ; No context menu for filter row
-  IF ev.col LT 0 THEN return,-1 ; No context menu for row labels
-  
-  
-  base = widget_base(/CONTEXT_MENU,ev.id,event_pro="spice_cat__context_menu_event")
-  
-  IF ev.row EQ -1 THEN spice_cat__make_heading_context_menu, base, ev.col
-  IF ev.row GE 1 THEN spice_cat__make_datacell_contet_menu, base, state, ev.row, ev.col
 
-  return,base
+PRO spice_cat::table_widget_context_event,ev, parts
+  print,"Table context event detected"
+  IF ev.row EQ 0 THEN return ; No context menu for filter row
+  IF ev.col LT 0 THEN return ; No context menu for row labels
+  
+  base = widget_base(/CONTEXT_MENU, ev.id)
+  
+  IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev.col
+  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, state, ev.row, ev.col
+  
+  widget_displaycontextmenu,ev.id, ev.x, ev.y, base
 END
 
-
-PRO spice_cat__table_event,ev
-  widget_control,ev.top,get_uvalue=uvalue
-  type = tag_names(ev,/structure_name)
-  IF type EQ "WIDGET_CONTEXT" THEN BEGIN
-     help,ev,/structure 
-     menu = spice_cat__table_make_context_menu(uvalue,ev)
-     IF menu NE -1 THEN widget_displaycontextmenu,ev.id, ev.x,ev.y, menu
-  END
-  IF type EQ "WIDGET_TABLE_CELL_SEL" THEN BEGIN
-     ; widget_control,ev.handler,set_table_select=[-1,-1,-1,-1]
-  END
-  help,ev
+PRO spice_cat::table_widget_table_cell_sel_event,ev,parts
+  print,"Table cell selection detected"
 END
 
+PRO spice_cat::table_event, ev, parts
+  print,"TABLE EVENT DETECTED"
+  method = "table_" + tag_names(ev,/structure_name)+"_event"
+  call_method, method, self, ev, parts
+END
 
-FUNCTION spice_cat__parameters
+;; COMMAND BASE EVENTS -----------------------
+
+PRO spice_cat::return_selection_event,event,parts
+  print,"RETURN_SELECTION"
+END
+
+PRO spice_cat::regenerate_event,event,parts
+  print,"REGENERATE"
+END
+
+; RESIZE TABLE ACCORDING TO TLB!
+;
+PRO spice_cat::tlb_event,event
+  help,event
+  IF tag_names(event,/structure_name) EQ "WIDGET_BASE" THEN BEGIN
+     tablex = event.x
+     tabley = event.y
+;     widget_control,event.top,xsize=tablex,ysize=tabley
+     widget_control,(*self.state).table_id,xsize=tablex,ysize=tabley
+     widget_control,(*self.state).table_id,scr_xsize=tablex,scr_ysize=tabley
+  END
+END
+
+;; THE CATCH-ALL EVENT HANDLER ----------------
+
+PRO spice_cat__event,event
+  widget_control,event.top,get_uvalue=self
+  IF event.id EQ event.top THEN BEGIN
+     self.tlb_event,event
+     return
+  END 
+  widget_control,event.id,get_uvalue=uvalue
+  
+  parts = uvalue.split(':')
+  method = parts[0]+"_event"
+  
+  call_method,method,self,event,parts
+END
+
+;; UTILITY TO KILL PREVIOUS INCARNATION -------
+
+PRO spice_cat::new_incarnation,new_incarnation
+  compile_opt static
+  COMMON spice_cat,previous_incarnation
+  default,previous_incarnation,0L
+  IF widget_info(previous_incarnation,/valid_id) THEN BEGIN
+     widget_control,previous_incarnation,/destroy
+  END
+  previous_incarnation = new_incarnation
+END
+
+;; Utility function to handle defaults etc -----
+
+FUNCTION spice_cat::parameters, example_param1, example_param2, _extra=extra
+  compile_opt static
   default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   default,listfiledir,spice_datadir
   listfilename = concat_dir(listfiledir,'spice_fitslist.txt')
@@ -85,24 +139,17 @@ FUNCTION spice_cat__parameters
          }
 END
 
-
-PRO spice_cat__new_incarnation,new_incarnation
-  COMMON spice_cat,previous_incarnation
-  default,previous_incarnation,0L
-  IF widget_info(previous_incarnation,/valid_id) THEN BEGIN
-     widget_control,previous_incarnation,/destroy
-  END
-  previous_incarnation = new_incarnation
-END
-
-
-PRO spice_cat
-  base = widget_base(/column,xpad=0,ypad=0)
-  spice_cat__new_incarnation,base
+;; INIT: create, realize and register widget
+function spice_cat::init,example_param1, example_param2,_extra=extra
+  print,"spice_cat::init"
+  base = widget_base(/column,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
+  spice_cat.new_incarnation,base
+  command_base = widget_base(base,/row)
+  command_button = widget_button(command_base,value="Return selection",uvalue="RETURN_SELECTION:")
+  command_button = widget_button(command_base,value="Regenerate fits list",uvalue="REGENERATE:")
+  params = spice_cat.parameters(example_param1,example_param2,_extra = extra)
   
-  params = spice_cat__parameters()
-  
-  list = spice_cat__read_fitslist(params.listfilename,headers=headers)
+  list = spice_cat.read_fitslist(params.listfilename,headers=headers)
   filter = list[0]
   foreach tag, tag_names(filter), index DO filter.(index) = ""
   displayed = [filter,list]
@@ -119,8 +166,12 @@ PRO spice_cat
   
   table_base = widget_base(base,/column,/frame,xpad=0,ypad=0)
   
+  data = { list: list, displayed: list, headers:headers }
+  self.state = ptr_new(create_struct(params,data,"top",base))
+  
   t = hash()
   t['value'] = displayed
+  t['scroll'] = 1b 
   t['column_labels'] = headers
   t['no_row_headers'] = 1b
   t['editable'] = editable
@@ -129,17 +180,23 @@ PRO spice_cat
   t['column_widths'] = column_widths
   t['all_events'] = 1b
   t['context_events'] = 1b
-  t['event_pro']="spice_cat__table_event"
+  t['uvalue']="TABLE:"
+  ;t['resizeable_columns'] = 1b
   table = widget_table(table_base,_extra=hash_to_struct(t))
-  
-  data = { list: list, displayed: list, headers:headers }
-  state = create_struct(params,data)
-  widget_control,base,set_uvalue=state
-  
+  *self.state = create_struct(*self.state,'table_id',table)
   widget_control,base,/realize
-  xmanager,"spice_cat",base,/no_block
+  xmanager,"spice_cat",base,/no_block,event_handler="spice_cat__event"
+  return,1
 END
 
-xmanager,/cleanup
-spice_cat
+PRO spice_cat__define
+  dummy = {spice_cat, state: ptr_new()}  
+END
+
+PRO spice_cat,o
+  spice_cat__define
+  o = obj_new('spice_cat')
+END
+
+spice_cat,o
 END
