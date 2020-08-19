@@ -51,7 +51,7 @@ PRO spice_cat::make_datacell_context_menu,base,state,row,col,column_name
 END
 
 
-PRO spice_cat::table_widget_context_event,ev, parts
+PRO spice_cat::table_widget_context_event,ev
   print,"Table context event detected"
   IF ev.row EQ 0 THEN return ; No context menu for filter row
   IF ev.col LT 0 THEN return ; No context menu for row labels
@@ -64,14 +64,24 @@ PRO spice_cat::table_widget_context_event,ev, parts
   widget_displaycontextmenu,ev.id, ev.x, ev.y, base
 END
 
-PRO spice_cat::table_widget_table_cell_sel_event,ev,parts
+PRO spice_cat::table_widget_table_cell_sel_event,ev
   print,"Table cell selection detected"
 END
 
+PRO spice_cat::table_widget_table_ch_event,ev
+  print,"Table widget cell change event detected"
+END  
+
 PRO spice_cat::table_event, ev, parts
   print,"TABLE EVENT DETECTED"
+  type = tag_names(ev,/structure_name)
+  CASE type OF 
+     "WIDGET_TABLE_COL_WIDTH": return
+     ELSE:
+  END
+  
   method = "table_" + tag_names(ev,/structure_name)+"_event"
-  call_method, method, self, ev, parts
+  call_method, method, self, ev
 END
 
 ;; COMMAND BASE EVENTS -----------------------
@@ -91,8 +101,6 @@ PRO spice_cat::tlb_event,event
   IF tag_names(event,/structure_name) EQ "WIDGET_BASE" THEN BEGIN
      tablex = event.x
      tabley = event.y
-;     widget_control,event.top,xsize=tablex,ysize=tabley
-     widget_control,(*self.state).table_id,xsize=tablex,ysize=tabley
      widget_control,(*self.state).table_id,scr_xsize=tablex,scr_ysize=tabley
   END
 END
@@ -181,7 +189,7 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   t['all_events'] = 1b
   t['context_events'] = 1b
   t['uvalue']="TABLE:"
-  ;t['resizeable_columns'] = 1b
+  t['resizeable_columns'] = 1b
   table = widget_table(table_base,_extra=hash_to_struct(t))
   *self.state = create_struct(*self.state,'table_id',table)
   widget_control,base,/realize
