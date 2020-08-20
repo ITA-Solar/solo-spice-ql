@@ -14,9 +14,12 @@ FUNCTION spice_keyword_info,keywords,all=all,hash=hash
   w += "       2"
   t += "       n"
 
-  k = trim(strsplit(k,",",/extract))
+  k = strsplit(k,",",/extract)
   w = fix(strsplit(w,",",/extract))
-  t = trim(strsplit(t,",",/extract))
+  t = strsplit(t,",",/extract)
+  
+  k = k.trim()
+  t = k.trim()
   
   display_widths = hash(k,w)
   types = hash(k,t)
