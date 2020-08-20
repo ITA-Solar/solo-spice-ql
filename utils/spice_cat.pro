@@ -205,7 +205,7 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   self.state.table_props.uvalue="TABLE:"
   self.state.table_props.resizeable_columns = 1b
   
-  props = hash_or_dict_to_struct(self.state.table_props)
+  props = self.state.table_props.tostruct()
   self.state.table_id = widget_table(self.state.table_base, _extra=props)
   
   widget_control,self.state.top_base,/realize
