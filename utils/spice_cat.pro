@@ -1,3 +1,8 @@
+PRO spice_cat::default,var,default
+  compile_opt static
+  IF n_elements(var) EQ 0 THEN var = default
+END 
+
 PRO spice_cat::read_fitslist,filename,headers=headers
   openr,lun,self.state.listfilename,/get_lun
   t = ''
@@ -133,9 +138,8 @@ END
 ;; UTILITY TO KILL PREVIOUS INCARNATION -------
 
 PRO spice_cat::new_incarnation
-;  compile_opt static
   COMMON spice_cat,previous_incarnation
-  default,previous_incarnation,0L
+  self.default,previous_incarnation,0L
   IF widget_info(previous_incarnation,/valid_id) THEN BEGIN
      widget_control,previous_incarnation,/destroy
   END
@@ -148,9 +152,9 @@ PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   self.state = dictionary()
   
   IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
-  default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
+  self.default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   
-  default,listfiledir,spice_datadir
+  self.default,listfiledir,spice_datadir
   
   self.state.spice_datadir = spice_datadir
   self.state.listfiledir = listfiledir
