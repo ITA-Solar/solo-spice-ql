@@ -1,6 +1,5 @@
-FUNCTION spice_cat::read_fitslist,filename,headers=headers
-  compile_opt static
-  openr,lun,filename,/get_lun
+PRO spice_cat::read_fitslist,filename,headers=headers
+  openr,lun,self.state.listfilename,/get_lun
   t = ''
   readf,lun,t
   keywords = strsplit(/extract,t,",")
@@ -20,8 +19,9 @@ FUNCTION spice_cat::read_fitslist,filename,headers=headers
      list = [list,struct]
   END
   free_lun,lun
-  headers = tag_names(list[0] )
-  return,list
+  
+  self.state.full_list = list
+  self.state.headers = tag_names(list[0])
 END 
 
 
@@ -34,12 +34,12 @@ FUNCTION spice_cat::column_name,column,original=original
 END
 
 PRO spice_cat::handle_remove_column,event,parts
-  print,"SORT on: ",parts[1]
+  print,"REMOVE COLUMN: ",parts[1]
 END
 
 PRO spice_cat::make_heading_context_menu,base,ev
   column_name = self.column_name(ev.col)
-  button = widget_button(base,value="Remove column",uvalue="REMOVE-COLUMN:"+column_name)
+  button = widget_button(base,value="Remove column",uvalue="REMOVE_COLUMN:"+column_name)
   button = widget_button(base,value="Sort ascending",uvalue="SORT:ASCENDING:"+column_name)
   button = widget_button(base,value="Sort descending",uvalue="SORT:DESCENDING:"+column_name)
 END
@@ -56,6 +56,7 @@ END
 
 PRO spice_cat::handle_table_widget_context,ev
   print,"Table context event detected"
+  widget_control, self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   IF ev.row EQ 0 THEN return ; No context menu for filter row
   IF ev.col LT 0 THEN return ; No context menu for row labels
   
@@ -66,16 +67,32 @@ PRO spice_cat::handle_table_widget_context,ev
   widget_displaycontextmenu,ev.id, ev.x, ev.y, base
 END
 
+
 PRO spice_cat::handle_table_widget_table_cell_sel,ev
-  print,"Table cell selection detected"
-  help,ev,/structure
+  column_range = trim(ev.sel_left) + ':' + trim(ev.sel_right)
+  row_range = trim(ev.sel_top) + ':' + trim(ev.sel_bottom)
+  text = '[' + column_range + ', ' + row_range + ']'
+  print,"Table cell selection detected: "+text
+;  help,ev,/structure
 END
 
+
 PRO spice_cat::handle_table_widget_table_ch,ev
-  print,"Table widget cell change event detected"
+  print,"Table cell change"
 END  
 
-PRO spice_cat::handle_table, ev, parts
+PRO spice_cat::handle_table_widget_table_del,ev
+  print,"Table cell text deletion"
+END 
+
+PRO spice_cat::handle_table_widget_table_text_sel
+  print,"Table cell text selection"
+END
+
+PRO spice_cat::handle_all_table, ev, parts
+  ;; We came here because all table events, anywhere,
+  ;; results in uvalue="ALL_TABLE:"
+  ;;
   type = tag_names(ev,/structure_name)
   CASE type OF 
      "WIDGET_TABLE_COL_WIDTH": return
@@ -121,7 +138,7 @@ PRO spice_cat::new_incarnation
   IF widget_info(previous_incarnation,/valid_id) THEN BEGIN
      widget_control,previous_incarnation,/destroy
   END
-  previous_incarnation = self.state.top_base
+  previous_incarnation = self.wid.top_base
 END
 
 ;; Utility function to handle defaults etc -----
@@ -138,44 +155,19 @@ PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
 END
 
 
-PRO spice_cat::rebuild_table,scr_xsize,scr_ysize
-  
-END
 ; RESIZE TABLE ACCORDING TO TLB size change!
 ;
 PRO spice_cat::tlb_event,event
-  help,event
   IF tag_names(event,/structure_name) EQ "WIDGET_BASE" THEN BEGIN
+     widget_control,self.wid.xsize_spacer_base,xsize=event.x
+     widget_control,self.wid.ysize_spacer_base,ysize=event.y
      tablex = event.x
-     tabley = event.y
-     widget_control,self.state.table_id,scr_xsize=tablex,scr_ysize=tabley
+     tabley = event.y - 50
+     widget_control,self.wid.table_id,scr_xsize=tablex,scr_ysize=tabley
    END
 END
 
-;; INIT: create, realize and register widget
-function spice_cat::init,example_param1, example_param2,_extra=extra
-  self.parameters, example_param1,example_param2,_extra = extra
-  
-  self.state.full_list = spice_cat.read_fitslist(self.state.listfilename,headers=headers)
-  self.state.headers = headers
-  
-  filter = create_struct(name=tag_names(self.state.full_list,/structure_name))
-  self.state.displayed = [filter,self.state.full_list]
-  
-  self.state.top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
-  self.new_incarnation
-  
-  self.state.ysize_spacer_base = widget_base(self.state.top_base,/column,ysize=800)
-  self.state.content_base = widget_base(self.state.top_base,/column)
-  self.state.xsize_spacer_base = widget_base(self.state.content_base,/row,xsize=800)
-  self.state.command_base = widget_base(self.state.content_base,/row)
-  self.state.table_base = widget_base(self.state.content_base,/column,/frame,xpad=0,ypad=0)
-    
-  
-  button = widget_button(self.state.command_base,value="Return selection",uvalue="RETURN_SELECTION:")
-  button = widget_button(self.state.command_base,value="Regenerate fits list",uvalue="REGENERATE:")
-  
-  
+PRO spice_cat::build_table
   ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
   
   num_table_columns = n_elements(self.state.headers)
@@ -186,38 +178,68 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   background_color[*,*,0] = 255b
   column_widths = (spice_keyword_info(self.state.headers)).display_width * 12
   
-  self.state.table_props = dictionary()
-  self.state.table_props.value = self.state.displayed
-  self.state.table_props.scroll = 1b 
-  self.state.table_props.column_labels = self.state.headers
-  self.state.table_props.no_row_headers = 1b
-  self.state.table_props.editable = editable
-  self.state.table_props.row_major = 1b
-  self.state.table_props.background_color = background_color
-  self.state.table_props.column_widths = column_widths
-  self.state.table_props.all_events = 1b
-  self.state.table_props.context_events = 1b
-  self.state.table_props.uvalue="TABLE:"
-  self.state.table_props.resizeable_columns = 1b
+  self.wid.table_props = dictionary()
+  self.wid.table_props.value = self.state.displayed
+  self.wid.table_props.scroll = 1b 
+  self.wid.table_props.column_labels = self.state.headers
+  self.wid.table_props.no_row_headers = 1b
+  self.wid.table_props.editable = editable
+  self.wid.table_props.row_major = 1b
+  self.wid.table_props.background_color = background_color
+  self.wid.table_props.column_widths = column_widths
+  self.wid.table_props.all_events = 1b
+  self.wid.table_props.context_events = 1b
+  self.wid.table_props.uvalue="ALL_TABLE:"
+  self.wid.table_props.resizeable_columns = 1b
   
-  props = self.state.table_props.tostruct()
-  self.state.table_id = widget_table(self.state.table_base, _extra=props)
+  props = self.wid.table_props.tostruct()
+  self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
+END
+
+
+PRO spice_cat::build_widget
+  self.wid = dictionary()
   
-  widget_control,self.state.top_base,/realize
+  self.wid.top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events,title='SPICE-CAT')
+  self.wid.ysize_spacer_base = widget_base(self.wid.top_base,/column,ysize=800)
+  self.wid.content_base = widget_base(self.wid.top_base,/column)
+  self.wid.xsize_spacer_base = widget_base(self.wid.content_base,/row,xsize=800)
+  self.wid.command_base = widget_base(self.wid.content_base,/row)
+  self.wid.table_base = widget_base(self.wid.content_base,/column,/frame,xpad=0,ypad=0)
+    
+  self.new_incarnation
+  
+  button = widget_button(self.wid.command_base,value="Return selection",uvalue="RETURN_SELECTION:")
+  button = widget_button(self.wid.command_base,value="Regenerate fits list",uvalue="REGENERATE:")
+  
+  self.build_table
+  
+  widget_control,self.wid.top_base,/realize
   
   ;; Make table fill available space despite /scroll
-  widget_control,self.state.top_base,tlb_get_size=tlb_size
+  widget_control,self.wid.top_base,tlb_get_size=tlb_size
   base_resize_event = {widget_base}
   base_resize_event.x = tlb_size[0]
   base_resize_event.y = tlb_size[1]
   self.tlb_event, base_resize_event
+END
+
+;; INIT: create, realize and register widget
+function spice_cat::init,example_param1, example_param2,_extra=extra
+  self.parameters, example_param1,example_param2,_extra = extra
+  self.read_fitslist
   
-  xmanager,"spice_cat",self.state.top_base,/no_block,event_handler="spice_cat__event"
+  filter = create_struct(name=tag_names(self.state.full_list,/structure_name))
+  self.state.displayed = [filter,self.state.full_list]
+  
+  self.build_widget
+  
+  xmanager,"spice_cat",self.wid.top_base,/no_block,event_handler="spice_cat__event"
   return,1
 END
 
 PRO spice_cat__define
-  dummy = {spice_cat, state: dictionary()}  
+  dummy = {spice_cat, state: dictionary(), wid:dictionary() }  
 END
 
 PRO spice_cat,o
