@@ -27,9 +27,9 @@ END
 
 FUNCTION spice_cat::column_name,column,original=original
   IF NOT keyword_set(original) THEN BEGIN
-     return, (tag_names((*self.state).displayed))[column]
+     return, (tag_names(self.state.displayed))[column]
   END ELSE BEGIN 
-     return, (tag_names((*self.state).displayed))[column]
+     return, (tag_names(self.state.displayed))[column]
   END
 END
 
@@ -45,10 +45,9 @@ PRO spice_cat::make_heading_context_menu,base,ev
 END
 
 PRO spice_cat::make_datacell_context_menu,base,ev
-  state = *self.state
   column_name = self.column_name(ev.col)
-  cell_value = trim(state.displayed[row].(col))
-  filename = state.displayed[row].filename
+  cell_value = trim(self.state.displayed[ev.row].(ev.col))
+  filename = self.state.displayed[ev.row].filename
   name_and_value = column_name+": "+cell_value
   button = widget_button(base,value=filename,uvalue="FILENAME")
   button = widget_button(base,value=name_and_value,uvalue="NAME-AND-VALUE")
@@ -69,6 +68,7 @@ END
 
 PRO spice_cat::handle_table_widget_table_cell_sel,ev
   print,"Table cell selection detected"
+  help,ev,/structure
 END
 
 PRO spice_cat::handle_table_widget_table_ch,ev
@@ -76,7 +76,6 @@ PRO spice_cat::handle_table_widget_table_ch,ev
 END  
 
 PRO spice_cat::handle_table, ev, parts
-  print,"TABLE EVENT DETECTED"
   type = tag_names(ev,/structure_name)
   CASE type OF 
      "WIDGET_TABLE_COL_WIDTH": return
@@ -115,33 +114,31 @@ END
 
 ;; UTILITY TO KILL PREVIOUS INCARNATION -------
 
-PRO spice_cat::new_incarnation,new_incarnation
-  compile_opt static
+PRO spice_cat::new_incarnation
+;  compile_opt static
   COMMON spice_cat,previous_incarnation
   default,previous_incarnation,0L
   IF widget_info(previous_incarnation,/valid_id) THEN BEGIN
      widget_control,previous_incarnation,/destroy
   END
-  previous_incarnation = new_incarnation
+  previous_incarnation = self.state.top_base
 END
 
 ;; Utility function to handle defaults etc -----
 
-FUNCTION spice_cat::parameters, example_param1, example_param2, _extra=extra
-  compile_opt static
+PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
+  self.state = dictionary()
+  
   default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   default,listfiledir,spice_datadir
-  listfilename = concat_dir(listfiledir,'spice_fitslist.txt')
-  return,{$
-         spice_datadir:spice_datadir, $
-         listfiledir:listfiledir, $
-         listfilename:listfilename $
-         }
+  
+  self.state.spice_datadir = spice_datadir
+  self.state.listfiledir = listfiledir
+  self.state.listfilename = concat_dir(listfiledir,'spice_fitslist.txt')
 END
 
 
 PRO spice_cat::rebuild_table,scr_xsize,scr_ysize
-  state = *self.state
   
 END
 ; RESIZE TABLE ACCORDING TO TLB size change!
@@ -151,19 +148,20 @@ PRO spice_cat::tlb_event,event
   IF tag_names(event,/structure_name) EQ "WIDGET_BASE" THEN BEGIN
      tablex = event.x
      tabley = event.y
-     widget_control,(*self.state).table_id,scr_xsize=tablex,scr_ysize=tabley
+     widget_control,self.state.table_id,scr_xsize=tablex,scr_ysize=tabley
    END
 END
 
 ;; INIT: create, realize and register widget
 function spice_cat::init,example_param1, example_param2,_extra=extra
-  print,"spice_cat::init"
-  top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
-  spice_cat.new_incarnation,top_base
+  self.parameters, example_param1,example_param2,_extra = extra
   
-  ysize_spacer_base = widget_base(top_base,/column)
+  self.state.top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
+  self.new_incarnation
   
-  content_base = widget_base(top_base,/column)
+  ysize_spacer_base = widget_base(self.state.top_base,/column)
+  
+  content_base = widget_base(self.state.top_base,/column)
   command_base = widget_base(content_base,/row)
   command_button = widget_button(command_base,value="Return selection",uvalue="RETURN_SELECTION:")
   command_button = widget_button(command_base,value="Regenerate fits list",uvalue="REGENERATE:")
@@ -174,58 +172,57 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   label = widget_label(command_base,value='                     ')
   label = widget_label(command_base,value='                     ')
   
-  params = spice_cat.parameters(example_param1,example_param2,_extra = extra)
   
-  full_list = spice_cat.read_fitslist(params.listfilename,headers=headers)
-  filter = create_struct(name=tag_names(full_list,/structure_name))
-  displayed = [filter,full_list]
+  self.state.full_list = spice_cat.read_fitslist(self.state.listfilename,headers=headers)
+  self.state.headers = headers
+  
+  filter = create_struct(name=tag_names(self.state.full_list,/structure_name))
+  self.state.displayed = [filter,self.state.full_list]
   
   ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
   
-  num_table_columns = n_elements(headers)
-  num_table_rows = n_elements(full_list)+1
+  num_table_columns = n_elements(self.state.headers)
+  num_table_rows = n_elements(self.state.full_list)+1
   editable = bytarr(num_table_columns,num_table_rows)
   editable[*,0] = 1b
   background_color = replicate(230b,3,num_table_columns,num_table_rows)
   background_color[*,*,0] = 255b
-  column_widths = (spice_keyword_info(headers)).display_width * 12
+  column_widths = (spice_keyword_info(self.state.headers)).display_width * 12
   
-  table_base = widget_base(content_base,/column,/frame,xpad=0,ypad=0)
+  self.state.table_base = widget_base(content_base,/column,/frame,xpad=0,ypad=0)
+    
+  self.state.table_props = dictionary()
+  self.state.table_props.value = self.state.displayed
+  self.state.table_props.scroll = 1b 
+  self.state.table_props.column_labels = self.state.headers
+  self.state.table_props.no_row_headers = 1b
+  self.state.table_props.editable = editable
+  self.state.table_props.row_major = 1b
+  self.state.table_props.background_color = background_color
+  self.state.table_props.column_widths = column_widths
+  self.state.table_props.all_events = 1b
+  self.state.table_props.context_events = 1b
+  self.state.table_props.uvalue="TABLE:"
+  self.state.table_props.resizeable_columns = 1b
   
-  data = { full_list: full_list, displayed: displayed, headers:headers }
-  self.state = ptr_new(create_struct(params,data,"top_base",top_base))
+  props = hash_or_dict_to_struct(self.state.table_props)
+  self.state.table_id = widget_table(self.state.table_base, _extra=props)
   
-  t = hash()
-  t['value'] = displayed
-  t['scroll'] = 1b 
-  t['column_labels'] = headers
-  t['no_row_headers'] = 1b
-  t['editable'] = editable
-  t['row_major'] = 1b
-  t['background_color'] = background_color
-  t['column_widths'] = column_widths
-  t['all_events'] = 1b
-  t['context_events'] = 1b
-  t['uvalue']="TABLE:"
-  t['resizeable_columns'] = 1b
-  table_id = widget_table(table_base,_extra=hash_to_struct(t))
-  *self.state = create_struct(*self.state,'table_base',table_base,'table_id',table_id,'table_hash',t)
-  
-  widget_control,top_base,/realize
+  widget_control,self.state.top_base,/realize
   
   ;; Make table fill available space despite /scroll
-  widget_control,top_base,tlb_get_size=tlb
+  widget_control,self.state.top_base,tlb_get_size=tlb_size
   base_resize_event = {widget_base}
-  base_resize_event.x = tlb[0]
-  base_resize_event.y = tlb[1]
+  base_resize_event.x = tlb_size[0]
+  base_resize_event.y = tlb_size[1]
   self.tlb_event, base_resize_event
   
-  xmanager,"spice_cat",top_base,/no_block,event_handler="spice_cat__event"
+  xmanager,"spice_cat",self.state.top_base,/no_block,event_handler="spice_cat__event"
   return,1
 END
 
 PRO spice_cat__define
-  dummy = {spice_cat, state: ptr_new()}  
+  dummy = {spice_cat, state: dictionary()}  
 END
 
 PRO spice_cat,o
