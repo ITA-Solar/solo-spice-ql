@@ -51,7 +51,7 @@ END
 
 PRO spice_cat::make_datacell_context_menu,base,ev
   column_name = self.column_name(ev.col)
-  cell_value = trim(self.state.displayed[ev.row].(ev.col))
+  cell_value = self.state.displayed[ev.row].(ev.col).tostring()
   filename = self.state.displayed[ev.row].filename
   name_and_value = column_name+": "+cell_value
   button = widget_button(base,value=filename,uvalue="FILENAME")
@@ -75,8 +75,8 @@ END
 
 
 PRO spice_cat::handle_table_widget_table_cell_sel,ev
-  column_range = trim(ev.sel_left) + ':' + trim(ev.sel_right)
-  row_range = trim(ev.sel_top) + ':' + trim(ev.sel_bottom)
+  column_range = ev.sel_left.tostring() + ':' + ev.sel_right.tostring()
+  row_range = ev.sel_top.tostring() + ':' + ev.sel_bottom.tostring()
   text = '[' + column_range + ', ' + row_range + ']'
   print,"Table cell selection detected: "+text
 ;  help,ev,/structure
