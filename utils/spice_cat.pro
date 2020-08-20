@@ -25,24 +25,28 @@ FUNCTION spice_cat::read_fitslist,filename,headers=headers
 END 
 
 
-PRO spice_cat::context_menu_event,event
-  widget_control,event.id,get_uvalue=uvalue
-  print,"UVALUE: "+uvalue
+FUNCTION spice_cat::column_name,column,original=original
+  IF NOT keyword_set(original) THEN BEGIN
+     return, (tag_names((*self.state).displayed))[column]
+  END ELSE BEGIN 
+     return, (tag_names((*self.state).displayed))[column]
+  END
 END
 
-PRO spice_cat::remove_column_event,event,parts
+PRO spice_cat::handle_remove_column,event,parts
   print,"SORT on: ",parts[1]
 END
 
-PRO spice_cat::make_heading_context_menu,base,column_name
+PRO spice_cat::make_heading_context_menu,base,ev
+  column_name = self.column_name(ev.col)
   button = widget_button(base,value="Remove column",uvalue="REMOVE-COLUMN:"+column_name)
   button = widget_button(base,value="Sort ascending",uvalue="SORT:ASCENDING:"+column_name)
   button = widget_button(base,value="Sort descending",uvalue="SORT:DESCENDING:"+column_name)
 END
 
-PRO spice_cat::make_datacell_context_menu,base,state,row,col,column_name
+PRO spice_cat::make_datacell_context_menu,base,ev
   state = *self.state
-  column_name = (tag_names(state.displayed))[col]
+  column_name = self.column_name(ev.col)
   cell_value = trim(state.displayed[row].(col))
   filename = state.displayed[row].filename
   name_and_value = column_name+": "+cell_value
@@ -51,28 +55,27 @@ PRO spice_cat::make_datacell_context_menu,base,state,row,col,column_name
 END
 
 
-PRO spice_cat::table_widget_context_event,ev
+PRO spice_cat::handle_table_widget_context,ev
   print,"Table context event detected"
   IF ev.row EQ 0 THEN return ; No context menu for filter row
   IF ev.col LT 0 THEN return ; No context menu for row labels
   
   base = widget_base(/CONTEXT_MENU, ev.id)
-  
-  IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev.col
-  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, state, ev.row, ev.col
+  IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev
+  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, ev
   
   widget_displaycontextmenu,ev.id, ev.x, ev.y, base
 END
 
-PRO spice_cat::table_widget_table_cell_sel_event,ev
+PRO spice_cat::handle_table_widget_table_cell_sel,ev
   print,"Table cell selection detected"
 END
 
-PRO spice_cat::table_widget_table_ch_event,ev
+PRO spice_cat::handle_table_widget_table_ch,ev
   print,"Table widget cell change event detected"
 END  
 
-PRO spice_cat::table_event, ev, parts
+PRO spice_cat::handle_table, ev, parts
   print,"TABLE EVENT DETECTED"
   type = tag_names(ev,/structure_name)
   CASE type OF 
@@ -80,17 +83,17 @@ PRO spice_cat::table_event, ev, parts
      ELSE:
   END
   
-  method = "table_" + tag_names(ev,/structure_name)+"_event"
+  method = "handle_table_" + tag_names(ev,/structure_name)
   call_method, method, self, ev
 END
 
 ;; COMMAND BASE EVENTS -----------------------
 
-PRO spice_cat::return_selection_event,event,parts
+PRO spice_cat::handle_return_selection,event,parts
   print,"RETURN_SELECTION"
 END
 
-PRO spice_cat::regenerate_event,event,parts
+PRO spice_cat::handle_regenerate,event,parts
   print,"REGENERATE"
 END
 
@@ -116,7 +119,7 @@ PRO spice_cat__event,event
   widget_control,event.id,get_uvalue=uvalue
   
   parts = uvalue.split(':')
-  method = parts[0]+"_event"
+  method = "handle_"+parts[0]
   
   call_method,method,self,event,parts
 END
