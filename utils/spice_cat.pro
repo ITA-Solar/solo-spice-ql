@@ -167,15 +167,14 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   
   params = spice_cat.parameters(example_param1,example_param2,_extra = extra)
   
-  list = spice_cat.read_fitslist(params.listfilename,headers=headers)
-  filter = list[0]
-  foreach tag, tag_names(filter), index DO filter.(index) = ""
-  displayed = [filter,list]
+  full_list = spice_cat.read_fitslist(params.listfilename,headers=headers)
+  filter = create_struct(name=tag_names(full_list,/structure_name))
+  displayed = [filter,full_list]
   
   ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
   
   num_columns = n_elements(headers)
-  num_rows = n_elements(list)
+  num_rows = n_elements(full_list)
   editable = bytarr(num_columns,num_rows)
   editable[*,0] = 1b
   background_color = replicate(230b,3,num_columns,num_rows)
@@ -184,7 +183,7 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   
   table_base = widget_base(base,/column,/frame,xpad=0,ypad=0)
   
-  data = { list: list, displayed: list, headers:headers }
+  data = { full_list: full_list, displayed: displayed, headers:headers }
   self.state = ptr_new(create_struct(params,data,"top",base))
   
   t = hash()
@@ -200,8 +199,9 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   t['context_events'] = 1b
   t['uvalue']="TABLE:"
   t['resizeable_columns'] = 1b
-  table = widget_table(table_base,_extra=hash_to_struct(t))
-  *self.state = create_struct(*self.state,'table_id',table)
+  table_id = widget_table(table_base,_extra=hash_to_struct(t))
+  *self.state = create_struct(*self.state,'table_base',table_base,'table_id',table_id,'table_hash',t)
+  
   widget_control,base,/realize
   widget_control,base,tlb_get_size=tlb
   widget_control,table,scr_xsize=tlb[0],scr_ysize=tlb[1]-50
