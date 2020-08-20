@@ -139,24 +139,32 @@ FUNCTION spice_cat::parameters, example_param1, example_param2, _extra=extra
          }
 END
 
-; RESIZE TABLE ACCORDING TO TLB!
+
+PRO spice_cat::rebuild_table,scr_xsize,scr_ysize
+  state = *self.state
+  
+END
+; RESIZE TABLE ACCORDING TO TLB size change!
 ;
 PRO spice_cat::tlb_event,event
   help,event
   IF tag_names(event,/structure_name) EQ "WIDGET_BASE" THEN BEGIN
      tablex = event.x
-     tabley = event.y - 50
+     tabley = event.y
      widget_control,(*self.state).table_id,scr_xsize=tablex,scr_ysize=tabley
-     
-  END
+   END
 END
 
 ;; INIT: create, realize and register widget
 function spice_cat::init,example_param1, example_param2,_extra=extra
   print,"spice_cat::init"
-  base = widget_base(/column,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
-  spice_cat.new_incarnation,base
-  command_base = widget_base(base,/row)
+  top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
+  spice_cat.new_incarnation,top_base
+  
+  ysize_spacer_base = widget_base(top_base,/column)
+  
+  content_base = widget_base(top_base,/column)
+  command_base = widget_base(content_base,/row)
   command_button = widget_button(command_base,value="Return selection",uvalue="RETURN_SELECTION:")
   command_button = widget_button(command_base,value="Regenerate fits list",uvalue="REGENERATE:")
   label = widget_label(command_base,value='                     ')
@@ -182,10 +190,10 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   background_color[*,*,0] = 255b
   column_widths = (spice_keyword_info(headers)).display_width * 12
   
-  table_base = widget_base(base,/column,/frame,xpad=0,ypad=0)
+  table_base = widget_base(content_base,/column,/frame,xpad=0,ypad=0)
   
   data = { full_list: full_list, displayed: displayed, headers:headers }
-  self.state = ptr_new(create_struct(params,data,"top",base))
+  self.state = ptr_new(create_struct(params,data,"top_base",top_base))
   
   t = hash()
   t['value'] = displayed
@@ -203,16 +211,16 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   table_id = widget_table(table_base,_extra=hash_to_struct(t))
   *self.state = create_struct(*self.state,'table_base',table_base,'table_id',table_id,'table_hash',t)
   
-  widget_control,base,/realize
+  widget_control,top_base,/realize
   
   ;; Make table fill available space despite /scroll
-  widget_control,base,tlb_get_size=tlb
+  widget_control,top_base,tlb_get_size=tlb
   base_resize_event = {widget_base}
   base_resize_event.x = tlb[0]
   base_resize_event.y = tlb[1]
   self.tlb_event, base_resize_event
   
-  xmanager,"spice_cat",base,/no_block,event_handler="spice_cat__event"
+  xmanager,"spice_cat",top_base,/no_block,event_handler="spice_cat__event"
   return,1
 END
 
