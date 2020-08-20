@@ -56,13 +56,14 @@ END
 
 PRO spice_cat::handle_table_widget_context,ev
   print,"Table context event detected"
-  widget_control, self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   IF ev.row EQ 0 THEN return ; No context menu for filter row
   IF ev.col LT 0 THEN return ; No context menu for row labels
   
   base = widget_base(/CONTEXT_MENU, ev.id)
   IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev
-  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, ev
+  IF ev.row GE 1 THEN BEGIN
+     self.make_datacell_context_menu, base, ev
+  END
   
   widget_displaycontextmenu,ev.id, ev.x, ev.y, base
 END
@@ -146,7 +147,9 @@ END
 PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   self.state = dictionary()
   
+  IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
   default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
+  
   default,listfiledir,spice_datadir
   
   self.state.spice_datadir = spice_datadir
@@ -215,6 +218,7 @@ PRO spice_cat::build_widget
   self.build_table
   
   widget_control,self.wid.top_base,/realize
+  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   
   ;; Make table fill available space despite /scroll
   widget_control,self.wid.top_base,tlb_get_size=tlb_size
