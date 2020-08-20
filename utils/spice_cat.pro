@@ -97,17 +97,6 @@ PRO spice_cat::handle_regenerate,event,parts
   print,"REGENERATE"
 END
 
-; RESIZE TABLE ACCORDING TO TLB!
-;
-PRO spice_cat::tlb_event,event
-  help,event
-  IF tag_names(event,/structure_name) EQ "WIDGET_BASE" THEN BEGIN
-     tablex = event.x
-     tabley = event.y
-     widget_control,(*self.state).table_id,scr_xsize=tablex,scr_ysize=tabley
-  END
-END
-
 ;; THE CATCH-ALL EVENT HANDLER ----------------
 
 PRO spice_cat__event,event
@@ -150,6 +139,18 @@ FUNCTION spice_cat::parameters, example_param1, example_param2, _extra=extra
          }
 END
 
+; RESIZE TABLE ACCORDING TO TLB!
+;
+PRO spice_cat::tlb_event,event
+  help,event
+  IF tag_names(event,/structure_name) EQ "WIDGET_BASE" THEN BEGIN
+     tablex = event.x
+     tabley = event.y - 50
+     widget_control,(*self.state).table_id,scr_xsize=tablex,scr_ysize=tabley
+     
+  END
+END
+
 ;; INIT: create, realize and register widget
 function spice_cat::init,example_param1, example_param2,_extra=extra
   print,"spice_cat::init"
@@ -173,11 +174,11 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   
   ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
   
-  num_columns = n_elements(headers)
-  num_rows = n_elements(full_list)
-  editable = bytarr(num_columns,num_rows)
+  num_table_columns = n_elements(headers)
+  num_table_rows = n_elements(full_list)+1
+  editable = bytarr(num_table_columns,num_table_rows)
   editable[*,0] = 1b
-  background_color = replicate(230b,3,num_columns,num_rows)
+  background_color = replicate(230b,3,num_table_columns,num_table_rows)
   background_color[*,*,0] = 255b
   column_widths = (spice_keyword_info(headers)).display_width * 12
   
@@ -203,8 +204,14 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   *self.state = create_struct(*self.state,'table_base',table_base,'table_id',table_id,'table_hash',t)
   
   widget_control,base,/realize
+  
+  ;; Make table fill available space despite /scroll
   widget_control,base,tlb_get_size=tlb
-  widget_control,table,scr_xsize=tlb[0],scr_ysize=tlb[1]-50
+  base_resize_event = {widget_base}
+  base_resize_event.x = tlb[0]
+  base_resize_event.y = tlb[1]
+  self.tlb_event, base_resize_event
+  
   xmanager,"spice_cat",base,/no_block,event_handler="spice_cat__event"
   return,1
 END
