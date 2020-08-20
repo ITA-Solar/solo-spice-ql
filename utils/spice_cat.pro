@@ -156,28 +156,25 @@ END
 function spice_cat::init,example_param1, example_param2,_extra=extra
   self.parameters, example_param1,example_param2,_extra = extra
   
-  self.state.top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
-  self.new_incarnation
-  
-  ysize_spacer_base = widget_base(self.state.top_base,/column)
-  
-  content_base = widget_base(self.state.top_base,/column)
-  command_base = widget_base(content_base,/row)
-  command_button = widget_button(command_base,value="Return selection",uvalue="RETURN_SELECTION:")
-  command_button = widget_button(command_base,value="Regenerate fits list",uvalue="REGENERATE:")
-  label = widget_label(command_base,value='                     ')
-  label = widget_label(command_base,value='                     ')
-  label = widget_label(command_base,value='                     ')
-  label = widget_label(command_base,value='                     ')
-  label = widget_label(command_base,value='                     ')
-  label = widget_label(command_base,value='                     ')
-  
-  
   self.state.full_list = spice_cat.read_fitslist(self.state.listfilename,headers=headers)
   self.state.headers = headers
   
   filter = create_struct(name=tag_names(self.state.full_list,/structure_name))
   self.state.displayed = [filter,self.state.full_list]
+  
+  self.state.top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events)
+  self.new_incarnation
+  
+  self.state.ysize_spacer_base = widget_base(self.state.top_base,/column,ysize=800)
+  self.state.content_base = widget_base(self.state.top_base,/column)
+  self.state.xsize_spacer_base = widget_base(self.state.content_base,/row,xsize=800)
+  self.state.command_base = widget_base(self.state.content_base,/row)
+  self.state.table_base = widget_base(self.state.content_base,/column,/frame,xpad=0,ypad=0)
+    
+  
+  button = widget_button(self.state.command_base,value="Return selection",uvalue="RETURN_SELECTION:")
+  button = widget_button(self.state.command_base,value="Regenerate fits list",uvalue="REGENERATE:")
+  
   
   ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
   
@@ -189,8 +186,6 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   background_color[*,*,0] = 255b
   column_widths = (spice_keyword_info(self.state.headers)).display_width * 12
   
-  self.state.table_base = widget_base(content_base,/column,/frame,xpad=0,ypad=0)
-    
   self.state.table_props = dictionary()
   self.state.table_props.value = self.state.displayed
   self.state.table_props.scroll = 1b 
