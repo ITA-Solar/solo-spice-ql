@@ -203,6 +203,23 @@ PRO spice_cat::build_table
   self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
 END
 
+PRO spice_cat::set_main_offset
+  base = widget_base()
+  spacer = widget_base(base,xsize=5000,ysize=5000)
+  widget_control,base,/realize
+  widget_control,base,tlb_get_size=screen_size
+  print,"SCREEN SIZE: ",screen_size
+  widget_control,base,/destroy
+
+  
+  widget_control,self.wid.top_base,tlb_get_size=tlb_size
+  print,tlb_size
+  ;; Left edge offset from left edge of screen is...
+  ;; middle of screen minus half our size
+  offsets = screen_size/2 - tlb_size/2
+  widget_control,self.wid.top_base,xoffset=offsets[0],yoffset=offsets[1]
+END
+
 
 PRO spice_cat::build_widget
   self.wid = dictionary()
@@ -222,6 +239,7 @@ PRO spice_cat::build_widget
   self.build_table
   
   widget_control,self.wid.top_base,/realize
+  self.set_main_offset
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   
   ;; Make table fill available space despite /scroll
