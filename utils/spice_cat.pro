@@ -44,6 +44,54 @@ PRO spice_cat::handle_remove_column,event,parts
   print,"Remove column: ",parts[1]
 END
 
+
+PRO spice_cat::handle_sort,event,parts
+  print,"Handle sort: ",parts[1]
+END
+
+
+PRO spice_cat::handle_filter_event,event,parts
+  print,"Handle filter event: "+parts[1]
+  widget_control,event.id,get_value=filter_text
+  print,"FILTER: "+filter_text
+END
+
+PRO spice_cat::handle_filter_flash_text,event,parts
+  print,"Handle filter unselect_text: "+parts[1]
+  iteration = parts[1].toInteger()
+  widget_control,self.wid.filter_text,get_value=text
+  text_len = text.strlen()
+  IF (iteration MOD 2) THEN widget_control,self.wid.filter_text,set_text_select=[0,0] $
+  ELSE                      widget_control,self.wid.filter_text,set_text_select=[0,text_len]
+  IF iteration LT 5 THEN BEGIN
+     iteration++
+     widget_control,event.id,set_uvalue="FILTER_FLASH_TEXT:"+iteration.toString()
+     widget_control,event.id,timer=0.1
+  END
+END
+
+PRO spice_cat::handle_edit_filter,event,parts
+  print,"Handle edit filter: ",(keyword = parts[1])
+  widget_control,self.wid.top_base,update=0
+  
+  filter_base = self.wid.filter_base
+  filter_base_children = widget_info(filter_base,/all_children)
+  foreach child,filter_base_children DO widget_control,child,/destroy
+  
+  self.wid.filter_label = widget_label(filter_base, value="Filter on "+parts[1]+":")
+  current_value = "<current-value>"
+  self.wid.filter_text = widget_text(self.wid.filter_base, value=current_value,/editable,$
+                                     /all_events,uvalue="FILTER_EVENT:"+parts[1])
+  widget_control,self.wid.filter_text,/input_focus
+  
+  timer_base = widget_base(filter_base,uvalue="FILTER_FLASH_TEXT:1",map=0)
+  widget_control,self.wid.top_base,update=1
+  widget_control,self.wid.filter_text,set_text_select=[0,current_value.strlen()]
+  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
+  widget_control,timer_base,timer=0.1
+END
+
+
 PRO spice_cat::make_heading_context_menu,base,ev
   column_name = self.column_name(ev.col)
   button = widget_button(base,value="Remove column",uvalue="REMOVE_COLUMN:"+column_name)
@@ -78,11 +126,16 @@ END
 
 
 PRO spice_cat::handle_table_widget_table_cell_sel,ev
-  column_range = ev.sel_left.tostring() + ':' + ev.sel_right.tostring()
-  row_range = ev.sel_top.tostring() + ':' + ev.sel_bottom.tostring()
+  e = {left:ev.sel_left,right:ev.sel_right,top:ev.sel_top,bottom:ev.sel_bottom}
+  
+  column_range = e.left.tostring() + ':' + e.right.tostring()
+  row_range = e.top.tostring() + ':' + e.bottom.tostring()
   text = '[' + column_range + ', ' + row_range + ']'
   print,"Table cell selection detected: "+text
-;  help,ev,/structure
+  IF (e.top NE e.bottom) OR (e.left NE e.right) OR (e.top NE 0) THEN return
+  column_name = self.state.headers[e.left]
+  
+  self.handle_edit_filter,ev,["EDIT_FILTER",column_name]
 END
 
 
@@ -227,6 +280,16 @@ PRO spice_cat::set_window_position
   widget_control,self.wid.top_base,xoffset=offsets[0],yoffset=offsets[1]
 END
 
+PRO spice_cat::create_buttons
+  buttons = $
+     [ $
+     { value: "Return selection", uvalue: "RETURN_SELECTION:", ALIGN_CENTER: 1b },$
+     { value: "Regenerate list", uvalue: "REGENERATE:", ALIGN_CENTER: 1b },$
+     { value: "Call <program>", uvalue: "CALL_PROGRAM:", ALIGN_CENTER: 1b } $
+     ]
+  button = widget_button(self.wid.button_base,_extra=buttons[0])
+  button = widget_button(self.wid.button_base,value="Regenerate fits list",uvalue="REGENERATE:",/align_center)
+END
 
 PRO spice_cat::build_widget
   self.wid = dictionary()
@@ -235,16 +298,19 @@ PRO spice_cat::build_widget
   self.wid.ysize_spacer_base = widget_base(self.wid.top_base,/column,ysize=800)
   self.wid.content_base = widget_base(self.wid.top_base,/column)
   self.wid.xsize_spacer_base = widget_base(self.wid.content_base,/row,xsize=800)
-  self.wid.command_base = widget_base(self.wid.content_base,/row)
+  self.wid.top_row_base = widget_base(self.wid.content_base,/row)
+  self.wid.button_base = widget_base(self.wid.top_row_base,/row,/ALIGN_CENTER)
+  self.wid.filter_base = widget_base(self.wid.top_row_base,/row)
   self.wid.table_base = widget_base(self.wid.content_base,/column,/frame,xpad=0,ypad=0)
     
-  self.new_incarnation
+  self.create_buttons
   
-  button = widget_button(self.wid.command_base,value="Return selection",uvalue="RETURN_SELECTION:")
-  button = widget_button(self.wid.command_base,value="Regenerate fits list",uvalue="REGENERATE:")
+  self.wid.filter_label = widget_label(self.wid.filter_base,value='Filter:')
+  text = widget_text(self.wid.filter_base,value="right-click headers to edit")
   
   self.build_table
   
+  self.new_incarnation
   widget_control,self.wid.top_base,/realize
   self.set_window_position
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
