@@ -3,6 +3,7 @@ PRO spice_cat::default,var,default
   IF n_elements(var) EQ 0 THEN var = default
 END 
 
+
 PRO spice_cat::read_fitslist,filename,headers=headers
   openr,lun,self.state.listfilename,/get_lun
   t = ''
@@ -38,8 +39,9 @@ FUNCTION spice_cat::column_name,column,original=original
   END
 END
 
+
 PRO spice_cat::handle_remove_column,event,parts
-  print,"REMOVE COLUMN: ",parts[1]
+  print,"Remove column: ",parts[1]
 END
 
 PRO spice_cat::make_heading_context_menu,base,ev
@@ -48,6 +50,7 @@ PRO spice_cat::make_heading_context_menu,base,ev
   button = widget_button(base,value="Sort ascending",uvalue="SORT:ASCENDING:"+column_name)
   button = widget_button(base,value="Sort descending",uvalue="SORT:DESCENDING:"+column_name)
 END
+
 
 PRO spice_cat::make_datacell_context_menu,base,ev
   column_name = self.column_name(ev.col)
@@ -85,6 +88,10 @@ END
 
 PRO spice_cat::handle_table_widget_table_ch,ev
   print,"Table cell change"
+  IF ev.x LT 0 OR ev.y LT 0 THEN BEGIN
+     print,"Non-event!"
+     return
+  END
 END  
 
 PRO spice_cat::handle_table_widget_table_del,ev
@@ -203,7 +210,7 @@ PRO spice_cat::build_table
   self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
 END
 
-PRO spice_cat::set_main_offset
+PRO spice_cat::set_window_position
   base = widget_base()
   spacer = widget_base(base,xsize=5000,ysize=5000)
   widget_control,base,/realize
@@ -239,7 +246,7 @@ PRO spice_cat::build_widget
   self.build_table
   
   widget_control,self.wid.top_base,/realize
-  self.set_main_offset
+  self.set_window_position
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   
   ;; Make table fill available space despite /scroll
