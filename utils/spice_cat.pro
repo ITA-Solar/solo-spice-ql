@@ -101,6 +101,7 @@ END
 
 
 PRO spice_cat::make_datacell_context_menu,base,ev
+  print,"Make datacell context menu"
   column_name = self.column_name(ev.col)
   cell_value = self.state.displayed[ev.row].(ev.col).tostring()
   filename = self.state.displayed[ev.row].filename
@@ -132,9 +133,12 @@ PRO spice_cat::handle_table_widget_table_cell_sel,ev
   row_range = e.top.tostring() + ':' + e.bottom.tostring()
   text = '[' + column_range + ', ' + row_range + ']'
   print,"Table cell selection detected: "+text
+  
+  ;; Only meaningful action at this stage is if the user wants
+  ;; to edit the filter (1st and only 1st row)
+  
   IF (e.top NE e.bottom) OR (e.left NE e.right) OR (e.top NE 0) THEN return
   column_name = self.state.headers[e.left]
-  
   self.handle_edit_filter,ev,["EDIT_FILTER",column_name]
 END
 
@@ -287,8 +291,7 @@ PRO spice_cat::create_buttons
      { value: "Regenerate list", uvalue: "REGENERATE:", ALIGN_CENTER: 1b },$
      { value: "Call <program>", uvalue: "CALL_PROGRAM:", ALIGN_CENTER: 1b } $
      ]
-  button = widget_button(self.wid.button_base,_extra=buttons[0])
-  button = widget_button(self.wid.button_base,value="Regenerate fits list",uvalue="REGENERATE:",/align_center)
+  foreach button_info, buttons DO button = widget_button(self.wid.button_base,_extra=buttons[0])
 END
 
 PRO spice_cat::build_widget
@@ -328,8 +331,8 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
   self.parameters, example_param1,example_param2,_extra = extra
   self.read_fitslist
   
-  filter = create_struct(name=tag_names(self.state.full_list,/structure_name))
-  self.state.displayed = [filter,self.state.full_list]
+  filters_as_struct = create_struct(name=tag_names(self.state.full_list,/structure_name))
+  self.state.displayed = [filters_as_struct,self.state.full_list]
   
   self.build_widget
   
