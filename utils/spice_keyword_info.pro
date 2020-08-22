@@ -1,7 +1,7 @@
 ; Scalar input is no problem: foreach handles ok, and an
 ; array of 1 struct is the same as a scalar struct.
 
-FUNCTION spice_keyword_info,keywords,all=all,return_hash=return_hash
+FUNCTION spice_keyword_info,keywords,all=all,return_as_hash=return_as_hash
   k = "FILENAME,COMPRESS,STUDY_ID,OBS_ID,STUDYTYP,STUDYDES,STUDY,"
   w = "      20,       5,       2,    10,       5,      10,   10,"
   t = "       t,       t,       i,     t,       t,       t,    t,"
@@ -12,14 +12,14 @@ FUNCTION spice_keyword_info,keywords,all=all,return_hash=return_hash
   
   k += "NWIN_INT"
   w += "       2"
-  t += "       n"
+  t += "       i"
 
   k = strsplit(k,",",/extract)
   w = fix(strsplit(w,",",/extract))
   t = strsplit(t,",",/extract)
   
   k = k.trim()
-  t = k.trim()
+  t = t.trim()
   
   display_widths = hash(k,w)
   types = hash(k,t)
@@ -34,6 +34,6 @@ FUNCTION spice_keyword_info,keywords,all=all,return_hash=return_hash
                     }
      info_array = [info_array,keyword_info]
   END
-  IF keyword_set(return_hash) THEN return,hash(info_array.keyword,info_array)
+  IF keyword_set(return_as_hash) THEN return,hash(info_array.keyword,info_array)
   return,info_array
 END
