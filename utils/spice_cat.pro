@@ -4,13 +4,13 @@ PRO spice_cat::default,var,default
 END 
 
 
-PRO spice_cat::read_fitslist,filename,headers=headers
+PRO spice_cat::read_fitslist,filename,column_names=column_names
   openr,lun,self.state.listfilename,/get_lun
   t = ''
   readf,lun,t
   keywords = strsplit(/extract,t,",")
   list = []
-  keyword_info = spice_keyword_info(/all,/hash)
+  keyword_info = spice_keyword_info(/all,/return_hash)
   WHILE NOT eof(lun) DO BEGIN
      readf,lun,t
      values = strsplit(/extract,t,string(9b))
@@ -25,9 +25,8 @@ PRO spice_cat::read_fitslist,filename,headers=headers
      list = [list,struct]
   END
   free_lun,lun
-  
   self.state.full_list = list
-  self.state.headers = tag_names(list[0])
+  self.state.column_names = tag_names(list[0])
 END 
 
 
@@ -39,6 +38,18 @@ FUNCTION spice_cat::column_name,column,original=original
   END
 END
 
+FUNCTION spice_cat::get_filter_by_column_name,column_name
+  column_number = where(self.state.column_names EQ column_name)
+  select = [column_number,0,column_number,0]
+  widget_control,self.wid.table_id,get_value=filter,use_table_select=select
+  return,filter[0]
+END
+
+PRO spice_cat::set_filter_by_column_name,column_name,value
+  column_number = where(self.state.column_names EQ column_name)
+  select = [column_number,0,column_number,0]
+  widget_control,self.wid.table_id,set_value=value,use_table_select=select
+END
 
 PRO spice_cat::handle_remove_column,event,parts
   print,"Remove column: ",parts[1]
@@ -49,11 +60,12 @@ PRO spice_cat::handle_sort,event,parts
   print,"Handle sort: ",parts[1]
 END
 
-
 PRO spice_cat::handle_filter_event,event,parts
   print,"Handle filter event: "+parts[1]
   widget_control,event.id,get_value=filter_text
+  self.set_filter_by_column_name,parts[1],filter_text
   print,"FILTER: "+filter_text
+  
 END
 
 PRO spice_cat::handle_filter_flash_text,event,parts
@@ -67,24 +79,27 @@ PRO spice_cat::handle_filter_flash_text,event,parts
      iteration++
      widget_control,event.id,set_uvalue="FILTER_FLASH_TEXT:"+iteration.toString()
      widget_control,event.id,timer=0.1
+  END ELSE BEGIN
+     widget_control,self.wid.filter_text,get_value=value
+     IF value EQ "<filter>" THEN widget_control,self.wid.filter_text,set_value=""
   END
 END
 
 PRO spice_cat::handle_edit_filter,event,parts
-  print,"Handle edit filter: ",(keyword = parts[1])
+  print,"Handle edit filter: ",(column_name = parts[1])
   widget_control,self.wid.top_base,update=0
   
   filter_base = self.wid.filter_base
-  filter_base_children = widget_info(filter_base,/all_children)
+  filter_base_children = widget_info(self.wid.filter_base,/all_children)
   foreach child,filter_base_children DO widget_control,child,/destroy
   
-  self.wid.filter_label = widget_label(filter_base, value="Filter on "+parts[1]+":")
-  current_value = "<current-value>"
+  self.wid.filter_label = widget_label(self.wid.filter_base, value="Filter on "+parts[1]+":")
+  current_value = self.get_filter_by_column_name(column_name)
   self.wid.filter_text = widget_text(self.wid.filter_base, value=current_value,/editable,$
                                      /all_events,uvalue="FILTER_EVENT:"+parts[1])
   widget_control,self.wid.filter_text,/input_focus
   
-  timer_base = widget_base(filter_base,uvalue="FILTER_FLASH_TEXT:1",map=0)
+  timer_base = widget_base(self.wid.filter_base,uvalue="FILTER_FLASH_TEXT:1",map=0)
   widget_control,self.wid.top_base,update=1
   widget_control,self.wid.filter_text,set_text_select=[0,current_value.strlen()]
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
@@ -105,9 +120,9 @@ PRO spice_cat::make_datacell_context_menu,base,ev
   column_name = self.column_name(ev.col)
   cell_value = self.state.displayed[ev.row].(ev.col).tostring()
   filename = self.state.displayed[ev.row].filename
-  name_and_value = column_name+": "+cell_value
-  button = widget_button(base,value=filename,uvalue="FILENAME")
-  button = widget_button(base,value=name_and_value,uvalue="NAME-AND-VALUE")
+  filter_on_value = "Filter on "+column_name+"='"+cell_value+"'"
+  button = widget_button(base,value=filename,uvalue="CONTEXT_CLICK_ON_FILENAME:"+filename)
+  button = widget_button(base,value=filter_on_value,uvalue="CONTEXT_CLICK_ON_NAME_AND_VALUE")
 END
 
 
@@ -127,18 +142,18 @@ END
 
 
 PRO spice_cat::handle_table_widget_table_cell_sel,ev
-  e = {left:ev.sel_left,right:ev.sel_right,top:ev.sel_top,bottom:ev.sel_bottom}
+  ev = {left:ev.sel_left,right:ev.sel_right,top:ev.sel_top,bottom:ev.sel_bottom}
   
-  column_range = e.left.tostring() + ':' + e.right.tostring()
-  row_range = e.top.tostring() + ':' + e.bottom.tostring()
+  column_range = ev.left.tostring() + ':' + ev.right.tostring()
+  row_range = ev.top.tostring() + ':' + ev.bottom.tostring()
   text = '[' + column_range + ', ' + row_range + ']'
   print,"Table cell selection detected: "+text
   
   ;; Only meaningful action at this stage is if the user wants
   ;; to edit the filter (1st and only 1st row)
   
-  IF (e.top NE e.bottom) OR (e.left NE e.right) OR (e.top NE 0) THEN return
-  column_name = self.state.headers[e.left]
+  IF (ev.top NE ev.bottom) OR (ev.left NE ev.right) OR (ev.top NE 0) THEN return
+  column_name = self.state.column_names[ev.left]
   self.handle_edit_filter,ev,["EDIT_FILTER",column_name]
 END
 
@@ -238,35 +253,6 @@ PRO spice_cat::tlb_event,event
    END
 END
 
-PRO spice_cat::build_table
-  ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
-  
-  num_table_columns = n_elements(self.state.headers)
-  num_table_rows = n_elements(self.state.full_list)+1
-  editable = bytarr(num_table_columns,num_table_rows)
-  editable[*,0] = 1b
-  background_color = replicate(230b,3,num_table_columns,num_table_rows)
-  background_color[*,*,0] = 255b
-  column_widths = (spice_keyword_info(self.state.headers)).display_width * 12
-  
-  self.wid.table_props = dictionary()
-  self.wid.table_props.value = self.state.displayed
-  self.wid.table_props.scroll = 1b 
-  self.wid.table_props.column_labels = self.state.headers
-  self.wid.table_props.no_row_headers = 1b
-  self.wid.table_props.editable = editable
-  self.wid.table_props.row_major = 1b
-  self.wid.table_props.background_color = background_color
-  self.wid.table_props.column_widths = column_widths
-  self.wid.table_props.all_events = 1b
-  self.wid.table_props.context_events = 1b
-  self.wid.table_props.uvalue="ALL_TABLE:"
-  self.wid.table_props.resizeable_columns = 1b
-  
-  props = self.wid.table_props.tostruct()
-  self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
-END
-
 PRO spice_cat::set_window_position
   base = widget_base()
   spacer = widget_base(base,xsize=5000,ysize=5000)
@@ -282,6 +268,34 @@ PRO spice_cat::set_window_position
   ;; middle of screen minus half our size
   offsets = screen_size/2 - tlb_size/2
   widget_control,self.wid.top_base,xoffset=offsets[0],yoffset=offsets[1]
+END
+
+PRO spice_cat::build_table
+  ; Arrays like "editable" is [column,row], so [*,n] is all columns in row n
+  
+  num_table_columns = n_elements(self.state.column_names)
+  num_table_rows = n_elements(self.state.full_list)+1
+  background_color = replicate(230b,3,num_table_columns,num_table_rows)
+  background_color[1,*,0] = 255b
+  keyword_info = spice_keyword_info(self.state.column_names)
+  print, "GOT HERE A"
+  column_widths = keyword_info.display_width * 12
+  print,"GOT HERE"
+  self.wid.table_props = dictionary()
+  self.wid.table_props.value = self.state.displayed
+  self.wid.table_props.scroll = 1b 
+  self.wid.table_props.column_labels = self.state.column_names
+  self.wid.table_props.no_row_headers = 1b
+  self.wid.table_props.row_major = 1b
+  self.wid.table_props.background_color = background_color
+  self.wid.table_props.column_widths = column_widths
+  self.wid.table_props.all_events = 1b
+  self.wid.table_props.context_events = 1b
+  self.wid.table_props.uvalue="ALL_TABLE:"
+  self.wid.table_props.resizeable_columns = 1b
+  
+  props = self.wid.table_props.tostruct()
+  self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
 END
 
 PRO spice_cat::create_buttons
@@ -309,7 +323,7 @@ PRO spice_cat::build_widget
   self.create_buttons
   
   self.wid.filter_label = widget_label(self.wid.filter_base,value='Filter:')
-  text = widget_text(self.wid.filter_base,value="right-click headers to edit")
+  text = widget_text(self.wid.filter_base,value="click on green line to edit")
   
   self.build_table
   
@@ -326,14 +340,25 @@ PRO spice_cat::build_widget
   self.tlb_event, base_resize_event
 END
 
+PRO spice_cat::build_displayed_list
+  ;; Ooops! We get a core dump if we first create self.state.filters, and
+  ;; then try to manipulate it with e.g. self.state.filters.(i) = "<filter>",
+  ;; probably b/c .filters is a DICTIONARY() entry
+  
+  filters = create_struct(name=tag_names(self.state.full_list,/structure_name))
+  column_names = tag_names(self.state.full_list)
+  FOR i=0,n_elements(column_names)-1 DO filters.(i) = "<filter>"
+  self.state.filters = filters
+  select_mask = replicate(1b,n_elements(self.state.full_list))
+  ix = where(select_mask)
+  self.state.displayed = [self.state.filters, self.state.full_list[ix]]
+END
+
 ;; INIT: create, realize and register widget
 function spice_cat::init,example_param1, example_param2,_extra=extra
   self.parameters, example_param1,example_param2,_extra = extra
   self.read_fitslist
-  
-  filters_as_struct = create_struct(name=tag_names(self.state.full_list,/structure_name))
-  self.state.displayed = [filters_as_struct,self.state.full_list]
-  
+  self.build_displayed_list
   self.build_widget
   
   xmanager,"spice_cat",self.wid.top_base,/no_block,event_handler="spice_cat__event"
