@@ -60,13 +60,14 @@ PRO spice_cat::handle_sort,event,parts
   print,"Handle sort: ",parts[1]
 END
 
-PRO spice_cat::handle_filter_event,event,parts
+
+PRO spice_cat::handle_text_filter_event,event,parts
   print,"Handle filter event: "+parts[1]
   widget_control,event.id,get_value=filter_text
   self.set_filter_by_column_name,parts[1],filter_text
   print,"FILTER: "+filter_text
-  
 END
+
 
 PRO spice_cat::handle_filter_flash_text,event,parts
   print,"Handle filter unselect_text: "+parts[1]
@@ -78,32 +79,46 @@ PRO spice_cat::handle_filter_flash_text,event,parts
   IF iteration LT 5 THEN BEGIN
      iteration++
      widget_control,event.id,set_uvalue="FILTER_FLASH_TEXT:"+iteration.toString()
-     widget_control,event.id,timer=0.1
+     widget_control,event.id,timer=0.08
   END ELSE BEGIN
      widget_control,self.wid.filter_text,get_value=value
      IF value EQ "<filter>" THEN widget_control,self.wid.filter_text,set_value=""
   END
 END
 
-PRO spice_cat::handle_edit_filter,event,parts
-  print,"Handle edit filter: ",(column_name = parts[1])
-  widget_control,self.wid.top_base,update=0
+
+PRO spice_cat::build_text_filter,column_name
+  self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
+  current_value = self.get_filter_by_column_name(column_name)
+  self.wid.filter_text = widget_text(self.wid.filter_base, value=current_value,/editable,$
+                                     /all_events,uvalue="TEXT_FILTER_EVENT:"+column_name)
+  self.wid.filter_flash_text = self.wid.filter_text
+  widget_control,self.wid.filter_text,/input_focus
+  widget_control,self.wid.filter_text,set_text_select=[0,current_value.strlen()]
+END
+
+
+PRO spice_cat::build_range_filter,column_name
+  self.wid.filter_label = widget_label
+END
+
+
+PRO spice_cat::rebuild_filter,column_name,range_filter
+  print,"Rebuild filter: ",column_name
   
-  filter_base = self.wid.filter_base
+  widget_control,self.wid.top_base,update=0
+  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
+  
   filter_base_children = widget_info(self.wid.filter_base,/all_children)
   foreach child,filter_base_children DO widget_control,child,/destroy
   
-  self.wid.filter_label = widget_label(self.wid.filter_base, value="Filter on "+parts[1]+":")
-  current_value = self.get_filter_by_column_name(column_name)
-  self.wid.filter_text = widget_text(self.wid.filter_base, value=current_value,/editable,$
-                                     /all_events,uvalue="FILTER_EVENT:"+parts[1])
-  widget_control,self.wid.filter_text,/input_focus
+  IF keyword_set(range_filter) THEN self.build_range_filter,column_name
+  IF NOT keyword_set(range_filter) THEN self.build_text_filter,column_name
   
-  timer_base = widget_base(self.wid.filter_base,uvalue="FILTER_FLASH_TEXT:1",map=0)
+  widget_control,self.wid.filter_base, set_uvalue="FILTER_FLASH_TEXT:1"
+  widget_control,self.wid.filter_base,timer=0.08
+  
   widget_control,self.wid.top_base,update=1
-  widget_control,self.wid.filter_text,set_text_select=[0,current_value.strlen()]
-  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
-  widget_control,timer_base,timer=0.1
 END
 
 
@@ -154,7 +169,7 @@ PRO spice_cat::handle_table_widget_table_cell_sel,ev
   
   IF (ev.top NE ev.bottom) OR (ev.left NE ev.right) OR (ev.top NE 0) THEN return
   column_name = self.state.column_names[ev.left]
-  self.handle_edit_filter,ev,["EDIT_FILTER",column_name]
+  self.rebuild_filter,column_name
 END
 
 
