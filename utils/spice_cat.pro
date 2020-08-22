@@ -1,16 +1,28 @@
+@spice_keyword_info
+
+PRO spice_cat::handle_remove_column,event,parts
+  print,"Remove column: ",parts[1]
+END
+
+
+PRO spice_cat::handle_sort,event,parts
+  print,"Handle sort: ",parts[1]
+END
+
+
 PRO spice_cat::default,var,default
   compile_opt static
   IF n_elements(var) EQ 0 THEN var = default
 END 
 
 
-PRO spice_cat::read_fitslist,filename,column_names=column_names
+PRO spice_cat::load_fitslist,filename
   openr,lun,self.state.listfilename,/get_lun
   t = ''
   readf,lun,t
   keywords = strsplit(/extract,t,",")
   list = []
-  keyword_info = spice_keyword_info(/all,/return_hash)
+  keyword_info = spice_keyword_info(/all,/return_as_hash)
   WHILE NOT eof(lun) DO BEGIN
      readf,lun,t
      values = strsplit(/extract,t,string(9b))
@@ -18,8 +30,6 @@ PRO spice_cat::read_fitslist,filename,column_names=column_names
      structure_name = ""
      foreach value,values,index DO BEGIN
         structure_name += keywords[index]
-        IF keyword_info[keywords[index]].type EQ "i" THEN value = long(value)
-        IF keyword_info[keywords[index]].type EQ "d" THEN value = double(value)
         struct = create_struct(name=structure_name, struct,keywords[index],value)
      END
      list = [list,struct]
@@ -50,16 +60,6 @@ PRO spice_cat::set_filter_by_column_name,column_name,value
   select = [column_number,0,column_number,0]
   widget_control,self.wid.table_id,set_value=value,use_table_select=select
 END
-
-PRO spice_cat::handle_remove_column,event,parts
-  print,"Remove column: ",parts[1]
-END
-
-
-PRO spice_cat::handle_sort,event,parts
-  print,"Handle sort: ",parts[1]
-END
-
 
 PRO spice_cat::handle_text_filter_event,event,parts
   print,"Handle filter event: "+parts[1]
@@ -244,7 +244,7 @@ END
 
 PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   self.state = dictionary()
-  
+  self.state.keyword_info = spice_keyword_info(/all,/return_as_hash)
   IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
   self.default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   
@@ -372,7 +372,7 @@ END
 ;; INIT: create, realize and register widget
 function spice_cat::init,example_param1, example_param2,_extra=extra
   self.parameters, example_param1,example_param2,_extra = extra
-  self.read_fitslist
+  self.load_fitslist
   self.build_displayed_list
   self.build_widget
   
