@@ -1,10 +1,10 @@
 PRO spice_cat::handle_remove_column,event,parts
-  print,"Remove column: ",parts[1]
+  print,"Handle "+parts[0]+" : "+parts[1]
 END
 
 
 PRO spice_cat::handle_sort,event,parts
-  print,"Handle sort: ",parts[1]
+  print,"Handle "+parts[0]+" : "+parts[1]
 END
 
 
@@ -78,12 +78,25 @@ PRO spice_cat::set_filter_by_column_name,column_name,filter_as_array
 END
 
 
-PRO spice_cat::handle_text_filter_change_event, event,parts
+PRO spice_cat::set_filter_edit_color, column_name
+  num_columns = n_elements(tag_names(self.state.displayed))
+  table_select = [0, 0, num_columns-1, 0]
+  widget_control,self.wid.table_id, background_color=[230b,255b,230b], use_table_select=table_select
+  
+  IF column_name EQ "" THEN return
+  column_number = (where(self.state.column_names EQ column_name))[0]
+  table_select = [column_number, 0, column_number, 0]
+  color = [150b,255b,150b]
+  widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
+END
+
+
+PRO spice_cat::handle_text_filter_change, event,parts
+  print,"Handle "+parts[0]+" : "+parts[1]
   column_name = parts[1]
-  print,"Handle filter event: " + column_name + " "
-  widget_control,event.id,get_value=new_text_filter_as_array
-  print,"FILTER: "+new_text_filter_as_array[0]
-  self.set_filter_by_column_name,column_name,new_text_filter_as_array
+  widget_control,event.id,get_value=new_text_filter_as_singular_array
+  print,"FILTER: "+new_text_filter_as_singular_array[0]
+  self.set_filter_by_column_name,column_name,new_text_filter_as_singular_array
 END
 
 
@@ -98,9 +111,9 @@ END
 
 
 PRO spice_cat::handle_range_filter_change_event, event,parts
+  print,"Handle "+parts[0]+" : "+parts[1]
   min_or_max = parts[1]
   column_name = parts[2]
-  print,"Handle range filter change " + column_name
   
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
@@ -128,7 +141,7 @@ END
 
 
 PRO spice_cat::handle_filter_flash_texts,event,parts
-  print,"Handle filter flash text: "+parts[1]
+  print,"Handle "+parts[0]+" : "+parts[1]
   iteration = parts[1].toInteger()
 
   IF (iteration MOD 2)+1 THEN BEGIN 
@@ -151,10 +164,11 @@ END
 PRO spice_cat::build_text_filter,column_name,current_filter_as_array
   print,"Building text filter: " + column_name + " : " + current_filter_as_array
   current_filter_as_text = current_filter_as_array[0]
-  filter_text_uvalue = "TEXT_FILTER_CHANGE_EVENT`" + column_name
+  filter_text_uvalue = "TEXT_FILTER_CHANGE`" + column_name
   self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
+  text_props = {editable:1b, all_events:1b, kbrd_focus_events: 1b}
   self.wid.filter_text = widget_text(self.wid.filter_base, value=current_filter_as_text,$
-                                     /editable,/all_events,uvalue=filter_text_uvalue)
+                                     _extra=text_props,uvalue=filter_text_uvalue)
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
   button = widget_button(self.wid.filter_base,value="Use range",uvalue=button_uvalue)
   self.wid.filter_flash_texts = self.wid.filter_text
@@ -189,6 +203,7 @@ END
 
 
 PRO spice_cat::handle_rebuild_filter, dummy_event, parts
+  print,"Handle "+parts[0]+" : "+parts[1]
   column_name = parts[1]
   current_filter_as_array = parts[2:*]
   
@@ -234,7 +249,9 @@ END
 ; 
 
 PRO spice_cat::handle_click_on_filter,column_name
-  print,"Click on filter: "+column_name
+  print,"Handle click on filter : " + column_name
+  
+  self.set_filter_edit_color,column_name
   
   current_filter_as_array = self.get_filter_as_array_by_column_name(column_name)
   
@@ -272,8 +289,8 @@ PRO spice_cat::make_datacell_context_menu,base,ev
 END
 
 
-PRO spice_cat::handle_table_widget_context,ev
-  print,"Table context event detected"
+PRO spice_cat::handle_context,ev
+  print,"Handle : "+tag_names(ev,/structure_name)
   IF ev.row EQ 0 THEN return ; No context menu for filter row
   IF ev.col LT 0 THEN return ; No context menu for row labels
   
@@ -293,10 +310,16 @@ FUNCTION spice_cat::selection_range_string,ev
   return,text
 END
 
-PRO spice_cat::handle_table_widget_table_cell_sel,ev
+PRO spice_cat::handle_table_cell_sel,ev
+  ;; Ignore nonsensical [-1, -1, -1, -1] events:
+  IF total([ev.sel_left,ev.sel_top,ev.sel_right,ev.sel_bottom] EQ -1) EQ 4 THEN return
+  
+  print,"Handle "+tag_names(ev,/structure_name)
   sel = {left:ev.sel_left,right:ev.sel_right,top:ev.sel_top,bottom:ev.sel_bottom}
   
   print,"Table cell selection detected: "+self.selection_range_string(sel)
+  
+  self.set_filter_edit_color,""
   
   ;; Only meaningful action at this stage is if the user wants
   ;; to edit the filter (1st and only 1st row)
@@ -308,7 +331,8 @@ PRO spice_cat::handle_table_widget_table_cell_sel,ev
 END
 
 
-PRO spice_cat::handle_table_widget_table_ch,ev
+PRO spice_cat::handle_table_ch,ev
+  print,"Handle "+parts[0]+" : "+parts[1]
   print,"Table cell change"
   IF ev.x LT 0 OR ev.y LT 0 THEN BEGIN
      print,"Non-event!"
@@ -316,11 +340,11 @@ PRO spice_cat::handle_table_widget_table_ch,ev
   END
 END  
 
-PRO spice_cat::handle_table_widget_table_del,ev
+PRO spice_cat::handle_table_del,ev
   print,"Table cell text deletion"
 END 
 
-PRO spice_cat::handle_table_widget_table_text_sel
+PRO spice_cat::handle_table_text_sel
   print,"Table cell text selection"
 END
 
@@ -334,7 +358,8 @@ PRO spice_cat::handle_all_table, ev, parts
      ELSE:
   END
   
-  method = "handle_table_" + tag_names(ev,/structure_name)
+  short_event_name = strmid(tag_names(ev,/structure_name),7,1000)
+  method = "handle_" + short_event_name
   call_method, method, self, ev
 END
 
