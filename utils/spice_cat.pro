@@ -49,7 +49,7 @@ END
 
 FUNCTION spice_cat::filter_as_array, filter_as_text
   IF filter_as_text EQ "<filter>" THEN return,["<filter>"]
-  parts = filter_as_text.extract("^{([0-9]+) *, *([0-9*]+)}$",/subexpr)
+  parts = filter_as_text.extract("^{ (.*) , (.*) }$",/subexpr)
   IF parts[0].strlen() EQ 0 THEN return, [filter_as_text]
   return,[parts[1],parts[2]]
 END
@@ -57,7 +57,7 @@ END
 
 FUNCTION spice_cat::filter_as_text, filter_as_array
   IF n_elements(filter_as_array) EQ 1 THEN return,filter_as_array[0]
-  return, "{" + filter_as_array[0] + ", " + filter_as_array[1] + "}"
+  return, "{ " + filter_as_array[0] + " , " + filter_as_array[1] + " }"
 END
 
 
@@ -105,8 +105,13 @@ PRO spice_cat::handle_range_filter_change_event, event,parts
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
   
-  new_min_value = self.remove_non_digits(min_value)
-  new_max_value = self.remove_non_digits(max_value)
+  new_min_value = min_value
+  new_max_value = max_value
+  
+  IF self.state.keyword_info[column_name].type NE "t" THEN BEGIN
+     new_min_value = self.remove_non_digits(min_value)
+     new_max_value = self.remove_non_digits(max_value)
+  END
   
   min_text_select = widget_info(self.wid.min_filter_text,/text_select)
   max_text_select = widget_info(self.wid.max_filter_text,/text_select)
@@ -142,6 +147,7 @@ PRO spice_cat::handle_filter_flash_texts,event,parts
   END
 END
 
+
 PRO spice_cat::build_text_filter,column_name,current_filter_as_array
   print,"Building text filter: " + column_name + " : " + current_filter_as_array
   current_filter_as_text = current_filter_as_array[0]
@@ -150,7 +156,7 @@ PRO spice_cat::build_text_filter,column_name,current_filter_as_array
   self.wid.filter_text = widget_text(self.wid.filter_base, value=current_filter_as_text,$
                                      /editable,/all_events,uvalue=filter_text_uvalue)
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
-  button = widget_button(self.wid.filter_base,value="Use range filter",uvalue=button_uvalue)
+  button = widget_button(self.wid.filter_base,value="Use range",uvalue=button_uvalue)
   self.wid.filter_flash_texts = self.wid.filter_text
   widget_control,self.wid.draw_focus,/input_focus
   widget_control,self.wid.filter_text,set_text_select=[0,current_filter_as_array.strlen()]
@@ -173,7 +179,10 @@ PRO spice_cat::build_range_filter,column_name,current_filter_as_array
   self.wid.min_filter_text = min_text
   self.wid.max_filter_text = max_text
   
-  
+  IF self.state.keyword_info[column_name].type EQ "t" THEN BEGIN
+     button_uvalue = "REBUILD_FILTER`" + column_name + "`"
+     button = widget_button(self.wid.filter_base,value="Use regexp",uvalue=button_uvalue)
+  END
   
   self.wid.filter_flash_texts = min_text
 END
@@ -183,6 +192,7 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   column_name = parts[1]
   current_filter_as_array = parts[2:*]
   
+  self.set_filter_by_column_name, column_name, current_filter_as_array
   widget_control,self.wid.top_base,update=0
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   
