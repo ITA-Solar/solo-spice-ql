@@ -72,39 +72,44 @@ END
 PRO spice_cat::handle_filter_flash_text,event,parts
   print,"Handle filter unselect_text: "+parts[1]
   iteration = parts[1].toInteger()
-  widget_control,self.wid.filter_text,get_value=text
-  text_len = text.strlen()
-  IF (iteration MOD 2) THEN widget_control,self.wid.filter_text,set_text_select=[0,0] $
-  ELSE                      widget_control,self.wid.filter_text,set_text_select=[0,text_len]
-  IF iteration LT 5 THEN BEGIN
+
+  IF (iteration MOD 2)+1 THEN BEGIN 
+     foreach text, self.wid.filter_flash_text DO widget_control,text, /input_focus
+  END ELSE BEGIN
+     widget_control,self.wid.draw_focus,/input_focus
+  END
+  
+  IF iteration LT 9 THEN BEGIN
      iteration++
      widget_control,event.id,set_uvalue="FILTER_FLASH_TEXT:"+iteration.toString()
-     widget_control,event.id,timer=0.08
+     widget_control,event.id,timer=0.1
   END ELSE BEGIN
-     widget_control,self.wid.filter_text,get_value=value
+     widget_control,self.wid.filter_flash_text,get_value=value
      IF value EQ "<filter>" THEN widget_control,self.wid.filter_text,set_value=""
   END
 END
 
 
-PRO spice_cat::build_text_filter,column_name
+PRO spice_cat::build_text_filter,column_name,current_encoded
+  print,"Building text filter: " + column_name + " : " + current_encoded
   self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
-  current_value = self.get_filter_by_column_name(column_name)
-  self.wid.filter_text = widget_text(self.wid.filter_base, value=current_value,/editable,$
+  self.wid.filter_text = widget_text(self.wid.filter_base, value=current_encoded,/editable,$
                                      /all_events,uvalue="TEXT_FILTER_EVENT:"+column_name)
   self.wid.filter_flash_text = self.wid.filter_text
-  widget_control,self.wid.filter_text,/input_focus
-  widget_control,self.wid.filter_text,set_text_select=[0,current_value.strlen()]
+  widget_control,self.wid.draw_focus,/input_focus
+  widget_control,self.wid.filter_text,set_text_select=[0,current_encoded.strlen()]
 END
 
 
-PRO spice_cat::build_range_filter,column_name
-  self.wid.filter_label = widget_label
+PRO spice_cat::build_range_filter,column_name,current_encoded
+  print,"Building range filter: " + column_name + " : " + current_encoded
+;  self.wid.filter_label = widget_label
 END
 
 
-PRO spice_cat::rebuild_filter,column_name,range_filter
-  print,"Rebuild filter: ",column_name
+PRO spice_cat::handle_rebuild_filter, dummy_event, parts
+  column_name = parts[1]
+  current_encoded = parts[2]
   
   widget_control,self.wid.top_base,update=0
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
@@ -112,13 +117,55 @@ PRO spice_cat::rebuild_filter,column_name,range_filter
   filter_base_children = widget_info(self.wid.filter_base,/all_children)
   foreach child,filter_base_children DO widget_control,child,/destroy
   
-  IF keyword_set(range_filter) THEN self.build_range_filter,column_name
-  IF NOT keyword_set(range_filter) THEN self.build_text_filter,column_name
+  filter_type = strmid(current_encoded,0,1)
   
-  widget_control,self.wid.filter_base, set_uvalue="FILTER_FLASH_TEXT:1"
-  widget_control,self.wid.filter_base,timer=0.08
+  IF filter_type EQ "R" THEN self.build_range_filter, column_name, current_encoded
+  IF filter_type EQ "T" THEN self.build_text_filter, column_name, current_encoded
+  
+  widget_control,self.wid.filter_base, set_uvalue="FILTER_FLASH_TEXT:1:"+Current_encoded
+  widget_control,self.wid.filter_base,timer=0.1
   
   widget_control,self.wid.top_base,update=1
+END
+
+; Rebuilding the filter-editing base contents can occur in *two* situations,
+; 1) after a click in the filter row, *or* 2) after a click to chage filter
+; type.
+;
+; Case 1: after click in filter row:
+;
+;       Current_encoded value available through selection value
+;
+;       a) if no valid filter in place, set
+;            R''    for numeric types
+;            T'     for text types
+;          and continue with b:
+;
+;       b) a valid filter is in place, build the corresponding base
+;            R' min' max (range)  NOTE: This is allowed for *TEXTS* too!
+;            T' regexp            NOTE: *NOT ALLOWED* for numeric column types
+;
+; Case 2: When *switching*, INVALIDATE ANY EXISTING FILTER! 
+;         Set a blank filter of the indicated type, then 
+;         GOTO b above!
+; 
+
+
+PRO spice_cat::handle_click_on_filter,column_name
+  print,"Click on filter: "+column_name
+  
+  current_encoded = self.get_filter_by_column_name(column_name)
+  
+  ;; Case 1a:
+  IF current_encoded EQ "<filter>" THEN BEGIN
+     column_type = self.state.keyword_info[column_name].type
+     IF column_type EQ "t" THEN current_encoded = "T'"
+     IF column_type EQ "i" THEN current_encoded = "R''
+  END
+  self.set_filter_by_column_name, column_name, current_encoded
+  
+  ;; Corresponds to uvalue="REBUILD_FILTER:column_name:type"
+  self.handle_rebuild_filter,dummy_event,["REBUILD_FILTER", column_name, current_encoded]
 END
 
 
@@ -155,21 +202,25 @@ PRO spice_cat::handle_table_widget_context,ev
   widget_displaycontextmenu,ev.id, ev.x, ev.y, base
 END
 
-
-PRO spice_cat::handle_table_widget_table_cell_sel,ev
-  ev = {left:ev.sel_left,right:ev.sel_right,top:ev.sel_top,bottom:ev.sel_bottom}
-  
+FUNCTION spice_cat::selection_range_string,ev
   column_range = ev.left.tostring() + ':' + ev.right.tostring()
   row_range = ev.top.tostring() + ':' + ev.bottom.tostring()
   text = '[' + column_range + ', ' + row_range + ']'
-  print,"Table cell selection detected: "+text
+  return,text
+END
+
+PRO spice_cat::handle_table_widget_table_cell_sel,ev
+  sel = {left:ev.sel_left,right:ev.sel_right,top:ev.sel_top,bottom:ev.sel_bottom}
+  
+  print,"Table cell selection detected: "+self.selection_range_string(sel)
   
   ;; Only meaningful action at this stage is if the user wants
   ;; to edit the filter (1st and only 1st row)
   
-  IF (ev.top NE ev.bottom) OR (ev.left NE ev.right) OR (ev.top NE 0) THEN return
-  column_name = self.state.column_names[ev.left]
-  self.rebuild_filter,column_name
+  IF (sel.top NE sel.bottom) OR (sel.left NE sel.right) OR (sel.top NE 0) THEN return
+  
+  column_name = self.state.column_names[sel.left]
+  self.handle_click_on_filter,column_name
 END
 
 
@@ -325,9 +376,8 @@ END
 
 PRO spice_cat::build_widget
   self.wid = dictionary()
-  
   self.wid.top_base = widget_base(/row,xpad=0,ypad=0,uvalue=self,/tlb_size_events,title='SPICE-CAT')
-  self.wid.ysize_spacer_base = widget_base(self.wid.top_base,/column,ysize=800)
+  self.wid.ysize_spacer_base = widget_base(self.wid.top_base,ysize=800,xpad=0,ypad=0)
   self.wid.content_base = widget_base(self.wid.top_base,/column)
   self.wid.xsize_spacer_base = widget_base(self.wid.content_base,/row,xsize=800)
   self.wid.top_row_base = widget_base(self.wid.content_base,/row)
@@ -335,6 +385,7 @@ PRO spice_cat::build_widget
   self.wid.filter_base = widget_base(self.wid.top_row_base,/row)
   self.wid.table_base = widget_base(self.wid.content_base,/column,/frame,xpad=0,ypad=0)
     
+  self.wid.draw_focus = widget_text(self.wid.ysize_spacer_base,scr_xsize=1,scr_ysize=1)
   self.create_buttons
   
   self.wid.filter_label = widget_label(self.wid.filter_base,value='Filter:')
