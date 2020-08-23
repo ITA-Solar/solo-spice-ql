@@ -86,6 +86,7 @@ PRO spice_cat::handle_text_filter_change_event, event,parts
   self.set_filter_by_column_name,column_name,new_text_filter_as_array
 END
 
+
 FUNCTION spice_cat::remove_non_digits, text
   bytes = byte(text)
   byte0 = (byte('0'))[0]
@@ -94,6 +95,7 @@ FUNCTION spice_cat::remove_non_digits, text
   IF count EQ 0 THEN return, ""
   return, string(bytes[ix])
 END
+
 
 PRO spice_cat::handle_range_filter_change_event, event,parts
   min_or_max = parts[1]
@@ -119,6 +121,7 @@ PRO spice_cat::handle_range_filter_change_event, event,parts
   self.set_filter_by_column_name, column_name, new_range_filter_as_array
 END
 
+
 PRO spice_cat::handle_filter_flash_texts,event,parts
   print,"Handle filter flash text: "+parts[1]
   iteration = parts[1].toInteger()
@@ -139,7 +142,6 @@ PRO spice_cat::handle_filter_flash_texts,event,parts
   END
 END
 
-
 PRO spice_cat::build_text_filter,column_name,current_filter_as_array
   print,"Building text filter: " + column_name + " : " + current_filter_as_array
   current_filter_as_text = current_filter_as_array[0]
@@ -147,6 +149,8 @@ PRO spice_cat::build_text_filter,column_name,current_filter_as_array
   self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
   self.wid.filter_text = widget_text(self.wid.filter_base, value=current_filter_as_text,$
                                      /editable,/all_events,uvalue=filter_text_uvalue)
+  button_uvalue = "REBUILD_FILTER`"+column_name+"``"
+  button = widget_button(self.wid.filter_base,value="Use range filter",uvalue=button_uvalue)
   self.wid.filter_flash_texts = self.wid.filter_text
   widget_control,self.wid.draw_focus,/input_focus
   widget_control,self.wid.filter_text,set_text_select=[0,current_filter_as_array.strlen()]
@@ -168,6 +172,8 @@ PRO spice_cat::build_range_filter,column_name,current_filter_as_array
   
   self.wid.min_filter_text = min_text
   self.wid.max_filter_text = max_text
+  
+  
   
   self.wid.filter_flash_texts = min_text
 END
