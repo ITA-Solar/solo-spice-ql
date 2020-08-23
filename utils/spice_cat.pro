@@ -74,6 +74,7 @@ END
 
 PRO spice_cat::set_filter_by_column_name,column_name,filter_as_array
   filter_as_text = self.filter_as_text(filter_as_array)
+  IF filter_as_text EQ "" THEN filter_as_text = "<filter>"
   column_number = (where(self.state.column_names EQ column_name))[0]
   select = [column_number,0,column_number,0]
   widget_control,self.wid.table_id,set_value=filter_as_text,use_table_select=select
@@ -90,7 +91,7 @@ END
 
 
 PRO spice_cat::handle_filter_flash_texts,event,parts
-  print,"Handle filter unselect_text: "+parts[1]
+  print,"Handle filter flash text: "+parts[1]
   iteration = parts[1].toInteger()
 
   IF (iteration MOD 2)+1 THEN BEGIN 
@@ -101,7 +102,7 @@ PRO spice_cat::handle_filter_flash_texts,event,parts
   
   IF iteration LT 8 THEN BEGIN
      iteration++
-     widget_control,event.id,set_uvalue="FILTER_FLASH_TEXTS:"+iteration.toString()
+     widget_control,event.id,set_uvalue="FILTER_FLASH_TEXTS`"+iteration.toString()
      widget_control,event.id,timer=0.05
   END ELSE BEGIN
      widget_control,self.wid.filter_flash_texts,get_value=value
@@ -113,7 +114,7 @@ END
 PRO spice_cat::build_text_filter,column_name,current_filter_as_array
   print,"Building text filter: " + column_name + " : " + current_filter_as_array
   current_filter_as_text = current_filter_as_array[0]
-  filter_text_uvalue = "TEXT_FILTER_CHANGE_EVENT:" + column_name
+  filter_text_uvalue = "TEXT_FILTER_CHANGE_EVENT`" + column_name
   self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
   self.wid.filter_text = widget_text(self.wid.filter_base, value=current_filter_as_text,$
                                      /editable,/all_events,uvalue=filter_text_uvalue)
@@ -145,7 +146,7 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   IF current_filter_type EQ "T" THEN self.build_text_filter, column_name, current_filter_as_array
   
   current_filter_as_text = self.filter_as_text(current_filter_as_array)
-  widget_control,self.wid.filter_base, set_uvalue="FILTER_FLASH_TEXTS:1
+  widget_control,self.wid.filter_base, set_uvalue="FILTER_FLASH_TEXTS`1
   widget_control,self.wid.filter_base,timer=0.05
   
   widget_control,self.wid.top_base,update=1
@@ -187,17 +188,17 @@ PRO spice_cat::handle_click_on_filter,column_name
   
   ;; Case 2b:
   self.set_filter_by_column_name, column_name, current_filter_as_array
-  
-  ;; Corresponds to uvalue="REBUILD_FILTER:column_name:type"
+  filter_as_uvalue_text = current_filter_as_array.join("`")
+  ;; Corresponds to uvalue="REBUILD_FILTER`column_name`"
   self.handle_rebuild_filter,dummy_event,["REBUILD_FILTER", column_name, current_filter_as_array]
 END
 
 
 PRO spice_cat::make_heading_context_menu,base,ev
   column_name = self.column_name(ev.col)
-  button = widget_button(base,value="Remove column",uvalue="REMOVE_COLUMN:"+column_name)
-  button = widget_button(base,value="Sort ascending",uvalue="SORT:ASCENDING:"+column_name)
-  button = widget_button(base,value="Sort descending",uvalue="SORT:DESCENDING:"+column_name)
+  button = widget_button(base,value="Remove column",uvalue="REMOVE_COLUMN`"+column_name)
+  button = widget_button(base,value="Sort ascending",uvalue="SORT`ASCENDING`"+column_name)
+  button = widget_button(base,value="Sort descending",uvalue="SORT`DESCENDING`"+column_name)
 END
 
 
@@ -207,7 +208,7 @@ PRO spice_cat::make_datacell_context_menu,base,ev
   cell_value = self.state.displayed[ev.row].(ev.col).tostring()
   filename = self.state.displayed[ev.row].filename
   filter_on_value = "Filter on "+column_name+"='"+cell_value+"'"
-  button = widget_button(base,value=filename,uvalue="CONTEXT_CLICK_ON_FILENAME:"+filename)
+  button = widget_button(base,value=filename,uvalue="CONTEXT_CLICK_ON_FILENAME`"+filename)
   button = widget_button(base,value=filter_on_value,uvalue="CONTEXT_CLICK_ON_NAME_AND_VALUE")
 END
 
@@ -266,7 +267,7 @@ END
 
 PRO spice_cat::handle_all_table, ev, parts
   ;; We came here because all table events, anywhere,
-  ;; results in uvalue="ALL_TABLE:"
+  ;; results in uvalue="ALL_TABLE`"
   ;;
   type = tag_names(ev,/structure_name)
   CASE type OF 
@@ -298,7 +299,7 @@ PRO spice_cat__event,event
   END 
   widget_control,event.id,get_uvalue=uvalue
   
-  parts = uvalue.split(':')
+  parts = uvalue.split('`')
   method = "handle_"+parts[0]
   
   call_method,method,self,event,parts
@@ -379,7 +380,7 @@ PRO spice_cat::build_table
   self.wid.table_props.column_widths = column_widths
   self.wid.table_props.all_events = 1b
   self.wid.table_props.context_events = 1b
-  self.wid.table_props.uvalue="ALL_TABLE:"
+  self.wid.table_props.uvalue="ALL_TABLE`"
   self.wid.table_props.resizeable_columns = 1b
   
   props = self.wid.table_props.tostruct()
@@ -389,9 +390,9 @@ END
 PRO spice_cat::create_buttons
   buttons = $
      [ $
-     { value: "Return selection", uvalue: "RETURN_SELECTION:", ALIGN_CENTER: 1b },$
-     { value: "Regenerate list", uvalue: "REGENERATE:", ALIGN_CENTER: 1b },$
-     { value: "Call <program>", uvalue: "CALL_PROGRAM:", ALIGN_CENTER: 1b } $
+     { value: "Return selection", uvalue: "RETURN_SELECTION`", ALIGN_CENTER: 1b },$
+     { value: "Regenerate list", uvalue: "REGENERATE`", ALIGN_CENTER: 1b },$
+     { value: "Call <program>", uvalue: "CALL_PROGRAM`", ALIGN_CENTER: 1b } $
      ]
   foreach button_info, buttons DO button = widget_button(self.wid.button_base,_extra=buttons[0])
 END
@@ -444,6 +445,7 @@ END
 
 ;; INIT: create, realize and register widget
 function spice_cat::init,example_param1, example_param2,_extra=extra
+  self.x = " "
   self.parameters, example_param1,example_param2,_extra = extra
   self.load_fitslist
   self.build_displayed_list
@@ -454,7 +456,7 @@ function spice_cat::init,example_param1, example_param2,_extra=extra
 END
 
 PRO spice_cat__define
-  dummy = {spice_cat, state: dictionary(), wid:dictionary() }  
+  dummy = {spice_cat, state: dictionary(), wid:dictionary(), x: ''}
 END
 
 PRO spice_cat,o
