@@ -47,20 +47,17 @@ FUNCTION spice_cat::column_name,column,original=original
 END
 
 
-FUNCTION spice_cat::filter_as_array,filter_as_text
-  IF filter_as_text EQ "<filter>" THEN return,['']
-  parts = (strsplit(filter_as_text,"<=",/extract,/preserve_null)).trim()
-  IF n_elements(parts) EQ 1 THEN return, parts[0]
-  min_max = ["*","*"]
-  IF parts[0] NE '' THEN min_max[0] = parts[0]
-  IF parts[1] NE '' THEN min_max[1] = parts[1]
-  return,min_max
+FUNCTION spice_cat::filter_as_array, filter_as_text
+  IF filter_as_text EQ "<filter>" THEN return,["<filter>"]
+  parts = filter_as_text.extract("^{([0-9]+) *, *([0-9*]+)}$",/subexpr)
+  IF parts[0].strlen() EQ 0 THEN return, [filter_as_text]
+  return,[parts[1],parts[2]]
 END
 
 
-FUNCTION spice_cat::filter_as_text,filter_as_array
+FUNCTION spice_cat::filter_as_text, filter_as_array
   IF n_elements(filter_as_array) EQ 1 THEN return,filter_as_array[0]
-  return,filter_as_array.join(" <= ")
+  return, "{" + filter_as_array[0] + ", " + filter_as_array[1] + "}"
 END
 
 
@@ -81,14 +78,46 @@ PRO spice_cat::set_filter_by_column_name,column_name,filter_as_array
 END
 
 
-PRO spice_cat::handle_text_filter_change_event,event,parts
+PRO spice_cat::handle_text_filter_change_event, event,parts
   column_name = parts[1]
-  print,"Handle filter event: " + column_name
-  widget_control,event.id,get_value=new_filter_text_as_array
-  print,"FILTER: "+new_filter_text_as_array[0]
-  self.set_filter_by_column_name,column_name,new_filter_text_as_array
+  print,"Handle filter event: " + column_name + " "
+  widget_control,event.id,get_value=new_text_filter_as_array
+  print,"FILTER: "+new_text_filter_as_array[0]
+  self.set_filter_by_column_name,column_name,new_text_filter_as_array
 END
 
+FUNCTION spice_cat::remove_non_digits, text
+  bytes = byte(text)
+  byte0 = (byte('0'))[0]
+  byte9 = (byte('9'))[0]
+  ix = where(bytes GE byte0 AND bytes LE byte9, count)
+  IF count EQ 0 THEN return, ""
+  return, string(bytes[ix])
+END
+
+PRO spice_cat::handle_range_filter_change_event, event,parts
+  min_or_max = parts[1]
+  column_name = parts[2]
+  print,"Handle range filter change " + column_name
+  
+  widget_control, self.wid.min_filter_text, get_value=min_value
+  widget_control, self.wid.max_filter_text, get_value=max_value
+  
+  new_min_value = self.remove_non_digits(min_value)
+  new_max_value = self.remove_non_digits(max_value)
+  
+  min_text_select = widget_info(self.wid.min_filter_text,/text_select)
+  max_text_select = widget_info(self.wid.max_filter_text,/text_select)
+  
+  min_text_select[0] = min_text_select[0] - (min_value.strlen() - new_min_value.strlen())
+  max_text_select[0] = max_text_select[0] - (max_value.strlen() - new_max_value.strlen())
+  
+  widget_control, self.wid.min_filter_text, set_value=new_min_value, set_text_select=min_text_select 
+  widget_control, self.wid.max_filter_text, set_value=new_max_value, set_text_select=max_text_select
+  
+  new_range_filter_as_array = [new_min_value, new_max_value]
+  self.set_filter_by_column_name, column_name, new_range_filter_as_array
+END
 
 PRO spice_cat::handle_filter_flash_texts,event,parts
   print,"Handle filter flash text: "+parts[1]
@@ -125,8 +154,22 @@ END
 
 
 PRO spice_cat::build_range_filter,column_name,current_filter_as_array
-  print,"Building range filter: " + column_name + " : " + current_filter_as_array
-;  self.wid.filter_label = widget_label
+  print,"Building range filter: " + column_name + " : " + current_filter_as_array.join(' - ')
+  min_value = current_filter_as_array[0]
+  max_value = current_filter_as_array[1]
+  
+  min_text_uvalue = "RANGE_FILTER_CHANGE_EVENT`MIN`" + column_name
+  max_text_uvalue = "RANGE_FILTER_CHANGE_EVENT`MAX`" + column_name
+  
+  extra = {editable:1b, all_events:1b}
+  min_text = widget_text(self.wid.filter_base,value=min_value,uvalue=min_text_uvalue,_extra=extra)
+  label = widget_label(self.wid.filter_base,value="<= " + column_name + " <=")
+  max_text = widget_text(self.wid.filter_base,value=max_value,uvalue=max_text_uvalue,_extra=extra)
+  
+  self.wid.min_filter_text = min_text
+  self.wid.max_filter_text = max_text
+  
+  self.wid.filter_flash_texts = min_text
 END
 
 
@@ -182,8 +225,8 @@ PRO spice_cat::handle_click_on_filter,column_name
   ;; Case 1a:
   IF current_filter_as_array[0] EQ "<filter>" THEN BEGIN
      column_type = self.state.keyword_info[column_name].type
-     IF column_type EQ "t" THEN current_filter_as_array = ""
-     IF column_type EQ "i" THEN current_filter_as_array = "* <= " + column_name + " <= *"
+     IF column_type EQ "t" THEN current_filter_as_array = [""]
+     IF column_type EQ "i" THEN current_filter_as_array = ["",""] ; range
   END
   
   ;; Case 2b:
@@ -394,7 +437,7 @@ PRO spice_cat::create_buttons
      { value: "Regenerate list", uvalue: "REGENERATE`", ALIGN_CENTER: 1b },$
      { value: "Call <program>", uvalue: "CALL_PROGRAM`", ALIGN_CENTER: 1b } $
      ]
-  foreach button_info, buttons DO button = widget_button(self.wid.button_base,_extra=buttons[0])
+  foreach button, buttons DO button = widget_button(self.wid.button_base,_extra=button)
 END
 
 PRO spice_cat::build_widget
@@ -404,8 +447,8 @@ PRO spice_cat::build_widget
   self.wid.content_base = widget_base(self.wid.top_base,/column)
   self.wid.xsize_spacer_base = widget_base(self.wid.content_base,/row,xsize=800)
   self.wid.top_row_base = widget_base(self.wid.content_base,/row)
-  self.wid.button_base = widget_base(self.wid.top_row_base,/row,/ALIGN_CENTER)
-  self.wid.filter_base = widget_base(self.wid.top_row_base,/row)
+  self.wid.button_base = widget_base(self.wid.top_row_base,/row,/ALIGN_CENTER,xpad=0,ypad=0)
+  self.wid.filter_base = widget_base(self.wid.top_row_base,/row,xpad=0,ypad=0)
   self.wid.table_base = widget_base(self.wid.content_base,/column,/frame,xpad=0,ypad=0)
     
   self.wid.draw_focus = widget_text(self.wid.ysize_spacer_base,scr_xsize=1,scr_ysize=1)
