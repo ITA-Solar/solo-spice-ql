@@ -92,29 +92,33 @@ PRO spice_cat::set_filter_edit_color, column_name
 END
 
 
+FUNCTION spice_cat::handle_filter_focus_change, event, column_name
+  IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN return, 0
+  
+  IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
+  IF event.enter EQ 0 THEN self.set_filter_edit_color, ""
+  widget_control, self.wid.table_id, set_table_select=[-1,-1,-1,-1]
+  return,1
+END
+
+
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
-  IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
-     IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
-     IF event.enter EQ 0 THEN self.set_filter_edit_color, ""
-     return
-  END
+  
+  IF self.handle_filter_focus_change(event, column_name) THEN return
+  
   widget_control, event.id, get_value=new_text_filter_as_singular_array
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
 END
 
 
-PRO spice_cat::handle_range_filter_change_event, event, parts
+PRO spice_cat::handle_range_filter_change, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
   
   min_or_max = parts[1]
   column_name = parts[2]
   
-  IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
-     IF event.enter NE 0 THEN self.set_filter_edit_color, column_name
-     IF event.enter EQ 0 THEN self.set_filter_edit_color, ""
-     return
-  END
+  IF self.handle_filter_focus_change(event, column_name) THEN return
 
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
@@ -182,8 +186,8 @@ PRO spice_cat::build_range_filter, column_name, current_filter_as_array
   min_value = current_filter_as_array[0]
   max_value = current_filter_as_array[1]
   
-  min_text_uvalue = "RANGE_FILTER_CHANGE_EVENT`MIN`" + column_name
-  max_text_uvalue = "RANGE_FILTER_CHANGE_EVENT`MAX`" + column_name
+  min_text_uvalue = "RANGE_FILTER_CHANGE`MIN`" + column_name
+  max_text_uvalue = "RANGE_FILTER_CHANGE`MAX`" + column_name
   
   extra = {editable: 1b, all_events: 1b, kbrd_focus_events: 1b}
   min_text = widget_text(self.wid.filter_base, value=min_value, uvalue=min_text_uvalue, _extra=extra)
