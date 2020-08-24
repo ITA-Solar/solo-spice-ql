@@ -73,6 +73,7 @@ END
 ;;
 ;; EVENT HANDLING HELPERS
 ;;
+
 FUNCTION spice_cat::filter_as_array, filter_as_text
   IF filter_as_text EQ "<filter>" THEN return, ["<filter>"]
   parts = filter_as_text.extract("^{ (.*) , (.*) }$", /subexpr)
@@ -117,11 +118,7 @@ PRO spice_cat::set_filter_edit_color, column_name, clear=clear
   widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
 END
 
-;;
-;;
-;;
-
-FUNCTION spice_cat::handle_filter_focus_change, event, column_name
+FUNCTION spice_cat::deal_with_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN return, 0
   
   IF self.state.ignore_next_focus_change NE 1 THEN BEGIN 
@@ -132,11 +129,14 @@ FUNCTION spice_cat::handle_filter_focus_change, event, column_name
   return,1
 END
 
+;;
+;; EVENT HANDLERS
+;;
 
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
   
-  IF self.handle_filter_focus_change(event, column_name) THEN return
+  IF self.deal_with_filter_focus_change(event, column_name) THEN return
   
   widget_control, event.id, get_value=new_text_filter_as_singular_array
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
@@ -149,7 +149,7 @@ PRO spice_cat::handle_range_filter_change, event, parts
   min_or_max = parts[1]
   column_name = parts[2]
   
-  IF self.handle_filter_focus_change(event, column_name) THEN return
+  IF self.deal_with_filter_focus_change(event, column_name) THEN return
 
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
@@ -191,6 +191,9 @@ PRO spice_cat::handle_flash_filter_focus, event, parts
   END
 END
 
+;;
+;; WIDGET BUILDERS
+;;
 
 PRO spice_cat::build_text_filter, column_name, current_filter_as_array
   print,"Building text filter: " + column_name + " : " + current_filter_as_array
@@ -257,23 +260,6 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   widget_control, self.wid.top_base, update=1
 END
 
-; Rebuilding the filter-editing base contents can occur in *two* situations,
-; 1) after a click in the filter row, *or* 2) after a click to chage filter
-; type.
-;
-; Case 1: after click in filter row:
-;
-;       Current_filter_as_array value available through selection value
-;
-;       a) if no valid filter in place, set to
-;            Range filter for numeric types
-;            Regexp filter for text types
-;          and continue with b:
-;
-; Case 2: When *switching*, INVALIDATE ANY EXISTING FILTER! 
-;         Set a blank filter of the indicated type, then 
-;         GOTO b above!
-; 
 
 PRO spice_cat::handle_click_on_filter,column_name
   print,"Handle click on filter : " + column_name
@@ -289,7 +275,9 @@ PRO spice_cat::handle_click_on_filter,column_name
   self.set_filter_by_column_name, column_name, current_filter_as_array
   filter_as_uvalue_text = current_filter_as_array.join("`")
   
-  ;; Corresponds to uvalue="REBUILD_FILTER`column_name`min`max" or "...`column_name`text_filter"
+  ;; Simulates UVALUE = "REBUILD_FILTER`column_name`min`max" or
+  ;;                    "REBUILD_FILTER`column_name`text_filter"
+  ;;
   self.handle_rebuild_filter, dummy_event, ["REBUILD_FILTER", column_name, current_filter_as_array]
 END
 
@@ -337,7 +325,6 @@ END
 
 PRO spice_cat::handle_table_cell_sel, ev
   sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
-  help,ev
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
