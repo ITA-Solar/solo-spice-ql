@@ -1,3 +1,7 @@
+;;
+;; UTILITY FUNCTIONS
+;;
+
 PRO spice_cat::handle_remove_column, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
 END
@@ -24,6 +28,9 @@ FUNCTION spice_cat::remove_non_digits, text
   return, string(bytes[ix])
 END
 
+;;
+;; DATA LOADING & MANIPULATION
+;;
 
 PRO spice_cat::load_fitslist, filename
   openr, lun, self.state.listfilename, /get_lun
@@ -48,6 +55,24 @@ PRO spice_cat::load_fitslist, filename
 END 
 
 
+PRO spice_cat::create_displayed_list
+  ;; Ooops! We get a core dump if we first create self.state.filters, and
+  ;; then try to manipulate it with e.g. self.state.filters.(i) = "<filter>",
+  ;; probably b/c .filters is a DICTIONARY() entry
+  
+  filters = create_struct(name=tag_names(self.state.full_list, /structure_name))
+  column_names = tag_names(self.state.full_list)
+  FOR i=0, n_elements(column_names)-1 DO filters.(i) = "<filter>"
+  self.state.filters = filters
+  select_mask = replicate(1b, n_elements(self.state.full_list))
+  ix = where(select_mask)
+  self.state.displayed = [self.state.filters, self.state.full_list[ix]]
+END
+
+
+;;
+;; EVENT HANDLING HELPERS
+;;
 FUNCTION spice_cat::filter_as_array, filter_as_text
   IF filter_as_text EQ "<filter>" THEN return, ["<filter>"]
   parts = filter_as_text.extract("^{ (.*) , (.*) }$", /subexpr)
@@ -79,25 +104,30 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
 END
 
 
-PRO spice_cat::set_filter_edit_color, column_name
+PRO spice_cat::set_filter_edit_color, column_name, clear=clear
   num_columns = n_elements(tag_names(self.state.displayed))
   table_select = [0, 0, num_columns-1, 0]
   widget_control, self.wid.table_id, background_color=[230b,255b,230b], use_table_select=table_select
   
-  IF column_name EQ "" THEN return
+  IF keyword_set(clear) THEN return
   column_number = (where(self.state.column_names EQ column_name))[0]
   table_select = [column_number, 0, column_number, 0]
   color = [150b, 255b, 150b]
   widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
 END
 
+;;
+;;
+;;
 
 FUNCTION spice_cat::handle_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN return, 0
   
-  IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
-  IF event.enter EQ 0 THEN self.set_filter_edit_color, ""
-  widget_control, self.wid.table_id, set_table_select=[-1,-1,-1,-1]
+  IF self.state.ignore_next_focus_change NE 1 THEN BEGIN 
+     IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
+     IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
+  END
+  self.state.ignore_next_focus_change = 0
   return,1
 END
 
@@ -145,22 +175,18 @@ PRO spice_cat::handle_range_filter_change, event, parts
 END
 
 
-PRO spice_cat::handle_filter_flash_texts, event, parts
+PRO spice_cat::handle_flash_filter_focus, event, parts
   iteration = parts[1].toInteger()
 
-  IF (iteration MOD 2)+1 THEN BEGIN 
-     foreach text, self.wid.filter_flash_texts DO widget_control, text, /input_focus
-  END ELSE BEGIN
-     widget_control, self.wid.draw_focus, /input_focus
-  END
+  IF (iteration MOD 2)+1 THEN widget_control,self.wid.filter_focus_flash_text,/input_focus $
+  ELSE                        widget_control, self.wid.draw_focus_away, /input_focus
   
-  IF iteration LT 8 THEN BEGIN
+  
+  IF iteration LT 4 THEN BEGIN
+     self.state.ignore_next_focus_change = 1
      iteration++
-     widget_control, event.id, set_uvalue="FILTER_FLASH_TEXTS`"+iteration.toString()
+     widget_control, event.id, set_uvalue="FLASH_FILTER_FOCUS`"+iteration.toString()
      widget_control, event.id, timer=0.05
-  END ELSE BEGIN
-     widget_control, self.wid.filter_flash_texts, get_value=value
-     IF value EQ "<filter>" THEN widget_control, self.wid.filter_text, set_value=""
   END
 END
 
@@ -175,8 +201,8 @@ PRO spice_cat::build_text_filter, column_name, current_filter_as_array
                                      _extra=text_props, uvalue=filter_text_uvalue)
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
   button = widget_button(self.wid.filter_base, value="Use alphabetical range", uvalue=button_uvalue)
-  self.wid.filter_flash_texts = self.wid.filter_text
-  widget_control, self.wid.draw_focus, /input_focus
+  self.wid.filter_focus_flash_text = self.wid.filter_text
+  widget_control, self.wid.draw_focus_away, /input_focus
   widget_control, self.wid.filter_text, set_text_select=[0, current_filter_as_array.strlen()]
 END
 
@@ -202,7 +228,7 @@ PRO spice_cat::build_range_filter, column_name, current_filter_as_array
      button = widget_button(self.wid.filter_base, value="Use regexp", uvalue=button_uvalue)
   END
   
-  self.wid.filter_flash_texts = min_text
+  self.wid.filter_focus_flash_text = min_text
 END
 
 
@@ -224,7 +250,7 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   IF current_filter_type EQ "T" THEN self.build_text_filter, column_name, current_filter_as_array
   
   current_filter_as_text = self.filter_as_text(current_filter_as_array)
-  widget_control, self.wid.filter_base, set_uvalue="FILTER_FLASH_TEXTS`1
+  widget_control, self.wid.filter_base, set_uvalue="FLASH_FILTER_FOCUS`1
   widget_control, self.wid.filter_base, timer=0.05
   
   widget_control, self.wid.top_base, update=1
@@ -238,14 +264,10 @@ END
 ;
 ;       Current_filter_as_array value available through selection value
 ;
-;       a) if no valid filter in place, set
-;            R''    for numeric types
-;            T'     for text types
+;       a) if no valid filter in place, set to
+;            Range filter for numeric types
+;            Regexp filter for text types
 ;          and continue with b:
-;
-;       b) a valid filter is in place, build the corresponding base
-;            R' min' max (range)  NOTE: This is allowed for *TEXTS* too!
-;            T' regexp            NOTE: *NOT ALLOWED* for numeric column types
 ;
 ; Case 2: When *switching*, INVALIDATE ANY EXISTING FILTER! 
 ;         Set a blank filter of the indicated type, then 
@@ -255,21 +277,20 @@ END
 PRO spice_cat::handle_click_on_filter,column_name
   print,"Handle click on filter : " + column_name
   
-  self.set_filter_edit_color, column_name
+;  self.set_filter_edit_color, column_name
   
   current_filter_as_array = self.get_filter_by_column_name(column_name)
   
-  ;; Case 1a:
   IF current_filter_as_array[0] EQ "<filter>" THEN BEGIN
      column_type = self.state.keyword_info[column_name].type
      IF column_type EQ "t" THEN current_filter_as_array = [""]
      IF column_type EQ "i" THEN current_filter_as_array = ["", ""] ; range
   END
   
-  ;; Case 2b:
   self.set_filter_by_column_name, column_name, current_filter_as_array
   filter_as_uvalue_text = current_filter_as_array.join("`")
-  ;; Corresponds to uvalue="REBUILD_FILTER`column_name`"
+  
+  ;; Corresponds to uvalue="REBUILD_FILTER`column_name`min`max" or "...`column_name`text_filter"
   self.handle_rebuild_filter, dummy_event, ["REBUILD_FILTER", column_name, current_filter_as_array]
 END
 
@@ -303,9 +324,7 @@ PRO spice_cat::handle_context, ev
   
   base = widget_base(/CONTEXT_MENU, ev.id)
   IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev
-  IF ev.row GE 1 THEN BEGIN
-     self.make_datacell_context_menu, base, ev
-  END
+  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, ev
   
   widget_displaycontextmenu, ev.id, ev.x, ev.y, base
 END
@@ -319,7 +338,7 @@ END
 
 PRO spice_cat::handle_table_cell_sel, ev
   sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
-  
+  help,ev
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
@@ -389,20 +408,6 @@ END
 
 ;; Utility function to handle defaults etc -----
 
-PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
-  self.state = dictionary()
-  self.state.keyword_info = spice_keyword_info(/all, /return_as_hash)
-  IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
-  self.default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
-  
-  self.default,listfiledir,spice_datadir
-  
-  self.state.spice_datadir = spice_datadir
-  self.state.listfiledir = listfiledir
-  self.state.listfilename = concat_dir(listfiledir, 'spice_fitslist.txt')
-END
-
-
 ; RESIZE TABLE ACCORDING TO TLB size change!
 ;
 PRO spice_cat::tlb_event,event
@@ -415,16 +420,17 @@ PRO spice_cat::tlb_event,event
    END
 END
 
-PRO spice_cat::set_window_position
-  screen_size = spice_get_screen_size()
-  
-  ;; Left edge offset from left edge of screen is...
-  ;; middle of screen minus half our size
-  
-  widget_control,self.wid.top_base, tlb_get_size=tlb_size
-  offsets = screen_size/2 - tlb_size/2
-  widget_control,self.wid.top_base, xoffset=offsets[0], yoffset=offsets[1]
+
+PRO spice_cat::create_buttons
+  buttons = $
+     [ $
+     { value: "Return selection", uvalue: "RETURN_SELECTION`", ALIGN_CENTER: 1b },$
+     { value: "Regenerate list", uvalue: "REGENERATE`", ALIGN_CENTER: 1b },$
+     { value: "Call <program>", uvalue: "CALL_PROGRAM`", ALIGN_CENTER: 1b } $
+     ]
+  foreach button, buttons DO button = widget_button(self.wid.button_base, _extra=button)
 END
+
 
 PRO spice_cat::build_table
   ; Arrays like "editable" is [column, row], so [*, n] is all columns in row n
@@ -451,28 +457,20 @@ PRO spice_cat::build_table
   self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
 END
 
-PRO spice_cat::create_buttons
-  buttons = $
-     [ $
-     { value: "Return selection", uvalue: "RETURN_SELECTION`", ALIGN_CENTER: 1b },$
-     { value: "Regenerate list", uvalue: "REGENERATE`", ALIGN_CENTER: 1b },$
-     { value: "Call <program>", uvalue: "CALL_PROGRAM`", ALIGN_CENTER: 1b } $
-     ]
-  foreach button, buttons DO button = widget_button(self.wid.button_base, _extra=button)
-END
 
 PRO spice_cat::build_widget
   self.wid = dictionary()
-  self.wid.top_base = widget_base(/row, xpad=0, ypad=0, uvalue=self, /tlb_size_events, title='SPICE-CAT')
+  top_props = {row: 1b, xpad: 0b, ypad: 0b, uvalue: self, tlb_size_events: 1b}
+  self.wid.top_base = widget_base(title='SPICE-CAT', _extra=top_props)
   self.wid.ysize_spacer_base = widget_base(self.wid.top_base, ysize=800, xpad=0, ypad=0)
   self.wid.content_base = widget_base(self.wid.top_base, /column)
   self.wid.xsize_spacer_base = widget_base(self.wid.content_base, /row, xsize=800)
   self.wid.top_row_base = widget_base(self.wid.content_base, /row)
-  self.wid.button_base = widget_base(self.wid.top_row_base, /row, /ALIGN_CENTER, xpad=0, ypad=0)
+  self.wid.button_base = widget_base(self.wid.top_row_base, /row, /align_center, xpad=0, ypad=0)
   self.wid.filter_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0)
   self.wid.table_base = widget_base(self.wid.content_base, /column, /frame, xpad=0, ypad=0)
     
-  self.wid.draw_focus = widget_text(self.wid.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
+  self.wid.draw_focus_away = widget_text(self.wid.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
   self.create_buttons
   
   self.wid.filter_label = widget_label(self.wid.filter_base, value='Filter:')
@@ -482,7 +480,7 @@ PRO spice_cat::build_widget
   
   self.new_incarnation
   widget_control,self.wid.top_base, /realize
-  self.set_window_position
+  spice_center_window, self.wid.top_base
   widget_control,self.wid.table_id, set_table_select=[-1, -1, -1, -1]
   
   ;; Make table fill available space despite /scroll
@@ -493,26 +491,27 @@ PRO spice_cat::build_widget
   self.tlb_event, base_resize_event
 END
 
-PRO spice_cat::build_displayed_list
-  ;; Ooops! We get a core dump if we first create self.state.filters, and
-  ;; then try to manipulate it with e.g. self.state.filters.(i) = "<filter>",
-  ;; probably b/c .filters is a DICTIONARY() entry
+
+PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
+  self.state = dictionary()
+  self.state.keyword_info = spice_keyword_info(/all, /return_as_hash)
+  IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
+  self.default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
   
-  filters = create_struct(name=tag_names(self.state.full_list, /structure_name))
-  column_names = tag_names(self.state.full_list)
-  FOR i=0, n_elements(column_names)-1 DO filters.(i) = "<filter>"
-  self.state.filters = filters
-  select_mask = replicate(1b, n_elements(self.state.full_list))
-  ix = where(select_mask)
-  self.state.displayed = [self.state.filters, self.state.full_list[ix]]
+  self.default,listfiledir,spice_datadir
+  
+  self.state.spice_datadir = spice_datadir
+  self.state.listfiledir = listfiledir
+  self.state.listfilename = concat_dir(listfiledir, 'spice_fitslist.txt')
 END
+
 
 ;; INIT: create, realize and register widget
 function spice_cat::init, example_param1,  example_param2, _extra=extra
   self.x = " "
   self.parameters, example_param1, example_param2, _extra = extra
   self.load_fitslist
-  self.build_displayed_list
+  self.create_displayed_list
   self.build_widget
   
   xmanager,"spice_cat", self.wid.top_base, /no_block, event_handler="spice_cat__event"
