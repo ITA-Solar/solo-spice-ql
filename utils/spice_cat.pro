@@ -14,6 +14,17 @@ PRO spice_cat::default, var, default
 END 
 
 
+FUNCTION spice_cat::remove_non_digits, text
+  compile_opt static
+  bytes = byte(text)
+  byte0 = (byte('0'))[0]
+  byte9 = (byte('9'))[0]
+  ix = where(bytes GE byte0 AND bytes LE byte9, count)
+  IF count EQ 0 THEN return,""
+  return, string(bytes[ix])
+END
+
+
 PRO spice_cat::load_fitslist, filename
   openr, lun, self.state.listfilename, /get_lun
   t = ''
@@ -90,16 +101,6 @@ PRO spice_cat::handle_text_filter_change, event, parts
   END
   widget_control, event.id, get_value=new_text_filter_as_singular_array
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
-END
-
-
-FUNCTION spice_cat::remove_non_digits, text
-  bytes = byte(text)
-  byte0 = (byte('0'))[0]
-  byte9 = (byte('9'))[0]
-  ix = where(bytes GE byte0 AND bytes LE byte9, count)
-  IF count EQ 0 THEN return,""
-  return, string(bytes[ix])
 END
 
 
