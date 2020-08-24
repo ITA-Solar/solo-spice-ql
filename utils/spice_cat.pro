@@ -20,7 +20,6 @@ PRO spice_cat::load_fitslist, filename
   readf, lun, t
   keywords = strsplit(/extract, t, ",")
   list = []
-  keyword_info = spice_keyword_info(/all, /return_as_hash)
   WHILE NOT eof(lun) DO BEGIN
      readf, lun, t
      values = strsplit(/extract, t, string(9b))
@@ -83,10 +82,8 @@ END
 
 
 PRO spice_cat::handle_text_filter_change, event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
   column_name = parts[1]
   widget_control, event.id, get_value=new_text_filter_as_singular_array
-  print,"FILTER: "+new_text_filter_as_singular_array[0]
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
 END
 
@@ -132,7 +129,6 @@ END
 
 
 PRO spice_cat::handle_filter_flash_texts, event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
   iteration = parts[1].toInteger()
 
   IF (iteration MOD 2)+1 THEN BEGIN 
@@ -161,7 +157,7 @@ PRO spice_cat::build_text_filter, column_name, current_filter_as_array
   self.wid.filter_text = widget_text(self.wid.filter_base, value=current_filter_as_text,$
                                      _extra=text_props, uvalue=filter_text_uvalue)
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
-  button = widget_button(self.wid.filter_base, value="Use range", uvalue=button_uvalue)
+  button = widget_button(self.wid.filter_base, value="Use alphabetical range", uvalue=button_uvalue)
   self.wid.filter_flash_texts = self.wid.filter_text
   widget_control, self.wid.draw_focus, /input_focus
   widget_control, self.wid.filter_text, set_text_select=[0, current_filter_as_array.strlen()]
@@ -422,8 +418,7 @@ PRO spice_cat::build_table
   num_table_rows = n_elements(self.state.full_list)+1
   background_color = replicate(230b, 3, num_table_columns, num_table_rows)
   background_color[1, *, 0] = 255b
-  keyword_info = spice_keyword_info(self.state.column_names)
-  column_widths = keyword_info.display_width * 12
+  relative_column_widths = ((self.state.keyword_info.values()).toarray()).display_width
   self.wid.table_props = dictionary()
   self.wid.table_props.value = self.state.displayed
   self.wid.table_props.scroll = 1b 
@@ -431,7 +426,7 @@ PRO spice_cat::build_table
   self.wid.table_props.no_row_headers = 1b
   self.wid.table_props.row_major = 1b
   self.wid.table_props.background_color = background_color
-  self.wid.table_props.column_widths = column_widths
+  self.wid.table_props.column_widths = relative_column_widths * 12
   self.wid.table_props.all_events = 1b
   self.wid.table_props.context_events = 1b
   self.wid.table_props.uvalue="ALL_TABLE_EVENTS`"
