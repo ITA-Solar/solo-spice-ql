@@ -83,6 +83,11 @@ END
 
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
+  IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
+     IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
+     IF event.enter EQ 0 THEN self.set_filter_edit_color, ""
+     return
+  END
   widget_control, event.id, get_value=new_text_filter_as_singular_array
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
 END
@@ -100,9 +105,16 @@ END
 
 PRO spice_cat::handle_range_filter_change_event, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
+  
   min_or_max = parts[1]
   column_name = parts[2]
   
+  IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
+     IF event.enter NE 0 THEN self.set_filter_edit_color, column_name
+     IF event.enter EQ 0 THEN self.set_filter_edit_color, ""
+     return
+  END
+
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
   
@@ -172,7 +184,7 @@ PRO spice_cat::build_range_filter, column_name, current_filter_as_array
   min_text_uvalue = "RANGE_FILTER_CHANGE_EVENT`MIN`" + column_name
   max_text_uvalue = "RANGE_FILTER_CHANGE_EVENT`MAX`" + column_name
   
-  extra = {editable:1b, all_events:1b}
+  extra = {editable: 1b, all_events: 1b, kbrd_focus_events: 1b}
   min_text = widget_text(self.wid.filter_base, value=min_value, uvalue=min_text_uvalue, _extra=extra)
   label = widget_label(self.wid.filter_base, value="<= " + column_name + " <=")
   max_text = widget_text(self.wid.filter_base, value=max_value, uvalue=max_text_uvalue, _extra=extra)
@@ -307,8 +319,6 @@ PRO spice_cat::handle_table_cell_sel, ev
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
   print,"Handle "+tag_names(ev, /structure_name) + " " + self.selection_range_string(sel)
-  
-  self.set_filter_edit_color,""
   
   ;; Only meaningful action at this stage is if the user wants
   ;; to edit the filter (1st and only 1st row)
