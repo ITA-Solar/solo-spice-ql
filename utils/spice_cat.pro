@@ -262,9 +262,13 @@ END
 
 
 PRO spice_cat::make_heading_context_menu, base, ev
+  print,"Make header context menu"
+  column_name = (tag_names(self.state.displayed))[ev.col]
   button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
   button = widget_button(base, value="Sort ascending", uvalue="SORT`ASCENDING`"+column_name)
   button = widget_button(base, value="Sort descending", uvalue="SORT`DESCENDING`"+column_name)
+  button = widget_button(base, value="Move left", uvalue="MOVE`LEFT`"+column_name)
+  button = widget_button(base, value="Move right", uvalue="MOVE`RIGHT`+column_name)
 END
 
 
