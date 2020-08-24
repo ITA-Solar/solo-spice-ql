@@ -83,6 +83,7 @@ END
 
 FUNCTION spice_cat::filter_as_text, filter_as_array
   IF n_elements(filter_as_array) EQ 1 THEN return, filter_as_array[0]
+  IF filter_as_array.join("") EQ "" THEN return,"<filter>"
   return,"{ " + filter_as_array[0] + " , " + filter_as_array[1] + " }"
 END
 
@@ -276,9 +277,7 @@ END
 
 PRO spice_cat::handle_click_on_filter,column_name
   print,"Handle click on filter : " + column_name
-  
-;  self.set_filter_edit_color, column_name
-  
+
   current_filter_as_array = self.get_filter_by_column_name(column_name)
   
   IF current_filter_as_array[0] EQ "<filter>" THEN BEGIN
