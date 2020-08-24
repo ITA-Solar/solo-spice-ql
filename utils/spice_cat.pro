@@ -268,7 +268,7 @@ PRO spice_cat::make_heading_context_menu, base, ev
   button = widget_button(base, value="Sort ascending", uvalue="SORT`ASCENDING`"+column_name)
   button = widget_button(base, value="Sort descending", uvalue="SORT`DESCENDING`"+column_name)
   button = widget_button(base, value="Move left", uvalue="MOVE`LEFT`"+column_name)
-  button = widget_button(base, value="Move right", uvalue="MOVE`RIGHT`+column_name)
+  button = widget_button(base, value="Move right", uvalue="MOVE`RIGHT`"+column_name)
 END
 
 
@@ -324,26 +324,9 @@ PRO spice_cat::handle_table_cell_sel, ev
 END
 
 
-PRO spice_cat::handle_table_ch, ev
-  print,"Handle "+parts[0]+" : "+parts[1]
-  print,"Table cell change"
-  IF ev.x LT 0 OR ev.y LT 0 THEN BEGIN
-     print,"Non-event!"
-     return
-  END
-END  
-
-PRO spice_cat::handle_table_del, ev
-  print,"Table cell text deletion"
-END 
-
-PRO spice_cat::handle_table_text_sel
-  print,"Table cell text selection"
-END
-
-PRO spice_cat::handle_all_table, ev, parts
+PRO spice_cat::handle_all_table_events, ev, parts
   ;; We came here because all table events, anywhere,
-  ;; results in uvalue="ALL_TABLE`"
+  ;; results in uvalue="ALL_TABLE_EVENTS`"
   ;;
   type = tag_names(ev, /structure_name)
   CASE type OF 
@@ -422,18 +405,12 @@ PRO spice_cat::tlb_event,event
 END
 
 PRO spice_cat::set_window_position
-  base = widget_base()
-  spacer = widget_base(base, xsize=5000, ysize=5000)
-  widget_control,base, /realize
-  widget_control,base, tlb_get_size=screen_size
-  print,"SCREEN SIZE: ", screen_size
-  widget_control,base, /destroy
-
+  screen_size = spice_get_screen_size()
   
-  widget_control,self.wid.top_base, tlb_get_size=tlb_size
-  print, tlb_size
   ;; Left edge offset from left edge of screen is...
   ;; middle of screen minus half our size
+  
+  widget_control,self.wid.top_base, tlb_get_size=tlb_size
   offsets = screen_size/2 - tlb_size/2
   widget_control,self.wid.top_base, xoffset=offsets[0], yoffset=offsets[1]
 END
@@ -457,7 +434,7 @@ PRO spice_cat::build_table
   self.wid.table_props.column_widths = column_widths
   self.wid.table_props.all_events = 1b
   self.wid.table_props.context_events = 1b
-  self.wid.table_props.uvalue="ALL_TABLE`"
+  self.wid.table_props.uvalue="ALL_TABLE_EVENTS`"
   self.wid.table_props.resizeable_columns = 1b
   
   props = self.wid.table_props.tostruct()
