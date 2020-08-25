@@ -120,10 +120,13 @@ PRO spice_cat::create_displayed_list, use_columns = use_columns
   
   ix = where(filter_mask)
   
-  
   self.state.displayed = [new_filters_as_text, self.state.full_list[ix]]
 END
 
+PRO spice_cat::remake_displayed_list
+  self.create_displayed_list
+  widget_control,self.wid.table_id,set_value=self.state.displayed
+END
 
 ;;
 ;; EVENT HANDLING HELPERS
