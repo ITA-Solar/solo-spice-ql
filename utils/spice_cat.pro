@@ -299,10 +299,11 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   filter_base_children = widget_info(self.wid.filter_base, /all_children)
   foreach child, filter_base_children DO widget_control, child, /destroy
   
-  current_filter_type = n_elements(current_filter_as_array) EQ 1 ? "T" : "R"
+  text = n_elements(current_filter_as_array) EQ 1
+  range = n_elements(current_filter_as_array) EQ 2
   
-  IF current_filter_type EQ "R" THEN self.build_range_filter, column_name, current_filter_as_array
-  IF current_filter_type EQ "T" THEN self.build_text_filter, column_name, current_filter_as_array
+  IF text THEN self.build_text_filter, column_name, current_filter_as_array
+  IF range THEN self.build_range_filter, column_name, current_filter_as_array
   
   current_filter_as_text = self.filter_as_text(current_filter_as_array)
   widget_control, self.wid.filter_base, set_uvalue="FLASH_FILTER_FOCUS`1
