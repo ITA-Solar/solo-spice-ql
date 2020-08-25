@@ -29,6 +29,24 @@ FUNCTION spice_cat::remove_non_digits, text
 END
 
 ;;
+;; FILTER CONVERSION text <--> array
+;;
+
+FUNCTION spice_cat::filter_as_array, filter_as_text
+  IF filter_as_text EQ "<filter>" THEN return, ["<filter>"]
+  parts = filter_as_text.extract("^{ (.*) , (.*) }$", /subexpr)
+  IF parts[0].strlen() EQ 0 THEN return, [filter_as_text]
+  return, [parts[1], parts[2]]
+END
+
+
+FUNCTION spice_cat::filter_as_text, filter_as_array
+  IF n_elements(filter_as_array) EQ 1 THEN return, filter_as_array[0]
+  IF filter_as_array.join("") EQ "" THEN return,"<filter>"
+  return,"{ " + filter_as_array[0] + " , " + filter_as_array[1] + " }"
+END
+
+;;
 ;; DATA LOADING & MANIPULATION
 ;;
 
@@ -73,21 +91,6 @@ END
 ;;
 ;; EVENT HANDLING HELPERS
 ;;
-
-FUNCTION spice_cat::filter_as_array, filter_as_text
-  IF filter_as_text EQ "<filter>" THEN return, ["<filter>"]
-  parts = filter_as_text.extract("^{ (.*) , (.*) }$", /subexpr)
-  IF parts[0].strlen() EQ 0 THEN return, [filter_as_text]
-  return, [parts[1], parts[2]]
-END
-
-
-FUNCTION spice_cat::filter_as_text, filter_as_array
-  IF n_elements(filter_as_array) EQ 1 THEN return, filter_as_array[0]
-  IF filter_as_array.join("") EQ "" THEN return,"<filter>"
-  return,"{ " + filter_as_array[0] + " , " + filter_as_array[1] + " }"
-END
-
 
 FUNCTION spice_cat::get_filter_by_column_name, column_name
   column_number = where(self.state.column_names EQ column_name)
