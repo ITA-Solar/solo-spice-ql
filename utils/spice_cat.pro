@@ -165,14 +165,17 @@ PRO spice_cat::set_filter_edit_color, column_name, clear=clear
   widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
 END
 
-FUNCTION spice_cat::deal_with_filter_focus_change, event, column_name
-  IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN return, 0
+FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
+  IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN BEGIN
+     print,"pseudo_handle_filter_focus_change_ok: not ok, not a focus event"
+     return, 0
+  END
   
   IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
      IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
      IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
   END
-  return,1
+  return,1 ; It's OK, dealt with!
 END
 
 ;;
@@ -182,7 +185,7 @@ END
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
   
-  IF self.deal_with_filter_focus_change(event, column_name) THEN return
+  IF self.pseudo_handler_filter_focus_change_ok(event, column_name) THEN return
   
   widget_control, event.id, get_value=new_text_filter_as_singular_array
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
@@ -195,7 +198,7 @@ PRO spice_cat::handle_range_filter_change, event, parts
   min_or_max = parts[1]
   column_name = parts[2]
   
-  IF self.deal_with_filter_focus_change(event, column_name) THEN return
+  IF self.pseudo_handler_filter_focus_change_ok(event, column_name) THEN return
 
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
