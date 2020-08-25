@@ -313,7 +313,7 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
 END
 
 
-PRO spice_cat::handle_click_on_filter,column_name
+PRO spice_cat::deal_with_click_on_filter,column_name
   print,"Handle click on filter : " + column_name
 
   current_filter_as_array = self.get_filter_by_column_name(column_name)
@@ -373,7 +373,7 @@ PRO spice_cat::handle_context, ev
   widget_displaycontextmenu, ev.id, ev.x, ev.y, base
 END
 
-FUNCTION spice_cat::selection_range_string, ev
+FUNCTION spice_cat::format_selection_range_string, ev
   column_range = ev.left.tostring() + ':' + ev.right.tostring()
   row_range = ev.top.tostring() + ':' + ev.bottom.tostring()
   text = '[' + column_range + ', ' + row_range + ']'
@@ -385,7 +385,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
-  print,"Handle "+tag_names(ev, /structure_name) + " " + self.selection_range_string(sel)
+  print,"Handle "+tag_names(ev, /structure_name) + " " + self.format_selection_range_string(sel)
   
   ;; Only meaningful action at this stage is if the user wants
   ;; to edit the filter (1st and only 1st row)
@@ -393,7 +393,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   IF (sel.top NE sel.bottom) OR (sel.left NE sel.right) OR (sel.top NE 0) THEN return
   
   column_name = self.state.column_names[sel.left]
-  self.handle_click_on_filter,column_name
+  self.deal_with_click_on_filter,column_name
 END
 
 
