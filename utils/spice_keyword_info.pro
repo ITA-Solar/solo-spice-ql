@@ -34,6 +34,6 @@ FUNCTION spice_keyword_info,keywords,all=all,return_as_hash=return_as_hash
                     }
      info_array = [info_array,keyword_info]
   END
-  IF keyword_set(return_as_hash) THEN return,hash(info_array.keyword,info_array)
+  IF keyword_set(return_as_hash) THEN return,orderedhash(info_array.keyword,info_array)
   return,info_array
 END
