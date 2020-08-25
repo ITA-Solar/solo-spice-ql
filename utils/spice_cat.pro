@@ -74,6 +74,7 @@ END
 
 
 FUNCTION spice_cat::apply_filter, filter, tag_index
+  print,"APPLYING FILTER: "+filter
   filter_as_array = self.filter_as_array(filter)
   
   IF n_elements(filter_as_array) THEN BEGIN 
@@ -87,6 +88,7 @@ FUNCTION spice_cat::apply_filter, filter, tag_index
      
      IF filter_as_array[1] NE "" THEN mask = mask AND self.state.full_list LE max
   END
+  print,TOTAL(mask)
   return,mask
 END
 
@@ -99,6 +101,7 @@ FUNCTION spice_cat::filter_mask, filters
      IF filter EQ "<filter>" THEN CONTINUE
      mask = mask AND self.apply_filter(filter, tag_ix)
   END
+  print,"APPLIED ALL FILTERS: ",TOTAL(mask)
   return,mask
 END
 
@@ -124,15 +127,16 @@ PRO spice_cat::create_displayed_list, use_columns = use_columns
   
   filter_mask = self.filter_mask(new_filters_as_text)
   
-  ix = where(filter_mask)
-  
-  self.state.displayed = [new_filters_as_text, self.state.full_list[ix]]
+  ix = where(filter_mask,count)
+  IF count EQ 0 THEN self.state.displayed = [new_filters_as_text] $
+  ELSE               self.state.displayed = [new_filters_as_text, self.state.full_list[ix]]
 END
 
 
 PRO spice_cat::remake_displayed_list
   self.create_displayed_list
-  widget_control,self.wid.table_id,set_value=self.state.displayed
+  widget_control,self.wid.table_id,set_value=self.state.displayed,$
+                 table_ysize=n_elements(self.state.displayed)
 END
 
 ;;
