@@ -72,11 +72,12 @@ PRO spice_cat::load_fitslist, filename
   self.state.column_names = tag_names(list[0])
 END 
 
-FUNCTION apply_filter, filter, tag_index
+
+FUNCTION spice_cat::apply_filter, filter, tag_index
   filter_as_array = self.filter_as_array(filter)
   
   IF n_elements(filter_as_array) THEN BEGIN 
-     mask = self.state.full_list[*].matches(filter_as_array[0])
+     mask = self.state.full_list[*].(tag_index).matches(filter_as_array[0])
   END ELSE BEGIN
      min = filter_as_array[0]
      max = filter_as_array[1]
@@ -89,6 +90,7 @@ FUNCTION apply_filter, filter, tag_index
   return,mask
 END
 
+
 FUNCTION spice_cat::filter_mask, filters
   mask = replicate(1b,n_elements(self.state.full_list))
   
@@ -100,12 +102,16 @@ FUNCTION spice_cat::filter_mask, filters
   return,mask
 END
 
+
 PRO spice_cat::create_displayed_list, use_columns = use_columns
   empty_filters_as_text = create_struct(name=tag_names(self.state.full_list, /structure_name))
   FOR i=0, n_elements(self.state.column_names)-1 DO empty_filters_as_text.(i) = "<filter>"
   
-  IF self.state.haskey("displayed") THEN current_filters_as_text = self.state.displayed[0] $
-  ELSE                                   current_filters_as_text = empty_filters_as_text
+  IF self.state.haskey("current_filters_as_text") THEN BEGIN
+     current_filters_as_text = self.state.current_filters_as_text.toStruct()
+  END ELSE BEGIN
+     current_filters_as_text = empty_filters_as_text
+  END
   
   new_filters_as_text = current_filters_as_text
   IF keyword_set(use_columns) THEN BEGIN
@@ -122,6 +128,7 @@ PRO spice_cat::create_displayed_list, use_columns = use_columns
   
   self.state.displayed = [new_filters_as_text, self.state.full_list[ix]]
 END
+
 
 PRO spice_cat::remake_displayed_list
   self.create_displayed_list
@@ -143,13 +150,13 @@ END
 PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   filter_as_text = self.filter_as_text(filter_as_array)
   IF filter_as_text EQ "" THEN filter_as_text = "<filter>"
-  IF filter_as_text NE self.state.current_filters_as_text[column_name] THEN BEGIN
-     PRINT,"FILTER CHANGE DETECTED!!"
-  END
-  self.state.current_filters_as_text[column_name] = filter_as_text
   column_number = (where(self.state.column_names EQ column_name))[0]
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, set_value=filter_as_text, use_table_select=select
+  IF filter_as_text NE self.state.current_filters_as_text[column_name] THEN BEGIN
+     self.state.current_filters_as_text[column_name] = filter_as_text
+     self.remake_displayed_list
+  END
 END
 
 
@@ -159,11 +166,13 @@ PRO spice_cat::set_filter_edit_color, column_name, clear=clear
   widget_control, self.wid.table_id, background_color=[230b,255b,230b], use_table_select=table_select
   
   IF keyword_set(clear) THEN return
+  
   column_number = (where(self.state.column_names EQ column_name))[0]
   table_select = [column_number, 0, column_number, 0]
   color = [150b, 255b, 150b]
   widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
 END
+
 
 FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
   IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN BEGIN
@@ -171,6 +180,9 @@ FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
      return, 0
   END
   
+  ;; We get here more often than we should, but... that's IDL's fault for
+  ;; creating weird extra events (and because we can't send any extra info in
+  ;; the event, whether to ignore or not).
   IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
      IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
      IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
@@ -542,7 +554,6 @@ END
 
 PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   self.state = dictionary()
-  self.state.current_filters_as_text = orderedhash()
   self.state.keyword_info = spice_keyword_info(/all, /return_as_hash)
   IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
   self.default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
