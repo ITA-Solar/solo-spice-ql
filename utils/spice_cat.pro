@@ -72,19 +72,56 @@ PRO spice_cat::load_fitslist, filename
   self.state.column_names = tag_names(list[0])
 END 
 
-
-PRO spice_cat::create_displayed_list
-  ;; Ooops! We get a core dump if we first create self.state.filters, and
-  ;; then try to manipulate it with e.g. self.state.filters.(i) = "<filter>",
-  ;; probably b/c .filters is a DICTIONARY() entry
+FUNCTION apply_filter, filter, tag_index
+  filter_as_array = self.filter_as_array(filter)
   
-  filters = create_struct(name=tag_names(self.state.full_list, /structure_name))
-  column_names = tag_names(self.state.full_list)
-  FOR i=0, n_elements(column_names)-1 DO filters.(i) = "<filter>"
-  self.state.filters = filters
-  select_mask = replicate(1b, n_elements(self.state.full_list))
-  ix = where(select_mask)
-  self.state.displayed = [self.state.filters, self.state.full_list[ix]]
+  IF n_elements(filter_as_array) THEN BEGIN 
+     mask = self.state.full_list[*].matches(filter_as_array[0])
+  END ELSE BEGIN
+     min = filter_as_array[0]
+     max = filter_as_array[1]
+     
+     IF filter_as_array[0] NE "" THEN mask = self.state.full_list GE min $
+     ELSE                             mask = replicate(1b,n_elements(self.state.full_list))
+     
+     IF filter_as_array[1] NE "" THEN mask = mask AND self.state.full_list LE max
+  END
+  return,mask
+END
+
+FUNCTION spice_cat::filter_mask, filters
+  mask = replicate(1b,n_elements(self.state.full_list))
+  
+  foreach tag_name, tag_names(filters), tag_ix DO BEGIN
+     filter = filters.(tag_ix)
+     IF filter EQ "<filter>" THEN CONTINUE
+     mask = mask AND self.apply_filter(filter, tag_ix)
+  END
+  return,mask
+END
+
+PRO spice_cat::create_displayed_list, use_columns = use_columns
+  empty_filters_as_text = create_struct(name=tag_names(self.state.full_list, /structure_name))
+  FOR i=0, n_elements(self.state.column_names)-1 DO empty_filters_as_text.(i) = "<filter>"
+  
+  IF self.state.haskey("displayed") THEN current_filters_as_text = self.state.displayed[0] $
+  ELSE                                   current_filters_as_text = empty_filters_as_text
+  
+  new_filters_as_text = current_filters_as_text
+  IF keyword_set(use_columns) THEN BEGIN
+     new_filters_as_text = use_columns
+     struct_assign,new_filters_as_text,empty_filters_as_text    ;; All tags = <filter>
+     struct_assign,new_filters_as_text,current_filters_as_text  ;; Override with current filters
+  END
+  self.state.current_filters_as_text = orderedhash(new_filters_as_text)
+  self.state.column_names = tag_names(new_filters_as_text)
+  
+  filter_mask = self.filter_mask(new_filters_as_text)
+  
+  ix = where(filter_mask)
+  
+  
+  self.state.displayed = [new_filters_as_text, self.state.full_list[ix]]
 END
 
 
@@ -103,6 +140,10 @@ END
 PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   filter_as_text = self.filter_as_text(filter_as_array)
   IF filter_as_text EQ "" THEN filter_as_text = "<filter>"
+  IF filter_as_text NE self.state.current_filters_as_text[column_name] THEN BEGIN
+     PRINT,"FILTER CHANGE DETECTED!!"
+  END
+  self.state.current_filters_as_text[column_name] = filter_as_text
   column_number = (where(self.state.column_names EQ column_name))[0]
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, set_value=filter_as_text, use_table_select=select
@@ -160,19 +201,23 @@ PRO spice_cat::handle_range_filter_change, event, parts
   new_min_value = min_value
   new_max_value = max_value
   
+  ;; Remove non-digit chars and adjust cursor position for numeric columns
+  ;;
   IF self.state.keyword_info[column_name].type NE "t" THEN BEGIN
      new_min_value = self.remove_non_digits(min_value)
      new_max_value = self.remove_non_digits(max_value)
+  
+     min_text_select = widget_info(self.wid.min_filter_text, /text_select)
+     max_text_select = widget_info(self.wid.max_filter_text, /text_select)
+     
+     min_text_select[0] = min_text_select[0] - (min_value.strlen() - new_min_value.strlen())
+     max_text_select[0] = max_text_select[0] - (max_value.strlen() - new_max_value.strlen())
+     
+     widget_control, self.wid.min_filter_text, $
+                     set_value=new_min_value, set_text_select=min_text_select 
+     widget_control, self.wid.max_filter_text, $
+                     set_value=new_max_value, set_text_select=max_text_select
   END
-  
-  min_text_select = widget_info(self.wid.min_filter_text, /text_select)
-  max_text_select = widget_info(self.wid.max_filter_text, /text_select)
-  
-  min_text_select[0] = min_text_select[0] - (min_value.strlen() - new_min_value.strlen())
-  max_text_select[0] = max_text_select[0] - (max_value.strlen() - new_max_value.strlen())
-  
-  widget_control, self.wid.min_filter_text, set_value=new_min_value, set_text_select=min_text_select 
-  widget_control, self.wid.max_filter_text, set_value=new_max_value, set_text_select=max_text_select
   
   new_range_filter_as_array = [new_min_value, new_max_value]
   self.set_filter_by_column_name, column_name, new_range_filter_as_array
@@ -278,8 +323,8 @@ PRO spice_cat::handle_click_on_filter,column_name
   self.set_filter_by_column_name, column_name, current_filter_as_array
   filter_as_uvalue_text = current_filter_as_array.join("`")
   
-  ;; Simulates UVALUE = "REBUILD_FILTER`column_name`min`max" or
-  ;;                    "REBUILD_FILTER`column_name`text_filter"
+  ;; Simulates event with UVALUE = "REBUILD_FILTER`column_name`min`max"
+  ;;                 or   UVALUE = "REBUILD_FILTER`column_name`text_filter"
   ;;
   self.handle_rebuild_filter, dummy_event, ["REBUILD_FILTER", column_name, current_filter_as_array]
 END
@@ -300,10 +345,15 @@ PRO spice_cat::make_datacell_context_menu, base, ev
   print,"Make datacell context menu"
   column_name = (tag_names(self.state.displayed))[ev.col]
   cell_value = self.state.displayed[ev.row].(ev.col).tostring()
+  
   filename = self.state.displayed[ev.row].filename
+  filename_uvalue = "CONTEXT_CLICK_ON_FILENAME`"+filename
+  
   filter_on_value = "Filter on "+column_name+"='"+cell_value+"'"
-  button = widget_button(base, value=filename, uvalue="CONTEXT_CLICK_ON_FILENAME`"+filename)
-  button = widget_button(base, value=filter_on_value, uvalue="CONTEXT_CLICK_ON_NAME_AND_VALUE")
+  filter_on_value_uvalue = "CONTEXT_CLICK_ON_FULL_VALUE`+column_name"
+  
+  button = widget_button(base, value=filename, uvalue=filename_uvalue)
+  button = widget_button(base, value=filter_on_value, uvalue=filter_on_value_uvalue)
 END
 
 
@@ -483,6 +533,7 @@ END
 
 PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   self.state = dictionary()
+  self.state.current_filters_as_text = orderedhash()
   self.state.keyword_info = spice_keyword_info(/all, /return_as_hash)
   IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
   self.default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
@@ -497,7 +548,6 @@ END
 
 ;; INIT: create, realize and register widget
 function spice_cat::init, example_param1,  example_param2, _extra=extra
-  self.x = " "
   self.parameters, example_param1, example_param2, _extra = extra
   self.load_fitslist
   self.create_displayed_list
