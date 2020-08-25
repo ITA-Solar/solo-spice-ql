@@ -290,22 +290,22 @@ END
 PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
   column_name = parts[1]
-  current_filter_as_array = parts[2:*]
+  new_filter_as_array = parts[2:*]
   
-  self.set_filter_by_column_name, column_name, current_filter_as_array
+  self.set_filter_by_column_name, column_name, new_filter_as_array
   widget_control, self.wid.top_base, update=0
   widget_control, self.wid.table_id, set_table_select=[-1, -1, -1, -1]
   
   filter_base_children = widget_info(self.wid.filter_base, /all_children)
   foreach child, filter_base_children DO widget_control, child, /destroy
   
-  text = n_elements(current_filter_as_array) EQ 1
-  range = n_elements(current_filter_as_array) EQ 2
+  text = n_elements(new_filter_as_array) EQ 1
+  range = n_elements(new_filter_as_array) EQ 2
   
-  IF text THEN self.build_text_filter, column_name, current_filter_as_array
-  IF range THEN self.build_range_filter, column_name, current_filter_as_array
+  IF text THEN self.build_text_filter, column_name, new_filter_as_array
+  IF range THEN self.build_range_filter, column_name, new_filter_as_array
   
-  current_filter_as_text = self.filter_as_text(current_filter_as_array)
+  new_filter_as_text = self.filter_as_text(new_filter_as_array)
   widget_control, self.wid.filter_base, set_uvalue="FLASH_FILTER_FOCUS`1
   widget_control, self.wid.filter_base, timer=0.05
   
