@@ -168,11 +168,10 @@ END
 FUNCTION spice_cat::deal_with_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN return, 0
   
-  IF self.state.ignore_next_focus_change NE 1 THEN BEGIN 
+  IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
      IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
      IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
   END
-  self.state.ignore_next_focus_change = 0
   return,1
 END
 
@@ -239,6 +238,8 @@ PRO spice_cat::handle_flash_filter_focus, event, parts
      iteration++
      widget_control, event.id, set_uvalue="FLASH_FILTER_FOCUS`"+iteration.toString()
      widget_control, event.id, timer=0.05
+  END ELSE BEGIN
+     self.state.ignore_next_focus_change = 0
   END
 END
 
@@ -257,7 +258,6 @@ PRO spice_cat::build_text_filter, column_name, current_filter_as_array
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
   button = widget_button(self.wid.filter_base, value="Use alphabetical range", uvalue=button_uvalue)
   self.wid.filter_focus_flash_text = self.wid.filter_text
-  widget_control, self.wid.draw_focus_away, /input_focus
   widget_control, self.wid.filter_text, set_text_select=[0, current_filter_as_array.strlen()]
 END
 
@@ -317,6 +317,7 @@ PRO spice_cat::deal_with_click_on_filter,column_name
   print,"Handle click on filter : " + column_name
 
   current_filter_as_array = self.get_filter_by_column_name(column_name)
+  self.set_filter_edit_color,column_name
   
   IF current_filter_as_array[0] EQ "<filter>" THEN BEGIN
      column_type = self.state.keyword_info[column_name].type
@@ -382,10 +383,11 @@ END
 
 PRO spice_cat::handle_table_cell_sel, ev
   sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
+  
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
-  print,"Handle "+tag_names(ev, /structure_name) + " " + self.format_selection_range_string(sel)
+  print,"Handle "+tag_names(ev, /structure_name) + " : " + self.format_selection_range_string(sel)
   
   ;; Only meaningful action at this stage is if the user wants
   ;; to edit the filter (1st and only 1st row)
