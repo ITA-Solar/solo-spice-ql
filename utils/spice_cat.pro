@@ -69,6 +69,12 @@ PRO spice_cat::load_fitslist
 END 
 
 
+FUNCTION spice_cat::empty_filters_as_text, tag_names
+  filters_as_text = {}
+  foreach tag, tag_names DO filters_as_text = create_struct(filters_as_text, tag, '<filter>')
+  return, filters_as_text
+END
+
 FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
   filter_as_array = self.filter_as_array(filter)
   
@@ -122,24 +128,19 @@ END
 
 
 PRO spice_cat::create_displayed_list, use_columns = use_columns
-  
-  empty_filters_as_text = {}
-  foreach tag_name, self.state.full_tag_names DO BEGIN
-     empty_filters_as_text = create_struct(empty_filters_as_text, tag_name, '<filter>')
+  IF NOT self.state.haskey("current_filters_as_text") THEN BEGIN
+     self.state.current_filters_as_text = self.empty_filters_as_text(self.state.current_tag_names)
   END
   
-  IF self.state.haskey("current_filters_as_text") THEN BEGIN
-     current_filters_as_text = self.state.current_filters_as_text
-  END ELSE BEGIN
-     current_filters_as_text = empty_filters_as_text
-  END
+  new_filters_as_text = self.state.current_filters_as_text
   
-  new_filters_as_text = current_filters_as_text
   IF keyword_set(use_columns) THEN BEGIN
+     
      new_filters_as_text = use_columns
      struct_assign,new_filters_as_text,empty_filters_as_text    ;; All tags = <filter>
      struct_assign,new_filters_as_text,current_filters_as_text  ;; Override with current filters
   END
+  
   self.state.current_filters_as_text = new_filters_as_text
   self.state.current_tag_names = tag_names(new_filters_as_text)
   
@@ -617,6 +618,7 @@ function spice_cat::init, example_param1,  example_param2, _extra=extra
   self.parameters, example_param1, example_param2, _extra = extra
   self.load_fitslist
   self.create_displayed_list
+  
   self.build_widget
   
   xmanager,"spice_cat", self.wid.top_base, /no_block, event_handler="spice_cat__event"
