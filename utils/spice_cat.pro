@@ -28,6 +28,13 @@ FUNCTION spice_cat::remove_non_digits, text
   return, string(bytes[ix])
 END
 
+FUNCTION spice_cat::format_selection_range_string, ev
+  column_range = ev.left.tostring() + ':' + ev.right.tostring()
+  row_range = ev.top.tostring() + ':' + ev.bottom.tostring()
+  text = '[' + column_range + ', ' + row_range + ']'
+  return, text
+END
+
 ;;
 ;; FILTER CONVERSION text <--> array
 ;;
@@ -393,12 +400,6 @@ PRO spice_cat::handle_context, ev
   widget_displaycontextmenu, ev.id, ev.x, ev.y, base
 END
 
-FUNCTION spice_cat::format_selection_range_string, ev
-  column_range = ev.left.tostring() + ':' + ev.right.tostring()
-  row_range = ev.top.tostring() + ':' + ev.bottom.tostring()
-  text = '[' + column_range + ', ' + row_range + ']'
-  return, text
-END
 
 PRO spice_cat::handle_table_cell_sel, ev
   sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
