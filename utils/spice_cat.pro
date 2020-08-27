@@ -425,6 +425,7 @@ PRO spice_cat::handle_all_table_events, ev, parts
   type = tag_names(ev, /structure_name)
   CASE type OF 
      "WIDGET_TABLE_COL_WIDTH": return
+     "WIDGET_TABLE_CH": return ;; Doh! Typing into non-editable cells triggers this!!!
      ELSE:
   END
   
