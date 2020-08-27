@@ -1,39 +1,35 @@
 ; Scalar input is no problem: foreach handles ok, and an
 ; array of 1 struct is the same as a scalar struct.
 
-FUNCTION spice_keyword_info,keywords,all=all,return_as_hash=return_as_hash
-  k = "FILENAME,COMPRESS,STUDY_ID,OBS_ID,STUDYTYP,STUDYDES,STUDY,"
-  w = "      20,       5,       2,    10,       5,      10,   10,"
-  t = "       t,       t,       i,     t,       t,       t,    t,"
+FUNCTION spice_keyword_info,keywords,all=all
+  kwds = [$
+          {SPICE_KEYWORD_INFO, keyword: "FILENAME", display_width: 20, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "DATE-BEG", display_width: 10, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "COMPRESS", display_width:  5, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "STUDY_ID", display_width:  2, type: "i"},$
+          {SPICE_KEYWORD_INFO, keyword: "OBS_ID",   display_width: 10, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "STUDYTYP", display_width:  5, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "STUDYDES", display_width: 10, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "STUDY",    display_width: 10, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "AUTHOR",   display_width: 10, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "PURPOSE",  display_width: 10, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "READMODE", display_width:  5, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "SOOPNAME", display_width: 10, type: "t"},$
+          {SPICE_KEYWORD_INFO, keyword: "NWIN",     display_width:  2, type: "i"},$
+          {SPICE_KEYWORD_INFO, keyword: "NWIN_PRF", display_width:  2, type: "i"},$
+          {SPICE_KEYWORD_INFO, keyword: "NWIN_DUM", display_width:  2, type: "i"},$
+          {SPICE_KEYWORD_INFO, keyword: "NWIN_INT", display_width:  2, type: "i"} $
+         ]
   
-  k += "AUTHOR,PURPOSE,READMODE,SOOPNAME,NWIN,NWIN_PRF,NWIN_DUM,"
-  w += "    10,     10,       5,      10,   2,       2,        2,"
-  t += "     t,      t,       t,       t,   i,       i,        i,
+  IF keyword_set(all) THEN keywords = kwds[*].keyword
+  default,keywords, kwds[*].keyword
   
-  k += "NWIN_INT"
-  w += "       2"
-  t += "       i"
-
-  k = strsplit(k,",",/extract)
-  w = fix(strsplit(w,",",/extract))
-  t = strsplit(t,",",/extract)
-  
-  k = k.trim()
-  t = t.trim()
-  
-  display_widths = hash(k,w)
-  types = hash(k,t)
-  
-  info_array = []
-  IF keyword_set(all) THEN keywords = k
-  foreach keyword,keywords DO BEGIN
-     keyword_info = {spice_keyword_info, $
-                     keyword:keyword,$
-                     display_width:display_widths[keyword],$
-                     type:types[keyword] $
-                    }
-     info_array = [info_array,keyword_info]
+  keyword_info_hash = orderedhash()
+  foreach keyword, keywords, index DO BEGIN
+     info = reform(kwds[where(kwds.keyword EQ keyword,count)])
+     IF count NE 1 THEN message,"Huh? This shouldn't happen! Should be one and only one match!"
+     keyword_info_hash[keyword] = info
   END
-  IF keyword_set(return_as_hash) THEN return,orderedhash(info_array.keyword,info_array)
-  return,info_array
+
+  return,keyword_info_hash
 END
