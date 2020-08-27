@@ -50,26 +50,15 @@ END
 ;; DATA LOADING & MANIPULATION
 ;;
 
-PRO spice_cat::load_fitslist, filename
-  openr, lun, self.state.listfilename, /get_lun
-  t = ''
-  readf, lun, t
-  keywords = strsplit(/extract, t, ",")
-  list = []
-  WHILE NOT eof(lun) DO BEGIN
-     readf, lun, t
-     values = strsplit(/extract, t, string(9b))
-     struct = { }
-     structure_name = ""
-     foreach value, values, index DO BEGIN
-        structure_name += keywords[index]
-        struct = create_struct(name=structure_name, struct, keywords[index], value)
-     END
-     list = [list, struct]
-  END
-  free_lun, lun
-  self.state.full_list = list
-  self.state.column_names = tag_names(list[0])
+PRO spice_cat::load_fitslist
+  fitslist = spice_read_fitslist(self.state.listfilename)  ;; Array of orderedhashes()
+  
+  self.state.full_list = fitslist
+  self.state.full_tag_names = tag_names(fitslist[0])
+  self.state.full_column_names = self.state.full_tag_names.replace('$','-')
+  
+  self.state.current_tag_names = self.state.full_tag_names
+  self.state.current_column_names = self.state.full_column_names
 END 
 
 
