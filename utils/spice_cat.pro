@@ -158,11 +158,24 @@ FUNCTION spice_cat::cell_alignments
   return,cell_alignments
 END
 
+FUNCTION spice_cat::background_colors
+  num_table_columns = n_elements(self.state.current_column_names)
+  num_table_rows = n_elements(self.state.displayed)
+  background_colors = replicate(230b, 3, num_table_columns, num_table_rows)
+  background_colors[1, *, 0] = 255b
+  help,background_colors
+  return, background_colors
+END
+
+
 PRO spice_cat::remake_displayed_list
   self.create_displayed_list
   cell_alignments = self.cell_alignments()
-  widget_control,self.wid.table_id,set_value=self.state.displayed,$
-                 table_ysize=n_elements(self.state.displayed),alignment=cell_alignments
+  background_color = self.background_colors()
+  widget_control,self.wid.table_id, set_value=self.state.displayed
+  widget_control,self.wid.table_id, table_ysize=n_elements(self.state.displayed)
+  widget_control,self.wid.table_id, alignment=cell_alignments
+  widget_control,self.wid.table_id, background_color=background_color
 END
 
 ;;
@@ -213,20 +226,17 @@ END
 
 
 FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
-  IF tag_names(event,/structure_name) NE "WIDGET_KBRD_FOCUS" THEN BEGIN
-     print,"pseudo_handle_filter_focus_change_ok: not ok, not a focus event"
-     return, 0
+  IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
+     ;; We get here more often than we should, but... that's IDL's fault for
+     ;; creating weird extra events (and because we can't send any extra info in
+     ;; the event, whether to ignore or not).
+     IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
+        IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
+        IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
+     END
+     return,1 ; It's OK, dealt with!
   END
-  print,"pseudo_handle_filter_focus_change_ok: ok, just a focus event, enter=",event.enter
-  
-  ;; We get here more often than we should, but... that's IDL's fault for
-  ;; creating weird extra events (and because we can't send any extra info in
-  ;; the event, whether to ignore or not).
-  IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
-     IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
-     IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
-  END
-  return,1 ; It's OK, dealt with!
+  return,0 ; It wasn't a keyboard focus event, not ok
 END
 
 ;;
@@ -340,7 +350,6 @@ END
 
 
 PRO spice_cat::handle_rebuild_filter, dummy_event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
   column_name = parts[1]
   new_filter_as_array = parts[2:*]
   
@@ -446,9 +455,8 @@ PRO spice_cat::handle_table_cell_sel, ev
   
   IF header_click THEN BEGIN
      print,"ASSUMING YOU CLICKED THE HEADER???"
-     widget_control,self.wid.table_id,set_table_select=[sel.left, 0, sel.left, 0]
   END
-  
+  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   column_name = self.state.current_column_names[sel.left]
   self.deal_with_click_on_filter,column_name
 END
@@ -534,22 +542,14 @@ END
 
 
 PRO spice_cat::build_table
-  ; Arrays like "editable" is [column, row], so [*, n] is all columns in row n
-  
-  num_table_columns = n_elements(self.state.current_column_names)
-  num_table_rows = n_elements(self.state.full_list)+1
-  background_color = replicate(230b, 3, num_table_columns, num_table_rows)
-  background_color[1, *, 0] = 255b
-  
   relative_column_widths = ((self.state.keyword_info.values()).toarray()).display_width
   
   table_props = dictionary()
-  table_props.value = self.state.displayed
   table_props.scroll = 1b 
   table_props.column_labels = self.state.current_column_names
   table_props.no_row_headers = 1b
   table_props.row_major = 1b
-  table_props.background_color = background_color
+  table_props.background_color = self.background_colors()
   table_props.column_widths = relative_column_widths * 12
   table_props.all_events = 1b
   table_props.context_events = 1b
@@ -558,27 +558,29 @@ PRO spice_cat::build_table
   table_props.alignment = self.cell_alignments()
   
   props = table_props.tostruct()
-  self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
+  self.wid.table_id = widget_table(self.wid.table_base, value=self.state.displayed, _extra=props)
 END
 
 
 PRO spice_cat::build_widget
   self.wid = dictionary()
+  
   top_props = {row: 1b, xpad: 0b, ypad: 0b, uvalue: self, tlb_size_events: 1b}
+  
   self.wid.top_base = widget_base(title='SPICE-CAT', _extra=top_props)
   self.wid.ysize_spacer_base = widget_base(self.wid.top_base, ysize=800, xpad=0, ypad=0)
   self.wid.content_base = widget_base(self.wid.top_base, /column)
   self.wid.xsize_spacer_base = widget_base(self.wid.content_base, /row, xsize=800)
   self.wid.top_row_base = widget_base(self.wid.content_base, /row)
   self.wid.button_base = widget_base(self.wid.top_row_base, /row, /align_center, xpad=0, ypad=0)
-  self.wid.filter_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0)
+  self.wid.filter_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0, /align_center)
   self.wid.table_base = widget_base(self.wid.content_base, /column, /frame, xpad=0, ypad=0)
     
   self.wid.draw_focus_away = widget_text(self.wid.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
   self.create_buttons
   
-  self.wid.filter_label = widget_label(self.wid.filter_base, value='Filter:')
-  text = widget_text(self.wid.filter_base, value="click on green line to edit")
+  text = widget_label(self.wid.filter_base, value="Click on green line/heading to edit filter",$
+                     frame=2)
   
   self.build_table
   
