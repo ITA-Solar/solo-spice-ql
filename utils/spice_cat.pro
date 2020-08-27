@@ -70,7 +70,6 @@ END
 
 
 FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
-  print,"APPLYING FILTER: "+filter, full_list_tag_index
   filter_as_array = self.filter_as_array(filter)
   
   IF n_elements(filter_as_array) EQ 1 THEN BEGIN 
@@ -87,9 +86,14 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
      END
      
      IF filter_as_array[0] EQ "" THEN mask = replicate(1b,n_elements(self.state.full_list))
-     IF filter_as_array[0] NE "" THEN mask = self.state.full_list[*].(full_list_tag_index) GE min
      
-     IF filter_as_array[1] NE "" THEN mask = mask AND self.state.full_list[*].(tag_index) LE max
+     IF filter_as_array[0] NE "" THEN BEGIN
+        mask = self.state.full_list[*].(full_list_tag_index) GE min
+     END
+     
+     IF filter_as_array[1] NE "" THEN BEGIN
+        mask = mask AND self.state.full_list[*].(full_list_tag_index) LE max
+     END
   END
   print,TOTAL(mask)
   return,mask
@@ -163,7 +167,6 @@ FUNCTION spice_cat::background_colors
   num_table_rows = n_elements(self.state.displayed)
   background_colors = replicate(230b, 3, num_table_columns, num_table_rows)
   background_colors[1, *, 0] = 255b
-  help,background_colors
   return, background_colors
 END
 
@@ -207,6 +210,7 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
      current_filters_as_text.(column_number) = filter_as_text
      self.state.current_filters_as_text = current_filters_as_text
      self.remake_displayed_list
+     self.set_filter_edit_color,column_name
   END
 END
 
@@ -310,7 +314,6 @@ END
 ;;
 
 PRO spice_cat::build_text_filter, column_name, current_filter_as_array
-  print,"Building text filter: " + column_name + " : " + current_filter_as_array
   current_filter_as_text = current_filter_as_array[0]
   filter_text_uvalue = "TEXT_FILTER_CHANGE`" + column_name
   self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
@@ -325,7 +328,6 @@ END
 
 
 PRO spice_cat::build_range_filter, column_name, current_filter_as_array
-  print,"Building range filter: " + column_name + " : " + current_filter_as_array.join(' - ')
   min_value = current_filter_as_array[0]
   max_value = current_filter_as_array[1]
   
@@ -374,8 +376,6 @@ END
 
 
 PRO spice_cat::deal_with_click_on_filter,column_name
-  print,"Handle click on filter : " + column_name
-
   current_filter_as_array = self.get_filter_by_column_name(column_name)
   self.set_filter_edit_color,column_name
   
@@ -441,7 +441,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
-  print,"Handle "+tag_names(ev, /structure_name) + " : " + self.format_selection_range_string(sel)
+  ;print,"Handle "+tag_names(ev, /structure_name) + " : " + self.format_selection_range_string(sel)
   
   num_displayed = n_elements(self.state.displayed)
   
@@ -454,7 +454,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   IF (NOT header_click) AND (NOT filter_click) THEN return 
   
   IF header_click THEN BEGIN
-     print,"ASSUMING YOU CLICKED THE HEADER???"
+     ;print,"ASSUMING YOU CLICKED THE HEADER???"
   END
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   column_name = self.state.current_column_names[sel.left]
