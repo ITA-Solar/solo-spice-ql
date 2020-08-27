@@ -65,7 +65,7 @@ FUNCTION spice_fitslist__unique_key,line
 END
 
 
-FUNCTION spice_fitslist__stash_in_hash,lines
+FUNCTION spice_fitslist__stash_lines_in_hash,lines
   keys = spice_fitslist__unique_key(lines)
   return,hash(keys,lines) ;; Wow....
 END
@@ -94,13 +94,13 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
   IF keyword_set(reset) THEN file_delete,listfilename,/allow_nonexistent
   
   IF file_exist(listfilename) THEN BEGIN
-     list =  rd_ascii(listfilename)
-     stash = spice_fitslist__stash_in_hash(list[1:*])
-     print,"Found list, with "+trim(stash.count())+" elements"
+     list = rd_ascii(listfilename)
+     lines_in_hash = spice_fitslist__stash_lines_in_hash(list[1:*])
+     print,"Found list, with "+trim(lines_in_hash.count())+" elements"
   END ELSE BEGIN
      PRINT,"No file "+listfilename+" found"
      PRINT,"Creating one from scratch"
-     stash = hash()
+     lines_in_hash = hash()
   END
   
   fits_filelist = file_search(spice_datadir,"*.fits")
@@ -114,24 +114,24 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
   
   FOREACH fits_filename, fits_filelist, index DO BEGIN
      key = spice_fitslist__unique_key(fits_filename)
-     IF stash.haskey(key) THEN BEGIN
+     IF lines_in_hash.haskey(key) THEN BEGIN
         print,"Skipping "+key
         CONTINUE
      END
      
      header = spice_fitslist__get_header(fits_filename)
      
-     stash[key] = spice_fitslist__line(header,keyword_info)
+     lines_in_hash[key] = spice_fitslist__line(header,keyword_info)
      PRINT,"Files done :",index+1," "+key
      IF index GE maxfiles-1 THEN BREAK
   END
   keyword_list = keyword_info.keys()
   keyword_array = keyword_list.toArray()
   comma_separated_keywords = keyword_array.join(",")
-  keys = (stash.keys()).sort()
+  keys = (lines_in_hash.keys()).sort()
   OPENW,fitslist_lun,listfilename,/get_lun
   printf,fitslist_lun,comma_separated_keywords
-  foreach key,keys DO printf,fitslist_lun,stash[key],format="(a)"
+  foreach key,keys DO printf,fitslist_lun,lines_in_hash[key],format="(a)"
   FREE_LUN,fitslist_lun
 END
 
