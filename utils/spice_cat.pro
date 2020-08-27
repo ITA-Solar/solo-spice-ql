@@ -96,11 +96,14 @@ END
 
 
 PRO spice_cat::create_displayed_list, use_columns = use_columns
-  empty_filters_as_text = create_struct(name=tag_names(self.state.full_list, /structure_name))
-  FOR i=0, n_elements(self.state.column_names)-1 DO empty_filters_as_text.(i) = "<filter>"
+  
+  empty_filters_as_text = {}
+  foreach tag_name, self.state.full_tag_names DO BEGIN
+     empty_filters_as_text = create_struct(empty_filters_as_text, tag_name, '<filter>')
+  END
   
   IF self.state.haskey("current_filters_as_text") THEN BEGIN
-     current_filters_as_text = self.state.current_filters_as_text.toStruct()
+     current_filters_as_text = self.state.current_filters_as_text
   END ELSE BEGIN
      current_filters_as_text = empty_filters_as_text
   END
@@ -111,8 +114,8 @@ PRO spice_cat::create_displayed_list, use_columns = use_columns
      struct_assign,new_filters_as_text,empty_filters_as_text    ;; All tags = <filter>
      struct_assign,new_filters_as_text,current_filters_as_text  ;; Override with current filters
   END
-  self.state.current_filters_as_text = orderedhash(new_filters_as_text)
-  self.state.column_names = tag_names(new_filters_as_text)
+  self.state.current_filters_as_text = new_filters_as_text
+  self.state.current_tag_names = tag_names(new_filters_as_text)
   
   filter_mask = self.filter_mask(new_filters_as_text)
   
@@ -133,7 +136,7 @@ END
 ;;
 
 FUNCTION spice_cat::get_filter_by_column_name, column_name
-  column_number = where(self.state.column_names EQ column_name)
+  column_number = where(self.state.current_column_names EQ column_name)
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, get_value=filter_as_text, use_table_select=select
   return, self.filter_as_array(filter_as_text)
@@ -142,12 +145,20 @@ END
 
 PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   filter_as_text = self.filter_as_text(filter_as_array)
+  
   IF filter_as_text EQ "" THEN filter_as_text = "<filter>"
-  column_number = (where(self.state.column_names EQ column_name))[0]
+  column_number = (where(self.state.current_column_names EQ column_name))[0]
+  
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, set_value=filter_as_text, use_table_select=select
-  IF filter_as_text NE self.state.current_filters_as_text[column_name] THEN BEGIN
-     self.state.current_filters_as_text[column_name] = filter_as_text
+  
+  ;; DON'T do "current_filters_as_text.(column_number)" directly (CORE DUMP!),
+  ;; use the parentheses!
+  ;; 
+  current_filters_as_text = self.state.current_filters_as_text
+  IF filter_as_text NE current_filters_as_text.(column_number) THEN BEGIN
+     current_filters_as_text.(column_number) = filter_as_text
+     self.state.current_filters_as_text = current_filters_as_text
      self.remake_displayed_list
   END
 END
@@ -160,7 +171,7 @@ PRO spice_cat::set_filter_edit_color, column_name, clear=clear
   
   IF keyword_set(clear) THEN return
   
-  column_number = (where(self.state.column_names EQ column_name))[0]
+  column_number = (where(self.state.current_column_names EQ column_name))[0]
   table_select = [column_number, 0, column_number, 0]
   color = [150b, 255b, 150b]
   widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
@@ -402,7 +413,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   
   IF (sel.top NE sel.bottom) OR (sel.left NE sel.right) OR (sel.top NE 0) THEN return
   
-  column_name = self.state.column_names[sel.left]
+  column_name = self.state.current_column_names[sel.left]
   self.deal_with_click_on_filter,column_name
 END
 
@@ -488,7 +499,7 @@ END
 PRO spice_cat::build_table
   ; Arrays like "editable" is [column, row], so [*, n] is all columns in row n
   
-  num_table_columns = n_elements(self.state.column_names)
+  num_table_columns = n_elements(self.state.current_column_names)
   num_table_rows = n_elements(self.state.full_list)+1
   background_color = replicate(230b, 3, num_table_columns, num_table_rows)
   background_color[1, *, 0] = 255b
@@ -496,7 +507,7 @@ PRO spice_cat::build_table
   self.wid.table_props = dictionary()
   self.wid.table_props.value = self.state.displayed
   self.wid.table_props.scroll = 1b 
-  self.wid.table_props.column_labels = self.state.column_names
+  self.wid.table_props.column_labels = self.state.current_column_names
   self.wid.table_props.no_row_headers = 1b
   self.wid.table_props.row_major = 1b
   self.wid.table_props.background_color = background_color
