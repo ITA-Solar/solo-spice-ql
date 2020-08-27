@@ -61,7 +61,7 @@ END
 
 
 FUNCTION spice_fitslist__unique_key,line
-  return, line.extract("solo_.*spice.*[0-9]{8}T[0-9]{6}.*V[0-9]+")
+  return, line.extract("_[0-9]{8}T[0-9]{6}.*V[0-9]+")
 END
 
 
