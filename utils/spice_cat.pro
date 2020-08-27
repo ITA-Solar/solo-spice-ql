@@ -69,20 +69,27 @@ PRO spice_cat::load_fitslist
 END 
 
 
-FUNCTION spice_cat::apply_filter, filter, tag_index
-  print,"APPLYING FILTER: "+filter
+FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
+  print,"APPLYING FILTER: "+filter, full_list_tag_index
   filter_as_array = self.filter_as_array(filter)
   
-  IF n_elements(filter_as_array) THEN BEGIN 
-     mask = self.state.full_list[*].(tag_index).matches(filter_as_array[0])
+  IF n_elements(filter_as_array) EQ 1 THEN BEGIN 
+     mask = self.state.full_list[*].(full_list_tag_index).matches(filter_as_array[0],/fold_case)
   END ELSE BEGIN
      min = filter_as_array[0]
      max = filter_as_array[1]
      
-     IF filter_as_array[0] NE "" THEN mask = self.state.full_list GE min $
-     ELSE                             mask = replicate(1b,n_elements(self.state.full_list))
+     column_name = self.state.full_column_names[full_list_tag_index]
      
-     IF filter_as_array[1] NE "" THEN mask = mask AND self.state.full_list LE max
+     IF self.state.keyword_info[colun_name] EQ "i" THEN BEGIN
+        IF min NE "" THEN min = min + 0.0d
+        IF max NE "" THEN max = max + 0.0d
+     END
+     
+     IF filter_as_array[0] EQ "" THEN mask = replicate(1b,n_elements(self.state.full_list))
+     IF filter_as_array[0] NE "" THEN mask = self.state.full_list[*].(full_list_tag_index) GE min
+     
+     IF filter_as_array[1] NE "" THEN mask = mask AND self.state.full_list[*].(tag_index) LE max
   END
   print,TOTAL(mask)
   return,mask
@@ -92,12 +99,20 @@ END
 FUNCTION spice_cat::filter_mask, filters
   mask = replicate(1b,n_elements(self.state.full_list))
   
-  foreach tag_name, tag_names(filters), tag_ix DO BEGIN
-     filter = filters.(tag_ix)
+  ; The apply_filter() method operates on the full_list list of tags,
+  ; so we should supply full_list_tag_index, not filter_tag_index
+  ;
+  foreach filter_tag_name, tag_names(filters), filter_tag_ix DO BEGIN
+     filter = filters.(filter_tag_ix)
      IF filter EQ "<filter>" THEN CONTINUE
-     mask = mask AND self.apply_filter(filter, tag_ix)
+     
+     full_list_tag_index = (where(self.state.full_tag_names EQ filter_tag_name))[0]
+     print, "Current filter tag name " + filter_tag_name + "(" + filter_tag_ix.toString() + ")"
+     print, "Full list tag index: "+full_list_tag_index.toString()
+     
+     mask = mask AND self.apply_filter(filter, full_list_tag_index)
   END
-  print,"APPLIED ALL FILTERS: ",TOTAL(mask)
+  print,"APPLIED ALL FILTERS: ",long(TOTAL(mask))
   return,mask
 END
 
@@ -131,11 +146,23 @@ PRO spice_cat::create_displayed_list, use_columns = use_columns
   ELSE               self.state.displayed = [new_filters_as_text, self.state.full_list[ix]]
 END
 
+FUNCTION spice_cat::cell_alignments
+  num_cols = n_elements(self.state.current_column_names)
+  num_rows = n_elements(self.state.displayed)
+  
+  cell_alignments = replicate(0b,num_cols, num_rows)
+  foreach column_name, self.state.current_column_names, columnix DO BEGIN
+     align = self.state.keyword_info[column_name].type EQ "i"
+     cell_alignments[columnix,*] = align * 2
+  END
+  return,cell_alignments
+END
 
 PRO spice_cat::remake_displayed_list
   self.create_displayed_list
+  cell_alignments = self.cell_alignments()
   widget_control,self.wid.table_id,set_value=self.state.displayed,$
-                 table_ysize=n_elements(self.state.displayed)
+                 table_ysize=n_elements(self.state.displayed),alignment=cell_alignments
 END
 
 ;;
@@ -190,6 +217,7 @@ FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
      print,"pseudo_handle_filter_focus_change_ok: not ok, not a focus event"
      return, 0
   END
+  print,"pseudo_handle_filter_focus_change_ok: ok, just a focus event, enter=",event.enter
   
   ;; We get here more often than we should, but... that's IDL's fault for
   ;; creating weird extra events (and because we can't send any extra info in
@@ -216,8 +244,6 @@ END
 
 
 PRO spice_cat::handle_range_filter_change, event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
-  
   min_or_max = parts[1]
   column_name = parts[2]
   
@@ -320,7 +346,6 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   
   self.set_filter_by_column_name, column_name, new_filter_as_array
   widget_control, self.wid.top_base, update=0
-  widget_control, self.wid.table_id, set_table_select=[-1, -1, -1, -1]
   
   filter_base_children = widget_info(self.wid.filter_base, /all_children)
   foreach child, filter_base_children DO widget_control, child, /destroy
@@ -409,10 +434,20 @@ PRO spice_cat::handle_table_cell_sel, ev
   
   print,"Handle "+tag_names(ev, /structure_name) + " : " + self.format_selection_range_string(sel)
   
-  ;; Only meaningful action at this stage is if the user wants
-  ;; to edit the filter (1st and only 1st row)
+  num_displayed = n_elements(self.state.displayed)
   
-  IF (sel.top NE sel.bottom) OR (sel.left NE sel.right) OR (sel.top NE 0) THEN return
+  ;; Only meaningful action at this stage is if the user wants
+  ;; to edit the filter: 1st and only 1st row single cell, OR header click
+  
+  filter_click = (sel.top EQ 0) AND (sel.bottom EQ 0) AND (sel.left EQ sel.right)
+  header_click = sel.left EQ sel.right AND sel.top EQ 0 AND sel.bottom EQ num_displayed - 1
+  
+  IF (NOT header_click) AND (NOT filter_click) THEN return 
+  
+  IF header_click THEN BEGIN
+     print,"ASSUMING YOU CLICKED THE HEADER???"
+     widget_control,self.wid.table_id,set_table_select=[sel.left, 0, sel.left, 0]
+  END
   
   column_name = self.state.current_column_names[sel.left]
   self.deal_with_click_on_filter,column_name
@@ -505,21 +540,24 @@ PRO spice_cat::build_table
   num_table_rows = n_elements(self.state.full_list)+1
   background_color = replicate(230b, 3, num_table_columns, num_table_rows)
   background_color[1, *, 0] = 255b
-  relative_column_widths = ((self.state.keyword_info.values()).toarray()).display_width
-  self.wid.table_props = dictionary()
-  self.wid.table_props.value = self.state.displayed
-  self.wid.table_props.scroll = 1b 
-  self.wid.table_props.column_labels = self.state.current_column_names
-  self.wid.table_props.no_row_headers = 1b
-  self.wid.table_props.row_major = 1b
-  self.wid.table_props.background_color = background_color
-  self.wid.table_props.column_widths = relative_column_widths * 12
-  self.wid.table_props.all_events = 1b
-  self.wid.table_props.context_events = 1b
-  self.wid.table_props.uvalue="ALL_TABLE_EVENTS`"
-  self.wid.table_props.resizeable_columns = 1b
   
-  props = self.wid.table_props.tostruct()
+  relative_column_widths = ((self.state.keyword_info.values()).toarray()).display_width
+  
+  table_props = dictionary()
+  table_props.value = self.state.displayed
+  table_props.scroll = 1b 
+  table_props.column_labels = self.state.current_column_names
+  table_props.no_row_headers = 1b
+  table_props.row_major = 1b
+  table_props.background_color = background_color
+  table_props.column_widths = relative_column_widths * 12
+  table_props.all_events = 1b
+  table_props.context_events = 1b
+  table_props.uvalue="ALL_TABLE_EVENTS`"
+  table_props.resizeable_columns = 1b
+  table_props.alignment = self.cell_alignments()
+  
+  props = table_props.tostruct()
   self.wid.table_id = widget_table(self.wid.table_base, _extra=props)
 END
 
