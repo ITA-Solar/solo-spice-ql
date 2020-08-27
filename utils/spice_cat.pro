@@ -558,9 +558,9 @@ END
 
 PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   self.state = dictionary()
-  self.state.keyword_info = spice_keyword_info(/all, /return_as_hash)
-  IF getenv("SPICE_DATA") NE "" THEN spice_datadir = getenv("SPICE_DATA")
-  self.default,spice_datadir,'/mn/acubens/u1/steinhh/tmp/spice_data/level2'
+  self.state.keyword_info = spice_keyword_info(/all)
+  spice_datadir = getenv("SPICE_DATA")
+  IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATADIR is blank or not set"
   
   self.default,listfiledir,spice_datadir
   
