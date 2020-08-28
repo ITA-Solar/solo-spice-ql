@@ -22,7 +22,7 @@ FUNCTION spice_keyword_info,keywords,all=all
          ]
   
   IF keyword_set(all) THEN keywords = kwds[*].keyword
-  default,keywords, kwds[*].keyword
+  spice_default, keywords, kwds[*].keyword
   
   keyword_info_hash = orderedhash()
   foreach keyword, keywords, index DO BEGIN
