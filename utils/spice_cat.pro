@@ -22,11 +22,19 @@ FUNCTION spice_cat::remove_non_digits, text
   return, string(bytes[ix])
 END
 
+
 FUNCTION spice_cat::format_selection_range_string, ev
   column_range = ev.left.tostring() + ':' + ev.right.tostring()
   row_range = ev.top.tostring() + ':' + ev.bottom.tostring()
   text = '[' + column_range + ', ' + row_range + ']'
   return, text
+END
+
+
+FUNCTION spice_cat::empty_filters_as_text, tag_names
+  filters_as_text = {}
+  foreach tag, tag_names DO filters_as_text = create_struct(filters_as_text, tag, '<filter>')
+  return, filters_as_text
 END
 
 ;;
@@ -62,12 +70,6 @@ PRO spice_cat::load_fitslist
   self.state.current_column_names = self.state.full_column_names
 END 
 
-
-FUNCTION spice_cat::empty_filters_as_text, tag_names
-  filters_as_text = {}
-  foreach tag, tag_names DO filters_as_text = create_struct(filters_as_text, tag, '<filter>')
-  return, filters_as_text
-END
 
 FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
   filter_as_array = self.filter_as_array(filter)
