@@ -1,5 +1,5 @@
 ;;
-;; UTILITY FUNCTIONS
+PRO _____________________UTILITY_FUNCTIONS & END
 ;;
 PRO spice_cat::modal_message,message,timer=timer
   spice_modal_message, self.wid.top_base, message, timer=timer
@@ -14,6 +14,8 @@ END
 
 PRO spice_cat::handle_sort, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
+  self.state.current_sort_order = parts[1].tolower()
+;  self.state
 END
 
 
@@ -44,6 +46,7 @@ END
 
 ;;
 ;; FILTER CONVERSION text <--> array
+PRO _____________________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
 
 FUNCTION spice_cat::filter_as_array, filter_as_text
@@ -61,7 +64,7 @@ FUNCTION spice_cat::filter_as_text, filter_as_array
 END
 
 ;;
-;; DATA LOADING & MANIPULATION
+PRO _____________________DATA_LOADING_AND_MANIPULATION           & END
 ;;
 
 PRO spice_cat::load_fitslist
@@ -73,6 +76,9 @@ PRO spice_cat::load_fitslist
   
   self.state.current_tag_names = self.state.full_tag_names
   self.state.current_column_names = self.state.full_column_names
+  self.state.current_sort_column = 'DATE-BEG'
+  self.state.current_sort_order = "ascending"
+  self.state.current_sort_order = "descending"
 END 
 
 
@@ -126,7 +132,7 @@ FUNCTION spice_cat::apply_filters, filters
 END
 
 
-PRO spice_cat::set_current_filter_status, keywords
+PRO spice_cat::update_current_filter, keywords
   spice_default, keywords, self.state.current_column_names
   
   IF self.state.haskey("current_filters_as_text") THEN BEGIN
@@ -139,28 +145,54 @@ PRO spice_cat::set_current_filter_status, keywords
   struct_assign,current_filters_as_text, new_filters_as_text
   
   self.state.current_filters_as_text = new_filters_as_text
-  self.state.current_tag_names = tag_names(new_filters_as_text)
+END
+
+
+FUNCTION spice_cat::sort,list
+  tag_names = tag_names(list)
+  current_sort_tag = self.state.current_sort_column.replace('-','$')
+  
+  sort_tag_ix = (where(tag_names EQ current_sort_tag, count))[0]
+  
+  IF self.state.keyword_info[self.state.current_sort_column].type EQ "i" THEN BEGIN
+     sort_values = 0.0d + list[*].(sort_tag_ix)
+     sortix = sort(sort_values)
+  END ELSE BEGIN
+     sortix = sort(list.(sort_tag_ix))
+  END
+  
+  IF self.state.current_sort_order EQ "descending" THEN sortix = reverse(sortix)
+  
+  return,list[sortix]
 END
 
 
 PRO spice_cat::create_displayed_list, keywords
-  self.set_current_filter_status, keywords
+  self.update_current_filter, keywords
+  
+  new_list_without_filter = []
   
   filter_mask = self.apply_filters(self.state.current_filters_as_text)
-  ix = where(filter_mask,count)
+  selected_ix = where(filter_mask,count)
   
-  new_displayed_without_filter = []
   IF count GT 0 THEN BEGIN
-     new_displayed_without_filter = replicate(self.state.current_filters_as_text, count)
-     struct_assign, self.state.full_list[ix], new_displayed_without_filter
+     new_list_without_filter = replicate(self.state.current_filters_as_text, count)
+     struct_assign, self.state.full_list[selected_ix], new_list_without_filter
   END
-  new_displayed = [self.state.current_filters_as_text, temporary(new_displayed_without_filter)]
   
-  self.state.displayed = temporary(new_displayed)
+  new_sorted_list_without_filter = self.sort(new_list_without_filter)
+  
+  new_list = [self.state.current_filters_as_text, temporary(new_sorted_list_without_filter)]
+  
+  self.state.displayed = temporary(new_list)
   self.state.current_tag_names = tag_names(self.state.displayed)
-  self.state.current_column_names = self.state.current_tag_names.replace('$','-')
+  self.state.current_column_names = (tag_names(self.state.displayed)).replace('$','-')
 END
 
+
+;;
+PRO _____________________TABLE_WIDGET_UTILITIES & END
+;;
 
 FUNCTION spice_cat::cell_alignments
   num_cols = n_elements(self.state.current_column_names)
@@ -183,6 +215,7 @@ FUNCTION spice_cat::background_colors
   return, background_colors
 END
 
+;;
 
 PRO spice_cat::remake_displayed_list
   self.create_displayed_list
@@ -195,7 +228,7 @@ PRO spice_cat::remake_displayed_list
 END
 
 ;;
-;; EVENT HANDLING HELPERS
+PRO _____________________EVENT_HANDLING_HELPERS                      & END
 ;;
 
 FUNCTION spice_cat::get_filter_by_column_name, column_name
@@ -257,7 +290,7 @@ FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
 END
 
 ;;
-;; EVENT HANDLERS
+PRO _____________________EVENT_HANDLERS                     & END
 ;;
 
 ; RESIZE TABLE ACCORDING TO TLB size change!
@@ -336,8 +369,60 @@ PRO spice_cat::handle_flash_filter_focus, event, parts
   END
 END
 
+
+PRO spice_cat::handle_context, ev
+  IF ev.row EQ 0 THEN return ; No context menu for filter row
+  IF ev.col LT 0 THEN return ; No context menu for row labels
+  
+  base = widget_base(/CONTEXT_MENU, ev.id)
+  IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev
+  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, ev
+  
+  widget_displaycontextmenu, ev.id, ev.x, ev.y, base
+END
+
+
+
+
+PRO _____________________COMMAND_BASE_EVENTS                            & END
+;; COMMAND BASE EVENTS -----------------------
+
+PRO spice_cat::handle_call_program, event, parts
+  self.modal_message,"Call program with selection not implemented yet", timer = 2
+END
+
+
+PRO spice_cat::handle_return_selection, event, parts
+  self.modal_message, "Returning selection is not implemented yet", timer=2
+END
+
+
+PRO spice_cat::handle_regenerate, event, parts
+  self.modal_message, ["Regenerate list with:","IDL> spice_fitslist"], timer=2
+END
+
 ;;
-;; WIDGET BUILDERS
+PRO _____________________CATCH_ALL_EVENT_HANDLER                         & END
+;;
+  
+PRO spice_cat__event, event
+  widget_control, event.top, get_uvalue=self
+  IF event.id EQ event.top THEN BEGIN
+     self.tlb_resize_event,event
+     return
+  END 
+  widget_control, event.id, get_uvalue=uvalue
+  
+  parts = uvalue.split('`')
+  method = "handle_"+parts[0]
+  
+  call_method,method, self, event, parts
+END
+
+;;
+PRO _____________________BUILDERS                                         & END
+;;
+PRO _____________________WIDGET_BUILDERS                   & END
 ;;
 
 PRO spice_cat::build_text_filter, column_name, filter_as_array
@@ -377,6 +462,9 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
   self.wid.filter_focus_flash_text = min_text
 END
 
+
+;; TODO: Reclassify (move) this? It's an event handler... though sometimes
+;;       responding to a pseudo-event
 
 PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   column_name = parts[1]
@@ -448,18 +536,6 @@ PRO spice_cat::make_datacell_context_menu, base, ev
 END
 
 
-PRO spice_cat::handle_context, ev
-  IF ev.row EQ 0 THEN return ; No context menu for filter row
-  IF ev.col LT 0 THEN return ; No context menu for row labels
-  
-  base = widget_base(/CONTEXT_MENU, ev.id)
-  IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev
-  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, ev
-  
-  widget_displaycontextmenu, ev.id, ev.x, ev.y, base
-END
-
-
 PRO spice_cat::handle_table_cell_sel, ev
   sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
   
@@ -500,39 +576,7 @@ PRO spice_cat::handle_all_table_events, ev, parts
   method = "handle_" + short_event_name
   call_method, method, self, ev
 END
-
-;; COMMAND BASE EVENTS -----------------------
-
-PRO spice_cat::handle_call_program, event, parts
-  self.modal_message,"Call program with selection not implemented yet", timer = 2
-END
-
-
-PRO spice_cat::handle_return_selection, event, parts
-  self.modal_message, "Returning selection is not implemented yet", timer=2
-END
-
-
-PRO spice_cat::handle_regenerate, event, parts
-  self.modal_message, ["Regenerate list with:","IDL> spice_fitslist"], timer=2
-END
-
-;; THE CATCH-ALL EVENT HANDLER ----------------
-
-PRO spice_cat__event, event
-  widget_control, event.top, get_uvalue=self
-  IF event.id EQ event.top THEN BEGIN
-     self.tlb_resize_event,event
-     return
-  END 
-  widget_control, event.id, get_uvalue=uvalue
   
-  parts = uvalue.split('`')
-  method = "handle_"+parts[0]
-  
-  call_method,method, self, event, parts
-END
-
 ;; UTILITY TO KILL PREVIOUS INCARNATION -------
 
 PRO spice_cat::new_incarnation
@@ -543,8 +587,6 @@ PRO spice_cat::new_incarnation
   END
   previous_incarnation = self.wid.top_base
 END
-
-;; Utility function to handle defaults etc -----
 
 PRO spice_cat::create_command_buttons
   buttons = $
@@ -638,6 +680,7 @@ function spice_cat::init, example_param1,  example_param2, _extra=extra
   IF keywords GT "" THEN BEGIN
      keywords = keywords.split(",")
      keywords = keywords.trim()
+     IF total(keywords EQ "DATE-BEG") EQ 0 THEN keywords = ["DATE-BEG", keywords]
   END ELSE BEGIN
      keywords = []
   END
