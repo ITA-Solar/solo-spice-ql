@@ -5,6 +5,7 @@ PRO spice_cat::modal_message,message,timer=timer
   spice_modal_message, self.wid.top_base, message, timer=timer
 END
 
+
 PRO spice_cat::handle_remove_column, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
   screen_size = spice_get_screen_size()
@@ -14,6 +15,7 @@ END
 PRO spice_cat::handle_sort, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
 END
+
 
 FUNCTION spice_cat::remove_non_digits, text
   compile_opt static
@@ -105,9 +107,6 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
 END
 
 
-;     print, "Current filter tag name " + current_filter_tag_name + "(" + current_filter_tag_ix.toString() + ")"
-;     print, "Full list tag index: "+full_list_tag_index.toString()
-     
 FUNCTION spice_cat::apply_filters, filters
   mask = replicate(1b,n_elements(self.state.full_list))
   
@@ -126,6 +125,7 @@ FUNCTION spice_cat::apply_filters, filters
   return,mask
 END
 
+
 PRO spice_cat::set_current_filter_status, keywords
   spice_default, keywords, self.state.current_column_names
   
@@ -141,6 +141,7 @@ PRO spice_cat::set_current_filter_status, keywords
   self.state.current_filters_as_text = new_filters_as_text
   self.state.current_tag_names = tag_names(new_filters_as_text)
 END
+
 
 PRO spice_cat::create_displayed_list, keywords
   self.set_current_filter_status, keywords
@@ -160,6 +161,7 @@ PRO spice_cat::create_displayed_list, keywords
   self.state.current_column_names = self.state.current_tag_names.replace('$','-')
 END
 
+
 FUNCTION spice_cat::cell_alignments
   num_cols = n_elements(self.state.current_column_names)
   num_rows = n_elements(self.state.displayed)
@@ -171,6 +173,7 @@ FUNCTION spice_cat::cell_alignments
   END
   return,cell_alignments
 END
+
 
 FUNCTION spice_cat::background_colors
   num_table_columns = n_elements(self.state.current_column_names)
@@ -256,6 +259,20 @@ END
 ;;
 ;; EVENT HANDLERS
 ;;
+
+; RESIZE TABLE ACCORDING TO TLB size change!
+; Only called when event.id eq event.top
+;
+PRO spice_cat::tlb_resize_event,event
+  IF tag_names(event, /structure_name) NE "WIDGET_BASE" THEN return
+  
+  widget_control,self.wid.xsize_spacer_base, xsize=event.x
+  widget_control,self.wid.ysize_spacer_base, ysize=event.y
+  tablex = event.x
+  tabley = event.y - 50
+  widget_control,self.wid.table_id, scr_xsize=tablex, scr_ysize=tabley
+END
+
 
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
@@ -490,9 +507,11 @@ PRO spice_cat::handle_call_program, event, parts
   self.modal_message,"Call program with selection not implemented yet", timer = 2
 END
 
+
 PRO spice_cat::handle_return_selection, event, parts
   self.modal_message, "Returning selection is not implemented yet", timer=2
 END
+
 
 PRO spice_cat::handle_regenerate, event, parts
   self.modal_message, ["Regenerate list with:","IDL> spice_fitslist"], timer=2
@@ -503,7 +522,7 @@ END
 PRO spice_cat__event, event
   widget_control, event.top, get_uvalue=self
   IF event.id EQ event.top THEN BEGIN
-     self.tlb_event,event
+     self.tlb_resize_event,event
      return
   END 
   widget_control, event.id, get_uvalue=uvalue
@@ -527,20 +546,7 @@ END
 
 ;; Utility function to handle defaults etc -----
 
-; RESIZE TABLE ACCORDING TO TLB size change!
-;
-PRO spice_cat::tlb_event,event
-  IF tag_names(event, /structure_name) EQ "WIDGET_BASE" THEN BEGIN
-     widget_control,self.wid.xsize_spacer_base, xsize=event.x
-     widget_control,self.wid.ysize_spacer_base, ysize=event.y
-     tablex = event.x
-     tabley = event.y - 50
-     widget_control,self.wid.table_id, scr_xsize=tablex, scr_ysize=tabley
-   END
-END
-
-
-PRO spice_cat::create_buttons
+PRO spice_cat::create_command_buttons
   buttons = $
      [ $
      { value: "Return selection", uvalue: "RETURN_SELECTION`", ALIGN_CENTER: 1b },$
@@ -569,6 +575,7 @@ PRO spice_cat::build_table
   
   props = table_props.tostruct()
   self.wid.table_id = widget_table(self.wid.table_base, value=self.state.displayed, _extra=props)
+  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
 END
 
 
@@ -578,33 +585,33 @@ PRO spice_cat::build_widget
   top_props = {row: 1b, xpad: 0b, ypad: 0b, uvalue: self, tlb_size_events: 1b}
   
   self.wid.top_base = widget_base(title='SPICE-CAT', _extra=top_props)
+  self.new_incarnation
+
   self.wid.ysize_spacer_base = widget_base(self.wid.top_base, ysize=800, xpad=0, ypad=0)
   self.wid.content_base = widget_base(self.wid.top_base, /column)
   self.wid.xsize_spacer_base = widget_base(self.wid.content_base, /row, xsize=800)
   self.wid.top_row_base = widget_base(self.wid.content_base, /row)
   self.wid.button_base = widget_base(self.wid.top_row_base, /row, /align_center, xpad=0, ypad=0)
+  spacer = widget_base(self.wid.top_row_base,xsize=5)
   self.wid.filter_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0, /align_center)
   self.wid.table_base = widget_base(self.wid.content_base, /column, /frame, xpad=0, ypad=0)
     
   self.wid.draw_focus_away = widget_text(self.wid.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
-  self.create_buttons
   
-  text = widget_label(self.wid.filter_base, value="Click on green line/heading to edit filter",$
-                     frame=2)
+  self.create_command_buttons
+  
+  t = "Click on green line or the heading to edit filter"
+  text = widget_label(self.wid.filter_base, frame=2,value=t)
   
   self.build_table
   
-  self.new_incarnation
   widget_control,self.wid.top_base, /realize
   spice_center_window, self.wid.top_base
-  widget_control,self.wid.table_id, set_table_select=[-1, -1, -1, -1]
   
   ;; Make table fill available space despite /scroll
   widget_control,self.wid.top_base, tlb_get_size=tlb_size
-  base_resize_event = {widget_base}
-  base_resize_event.x = tlb_size[0]
-  base_resize_event.y = tlb_size[1]
-  self.tlb_event, base_resize_event
+  resize_event = {widget_base,id:0L,top:0L,handler:0L, x:tlb_size[0], y:tlb_size[1] }
+  self.tlb_resize_event, resize_event
 END
 
 
