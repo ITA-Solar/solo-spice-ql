@@ -203,14 +203,22 @@ FUNCTION spice_cat::background_colors
   return, background_colors
 END
 
+PRO spice_cat::capture_column_widths
+  COMMON spice_cat_column_widths, widths_by_column_name
+  widths = widget_info(self.wid.table_id, /column_widths)
+  foreach column_name, self.state.current_column_names, index DO BEGIN
+     widths_by_column_name[column_name] = widths[index]
+  END
+END
+
 FUNCTION spice_cat::current_column_widths
   COMMON spice_cat_column_widths, widths_by_column_name
-;  IF n_elements(widths_by_column_name) EQ 0 THEN BEGIN
+  IF n_elements(widths_by_column_name) EQ 0 THEN BEGIN
      widths_by_column_name = hash()
      foreach info, self.state.keyword_info, column_name DO BEGIN
         widths_by_column_name[column_name] = info.display_width * 12
      END
-;  END
+  END
   
   widths = []
   foreach column_name, self.state.current_column_names DO BEGIN
@@ -588,11 +596,13 @@ PRO spice_cat::handle_all_table_events, ev, parts
   ;; We came here because of any table event (uvalue="ALL_TABLE_EVENTS`")
   ;;
   type = tag_names(ev, /structure_name)
-  CASE type OF 
-     "WIDGET_TABLE_COL_WIDTH": return
-     "WIDGET_TABLE_CH": return        ;; Doh! Typing into non-editable cells triggers this!!!
-     ELSE:
+  
+  IF type EQ "WIDGET_TABLE_COL_WIDTH" THEN BEGIN
+     self.capture_column_widths
+     return
   END
+  
+  IF type EQ "WIDGET_TABLE_CH" THEN return   ;; Doh! Typing into non-editable cells triggers this!!!
   
   short_event_name = strmid(tag_names(ev, /structure_name), 7, 1000)
   
