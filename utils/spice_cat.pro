@@ -87,9 +87,9 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
         IF max NE "" THEN max = max + 0.0d
      END
      
-     IF filter_as_array[0] EQ "" THEN mask = replicate(1b,n_elements(self.state.full_list))
-     
-     IF filter_as_array[0] NE "" THEN BEGIN
+     IF filter_as_array[0] EQ "" THEN BEGIN
+        mask = replicate(1b,n_elements(self.state.full_list))
+     END ELSE BEGIN
         mask = self.state.full_list[*].(full_list_tag_index) GE min
      END
      
@@ -122,29 +122,38 @@ FUNCTION spice_cat::filter_mask, filters
   return,mask
 END
 
-
-PRO spice_cat::create_displayed_list, use_columns = use_columns
-  IF NOT self.state.haskey("current_filters_as_text") THEN BEGIN
-     self.state.current_filters_as_text = self.empty_filters_as_text(self.state.current_tag_names)
+PRO spice_cat::set_current_filter_status, keywords
+  spice_default, keywords, self.state.current_column_names
+  
+  IF self.state.haskey("current_filters_as_text") THEN BEGIN
+     current_filters_as_text = self.state.current_filters_as_text
+  END ELSE BEGIN
+     current_filters_as_text = self.empty_filters_as_text(self.state.current_tag_names)
   END
   
-  new_filters_as_text = self.state.current_filters_as_text
-  
-  IF keyword_set(use_columns) THEN BEGIN
-     
-     new_filters_as_text = use_columns
-     struct_assign,new_filters_as_text,empty_filters_as_text    ;; All tags = <filter>
-     struct_assign,new_filters_as_text,current_filters_as_text  ;; Override with current filters
-  END
+  new_filters_as_text = self.empty_filters_as_text(keywords.replace('-','$'))
+  struct_assign,current_filters_as_text, new_filters_as_text
   
   self.state.current_filters_as_text = new_filters_as_text
   self.state.current_tag_names = tag_names(new_filters_as_text)
+END
+
+PRO spice_cat::create_displayed_list, keywords
+  self.set_current_filter_status, keywords
   
-  filter_mask = self.filter_mask(new_filters_as_text)
-  
+  filter_mask = self.filter_mask(self.state.current_filters_as_text)
   ix = where(filter_mask,count)
-  IF count EQ 0 THEN self.state.displayed = [new_filters_as_text] $
-  ELSE               self.state.displayed = [new_filters_as_text, self.state.full_list[ix]]
+  
+  new_displayed_without_filter = []
+  IF count GT 0 THEN BEGIN
+     new_displayed_without_filter = replicate(self.state.current_filters_as_text, count)
+     struct_assign, self.state.full_list[ix], new_displayed_without_filter
+  END
+  new_displayed = [self.state.current_filters_as_text, temporary(new_displayed_without_filter)]
+  
+  self.state.displayed = temporary(new_displayed)
+  self.state.current_tag_names = tag_names(self.state.displayed)
+  self.state.current_column_names = self.state.current_tag_names.replace('$','-')
 END
 
 FUNCTION spice_cat::cell_alignments
@@ -310,23 +319,23 @@ END
 ;; WIDGET BUILDERS
 ;;
 
-PRO spice_cat::build_text_filter, column_name, current_filter_as_array
-  current_filter_as_text = current_filter_as_array[0]
+PRO spice_cat::build_text_filter, column_name, filter_as_array
+  filter_as_text = filter_as_array[0]
   filter_text_uvalue = "TEXT_FILTER_CHANGE`" + column_name
   self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
   text_props = {editable:1b, all_events:1b, kbrd_focus_events: 1b}
-  self.wid.filter_text = widget_text(self.wid.filter_base, value=current_filter_as_text,$
+  self.wid.filter_text = widget_text(self.wid.filter_base, value=filter_as_text,$
                                      _extra=text_props, uvalue=filter_text_uvalue)
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
   button = widget_button(self.wid.filter_base, value="Use alphabetical range", uvalue=button_uvalue)
   self.wid.filter_focus_flash_text = self.wid.filter_text
-  widget_control, self.wid.filter_text, set_text_select=[0, current_filter_as_array.strlen()]
+  widget_control, self.wid.filter_text, set_text_select=[0, filter_as_array.strlen()]
 END
 
 
-PRO spice_cat::build_range_filter, column_name, current_filter_as_array
-  min_value = current_filter_as_array[0]
-  max_value = current_filter_as_array[1]
+PRO spice_cat::build_range_filter, column_name, filter_as_array
+  min_value = filter_as_array[0]
+  max_value = filter_as_array[1]
   
   min_text_uvalue = "RANGE_FILTER_CHANGE`MIN`" + column_name
   max_text_uvalue = "RANGE_FILTER_CHANGE`MAX`" + column_name
@@ -382,6 +391,7 @@ PRO spice_cat::deal_with_click_on_filter,column_name
      IF column_type EQ "i" THEN current_filter_as_array = ["", ""] ; range
   END
   
+  ;; TODO: can't be necessary, right?
   self.set_filter_by_column_name, column_name, current_filter_as_array
   filter_as_uvalue_text = current_filter_as_array.join("`")
   
@@ -613,7 +623,15 @@ END
 function spice_cat::init, example_param1,  example_param2, _extra=extra
   self.parameters, example_param1, example_param2, _extra = extra
   self.load_fitslist
-  self.create_displayed_list
+  
+  keywords = getenv("SPICE_CAT_KEYWORDS")
+  IF keywords GT "" THEN BEGIN
+     keywords = keywords.split(",")
+     keywords = keywords.trim()
+  END ELSE BEGIN
+     keywords = []
+  END
+  self.create_displayed_list,keywords
   
   self.build_widget
   
@@ -630,5 +648,6 @@ PRO spice_cat, o
   o = obj_new('spice_cat')
 END
 
+setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
 spice_cat, o
 END
