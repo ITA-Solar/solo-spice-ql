@@ -79,7 +79,7 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
      
      column_name = self.state.full_column_names[full_list_tag_index]
      
-     IF self.state.keyword_info[colun_name] EQ "i" THEN BEGIN
+     IF (self.state.keyword_info[column_name].type) EQ "i" THEN BEGIN
         IF min NE "" THEN min = min + 0.0d
         IF max NE "" THEN max = max + 0.0d
      END
