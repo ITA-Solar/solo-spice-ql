@@ -135,6 +135,8 @@ END
 
 
 FUNCTION spice_cat::sort,list
+  IF n_elements(list) EQ 0 THEN return, list
+  
   tag_names = tag_names(list)
   current_sort_tag = self.state.current_sort_column.replace('-','$')
   
@@ -177,7 +179,7 @@ END
 
 
 ;;
-PRO _____________________TABLE_WIDGET_UTILITIES & END
+PRO _____________________TABLE_WIDGET_UTILITIES                          & END
 ;;
 
 FUNCTION spice_cat::cell_alignments
@@ -201,16 +203,35 @@ FUNCTION spice_cat::background_colors
   return, background_colors
 END
 
-;;
+FUNCTION spice_cat::current_column_widths
+  COMMON spice_cat_column_widths, widths_by_column_name
+;  IF n_elements(widths_by_column_name) EQ 0 THEN BEGIN
+     widths_by_column_name = hash()
+     foreach info, self.state.keyword_info, column_name DO BEGIN
+        widths_by_column_name[column_name] = info.display_width * 12
+     END
+;  END
+  
+  widths = []
+  foreach column_name, self.state.current_column_names DO BEGIN
+     widths = [widths, widths_by_column_name[column_name]]
+  END
+  return, widths
+END
 
-PRO spice_cat::remake_displayed_list
-  self.create_displayed_list
-  cell_alignments = self.cell_alignments()
-  background_color = self.background_colors()
+
+PRO spice_cat::display_displayed_list
+;  relative_column_widths = ((self.state.keyword_info.values()).toarray()).display_width
+;  table_props.column_widths = relative_column_widths * 12
+  
+  column_widths = self.current_column_widths()
+  
   widget_control,self.wid.table_id, set_value=self.state.displayed
   widget_control,self.wid.table_id, table_ysize=n_elements(self.state.displayed)
   widget_control,self.wid.table_id, alignment=self.cell_alignments()
   widget_control,self.wid.table_id, background_color=self.background_colors()
+  widget_control, self.wid.table_id, column_labels = self.state.current_column_names
+  widget_control, self.wid.table_id, column_widths=column_widths
 END
 
 ;;
@@ -241,7 +262,8 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   IF filter_as_text NE current_filters_as_text.(column_number) THEN BEGIN
      current_filters_as_text.(column_number) = filter_as_text
      self.state.current_filters_as_text = current_filters_as_text
-     self.remake_displayed_list
+     self.create_displayed_list
+     self.display_displayed_list
      self.set_filter_edit_color,column_name
   END
 END
@@ -606,23 +628,19 @@ END
 
 
 PRO spice_cat::build_table
-  relative_column_widths = ((self.state.keyword_info.values()).toarray()).display_width
-  
   table_props = dictionary()
   table_props.scroll = 1b 
-  table_props.column_labels = self.state.current_column_names
   table_props.no_row_headers = 1b
   table_props.row_major = 1b
-  table_props.background_color = self.background_colors()
-  table_props.column_widths = relative_column_widths * 12
   table_props.all_events = 1b
   table_props.context_events = 1b
   table_props.uvalue="ALL_TABLE_EVENTS`"
   table_props.resizeable_columns = 1b
-  table_props.alignment = self.cell_alignments()
   
   props = table_props.tostruct()
   self.wid.table_id = widget_table(self.wid.table_base, value=self.state.displayed, _extra=props)
+  self.display_displayed_list
+  
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
 END
 
