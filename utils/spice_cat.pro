@@ -329,9 +329,10 @@ END
 
 
 PRO spice_cat::handle_sort, event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
   self.state.current_sort_order = parts[1].tolower()
-;  self.state
+  self.state.current_sort_column = parts[2]
+  self.create_displayed_list
+  self.display_displayed_list
 END
 
 
@@ -543,7 +544,7 @@ END
 
 
 PRO spice_cat::make_heading_context_menu, base, ev
-  column_name = (tag_names(self.state.displayed))[ev.col]
+  column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
   button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
   button = widget_button(base, value="Sort ascending", uvalue="SORT`ASCENDING`"+column_name)
   button = widget_button(base, value="Sort descending", uvalue="SORT`DESCENDING`"+column_name)
