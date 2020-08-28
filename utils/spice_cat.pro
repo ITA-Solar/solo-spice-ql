@@ -12,12 +12,6 @@ PRO spice_cat::handle_sort, event, parts
 END
 
 
-PRO spice_cat::default, var, default
-  compile_opt static
-  IF n_elements(var) EQ 0 THEN var = default
-END 
-
-
 FUNCTION spice_cat::remove_non_digits, text
   compile_opt static
   bytes = byte(text)
@@ -509,7 +503,7 @@ END
 
 PRO spice_cat::new_incarnation
   COMMON spice_cat, previous_incarnation
-  self.default,previous_incarnation, 0L
+  spice_default,previous_incarnation, 0L
   IF widget_info(previous_incarnation, /valid_id) THEN BEGIN
      widget_control,previous_incarnation, /destroy
   END
@@ -605,7 +599,7 @@ PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   spice_datadir = getenv("SPICE_DATA")
   IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATADIR is blank or not set"
   
-  self.default,listfiledir,spice_datadir
+  spice_default,listfiledir,spice_datadir
   
   self.state.spice_datadir = spice_datadir
   self.state.listfiledir = listfiledir
