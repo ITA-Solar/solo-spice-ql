@@ -305,6 +305,27 @@ FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
   return,0 ; It wasn't a keyboard focus event, not ok
 END
 
+
+PRO spice_cat::deal_with_click_on_filter,column_name
+  current_filter_as_array = self.get_filter_by_column_name(column_name)
+  self.set_filter_edit_color,column_name
+  
+  IF current_filter_as_array[0] EQ "<filter>" THEN BEGIN
+     column_type = self.state.keyword_info[column_name].type
+     IF column_type EQ "t" THEN current_filter_as_array = [""]
+     IF column_type EQ "i" THEN current_filter_as_array = ["", ""] ; range
+  END
+  
+  ;; TODO: can't be necessary, right?
+  self.set_filter_by_column_name, column_name, current_filter_as_array
+  filter_as_uvalue_text = current_filter_as_array.join("`")
+  
+  ;; Simulates event with UVALUE = "REBUILD_FILTER`column_name`min`max"
+  ;;                 or   UVALUE = "REBUILD_FILTER`column_name`text_filter"
+  ;;
+  self.handle_rebuild_filter, dummy_event, ["REBUILD_FILTER", column_name, current_filter_as_array]
+END
+
 ;;
 PRO _____________________EVENT_HANDLERS                     & END
 ;;
@@ -411,11 +432,55 @@ PRO spice_cat::handle_table_context, ev
   widget_displaycontextmenu, ev.id, ev.x, ev.y, base
 END
 
+PRO spice_cat::handle_table_cell_sel, ev
+  sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
+  
+  ;; Ignore nonsensical [-1, -1, -1, -1] events:
+  IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
+  
+  
+  ;; Only meaningful action is if the user wants to edit the filter:
+  ;; a) single cell from first row
+  ;; b) header click (selects entire column)
+  
+  num_displayed = n_elements(self.state.displayed)
+  header_click = sel.left EQ sel.right AND sel.top EQ 0 AND sel.bottom EQ num_displayed - 1
+  filter_click = (sel.top EQ 0) AND (sel.bottom EQ 0) AND (sel.left EQ sel.right)
+  
+  IF (NOT header_click) AND (NOT filter_click) THEN return 
+  
+  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
+  column_name = self.state.current_column_names[sel.left]
+  self.deal_with_click_on_filter,column_name
+END
 
 
+PRO spice_cat::handle_all_table_events, ev, parts
+  ;; We came here because of any table event (uvalue="ALL_TABLE_EVENTS`")
+  ;;
+  type = tag_names(ev, /structure_name)
+  
+  IF type EQ "WIDGET_TABLE_COL_WIDTH" THEN BEGIN
+     self.capture_column_widths
+     return
+  END
+  
+  IF type EQ "WIDGET_TABLE_CH" THEN return   ;; Doh! Typing into non-editable cells triggers this!!!
+  
+  short_event_name = strmid(tag_names(ev, /structure_name), 7, 1000)
+  
+  ;; Note that context events within the table come as "WIDGET_CONTEXT"
+  ;; events, not WIDGET_TABLE_CONTEXT. So we "fix" that:
+  
+  IF short_event_name EQ "CONTEXT" THEN short_event_name = "TABLE_CONTEXT"
+  
+  method = "handle_" + short_event_name
+  call_method, method, self, ev
+END
 
+;;
 PRO _____________________COMMAND_BASE_EVENTS                            & END
-;; COMMAND BASE EVENTS -----------------------
+;;
 
 PRO spice_cat::handle_call_program, event, parts
   self.modal_message,"Call program with selection not implemented yet", timer = 2
@@ -522,27 +587,6 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
 END
 
 
-PRO spice_cat::deal_with_click_on_filter,column_name
-  current_filter_as_array = self.get_filter_by_column_name(column_name)
-  self.set_filter_edit_color,column_name
-  
-  IF current_filter_as_array[0] EQ "<filter>" THEN BEGIN
-     column_type = self.state.keyword_info[column_name].type
-     IF column_type EQ "t" THEN current_filter_as_array = [""]
-     IF column_type EQ "i" THEN current_filter_as_array = ["", ""] ; range
-  END
-  
-  ;; TODO: can't be necessary, right?
-  self.set_filter_by_column_name, column_name, current_filter_as_array
-  filter_as_uvalue_text = current_filter_as_array.join("`")
-  
-  ;; Simulates event with UVALUE = "REBUILD_FILTER`column_name`min`max"
-  ;;                 or   UVALUE = "REBUILD_FILTER`column_name`text_filter"
-  ;;
-  self.handle_rebuild_filter, dummy_event, ["REBUILD_FILTER", column_name, current_filter_as_array]
-END
-
-
 PRO spice_cat::make_heading_context_menu, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
   button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
@@ -568,54 +612,6 @@ PRO spice_cat::make_datacell_context_menu, base, ev
 END
 
 
-PRO spice_cat::handle_table_cell_sel, ev
-  sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
-  
-  ;; Ignore nonsensical [-1, -1, -1, -1] events:
-  IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
-  
-  num_displayed = n_elements(self.state.displayed)
-  
-  ;; Only meaningful action at this stage is if the user wants
-  ;; to edit the filter: 1st and only 1st row single cell, OR header click
-  
-  filter_click = (sel.top EQ 0) AND (sel.bottom EQ 0) AND (sel.left EQ sel.right)
-  header_click = sel.left EQ sel.right AND sel.top EQ 0 AND sel.bottom EQ num_displayed - 1
-  
-  IF (NOT header_click) AND (NOT filter_click) THEN return 
-  
-  IF header_click THEN BEGIN
-     ;print,"ASSUMING YOU CLICKED THE HEADER???"
-  END
-  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
-  column_name = self.state.current_column_names[sel.left]
-  self.deal_with_click_on_filter,column_name
-END
-
-
-PRO spice_cat::handle_all_table_events, ev, parts
-  ;; We came here because of any table event (uvalue="ALL_TABLE_EVENTS`")
-  ;;
-  type = tag_names(ev, /structure_name)
-  
-  IF type EQ "WIDGET_TABLE_COL_WIDTH" THEN BEGIN
-     self.capture_column_widths
-     return
-  END
-  
-  IF type EQ "WIDGET_TABLE_CH" THEN return   ;; Doh! Typing into non-editable cells triggers this!!!
-  
-  short_event_name = strmid(tag_names(ev, /structure_name), 7, 1000)
-  
-  ;; Note that context events within the table come as "WIDGET_CONTEXT"
-  ;; events, not WIDGET_TABLE_CONTEXT. So we "fix" that:
-  
-  IF short_event_name EQ "CONTEXT" THEN short_event_name = "TABLE_CONTEXT"
-  
-  method = "handle_" + short_event_name
-  call_method, method, self, ev
-END
-  
 ;; UTILITY TO KILL PREVIOUS INCARNATION -------
 
 PRO spice_cat::new_incarnation
