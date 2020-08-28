@@ -6,19 +6,6 @@ PRO spice_cat::modal_message,message,timer=timer
 END
 
 
-PRO spice_cat::handle_remove_column, event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
-  screen_size = spice_get_screen_size()
-END
-
-
-PRO spice_cat::handle_sort, event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
-  self.state.current_sort_order = parts[1].tolower()
-;  self.state
-END
-
-
 FUNCTION spice_cat::remove_non_digits, text
   compile_opt static
   bytes = byte(text)
@@ -45,7 +32,6 @@ FUNCTION spice_cat::empty_filters_as_text, tag_names
 END
 
 ;;
-;; FILTER CONVERSION text <--> array
 PRO _____________________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
 
@@ -306,6 +292,18 @@ PRO spice_cat::tlb_resize_event,event
   widget_control,self.wid.table_id, scr_xsize=tablex, scr_ysize=tabley
 END
 
+PRO spice_cat::handle_remove_column, event, parts
+  print,"Handle "+parts[0]+" : "+parts[1]
+  screen_size = spice_get_screen_size()
+END
+
+
+PRO spice_cat::handle_sort, event, parts
+  print,"Handle "+parts[0]+" : "+parts[1]
+  self.state.current_sort_order = parts[1].tolower()
+;  self.state
+END
+
 
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
@@ -370,11 +368,12 @@ PRO spice_cat::handle_flash_filter_focus, event, parts
 END
 
 
-PRO spice_cat::handle_context, ev
+PRO spice_cat::handle_table_context, ev
   IF ev.row EQ 0 THEN return ; No context menu for filter row
   IF ev.col LT 0 THEN return ; No context menu for row labels
   
   base = widget_base(/CONTEXT_MENU, ev.id)
+  
   IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev
   IF ev.row GE 1 THEN self.make_datacell_context_menu, base, ev
   
@@ -419,8 +418,6 @@ PRO spice_cat__event, event
   call_method,method, self, event, parts
 END
 
-;;
-PRO _____________________BUILDERS                                         & END
 ;;
 PRO _____________________WIDGET_BUILDERS                   & END
 ;;
@@ -562,17 +559,22 @@ END
 
 
 PRO spice_cat::handle_all_table_events, ev, parts
-  ;; We came here because all table events, anywhere,
-  ;; results in uvalue="ALL_TABLE_EVENTS`"
+  ;; We came here because of any table event (uvalue="ALL_TABLE_EVENTS`")
   ;;
   type = tag_names(ev, /structure_name)
   CASE type OF 
      "WIDGET_TABLE_COL_WIDTH": return
-     "WIDGET_TABLE_CH": return ;; Doh! Typing into non-editable cells triggers this!!!
+     "WIDGET_TABLE_CH": return        ;; Doh! Typing into non-editable cells triggers this!!!
      ELSE:
   END
   
   short_event_name = strmid(tag_names(ev, /structure_name), 7, 1000)
+  
+  ;; Note that context events within the table come as "WIDGET_CONTEXT"
+  ;; events, not WIDGET_TABLE_CONTEXT. So we "fix" that:
+  
+  IF short_event_name EQ "CONTEXT" THEN short_event_name = "TABLE_CONTEXT"
+  
   method = "handle_" + short_event_name
   call_method, method, self, ev
 END
