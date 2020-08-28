@@ -5,7 +5,7 @@ PRO spice_modal_message__event_handler, event
 END
 
 
-PRO spice_modal_message,parent_base,text, timer=timer
+PRO spice_modal_message,parent_base, messages, timer=timer
   base = widget_base(group_leader=parent_base,/floating, /modal, /row)
   left = widget_base(base,xsize=10)
   center = widget_base(base,/column, frame=0)
@@ -14,12 +14,13 @@ PRO spice_modal_message,parent_base,text, timer=timer
   message_base = widget_base(center,/row,frame=5)
   
   left = widget_base(message_base,xsize=5)
-  middle = widget_base(message_base,/column,frame=1)
+  middle = widget_base(message_base,/column)
   right = widget_base(message_base,xsize=5)
   
   label = widget_label(middle,value=' ')
   label = widget_label(middle,value=' ')
-  label = widget_label(middle,value='   '+text+'   ')
+  aligned_left = widget_base(middle,/column,/base_align_left)
+  foreach message, messages DO label = widget_label(aligned_left,value='   '+message+'   ')
   label = widget_label(middle,value=' ')
   text = widget_text(center,value="    Hit any key or click to dismiss    ",/all_events)
   label = widget_label(middle,value=' ')
