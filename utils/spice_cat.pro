@@ -282,7 +282,7 @@ PRO _____________________EVENT_HANDLERS                     & END
 ; RESIZE TABLE ACCORDING TO TLB size change!
 ; Only called when event.id eq event.top
 ;
-PRO spice_cat::tlb_resize_event,event
+PRO spice_cat::handle_tlb,event
   IF tag_names(event, /structure_name) NE "WIDGET_BASE" THEN return
   
   widget_control,self.wid.xsize_spacer_base, xsize=event.x
@@ -406,8 +406,12 @@ PRO _____________________CATCH_ALL_EVENT_HANDLER                         & END
   
 PRO spice_cat__event, event
   widget_control, event.top, get_uvalue=self
+  
+  ;; The TLB's UVALUE is pointing to *self*, so it can't be used for directing
+  ;; the event to the right handler. We must detect that as a separate thing,
+  ;; and pretend everything was normal:
   IF event.id EQ event.top THEN BEGIN
-     self.tlb_resize_event,event
+     self.handle_tlb,event
      return
   END 
   widget_control, event.id, get_uvalue=uvalue
@@ -655,7 +659,7 @@ PRO spice_cat::build_widget
   ;; Make table fill available space despite /scroll
   widget_control,self.wid.top_base, tlb_get_size=tlb_size
   resize_event = {widget_base,id:0L,top:0L,handler:0L, x:tlb_size[0], y:tlb_size[1] }
-  self.tlb_resize_event, resize_event
+  self.handle_tlb, resize_event
 END
 
 
