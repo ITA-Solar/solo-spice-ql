@@ -1,16 +1,19 @@
 ;;
 ;; UTILITY FUNCTIONS
 ;;
+PRO spice_cat::modal_message,message,timer=timer
+  spice_modal_message, self.wid.top_base, message, timer=timer
+END
 
 PRO spice_cat::handle_remove_column, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
+  screen_size = spice_get_screen_size()
 END
 
 
 PRO spice_cat::handle_sort, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
 END
-
 
 FUNCTION spice_cat::remove_non_digits, text
   compile_opt static
@@ -102,23 +105,24 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
 END
 
 
-FUNCTION spice_cat::filter_mask, filters
+;     print, "Current filter tag name " + current_filter_tag_name + "(" + current_filter_tag_ix.toString() + ")"
+;     print, "Full list tag index: "+full_list_tag_index.toString()
+     
+FUNCTION spice_cat::apply_filters, filters
   mask = replicate(1b,n_elements(self.state.full_list))
   
-  ; The apply_filter() method operates on the full_list list of tags,
-  ; so we should supply full_list_tag_index, not filter_tag_index
-  ;
-  foreach filter_tag_name, tag_names(filters), filter_tag_ix DO BEGIN
-     filter = filters.(filter_tag_ix)
-     IF filter EQ "<filter>" THEN CONTINUE
+  foreach current_filter_tag_name, tag_names(filters), current_filter_tag_ix DO BEGIN
+     current_filter = filters.(current_filter_tag_ix)
+     IF current_filter EQ "<filter>" THEN CONTINUE
      
-     full_list_tag_index = (where(self.state.full_tag_names EQ filter_tag_name))[0]
-     print, "Current filter tag name " + filter_tag_name + "(" + filter_tag_ix.toString() + ")"
-     print, "Full list tag index: "+full_list_tag_index.toString()
+     ; apply_filter() operates on full_list, we must supply
+     ; full_list_tag_index, not filter_tag_index
+
+     full_list_tag_index = (where(self.state.full_tag_names EQ current_filter_tag_name))[0]
      
-     mask = mask AND self.apply_filter(filter, full_list_tag_index)
+     mask = mask AND self.apply_filter(current_filter, full_list_tag_index)
   END
-  print,"APPLIED ALL FILTERS: ",long(TOTAL(mask))
+  print,"APPLIED ALL CURRENT_FILTERS: ",long(TOTAL(mask))
   return,mask
 END
 
@@ -141,7 +145,7 @@ END
 PRO spice_cat::create_displayed_list, keywords
   self.set_current_filter_status, keywords
   
-  filter_mask = self.filter_mask(self.state.current_filters_as_text)
+  filter_mask = self.apply_filters(self.state.current_filters_as_text)
   ix = where(filter_mask,count)
   
   new_displayed_without_filter = []
@@ -403,7 +407,6 @@ END
 
 
 PRO spice_cat::make_heading_context_menu, base, ev
-  print,"Make header context menu"
   column_name = (tag_names(self.state.displayed))[ev.col]
   button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
   button = widget_button(base, value="Sort ascending", uvalue="SORT`ASCENDING`"+column_name)
@@ -414,7 +417,6 @@ END
 
 
 PRO spice_cat::make_datacell_context_menu, base, ev
-  print,"Make datacell context menu"
   column_name = (tag_names(self.state.displayed))[ev.col]
   cell_value = self.state.displayed[ev.row].(ev.col).tostring()
   
@@ -430,7 +432,6 @@ END
 
 
 PRO spice_cat::handle_context, ev
-  print,"Handle : "+tag_names(ev, /structure_name)
   IF ev.row EQ 0 THEN return ; No context menu for filter row
   IF ev.col LT 0 THEN return ; No context menu for row labels
   
@@ -447,8 +448,6 @@ PRO spice_cat::handle_table_cell_sel, ev
   
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
-  
-  ;print,"Handle "+tag_names(ev, /structure_name) + " : " + self.format_selection_range_string(sel)
   
   num_displayed = n_elements(self.state.displayed)
   
@@ -487,12 +486,16 @@ END
 
 ;; COMMAND BASE EVENTS -----------------------
 
+PRO spice_cat::handle_call_program, event, parts
+  self.modal_message,"Call program with selection not implemented yet", timer = 2
+END
+
 PRO spice_cat::handle_return_selection, event, parts
-  print,"RETURN_SELECTION"
+  self.modal_message, "Returning selection is not implemented yet", timer=2
 END
 
 PRO spice_cat::handle_regenerate, event, parts
-  print,"REGENERATE"
+  self.modal_message, ["Regenerate list with:","IDL> spice_fitslist"], timer=2
 END
 
 ;; THE CATCH-ALL EVENT HANDLER ----------------
@@ -636,6 +639,7 @@ function spice_cat::init, example_param1,  example_param2, _extra=extra
   self.build_widget
   
   xmanager,"spice_cat", self.wid.top_base, /no_block, event_handler="spice_cat__event"
+  
   return,1
 END
 
