@@ -209,8 +209,8 @@ PRO spice_cat::remake_displayed_list
   background_color = self.background_colors()
   widget_control,self.wid.table_id, set_value=self.state.displayed
   widget_control,self.wid.table_id, table_ysize=n_elements(self.state.displayed)
-  widget_control,self.wid.table_id, alignment=cell_alignments
-  widget_control,self.wid.table_id, background_color=background_color
+  widget_control,self.wid.table_id, alignment=self.cell_alignments()
+  widget_control,self.wid.table_id, background_color=self.background_colors()
 END
 
 ;;
