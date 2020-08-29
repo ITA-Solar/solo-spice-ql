@@ -561,8 +561,8 @@ PRO spice_cat::handle_call_program, event, parts
 END
 
 
-PRO spice_cat::handle_return_selection, event, parts
-  self.modal_message, "Returning selection is not implemented yet", timer=2
+PRO spice_cat::handle_exit, event, parts
+  widget_control, event.top, /destroy
 END
 
 
@@ -716,10 +716,11 @@ END
 PRO spice_cat::create_command_buttons
   buttons = $
      [ $
-     { value: "Return selection", uvalue: "RETURN_SELECTION`", ALIGN_CENTER: 1b },$
-     { value: "Regenerate list", uvalue: "REGENERATE`", ALIGN_CENTER: 1b },$
+     { value: "Return selection", uvalue: "EXIT`", ALIGN_CENTER: 1b },$
+     ;{ value: "Regenerate list", uvalue: "REGENERATE`", ALIGN_CENTER: 1b },$
      { value: "Call <program>", uvalue: "CALL_PROGRAM`", ALIGN_CENTER: 1b } $
      ]
+  IF NOT self.state.modal THEN buttons[0].value = "Exit"
   foreach button, buttons DO button = widget_button(self.wid.button_base, _extra=button)
 END
 
@@ -761,6 +762,7 @@ PRO spice_cat::build_widget
   w.button_base = widget_base(w.top_row_base, /row, /align_center, xpad=0, ypad=0)
   spacer = widget_base(w.top_row_base, xsize=5)
   w.sort_base = widget_base(w.top_row_base, /row, xpad=0, ypad=0, /align_center)
+  spacer = widget_base(w.top_row_base, xsize=5)
   w.filter_base = widget_base(w.top_row_base, /row, xpad=0, ypad=0, /align_center)
   
   w.message_label = widget_label(w.message_base, value='     STATUS:', /align_right)
@@ -785,8 +787,9 @@ PRO spice_cat::build_widget
 END
 
 
-PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
+PRO spice_cat::parameters, modal=modal
   self.state = dictionary()
+  self.state.modal = keyword_set(modal)
   self.state.keyword_info = spice_keyword_info(/all)
   spice_datadir = getenv("SPICE_DATA")
   IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATADIR is blank or not set"
@@ -804,8 +807,8 @@ FUNCTION spice_cat::selection
 END
 
 ;; INIT: create, realize and register widget
-function spice_cat::init, example_param1,  example_param2, _extra=extra, modal=modal
-  self.parameters, example_param1, example_param2, _extra = extra
+function spice_cat::init, modal=modal
+  self.parameters, modal = modal
   self.load_fitslist
   
   keywords = getenv("SPICE_CAT_KEYWORDS")
@@ -820,15 +823,11 @@ function spice_cat::init, example_param1,  example_param2, _extra=extra, modal=m
   
   self.build_widget
   
-  no_block = keyword_set(modal) ? 0 : 1
+  no_block = keyword_set(self.state.modal) ? 0 : 1
   xmanager,"spice_cat", self.wid.top_base, no_block=no_block, event_handler="spice_cat__event"
   
   return,1
 END
-
-;PRO spice_cat__define
-;  dummy = {spice_cat, state: dictionary(), wid:dictionary(), x: ''}
-;END
 
 PRO spice_cat_define_structure
   dummy = {spice_cat, state: dictionary(), wid:dictionary() }
