@@ -31,6 +31,12 @@ FUNCTION spice_cat::empty_filters_as_text, tag_names
   return, filters_as_text
 END
 
+PRO spice_cat::destroy_children, parent
+  children = widget_info(parent, /all_children)
+  IF children[0] EQ 0 THEN return
+  foreach child, children DO widget_control, child, /destroy
+END
+
 ;;
 PRO _____________________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
@@ -64,7 +70,6 @@ PRO spice_cat::load_fitslist
   self.state.current_column_names = self.state.full_column_names
   self.state.current_sort_column = 'DATE-BEG'
   self.state.current_sort_order = "ascending"
-  self.state.current_sort_order = "descending"
 END 
 
 
@@ -560,14 +565,14 @@ END
 ;;       responding to a pseudo-event
 
 PRO spice_cat::handle_rebuild_filter, dummy_event, parts
+  widget_control, self.wid.top_base, update=0
+  
   column_name = parts[1]
   new_filter_as_array = parts[2:*]
   
   self.set_filter_by_column_name, column_name, new_filter_as_array
-  widget_control, self.wid.top_base, update=0
   
-  filter_base_children = widget_info(self.wid.filter_base, /all_children)
-  foreach child, filter_base_children DO widget_control, child, /destroy
+  self.destroy_children, self.wid.filter_base
   
   text = n_elements(new_filter_as_array) EQ 1
   range = n_elements(new_filter_as_array) EQ 2
