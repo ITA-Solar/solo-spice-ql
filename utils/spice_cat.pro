@@ -214,10 +214,12 @@ FUNCTION spice_cat::background_colors
   num_table_rows = n_elements(self.state.displayed)
   background_colors = replicate(230b, 3, num_table_columns, num_table_rows)
   background_colors[1, *, 0] = 255b
-  IF self.state.haskey("selection_beg") THEN BEGIN
+  IF self.state.haskey("selection_beg") && self.state.selection_beg GT 0 THEN BEGIN
      background_colors[*, *, self.state.selection_beg : self.state.selection_end] = 200b
      background_colors[2, *, self.state.selection_beg : self.state.selection_end] = 255b
   END
+  sort_column_ix = (where(self.state.current_sort_column EQ self.state.current_column_names))[0]
+  background_colors[*, sort_column_ix, *] = (background_colors[*, sort_column_ix, *] + 10) < 255
   return, background_colors
 END
 
@@ -280,6 +282,8 @@ END
 
 PRO spice_cat::display_displayed_list
   widget_control, self.wid.table_id, update=1
+  
+  self.register_selection, /blank
   
   widget_control,self.wid.table_id, set_value=self.state.displayed
   widget_control,self.wid.table_id, table_ysize=n_elements(self.state.displayed)
@@ -520,7 +524,14 @@ PRO spice_cat::set_message_to_full_content, sel
 END
 
 
-PRO spice_cat::register_selection, sel
+PRO spice_cat::register_selection, sel, blank=blank
+  IF keyword_set(blank) THEN BEGIN
+     self.state.selection = []
+     self.state.selection_beg = -1
+     self.state.selection_end = -1
+     return
+  END
+  
   self.state.selection = self.state.displayed[sel.top:sel.bottom].filename
   self.state.selection_beg = sel.top
   self.state.selection_end = sel.bottom
