@@ -69,7 +69,7 @@ PRO spice_cat::load_fitslist
   self.state.current_tag_names = self.state.full_tag_names
   self.state.current_column_names = self.state.full_column_names
   self.state.current_sort_column = 'DATE-BEG'
-  self.state.current_sort_order = "ascending"
+  self.state.current_sort_order = "INCREASING"
 END 
 
 
@@ -154,7 +154,7 @@ FUNCTION spice_cat::sort,list
      sortix = sort(list.(sort_tag_ix))
   END
   
-  IF self.state.current_sort_order EQ "descending" THEN sortix = reverse(sortix)
+  IF self.state.current_sort_order EQ "decreasing" THEN sortix = reverse(sortix)
   
   return,list[sortix]
 END
@@ -352,7 +352,7 @@ END
 
 
 PRO spice_cat::handle_sort, event, parts
-  self.state.current_sort_order = parts[1].tolower()
+  self.state.current_sort_order = parts[1]
   self.state.current_sort_column = parts[2]
   self.build_sort_pulldown
   self.create_displayed_list
@@ -586,33 +586,44 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
 END
 
 
+PRO spice_cat::build_sort_choices_for_column, base, sort_column_name
+  column_name_base = widget_button(base, value=sort_column_name, /menu)
+  
+  foreach sort_order, ['INCREASING', 'DECREASING'] DO BEGIN
+     uvalue = "SORT`" + sort_order.toupper() + "`" + sort_column_name
+     sensitive = (sort_column_name NE self.state.current_sort_column) $
+                 OR (sort_order NE self.state.current_sort_order)
+     value = sort_order.tolower()
+     button = widget_button(column_name_base, uvalue=uvalue,  value=value, sensitive=sensitive)
+  END
+  
+END
+
+
 PRO spice_cat::build_sort_pulldown
   widget_control, self.wid.top_base, update=0
-  
   self.destroy_children, self.wid.sort_base
   
-  direction = self.state.current_sort_order EQ "ascending" ? "(incr.)" : "(decr.)"
+  direction = self.state.current_sort_order EQ "INCREASING" ? "(incr.)" : "(decr.)"
   
   menu_text = "Sort: " + self.state.current_sort_column + " " + direction
   menu = widget_button(self.wid.sort_base, /menu, value=menu_text)
   
   foreach column_name, self.state.current_column_names DO BEGIN
-     mx = widget_button(menu, value=column_name, /menu)
-     button = widget_button(mx, value="increasing", $
-                            uvalue="SORT`ASCENDING`"+column_name)
-     button = widget_button(mx, value="decreasing", $
-                            uvalue="SORT`DESCENDING`"+column_name)
+     self.build_sort_choices_for_column, menu, column_name
   END
+  
   widget_control, self.wid.top_base, update=1
 END
 
+
 PRO spice_cat::make_heading_context_menu, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
-  button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
-  button = widget_button(base, value="Sort increasing", uvalue="SORT`ASCENDING`"+column_name)
-  button = widget_button(base, value="Sort decreasing", uvalue="SORT`DESCENDING`"+column_name)
+  button = widget_button(base, value="Sort increasing", uvalue="SORT`INCREASING`"+column_name)
+  button = widget_button(base, value="Sort decreasing", uvalue="SORT`DECREASING`"+column_name)
   button = widget_button(base, value="Move left", uvalue="MOVE`LEFT`"+column_name)
   button = widget_button(base, value="Move right", uvalue="MOVE`RIGHT`"+column_name)
+  button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
 END
 
 
