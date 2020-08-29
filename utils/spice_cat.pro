@@ -639,22 +639,28 @@ PRO spice_cat::build_text_filter, column_name, filter_as_array
 END
 
 
-PRO spice_cat::build_range_filter, column_name, filter_as_array
-  min_value = filter_as_array[0]
-  max_value = filter_as_array[1]
-  
-  min_uvalue = "RANGE_FILTER_CHANGE`MIN`" + column_name
-  max_uvalue = "RANGE_FILTER_CHANGE`MAX`" + column_name
-  
+;; TODO: don't repeat yourself? Make a smaller routine for each text?
+
+FUNCTION spice_cat::build_range_filter_text, base, column_name, minmax, value
   extra = {editable: 1b, all_events: 1b, kbrd_focus_events: 1b}
   
-  min_text = widget_text(self.wid.filter_base, value=min_value, uvalue=min_uvalue, _extra=extra)
+  uvalue = "RANGE_FILTER_CHANGE`" + minmax + "`" + column_name
+  text_id = widget_text(base, value=value, uvalue=uvalue, _extra=extra)
+  widget_control, text_id, set_text_select=strlen(value)
+  
+  return, text_id
+END
+
+
+PRO spice_cat::build_range_filter, column_name, filter_as_array
+  base = self.wid.filter_base
+  
+  min_text = self.build_range_filter_text(base, column_name, "MIN", filter_as_array[0])
+  
   label = widget_label(self.wid.filter_base, value="<= " + column_name + " <=")
-  max_text = widget_text(self.wid.filter_base, value=max_value, uvalue=max_uvalue, _extra=extra)
   
-  widget_control, min_text, set_text_select=strlen(min_value)
-  widget_control, max_text, set_text_select=strlen(max_value)
-  
+  max_text = self.build_range_filter_text(base, column_name, "MAX", filter_as_array[1])
+    
   self.wid.min_filter_text = min_text
   self.wid.max_filter_text = max_text
   
