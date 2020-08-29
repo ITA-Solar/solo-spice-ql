@@ -37,6 +37,17 @@ PRO spice_cat::destroy_children, parent
   foreach child, children DO widget_control, child, /destroy
 END
 
+
+PRO spice_cat::set_message, label, message, select=select
+  message_text = message.tostring()
+  widget_control, self.wid.message_label, set_value=label.tostring()
+  widget_control, self.wid.message_text, set_value=message_text
+  IF keyword_set(select) THEN BEGIN
+     text_length = strlen(message_text)
+     widget_control, self.wid.message_text, set_text_select=[0, text_length]
+  END
+END
+
 ;;
 PRO spice_cat::_____________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
@@ -460,14 +471,26 @@ END
 
 PRO spice_cat::handle_table_context, ev
   IF ev.row EQ 0 THEN return ; No context menu for filter row
-  IF ev.col LT 0 THEN return ; No context menu for row labels
   
-  base = widget_base(/CONTEXT_MENU, ev.id)
+  ;; It's tempting to mess with table_select here since IDL doesn't blank out
+  ;; the previous selection even if the context click was on a different cell,
+  ;; BUT THIS CAUSES A SCROLL so the new selection (or top-row) is on top
+  ;; (even though it was already visible)
+  ;;
+  context_menu_base = widget_base(/CONTEXT_MENU, ev.id)
   
-  IF ev.row EQ -1 THEN self.build_context_menu_heading, base, ev
-  IF ev.row GE 1 THEN self.build_context_menu_datacell, base, ev
+  IF ev.row EQ -1 THEN self.build_context_menu_heading, context_menu_base, ev
+  IF ev.row GE 1 THEN self.build_context_menu_datacell, context_menu_base, ev
   
-  widget_displaycontextmenu, ev.id, ev.x, ev.y, base
+  widget_displaycontextmenu, ev.id, ev.x, ev.y, context_menu_base
+END
+
+
+PRO spice_cat::set_message_to_full_content, sel
+  column_name = self.state.current_column_names[sel.left]
+  full_content = self.state.displayed[sel.top].(sel.left)
+  self.set_message, column_name+":", full_content, /select
+  print, column_name, full_content
 END
 
 PRO spice_cat::handle_table_cell_sel, ev
@@ -476,14 +499,27 @@ PRO spice_cat::handle_table_cell_sel, ev
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
+  IF sel.top GT 1 THEN BEGIN
+     self.state.selection = self.state.displayed[sel.top:sel.bottom].filename
+  END
   
-  ;; Only meaningful action is if the user wants to edit the filter:
-  ;; a) single cell from first row
-  ;; b) header click (selects entire column)
+  ;; Only meaningful actions are:
+  ;; EITHER to edit the filter:
+  ;;   a) single cell from first row
+  ;;   b) header click (selects entire column)
+  ;; OR just get the full text in the message window by 
+  ;;   c) selecting a single cell anywhere else
+  
+  single_cell = (sel.top EQ sel.bottom) AND (sel.left EQ sel.right)
+  
+  IF single_cell AND (sel.top GT 1) THEN BEGIN
+     self.set_message_to_full_content, sel
+     return
+  END
   
   num_displayed = n_elements(self.state.displayed)
   header_click = sel.left EQ sel.right AND sel.top EQ 0 AND sel.bottom EQ num_displayed - 1
-  filter_click = (sel.top EQ 0) AND (sel.bottom EQ 0) AND (sel.left EQ sel.right)
+  filter_click = single_cell AND sel.top EQ 0
   
   IF (NOT header_click) AND (NOT filter_click) THEN return 
   
@@ -628,7 +664,10 @@ PRO spice_cat::build_sort_pulldown
   widget_control, self.wid.top_base, update=1
 END
 
-
+;;
+;; TODO: make cell context menu actions to copy whatever (filename, value) to clipboard
+;; TODO: single-cell regular click: show full text in text widget at top (&select)
+;;
 PRO spice_cat::build_context_menu_heading, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
   
@@ -704,39 +743,43 @@ END
 
 
 PRO spice_cat::build_widget
-  self.wid = dictionary()
+  w = (self.wid = dictionary()) ; What happens to W also happens to self.wid
   
-  top_props = {row: 1b, xpad: 0b, ypad: 0b, uvalue: self, tlb_size_events: 1b}
+  w.top_base = widget_base(title='SPICE-CAT', uvalue=self, /row, /tlb_size_events, xpad=0, ypad=0)
   
-  self.wid.top_base = widget_base(title='SPICE-CAT', _extra=top_props)
   self.new_incarnation
 
-  self.wid.ysize_spacer_base = widget_base(self.wid.top_base, ysize=800, xpad=0, ypad=0)
-  self.wid.content_base = widget_base(self.wid.top_base, /column)
-  self.wid.xsize_spacer_base = widget_base(self.wid.content_base, /row, xsize=800)
-  self.wid.top_row_base = widget_base(self.wid.content_base, /row)
-  self.wid.button_base = widget_base(self.wid.top_row_base, /row, /align_center, xpad=0, ypad=0)
-  spacer = widget_base(self.wid.top_row_base,xsize=5)
-  self.wid.sort_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0, /align_center)
-  self.wid.filter_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0, /align_center)
-  self.wid.table_base = widget_base(self.wid.content_base, /column, /frame, xpad=0, ypad=0)
+  w.ysize_spacer_base = widget_base(w.top_base, ysize=800, xpad=0, ypad=0)
+  w.content_base = widget_base(w.top_base, /column)
+  
+  w.xsize_spacer_base = widget_base(w.content_base, /row, xsize=800)  
+  w.top_row_base = widget_base(w.content_base, /row, xpad=0, ypad=0)
+  w.message_base = widget_base(w.content_base, /row, xpad=0, ypad=0)
+  w.table_base = widget_base(w.content_base, /column, /frame, xpad=0, ypad=0)
     
-  self.wid.draw_focus_away = widget_text(self.wid.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
+  w.draw_focus_away = widget_text(w.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
+  w.button_base = widget_base(w.top_row_base, /row, /align_center, xpad=0, ypad=0)
+  spacer = widget_base(w.top_row_base, xsize=5)
+  w.sort_base = widget_base(w.top_row_base, /row, xpad=0, ypad=0, /align_center)
+  w.filter_base = widget_base(w.top_row_base, /row, xpad=0, ypad=0, /align_center)
+  
+  w.message_label = widget_label(w.message_base, value='     STATUS:', /align_right)
+  w.message_text = widget_text(w.message_base, scr_xsize=700)
   
   self.create_command_buttons
   
   self.build_sort_pulldown
   
   t = "Click on green line or the heading to edit filter"
-  text = widget_label(self.wid.filter_base, frame=2,value=t)
+  text = widget_label(w.filter_base, frame=2,value=t)
   
   self.build_table
   
-  widget_control,self.wid.top_base, /realize
-  spice_center_window, self.wid.top_base
+  widget_control,w.top_base, /realize
+  spice_center_window, w.top_base
   
   ;; Make table fill available space despite /scroll
-  widget_control,self.wid.top_base, tlb_get_size=tlb_size
+  widget_control,w.top_base, tlb_get_size=tlb_size
   resize_event = {widget_base,id:0L,top:0L,handler:0L, x:tlb_size[0], y:tlb_size[1] }
   self.handle_tlb, resize_event
 END
@@ -755,9 +798,13 @@ PRO spice_cat::parameters, example_param1, example_param2, _extra=extra
   self.state.listfilename = concat_dir(listfiledir, 'spice_fitslist.txt')
 END
 
+FUNCTION spice_cat::selection
+  IF NOT self.state.haskey("selection") THEN return, !null
+  return, self.state.selection
+END
 
 ;; INIT: create, realize and register widget
-function spice_cat::init, example_param1,  example_param2, _extra=extra
+function spice_cat::init, example_param1,  example_param2, _extra=extra, modal=modal
   self.parameters, example_param1, example_param2, _extra = extra
   self.load_fitslist
   
@@ -773,7 +820,8 @@ function spice_cat::init, example_param1,  example_param2, _extra=extra
   
   self.build_widget
   
-  xmanager,"spice_cat", self.wid.top_base, /no_block, event_handler="spice_cat__event"
+  no_block = keyword_set(modal) ? 0 : 1
+  xmanager,"spice_cat", self.wid.top_base, no_block=no_block, event_handler="spice_cat__event"
   
   return,1
 END
@@ -793,10 +841,10 @@ FUNCTION spice_cat
 END
 
 PRO spice_cat, o
-  spice_cat__define
+  spice_cat_define_structure
   o = obj_new('spice_cat')
 END
 
-setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
+;setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
 spice_cat, o
 END
