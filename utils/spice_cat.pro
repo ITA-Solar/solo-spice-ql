@@ -154,7 +154,7 @@ FUNCTION spice_cat::sort,list
      sortix = sort(list.(sort_tag_ix))
   END
   
-  IF self.state.current_sort_order EQ "decreasing" THEN sortix = reverse(sortix)
+  IF self.state.current_sort_order EQ "DECREASING" THEN sortix = reverse(sortix)
   
   return,list[sortix]
 END
@@ -344,6 +344,7 @@ PRO spice_cat::handle_tlb,event
   tabley = event.y - 50
   widget_control,self.wid.table_id, scr_xsize=tablex, scr_ysize=tabley
 END
+
 
 PRO spice_cat::handle_remove_column, event, parts
   print,"Handle "+parts[0]+" : "+parts[1]
