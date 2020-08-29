@@ -404,7 +404,7 @@ PRO spice_cat::handle_range_filter_change, event, parts
 END
 
 
-PRO spice_cat::handle_flash_filter_focus, event, parts
+PRO spice_cat::handle_filter_flash_timer, event, parts
   iteration = parts[1].toInteger()
 
   IF (iteration MOD 2)+1 THEN widget_control,self.wid.filter_focus_flash_text,/input_focus $
@@ -414,11 +414,35 @@ PRO spice_cat::handle_flash_filter_focus, event, parts
   IF iteration LT 4 THEN BEGIN
      self.state.ignore_next_focus_change = 1
      iteration++
-     widget_control, event.id, set_uvalue="FLASH_FILTER_FOCUS`"+iteration.toString()
+     widget_control, event.id, set_uvalue="FILTER_FLASH_TIMER`"+iteration.toString()
      widget_control, event.id, timer=0.05
   END ELSE BEGIN
      self.state.ignore_next_focus_change = 0
   END
+END
+
+
+PRO spice_cat::handle_rebuild_filter, dummy_event, parts
+  widget_control, self.wid.top_base, update=0
+  
+  column_name = parts[1]
+  new_filter_as_array = parts[2:*]
+  
+  self.destroy_children, self.wid.filter_base
+  
+  self.set_filter_by_column_name, column_name, new_filter_as_array
+  
+  text = n_elements(new_filter_as_array) EQ 1
+  range = n_elements(new_filter_as_array) EQ 2
+  
+  IF text THEN self.build_text_filter, column_name, new_filter_as_array
+  IF range THEN self.build_range_filter, column_name, new_filter_as_array
+  
+  new_filter_as_text = self.filter_as_text(new_filter_as_array)
+  widget_control, self.wid.filter_base, set_uvalue="FILTER_FLASH_TIMER`1
+  widget_control, self.wid.filter_base, timer=0.05
+  
+  widget_control, self.wid.top_base, update=1
 END
 
 
@@ -559,33 +583,6 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
   END
   
   self.wid.filter_focus_flash_text = min_text
-END
-
-
-;; TODO: Reclassify (move) this? It's an event handler... though sometimes
-;;       responding to a pseudo-event
-
-PRO spice_cat::handle_rebuild_filter, dummy_event, parts
-  widget_control, self.wid.top_base, update=0
-  
-  column_name = parts[1]
-  new_filter_as_array = parts[2:*]
-  
-  self.set_filter_by_column_name, column_name, new_filter_as_array
-  
-  self.destroy_children, self.wid.filter_base
-  
-  text = n_elements(new_filter_as_array) EQ 1
-  range = n_elements(new_filter_as_array) EQ 2
-  
-  IF text THEN self.build_text_filter, column_name, new_filter_as_array
-  IF range THEN self.build_range_filter, column_name, new_filter_as_array
-  
-  new_filter_as_text = self.filter_as_text(new_filter_as_array)
-  widget_control, self.wid.filter_base, set_uvalue="FLASH_FILTER_FOCUS`1
-  widget_control, self.wid.filter_base, timer=0.05
-  
-  widget_control, self.wid.top_base, update=1
 END
 
 
