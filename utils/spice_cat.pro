@@ -1,5 +1,5 @@
 ;;
-PRO _____________________UTILITY_FUNCTIONS & END
+PRO spice_cat::_____________UTILITY_FUNCTIONS & END
 ;;
 PRO spice_cat::modal_message,message,timer=timer
   spice_modal_message, self.wid.top_base, message, timer=timer
@@ -38,7 +38,7 @@ PRO spice_cat::destroy_children, parent
 END
 
 ;;
-PRO _____________________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
+PRO spice_cat::_____________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
 
 FUNCTION spice_cat::filter_as_array, filter_as_text
@@ -56,7 +56,7 @@ FUNCTION spice_cat::filter_as_text, filter_as_array
 END
 
 ;;
-PRO _____________________DATA_LOADING_AND_MANIPULATION           & END
+PRO spice_cat::_____________DATA_LOADING_AND_MANIPULATION           & END
 ;;
 
 PRO spice_cat::load_fitslist
@@ -118,7 +118,6 @@ FUNCTION spice_cat::apply_filters, filters
      
      mask = mask AND self.apply_filter(current_filter, full_list_tag_index)
   END
-  print,"APPLIED ALL CURRENT_FILTERS: ",long(TOTAL(mask))
   return,mask
 END
 
@@ -184,7 +183,7 @@ END
 
 
 ;;
-PRO _____________________TABLE_WIDGET_UTILITIES                          & END
+PRO spice_cat::_____________TABLE_WIDGET_UTILITIES                          & END
 ;;
 
 FUNCTION spice_cat::cell_alignments
@@ -249,14 +248,16 @@ PRO spice_cat::display_displayed_list
   widget_control,self.wid.table_id, alignment=self.cell_alignments()
   widget_control,self.wid.table_id, background_color=self.background_colors()
   widget_control, self.wid.table_id, column_labels = self.current_column_labels()
-
+  
+  self.set_message, "Files found:", " "+(n_elements(self.state.displayed)-1).tostring()
+  
   widget_control, self.wid.table_id, update=1
   
   widget_control, self.wid.table_id, column_widths=self.current_column_widths()
 END
 
 ;;
-PRO _____________________EVENT_HANDLING_HELPERS                      & END
+PRO spice_cat::_____________EVENT_HANDLING_HELPERS                      & END
 ;;
 
 FUNCTION spice_cat::get_filter_by_column_name, column_name
@@ -337,7 +338,7 @@ PRO spice_cat::deal_with_click_on_filter,column_name
 END
 
 ;;
-PRO _____________________EVENT_HANDLERS                     & END
+PRO spice_cat::_____________EVENT_HANDLERS                     & END
 ;;
 
 ; RESIZE TABLE ACCORDING TO TLB size change!
@@ -390,12 +391,14 @@ PRO spice_cat::handle_range_filter_change, event, parts
   new_min_value = min_value
   new_max_value = max_value
   
-  ;; Remove non-digit chars and adjust cursor position for numeric columns
+  ;; Remove non-digit chars for numeric columns
   ;;
   IF self.state.keyword_info[column_name].type NE "t" THEN BEGIN
      new_min_value = self.remove_non_digits(min_value)
      new_max_value = self.remove_non_digits(max_value)
-  
+     
+     ;; Correct cursor position due to deletion of non-digit content:
+     ;;
      min_text_select = widget_info(self.wid.min_filter_text, /text_select)
      max_text_select = widget_info(self.wid.max_filter_text, /text_select)
      
@@ -514,7 +517,7 @@ PRO spice_cat::handle_all_table_events, ev, parts
 END
 
 ;;
-PRO _____________________COMMAND_BASE_EVENTS                            & END
+PRO spice_cat::_____________COMMAND_BASE_EVENTS                            & END
 ;;
 
 PRO spice_cat::handle_call_program, event, parts
@@ -532,7 +535,7 @@ PRO spice_cat::handle_regenerate, event, parts
 END
 
 ;;
-PRO _____________________CATCH_ALL_EVENT_HANDLER                         & END
+PRO spice_cat::_____________CATCH_ALL_EVENT_HANDLER                         & END
 ;;
   
 PRO spice_cat__event, event
@@ -554,7 +557,7 @@ PRO spice_cat__event, event
 END
 
 ;;
-PRO _____________________WIDGET_BUILDERS                   & END
+PRO spice_cat::_____________WIDGET_BUILDERS                   & END
 ;;
 
 PRO spice_cat::build_text_filter, column_name, filter_as_array
@@ -775,8 +778,18 @@ function spice_cat::init, example_param1,  example_param2, _extra=extra
   return,1
 END
 
-PRO spice_cat__define
-  dummy = {spice_cat, state: dictionary(), wid:dictionary(), x: ''}
+;PRO spice_cat__define
+;  dummy = {spice_cat, state: dictionary(), wid:dictionary(), x: ''}
+;END
+
+PRO spice_cat_define_structure
+  dummy = {spice_cat, state: dictionary(), wid:dictionary() }
+END
+
+FUNCTION spice_cat
+  spice_cat_define_structure
+  o = obj_new('spice_cat',/modal)
+  return, o.selection()
 END
 
 PRO spice_cat, o
