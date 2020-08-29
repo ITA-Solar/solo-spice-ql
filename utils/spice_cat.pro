@@ -354,6 +354,7 @@ END
 PRO spice_cat::handle_sort, event, parts
   self.state.current_sort_order = parts[1].tolower()
   self.state.current_sort_column = parts[2]
+  self.build_sort_pulldown
   self.create_displayed_list
   self.display_displayed_list
 END
@@ -588,11 +589,31 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
 END
 
 
+PRO spice_cat::build_sort_pulldown
+  widget_control, self.wid.top_base, update=0
+  
+  self.destroy_children, self.wid.sort_base
+  
+  direction = self.state.current_sort_order EQ "ascending" ? "(incr.)" : "(decr.)"
+  
+  menu_text = "Sort: " + self.state.current_sort_column + " " + direction
+  menu = widget_button(self.wid.sort_base, /menu, value=menu_text)
+  
+  foreach column_name, self.state.current_column_names DO BEGIN
+     mx = widget_button(menu, value=column_name, /menu)
+     button = widget_button(mx, value="increasing", $
+                            uvalue="SORT`ASCENDING`"+column_name)
+     button = widget_button(mx, value="decreasing", $
+                            uvalue="SORT`DESCENDING`"+column_name)
+  END
+  widget_control, self.wid.top_base, update=1
+END
+
 PRO spice_cat::make_heading_context_menu, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
   button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
-  button = widget_button(base, value="Sort ascending", uvalue="SORT`ASCENDING`"+column_name)
-  button = widget_button(base, value="Sort descending", uvalue="SORT`DESCENDING`"+column_name)
+  button = widget_button(base, value="Sort increasing", uvalue="SORT`ASCENDING`"+column_name)
+  button = widget_button(base, value="Sort decreasing", uvalue="SORT`DESCENDING`"+column_name)
   button = widget_button(base, value="Move left", uvalue="MOVE`LEFT`"+column_name)
   button = widget_button(base, value="Move right", uvalue="MOVE`RIGHT`"+column_name)
 END
@@ -667,12 +688,15 @@ PRO spice_cat::build_widget
   self.wid.top_row_base = widget_base(self.wid.content_base, /row)
   self.wid.button_base = widget_base(self.wid.top_row_base, /row, /align_center, xpad=0, ypad=0)
   spacer = widget_base(self.wid.top_row_base,xsize=5)
+  self.wid.sort_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0, /align_center)
   self.wid.filter_base = widget_base(self.wid.top_row_base, /row, xpad=0, ypad=0, /align_center)
   self.wid.table_base = widget_base(self.wid.content_base, /column, /frame, xpad=0, ypad=0)
     
   self.wid.draw_focus_away = widget_text(self.wid.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
   
   self.create_command_buttons
+  
+  self.build_sort_pulldown
   
   t = "Click on green line or the heading to edit filter"
   text = widget_label(self.wid.filter_base, frame=2,value=t)
