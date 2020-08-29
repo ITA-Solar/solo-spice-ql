@@ -461,8 +461,8 @@ PRO spice_cat::handle_table_context, ev
   
   base = widget_base(/CONTEXT_MENU, ev.id)
   
-  IF ev.row EQ -1 THEN self.make_heading_context_menu, base, ev
-  IF ev.row GE 1 THEN self.make_datacell_context_menu, base, ev
+  IF ev.row EQ -1 THEN self.build_context_menu_heading, base, ev
+  IF ev.row GE 1 THEN self.build_context_menu_datacell, base, ev
   
   widget_displaycontextmenu, ev.id, ev.x, ev.y, base
 END
@@ -626,17 +626,26 @@ PRO spice_cat::build_sort_pulldown
 END
 
 
-PRO spice_cat::make_heading_context_menu, base, ev
+PRO spice_cat::build_context_menu_heading, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
-  button = widget_button(base, value="Sort increasing", uvalue="SORT`INCREASING`"+column_name)
-  button = widget_button(base, value="Sort decreasing", uvalue="SORT`DECREASING`"+column_name)
-  button = widget_button(base, value="Move left", uvalue="MOVE`LEFT`"+column_name)
-  button = widget_button(base, value="Move right", uvalue="MOVE`RIGHT`"+column_name)
-  button = widget_button(base, value="Remove column", uvalue="REMOVE_COLUMN`"+column_name)
+  
+  buttons = [ {value:"Sort increasing", uvalue:"SORT`INCREASING`" + column_name}, $
+              {value:"Sort decreasing", uvalue:"SORT`DECREASING`" + column_name}, $
+              {value:"Move left",       uvalue:"MOVE`LEFT`" + column_name}, $
+              {value:"Move right",      uvalue:"MOVE`RIGHT`" + column_name}, $
+              {value:"Remove column",   uvalue:"REMOVE_COLUMN`" + column_name} $
+            ]
+
+  current_uvalue = "SORT`" + self.state.current_sort_order + "`" + self.state.current_sort_column
+  
+  foreach button, buttons DO BEGIN
+     sensitive = button.uvalue NE current_uvalue
+     b = widget_button(base, _extra=button, sensitive=sensitive)
+  END 
 END
 
 
-PRO spice_cat::make_datacell_context_menu, base, ev
+PRO spice_cat::build_context_menu_datacell, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col]
   cell_value = self.state.displayed[ev.row].(ev.col).tostring()
   
