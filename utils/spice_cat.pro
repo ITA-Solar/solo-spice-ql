@@ -232,19 +232,27 @@ FUNCTION spice_cat::current_column_widths
   return, widths
 END
 
+FUNCTION spice_cat::current_column_labels
+  up_or_down = self.state.current_sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
+  labels = self.state.current_column_names
+  foreach label, labels, index DO BEGIN
+     IF label EQ self.state.current_sort_column THEN labels[index] += " " + up_or_down
+  END
+  return, labels
+END
 
 PRO spice_cat::display_displayed_list
-;  relative_column_widths = ((self.state.keyword_info.values()).toarray()).display_width
-;  table_props.column_widths = relative_column_widths * 12
-  
-  column_widths = self.current_column_widths()
+  widget_control, self.wid.table_id, update=1
   
   widget_control,self.wid.table_id, set_value=self.state.displayed
   widget_control,self.wid.table_id, table_ysize=n_elements(self.state.displayed)
   widget_control,self.wid.table_id, alignment=self.cell_alignments()
   widget_control,self.wid.table_id, background_color=self.background_colors()
-  widget_control, self.wid.table_id, column_labels = self.state.current_column_names
-  widget_control, self.wid.table_id, column_widths=column_widths
+  widget_control, self.wid.table_id, column_labels = self.current_column_labels()
+
+  widget_control, self.wid.table_id, update=1
+  
+  widget_control, self.wid.table_id, column_widths=self.current_column_widths()
 END
 
 ;;
