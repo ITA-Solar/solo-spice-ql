@@ -517,7 +517,6 @@ PRO spice_cat::set_message_to_full_content, sel
   column_name = self.state.current_column_names[sel.left]
   full_content = self.state.displayed[sel.top].(sel.left)
   self.set_message, column_name+":", full_content, /select
-  print, column_name, full_content
 END
 
 
@@ -535,7 +534,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
-  IF sel.top GT 1 THEN self.register_selection, sel
+  IF sel.top GE 1 THEN self.register_selection, sel
   
   ;; Only meaningful actions are:
   ;; EITHER to edit the filter:
@@ -546,7 +545,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   
   single_cell = (sel.top EQ sel.bottom) AND (sel.left EQ sel.right)
   
-  IF single_cell AND (sel.top GT 1) THEN BEGIN
+  IF single_cell AND (sel.top GE 1) THEN BEGIN
      self.set_message_to_full_content, sel
      return
   END
@@ -591,7 +590,7 @@ PRO spice_cat::_____________COMMAND_BASE_EVENTS                            & END
 ;;
 
 PRO spice_cat::handle_call_program, event, parts
-  self.modal_message,"Call program with selection not implemented yet", timer = 2
+  call_procedure, parts[1], self.selection()
 END
 
 
@@ -599,10 +598,6 @@ PRO spice_cat::handle_exit, event, parts
   widget_control, event.top, /destroy
 END
 
-
-PRO spice_cat::handle_regenerate, event, parts
-  self.modal_message, ["Regenerate list with:","IDL> spice_fitslist"], timer=2
-END
 
 ;;
 PRO spice_cat::_____________CATCH_ALL_EVENT_HANDLER                         & END
@@ -689,7 +684,8 @@ PRO spice_cat::build_sort_pulldown
   direction = self.state.current_sort_order EQ "INCREASING" ? "(incr.)" : "(decr.)"
   
   menu_text = "Sort: " + self.state.current_sort_column + " " + direction
-  menu = widget_button(self.wid.sort_base, /menu, value=menu_text)
+  bbase = widget_base(self.wid.sort_base, xpad=0, ypad=0, frame=2)
+  menu = widget_button(bbase, /menu, value=menu_text)
   
   foreach column_name, self.state.current_column_names DO BEGIN
      self.build_sort_choices_for_column, menu, column_name
@@ -747,15 +743,18 @@ PRO spice_cat::new_incarnation
   previous_incarnation = self.wid.top_base
 END
 
-PRO spice_cat::create_command_buttons
-  buttons = $
-     [ $
-     { value: "Return selection", uvalue: "EXIT`", ALIGN_CENTER: 1b },$
-     ;{ value: "Regenerate list", uvalue: "REGENERATE`", ALIGN_CENTER: 1b },$
-     { value: "Call <program>", uvalue: "CALL_PROGRAM`", ALIGN_CENTER: 1b } $
-     ]
-  IF NOT self.state.modal THEN buttons[0].value = "Exit"
-  foreach button, buttons DO button = widget_button(self.wid.button_base, _extra=button)
+PRO spice_cat::build_command_buttons
+  base = self.wid.button_base
+  
+  return_or_select = self.state.modal ? "Return selection" : "Exit"
+  b = widget_button(base, value=return_or_select, uvalue='EXIT', /align_center)
+  
+  bbase = widget_base(base, xpad=0, ypad=0, frame=2)
+  call = widget_button(bbase, value="Call procedure", /menu, frame=3)
+
+  foreach program, self.state.programs DO BEGIN
+     b = widget_button(call, value=program, uvalue="CALL_PROGRAM`"+program)
+  END
 END
 
 
@@ -802,7 +801,7 @@ PRO spice_cat::build_widget
   w.message_label = widget_label(w.message_base, value='     STATUS:', /align_right)
   w.message_text = widget_text(w.message_base, scr_xsize=700)
   
-  self.create_command_buttons
+  self.build_command_buttons
   
   self.build_sort_pulldown
   
@@ -824,6 +823,7 @@ END
 PRO spice_cat::parameters, modal=modal
   self.state = dictionary()
   self.state.modal = keyword_set(modal)
+  self.state.programs = ["help", "print"] ;; TODO: plug in Martin's routines
   self.state.keyword_info = spice_keyword_info(/all)
   spice_datadir = getenv("SPICE_DATA")
   IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATADIR is blank or not set"
@@ -835,12 +835,13 @@ PRO spice_cat::parameters, modal=modal
   self.state.listfilename = concat_dir(listfiledir, 'spice_fitslist.txt')
 END
 
+
 FUNCTION spice_cat::selection
   IF NOT self.state.haskey("selection") THEN return, !null
   return, self.state.selection
 END
 
-;; INIT: create, realize and register widget
+
 function spice_cat::init, modal=modal
   self.parameters, modal = modal
   self.load_fitslist
@@ -864,23 +865,26 @@ function spice_cat::init, modal=modal
   return,1
 END
 
+
 PRO spice_cat_define_structure
   dummy = {spice_cat, state: dictionary(), wid:dictionary() }
 END
 
-FUNCTION spice_cat
+
+FUNCTION spice_cat                   ;; IDL> selection = spice_cat()
   spice_cat_define_structure
   o = obj_new('spice_cat',/modal)
   return, o.selection()
 END
 
-PRO spice_cat, o
+
+PRO spice_cat, o                     ;; IDL> spice_cat
   spice_cat_define_structure
   o = obj_new('spice_cat')
 END
 
 ;setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
-setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
+;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
 
 spice_cat, o
 END
