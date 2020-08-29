@@ -221,29 +221,52 @@ FUNCTION spice_cat::background_colors
   return, background_colors
 END
 
+
 PRO spice_cat::capture_column_widths
   COMMON spice_cat_column_widths, widths_by_column_name
   widths = widget_info(self.wid.table_id, /column_widths)
   foreach column_name, self.state.current_column_names, index DO BEGIN
-     widths_by_column_name[column_name] = widths[index]
+     widths_by_column_name[column_name] = fix(widths[index])
+  END
+  env_widths = []
+  foreach width, widths_by_column_name, column_name DO BEGIN
+     env_widths = [env_widths, column_name + ":" + width.tostring()]
+  END
+  env_widths = env_widths.join(",")
+  print, "** Put this in your IDL-startup to set column widhts permanently:"
+  print, "SETENV,'SPICE_CAT_KEYWORD_WIDTHS=" + env_widths + "'"
+END
+
+
+PRO spice_cat::init_column_widths
+  COMMON spice_cat_column_widths, widths_by_column_name
+  
+  widths_by_column_name = hash()
+  foreach info, self.state.keyword_info, column_name DO BEGIN
+     widths_by_column_name[column_name] = info.display_width * 12
+  END
+  
+  ; Override with SPICE_CAT_KEYWORD_WIDTHS when set
+  spice_cat_keyword_widths = getenv("SPICE_CAT_KEYWORD_WIDTHS")
+  IF spice_cat_keyword_widths EQ "" THEN return
+  spice_cat_keyword_widths = spice_cat_keyword_widths.split(',')
+  foreach width_setting, spice_cat_keyword_widths DO BEGIN
+     parts = width_setting.split(':')
+     widths_by_column_name[parts[0]] = parts[1].toInteger()
   END
 END
+  
 
 FUNCTION spice_cat::current_column_widths
   COMMON spice_cat_column_widths, widths_by_column_name
-  IF n_elements(widths_by_column_name) EQ 0 THEN BEGIN
-     widths_by_column_name = hash()
-     foreach info, self.state.keyword_info, column_name DO BEGIN
-        widths_by_column_name[column_name] = info.display_width * 12
-     END
-  END
-  
+  IF n_elements(widths_by_column_name) EQ 0 THEN self.init_column_widths
   widths = []
   foreach column_name, self.state.current_column_names DO BEGIN
      widths = [widths, widths_by_column_name[column_name]]
   END
   return, widths
 END
+
 
 FUNCTION spice_cat::current_column_labels
   up_or_down = self.state.current_sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
@@ -253,6 +276,7 @@ FUNCTION spice_cat::current_column_labels
   END
   return, labels
 END
+
 
 PRO spice_cat::display_displayed_list
   widget_control, self.wid.table_id, update=1
@@ -826,6 +850,7 @@ function spice_cat::init, modal=modal
      keywords = keywords.split(",")
      keywords = keywords.trim()
      IF total(keywords EQ "DATE-BEG") EQ 0 THEN keywords = ["DATE-BEG", keywords]
+     IF total(keywords EQ "FILENAME") EQ 0 THEN keywords = ["FILENAME", keywords]
   END ELSE BEGIN
      keywords = []
   END
@@ -855,5 +880,7 @@ PRO spice_cat, o
 END
 
 ;setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
+setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
+
 spice_cat, o
 END
