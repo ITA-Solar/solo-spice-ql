@@ -110,7 +110,6 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
         mask = mask AND self.state.full_list[*].(full_list_tag_index) LE max
      END
   END
-  print,TOTAL(mask)
   return,mask
 END
 
@@ -122,7 +121,7 @@ FUNCTION spice_cat::apply_filters, filters
      current_filter = filters.(current_filter_tag_ix)
      IF current_filter EQ "<filter>" THEN CONTINUE
      
-     ; apply_filter() operates on full_list, we must supply
+     ; apply_filter() operates on full_list, so we must supply
      ; full_list_tag_index, not filter_tag_index
 
      full_list_tag_index = (where(self.state.full_tag_names EQ current_filter_tag_name))[0]
@@ -215,6 +214,10 @@ FUNCTION spice_cat::background_colors
   num_table_rows = n_elements(self.state.displayed)
   background_colors = replicate(230b, 3, num_table_columns, num_table_rows)
   background_colors[1, *, 0] = 255b
+  IF self.state.haskey("selection_beg") THEN BEGIN
+     background_colors[*, *, self.state.selection_beg : self.state.selection_end] = 200b
+     background_colors[2, *, self.state.selection_beg : self.state.selection_end] = 255b
+  END
   return, background_colors
 END
 
@@ -493,15 +496,22 @@ PRO spice_cat::set_message_to_full_content, sel
   print, column_name, full_content
 END
 
+
+PRO spice_cat::register_selection, sel
+  self.state.selection = self.state.displayed[sel.top:sel.bottom].filename
+  self.state.selection_beg = sel.top
+  self.state.selection_end = sel.bottom
+  widget_control, self.wid.table_id, background_color=self.background_colors()
+END
+
+
 PRO spice_cat::handle_table_cell_sel, ev
   sel = {left:ev.sel_left, right:ev.sel_right, top:ev.sel_top, bottom:ev.sel_bottom}
   
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
-  IF sel.top GT 1 THEN BEGIN
-     self.state.selection = self.state.displayed[sel.top:sel.bottom].filename
-  END
+  IF sel.top GT 1 THEN self.register_selection, sel
   
   ;; Only meaningful actions are:
   ;; EITHER to edit the filter:
