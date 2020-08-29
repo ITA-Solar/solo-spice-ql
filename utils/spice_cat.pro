@@ -378,7 +378,7 @@ PRO spice_cat::set_filter_cell_to_edit_color, column_name, clear=clear
 END
 
 
-FUNCTION spice_cat::deal_with_filter_focus_change, event, column_name
+FUNCTION spice_cat::absorb_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
      IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
         IF event.enter GE 0 THEN self.set_filter_cell_to_edit_color, column_name
@@ -400,8 +400,6 @@ PRO spice_cat::deal_with_click_on_filter_cell,column_name
      IF column_type EQ "i" THEN current_filter_as_array = ["", ""] ; range
   END
   
-  ;; TODO: can't be necessary, right?
-  self.set_filter_by_column_name, column_name, current_filter_as_array
   filter_as_uvalue_text = current_filter_as_array.join("`")
   
   ;; Simulates event with UVALUE = "REBUILD_FILTER`column_name`min`max"
@@ -453,7 +451,7 @@ END
 
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
-  IF self.deal_with_filter_focus_change(event, column_name) THEN return
+  IF self.absorb_filter_focus_change(event, column_name) THEN return
   
   widget_control, event.id, get_value=new_text_filter_as_singular_array
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
@@ -464,7 +462,7 @@ PRO spice_cat::handle_range_filter_change, event, parts
   min_or_max = parts[1]
   column_name = parts[2]
   
-  IF self.deal_with_filter_focus_change(event, column_name) THEN return
+  IF self.absorb_filter_focus_change(event, column_name) THEN return
 
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
@@ -503,7 +501,6 @@ PRO spice_cat::handle_filter_cell_flash_timer, event, parts
   IF (iteration MOD 2)+1 THEN widget_control,self.wid.filter_focus_flash_text,/input_focus $
   ELSE                        widget_control, self.wid.draw_focus_away, /input_focus
   
-  
   IF iteration LT 4 THEN BEGIN
      self.state.ignore_next_focus_change = 1
      iteration++
@@ -531,7 +528,6 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   IF text THEN self.build_text_filter, column_name, new_filter_as_array
   IF range THEN self.build_range_filter, column_name, new_filter_as_array
   
-  new_filter_as_text = self.filter_as_text(new_filter_as_array)
   widget_control, self.wid.filter_base, set_uvalue="FILTER_CELL_FLASH_TIMER`1
   widget_control, self.wid.filter_base, timer=0.05
   
@@ -613,9 +609,6 @@ PRO spice_cat::handle_all_table_events, ev, parts
   call_method, method, self, ev
 END
 
-;;
-PRO spice_cat::_____________COMMAND_BASE_EVENTS                            & END
-;;
 
 PRO spice_cat::handle_call_program, event, parts
   call_procedure, parts[1], self.selection()
@@ -642,7 +635,7 @@ PRO spice_cat::build_text_filter, column_name, filter_as_array
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
   button = widget_button(self.wid.filter_base, value="Use alphabetical range", uvalue=button_uvalue)
   self.wid.filter_focus_flash_text = self.wid.filter_text
-  widget_control, self.wid.filter_text, set_text_select=[0, filter_as_array.strlen()]
+  widget_control, self.wid.filter_text, set_text_select=strlen(filter_as_text)
 END
 
 
@@ -650,13 +643,17 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
   min_value = filter_as_array[0]
   max_value = filter_as_array[1]
   
-  min_text_uvalue = "RANGE_FILTER_CHANGE`MIN`" + column_name
-  max_text_uvalue = "RANGE_FILTER_CHANGE`MAX`" + column_name
+  min_uvalue = "RANGE_FILTER_CHANGE`MIN`" + column_name
+  max_uvalue = "RANGE_FILTER_CHANGE`MAX`" + column_name
   
   extra = {editable: 1b, all_events: 1b, kbrd_focus_events: 1b}
-  min_text = widget_text(self.wid.filter_base, value=min_value, uvalue=min_text_uvalue, _extra=extra)
+  
+  min_text = widget_text(self.wid.filter_base, value=min_value, uvalue=min_uvalue, _extra=extra)
   label = widget_label(self.wid.filter_base, value="<= " + column_name + " <=")
-  max_text = widget_text(self.wid.filter_base, value=max_value, uvalue=max_text_uvalue, _extra=extra)
+  max_text = widget_text(self.wid.filter_base, value=max_value, uvalue=max_uvalue, _extra=extra)
+  
+  widget_control, min_text, set_text_select=strlen(min_value)
+  widget_control, max_text, set_text_select=strlen(max_value)
   
   self.wid.min_filter_text = min_text
   self.wid.max_filter_text = max_text
