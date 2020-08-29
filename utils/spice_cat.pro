@@ -48,6 +48,37 @@ PRO spice_cat::set_message, label, message, select=select
   END
 END
 
+
+PRO spice_cat::register_selection, sel, blank=blank
+  IF keyword_set(blank) THEN BEGIN
+     self.state.selection = []
+     self.state.selection_beg = -1
+     self.state.selection_end = -1
+     return
+  END
+  
+  self.state.selection = self.state.displayed[sel.top:sel.bottom].filename
+  self.state.selection_beg = sel.top
+  self.state.selection_end = sel.bottom
+  widget_control, self.wid.table_id, background_color=self.background_colors()
+END
+
+
+FUNCTION spice_cat::selection
+  IF NOT self.state.haskey("selection") THEN return, !null
+  return, self.state.selection
+END
+
+
+PRO spice_cat::replace_previous_incarnation
+  COMMON spice_cat, previous_incarnation
+  spice_default,previous_incarnation, 0L
+  IF widget_info(previous_incarnation, /valid_id) THEN BEGIN
+     widget_control,previous_incarnation, /destroy
+  END
+  previous_incarnation = self.wid.top_base
+END
+
 ;;
 PRO spice_cat::_____________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
@@ -132,7 +163,7 @@ FUNCTION spice_cat::apply_filters, filters
 END
 
 
-PRO spice_cat::update_current_filter, keywords
+PRO spice_cat::update_current_filters, keywords
   spice_default, keywords, self.state.current_column_names
   
   IF self.state.haskey("current_filters_as_text") THEN BEGIN
@@ -170,7 +201,7 @@ END
 
 
 PRO spice_cat::create_displayed_list, keywords
-  self.update_current_filter, keywords
+  self.update_current_filters, keywords
   
   new_list_without_filter = []
   
@@ -328,12 +359,12 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
      self.state.current_filters_as_text = current_filters_as_text
      self.create_displayed_list
      self.display_displayed_list
-     self.set_filter_edit_color,column_name
+     self.set_filter_cell_to_edit_color,column_name
   END
 END
 
 
-PRO spice_cat::set_filter_edit_color, column_name, clear=clear
+PRO spice_cat::set_filter_cell_to_edit_color, column_name, clear=clear
   num_columns = n_elements(tag_names(self.state.displayed))
   table_select = [0, 0, num_columns-1, 0]
   widget_control, self.wid.table_id, background_color=[230b,255b,230b], use_table_select=table_select
@@ -350,8 +381,8 @@ END
 FUNCTION spice_cat::deal_with_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
      IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
-        IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
-        IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
+        IF event.enter GE 0 THEN self.set_filter_cell_to_edit_color, column_name
+        IF event.enter EQ 0 THEN self.set_filter_cell_to_edit_color, /clear
      END
      return,1 ; It's OK, dealt with!
   END
@@ -359,9 +390,9 @@ FUNCTION spice_cat::deal_with_filter_focus_change, event, column_name
 END
 
 
-PRO spice_cat::deal_with_click_on_filter,column_name
+PRO spice_cat::deal_with_click_on_filter_cell,column_name
   current_filter_as_array = self.get_filter_by_column_name(column_name)
-  self.set_filter_edit_color,column_name
+  self.set_filter_cell_to_edit_color,column_name
   
   IF current_filter_as_array[0] EQ "<filter>" THEN BEGIN
      column_type = self.state.keyword_info[column_name].type
@@ -378,6 +409,14 @@ PRO spice_cat::deal_with_click_on_filter,column_name
   ;;
   self.handle_rebuild_filter, dummy_event, ["REBUILD_FILTER", column_name, current_filter_as_array]
 END
+
+
+PRO spice_cat::set_message_to_full_content, sel
+  column_name = self.state.current_column_names[sel.left]
+  full_content = self.state.displayed[sel.top].(sel.left)
+  self.set_message, column_name+":", full_content, /select
+END
+
 
 ;;
 PRO spice_cat::_____________EVENT_HANDLERS                     & END
@@ -458,7 +497,7 @@ PRO spice_cat::handle_range_filter_change, event, parts
 END
 
 
-PRO spice_cat::handle_filter_flash_timer, event, parts
+PRO spice_cat::handle_filter_cell_flash_timer, event, parts
   iteration = parts[1].toInteger()
 
   IF (iteration MOD 2)+1 THEN widget_control,self.wid.filter_focus_flash_text,/input_focus $
@@ -468,7 +507,7 @@ PRO spice_cat::handle_filter_flash_timer, event, parts
   IF iteration LT 4 THEN BEGIN
      self.state.ignore_next_focus_change = 1
      iteration++
-     widget_control, event.id, set_uvalue="FILTER_FLASH_TIMER`"+iteration.toString()
+     widget_control, event.id, set_uvalue="FILTER_CELL_FLASH_TIMER`"+iteration.toString()
      widget_control, event.id, timer=0.05
   END ELSE BEGIN
      self.state.ignore_next_focus_change = 0
@@ -493,7 +532,7 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   IF range THEN self.build_range_filter, column_name, new_filter_as_array
   
   new_filter_as_text = self.filter_as_text(new_filter_as_array)
-  widget_control, self.wid.filter_base, set_uvalue="FILTER_FLASH_TIMER`1
+  widget_control, self.wid.filter_base, set_uvalue="FILTER_CELL_FLASH_TIMER`1
   widget_control, self.wid.filter_base, timer=0.05
   
   widget_control, self.wid.top_base, update=1
@@ -514,28 +553,6 @@ PRO spice_cat::handle_table_context, ev
   IF ev.row GE 1 THEN self.build_context_menu_datacell, context_menu_base, ev
   
   widget_displaycontextmenu, ev.id, ev.x, ev.y, context_menu_base
-END
-
-
-PRO spice_cat::set_message_to_full_content, sel
-  column_name = self.state.current_column_names[sel.left]
-  full_content = self.state.displayed[sel.top].(sel.left)
-  self.set_message, column_name+":", full_content, /select
-END
-
-
-PRO spice_cat::register_selection, sel, blank=blank
-  IF keyword_set(blank) THEN BEGIN
-     self.state.selection = []
-     self.state.selection_beg = -1
-     self.state.selection_end = -1
-     return
-  END
-  
-  self.state.selection = self.state.displayed[sel.top:sel.bottom].filename
-  self.state.selection_beg = sel.top
-  self.state.selection_end = sel.bottom
-  widget_control, self.wid.table_id, background_color=self.background_colors()
 END
 
 
@@ -569,7 +586,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   column_name = self.state.current_column_names[sel.left]
-  self.deal_with_click_on_filter,column_name
+  self.deal_with_click_on_filter_cell,column_name
 END
 
 
@@ -610,27 +627,6 @@ PRO spice_cat::handle_exit, event, parts
 END
 
 
-;;
-PRO spice_cat::_____________CATCH_ALL_EVENT_HANDLER                         & END
-;;
-  
-PRO spice_cat__event, event
-  widget_control, event.top, get_uvalue=self
-  
-  ;; The TLB's UVALUE is pointing to *self*, so it can't be used for directing
-  ;; the event to the right handler. We must detect that as a separate thing,
-  ;; and pretend everything was normal:
-  IF event.id EQ event.top THEN BEGIN
-     self.handle_tlb,event
-     return
-  END 
-  widget_control, event.id, get_uvalue=uvalue
-  
-  parts = uvalue.split('`')
-  method = "handle_"+parts[0]
-  
-  call_method,method, self, event, parts
-END
 
 ;;
 PRO spice_cat::_____________WIDGET_BUILDERS                   & END
@@ -743,17 +739,6 @@ PRO spice_cat::build_context_menu_datacell, base, ev
 END
 
 
-;; UTILITY TO KILL PREVIOUS INCARNATION -------
-
-PRO spice_cat::new_incarnation
-  COMMON spice_cat, previous_incarnation
-  spice_default,previous_incarnation, 0L
-  IF widget_info(previous_incarnation, /valid_id) THEN BEGIN
-     widget_control,previous_incarnation, /destroy
-  END
-  previous_incarnation = self.wid.top_base
-END
-
 PRO spice_cat::build_command_buttons
   base = self.wid.button_base
   
@@ -792,7 +777,7 @@ PRO spice_cat::build_widget
   
   w.top_base = widget_base(title='SPICE-CAT', uvalue=self, /row, /tlb_size_events, xpad=0, ypad=0)
   
-  self.new_incarnation
+  self.replace_previous_incarnation
 
   w.ysize_spacer_base = widget_base(w.top_base, ysize=800, xpad=0, ypad=0)
   w.content_base = widget_base(w.top_base, /column)
@@ -831,6 +816,24 @@ PRO spice_cat::build_widget
 END
 
 
+PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
+  
+  widget_control, event.top, get_uvalue=self
+  
+  IF event.id EQ event.top THEN BEGIN ;; TLB event has ID = TOP
+     self.handle_tlb,event
+     return
+  END 
+  
+  widget_control, event.id, get_uvalue=uvalue
+  
+  parts = uvalue.split('`')
+  method = "handle_"+parts[0]
+  
+  call_method,method, self, event, parts
+END
+
+
 PRO spice_cat::parameters, modal=modal
   self.state = dictionary()
   self.state.modal = keyword_set(modal)
@@ -844,12 +847,6 @@ PRO spice_cat::parameters, modal=modal
   self.state.spice_datadir = spice_datadir
   self.state.listfiledir = listfiledir
   self.state.listfilename = concat_dir(listfiledir, 'spice_fitslist.txt')
-END
-
-
-FUNCTION spice_cat::selection
-  IF NOT self.state.haskey("selection") THEN return, !null
-  return, self.state.selection
 END
 
 
@@ -871,7 +868,8 @@ function spice_cat::init, modal=modal
   self.build_widget
   
   no_block = keyword_set(self.state.modal) ? 0 : 1
-  xmanager,"spice_cat", self.wid.top_base, no_block=no_block, event_handler="spice_cat__event"
+  event_handler = "spice_cat_______________catch_all_event_handler"
+  xmanager,"spice_cat", self.wid.top_base, no_block=no_block, event_handler=event_handler
   
   return,1
 END
