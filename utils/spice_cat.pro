@@ -291,11 +291,8 @@ PRO spice_cat::set_filter_edit_color, column_name, clear=clear
 END
 
 
-FUNCTION spice_cat::pseudo_handler_filter_focus_change_ok, event, column_name
+FUNCTION spice_cat::deal_with_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
-     ;; We get here more often than we should, but... that's IDL's fault for
-     ;; creating weird extra events (and because we can't send any extra info in
-     ;; the event, whether to ignore or not).
      IF self.state.ignore_next_focus_change EQ 0 THEN BEGIN 
         IF event.enter GE 0 THEN self.set_filter_edit_color, column_name
         IF event.enter EQ 0 THEN self.set_filter_edit_color, /clear
@@ -359,8 +356,7 @@ END
 
 PRO spice_cat::handle_text_filter_change, event, parts
   column_name = parts[1]
-  
-  IF self.pseudo_handler_filter_focus_change_ok(event, column_name) THEN return
+  IF self.deal_with_filter_focus_change(event, column_name) THEN return
   
   widget_control, event.id, get_value=new_text_filter_as_singular_array
   self.set_filter_by_column_name, column_name, new_text_filter_as_singular_array
@@ -371,7 +367,7 @@ PRO spice_cat::handle_range_filter_change, event, parts
   min_or_max = parts[1]
   column_name = parts[2]
   
-  IF self.pseudo_handler_filter_focus_change_ok(event, column_name) THEN return
+  IF self.deal_with_filter_focus_change(event, column_name) THEN return
 
   widget_control, self.wid.min_filter_text, get_value=min_value
   widget_control, self.wid.max_filter_text, get_value=max_value
