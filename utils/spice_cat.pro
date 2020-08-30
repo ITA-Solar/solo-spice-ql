@@ -200,8 +200,8 @@ FUNCTION spice_cat::sort,list
 END
 
 
-PRO spice_cat::create_displayed_list, keywords
-  self.update_current_filters, keywords
+PRO spice_cat::create_displayed_list, column_names
+  self.update_current_filters, column_names
   
   new_list_without_filter = []
   
@@ -857,16 +857,16 @@ function spice_cat::init, modal=modal
   self.parameters, modal = modal
   self.load_fitslist
   
-  keywords = getenv("SPICE_CAT_KEYWORDS")
-  IF keywords GT "" THEN BEGIN
-     keywords = keywords.split(",")
-     keywords = keywords.trim()
-     IF total(keywords EQ "DATE-BEG") EQ 0 THEN keywords = ["DATE-BEG", keywords]
-     IF total(keywords EQ "FILENAME") EQ 0 THEN keywords = ["FILENAME", keywords]
+  column_names = getenv("SPICE_CAT_KEYWORDS")
+  IF column_names GT "" THEN BEGIN
+     column_names = column_names.split(",")
+     column_names = column_names.trim()
+     IF total(column_names EQ "DATE-BEG") EQ 0 THEN column_names = ["DATE-BEG", column_names]
+     IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
   END ELSE BEGIN
-     keywords = []
+     column_names = []
   END
-  self.create_displayed_list,keywords
+  self.create_displayed_list,column_names
   
   self.build_widget
   
