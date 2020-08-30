@@ -703,7 +703,7 @@ PRO spice_cat::build_sort_pulldown
   widget_control, self.wid.top_base, update=0
   self.destroy_children, self.wid.sort_base
   
-  direction = self.state.current_sort_order EQ "INCREASING" ? "(incr.)" : "(decr.)"
+  direction = self.state.current_sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
   
   menu_text = "Sort: " + self.state.current_sort_column + " " + direction
   bbase = widget_base(self.wid.sort_base, xpad=0, ypad=0, frame=2)
@@ -761,7 +761,7 @@ PRO spice_cat::build_command_buttons
   b = widget_button(base, value=return_or_select, uvalue='EXIT', /align_center)
   
   bbase = widget_base(base, xpad=0, ypad=0, frame=2)
-  call = widget_button(bbase, value="Call procedure", /menu, frame=3)
+  call = widget_button(bbase, value="Call procedure", /menu)
 
   foreach program, self.state.programs DO BEGIN
      b = widget_button(call, value=program, uvalue="CALL_PROGRAM`"+program)
@@ -800,13 +800,12 @@ PRO spice_cat::build_widget
   w.xsize_spacer_base = widget_base(w.content_base, /row, xsize=800)  
   w.top_row_base = widget_base(w.content_base, /row, xpad=0, ypad=0)
   w.message_base = widget_base(w.content_base, /row, xpad=0, ypad=0)
-  w.table_base = widget_base(w.content_base, /column, /frame, xpad=0, ypad=0)
+  w.table_base = widget_base(w.content_base, /column, xpad=0, ypad=0)
     
   w.draw_focus_away = widget_text(w.ysize_spacer_base, scr_xsize=1, scr_ysize=1)
   w.button_base = widget_base(w.top_row_base, /row, /align_center, xpad=0, ypad=0)
-  spacer = widget_base(w.top_row_base, xsize=5)
   w.sort_base = widget_base(w.top_row_base, /row, xpad=0, ypad=0, /align_center)
-  spacer = widget_base(w.top_row_base, xsize=5)
+  button_spacer = widget_base(w.top_row_base, xsize=1, xpad=0, ypad=0)
   w.filter_base = widget_base(w.top_row_base, /row, xpad=0, ypad=0, /align_center)
   
   w.message_label = widget_label(w.message_base, value='     STATUS:', /align_right)
