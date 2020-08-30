@@ -722,15 +722,18 @@ END
 PRO spice_cat::build_context_menu_heading, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
   
-  buttons = [ {value:"Sort increasing", uvalue:"SORT`INCREASING`" + column_name, sensitive:1 }, $
-              {value:"Sort decreasing", uvalue:"SORT`DECREASING`" + column_name, sensitive:1 }, $
-              {value:"Move left",       uvalue:"MOVE`LEFT`" + column_name, sensitive:1 }, $
-              {value:"Move right",      uvalue:"MOVE`RIGHT`" + column_name,  sensitive:1 }, $
-              {value:"Remove column",   uvalue:"REMOVE_COLUMN`" + column_name, sensitive:1 } $
+  buttons = [ {value:"Sort increasing",  uvalue:"SORT`INCREASING`" + column_name, sensitive:1 }, $
+              {value:"Sort decreasing",  uvalue:"SORT`DECREASING`" + column_name, sensitive:1 }, $
+              {value:"Move left",        uvalue:"MOVE`LEFT`" + column_name, sensitive:1 }, $
+              {value:"Move right",       uvalue:"MOVE`RIGHT`" + column_name,  sensitive:1 }, $
+              {value:"Add column left",  uvalue:"ADD_COLUMN`LEFT",  sensitive:1 }, $
+              {value:"Add column right", uvalue:"ADD_COLUMN`RIGHT", sensitive:1}, $
+              {value:"Remove column",    uvalue:"REMOVE_COLUMN`" + column_name, sensitive:1 } $
             ]
   
-  current_sorting_uvalue = "SORT`" + self.state.current_sort_order
-  current_sorting_uvalue += "`" + self.state.current_sort_column
+  current_sort_order = self.state.current_sort_order
+  current_sort_column = self.state.current_sort_column
+  current_sorting_uvalue = "SORT`" + current_sort_order + "`" + current_sort_column
   current_sorting_ix = (where(buttons.uvalue EQ current_sorting_uvalue))[0]
   IF current_sorting_ix NE -1 THEN buttons[current_sorting_ix].sensitive = 0
   
@@ -740,7 +743,11 @@ PRO spice_cat::build_context_menu_heading, base, ev
   IF move_left_insensitive THEN buttons[2].sensitive = 0
   IF move_right_insensitive THEN buttons[3].sensitive = 0
   
-  foreach button, buttons DO b = widget_button(base, _extra=button)
+  foreach button, buttons DO BEGIN
+     add_column_menu = strmid(button.uvalue, 0, 10) EQ "ADD_COLUMN"
+     b = widget_button(base, _extra=button, menu=add_column_menu)
+     IF add_column_menu THEN self.build_add_column_menu, b, button.uvalue
+  END 
 END
 
 
