@@ -106,9 +106,8 @@ PRO spice_cat::load_fitslist
   
   self.state.full_list = fitslist
   self.state.full_tag_names = tag_names(fitslist[0])
-  self.state.full_column_names = self.state.full_tag_names.replace('$','-')
+  self.state.full_column_names = (tag_names(fitslist[0])).replace('$','-')
   
-  self.state.current_tag_names = self.state.full_tag_names
   self.state.current_column_names = self.state.full_column_names
   self.state.current_sort_column = 'DATE-BEG'
   self.state.current_sort_order = "INCREASING"
@@ -154,8 +153,8 @@ FUNCTION spice_cat::apply_filters, filters
      
      ; apply_filter() operates on full_list, so we must supply
      ; full_list_tag_index, not filter_tag_index
-
-     full_list_tag_index = (where(self.state.full_tag_names EQ current_filter_tag_name))[0]
+     full_tag_names = self.state.full_column_names.replace('-', '$')
+     full_list_tag_index = (where(full_tag_names EQ current_filter_tag_name))[0]
      
      mask = mask AND self.apply_filter(current_filter, full_list_tag_index)
   END
@@ -169,7 +168,8 @@ PRO spice_cat::update_current_filters, keywords
   IF self.state.haskey("current_filters_as_text") THEN BEGIN
      current_filters_as_text = self.state.current_filters_as_text
   END ELSE BEGIN
-     current_filters_as_text = self.empty_filters_as_text(self.state.current_tag_names)
+     current_tag_names = self.state.current_column_names.replace('-', '$')
+     current_filters_as_text = self.empty_filters_as_text(current_tag_names)
   END
   
   new_filters_as_text = self.empty_filters_as_text(keywords.replace('-','$'))
@@ -218,8 +218,8 @@ PRO spice_cat::create_displayed_list, keywords
   new_list = [self.state.current_filters_as_text, temporary(new_sorted_list_without_filter)]
   
   self.state.displayed = temporary(new_list)
-  self.state.current_tag_names = tag_names(self.state.displayed)
-  self.state.current_column_names = (tag_names(self.state.displayed)).replace('$','-')
+  current_tag_names = tag_names(self.state.displayed)
+  self.state.current_column_names = current_tag_names.replace('$','-')
 END
 
 
