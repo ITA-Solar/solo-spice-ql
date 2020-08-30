@@ -311,13 +311,14 @@ FUNCTION spice_cat::current_column_labels
 END
 
 
-PRO spice_cat::display_displayed_list
+PRO spice_cat::display_displayed_list, keep_selection=keep_selection
   widget_control, self.wid.table_id, update=1
   
-  self.register_selection, /blank
+  IF NOT keyword_set(keep_selection) THEN self.register_selection, /blank
   
   widget_control,self.wid.table_id, set_value=self.state.displayed
   widget_control,self.wid.table_id, table_ysize=n_elements(self.state.displayed)
+  widget_control, self.wid.table_id, table_xsize=n_elements(tag_names(self.state.displayed))
   widget_control,self.wid.table_id, alignment=self.cell_alignments()
   widget_control,self.wid.table_id, background_color=self.background_colors()
   widget_control, self.wid.table_id, column_labels = self.current_column_labels()
@@ -435,8 +436,21 @@ END
 
 
 PRO spice_cat::handle_remove_column, event, parts
-  print,"Handle "+parts[0]+" : "+parts[1]
-  screen_size = spice_get_screen_size()
+  column_name = parts[1]
+  
+  goodix = where(self.state.current_column_names NE column_name, count)
+  IF count EQ 0 THEN self.modal_message, "You can't remove the last column!"
+  
+  new_column_names = self.state.current_column_names[goodix]
+  
+  IF column_name EQ self.state.current_sort_column THEN BEGIN
+     newsort = self.state.current_column_names[0]
+     IF (where(new_column_names EQ 'DATE-BEG'))[0] NE -1 THEN newsort = 'DATE-BEG'
+     self.state.current_sort_column = newsort
+  END
+  
+  self.create_displayed_list, new_column_names
+  self.display_displayed_list, /keep_selection
 END
 
 
