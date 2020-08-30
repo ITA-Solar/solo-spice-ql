@@ -493,9 +493,8 @@ FUNCTION spice_cat::handle_range_single_filter_change, text_id, column_name
 END
 
 
-;; TODO: parts[1] = min_max is NOT USED, remove from UVALUE
 PRO spice_cat::handle_range_filter_change, event, parts
-  column_name = parts[2]
+  column_name = parts[1]
   
   IF self.absorb_filter_focus_change(event, column_name) THEN return
   
@@ -656,7 +655,7 @@ END
 FUNCTION spice_cat::build_range_filter_text, base, column_name, minmax, value
   extra = {editable: 1b, all_events: 1b, kbrd_focus_events: 1b}
   
-  uvalue = "RANGE_FILTER_CHANGE`" + minmax + "`" + column_name
+  uvalue = "RANGE_FILTER_CHANGE`" + column_name
   text_id = widget_text(base, value=value, uvalue=uvalue, _extra=extra)
   widget_control, text_id, set_text_select=strlen(value)
   
