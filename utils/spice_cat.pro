@@ -472,37 +472,35 @@ PRO spice_cat::handle_text_filter_change, event, parts
 END
 
 
-PRO spice_cat::handle_range_filter_change, event, parts
-  min_or_max = parts[1]
-  column_name = parts[2]
+FUNCTION spice_cat::handle_range_single_filter_change, text_id, column_name
+  widget_control, text_id, get_value=value
   
-  IF self.absorb_filter_focus_change(event, column_name) THEN return
-
-  widget_control, self.wid.min_filter_text, get_value=min_value
-  widget_control, self.wid.max_filter_text, get_value=max_value
-  
-  new_min_value = min_value
-  new_max_value = max_value
+  new_value = value
   
   ;; Remove non-digit chars for numeric columns
   ;;
   IF self.state.keyword_info[column_name].type NE "t" THEN BEGIN
-     new_min_value = self.remove_non_digits(min_value)
-     new_max_value = self.remove_non_digits(max_value)
+     new_value = self.remove_non_digits(value)
      
      ;; Correct cursor position due to deletion of non-digit content:
      ;;
-     min_text_select = widget_info(self.wid.min_filter_text, /text_select)
-     max_text_select = widget_info(self.wid.max_filter_text, /text_select)
-     
-     min_text_select[0] = min_text_select[0] - (min_value.strlen() - new_min_value.strlen())
-     max_text_select[0] = max_text_select[0] - (max_value.strlen() - new_max_value.strlen())
-     
-     widget_control, self.wid.min_filter_text, $
-                     set_value=new_min_value, set_text_select=min_text_select 
-     widget_control, self.wid.max_filter_text, $
-                     set_value=new_max_value, set_text_select=max_text_select
+     text_select = widget_info(text_id, /text_select)
+     text_select = text_select[0] - (value.strlen() - new_value.strlen())
+     widget_control, text_id, set_value=new_value, set_text_select=text_select 
   END
+  
+  return, new_value
+END
+
+
+;; TODO: parts[1] = min_max is NOT USED, remove from UVALUE
+PRO spice_cat::handle_range_filter_change, event, parts
+  column_name = parts[2]
+  
+  IF self.absorb_filter_focus_change(event, column_name) THEN return
+  
+  new_min_value = self.handle_range_single_filter_change(self.wid.min_filter_text, column_name)
+  new_max_value = self.handle_range_single_filter_change(self.wid.max_filter_text, column_name)
   
   new_range_filter_as_array = [new_min_value, new_max_value]
   self.set_filter_by_column_name, column_name, new_range_filter_as_array
