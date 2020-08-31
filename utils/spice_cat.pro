@@ -715,6 +715,43 @@ PRO spice_cat::build_sort_pulldown
   widget_control, self.wid.top_base, update=1
 END
 
+
+PRO spice_cat::handle_add_column, event, parts
+  left_right = parts[1]
+  column_name = parts[2]
+  cut_column_name = parts[3]
+  
+  cut_before_ix = (where(column_name EQ self.state.current_column_names))[0]
+  IF left_right EQ "RIGHT" THEN cut_before_ix = cut_before_ix + 1
+  
+  IF cut_before_ix GT  0 THEN BEGIN
+     left = self.state.current_column_names[0:cut_before_ix-1]
+  END ELSE BEGIN
+     left = []
+  END 
+  
+  IF cut_before_ix LT n_elements(self.state.current_column_names)-1 THEN BEGIN
+     right = self.state.current_column_names[cut_before_ix:*]
+  END ELSE BEGIN
+     right = []
+  END
+     
+  new_column_names = [left, column_name, right]
+  print, "New column names: " + new_column_names.join(", ")
+  self.update_current_filters, new_column_names
+END
+
+
+PRO spice_cat::build_add_column_menu, base, uvalue
+  left_right = (uvalue.split("`"))[1]
+  print, "BUILD: "+uvalue+"  :" + left_right
+  foreach column_name, self.state.full_column_names DO BEGIN
+     IF total(column_name EQ self.state.current_column_names) GT 0 THEN CONTINUE
+     uvalue = "ADD_COLUMN`" + left_right + "`" + column_name + "`" + left_right
+     b = widget_button(base, value=column_name, uvalue=uvalue)
+  END
+END
+
 ;;
 ;; TODO: make cell context menu actions to copy whatever (filename, value) to clipboard
 ;; TODO: single-cell regular click: show full text in text widget at top (&select)
@@ -722,15 +759,16 @@ END
 PRO spice_cat::build_context_menu_heading, base, ev
   column_name = (tag_names(self.state.displayed))[ev.col].replace('$', '-')
   
-  buttons = [ {value:"Sort increasing",  uvalue:"SORT`INCREASING`" + column_name, sensitive:1 }, $
-              {value:"Sort decreasing",  uvalue:"SORT`DECREASING`" + column_name, sensitive:1 }, $
-              {value:"Move left",        uvalue:"MOVE`LEFT`" + column_name, sensitive:1 }, $
-              {value:"Move right",       uvalue:"MOVE`RIGHT`" + column_name,  sensitive:1 }, $
-              {value:"Add column left",  uvalue:"ADD_COLUMN`LEFT",  sensitive:1 }, $
-              {value:"Add column right", uvalue:"ADD_COLUMN`RIGHT", sensitive:1}, $
-              {value:"Remove column",    uvalue:"REMOVE_COLUMN`" + column_name, sensitive:1 } $
+  buttons = [ {value:"Sort increasing",  uvalue:"SORT`INCREASING`",  sensitive:1 }, $
+              {value:"Sort decreasing",  uvalue:"SORT`DECREASING`",  sensitive:1 }, $
+              {value:"Move left",        uvalue:"MOVE`LEFT`",        sensitive:1 }, $
+              {value:"Move right",       uvalue:"MOVE`RIGHT`",       sensitive:1 }, $
+              {value:"Add column left",  uvalue:"ADD_COLUMN`LEFT`",  sensitive:1 }, $
+              {value:"Add column right", uvalue:"ADD_COLUMN`RIGHT`", sensitive:1 }, $
+              {value:"Remove column",    uvalue:"REMOVE_COLUMN`",    sensitive:1 } $
             ]
   
+  buttons[*].uvalue = buttons[*].uvalue + column_name
   current_sort_order = self.state.current_sort_order
   current_sort_column = self.state.current_sort_column
   current_sorting_uvalue = "SORT`" + current_sort_order + "`" + current_sort_column
