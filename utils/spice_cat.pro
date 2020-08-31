@@ -166,14 +166,14 @@ PRO spice_cat::update_current_filters, keywords
   spice_default, keywords, self.curr.column_names
   
   IF self.curr.haskey("filters_as_text") THEN BEGIN
-     current_filters_as_text = self.curr.filters_as_text
+     inited_current_filters_as_text = self.curr.filters_as_text
   END ELSE BEGIN
      current_tag_names = self.curr.column_names.replace('-', '$')
-     current_filters_as_text = self.empty_filters_as_text(current_tag_names)
+     inited_current_filters_as_text = self.empty_filters_as_text(current_tag_names)
   END
   
   new_filters_as_text = self.empty_filters_as_text(keywords.replace('-','$'))
-  struct_assign,current_filters_as_text, new_filters_as_text
+  struct_assign,inited_current_filters_as_text, new_filters_as_text
   
   self.curr.filters_as_text = new_filters_as_text
 END
@@ -218,8 +218,7 @@ PRO spice_cat::create_displayed_list, column_names
   new_list = [self.curr.filters_as_text, temporary(new_sorted_list_without_filter)]
   
   self.curr.displayed = temporary(new_list)
-  current_tag_names = tag_names(self.curr.displayed)
-  self.curr.column_names = current_tag_names.replace('$','-')
+  self.curr.column_names = (tag_names(self.curr.displayed)).replace('$','-')
 END
 
 
@@ -351,11 +350,10 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, set_value=filter_as_text, use_table_select=select
   
-  ;; DON'T do "current_filters_as_text.(column_number)" directly (CORE DUMP!),
-  ;; use the parentheses!
-  ;; 
+  ;; DON'T CHANGE! Using "self.curr.filters_as_text" DIRECTLY => core dump!
   current_filters_as_text = self.curr.filters_as_text
-  IF filter_as_text NE current_filters_as_text.(column_number) THEN BEGIN
+  
+  IF filter_as_text NE self.curr.filters_as_text.(column_number) THEN BEGIN
      current_filters_as_text.(column_number) = filter_as_text
      self.curr.filters_as_text = current_filters_as_text
      self.create_displayed_list
@@ -702,9 +700,9 @@ PRO spice_cat::build_sort_pulldown
   widget_control, self.wid.top_base, update=0
   self.destroy_children, self.wid.sort_base
   
-  direction = self.curr.sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
+  incr_or_decr = self.curr.sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
   
-  menu_text = "Sort: " + self.curr.sort_column + " " + direction
+  menu_text = "Sort: " + self.curr.sort_column + " " + incr_or_decr
   bbase = widget_base(self.wid.sort_base, xpad=0, ypad=0, frame=2)
   menu = widget_button(bbase, /menu, value=menu_text)
   
@@ -717,12 +715,12 @@ END
 
 
 PRO spice_cat::handle_add_column, event, parts
-  left_right = parts[1]
+  left_or_right = parts[1]
   column_name = parts[2]
   cut_column_name = parts[3]
   
   cut_before_ix = (where(column_name EQ self.curr.column_names))[0]
-  IF left_right EQ "RIGHT" THEN cut_before_ix = cut_before_ix + 1
+  IF left_or_right EQ "RIGHT" THEN cut_before_ix = cut_before_ix + 1
   
   IF cut_before_ix GT  0 THEN BEGIN
      left = self.curr.column_names[0:cut_before_ix-1]
@@ -743,11 +741,11 @@ END
 
 
 PRO spice_cat::build_add_column_menu, base, uvalue
-  left_right = (uvalue.split("`"))[1]
-  print, "BUILD: "+uvalue+"  :" + left_right
+  left_or_right = (uvalue.split("`"))[1]
+  print, "BUILD: "+uvalue+"  :" + left_or_right
   foreach column_name, self.d.full_column_names DO BEGIN
      IF total(column_name EQ self.curr.column_names) GT 0 THEN CONTINUE
-     uvalue = "ADD_COLUMN`" + left_right + "`" + column_name + "`" + left_right
+     uvalue = "ADD_COLUMN`" + left_or_right + "`" + column_name + "`" + left_or_right
      b = widget_button(base, value=column_name, uvalue=uvalue)
   END
 END
@@ -757,7 +755,8 @@ END
 ;; TODO: single-cell regular click: show full text in text widget at top (&select)
 ;;
 PRO spice_cat::build_context_menu_heading, base, ev
-  column_name = (tag_names(self.curr.displayed))[ev.col].replace('$', '-')
+  tag_name = (tag_names(self.curr.displayed))[ev.col]
+  column_name = tag_name.replace('$', '-')
   
   buttons = [ {value:"Sort increasing",  uvalue:"SORT`INCREASING`",  sensitive:1 }, $
               {value:"Sort decreasing",  uvalue:"SORT`DECREASING`",  sensitive:1 }, $
@@ -769,11 +768,11 @@ PRO spice_cat::build_context_menu_heading, base, ev
             ]
   
   buttons[*].uvalue = buttons[*].uvalue + column_name
-  current_sort_order = self.curr.sort_order
-  current_sort_column = self.curr.sort_column
-  current_sorting_uvalue = "SORT`" + current_sort_order + "`" + current_sort_column
-  current_sorting_ix = (where(buttons.uvalue EQ current_sorting_uvalue))[0]
-  IF current_sorting_ix NE -1 THEN buttons[current_sorting_ix].sensitive = 0
+
+  uvalue_for_current_sorting = "SORT`" + self.curr.sort_order + "`" + self.curr.sort_column
+  
+  possible_matching_uvalue_ix = (where(buttons.uvalue EQ uvalue_for_current_sorting))[0]
+  IF possible_matching_uvalue_ix NE -1 THEN buttons[possible_matching_uvalue_ix].sensitive = 0
   
   column_position = (where(column_name EQ self.curr.column_names))[0]
   move_left_insensitive = column_position EQ 0
