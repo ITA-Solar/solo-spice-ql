@@ -108,9 +108,9 @@ PRO spice_cat::load_fitslist
   self.d.full_tag_names = tag_names(fitslist[0])
   self.d.full_column_names = (tag_names(fitslist[0])).replace('$','-')
   
-  self.d.current_column_names = self.d.full_column_names
-  self.d.current_sort_column = 'DATE-BEG'
-  self.d.current_sort_order = "INCREASING"
+  self.d.curr.column_names = self.d.full_column_names
+  self.d.curr.sort_column = 'DATE-BEG'
+  self.d.curr.sort_order = "INCREASING"
 END 
 
 
@@ -163,19 +163,19 @@ END
 
 
 PRO spice_cat::update_current_filters, keywords
-  spice_default, keywords, self.d.current_column_names
+  spice_default, keywords, self.d.curr.column_names
   
   IF self.d.haskey("current_filters_as_text") THEN BEGIN
-     current_filters_as_text = self.d.current_filters_as_text
+     current_filters_as_text = self.d.curr.filters_as_text
   END ELSE BEGIN
-     current_tag_names = self.d.current_column_names.replace('-', '$')
+     current_tag_names = self.d.curr.column_names.replace('-', '$')
      current_filters_as_text = self.empty_filters_as_text(current_tag_names)
   END
   
   new_filters_as_text = self.empty_filters_as_text(keywords.replace('-','$'))
   struct_assign,current_filters_as_text, new_filters_as_text
   
-  self.d.current_filters_as_text = new_filters_as_text
+  self.d.curr.filters_as_text = new_filters_as_text
 END
 
 
@@ -183,18 +183,18 @@ FUNCTION spice_cat::sort,list
   IF n_elements(list) EQ 0 THEN return, list
   
   tag_names = tag_names(list)
-  current_sort_tag = self.d.current_sort_column.replace('-','$')
+  current_sort_tag = self.d.curr.sort_column.replace('-','$')
   
   sort_tag_ix = (where(tag_names EQ current_sort_tag, count))[0]
   
-  IF self.d.keyword_info[self.d.current_sort_column].type EQ "i" THEN BEGIN
+  IF self.d.keyword_info[self.d.curr.sort_column].type EQ "i" THEN BEGIN
      sort_values = 0.0d + list[*].(sort_tag_ix)
      sortix = sort(sort_values)
   END ELSE BEGIN
      sortix = sort(list.(sort_tag_ix))
   END
   
-  IF self.d.current_sort_order EQ "DECREASING" THEN sortix = reverse(sortix)
+  IF self.d.curr.sort_order EQ "DECREASING" THEN sortix = reverse(sortix)
   
   return,list[sortix]
 END
@@ -205,21 +205,21 @@ PRO spice_cat::create_displayed_list, column_names
   
   new_list_without_filter = []
   
-  filter_mask = self.apply_filters(self.d.current_filters_as_text)
+  filter_mask = self.apply_filters(self.d.curr.filters_as_text)
   selected_ix = where(filter_mask,count)
   
   IF count GT 0 THEN BEGIN
-     new_list_without_filter = replicate(self.d.current_filters_as_text, count)
+     new_list_without_filter = replicate(self.d.curr.filters_as_text, count)
      struct_assign, self.d.full_list[selected_ix], new_list_without_filter
   END
   
   new_sorted_list_without_filter = self.sort(new_list_without_filter)
   
-  new_list = [self.d.current_filters_as_text, temporary(new_sorted_list_without_filter)]
+  new_list = [self.d.curr.filters_as_text, temporary(new_sorted_list_without_filter)]
   
   self.d.displayed = temporary(new_list)
   current_tag_names = tag_names(self.d.displayed)
-  self.d.current_column_names = current_tag_names.replace('$','-')
+  self.d.curr.column_names = current_tag_names.replace('$','-')
 END
 
 
@@ -228,11 +228,11 @@ PRO spice_cat::_____________TABLE_WIDGET_UTILITIES                          & EN
 ;;
 
 FUNCTION spice_cat::cell_alignments
-  num_cols = n_elements(self.d.current_column_names)
+  num_cols = n_elements(self.d.curr.column_names)
   num_rows = n_elements(self.d.displayed)
   
   cell_alignments = replicate(0b,num_cols, num_rows)
-  foreach column_name, self.d.current_column_names, columnix DO BEGIN
+  foreach column_name, self.d.curr.column_names, columnix DO BEGIN
      align = self.d.keyword_info[column_name].type EQ "i"
      cell_alignments[columnix,*] = align * 2
   END
@@ -241,7 +241,7 @@ END
 
 
 FUNCTION spice_cat::background_colors
-  num_table_columns = n_elements(self.d.current_column_names)
+  num_table_columns = n_elements(self.d.curr.column_names)
   num_table_rows = n_elements(self.d.displayed)
   background_colors = replicate(230b, 3, num_table_columns, num_table_rows)
   background_colors[1, *, 0] = 255b
@@ -249,7 +249,7 @@ FUNCTION spice_cat::background_colors
      background_colors[*, *, self.d.selection_beg : self.d.selection_end] = 200b
      background_colors[2, *, self.d.selection_beg : self.d.selection_end] = 255b
   END
-  sort_column_ix = (where(self.d.current_sort_column EQ self.d.current_column_names))[0]
+  sort_column_ix = (where(self.d.curr.sort_column EQ self.d.curr.column_names))[0]
   background_colors[*, sort_column_ix, *] = (background_colors[*, sort_column_ix, *] + 10) < 255
   return, background_colors
 END
@@ -258,7 +258,7 @@ END
 PRO spice_cat::capture_column_widths
   COMMON spice_cat_column_widths, widths_by_column_name
   widths = widget_info(self.wid.table_id, /column_widths)
-  foreach column_name, self.d.current_column_names, index DO BEGIN
+  foreach column_name, self.d.curr.column_names, index DO BEGIN
      widths_by_column_name[column_name] = fix(widths[index])
   END
   env_widths = []
@@ -294,7 +294,7 @@ FUNCTION spice_cat::current_column_widths
   COMMON spice_cat_column_widths, widths_by_column_name
   IF n_elements(widths_by_column_name) EQ 0 THEN self.init_column_widths
   widths = []
-  foreach column_name, self.d.current_column_names DO BEGIN
+  foreach column_name, self.d.curr.column_names DO BEGIN
      widths = [widths, widths_by_column_name[column_name]]
   END
   return, widths
@@ -302,10 +302,10 @@ END
 
 
 FUNCTION spice_cat::current_column_labels
-  up_or_down = self.d.current_sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
-  labels = self.d.current_column_names
+  up_or_down = self.d.curr.sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
+  labels = self.d.curr.column_names
   foreach label, labels, index DO BEGIN
-     IF label EQ self.d.current_sort_column THEN labels[index] += " " + up_or_down
+     IF label EQ self.d.curr.sort_column THEN labels[index] += " " + up_or_down
   END
   return, labels
 END
@@ -335,7 +335,7 @@ PRO spice_cat::_____________EVENT_HANDLING_HELPERS                      & END
 ;;
 
 FUNCTION spice_cat::get_filter_by_column_name, column_name
-  column_number = where(self.d.current_column_names EQ column_name)
+  column_number = where(self.d.curr.column_names EQ column_name)
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, get_value=filter_as_text, use_table_select=select
   return, self.filter_as_array(filter_as_text)
@@ -346,7 +346,7 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   filter_as_text = self.filter_as_text(filter_as_array)
   
   IF filter_as_text EQ "" THEN filter_as_text = "<filter>"
-  column_number = (where(self.d.current_column_names EQ column_name))[0]
+  column_number = (where(self.d.curr.column_names EQ column_name))[0]
   
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, set_value=filter_as_text, use_table_select=select
@@ -354,10 +354,10 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   ;; DON'T do "current_filters_as_text.(column_number)" directly (CORE DUMP!),
   ;; use the parentheses!
   ;; 
-  current_filters_as_text = self.d.current_filters_as_text
+  current_filters_as_text = self.d.curr.filters_as_text
   IF filter_as_text NE current_filters_as_text.(column_number) THEN BEGIN
      current_filters_as_text.(column_number) = filter_as_text
-     self.d.current_filters_as_text = current_filters_as_text
+     self.d.curr.filters_as_text = current_filters_as_text
      self.create_displayed_list
      self.display_displayed_list
      self.set_filter_cell_to_edit_color,column_name
@@ -372,7 +372,7 @@ PRO spice_cat::set_filter_cell_to_edit_color, column_name, clear=clear
   
   IF keyword_set(clear) THEN return
   
-  column_number = (where(self.d.current_column_names EQ column_name))[0]
+  column_number = (where(self.d.curr.column_names EQ column_name))[0]
   table_select = [column_number, 0, column_number, 0]
   color = [150b, 255b, 150b]
   widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
@@ -411,7 +411,7 @@ END
 
 
 PRO spice_cat::set_message_to_full_content, sel
-  column_name = self.d.current_column_names[sel.left]
+  column_name = self.d.curr.column_names[sel.left]
   full_content = self.d.displayed[sel.top].(sel.left)
   self.set_message, column_name+":", full_content, /select
 END
@@ -438,15 +438,15 @@ END
 PRO spice_cat::handle_remove_column, event, parts
   column_name = parts[1]
   
-  goodix = where(self.d.current_column_names NE column_name, count)
+  goodix = where(self.d.curr.column_names NE column_name, count)
   IF count EQ 0 THEN self.modal_message, "You can't remove the last column!"
   
-  new_column_names = self.d.current_column_names[goodix]
+  new_column_names = self.d.curr.column_names[goodix]
   
-  IF column_name EQ self.d.current_sort_column THEN BEGIN
-     newsort = self.d.current_column_names[0]
+  IF column_name EQ self.d.curr.sort_column THEN BEGIN
+     newsort = self.d.curr.column_names[0]
      IF (where(new_column_names EQ 'DATE-BEG'))[0] NE -1 THEN newsort = 'DATE-BEG'
-     self.d.current_sort_column = newsort
+     self.d.curr.sort_column = newsort
   END
   
   self.create_displayed_list, new_column_names
@@ -455,8 +455,8 @@ END
 
 
 PRO spice_cat::handle_sort, event, parts
-  self.d.current_sort_order = parts[1]
-  self.d.current_sort_column = parts[2]
+  self.d.curr.sort_order = parts[1]
+  self.d.curr.sort_column = parts[2]
   self.build_sort_pulldown
   self.create_displayed_list
   self.display_displayed_list
@@ -592,7 +592,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   IF (NOT header_click) AND (NOT filter_click) THEN return 
   
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
-  column_name = self.d.current_column_names[sel.left]
+  column_name = self.d.curr.column_names[sel.left]
   self.deal_with_click_on_filter_cell,column_name
 END
 
@@ -689,8 +689,8 @@ PRO spice_cat::build_sort_choices_for_column, base, sort_column_name
   
   foreach sort_order, ['INCREASING', 'DECREASING'] DO BEGIN
      uvalue = "SORT`" + sort_order.toupper() + "`" + sort_column_name
-     sensitive = (sort_column_name NE self.d.current_sort_column) $
-                 OR (sort_order NE self.d.current_sort_order)
+     sensitive = (sort_column_name NE self.d.curr.sort_column) $
+                 OR (sort_order NE self.d.curr.sort_order)
      value = sort_order.tolower()
      button = widget_button(column_name_base, uvalue=uvalue,  value=value, sensitive=sensitive)
   END
@@ -702,13 +702,13 @@ PRO spice_cat::build_sort_pulldown
   widget_control, self.wid.top_base, update=0
   self.destroy_children, self.wid.sort_base
   
-  direction = self.d.current_sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
+  direction = self.d.curr.sort_order EQ "INCREASING" ? "(incr)" : "(decr)"
   
-  menu_text = "Sort: " + self.d.current_sort_column + " " + direction
+  menu_text = "Sort: " + self.d.curr.sort_column + " " + direction
   bbase = widget_base(self.wid.sort_base, xpad=0, ypad=0, frame=2)
   menu = widget_button(bbase, /menu, value=menu_text)
   
-  foreach column_name, self.d.current_column_names DO BEGIN
+  foreach column_name, self.d.curr.column_names DO BEGIN
      self.build_sort_choices_for_column, menu, column_name
   END
   
@@ -721,17 +721,17 @@ PRO spice_cat::handle_add_column, event, parts
   column_name = parts[2]
   cut_column_name = parts[3]
   
-  cut_before_ix = (where(column_name EQ self.d.current_column_names))[0]
+  cut_before_ix = (where(column_name EQ self.d.curr.column_names))[0]
   IF left_right EQ "RIGHT" THEN cut_before_ix = cut_before_ix + 1
   
   IF cut_before_ix GT  0 THEN BEGIN
-     left = self.d.current_column_names[0:cut_before_ix-1]
+     left = self.d.curr.column_names[0:cut_before_ix-1]
   END ELSE BEGIN
      left = []
   END 
   
-  IF cut_before_ix LT n_elements(self.d.current_column_names)-1 THEN BEGIN
-     right = self.d.current_column_names[cut_before_ix:*]
+  IF cut_before_ix LT n_elements(self.d.curr.column_names)-1 THEN BEGIN
+     right = self.d.curr.column_names[cut_before_ix:*]
   END ELSE BEGIN
      right = []
   END
@@ -746,7 +746,7 @@ PRO spice_cat::build_add_column_menu, base, uvalue
   left_right = (uvalue.split("`"))[1]
   print, "BUILD: "+uvalue+"  :" + left_right
   foreach column_name, self.d.full_column_names DO BEGIN
-     IF total(column_name EQ self.d.current_column_names) GT 0 THEN CONTINUE
+     IF total(column_name EQ self.d.curr.column_names) GT 0 THEN CONTINUE
      uvalue = "ADD_COLUMN`" + left_right + "`" + column_name + "`" + left_right
      b = widget_button(base, value=column_name, uvalue=uvalue)
   END
@@ -769,15 +769,15 @@ PRO spice_cat::build_context_menu_heading, base, ev
             ]
   
   buttons[*].uvalue = buttons[*].uvalue + column_name
-  current_sort_order = self.d.current_sort_order
-  current_sort_column = self.d.current_sort_column
+  current_sort_order = self.d.curr.sort_order
+  current_sort_column = self.d.curr.sort_column
   current_sorting_uvalue = "SORT`" + current_sort_order + "`" + current_sort_column
   current_sorting_ix = (where(buttons.uvalue EQ current_sorting_uvalue))[0]
   IF current_sorting_ix NE -1 THEN buttons[current_sorting_ix].sensitive = 0
   
-  column_position = (where(column_name EQ self.d.current_column_names))[0]
+  column_position = (where(column_name EQ self.d.curr.column_names))[0]
   move_left_insensitive = column_position EQ 0
-  move_right_insensitive = column_position EQ (n_elements(self.d.current_column_names)-1)
+  move_right_insensitive = column_position EQ (n_elements(self.d.curr.column_names)-1)
   IF move_left_insensitive THEN buttons[2].sensitive = 0
   IF move_right_insensitive THEN buttons[3].sensitive = 0
   
@@ -899,7 +899,8 @@ END
 
 
 PRO spice_cat::parameters, modal=modal
-  self.d = dictionary()
+  self.d = dictionary() ;; Data/dict
+  self.d.curr = dictionary() ;; <name is wrong if a comment is necessary...>
   self.d.modal = keyword_set(modal)
   self.d.programs = ["help", "print"] ;; TODO: plug in Martin's routines
   self.d.keyword_info = spice_keyword_info(/all)
