@@ -165,7 +165,7 @@ END
 PRO spice_cat::update_current_filters, keywords
   spice_default, keywords, self.curr.column_names
   
-  IF self.curr.haskey("current_filters_as_text") THEN BEGIN
+  IF self.curr.haskey("filters_as_text") THEN BEGIN
      current_filters_as_text = self.curr.filters_as_text
   END ELSE BEGIN
      current_tag_names = self.curr.column_names.replace('-', '$')
