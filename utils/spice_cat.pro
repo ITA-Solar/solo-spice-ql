@@ -51,22 +51,22 @@ END
 
 PRO spice_cat::register_selection, sel, blank=blank
   IF keyword_set(blank) THEN BEGIN
-     self.d.selection = []
-     self.d.selection_beg = -1
-     self.d.selection_end = -1
+     self.curr.selection = []
+     self.curr.selection_beg = -1
+     self.curr.selection_end = -1
      return
   END
   
-  self.d.selection = self.d.displayed[sel.top:sel.bottom].filename
-  self.d.selection_beg = sel.top
-  self.d.selection_end = sel.bottom
+  self.curr.selection = self.curr.displayed[sel.top:sel.bottom].filename
+  self.curr.selection_beg = sel.top
+  self.curr.selection_end = sel.bottom
   widget_control, self.wid.table_id, background_color=self.background_colors()
 END
 
 
 FUNCTION spice_cat::selection
-  IF NOT self.d.haskey("selection") THEN return, !null
-  return, self.d.selection
+  IF NOT self.curr.haskey("selection") THEN return, !null
+  return, self.curr.selection
 END
 
 
@@ -165,7 +165,7 @@ END
 PRO spice_cat::update_current_filters, keywords
   spice_default, keywords, self.curr.column_names
   
-  IF self.d.haskey("current_filters_as_text") THEN BEGIN
+  IF self.curr.haskey("current_filters_as_text") THEN BEGIN
      current_filters_as_text = self.curr.filters_as_text
   END ELSE BEGIN
      current_tag_names = self.curr.column_names.replace('-', '$')
@@ -217,8 +217,8 @@ PRO spice_cat::create_displayed_list, column_names
   
   new_list = [self.curr.filters_as_text, temporary(new_sorted_list_without_filter)]
   
-  self.d.displayed = temporary(new_list)
-  current_tag_names = tag_names(self.d.displayed)
+  self.curr.displayed = temporary(new_list)
+  current_tag_names = tag_names(self.curr.displayed)
   self.curr.column_names = current_tag_names.replace('$','-')
 END
 
@@ -229,7 +229,7 @@ PRO spice_cat::_____________TABLE_WIDGET_UTILITIES                          & EN
 
 FUNCTION spice_cat::cell_alignments
   num_cols = n_elements(self.curr.column_names)
-  num_rows = n_elements(self.d.displayed)
+  num_rows = n_elements(self.curr.displayed)
   
   cell_alignments = replicate(0b,num_cols, num_rows)
   foreach column_name, self.curr.column_names, columnix DO BEGIN
@@ -242,12 +242,12 @@ END
 
 FUNCTION spice_cat::background_colors
   num_table_columns = n_elements(self.curr.column_names)
-  num_table_rows = n_elements(self.d.displayed)
+  num_table_rows = n_elements(self.curr.displayed)
   background_colors = replicate(230b, 3, num_table_columns, num_table_rows)
   background_colors[1, *, 0] = 255b
-  IF self.d.haskey("selection_beg") && self.d.selection_beg GT 0 THEN BEGIN
-     background_colors[*, *, self.d.selection_beg : self.d.selection_end] = 200b
-     background_colors[2, *, self.d.selection_beg : self.d.selection_end] = 255b
+  IF self.curr.haskey("selection_beg") && self.curr.selection_beg GT 0 THEN BEGIN
+     background_colors[*, *, self.curr.selection_beg : self.curr.selection_end] = 200b
+     background_colors[2, *, self.curr.selection_beg : self.curr.selection_end] = 255b
   END
   sort_column_ix = (where(self.curr.sort_column EQ self.curr.column_names))[0]
   background_colors[*, sort_column_ix, *] = (background_colors[*, sort_column_ix, *] + 10) < 255
@@ -316,14 +316,14 @@ PRO spice_cat::display_displayed_list, keep_selection=keep_selection
   
   IF NOT keyword_set(keep_selection) THEN self.register_selection, /blank
   
-  widget_control,self.wid.table_id, set_value=self.d.displayed
-  widget_control,self.wid.table_id, table_ysize=n_elements(self.d.displayed)
-  widget_control, self.wid.table_id, table_xsize=n_elements(tag_names(self.d.displayed))
+  widget_control,self.wid.table_id, set_value=self.curr.displayed
+  widget_control,self.wid.table_id, table_ysize=n_elements(self.curr.displayed)
+  widget_control, self.wid.table_id, table_xsize=n_elements(tag_names(self.curr.displayed))
   widget_control,self.wid.table_id, alignment=self.cell_alignments()
   widget_control,self.wid.table_id, background_color=self.background_colors()
   widget_control, self.wid.table_id, column_labels = self.current_column_labels()
   
-  self.set_message, "Files found:", " "+(n_elements(self.d.displayed)-1).tostring()
+  self.set_message, "Files found:", " "+(n_elements(self.curr.displayed)-1).tostring()
   
   widget_control, self.wid.table_id, update=1
   
@@ -366,7 +366,7 @@ END
 
 
 PRO spice_cat::set_filter_cell_to_edit_color, column_name, clear=clear
-  num_columns = n_elements(tag_names(self.d.displayed))
+  num_columns = n_elements(tag_names(self.curr.displayed))
   table_select = [0, 0, num_columns-1, 0]
   widget_control, self.wid.table_id, background_color=[230b,255b,230b], use_table_select=table_select
   
@@ -381,7 +381,7 @@ END
 
 FUNCTION spice_cat::absorb_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
-     IF self.d.ignore_next_focus_change EQ 0 THEN BEGIN 
+     IF self.curr.ignore_next_focus_change EQ 0 THEN BEGIN 
         IF event.enter GE 0 THEN self.set_filter_cell_to_edit_color, column_name
         IF event.enter EQ 0 THEN self.set_filter_cell_to_edit_color, /clear
      END
@@ -412,7 +412,7 @@ END
 
 PRO spice_cat::set_message_to_full_content, sel
   column_name = self.curr.column_names[sel.left]
-  full_content = self.d.displayed[sel.top].(sel.left)
+  full_content = self.curr.displayed[sel.top].(sel.left)
   self.set_message, column_name+":", full_content, /select
 END
 
@@ -513,12 +513,12 @@ PRO spice_cat::handle_filter_cell_flash_timer, event, parts
   ELSE                        widget_control, self.wid.draw_focus_away, /input_focus
   
   IF iteration LT 4 THEN BEGIN
-     self.d.ignore_next_focus_change = 1
+     self.curr.ignore_next_focus_change = 1
      iteration++
      widget_control, event.id, set_uvalue="FILTER_CELL_FLASH_TIMER`"+iteration.toString()
      widget_control, event.id, timer=0.05
   END ELSE BEGIN
-     self.d.ignore_next_focus_change = 0
+     self.curr.ignore_next_focus_change = 0
   END
 END
 
@@ -585,7 +585,7 @@ PRO spice_cat::handle_table_cell_sel, ev
      return
   END
   
-  num_displayed = n_elements(self.d.displayed)
+  num_displayed = n_elements(self.curr.displayed)
   header_click = sel.left EQ sel.right AND sel.top EQ 0 AND sel.bottom EQ num_displayed - 1
   filter_click = single_cell AND sel.top EQ 0
   
@@ -757,7 +757,7 @@ END
 ;; TODO: single-cell regular click: show full text in text widget at top (&select)
 ;;
 PRO spice_cat::build_context_menu_heading, base, ev
-  column_name = (tag_names(self.d.displayed))[ev.col].replace('$', '-')
+  column_name = (tag_names(self.curr.displayed))[ev.col].replace('$', '-')
   
   buttons = [ {value:"Sort increasing",  uvalue:"SORT`INCREASING`",  sensitive:1 }, $
               {value:"Sort decreasing",  uvalue:"SORT`DECREASING`",  sensitive:1 }, $
@@ -790,10 +790,10 @@ END
 
 
 PRO spice_cat::build_context_menu_datacell, base, ev
-  column_name = (tag_names(self.d.displayed))[ev.col]
-  cell_value = self.d.displayed[ev.row].(ev.col).tostring()
+  column_name = (tag_names(self.curr.displayed))[ev.col]
+  cell_value = self.curr.displayed[ev.row].(ev.col).tostring()
   
-  filename = self.d.displayed[ev.row].filename
+  filename = self.curr.displayed[ev.row].filename
   filename_uvalue = "CONTEXT_CLICK_ON_FILENAME`"+filename
   
   filter_on_value = "Filter on "+column_name+"='"+cell_value+"'"
@@ -830,7 +830,7 @@ PRO spice_cat::build_table
   table_props.resizeable_columns = 1b
   
   props = table_props.tostruct()
-  self.wid.table_id = widget_table(self.wid.table_base, value=self.d.displayed, _extra=props)
+  self.wid.table_id = widget_table(self.wid.table_base, value=self.curr.displayed, _extra=props)
   self.display_displayed_list
   
   widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
