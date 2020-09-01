@@ -727,37 +727,45 @@ END
 
 PRO spice_cat::handle_add_column, event, parts
   left_or_right = parts[1]
-  column_name = parts[2]
-  cut_column_name = parts[3]
+  left_or_right_of = parts[2]
+  add_column_name = parts[3]
   
-  cut_before_ix = (where(column_name EQ self.curr.column_names))[0]
-  IF left_or_right EQ "RIGHT" THEN cut_before_ix = cut_before_ix + 1
+  print, "ADD_COLUMN " + add_column_name + " " + left_or_right + " of " + left_or_right_of
   
-  IF cut_before_ix GT  0 THEN BEGIN
-     left = self.curr.column_names[0:cut_before_ix-1]
-  END ELSE BEGIN
-     left = []
-  END 
+  ref_col_ix = (where(left_or_right_of EQ self.curr.column_names))[0]
   
-  IF cut_before_ix LT n_elements(self.curr.column_names)-1 THEN BEGIN
-     right = self.curr.column_names[cut_before_ix:*]
-  END ELSE BEGIN
+  IF left_or_right EQ "RIGHT" THEN BEGIN
+     ;; What goes on the left is everything up to and *including* ref_col_ix
+     ;; What goes on the right is the rest... *IF* ANY!
+     ;;
+     left = self.curr.column_names[0:ref_col_ix]
      right = []
+     inside_bounds = ref_col_ix LT n_elements(self.curr.column_names)-1
+     IF inside_bounds THEN right = self.curr.column_names[ref_col_ix + 1:*]
   END
-     
-  new_column_names = [left, column_name, right]
+  IF left_or_right EQ "LEFT" THEN BEGIN
+     ;; What goes on the left, is up to but *excluding* ref_col_ix, *IF* ANY
+     ;; What goes on the right is the rest, *including* ref_col_ix
+     left = []
+     inside_bounds = ref_col_ix GT 0
+     IF inside_bounds THEN left = self.curr.column_names[0:ref_col_ix-1]
+     right = self.curr.column_names[ref_col_ix:*]
+  END
+  
+  new_column_names = [left, add_column_name, right]
   print, "New column names: " + new_column_names.join(", ")
-  self.update_current_filters, new_column_names
+  self.create_displayed_list, new_column_names
+  self.display_displayed_list
 END
 
 
 PRO spice_cat::build_add_column_menu, base, uvalue
-  left_or_right = (uvalue.split("`"))[1]
-  print, "BUILD: "+uvalue+"  :" + left_or_right
+  left_or_right_of = (uvalue.split("`"))[2]
   foreach column_name, self.d.full_column_names DO BEGIN
      IF total(column_name EQ self.curr.column_names) GT 0 THEN CONTINUE
-     uvalue = "ADD_COLUMN`" + left_or_right + "`" + column_name + "`" + left_or_right
-     b = widget_button(base, value=column_name, uvalue=uvalue)
+     full_uvalue = uvalue + "`" + column_name
+     print, "BUILD: " + full_uvalue
+     b = widget_button(base, value=column_name, uvalue=full_uvalue)
   END
 END
 
@@ -925,6 +933,12 @@ PRO spice_cat::parameters, modal=modal
 END
 
 
+PRO spice_cat::send_event, uvalue
+  widget_control, self.wid.draw_focus_away, set_uvalue=uvalue
+  event = {id:self.wid.draw_focus_away, top:self.wid.top_base}
+  spice_cat_______________catch_all_event_handler, event
+END
+
 function spice_cat::init, modal=modal
   self.parameters, modal = modal
   self.load_fitslist
@@ -971,4 +985,7 @@ setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
 ;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
 
 spice_cat, o
+o.send_event, "ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID"
+o.send_event, "ADD_COLUMN`LEFT`FILENAME`STUDYTYP"
+o.send_event, "ADD_COLUMN`RIGHT`NWIN`NWIN_INT"
 END
