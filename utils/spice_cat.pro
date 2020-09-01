@@ -79,6 +79,16 @@ PRO spice_cat::replace_previous_incarnation
   previous_incarnation = self.wid.top_base
 END
 
+
+PRO spice_cat::safe_struct_assign, source, destination
+  ;; Builtin STRUCT_ASSIGN BLANKS OUT tags that do not exist in source!!!
+  source_tag_names = tag_names(source)
+  foreach destination_tag_name, tag_names(destination), destination_tag_ix DO BEGIN
+     source_tag_ix = (where(source_tag_names EQ destination_tag_name))[0]
+     IF source_tag_ix NE -1 THEN destination.(destination_tag_ix) = source.(source_tag_ix)
+  END
+END
+  
 ;;
 PRO spice_cat::_____________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
@@ -173,7 +183,8 @@ PRO spice_cat::update_current_filters, keywords
   END
   
   new_filters_as_text = self.empty_filters_as_text(keywords.replace('-','$'))
-  struct_assign,inited_current_filters_as_text, new_filters_as_text
+  
+  self.safe_struct_assign, inited_current_filters_as_text, new_filters_as_text
   
   self.curr.filters_as_text = new_filters_as_text
 END
