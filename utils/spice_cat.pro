@@ -260,7 +260,7 @@ FUNCTION spice_cat::background_colors
      background_colors[2, *, self.curr.selection_beg : self.curr.selection_end] = 255b
   END
   sort_column_ix = (where(self.curr.sort_column EQ self.curr.column_names))[0]
-  background_colors[*, sort_column_ix, *] = (background_colors[*, sort_column_ix, *] + 10) < 255
+  background_colors[*, sort_column_ix, *] = (background_colors[*, sort_column_ix, *] + 40) < 255
   return, background_colors
 END
 
@@ -495,6 +495,32 @@ PRO spice_cat::handle_add_column, event, parts
   setenv, setenv_command
   print, "** Put this in your IDL-startup to set keyword list permanently:"
   print, "setenv," + setenv_command
+  self.create_displayed_list, new_column_names
+  self.display_displayed_list
+END
+
+
+PRO spice_cat::handle_move, event, parts
+  direction_to_move = parts[1]
+  column_to_move = parts[2]
+  
+  original_ix = (where(column_to_move EQ self.curr.column_names))[0]
+  purged_list_ix = where(self.curr.column_names NE column_to_move)
+  purged_list = self.curr.column_names[purged_list_ix]
+  
+  IF direction_to_move EQ "LEFT" THEN BEGIN
+     left = []
+     IF original_ix GE 2 THEN left = purged_list[0:original_ix-2]
+     right = purged_list[original_ix-1:*]
+  END
+  IF direction_to_move EQ "RIGHT" THEN BEGIN
+     left = purged_list[0: original_ix]
+     right = []
+     IF original_ix LT n_elements(purged_list)-1 THEN BEGIN
+        right = purged_list[original_ix + 1:*]
+     END
+  END
+  new_column_names = [left, column_to_move, right]
   self.create_displayed_list, new_column_names
   self.display_displayed_list
 END
@@ -989,7 +1015,21 @@ setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
 ;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
 
 spice_cat, o
-o.send_event, "ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID"
-o.send_event, "ADD_COLUMN`LEFT`FILENAME`STUDYTYP"
-o.send_event, "ADD_COLUMN`RIGHT`NWIN`NWIN_INT"
+;
+; The beginnings of unit testing! Can also be used for compoud widgets in
+; isolation!
+;
+uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
+         "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
+         "ADD_COLUMN`RIGHT`NWIN`NWIN_INT", $
+         "REMOVE_COLUMN`STUDY_ID", $
+         "REMOVE_COLUMN`STUDYTYP", $
+         "REMOVE_COLUMN`NWIN_INT", $
+         "MOVE`LEFT`DATE-BEG", $
+         "MOVE`RIGHT`DATE-BEG", $
+         "MOVE`RIGHT`DATE-BEG", $
+         "MOVE`RIGHT`DATE-BEG", $
+         "MOVE`RIGHT`DATE-BEG" $
+        ]
+foreach uval, uvals DO o.send_event, uval
 END
