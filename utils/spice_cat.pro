@@ -845,6 +845,9 @@ PRO spice_cat::handle_filter_on_full_value, ev, parts
   IF self.d.keyword_info[column_name].type EQ "t" THEN BEGIN 
      self.set_filter_by_column_name, column_name, [full_value]
   END
+  IF self.d.keyword_info[column_name].type EQ "i" THEN BEGIN
+     self.set_filter_by_column_name, column_name, [full_value, full_value]
+  END
 END
 
 
