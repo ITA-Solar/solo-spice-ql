@@ -463,6 +463,43 @@ PRO spice_cat::handle_remove_column, event, parts
 END
 
 
+PRO spice_cat::handle_add_column, event, parts
+  left_or_right = parts[1]
+  left_or_right_of = parts[2]
+  add_column_name = parts[3]
+  
+  print, "ADD_COLUMN " + add_column_name + " " + left_or_right + " of " + left_or_right_of
+  
+  ref_col_ix = (where(left_or_right_of EQ self.curr.column_names))[0]
+  
+  IF left_or_right EQ "RIGHT" THEN BEGIN
+     ;; What goes on the left is everything up to and *including* ref_col_ix
+     ;; What goes on the right is the rest... *IF* ANY!
+     ;;
+     left = self.curr.column_names[0:ref_col_ix]
+     right = []
+     inside_bounds = ref_col_ix LT n_elements(self.curr.column_names)-1
+     IF inside_bounds THEN right = self.curr.column_names[ref_col_ix + 1:*]
+  END
+  IF left_or_right EQ "LEFT" THEN BEGIN
+     ;; What goes on the left, is up to but *excluding* ref_col_ix, *IF* ANY
+     ;; What goes on the right is the rest, *including* ref_col_ix
+     left = []
+     inside_bounds = ref_col_ix GT 0
+     IF inside_bounds THEN left = self.curr.column_names[0:ref_col_ix-1]
+     right = self.curr.column_names[ref_col_ix:*]
+  END
+  
+  new_column_names = [left, add_column_name, right]
+  setenv_command = "SPICE_CAT_KEYWORDS=" + new_column_names.join(",")
+  setenv, setenv_command
+  print, "** Put this in your IDL-startup to set keyword list permanently:"
+  print, "setenv," + setenv_command
+  self.create_displayed_list, new_column_names
+  self.display_displayed_list
+END
+
+
 PRO spice_cat::handle_sort, event, parts
   self.curr.sort_order = parts[1]
   self.curr.sort_column = parts[2]
@@ -724,42 +761,6 @@ PRO spice_cat::build_sort_pulldown
   widget_control, self.wid.top_base, update=1
 END
 
-
-PRO spice_cat::handle_add_column, event, parts
-  left_or_right = parts[1]
-  left_or_right_of = parts[2]
-  add_column_name = parts[3]
-  
-  print, "ADD_COLUMN " + add_column_name + " " + left_or_right + " of " + left_or_right_of
-  
-  ref_col_ix = (where(left_or_right_of EQ self.curr.column_names))[0]
-  
-  IF left_or_right EQ "RIGHT" THEN BEGIN
-     ;; What goes on the left is everything up to and *including* ref_col_ix
-     ;; What goes on the right is the rest... *IF* ANY!
-     ;;
-     left = self.curr.column_names[0:ref_col_ix]
-     right = []
-     inside_bounds = ref_col_ix LT n_elements(self.curr.column_names)-1
-     IF inside_bounds THEN right = self.curr.column_names[ref_col_ix + 1:*]
-  END
-  IF left_or_right EQ "LEFT" THEN BEGIN
-     ;; What goes on the left, is up to but *excluding* ref_col_ix, *IF* ANY
-     ;; What goes on the right is the rest, *including* ref_col_ix
-     left = []
-     inside_bounds = ref_col_ix GT 0
-     IF inside_bounds THEN left = self.curr.column_names[0:ref_col_ix-1]
-     right = self.curr.column_names[ref_col_ix:*]
-  END
-  
-  new_column_names = [left, add_column_name, right]
-  setenv_command = "SPICE_CAT_KEYWORDS=" + new_column_names.join(",")
-  setenv, setenv_command
-  print, "** Put this in your IDL-startup to set keyword list permanently:"
-  print, "setenv," + setenv_command
-  self.create_displayed_list, new_column_names
-  self.display_displayed_list
-END
 
 
 PRO spice_cat::build_add_column_menu, base, uvalue
