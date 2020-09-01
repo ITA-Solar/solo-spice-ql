@@ -722,8 +722,6 @@ PRO spice_cat::build_text_filter, column_name, filter_as_array
 END
 
 
-;; TODO: don't repeat yourself? Make a smaller routine for each text?
-
 FUNCTION spice_cat::build_range_filter_text, base, column_name, minmax, value
   extra = {editable: 1b, all_events: 1b, kbrd_focus_events: 1b}
   
@@ -801,7 +799,6 @@ END
 
 ;;
 ;; TODO: make cell context menu actions to copy whatever (filename, value) to clipboard
-;; TODO: single-cell regular click: show full text in text widget at top (&select)
 ;;
 PRO spice_cat::build_context_menu_heading, base, ev
   tag_name = (tag_names(self.curr.displayed))[ev.col]
