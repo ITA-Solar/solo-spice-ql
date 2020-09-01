@@ -364,7 +364,8 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   ;; DON'T CHANGE! Using "self.curr.filters_as_text" DIRECTLY => core dump!
   current_filters_as_text = self.curr.filters_as_text
   
-  IF filter_as_text NE self.curr.filters_as_text.(column_number) THEN BEGIN
+  filters_as_text = self.curr.filters_as_text ;; CORE DUMP unless we do this!!
+  IF filter_as_text NE filters_as_text.(column_number) THEN BEGIN
      current_filters_as_text.(column_number) = filter_as_text
      self.curr.filters_as_text = current_filters_as_text
      self.create_displayed_list
@@ -797,9 +798,6 @@ PRO spice_cat::build_add_column_menu, base, uvalue
   END
 END
 
-;;
-;; TODO: make cell context menu actions to copy whatever (filename, value) to clipboard
-;;
 PRO spice_cat::build_context_menu_heading, base, ev
   tag_name = (tag_names(self.curr.displayed))[ev.col]
   column_name = tag_name.replace('$', '-')
@@ -834,17 +832,25 @@ PRO spice_cat::build_context_menu_heading, base, ev
 END
 
 
+PRO spice_cat::handle_filter_on_full_value, ev, parts
+  column_name = parts[1]
+  full_value = parts[2]
+  IF self.d.keyword_info[column_name].type EQ "t" THEN BEGIN 
+     self.set_filter_by_column_name, column_name, [full_value]
+  END
+END
+
+
 PRO spice_cat::build_context_menu_datacell, base, ev
-  column_name = (tag_names(self.curr.displayed))[ev.col]
+  column_name = (tag_names(self.curr.displayed))[ev.col].replace('$', '-')
   cell_value = self.curr.displayed[ev.row].(ev.col).tostring()
   
-  filename = self.curr.displayed[ev.row].filename
-  filename_uvalue = "CONTEXT_CLICK_ON_FILENAME`"+filename
+;  filename = self.curr.displayed[ev.row].filename
+;  filename_uvalue = "CONTEXT_CLICK_ON_FILENAME`"+filename
   
-  filter_on_value = "Filter on "+column_name+"='"+cell_value+"'"
-  filter_on_value_uvalue = "CONTEXT_CLICK_ON_FULL_VALUE`+column_name"
+  filter_on_value = "Filter on " + column_name + "='" + cell_value + "'"
+  filter_on_value_uvalue = "FILTER_ON_FULL_VALUE`" + column_name + "`" + cell_value
   
-  button = widget_button(base, value=filename, uvalue=filename_uvalue)
   button = widget_button(base, value=filter_on_value, uvalue=filter_on_value_uvalue)
 END
 
