@@ -753,7 +753,10 @@ PRO spice_cat::handle_add_column, event, parts
   END
   
   new_column_names = [left, add_column_name, right]
-  print, "New column names: " + new_column_names.join(", ")
+  setenv_command = "SPICE_CAT_KEYWORDS=" + new_column_names.join(",")
+  setenv, setenv_command
+  print, "** Put this in your IDL-startup to set keyword list permanently:"
+  print, "setenv," + setenv_command
   self.create_displayed_list, new_column_names
   self.display_displayed_list
 END
