@@ -6,14 +6,21 @@ PRO spice_cat::modal_message,message,timer=timer
 END
 
 
-FUNCTION spice_cat::remove_non_digits, text
+FUNCTION spice_cat::remove_non_digits_or_points, text
   compile_opt static
   bytes = byte(text)
   byte0 = (byte('0'))[0]
   byte9 = (byte('9'))[0]
-  ix = where(bytes GE byte0 AND bytes LE byte9, count)
+  byte_point = (byte('.'))[0]
+  ix = where(((bytes GE byte0) AND (bytes LE byte9)) OR (bytes EQ byte_point), count)
   IF count EQ 0 THEN return,""
-  return, string(bytes[ix])
+  ok_bytes = bytes[ix]
+  IF ok_bytes[0] EQ byte_point THEN BEGIN
+     ix = where(ok_bytes NE byte_point, count)
+     IF count EQ 0 THEN return, ""
+     ok_bytes = ok_bytes[ix]
+  END 
+  return, string(ok_bytes)
 END
 
 
@@ -553,7 +560,7 @@ FUNCTION spice_cat::handle_range_single_filter_change, text_id, column_name
   ;; Remove non-digit chars for numeric columns
   ;;
   IF self.d.keyword_info[column_name].type NE "t" THEN BEGIN
-     new_value = self.remove_non_digits(value)
+     new_value = self.remove_non_digits_or_points(value)
      
      ;; Correct cursor position due to deletion of non-digit content:
      ;;
