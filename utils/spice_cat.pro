@@ -2,29 +2,32 @@
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
 ;;
 PRO spice_cat::cleanup
-  self.print_keyword_setenv_commands
+  self.print_and_execute_keyword_setenv_commands
 END
 
 
-PRO spice_cat::print_keyword_setenv_commands
+PRO spice_cat::print_and_execute_keyword_setenv_commands
   COMMON spice_cat_column_widths, widths_by_column_name
   
   print, "* Put these commands in your IDL startup to save the current column setup"
   print, "* Equivalent commands may also be put in your shell initialization file"
   print
   
-  keywords_command = 'setenv,"SPICE_CAT_KEYWORDS='
-  keywords_command += self.curr.column_names.join(',') + '"'
-  print, keywords_command
+  keywords_command = "SPICE_CAT_KEYWORDS="
+  keywords_command += self.curr.column_names.join(',')
+  setenv, keywords_command
+  print, "=>" + getenv("SPICE_CAT_KEYWORDS")
+  print, 'setenv,"' + keywords_command + '"'
   print
   
-  keyword_widths_command = 'setenv,"SPICE_CAT_KEYWORD_WIDTHS='
+  keyword_widths_command = "SPICE_CAT_KEYWORD_WIDTHS="
   foreach width, widths_by_column_name, column_name DO BEGIN
      IF n_elements(keyword_width_assignments) EQ 0 THEN keyword_width_assignments = []
      keyword_width_assignments = [keyword_width_assignments, column_name + ":" + width.toString()]
   END
-  keyword_widths_command += keyword_width_assignments.join(",") + '"'
-  print, keyword_widths_command
+  keyword_widths_command += keyword_width_assignments.join(",")
+  setenv, keyword_widths_command
+  print, 'setenv,"' + keyword_widths_command + "'"
   print
 END
 
@@ -976,20 +979,37 @@ PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
 END
 
 
-PRO spice_cat::parameters, modal=modal
-  self.d = dictionary() ;; Data/dict
-  self.curr = dictionary() ;; <name is wrong if a comment is necessary...>
+PRO spice_cat::parameters, modal=modal, base=base
+  spice_datadir = getenv("SPICE_DATA")
+  IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATA is blank or not set"
+  
+  self.d = dictionary() ;; "Data"
+  self.curr = dictionary() ;; Current values
+  
   self.d.modal = keyword_set(modal)
   self.d.programs = ["help", "print"] ;; TODO: plug in Martin's routines
   self.d.keyword_info = spice_keyword_info(/all)
-  spice_datadir = getenv("SPICE_DATA")
-  IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATADIR is blank or not set"
   
   spice_default,listfiledir,spice_datadir
   
   self.d.spice_datadir = spice_datadir
   self.d.listfiledir = listfiledir
   self.d.listfilename = concat_dir(listfiledir, 'spice_fitslist.txt')
+  
+  column_names = getenv("SPICE_CAT_KEYWORDS")
+  IF column_names GT "" THEN BEGIN
+     print, "keywords not defined"
+     column_names = column_names.split(",")
+     column_names = column_names.trim()
+     IF total(column_names EQ "DATE-BEG") EQ 0 THEN column_names = ["DATE-BEG", column_names]
+     IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
+     self.curr.column_names = column_names
+  END ELSE BEGIN
+     self.curr.column_names = self.d.full_column_names
+  END
+  
+  self.curr.sort_column = 'DATE-BEG'
+  self.curr.sort_order = "INCREASING"
 END
 
 
