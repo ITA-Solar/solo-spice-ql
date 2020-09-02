@@ -39,19 +39,6 @@ PRO spice_cat::setenv_commands, quiet=quiet
   END
 END
 
-;; capture_column_widths is run for every column width change, not upon
-;; exiting spice_cat, because we want to capture columns that may be removed
-;; during the session. And yes, we're a bit lazy, using the common block that
-;; is, after all, necessary for setenv_commands to work.
-PRO spice_cat::capture_column_widths
-  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
-  
-  widths = widget_info(self.wid.table_id, /column_widths)
-  foreach column_name, self.curr.column_names, index DO BEGIN
-     widths_by_column_name[column_name] = fix(widths[index])
-  END
-END
-
 
 PRO spice_cat::cleanup
   COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
@@ -140,7 +127,9 @@ END
 PRO spice_cat::replace_previous_incarnation
   COMMON spice_cat, previous_incarnation
   IF obj_valid(previous_incarnation) THEN BEGIN
-     obj_destroy, previous_incarnation
+     user_set_columns = getenv("SPICE_CAT_KEYWORDS")
+     obj_destroy, previous_incarnation ;; Will change SPICE_CAT_KEYWORDS!
+     setenv, "SPICE_CAT_KEYWORDS=" + user_set_columns
   END
   previous_incarnation = self
 END
@@ -474,6 +463,19 @@ PRO spice_cat::set_message_to_full_content, sel
   self.set_message, column_name+":", full_content, /select
 END
 
+
+;; capture_column_widths is run for every column width change, not upon
+;; exiting spice_cat, because we want to capture columns that may be removed
+;; during the session. And yes, we're a bit lazy, using the common block that
+;; is, after all, necessary for setenv_commands to work.
+PRO spice_cat::capture_column_widths
+  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
+  
+  widths = widget_info(self.wid.table_id, /column_widths)
+  foreach column_name, self.curr.column_names, index DO BEGIN
+     widths_by_column_name[column_name] = fix(widths[index])
+  END
+END
 
 ;;
 PRO spice_cat::_____________EVENT_HANDLERS                     & END
@@ -1068,7 +1070,7 @@ END
 FUNCTION spice_cat                   ;; IDL> selection = spice_cat()
   spice_cat_define_structure
   cat = obj_new('spice_cat',/modal)
-  cat.start
+  cat.start ; Blocking
   selection = cat.selection()
   obj_destroy, cat
   return, selection
@@ -1081,11 +1083,11 @@ PRO spice_cat, cat                  ;; IDL> spice_cat
   cat.start
 END
 
-;setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
 ;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
 ;setenv, "SPICE_CAT_KEYWORDS="
 
-spice_cat ;, o
+setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
+spice_cat, o
 ;
 ; The beginnings of unit testing! Can also be used for compoud widgets in
 ; isolation!
@@ -1102,5 +1104,5 @@ uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
          "MOVE`RIGHT`DATE-BEG", $
          "MOVE`RIGHT`DATE-BEG" $
         ]
-;foreach uval, uvals DO o.send_event, uval
+foreach uval, uvals DO o.send_event, uval
 END
