@@ -845,7 +845,6 @@ PRO spice_cat::build_add_column_menu, base, uvalue
   foreach column_name, self.d.full_column_names DO BEGIN
      IF total(column_name EQ self.curr.column_names) GT 0 THEN CONTINUE
      full_uvalue = uvalue + "`" + column_name
-     print, "BUILD: " + full_uvalue
      b = widget_button(base, value=column_name, uvalue=full_uvalue)
   END
 END
