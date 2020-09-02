@@ -1,24 +1,21 @@
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
 ;;
-PRO spice_cat::cleanup
-  self.print_and_execute_keyword_setenv_commands
-END
-
-
-PRO spice_cat::print_and_execute_keyword_setenv_commands
-  COMMON spice_cat_column_widths, widths_by_column_name
   
-  print, "* Put these commands in your IDL startup to save the current column setup"
-  print, "* Equivalent commands may also be put in your shell initialization file"
-  print
+PRO spice_cat::setenv_commands, quiet=quiet
+  ;; Sorry, but for modal operation such as f = spice_cat(), there *has* to
+  ;; be a common block so the user can get to the commands later on
+  compile_opt static
+  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
+  
+  IF keyword_set(quiet) THEN BEGIN
+     print, "Column setup saved for this IDL session"
+     print, "To see how to preserve it for future sessions, type SPICE_CAT.SETENV_COMMANDS"
+  END
   
   keywords_command = "SPICE_CAT_KEYWORDS="
-  keywords_command += self.curr.column_names.join(',')
+  keywords_command += last_column_names.join(',')
   setenv, keywords_command
-  print, "=>" + getenv("SPICE_CAT_KEYWORDS")
-  print, 'setenv,"' + keywords_command + '"'
-  print
   
   keyword_widths_command = "SPICE_CAT_KEYWORD_WIDTHS="
   foreach width, widths_by_column_name, column_name DO BEGIN
@@ -27,19 +24,42 @@ PRO spice_cat::print_and_execute_keyword_setenv_commands
   END
   keyword_widths_command += keyword_width_assignments.join(",")
   setenv, keyword_widths_command
-  print, 'setenv,"' + keyword_widths_command + "'"
-  print
+  
+  IF NOT keyword_set(quiet) THEN BEGIN
+     print
+     print, "* Put these commands in your IDL startup to save the current column setup"
+     print, "* Equivalent commands may also be put in your shell initialization file"
+     print
+     
+     print, 'setenv,"' + keywords_command + '"'
+     print
+     
+     print, 'setenv,"' + keyword_widths_command + "'"
+     print
+  END
 END
 
-
+;; capture_column_widths is run for every column width change, not upon
+;; exiting spice_cat, because we want to capture columns that may be removed
+;; during the session. And yes, we're a bit lazy, using the common block that
+;; is, after all, necessary for setenv_commands to work.
 PRO spice_cat::capture_column_widths
-  COMMON spice_cat_column_widths, widths_by_column_name
+  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
   
   widths = widget_info(self.wid.table_id, /column_widths)
   foreach column_name, self.curr.column_names, index DO BEGIN
      widths_by_column_name[column_name] = fix(widths[index])
   END
 END
+
+
+PRO spice_cat::cleanup
+  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
+  last_column_names = self.curr.column_names
+  self.setenv_commands, /quiet
+  IF widget_info(self.wid.top_base, /valid_id) THEN widget_control, self.wid.top_base, /destroy
+END
+
 
 PRO spice_cat::modal_message,message,timer=timer
   spice_modal_message, self.wid.top_base, message, timer=timer
@@ -119,11 +139,10 @@ END
 
 PRO spice_cat::replace_previous_incarnation
   COMMON spice_cat, previous_incarnation
-  spice_default,previous_incarnation, 0L
-  IF widget_info(previous_incarnation, /valid_id) THEN BEGIN
-     widget_control,previous_incarnation, /destroy
+  IF obj_valid(previous_incarnation) THEN BEGIN
+     obj_destroy, previous_incarnation
   END
-  previous_incarnation = self.wid.top_base
+  previous_incarnation = self
 END
 
 
@@ -164,10 +183,6 @@ PRO spice_cat::load_fitslist
   self.d.full_list = fitslist
   self.d.full_tag_names = tag_names(fitslist[0])
   self.d.full_column_names = (tag_names(fitslist[0])).replace('$','-')
-  
-  self.curr.column_names = self.d.full_column_names
-  self.curr.sort_column = 'DATE-BEG'
-  self.curr.sort_order = "INCREASING"
 END 
 
 
@@ -219,24 +234,6 @@ FUNCTION spice_cat::apply_filters, filters
 END
 
 
-PRO spice_cat::update_current_filters, keywords
-  spice_default, keywords, self.curr.column_names
-  
-  IF self.curr.haskey("filters_as_text") THEN BEGIN
-     inited_current_filters_as_text = self.curr.filters_as_text
-  END ELSE BEGIN
-     current_tag_names = self.curr.column_names.replace('-', '$')
-     inited_current_filters_as_text = self.empty_filters_as_text(current_tag_names)
-  END
-  
-  new_filters_as_text = self.empty_filters_as_text(keywords.replace('-','$'))
-  
-  self.safe_struct_assign, inited_current_filters_as_text, new_filters_as_text
-  
-  self.curr.filters_as_text = new_filters_as_text
-END
-
-
 FUNCTION spice_cat::sort,list
   IF n_elements(list) EQ 0 THEN return, list
   
@@ -255,6 +252,25 @@ FUNCTION spice_cat::sort,list
   IF self.curr.sort_order EQ "DECREASING" THEN sortix = reverse(sortix)
   
   return,list[sortix]
+END
+
+
+PRO spice_cat::update_current_filters, keywords
+  IF NOT self.curr.haskey("column_names") THEN self.curr.column_names = self.d.full_column_names
+  spice_default, keywords, self.curr.column_names
+  
+  IF self.curr.haskey("filters_as_text") THEN BEGIN
+     inited_current_filters_as_text = self.curr.filters_as_text
+  END ELSE BEGIN
+     current_tag_names = self.curr.column_names.replace('-', '$')
+     inited_current_filters_as_text = self.empty_filters_as_text(current_tag_names)
+  END
+  
+  new_filters_as_text = self.empty_filters_as_text(keywords.replace('-','$'))
+  
+  self.safe_struct_assign, inited_current_filters_as_text, new_filters_as_text
+  
+  self.curr.filters_as_text = new_filters_as_text
 END
 
 
@@ -313,7 +329,7 @@ END
 
 
 PRO spice_cat::init_column_widths
-  COMMON spice_cat_column_widths, widths_by_column_name
+  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
   
   widths_by_column_name = hash()
   foreach info, self.d.keyword_info, column_name DO BEGIN
@@ -323,6 +339,7 @@ PRO spice_cat::init_column_widths
   ; Override with SPICE_CAT_KEYWORD_WIDTHS when set
   spice_cat_keyword_widths = getenv("SPICE_CAT_KEYWORD_WIDTHS")
   IF spice_cat_keyword_widths EQ "" THEN return
+  
   spice_cat_keyword_widths = spice_cat_keyword_widths.split(',')
   foreach width_setting, spice_cat_keyword_widths DO BEGIN
      parts = width_setting.split(':')
@@ -332,7 +349,7 @@ END
   
 
 FUNCTION spice_cat::current_column_widths
-  COMMON spice_cat_column_widths, widths_by_column_name
+  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
   IF n_elements(widths_by_column_name) EQ 0 THEN self.init_column_widths
   widths = []
   foreach column_name, self.curr.column_names DO BEGIN
@@ -466,6 +483,11 @@ PRO spice_cat::_____________EVENT_HANDLERS                     & END
 ; Only called when event.id eq event.top
 ;
 PRO spice_cat::handle_tlb,event
+  IF tag_names(event, /structure_name) EQ "WIDGET_KILL_REQUEST" THEN BEGIN
+     IF NOT self.d.modal THEN obj_destroy, self $
+     ELSE                     widget_control, self.wid.top_base, /destroy
+     return
+  END
   IF tag_names(event, /structure_name) NE "WIDGET_BASE" THEN return
   
   widget_control,self.wid.xsize_spacer_base, xsize=event.x
@@ -728,6 +750,7 @@ END
 
 PRO spice_cat::handle_exit, event, parts
   widget_control, event.top, /destroy
+  IF NOT self.d.modal THEN obj_destroy, self
 END
 
 
@@ -921,10 +944,11 @@ END
 PRO spice_cat::build_widget
   w = (self.wid = dictionary()) ; What happens to W also happens to self.wid
   
-  w.top_base = widget_base(title='SPICE-CAT', uvalue=self, /row, /tlb_size_events, xpad=0, ypad=0)
+  props = {row:1b, xpad:0, ypad:0, tlb_size_events:1, tlb_kill_request_events:1}
+  base = widget_base(title='SPICE-CAT', uvalue=self, _extra=props)
+  w.top_base = base
+  widget_control, w.top_base, set_uvalue=self
   
-  self.replace_previous_incarnation
-
   w.ysize_spacer_base = widget_base(w.top_base, ysize=800, xpad=0, ypad=0)
   w.content_base = widget_base(w.top_base, /column)
   
@@ -998,14 +1022,12 @@ PRO spice_cat::parameters, modal=modal, base=base
   
   column_names = getenv("SPICE_CAT_KEYWORDS")
   IF column_names GT "" THEN BEGIN
-     print, "keywords not defined"
      column_names = column_names.split(",")
      column_names = column_names.trim()
      IF total(column_names EQ "DATE-BEG") EQ 0 THEN column_names = ["DATE-BEG", column_names]
      IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
      self.curr.column_names = column_names
-  END ELSE BEGIN
-     self.curr.column_names = self.d.full_column_names
+     print, self.curr.column_names
   END
   
   self.curr.sort_column = 'DATE-BEG'
@@ -1019,26 +1041,20 @@ PRO spice_cat::send_event, uvalue
   spice_cat_______________catch_all_event_handler, event
 END
 
+
+PRO spice_cat::start
+  event_handler = "spice_cat_______________catch_all_event_handler"
+  no_block = keyword_set(self.d.modal) ? 0 : 1
+  xmanager,"spice_cat", self.wid.top_base, no_block=no_block, event_handler=event_handler
+END
+
+
 function spice_cat::init, modal=modal
+  self.replace_previous_incarnation
   self.parameters, modal = modal
   self.load_fitslist
-  
-  column_names = getenv("SPICE_CAT_KEYWORDS")
-  IF column_names GT "" THEN BEGIN
-     column_names = column_names.split(",")
-     column_names = column_names.trim()
-     IF total(column_names EQ "DATE-BEG") EQ 0 THEN column_names = ["DATE-BEG", column_names]
-     IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
-  END ELSE BEGIN
-     column_names = []
-  END
-  self.create_displayed_list,column_names
-  
+  self.create_displayed_list
   self.build_widget
-  
-  no_block = keyword_set(self.d.modal) ? 0 : 1
-  event_handler = "spice_cat_______________catch_all_event_handler"
-  xmanager,"spice_cat", self.wid.top_base, no_block=no_block, event_handler=event_handler
   
   return,1
 END
@@ -1051,20 +1067,25 @@ END
 
 FUNCTION spice_cat                   ;; IDL> selection = spice_cat()
   spice_cat_define_structure
-  o = obj_new('spice_cat',/modal)
-  return, o.selection()
+  cat = obj_new('spice_cat',/modal)
+  cat.start
+  selection = cat.selection()
+  obj_destroy, cat
+  return, selection
 END
 
 
-PRO spice_cat, o                     ;; IDL> spice_cat
+PRO spice_cat, cat                  ;; IDL> spice_cat
   spice_cat_define_structure
-  o = obj_new('spice_cat')
+  cat = obj_new('spice_cat')
+  cat.start
 END
 
-setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
+;setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
 ;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
+;setenv, "SPICE_CAT_KEYWORDS="
 
-spice_cat, o
+spice_cat ;, o
 ;
 ; The beginnings of unit testing! Can also be used for compoud widgets in
 ; isolation!
@@ -1081,5 +1102,5 @@ uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
          "MOVE`RIGHT`DATE-BEG", $
          "MOVE`RIGHT`DATE-BEG" $
         ]
-foreach uval, uvals DO o.send_event, uval
+;foreach uval, uvals DO o.send_event, uval
 END
