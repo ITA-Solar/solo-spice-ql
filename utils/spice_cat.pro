@@ -1,6 +1,43 @@
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
 ;;
+PRO spice_cat::cleanup
+  self.print_keyword_setenv_commands
+END
+
+
+PRO spice_cat::print_keyword_setenv_commands
+  COMMON spice_cat_column_widths, widths_by_column_name
+  
+  print, "* Put these commands in your IDL startup to save the current column setup"
+  print, "* Equivalent commands may also be put in your shell initialization file"
+  print
+  
+  keywords_command = 'setenv,"SPICE_CAT_KEYWORDS='
+  keywords_command += self.curr.column_names.join(',') + '"'
+  print, keywords_command
+  print
+  
+  keyword_widths_command = 'setenv,"SPICE_CAT_KEYWORD_WIDTHS='
+  foreach width, widths_by_column_name, column_name DO BEGIN
+     IF n_elements(keyword_width_assignments) EQ 0 THEN keyword_width_assignments = []
+     keyword_width_assignments = [keyword_width_assignments, column_name + ":" + width.toString()]
+  END
+  keyword_widths_command += keyword_width_assignments.join(",") + '"'
+  print, keyword_widths_command
+  print
+END
+
+
+PRO spice_cat::capture_column_widths
+  COMMON spice_cat_column_widths, widths_by_column_name
+  
+  widths = widget_info(self.wid.table_id, /column_widths)
+  foreach column_name, self.curr.column_names, index DO BEGIN
+     widths_by_column_name[column_name] = fix(widths[index])
+  END
+END
+
 PRO spice_cat::modal_message,message,timer=timer
   spice_modal_message, self.wid.top_base, message, timer=timer
 END
@@ -272,22 +309,6 @@ FUNCTION spice_cat::background_colors
 END
 
 
-PRO spice_cat::capture_column_widths
-  COMMON spice_cat_column_widths, widths_by_column_name
-  widths = widget_info(self.wid.table_id, /column_widths)
-  foreach column_name, self.curr.column_names, index DO BEGIN
-     widths_by_column_name[column_name] = fix(widths[index])
-  END
-  env_widths = []
-  foreach width, widths_by_column_name, column_name DO BEGIN
-     env_widths = [env_widths, column_name + ":" + width.tostring()]
-  END
-  env_widths = env_widths.join(",")
-  print, "** Put this in your IDL-startup to set column widhts permanently:"
-  print, "SETENV,'SPICE_CAT_KEYWORD_WIDTHS=" + env_widths + "'"
-END
-
-
 PRO spice_cat::init_column_widths
   COMMON spice_cat_column_widths, widths_by_column_name
   
@@ -499,10 +520,6 @@ PRO spice_cat::handle_add_column, event, parts
   END
   
   new_column_names = [left, add_column_name, right]
-  setenv_command = "SPICE_CAT_KEYWORDS=" + new_column_names.join(",")
-  setenv, setenv_command
-  print, "** Put this in your IDL-startup to set keyword list permanently:"
-  print, "setenv," + setenv_command
   self.create_displayed_list, new_column_names
   self.display_displayed_list
 END
