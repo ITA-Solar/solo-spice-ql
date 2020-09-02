@@ -1,0 +1,292 @@
+Environment variables
+
+  SPICE_DATA=../../.../
+
+  SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN
+
+  SPICE_CAT_KEYWORD_WIDTHS=FILENAME:x,DATE=BEG:y, ....
+
+Invoke :
+
+   Modal:     files = spice_cat()    - returns selection or !null
+   Non-modal: spice_cat              - returns immediately
+
+Filtering:
+
+  Click green filter line OR column header to edit filter
+
+  Text filters are regexps, range filters are min/max (inclusive)
+
+Click/select/navigate with keys to a data cell: 
+    Status message shows full content (also in cut buffer)
+
+Selected files are highlighted in blue
+
+Context menus (right-click):
+
+  Right-click on header: 
+     sort increasing/decreasing
+     move column left/right
+
+  Right-click on data cell:
+     - Click filename... to do what? Start program w/file?
+     - Click "filter on this value"
+
+
+
+STUDYTYP= 'Single Exposure'    / Sit-and-stare, Raster or Single Exposure       
+STUDYDES= 'Standard dark for cruise phase' / Description of the study           
+STUDY   = 'CAL_DARK_FS_SL04_1.0S_FD' / SPICE Study name                         
+OBS_MODE= 'CAL_DARK_FS_SL04_1.0S_FD' / = STUDY                                  
+OBS_TYPE= 'oooo    '           / Unique code for OBS_MODE                       
+AUTHOR  = 'Tim Grundy'         / Author of study                                
+OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID                     
+SPIOBSID=             16777434 / SPICE Observation ID                           
+DARKSPID=                   -1 / SPIOBSID of dark subtracted on-board           
+PURPOSE = 'Calibration/Dark'   / Purpose of study (Science/Calibration/Checkout)
+READMODE= 'Destructive'        / Destructive or non-destructive                 
+TRIGGERD= 'None    '           / Event that triggered observation               
+TARGET  = 'None    '           / Planned type of target                         
+SOOPNAME= 'None    '           / SOOP Campaign name(s)                          
+SOOPTYPE= '000     '           / SOOP Campaign name code(s)                     
+APID    =                 1388 / Application Process ID                         
+NRASTERS=                    1 / Number of planned rasters for this SPIOBSID    
+RASTERNO=                    0 / Raster number (starting at 0)                  
+STUDY_ID=                   54 / On-board Study ID slot (0-63)                  
+XSTART  =                    4 / [arcsec] Slit x offset rel. to S/C boresight   
+XPOSURE =             0.600000 / [s] Total effective exposure time              
+FOCUSPOS=                10601 / Focus position                                 
+NSEGMENT=                    1 / Number of segments per window                  
+NWIN    =                    2 / Total number of windows (incl. any dumbbells)  
+NWIN_PRF=                    2 / Number of windows not dumbbell or Intensity    
+NWIN_DUM=                    0 / Number of dumbbell windows                     
+NWIN_INT=                    0 / Number of Intensity-windows                    
+                                                                                
+                                                                                
+           ------------------------------------------------------               
+           | Other keywords valid for all Obs-HDUs in this file |               
+           ------------------------------------------------------               
+TIMESYS = 'UTC     '           / TIMESYS included for readability               
+DATEREF = '2020-06-21T00:05:39.083' / [UTC] Zero point of time coordinate       
+DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition       
+DATE-OBS= '2020-06-21T00:05:39.083' / [UTC] Equals DATE-BEG                     
+DATE-AVG= '2020-06-21T00:05:39.383' / [UTC] Data acquisition midpoint           
+DATE-END= '2020-06-21T00:05:39.683' / [UTC] End of data acquisition             
+SEQ_BEG = '2020-06-21T00:05:18' / [UTC] Approximated start of observation series
+TELAPSE =       0.599999904633 / [s] Elapsed time between beg. and end of acqu. 
+OBT_BEG =        646013120.051 / Start acquisition time in OBT                  
+LEVEL   = 'L2      '           / Data processing level                          
+CREATOR = 'SDP-SPICE'          / Name of pipeline                               
+ORIGIN  = 'University of Oslo' / Name of institution                            
+VERS_SW = '2101    '           / UiO SVN revision number of L2 pipeline         
+VERS_CAL= '2097    '           / UiO SVN revision number of calibration software
+VERSION = '01      '           / Incremental version number                     
+COMPLETE= 'C       '           / Complete data set                              
+OBSRVTRY= 'Solar Orbiter'      / Observatory Name                               
+INSTRUME= 'SPICE   '           / Instrument name                                
+CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
+                                                                                
+                                                                                
+           -------------------------------------                                
+           | STUDYFLG and its derived keywords |                                
+           -------------------------------------                                
+STUDYFLG=                    0 / Study flags                                    
+NOSPECTR=                    0 / Applies only to dumbbells                      
+CALMODE =                    0 / If set, file contains both un/decompressed data
+DBLEXP  =                    0 / If set, double exposure is enabled             
+DBLEXPNO=                    0 / Applies only when DBLEXP=1                     
+DARKMAP =                    0 / If set, a dark map was subtracted on-board     
+BLACKLEV=                    0 / If set, a bias frame was subtracted on-board   
+                                                                                
+                                                                                
+           -----------------------------------------------                      
+           | Keywords valid for this HDU (WINDOW0_74.73) |                      
+           -----------------------------------------------                      
+WIN_TYPE= 'Full Detector Narrow-slit' / Description of window type              
+DATAPROD= 'Full Detector Narrow-slit Single Exposure' / WIN_TYPE+STUDYTYP       
+TELESCOP= 'SOLO/SPICE/SW'      / Telescope/Sensor name/Detector array name      
+DETECTOR= 'SW      '           / Detector array name                            
+WINNO   =                    0 / Window number (starting at 0) within this study
+WINTABID=                  255 / Index in on-board window data table (0-255)    
+SLIT_ID =                    2 / Slit ID (0-3)                                  
+SLIT_WID=                    4 / [arcsec] Slit width                            
+DUMBBELL=                    0 / 0/1/2: not a dumbbell/lower dumbbel/upper dumbb
+                                                                                
+WAVEUNIT=                   -9 / Power of 10 by which the metre is multiplied   
+WAVEMIN =        69.5216616186 / [nm] Left edge of first read detector pixel    
+WAVEMAX =        79.4962027258 / [nm] Right edge of last read detector pixel    
+WINWIDTH=        9.97454110720 / [nm] Window width (Calibration mode)           
+                                                                                
+BTYPE   = 'Intensity'          / Type of data                                   
+UCD     = 'phot.flux.density; em.line.fexx' / Unified Content Descriptors v1.23 
+BUNIT   = 'adu     '           / Units of uncalibrated data                     
+DATAMIN =             -14962.1 / Minimum valid physical value                   
+DATAMAX =              2249.15 / Maximum valid physical value                   
+                                                                                
+NPACKETS=                  512 / Number of packets with data, SW detector       
+LOSTPKTS=                    0 / Number of lost packets w/data, variable keyword
+NLOSTCHK=                    0 / Number of lost Final Packets, w/checksum only  
+NFAILCHK=                    0 / Number of checksums failed                     
+NLOSTPIX=                    0 / Number of lost pixels                          
+NAPRXPLN=                    0 / Applies only to JPEG- or SHC-compressed data   
+NLOSTPLN=                    0 / Applies only to JPEG- or SHC-compressed data   
+LOSTBINS=                    0 / Applies only to SHC-compressed data            
+                                                                                
+PXBEG1  =                    1 / [pixel] First read-out pixel in X dimension    
+PXEND1  =                    1 / [pixel] Last  read-out pixel in X dimension    
+PXBEG2  =                    1 / [pixel] First read-out pixel in Y dimension    
+PXEND2  =                 1024 / [pixel] Last  read-out pixel in Y dimension    
+PXBEG3  =                    1 / [pixel] First read-out pixel in dispersion dim.
+PXEND3  =                 1024 / [pixel] Last  read-out pixel in dispersion dim.
+PXBEG4  =                    1 / [pixel] First read-out pixel in time dimension 
+PXEND4  =                    1 / [pixel] Last  read-out pixel in time dimension 
+                                                                                
+NBIN1   =                    1 / Binning factor in X dimension                  
+NBIN2   =                    1 / Binning factor in Y dimension                  
+NBIN3   =                    1 / Binning factor in dispersion dimension         
+NBIN4   =                    1 / Binning factor in time dimension               
+NBIN    =                    1 / Total binning factor                           
+                                                                                
+COMPRESS= 'Focal Uncompressed' / Compression description                        
+COMP_RAT=              1.00000 / Compression ratio decompressed/compressed      
+COMP_RAT=              1.00000 / Compression ratio decompressed/compressed      
+COMPTYPE=                    4 / Compression type (0-7)                         
+COMPPARA=                    0 / Applies only to JPEG-compressed data           
+SHCFFTID=                    0 / Applies only to SHC-compressed data            
+WCSNAME = 'Helioprojective-cartesian' / Name of coordinate system               
+LONPOLE =              180.000 / [deg] Native longitude of celestial pole       
+SPECSYS = 'TOPOCENT'           / Spectral coord. not corrected for S/C velocity 
+VELOSYS = '0.0     '           / [m/s] Default for SPECSYS='TOPOCENT'           
+                                                                                
+CTYPE1  = 'HPLN-TAN'           / Type of 1st coordinate                         
+CNAME1  = 'Helioprojective longitude (Solar X) (Degenerate Dimension)' / Descrip
+CUNIT1  = 'arcsec  '           / Units for 1st coordinate (for CRVAL1, CDELT1)  
+CRVAL1  =        2.78452099954 / [arcsec] 1st coordinate of reference point     
+CDELT1  =              1.00000 / [arcsec] Degenerate dimension; default value   
+CRPIX1  =              1.00000 / [pixel] 1st pixel index of reference point     
+PC1_1   =       0.999707785633 / Non-default value due to CROTA degrees S/C roll
+PC1_2   =      0.0265421678659 / Contribution of dim 2 to coord 1 due to roll   
+                                                                                
+CTYPE2  = 'HPLT-TAN'           / Type of 2nd coordinate                         
+CNAME2  = 'Helioprojective latitude (Solar Y), increases towards Solar North' / 
+CUNIT2  = 'arcsec  '           / Units for 2nd coordinate (for CRVAL2, CDELT2)  
+CRVAL2  =       0.278455408692 / [arcsec] 2nd coordinate of reference point     
+CDELT2  =              1.09800 / [arcsec] Increment of 2nd coord at ref point   
+CRPIX2  =              512.500 / [pixel] 2nd pixel index of reference point     
+PC2_1   =     -0.0220156600890 / Contribution of dim 1 to coord 2 due to roll   
+PC2_2   =       0.999707785633 / Non-default value due to CROTA degrees S/C roll
+                                                                                
+CTYPE3  = 'WAVE    '           / Type of 3rd coordinate                         
+CNAME3  = 'Wavelength'         / Description of 3rd coordinate                  
+CUNIT3  = 'nm      '           / Units for 3rd coordinate (for CRVAL3, CDELT3)  
+CRVAL3  =        100.840001000 / [nm] 3rd coordinate of reference point         
+CDELT3  =     0.00960000000000 / [nm] Increment of 3rd coord at ref point       
+CRPIX3  =              512.500 / [pixel] 3rd pixel index of reference point     
+PC3_3   =              1.00000 / Default value, no rotation                     
+                                                                                
+CTYPE4  = 'UTC     '           / Type of 4th coordinate                         
+CNAME4  = 'Time (Degenerate Dimension)' / Description of 4th coordinate         
+CUNIT4  = 's       '           / Units for 4th coordinate (for CRVAL4, CDELT4)  
+CRVAL4  =       0.300000000000 / [s] 4th coord of ref point, relative to DATEREF
+CDELT4  =        1.00000000000 / [UTC] Degenerate dimension; default value      
+CRPIX4  =              1.00000 / [pixel] 4th pixel index of reference point     
+PC4_4   =              1.00000 / Default value, no rotation                     
+                                                                                
+                                                                                
+           ------------------                                                   
+           | Auxiliary data |                                                   
+           ------------------                                                   
+TIMAQOBT=        646013120.051 / [OBT] Start time of data acquisition           
+MIRRPOS =              65535.0 / [adu] Scan mirror position                     
+TN_FOCUS=              2109.00 / [adu]     SFM focus   temperature              
+TN_GRAT =              2119.00 / [adu]     SFM grating temperature              
+TN_SW   =              2793.00 / [adu]     HAS SW      temperature              
+TN_LW   =              2796.00 / [adu]     HAS LW      temperature              
+T_FOCUS =              9.89957 / [Celsius] SFM focus   temperature              
+T_GRAT  =              9.63802 / [Celsius] SFM grating temperature              
+T_SW    =             -20.3739 / [Celsius] HAS SW      temperature              
+T_LW    =             -20.4530 / [Celsius] HAS LW      temperature              
+TIMAQUTC= '2020-06-21T00:05:39.083' / [UTC] Start t. of data acquisition        
+                                                                                
+VN_MCPSW=                  549 / [adu] MCP SW voltage                           
+VN_MCPLW=                  547 / [adu] MCP LW voltage                           
+VN_GAPSW=                  551 / [adu] GAP SW voltage                           
+VN_GAPLW=                  548 / [adu] GAP LW voltage                           
+V_MCPSW =              17.5079 / [V]   MCP SW voltage                           
+V_MCPLW =              16.6819 / [V]   MCP LW voltage                           
+V_GAPSW =              58.7131 / [V]   GAP SW voltage                           
+V_GAPLW =              55.2639 / [V]   GAP LW voltage                           
+                                                                                
+                                                                                
+           ----------------------------------------------                       
+           | SOLARNET keywords, and additional keywords |                       
+           ----------------------------------------------                       
+SOLARNET=             0.500000 / Fully/Partially/No SOLARNET compliant (1/0.5/-1
+OBS_HDU =                    1 / HDU contains observational data (1) or not (0) 
+PARENT  = 'solo_L1_spice-n-exp_20200621T000539_V01_16777434-000.fits' / L1 filen
+FILE_RAW= 'sc_2020_06_20.xml;sc_2020_06_21.xml' / Telemetry file                
+INFO_URL= 'https://spice.ias.u-psud.fr/' / URL to additional information        
+                                                                                
+                                                                                
+           ----------------------------                                         
+           | Solar Ephemeris Keywords |                                         
+           ----------------------------                                         
+DSUN_OBS=        78006701380.1 / [m]  S/C distance from Sun                     
+DSUN_AU =       0.521442615073 / [AU] S/C distance from Sun                     
+RSUN_ARC=        1839.51645412 / [arcsec] Apparent photospheric Solar radius    
+RSUN_REF=          6.95700e+08 / [m]      Assumed  photospheric Solar radius    
+SOLAR_B0=        6.53806062476 / [deg] Tilt angle of Solar North toward S/C     
+SOLAR_P0=        22.3339674130 / [deg] S/C Celestial North to Solar North angle 
+SOLAR_EP=      -0.278620864471 / [deg] S/C Ecliptic  North to Solar North angle 
+CAR_ROT =                 2231 / Carrington rotation number                     
+HGLT_OBS=        6.53806062476 / [deg] S/C Heliographic latitude (B0 angle)     
+HGLN_OBS=        73.8479461044 / [deg] S/C Heliographic longitude               
+CRLT_OBS=        6.53806062476 / [deg] S/C Carrington   latitude (B0 angle)     
+CRLN_OBS=        34.9832812522 / [deg] S/C Carrington   longitude (L0 angle)    
+HEEX_OBS=        21821841181.7 / [m]   S/C Heliocentric Earth Ecliptic X        
+HEEY_OBS=        74886055845.8 / [m]   S/C Heliocentric Earth Ecliptic Y        
+HEEZ_OBS=       -965063471.826 / [m]   S/C Heliocentric Earth Ecliptic Z        
+HCIX_OBS=       -2985352698.44 / [m]   S/C Heliocentric Inertial X              
+HCIY_OBS=       -77441859205.6 / [m]   S/C Heliocentric Inertial Y              
+HCIZ_OBS=        8882092785.03 / [m]   S/C Heliocentric Inertial Z              
+HCIX_VOB=        46850.0356394 / [m/s] S/C Heliocentric Inertial X Velocity     
+HCIY_VOB=       -5281.75573026 / [m/s] S/C Heliocentric Inertial Y Velocity     
+HCIZ_VOB=       -746.210819556 / [m/s] S/C Heliocentric Inertial Z Velocity     
+HAEX_OBS=        16507.0999567 / [m]   S/C Heliocentric Aries Ecliptic X        
+HAEY_OBS=        44146.5259177 / [m]   S/C Heliocentric Aries Ecliptic Y        
+HAEZ_OBS=       -1406.95202730 / [m]   S/C Heliocentric Aries Ecliptic Z        
+HEQX_OBS=        21559352396.4 / [m]   S/C Heliocentric Earth Equatorial X      
+HEQY_OBS=        74440232483.6 / [m]   S/C Heliocentric Earth Equatorial Y      
+HEQZ_OBS=        8882092785.03 / [m]   S/C Heliocentric Earth Equatorial Z      
+GSEX_OBS=        130215267218. / [m]   S/C Geocentric   Solar Ecliptic X        
+GSEY_OBS=       -74886055845.8 / [m]   S/C Geocentric   Solar Ecliptic Y        
+GSEZ_OBS=       -965063471.826 / [m]   S/C Geocentric   Solar Ecliptic Z        
+OBS_VR  =        3365.57054359 / [m/s] Radial velocity of S/C away from the Sun 
+EAR_TDEL=        246.938857345 / [s] Time(Sun to Earth)-Time(Sun to S/C)        
+SUN_TIME=        260.202347652 / [s] Time(Sun centre to S/C)                    
+DATE_EAR= '2020-06-21T00:09:46.022' / [UTC] DATE-BEG + EAR_TDEL                 
+DATE_SUN= '2020-06-21T00:01:18.881' / [UTC] DATE-BEG - SUN_TIME                 
+                                                                                
+                                                                                
+           ----------------------------------------                             
+           | Keywords describing processing steps |                             
+           ----------------------------------------                             
+PRSTEP1 = 'DARK    '           / Processing step type 1                         
+PRPROC1 = 'spice_prep_dark_offset_correction' / Name of procedure performing PRS
+PRPVER1 = '0.9     '           / Version of procedure PRPROC1                   
+PRMODE1 = 'dark corrected'     / Processing mode of step 1                      
+PRLIB1  = 'SSW     '           / Software library containing PRPROC1            
+                                                                                
+PRSTEP2 = 'FLATFIELD'          / Processing step type 2                         
+PRPROC2 = 'spice_prep_flat_field_correction' / Name of procedure performing PRST
+PRPVER2 = '0.9     '           / Version of procedure PRPROC2                   
+PRMODE2 = 'flafield corrected' / Processing mode of step 2                      
+PRLIB2  = 'SSW     '           / Software library containing PRPROC2            
+                                                                                
+PRSTEP3 = 'DISTORTION'         / Processing step type 3                         
+PRPROC3 = 'spice_prep_distortion_correction' / Name of procedure performing PRST
+PRPVER3 = '0.9     '           / Version of procedure PRPROC3                   
+PRPARA3 = '2020-05-20'         / Parameters for PRPROC3                         
+PRLIB3  = 'SSW     '           / Software library containing PRPROC3            
+                                                                                
+                                                                                
