@@ -1,16 +1,15 @@
 FUNCTION spice_keyword_info_header
   text = spice_inline_text()
-;DATE    = '2020-07-24T12:28:08' / Date and time of FITS file creation           '
 ;FILENAME= 'solo_L2_spice-n-exp_20200621T000329_V01_16777432-000.fits' / FI      '
+;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition       
+;LEVEL   = 'L2      '           / Data processing level                          
 ;STUDYTYP= 'Single Exposure'    / Sit-and-stare, Raster or Single Exposure       
 ;STUDYDES= 'Standard dark for cruise phase' / Description of the study           
 ;STUDY   = 'CAL_DARK_FS_SL04_1.0S_FD' / SPICE Study name                         
-;OBS_TYPE= 'oooo    '           / Unique code for OBS_MODE                       
+;PURPOSE = 'Calibration/Dark'   / Purpose of study (Science/Calibration/Checkout)
+;XPOSURE =             0.600000 / [s] Total effective exposure time              
 ;AUTHOR  = 'Tim Grundy'         / Author of study                                
 ;OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID                     
-;SPIOBSID=             16777434 / SPICE Observation ID                           
-;DARKSPID=                   -1 / SPIOBSID of dark subtracted on-board           
-;PURPOSE = 'Calibration/Dark'   / Purpose of study (Science/Calibration/Checkout)
 ;READMODE= 'Destructive'        / Destructive or non-destructive                 
 ;TRIGGERD= 'None    '           / Event that triggered observation               
 ;TARGET  = 'None    '           / Planned type of target                         
@@ -20,26 +19,42 @@ FUNCTION spice_keyword_info_header
 ;RASTERNO=                    0 / Raster number (starting at 0)                  
 ;STUDY_ID=                   54 / On-board Study ID slot (0-63)                  
 ;XSTART  =                    4 / [arcsec] Slit x offset rel. to S/C boresight   
-;XPOSURE =             0.600000 / [s] Total effective exposure time              
 ;FOCUSPOS=                10601 / Focus position                                 
-;NSEGMENT=                    1 / Number of segments per window                  
 ;NWIN    =                    2 / Total number of windows (incl. any dumbbells)  
 ;NWIN_PRF=                    2 / Number of windows not dumbbell or Intensity    
 ;NWIN_DUM=                    0 / Number of dumbbell windows                     
 ;NWIN_INT=                    0 / Number of Intensity-windows                    
 ;                                                                                
-;                                                                                
-;           ------------------------------------------------------               
-;           | Other keywords valid for all Obs-HDUs in this file |               
-;           ------------------------------------------------------               
-;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition       
-;TELAPSE =       0.599999904633 / [s] Elapsed time between beg. and end of acqu. 
-;LEVEL   = 'L2      '           / Data processing level                          
-;CREATOR = 'SDP-SPICE'          / Name of pipeline                               
+;
+;DBLEXP  =                    0 / If set, double exposure is enabled             
+;DBLEXPNO=                    0 / Applies only when DBLEXP=1                     
+;DARKMAP =                    0 / If set, a dark map was subtracted on-board     
+;BLACKLEV=                    0 / If set, a bias frame was subtracted on-board   
+;CALMODE =                    0 / If set, file contains both un/decompressed data
+;
+;COMPRESS= 'Focal Uncompressed' / Compression description                        
+;COMP_RAT=              1.00000 / Compression ratio decompressed/compressed      
+;
+;NSEGMENT=                    1 / Number of segments per window                  
+;OBS_TYPE= 'oooo    '           / Unique code for OBS_MODE                       
+;SPIOBSID=             16777434 / SPICE Observation ID                           
+;DARKSPID=                   -1 / SPIOBSID of dark subtracted on-board           
+;
 ;VERS_SW = '2101    '           / UiO SVN revision number of L2 pipeline         
 ;VERS_CAL= '2097    '           / UiO SVN revision number of calibration software
 ;VERSION = '01      '           / Incremental version number                     
 ;COMPLETE= 'C       '           / Complete data set                              
+;
+;SLIT_ID =                    2 / Slit ID (0-3)                                  
+;SLIT_WID=                    4 / [arcsec] Slit width                            
+;
+;DATE    = '2020-07-24T12:28:08' / Date and time of FITS file creation           '
+;                                                                                
+;           ------------------------------------------------------               
+;           | Other keywords valid for all Obs-HDUs in this file |               
+;           ------------------------------------------------------               
+;TELAPSE =       0.599999904633 / [s] Elapsed time between beg. and end of acqu. 
+;CREATOR = 'SDP-SPICE'          / Name of pipeline                               
 ;CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
 ;                                                                                
 ;                                                                                
@@ -48,26 +63,17 @@ FUNCTION spice_keyword_info_header
 ;           -------------------------------------                                
 ;STUDYFLG=                    0 / Study flags                                    
 ;NOSPECTR=                    0 / Applies only to dumbbells                      
-;CALMODE =                    0 / If set, file contains both un/decompressed data
-;DBLEXP  =                    0 / If set, double exposure is enabled             
-;DBLEXPNO=                    0 / Applies only when DBLEXP=1                     
-;DARKMAP =                    0 / If set, a dark map was subtracted on-board     
-;BLACKLEV=                    0 / If set, a bias frame was subtracted on-board   
 ;                                                                                
 ;                                                                                
 ;           -----------------------------------------------                      
 ;           | Keywords valid for this HDU (WINDOW0_74.73) |                      
 ;           -----------------------------------------------                      
-;SLIT_ID =                    2 / Slit ID (0-3)                                  
-;SLIT_WID=                    4 / [arcsec] Slit width                            
-  
-  
-;COMPRESS= 'Focal Uncompressed' / Compression description                        
-;COMP_RAT=              1.00000 / Compression ratio decompressed/compressed      
+; 
+; 
 ;COMPTYPE=                    4 / Compression type (0-7)                         
 ;COMPPARA=                    0 / Applies only to JPEG-compressed data           
 ;SHCFFTID=                    0 / Applies only to SHC-compressed data            
-  
+;  
 ;           ------------------                                                   
 ;           | Auxiliary data |                                                   
 ;           ------------------                                                   
@@ -108,10 +114,6 @@ FUNCTION spice_keyword_info_header
 ;HGLN_OBS=        73.8479461044 / [deg] S/C Heliographic longitude               
 ;  
 ;OBS_VR  =        3365.57054359 / [m/s] Radial velocity of S/C away from the Sun 
-;EAR_TDEL=        246.938857345 / [s] Time(Sun to Earth)-Time(Sun to S/C)        
-;SUN_TIME=        260.202347652 / [s] Time(Sun centre to S/C)                    
-;DATE_EAR= '2020-06-21T00:09:46.022' / [UTC] DATE-BEG + EAR_TDEL                 
-;DATE_SUN= '2020-06-21T00:01:18.881' / [UTC] DATE-BEG - SUN_TIME                 
 ;  
 ;PRPROC1 = 'spice_prep_dark_offset_correction' / Name of procedure performing PRS
 ;PRPVER1 = '0.9     '           / Version of procedure PRPROC1                   
@@ -134,6 +136,7 @@ FUNCTION spice_keyword_info,keywords,all=all
   header = spice_keyword_info_header()
   first_eight = (strmid(header, 0, 8)).trim()
   all_keywords = first_eight(where(first_eight NE ""))
+  all_keywords = [all_keywords[0:2], 'FIRST_RASTER', all_keywords[3:*]]
   list = []
   foreach keyword, all_keywords DO BEGIN
      val = fxpar(header, keyword)
@@ -143,6 +146,10 @@ FUNCTION spice_keyword_info,keywords,all=all
         "INT"    : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  3, type:"i"}
         "LONG"   : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  4, type:"i"}
         "DOUBLE" : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  5, type:"i"}
+     END
+     IF keyword EQ "FIRST_RASTER" THEN BEGIN
+        info.display_width = 2
+        info.type = "t"
      END
      list = [list, info]
   END
