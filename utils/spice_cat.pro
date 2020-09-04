@@ -1085,23 +1085,24 @@ END
 ;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
 ;setenv, "SPICE_CAT_KEYWORDS="
 
-setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
 spice_cat, o
 ;
 ; The beginnings of unit testing! Can also be used for compoud widgets in
 ; isolation!
-;
-uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
-         "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
-         "ADD_COLUMN`RIGHT`NWIN`NWIN_INT", $
-         "REMOVE_COLUMN`STUDY_ID", $
-         "REMOVE_COLUMN`STUDYTYP", $
-         "REMOVE_COLUMN`NWIN_INT", $
-         "MOVE`LEFT`DATE-BEG", $
-         "MOVE`RIGHT`DATE-BEG", $
-         "MOVE`RIGHT`DATE-BEG", $
-         "MOVE`RIGHT`DATE-BEG", $
-         "MOVE`RIGHT`DATE-BEG" $
-        ]
-foreach uval, uvals DO o.send_event, uval
+IF 0 THEN BEGIN 
+   setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
+   uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
+            "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
+            "ADD_COLUMN`RIGHT`NWIN`NWIN_INT", $
+            "REMOVE_COLUMN`STUDY_ID", $
+            "REMOVE_COLUMN`STUDYTYP", $
+            "REMOVE_COLUMN`NWIN_INT", $
+            "MOVE`LEFT`DATE-BEG", $
+            "MOVE`RIGHT`DATE-BEG", $
+            "MOVE`RIGHT`DATE-BEG", $
+            "MOVE`RIGHT`DATE-BEG", $
+            "MOVE`RIGHT`DATE-BEG" $
+           ]
+   foreach uval, uvals DO o.send_event, uval
+END
 END
