@@ -245,7 +245,6 @@ END
 
 
 PRO spice_cat::update_current_filters, keywords
-  IF NOT self.curr.haskey("column_names") THEN self.curr.column_names = self.d.full_column_names
   spice_default, keywords, self.curr.column_names
   
   IF self.curr.haskey("filters_as_text") THEN BEGIN
@@ -264,6 +263,8 @@ END
 
 
 PRO spice_cat::create_displayed_list, column_names
+  IF NOT self.curr.haskey("column_names") THEN self.curr.column_names = self.d.full_column_names
+  
   self.update_current_filters, column_names
   
   new_list_without_filter = []
