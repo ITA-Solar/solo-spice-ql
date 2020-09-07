@@ -71,19 +71,12 @@ FUNCTION spice_cat::remove_non_digits_or_points, text
 END
 
 
-FUNCTION spice_cat::format_selection_range_string, ev
-  column_range = ev.left.tostring() + ':' + ev.right.tostring()
-  row_range = ev.top.tostring() + ':' + ev.bottom.tostring()
-  text = '[' + column_range + ', ' + row_range + ']'
-  return, text
-END
-
-
 FUNCTION spice_cat::empty_filters_as_text, tag_names
   filters_as_text = {}
   foreach tag, tag_names DO filters_as_text = create_struct(filters_as_text, tag, '<filter>')
   return, filters_as_text
 END
+
 
 PRO spice_cat::destroy_children, parent
   children = widget_info(parent, /all_children)
@@ -263,6 +256,7 @@ END
 
 
 PRO spice_cat::create_displayed_list, column_names
+  start_time = systime(1)
   IF NOT self.curr.haskey("column_names") THEN self.curr.column_names = self.d.full_column_names
   
   self.update_current_filters, column_names
@@ -283,6 +277,10 @@ PRO spice_cat::create_displayed_list, column_names
   
   self.curr.displayed = temporary(new_list)
   self.curr.column_names = (tag_names(self.curr.displayed)).replace('$','-')
+  
+  self.check_for_actual_change
+  
+  print, "CREATE_DISPLAYED_LIST:", systime(1)-start_time
 END
 
 
@@ -338,8 +336,9 @@ FUNCTION spice_cat::background_colors
   
   ;; Selected rows:
   IF self.curr.haskey("selection_beg") && self.curr.selection_beg GT 0 THEN BEGIN
-     background_colors[*, *, self.curr.selection_beg : self.curr.selection_end] = 200b
-     background_colors[2, *, self.curr.selection_beg : self.curr.selection_end] = 255b
+     selection_size = self.curr.selection_end - self.curr.selection_beg + 1
+     selection_colors = rebin(self.d.color_selection, 3, num_table_columns, selection_size)
+     background_colors[*, *, self.curr.selection_beg : self.curr.selection_end] = selection_colors
   END
   
   ;; Sort column. NOTE: Just a brightened version of current colors!!
@@ -392,6 +391,7 @@ END
 
 
 PRO spice_cat::display_displayed_list, keep_selection=keep_selection
+  start_time = systime(1)
   widget_control, self.wid.table_id, update=1
   
   widget_control, self.wid.table_id, column_widths=self.current_column_widths()
@@ -412,7 +412,7 @@ PRO spice_cat::display_displayed_list, keep_selection=keep_selection
 
   widget_control, self.wid.table_id, update=1
   
-  widget_control, self.wid.table_id, column_widths=self.current_column_widths()
+  print, "Update released:", systime(1) - start_time
 END
 
 ;;
@@ -421,8 +421,8 @@ PRO spice_cat::_____________EVENT_HANDLING_HELPERS                      & END
 
 FUNCTION spice_cat::get_filter_by_column_name, column_name
   column_number = where(self.curr.column_names EQ column_name)
-  select = [column_number, 0, column_number, 0]
-  widget_control, self.wid.table_id, get_value=filter_as_text, use_table_select=select
+  filters_as_text = self.curr.filters_as_text ;; Core-dump if not
+  filter_as_text = filters_as_text.(column_number)
   return, self.filter_as_array(filter_as_text)
 END
 
@@ -452,24 +452,19 @@ END
 
 PRO spice_cat::set_filter_cell_to_edit_color, column_name, clear=clear
   num_columns = n_elements(tag_names(self.curr.displayed))
-  table_select = [0, 0, num_columns-1, 0]
-  widget_control, self.wid.table_id, background_color=[230b,255b,230b], use_table_select=table_select
+  filter_colors = self.baseline_filter_colors(table_selection = selection)
   
-  IF keyword_set(clear) THEN return
-  
-  column_number = (where(self.curr.column_names EQ column_name))[0]
-  table_select = [column_number, 0, column_number, 0]
-  color = [150b, 255b, 150b]
-  widget_control, self.wid.table_id, background_color=color, use_table_select=table_select
+  IF NOT keyword_set(clear) THEN BEGIN 
+     column_number = (where(self.curr.column_names EQ column_name))[0]
+     filter_colors[*, column_number, 0] = self.d.color_editing_filter
+  END
+  widget_control, self.wid.table_id, background_color=filter_colors, use_table_select=selection
 END
 
 
 FUNCTION spice_cat::absorb_filter_focus_change, event, column_name
   IF tag_names(event,/structure_name) EQ "WIDGET_KBRD_FOCUS" THEN BEGIN
-     IF self.curr.ignore_next_focus_change EQ 0 THEN BEGIN 
-        IF event.enter GE 0 THEN self.set_filter_cell_to_edit_color, column_name
-        IF event.enter EQ 0 THEN self.set_filter_cell_to_edit_color, /clear
-     END
+     IF event.enter GE 0 THEN self.set_filter_cell_to_edit_color, column_name
      return,1 ; It's OK, dealt with!
   END
   return,0 ; It wasn't a keyboard focus event, not ok
@@ -539,6 +534,7 @@ END
 
 
 PRO spice_cat::handle_remove_column, event, parts
+  start_time = systime(1)
   column_name = parts[1]
   
   goodix = where(self.curr.column_names NE column_name, count)
@@ -555,7 +551,9 @@ PRO spice_cat::handle_remove_column, event, parts
   END
   
   self.create_displayed_list, new_column_names
+  start_time = systime(1)
   self.display_displayed_list, /keep_selection
+  print, "Remove_column:", systime(1)-start_time
 END
 
 
@@ -670,23 +668,6 @@ PRO spice_cat::handle_range_filter_change, event, parts
 END
 
 
-PRO spice_cat::handle_filter_cell_flash_timer, event, parts
-  iteration = parts[1].toInteger()
-
-  IF (iteration MOD 2)+1 THEN widget_control,self.wid.filter_focus_flash_text,/input_focus $
-  ELSE                        widget_control, self.wid.draw_focus_away, /input_focus
-  
-  IF iteration LT 4 THEN BEGIN
-     self.curr.ignore_next_focus_change = 1
-     iteration++
-     widget_control, event.id, set_uvalue="FILTER_CELL_FLASH_TIMER`"+iteration.toString()
-     widget_control, event.id, timer=0.05
-  END ELSE BEGIN
-     self.curr.ignore_next_focus_change = 0
-  END
-END
-
-
 PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   widget_control, self.wid.top_base, update=0
   
@@ -703,7 +684,7 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   IF text THEN self.build_text_filter, column_name, new_filter_as_array
   IF range THEN self.build_range_filter, column_name, new_filter_as_array
   
-  widget_control, self.wid.filter_focus_flash_text, /input_focus
+  widget_control, self.wid.filter_focus_text, /input_focus
   
   widget_control, self.wid.top_base, update=1
 END
@@ -809,7 +790,7 @@ PRO spice_cat::build_text_filter, column_name, filter_as_array
                                      _extra=text_props, uvalue=filter_text_uvalue)
   button_uvalue = "REBUILD_FILTER`"+column_name+"``"
   button = widget_button(self.wid.filter_base, value="Use alphabetical range", uvalue=button_uvalue)
-  self.wid.filter_focus_flash_text = self.wid.filter_text
+  self.wid.filter_focus_text = self.wid.filter_text
   widget_control, self.wid.filter_text, set_text_select=strlen(filter_as_text)
 END
 
@@ -842,7 +823,7 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
      button = widget_button(self.wid.filter_base, value="Use regexp", uvalue=button_uvalue)
   END
   
-  self.wid.filter_focus_flash_text = min_text
+  self.wid.filter_focus_text = min_text
 END
 
 
@@ -1063,6 +1044,7 @@ PRO spice_cat::parameters, modal=modal, base=base
   
   self.d = dictionary() ;; "Data"
   self.curr = dictionary() ;; Current values
+  self.last = dictionary() ;; Last values
   
   self.d.spice_datadir = spice_datadir
   self.d.listfilename = concat_dir(spice_datadir, 'spice_fitslist.txt')
@@ -1116,7 +1098,7 @@ END
 
 
 PRO spice_cat_define_structure
-  dummy = {spice_cat, d: dictionary(), wid:dictionary(), curr: dictionary()}
+  dummy = {spice_cat, d: dictionary(), wid:dictionary(), curr: dictionary(), last:dictionary()}
 END
 
 
@@ -1137,7 +1119,7 @@ PRO spice_cat, cat                  ;; IDL> spice_cat
 END
 
 ;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
-;setenv, "SPICE_CAT_KEYWORDS="
+setenv, "SPICE_CAT_KEYWORDS="
 
 spice_cat, o
 
