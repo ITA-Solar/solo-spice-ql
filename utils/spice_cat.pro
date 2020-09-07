@@ -329,14 +329,23 @@ END
 FUNCTION spice_cat::background_colors
   num_table_columns = n_elements(self.curr.column_names)
   num_table_rows = n_elements(self.curr.displayed)
-  background_colors = replicate(230b, 3, num_table_columns, num_table_rows)
-  background_colors[1, *, 0] = 255b
+  
+  ;; Basic:
+  background_colors = rebin(self.d.color_table, 3, num_table_columns, num_table_rows)
+  
+  ;; Light green filters:
+  background_colors = self.baseline_filter_colors(background_colors)
+  
+  ;; Selected rows:
   IF self.curr.haskey("selection_beg") && self.curr.selection_beg GT 0 THEN BEGIN
      background_colors[*, *, self.curr.selection_beg : self.curr.selection_end] = 200b
      background_colors[2, *, self.curr.selection_beg : self.curr.selection_end] = 255b
   END
+  
+  ;; Sort column. NOTE: Just a brightened version of current colors!!
   sort_column_ix = (where(self.curr.sort_column EQ self.curr.column_names))[0]
   background_colors[*, sort_column_ix, *] = (background_colors[*, sort_column_ix, *] + 40) < 255
+  
   return, background_colors
 END
 
@@ -385,17 +394,22 @@ END
 PRO spice_cat::display_displayed_list, keep_selection=keep_selection
   widget_control, self.wid.table_id, update=1
   
-  IF NOT keyword_set(keep_selection) THEN self.register_selection, /blank
+  widget_control, self.wid.table_id, column_widths=self.current_column_widths()
+  print, "Column_widths:", systime(1)-start_time
   
-  widget_control,self.wid.table_id, set_value=self.curr.displayed
-  widget_control,self.wid.table_id, table_ysize=n_elements(self.curr.displayed)
-  widget_control, self.wid.table_id, table_xsize=n_elements(tag_names(self.curr.displayed))
-  widget_control,self.wid.table_id, alignment=self.cell_alignments()
-  widget_control,self.wid.table_id, background_color=self.background_colors()
-  widget_control, self.wid.table_id, column_labels = self.current_column_labels()
+;  IF NOT keyword_set(keep_selection) THEN self.register_selection, /blank
+  start_time = systime(1)
+  widget_control, self.wid.table_id, $
+                  set_value=self.curr.displayed, $
+                  table_ysize=n_elements(self.curr.displayed), $
+                  table_xsize=n_elements(tag_names(self.curr.displayed)), $
+                  alignment=self.cell_alignments(), $
+                  column_labels=self.current_column_labels()
   
   self.set_message, "Files found:", " "+(n_elements(self.curr.displayed)-1).tostring()
   
+  widget_control,self.wid.table_id, background_color=self.background_colors()
+
   widget_control, self.wid.table_id, update=1
   
   widget_control, self.wid.table_id, column_widths=self.current_column_widths()
@@ -534,7 +548,9 @@ PRO spice_cat::handle_remove_column, event, parts
   
   IF column_name EQ self.curr.sort_column THEN BEGIN
      newsort = self.curr.column_names[0]
-     IF (where(new_column_names EQ 'DATE-BEG'))[0] NE -1 THEN newsort = 'DATE-BEG'
+     IF (where(new_column_names EQ 'DATE-BEG'))[0] NE -1 THEN newsort = 'DATE-BEG' $
+     ELSE IF (where(new_column_names EQ 'FILENAME'))[0] NE -1 THEN newsort = 'FILENAME' $
+     ELSE newsort = new_column_names[0]
      self.curr.sort_column = newsort
   END
   
@@ -687,8 +703,7 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   IF text THEN self.build_text_filter, column_name, new_filter_as_array
   IF range THEN self.build_range_filter, column_name, new_filter_as_array
   
-  widget_control, self.wid.filter_base, set_uvalue="FILTER_CELL_FLASH_TIMER`1
-  widget_control, self.wid.filter_base, timer=0.05
+  widget_control, self.wid.filter_focus_flash_text, /input_focus
   
   widget_control, self.wid.top_base, update=1
 END
@@ -873,11 +888,19 @@ PRO spice_cat::build_add_column_menu, base, uvalue
   END
 END
 
+
+PRO spice_cat::desensitize_button_by_uvalue, struct_arr, uvalue
+  matching_uvalue_ix = (where(struct_arr[*].uvalue.startswith(uvalue)))[0]
+  IF matching_uvalue_ix NE -1 THEN struct_arr[matching_uvalue_ix].sensitive = 0
+END
+
 PRO spice_cat::build_context_menu_heading, base, ev
-  tag_name = (tag_names(self.curr.displayed))[ev.col]
-  column_name = tag_name.replace('$', '-')
+  column_name = ((tag_names(self.curr.displayed))[ev.col]).replace('$', '-')
+  num_columns = n_elements(self.curr.displayed)
   
-  buttons = [ {value:"Sort increasing",  uvalue:"SORT`INCREASING`",  sensitive:1 }, $
+  ;; TODO: Add button showing full header name
+  buttons = [ {value: "Column: " + column_name, uvalue: "NULL`", sensitive:1}, $
+              {value:"Sort increasing",  uvalue:"SORT`INCREASING`",  sensitive:1 }, $
               {value:"Sort decreasing",  uvalue:"SORT`DECREASING`",  sensitive:1 }, $
               {value:"Move left",        uvalue:"MOVE`LEFT`",        sensitive:1 }, $
               {value:"Move right",       uvalue:"MOVE`RIGHT`",       sensitive:1 }, $
@@ -886,18 +909,13 @@ PRO spice_cat::build_context_menu_heading, base, ev
               {value:"Remove column",    uvalue:"REMOVE_COLUMN`",    sensitive:1 } $
             ]
   
-  buttons[*].uvalue = buttons[*].uvalue + column_name
-
-  uvalue_for_current_sorting = "SORT`" + self.curr.sort_order + "`" + self.curr.sort_column
+  buttons[*].uvalue += column_name
   
-  possible_matching_uvalue_ix = (where(buttons.uvalue EQ uvalue_for_current_sorting))[0]
-  IF possible_matching_uvalue_ix NE -1 THEN buttons[possible_matching_uvalue_ix].sensitive = 0
+  current_sort_uvalue = "SORT`" + self.curr.sort_order + "`" + self.curr.sort_column
+  self.desensitize_button_by_uvalue, buttons, current_sort_uvalue
   
-  column_position = (where(column_name EQ self.curr.column_names))[0]
-  move_left_insensitive = column_position EQ 0
-  move_right_insensitive = column_position EQ (n_elements(self.curr.column_names)-1)
-  IF move_left_insensitive THEN buttons[2].sensitive = 0
-  IF move_right_insensitive THEN buttons[3].sensitive = 0
+  IF ev.col EQ 0 THEN self.desensitize_button_by_uvalue, buttons, "MOVE`LEFT"
+  IF ev.col EQ num_columns THEN self.desensitize_button_by_uvalue, buttons, "MOVE`RIGHT"
   
   foreach button, buttons DO BEGIN
      add_column_menu = strmid(button.uvalue, 0, 10) EQ "ADD_COLUMN"
@@ -1011,7 +1029,6 @@ END
 
 
 PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
-  
   widget_control, event.top, get_uvalue=self
   
   IF event.id EQ event.top THEN BEGIN ;; TLB event has ID = TOP
@@ -1022,9 +1039,21 @@ PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
   widget_control, event.id, get_uvalue=uvalue
   
   parts = uvalue.split('`')
+  IF parts[0] EQ "NULL" THEN return
+  
   method = "handle_"+parts[0]
   
   call_method,method, self, event, parts
+END
+
+
+
+PRO spice_cat::set_background_colors
+  self.d.color_table = replicate(230b, 3)
+  self.d.color_filter = [230b, 255b, 230b]
+  self.d.color_editing_filter = [150b, 255b, 150b]
+  self.d.color_filter_in_use = [255b, 150b, 150b]
+  self.d.color_selection = [200b, 200b, 255b]
 END
 
 
@@ -1035,15 +1064,12 @@ PRO spice_cat::parameters, modal=modal, base=base
   self.d = dictionary() ;; "Data"
   self.curr = dictionary() ;; Current values
   
+  self.d.spice_datadir = spice_datadir
+  self.d.listfilename = concat_dir(spice_datadir, 'spice_fitslist.txt')
+  
   self.d.modal = keyword_set(modal)
   self.d.programs = ["help", "print"] ;; TODO: plug in Martin's routines
   self.d.keyword_info = spice_keyword_info(/all)
-  
-  spice_default,listfiledir,spice_datadir
-  
-  self.d.spice_datadir = spice_datadir
-  self.d.listfiledir = listfiledir
-  self.d.listfilename = concat_dir(listfiledir, 'spice_fitslist.txt')
   
   column_names = getenv("SPICE_CAT_KEYWORDS")
   IF column_names GT "" THEN BEGIN
@@ -1052,11 +1078,12 @@ PRO spice_cat::parameters, modal=modal, base=base
      IF total(column_names EQ "DATE-BEG") EQ 0 THEN column_names = ["DATE-BEG", column_names]
      IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
      self.curr.column_names = column_names
-     print, self.curr.column_names
   END
   
   self.curr.sort_column = 'DATE-BEG'
   self.curr.sort_order = "INCREASING"
+  
+  self.set_background_colors
 END
 
 
@@ -1073,6 +1100,9 @@ PRO spice_cat::start
   xmanager,"spice_cat", self.wid.top_base, no_block=no_block, event_handler=event_handler
 END
 
+PRO spice_cat::halt
+  stop
+END
 
 function spice_cat::init, modal=modal
   self.replace_previous_incarnation
@@ -1110,6 +1140,7 @@ END
 ;setenv, "SPICE_CAT_KEYWORDS="
 
 spice_cat, o
+
 ;
 ; The beginnings of unit testing! Can also be used for compoud widgets in
 ; isolation!
