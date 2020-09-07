@@ -267,8 +267,6 @@ PRO spice_cat::create_displayed_list, column_names
   self.curr.displayed = temporary(new_list)
   self.curr.column_names = (tag_names(self.curr.displayed)).replace('$','-')
   
-  self.check_for_actual_change
-  
   print, "CREATE_DISPLAYED_LIST:", systime(1)-start_time
 END
 
@@ -296,6 +294,7 @@ END
 FUNCTION spice_cat::baseline_filter_colors, filter_colors, table_selection=table_selection
   num_columns = n_elements(self.curr.column_names)
   regular_filter_colors = rebin(self.d.color_filter, 3, num_columns)
+  
   IF n_elements(filter_colors) EQ 0 THEN BEGIN
      filter_colors = regular_filter_colors
   END ELSE BEGIN
@@ -379,14 +378,9 @@ FUNCTION spice_cat::current_column_labels
 END
 
 
-PRO spice_cat::display_displayed_list, keep_selection=keep_selection
-  start_time = systime(1)
+PRO spice_cat::display_displayed_list
   widget_control, self.wid.table_id, update=1
   
-  widget_control, self.wid.table_id, column_widths=self.current_column_widths()
-  print, "Column_widths:", systime(1)-start_time
-  
-;  IF NOT keyword_set(keep_selection) THEN self.register_selection, /blank
   start_time = systime(1)
   widget_control, self.wid.table_id, $
                   set_value=self.curr.displayed, $
@@ -394,6 +388,8 @@ PRO spice_cat::display_displayed_list, keep_selection=keep_selection
                   table_xsize=n_elements(tag_names(self.curr.displayed)), $
                   alignment=self.cell_alignments(), $
                   column_labels=self.current_column_labels()
+  
+  widget_control, self.wid.table_id, column_widths=self.current_column_widths()
   
   self.set_message, "Files found:", " "+(n_elements(self.curr.displayed)-1).tostring()
   
@@ -541,7 +537,7 @@ PRO spice_cat::handle_remove_column, event, parts
   
   self.create_displayed_list, new_column_names
   start_time = systime(1)
-  self.display_displayed_list, /keep_selection
+  self.display_displayed_list
   print, "Remove_column:", systime(1)-start_time
 END
 
@@ -1084,6 +1080,8 @@ END
 
 function spice_cat::init, modal=modal, keywords=keywords, widths=widths
   self.replace_previous_incarnation
+  IF n_elements(keywords) GT 0 THEN setenv, "SPICE_CAT_KEYWORDS=" + keywords
+  IF n_elements(widths) GT 0 THEN setenv, "SPICE_CAT_KEYWORD_WIDTHS=" + widths
   self.parameters, modal = modal
   self.load_fitslist
   self.create_displayed_list
@@ -1098,7 +1096,7 @@ PRO spice_cat_define_structure
 END
 
 
-FUNCTION spice_cat                   ;; IDL> selection = spice_cat()
+FUNCTION spice_cat, keywords=keywords, widths=widths ;; IDL> selection = spice_cat()
   spice_cat_define_structure
   cat = obj_new('spice_cat',/modal)
   cat.start ; Blocking
@@ -1108,16 +1106,13 @@ FUNCTION spice_cat                   ;; IDL> selection = spice_cat()
 END
 
 
-PRO spice_cat, cat                  ;; IDL> spice_cat
+PRO spice_cat, output_object, keywords=keywords, widths=widths ;; IDL> spice_cat
   spice_cat_define_structure
-  cat = obj_new('spice_cat')
-  cat.start
+  output_object = obj_new('spice_cat', keywords=keywords, widths=widths)
+  output_object.start
 END
 
-;setenv, "SPICE_CAT_KEYWORD_WIDTHS=FILENAME:50,DATE-BEG:20"
-setenv, "SPICE_CAT_KEYWORDS="
-
-spice_cat, o
+spice_cat, o, keywords="FILENAME,DATE-BEG"
 
 ;
 ; The beginnings of unit testing! Can also be used for compoud widgets in
