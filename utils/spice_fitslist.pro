@@ -108,6 +108,8 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles, fake_fac
   IF fits_filelist(0) EQ '' THEN BEGIN
      MESSAGE,"No fits files found, exiting"
      RETURN
+  END ELSE BEGIN
+     PRINT, "Found " + (n_elements(fits_filelist)).toString() + " files"
   END
   
   PRINT,"About to create new " + listfilename + " with "+ $
@@ -138,5 +140,5 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles, fake_fac
   FREE_LUN,fitslist_lun
 END
 
-spice_fitslist, fake=10, /reset
+spice_fitslist, fake=1, /reset
 END
