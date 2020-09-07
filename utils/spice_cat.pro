@@ -117,17 +117,6 @@ FUNCTION spice_cat::selection
 END
 
 
-PRO spice_cat::replace_previous_incarnation
-  COMMON spice_cat, previous_incarnation
-  IF obj_valid(previous_incarnation) THEN BEGIN
-     user_set_columns = getenv("SPICE_CAT_KEYWORDS")
-     obj_destroy, previous_incarnation ;; Will change SPICE_CAT_KEYWORDS!
-     setenv, "SPICE_CAT_KEYWORDS=" + user_set_columns
-  END
-  previous_incarnation = self
-END
-
-
 PRO spice_cat::safe_struct_assign, source, destination
   ;; Builtin STRUCT_ASSIGN BLANKS OUT tags that do not exist in source!!!
   source_tag_names = tag_names(source)
@@ -1086,7 +1075,14 @@ PRO spice_cat::halt
   stop
 END
 
-function spice_cat::init, modal=modal
+PRO spice_cat::replace_previous_incarnation
+  COMMON spice_cat, previous_incarnation
+  IF obj_valid(previous_incarnation) THEN obj_destroy, previous_incarnation
+  previous_incarnation = self
+END
+
+
+function spice_cat::init, modal=modal, keywords=keywords, widths=widths
   self.replace_previous_incarnation
   self.parameters, modal = modal
   self.load_fitslist
