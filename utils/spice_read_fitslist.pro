@@ -1,4 +1,5 @@
 FUNCTION spice_read_fitslist, listfilename
+  start_time = systime(1)
   openr, lun, listfilename, /get_lun
   t = ''
   readf, lun, t
@@ -19,5 +20,7 @@ FUNCTION spice_read_fitslist, listfilename
      fitslist.add, entry
   END
   free_lun, lun
-  return, fitslist.toArray()
+  fits_array = fitslist.toArray()
+  print, "SPICE_READ_FITSLIST used ", systime(1)-start_time, " seconds "
+  return, fits_array
 END 
