@@ -302,6 +302,29 @@ FUNCTION spice_cat::cell_alignments
   return,cell_alignments
 END
 
+;
+; Input "filter_colors" may be none or an array (3,cols,rows) where the rows
+; dimension is optional
+;
+FUNCTION spice_cat::baseline_filter_colors, filter_colors, table_selection=table_selection
+  num_columns = n_elements(self.curr.column_names)
+  regular_filter_colors = rebin(self.d.color_filter, 3, num_columns)
+  IF n_elements(filter_colors) EQ 0 THEN BEGIN
+     filter_colors = regular_filter_colors
+  END ELSE BEGIN
+     filter_colors[*, *, 0] = regular_filter_colors
+  END
+  
+  foreach column_name, self.curr.column_names, index DO BEGIN
+     filter_as_text = self.filter_as_text(self.get_filter_by_column_name(column_name))
+     IF (filter_as_text NE "<filter>") AND (filter_as_text NE "") THEN BEGIN
+        filter_colors[*, index, 0] = self.d.color_filter_in_use
+     END
+  END
+  table_selection = [0, 0, n_elements(self.curr.column_names)-1, 0]
+  return, filter_colors
+END
+
 
 FUNCTION spice_cat::background_colors
   num_table_columns = n_elements(self.curr.column_names)
