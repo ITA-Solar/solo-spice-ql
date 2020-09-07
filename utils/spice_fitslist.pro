@@ -79,12 +79,13 @@ FUNCTION spice_fitslist__get_header,filename
 END
 
 
-PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
+PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles, fake_factor=fake_factor
   ON_ERROR,0
   
   keyword_info = spice_keyword_info(/all)
   
-  default,reset,1
+  default, reset,0
+  default, fake_factor, 1
   default,maxfiles,2000
   default,spice_datadir,getenv("SPICE_DATA")
   default,listfiledir,spice_datadir
@@ -131,9 +132,11 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles
   keys = (lines_in_hash.keys()).sort()
   OPENW,fitslist_lun,listfilename,/get_lun
   printf,fitslist_lun,comma_separated_keywords
-  foreach key,keys DO printf,fitslist_lun,lines_in_hash[key],format="(a)"
+  FOR fake=0, fake_factor-1 DO BEGIN 
+     foreach key,keys DO printf,fitslist_lun,lines_in_hash[key],format="(a)"
+  END
   FREE_LUN,fitslist_lun
 END
 
-spice_fitslist
+spice_fitslist, fake=10, /reset
 END
