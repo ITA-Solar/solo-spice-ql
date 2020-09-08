@@ -1,8 +1,9 @@
 FUNCTION spice_keyword_info_header
   text = spice_inline_text()
-;FILENAME= 'solo_L2_spice-n-exp_20200621T000329_V01_16777432-000.fits' / FI      '
-;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition       
 ;LEVEL   = 'L2      '           / Data processing level                          
+;FILENAME= 'solo_L2_spice-n-exp_20200621T000329_V01_16777432-000.fits' / FI      '
+;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition   
+;OBT_BEG =        646012990.301 /
 ;STUDYTYP= 'Single Exposure'    / Sit-and-stare, Raster or Single Exposure       
 ;STUDYDES= 'Standard dark for cruise phase' / Description of the study           
 ;STUDY   = 'CAL_DARK_FS_SL04_1.0S_FD' / SPICE Study name                         
@@ -136,7 +137,7 @@ FUNCTION spice_keyword_info,keywords,all=all
   header = spice_keyword_info_header()
   first_eight = (strmid(header, 0, 8)).trim()
   all_keywords = first_eight(where(first_eight NE ""))
-  all_keywords = [all_keywords[0:2], 'FIRST_RASTER', all_keywords[3:*]]
+  all_keywords = ['FIRST_RASTER', all_keywords]
   list = []
   foreach keyword, all_keywords DO BEGIN
      val = fxpar(header, keyword)
@@ -147,7 +148,7 @@ FUNCTION spice_keyword_info,keywords,all=all
         "LONG"   : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  4, type:"i"}
         "DOUBLE" : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  5, type:"i"}
      END
-     IF keyword EQ "FIRST_RASTER" THEN BEGIN
+     IF keyword EQ "FIRST_RASTER" OR keyword EQ "LEVEL" THEN BEGIN
         info.display_width = 2
         info.type = "t"
      END
