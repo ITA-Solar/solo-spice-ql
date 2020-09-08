@@ -1010,7 +1010,7 @@ PRO spice_cat::set_background_colors
   self.d.color_table = replicate(230b, 3)
   self.d.color_filter = [230b, 255b, 230b]
   self.d.color_editing_filter = [150b, 255b, 150b]
-  self.d.color_filter_in_use = [255b, 150b, 150b]
+  self.d.color_filter_in_use = [255b, 255b, 120b]
   self.d.color_selection = [200b, 200b, 255b]
 END
 
