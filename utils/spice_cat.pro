@@ -472,10 +472,6 @@ PRO spice_cat::set_message_to_full_content, sel
 END
 
 
-;; capture_column_widths is run for every column width change, not upon
-;; exiting spice_cat, because we want to capture columns that may be removed
-;; during the session. And yes, we're a bit lazy, using the common block that
-;; is, after all, necessary for setenv_commands to work.
 PRO spice_cat::capture_column_widths
   widths = widget_info(self.wid.table_id, /column_widths)
   foreach column_name, self.curr.column_names, index DO BEGIN
@@ -1033,9 +1029,11 @@ PRO spice_cat::parameters, modal=modal, base=base
      IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
      self.curr.column_names = column_names
   END
-  
+
   self.curr.sort_column = 'DATE-BEG'
   self.curr.sort_order = "INCREASING"
+  
+  self.init_column_widths
   
   self.set_background_colors
 END
@@ -1076,7 +1074,7 @@ PRO spice_cat_define_structure
 END
 
 
-FUNCTION spice_cat, keywords=keywords, widths=widths ;; IDL> selection = spice_cat()
+FUNCTION spice_cat ;; IDL> selection = spice_cat()
   spice_cat_define_structure
   cat = obj_new('spice_cat',/modal)
   cat.start ; Blocking
@@ -1086,7 +1084,7 @@ FUNCTION spice_cat, keywords=keywords, widths=widths ;; IDL> selection = spice_c
 END
 
 
-PRO spice_cat, output_object, keywords=keywords, widths=widths ;; IDL> spice_cat
+PRO spice_cat, output_object ;; IDL> spice_cat
   spice_cat_define_structure
   output_object = obj_new('spice_cat', keywords=keywords, widths=widths)
   output_object.start
