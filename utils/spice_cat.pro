@@ -126,6 +126,14 @@ PRO spice_cat::safe_struct_assign, source, destination
   END
 END
   
+
+PRO spice_cat::send_event, uvalue
+  widget_control, self.wid.draw_focus_away, set_uvalue=uvalue
+  event = {id:self.wid.draw_focus_away, top:self.wid.top_base}
+  spice_cat_______________catch_all_event_handler, event
+END
+
+
 ;;
 PRO spice_cat::_____________FILTER_CONVERSION___TEXT_vs_ARRAY       & END
 ;;
@@ -1051,13 +1059,6 @@ PRO spice_cat::parameters, modal=modal, base=base
   self.curr.sort_order = "INCREASING"
   
   self.set_background_colors
-END
-
-
-PRO spice_cat::send_event, uvalue
-  widget_control, self.wid.draw_focus_away, set_uvalue=uvalue
-  event = {id:self.wid.draw_focus_away, top:self.wid.top_base}
-  spice_cat_______________catch_all_event_handler, event
 END
 
 
