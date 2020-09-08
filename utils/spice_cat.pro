@@ -2,48 +2,22 @@
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
 ;;
   
-PRO spice_cat::setenv_commands, quiet=quiet
-  ;; Sorry, but for modal operation such as f = spice_cat(), there *has* to
-  ;; be a common block so the user can get to the commands later on
+PRO spice_cat::setenv_commands_info
   compile_opt static
-  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
-  
-  IF keyword_set(quiet) THEN BEGIN
-     print, "Column setup saved for this IDL session"
-     print, "To see how to preserve it for future sessions, type SPICE_CAT.SETENV_COMMANDS"
-  END
-  
-  keywords_command = "SPICE_CAT_KEYWORDS="
-  keywords_command += last_column_names.join(',')
-  setenv, keywords_command
-  
-  keyword_widths_command = "SPICE_CAT_KEYWORD_WIDTHS="
-  foreach width, widths_by_column_name, column_name DO BEGIN
-     IF n_elements(keyword_width_assignments) EQ 0 THEN keyword_width_assignments = []
-     keyword_width_assignments = [keyword_width_assignments, column_name + ":" + width.toString()]
-  END
-  keyword_widths_command += keyword_width_assignments.join(",")
-  setenv, keyword_widths_command
-  
-  IF NOT keyword_set(quiet) THEN BEGIN
-     print
-     print, "* Put these commands in your IDL startup to save the current column setup"
-     print, "* Equivalent commands may also be put in your shell initialization file"
-     print
-     
-     print, 'setenv,"' + keywords_command + '"'
-     print
-     
-     print, 'setenv,"' + keyword_widths_command + "'"
-     print
-  END
+  print
+  print, "* Put these commands in your IDL startup to save the current column setup"
+  print, "* Equivalent commands may also be put in your shell initialization file"
+  print
+  print, 'setenv, "SPICE_CAT_KEYWORDS=' + getenv("SPICE_CAT_KEYWORDS") + '"'
+  print
+  print, 'setenv, "SPICE_CAT_KEYWORD_WIDTHS="' + getenv("SPICE_CAT_KEYWORD_WIDTHS") + '"'
+  print
 END
 
 
 PRO spice_cat::cleanup
-  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
-  last_column_names = self.curr.column_names
-  self.setenv_commands, /quiet
+  print, "Column setup saved for this IDL session"
+  print, "To see how to preserve it for future sessions, type spice_cat.setenv_commands_info"
   IF widget_info(self.wid.top_base, /valid_id) THEN widget_control, self.wid.top_base, /destroy
 END
 
@@ -274,6 +248,7 @@ PRO spice_cat::create_displayed_list, column_names
   
   self.curr.displayed = temporary(new_list)
   self.curr.column_names = (tag_names(self.curr.displayed)).replace('$','-')
+  setenv, "SPICE_CAT_KEYWORDS=" + self.curr.column_names.join(',')
   
   print, "CREATE_DISPLAYED_LIST:", systime(1)-start_time
 END
@@ -345,12 +320,20 @@ FUNCTION spice_cat::background_colors
 END
 
 
-PRO spice_cat::init_column_widths
-  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
+PRO spice_cat::save_column_widths
+  foreach width, self.d.widths_by_column_name, column_name DO BEGIN
+     IF n_elements(keyword_width_assignments) EQ 0 THEN keyword_width_assignments = []
+     keyword_width_assignments = [keyword_width_assignments, column_name + ":" + width.toString()]
+  END
   
-  widths_by_column_name = hash()
+  setenv, "SPICE_CAT_KEYWORD_WIDTHS=" + keyword_width_assignments.join(",")
+END
+
+PRO spice_cat::init_column_widths
+  self.d.widths_by_column_name = hash()
+  
   foreach info, self.d.keyword_info, column_name DO BEGIN
-     widths_by_column_name[column_name] = info.display_width * 12
+     self.d.widths_by_column_name[column_name] = info.display_width * 12
   END
   
   ; Override with SPICE_CAT_KEYWORD_WIDTHS when set
@@ -360,17 +343,16 @@ PRO spice_cat::init_column_widths
   spice_cat_keyword_widths = spice_cat_keyword_widths.split(',')
   foreach width_setting, spice_cat_keyword_widths DO BEGIN
      parts = width_setting.split(':')
-     widths_by_column_name[parts[0]] = parts[1].toInteger()
+     self.d.widths_by_column_name[parts[0]] = parts[1].toInteger()
   END
+  self.save_column_widths
 END
   
 
 FUNCTION spice_cat::current_column_widths
-  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
-  IF n_elements(widths_by_column_name) EQ 0 THEN self.init_column_widths
   widths = []
   foreach column_name, self.curr.column_names DO BEGIN
-     widths = [widths, widths_by_column_name[column_name]]
+     widths = [widths, self.d.widths_by_column_name[column_name]]
   END
   return, widths
 END
@@ -445,13 +427,13 @@ END
 
 PRO spice_cat::set_filter_cell_to_edit_color, column_name, clear=clear
   num_columns = n_elements(tag_names(self.curr.displayed))
-  filter_colors = self.baseline_filter_colors(table_selection = selection)
+  filter_colors = self.baseline_filter_colors(table_selection = table_selection)
   
   IF NOT keyword_set(clear) THEN BEGIN 
      column_number = (where(self.curr.column_names EQ column_name))[0]
      filter_colors[*, column_number, 0] = self.d.color_editing_filter
   END
-  widget_control, self.wid.table_id, background_color=filter_colors, use_table_select=selection
+  widget_control, self.wid.table_id, background_color=filter_colors, use_table_select=table_selection
 END
 
 
@@ -495,12 +477,11 @@ END
 ;; during the session. And yes, we're a bit lazy, using the common block that
 ;; is, after all, necessary for setenv_commands to work.
 PRO spice_cat::capture_column_widths
-  COMMON spice_cat_column_setup, last_column_names, widths_by_column_name
-  
   widths = widget_info(self.wid.table_id, /column_widths)
   foreach column_name, self.curr.column_names, index DO BEGIN
-     widths_by_column_name[column_name] = fix(widths[index])
+     self.d.widths_by_column_name[column_name] = fix(widths[index])
   END
+  self.save_column_widths
 END
 
 ;;
@@ -554,8 +535,6 @@ PRO spice_cat::handle_add_column, event, parts
   left_or_right = parts[1]
   left_or_right_of = parts[2]
   add_column_name = parts[3]
-  
-  print, "ADD_COLUMN " + add_column_name + " " + left_or_right + " of " + left_or_right_of
   
   ref_col_ix = (where(left_or_right_of EQ self.curr.column_names))[0]
   
@@ -1113,13 +1092,21 @@ PRO spice_cat, output_object, keywords=keywords, widths=widths ;; IDL> spice_cat
   output_object.start
 END
 
-spice_cat, o, keywords="FILENAME,DATE-BEG"
+test = 0
+
+IF test THEN setenv, "SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN" $
+ELSE         setenv, "SPICE_CAT_KEYWORDS="
+
+spice_cat, o
 
 ;
 ; The beginnings of unit testing! Can also be used for compoud widgets in
 ; isolation!
-IF 0 THEN BEGIN 
-   setenv,"SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN"
+;
+; Would be nice with utility functions for creating dummy events (with e.g.
+; row begin/end for table selection
+;
+IF test THEN BEGIN 
    uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
             "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
             "ADD_COLUMN`RIGHT`NWIN`NWIN_INT", $
