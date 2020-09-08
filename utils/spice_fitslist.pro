@@ -61,7 +61,9 @@ END
 
 
 FUNCTION spice_fitslist__unique_key,line
-  return, line.extract("_[0-9]{8}T[0-9]{6}.*V[0-9]+")
+  level_1_to_3 = line.extract("solo_L[1-3]_spice.*_[0-9]{8}T[0-9]{6}.*V[0-9]+")
+  IF level_1_to_3 NE "" THEN return, level_1_to_3
+  return, line.extract("solo_L0_spice.*V[0-9]+")
 END
 
 
