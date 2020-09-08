@@ -80,8 +80,8 @@ PRO spice_cat::set_message, label, message, select=select
 END
 
 
-PRO spice_cat::register_selection, sel, blank=blank
-  IF keyword_set(blank) THEN BEGIN
+PRO spice_cat::register_selection, sel, clear=clear
+  IF keyword_set(clear) THEN BEGIN
      self.curr.selection = []
      self.curr.selection_beg = -1
      self.curr.selection_end = -1
@@ -304,6 +304,8 @@ FUNCTION spice_cat::baseline_filter_colors, filter_colors, table_selection=table
   return, filter_colors
 END
 
+;; TODO: TODO: Only redisplay when list is *actually* changed (keep list of FILENAME?)
+;;
 
 FUNCTION spice_cat::background_colors
   num_table_columns = n_elements(self.curr.column_names)
@@ -387,6 +389,7 @@ PRO spice_cat::display_displayed_list
   widget_control,self.wid.table_id, background_color=self.background_colors()
 
   widget_control, self.wid.table_id, update=1
+  widget_control, self.wid.table_id, set_table_select=[-1, -1, -1, -1]
   
   print, "Update released:", systime(1) - start_time
 END
@@ -412,11 +415,11 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, set_value=filter_as_text, use_table_select=select
   
-  ;; DON'T CHANGE! Using "self.curr.filters_as_text" DIRECTLY => core dump!
+  ;; DON'T CHANGE THIS LINE! Using "self.curr.filters_as_text" DIRECTLY => core dump!
   current_filters_as_text = self.curr.filters_as_text
-  
-  filters_as_text = self.curr.filters_as_text ;; CORE DUMP unless we do this!!
-  IF filter_as_text NE filters_as_text.(column_number) THEN BEGIN
+
+  IF filter_as_text NE current_filters_as_text.(column_number) THEN BEGIN
+     self.register_selection, /clear
      current_filters_as_text.(column_number) = filter_as_text
      self.curr.filters_as_text = current_filters_as_text
      self.create_displayed_list
@@ -519,8 +522,12 @@ PRO spice_cat::handle_remove_column, event, parts
      ELSE IF (where(new_column_names EQ 'FILENAME'))[0] NE -1 THEN newsort = 'FILENAME' $
      ELSE newsort = new_column_names[0]
      self.curr.sort_column = newsort
+     self.register_selection, /clear
   END
   
+  removed_filter = self.filter_as_text(self.get_filter_by_column_name(column_name))
+  IF removed_filter NE "<filter>" THEN self.register_selection, /clear
+
   self.create_displayed_list, new_column_names
   start_time = systime(1)
   self.display_displayed_list
@@ -588,6 +595,7 @@ END
 PRO spice_cat::handle_sort, event, parts
   self.curr.sort_order = parts[1]
   self.curr.sort_column = parts[2]
+  self.register_selection, /clear
   self.build_sort_pulldown
   self.create_displayed_list
   self.display_displayed_list
