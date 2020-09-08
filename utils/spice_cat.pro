@@ -341,14 +341,16 @@ PRO spice_cat::init_column_widths
   
   ; Override with SPICE_CAT_KEYWORD_WIDTHS when set
   spice_cat_keyword_widths = getenv("SPICE_CAT_KEYWORD_WIDTHS")
-  IF spice_cat_keyword_widths EQ "" THEN return
+  IF spice_cat_keyword_widths EQ "" THEN BEGIN
+     self.save_column_widths
+     return
+  END
   
   spice_cat_keyword_widths = spice_cat_keyword_widths.split(',')
   foreach width_setting, spice_cat_keyword_widths DO BEGIN
      parts = width_setting.split(':')
      self.d.widths_by_column_name[parts[0]] = parts[1].toInteger()
   END
-  self.save_column_widths
 END
   
 
@@ -1003,7 +1005,6 @@ PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
   
   call_method,method, self, event, parts
 END
-
 
 
 PRO spice_cat::set_background_colors
