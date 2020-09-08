@@ -15,6 +15,16 @@ PRO spice_cat::setenv_commands_info
 END
 
 
+PRO spice_cat::save_column_widths
+  foreach width, self.d.widths_by_column_name, column_name DO BEGIN
+     IF n_elements(keyword_width_assignments) EQ 0 THEN keyword_width_assignments = []
+     keyword_width_assignments = [keyword_width_assignments, column_name + ":" + width.toString()]
+  END
+  
+  setenv, "SPICE_CAT_KEYWORD_WIDTHS=" + keyword_width_assignments.join(",")
+END
+
+
 PRO spice_cat::cleanup
   print, "Column setup saved for this IDL session"
   print, "To see how to preserve it for future sessions, type spice_cat.setenv_commands_info"
@@ -319,15 +329,6 @@ FUNCTION spice_cat::background_colors
   return, background_colors
 END
 
-
-PRO spice_cat::save_column_widths
-  foreach width, self.d.widths_by_column_name, column_name DO BEGIN
-     IF n_elements(keyword_width_assignments) EQ 0 THEN keyword_width_assignments = []
-     keyword_width_assignments = [keyword_width_assignments, column_name + ":" + width.toString()]
-  END
-  
-  setenv, "SPICE_CAT_KEYWORD_WIDTHS=" + keyword_width_assignments.join(",")
-END
 
 PRO spice_cat::init_column_widths
   self.d.widths_by_column_name = hash()
