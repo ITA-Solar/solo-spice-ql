@@ -13,7 +13,7 @@
 ;               This file is used by SPICE_CAT in order to search/filter
 ;               the list of files for those files that the user wants.
 ;
-; Use         : SPICE_FITSLIST [,FITSDIR [,LISTDIR]]
+; Use         : SPICE_GEN_FITSLIST [,FITSDIR [,LISTDIR]]
 ;    
 ; Inputs      : None required.
 ;               
@@ -46,7 +46,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;-            
 
-FUNCTION spice_fitslist__line,header,keyword_info
+FUNCTION spice_gen_fitslist__line,header,keyword_info
   line = []
   keyword_array = keyword_info.keys()
   foreach keyword,keyword_array DO line =  [line, trim(fxpar(header,keyword))]
@@ -54,20 +54,20 @@ FUNCTION spice_fitslist__line,header,keyword_info
 END
 
 
-FUNCTION spice_fitslist__unique_key,line
+FUNCTION spice_gen_fitslist__unique_key,line
   level_1_to_3 = line.extract("solo_L[1-3]_spice.*_[0-9]{8}T[0-9]{6}.*V[0-9]+")
   IF level_1_to_3 NE "" THEN return, level_1_to_3
   return, line.extract("solo_L0_spice.*V[0-9]+")
 END
 
 
-FUNCTION spice_fitslist__stash_lines_in_hash,lines
-  keys = spice_fitslist__unique_key(lines)
+FUNCTION spice_gen_fitslist__stash_lines_in_hash,lines
+  keys = spice_gen_fitslist__unique_key(lines)
   return,hash(keys,lines) ;; Wow....
 END
 
 
-FUNCTION spice_fitslist__get_header,filename
+FUNCTION spice_gen_fitslist__get_header,filename
      openr,lun,filename,/get_lun
      fxhread,lun,header
      free_lun,lun
@@ -75,7 +75,7 @@ FUNCTION spice_fitslist__get_header,filename
 END
 
 
-PRO spice_fitslist,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
+PRO spice_gen_fitslist,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
   ON_ERROR,0
   
   keyword_info = spice_keyword_info(/all)
@@ -91,7 +91,7 @@ PRO spice_fitslist,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
   
   IF file_exist(listfilename) THEN BEGIN
      list = rd_ascii(listfilename)
-     lines_in_hash = spice_fitslist__stash_lines_in_hash(list[1:*])
+     lines_in_hash = spice_gen_fitslist__stash_lines_in_hash(list[1:*])
      print,"Found list, with "+trim(lines_in_hash.count())+" elements"
   END ELSE BEGIN
      PRINT,"No file "+listfilename+" found"
@@ -111,15 +111,15 @@ PRO spice_fitslist,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
      trim(N_ELEMENTS(fits_filelist))+" elements"
   
   FOREACH fits_filename, fits_filelist, index DO BEGIN
-     key = spice_fitslist__unique_key(fits_filename)
+     key = spice_gen_fitslist__unique_key(fits_filename)
      IF lines_in_hash.haskey(key) THEN BEGIN
         print,"Skipping "+key
         CONTINUE
      END
      
-     header = spice_fitslist__get_header(fits_filename)
+     header = spice_gen_fitslist__get_header(fits_filename)
      
-     lines_in_hash[key] = spice_fitslist__line(header,keyword_info)
+     lines_in_hash[key] = spice_gen_fitslist__line(header,keyword_info)
      PRINT,"Files done :",index+1," "+key
   END
   keyword_list = keyword_info.keys()
@@ -134,5 +134,5 @@ PRO spice_fitslist,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
   FREE_LUN,fitslist_lun
 END
 
-;spice_fitslist
+;spice_gen_fitslist
 ;END
