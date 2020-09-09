@@ -1,46 +1,38 @@
 ;+
 ; Project     : SOLAR ORBITER - SPICE     
 ;                   
-; Name        : SPICE_FITSLIST
+; Name        : SPICE_GEN_FITSLIST
 ;               
 ; Purpose     : Create/update the spice_fitslist.txt file.
 ;               
-; Explanation : This program creates/updates a file
-;               called spice_fitslist.txt in the fits file directory, with
-;               various information on the content of the files.
-;               This file is used by PICKFITS in order to search
+; Explanation : This program creates a file called spice_fitslist.txt in the
+;               $SPICE_DATA/ directory (but other paths can be specified),
+;               with various information on the content of the files found in
+;               the directory hierarchy below that path.
+;
+;               This file is used by SPICE_CAT in order to search/filter
 ;               the list of files for those files that the user wants.
 ;
 ; Use         : SPICE_FITSLIST [,FITSDIR [,LISTDIR]]
 ;    
 ; Inputs      : None required.
 ;               
-; Opt. Inputs : FITSDIR : The directory with the fits files to be in
-;                         the list. Default "SPICE_FITS_DATA"
+; Opt. Inputs : FITSDIR : The top of the directory tree containing the fits
+;                         files to be included in the list. Default is taken
+;                         from $SPICE_DATA
 ;
-;               LISTDIR : The directory to place the list in. This is
-;                         also the directory where the spice_fitslist.txt
-;                         file is created/updated. The default is
-;                         "$SPICE_FITS_DATA_W".
+;               LISTDIR : The directory to place the list in. The default is
+;                         to put the file at the top level of the scanned
+;                         directory tree
 ;               
 ; Outputs     : None.
 ;               
 ; Opt. Outputs: None.
 ;               
-; Keywords    : None.
+; Keywords    : fake_factor: Repeat all files fake_factor times (testing)
+;               reset: Default is true, reset=0 may have side effects 
 ;
-; Calls       : ?
-;
-; Common      : None.
-;               
-; Restrictions: Expects to find fits files in the specified directory.
-;               If there is already a spice_fitslist.txt file in the same
-;               directory, it has to have one or more entries.
-;               
-; Side effects: Creates/updates the file "spice_fitslist.txt" in the
-;               specified directory.
-;               
-; Category    : SPICE_Utility
+; Category    : SPICE_UTILITY
 ;               
 ; Prev. Hist. : 
 ;
@@ -48,8 +40,10 @@
 ;               
 ; Modified    : Version 1, SVHH, 9 August 2020
 ;                          Initial version based on sfitslist.pro
+;               Version 2, SVHH, 9 September 2020
+;                          Rewritten from scratch
 ;
-; Version     : Version 1, SVHH, 9 August 2020
+; Version     : Version 2, SVHH, 9 September 2020
 ;-            
 
 FUNCTION spice_fitslist__line,header,keyword_info
@@ -81,14 +75,13 @@ FUNCTION spice_fitslist__get_header,filename
 END
 
 
-PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles, fake_factor=fake_factor
+PRO spice_fitslist,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
   ON_ERROR,0
   
   keyword_info = spice_keyword_info(/all)
   
-  default, reset,0
-  default, fake_factor, 1
-  default,maxfiles,2000
+  default, reset,1
+  default,fake_factor, 1
   default,spice_datadir,getenv("SPICE_DATA")
   default,listfiledir,spice_datadir
   
@@ -128,7 +121,6 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles, fake_fac
      
      lines_in_hash[key] = spice_fitslist__line(header,keyword_info)
      PRINT,"Files done :",index+1," "+key
-     IF index GE maxfiles-1 THEN BREAK
   END
   keyword_list = keyword_info.keys()
   keyword_array = keyword_list.toArray()
@@ -142,5 +134,5 @@ PRO spice_fitslist,spice_datadir,listdir,reset=reset,maxfiles=maxfiles, fake_fac
   FREE_LUN,fitslist_lun
 END
 
-spice_fitslist, fake=1, /reset
-END
+;spice_fitslist
+;END
