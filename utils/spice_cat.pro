@@ -761,6 +761,7 @@ PRO spice_cat::_____________WIDGET_BUILDERS                   & END
 ;;
 
 PRO spice_cat::build_text_filter, column_name, filter_as_array
+  widget_control, self.wid.filter_base, update=0
   filter_as_text = filter_as_array[0]
   filter_text_uvalue = "TEXT_FILTER_CHANGE`" + column_name
   self.wid.filter_label = widget_label(self.wid.filter_base, value=column_name+":")
@@ -771,21 +772,21 @@ PRO spice_cat::build_text_filter, column_name, filter_as_array
   button = widget_button(self.wid.filter_base, value="Use alphabetical range", uvalue=button_uvalue)
   self.wid.filter_focus_text = self.wid.filter_text
   widget_control, self.wid.filter_text, set_text_select=strlen(filter_as_text)
+  widget_control, self.wid.filter_base, update=1
 END
 
 
 FUNCTION spice_cat::build_range_filter_text, base, column_name, minmax, value
   extra = {editable: 1b, all_events: 1b, kbrd_focus_events: 1b}
-  
   uvalue = "RANGE_FILTER_CHANGE`" + column_name
   text_id = widget_text(base, value=value, uvalue=uvalue, _extra=extra)
   widget_control, text_id, set_text_select=strlen(value)
-  
   return, text_id
 END
 
 
 PRO spice_cat::build_range_filter, column_name, filter_as_array
+  widget_control, self.wid.filter_base, update=0
   base = self.wid.filter_base
   
   min_text = self.build_range_filter_text(base, column_name, "MIN", filter_as_array[0])
@@ -803,6 +804,7 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
   END
   
   self.wid.filter_focus_text = min_text
+  widget_control, self.wid.filter_base, update=1
 END
 
 
