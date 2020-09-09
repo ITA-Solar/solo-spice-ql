@@ -1102,33 +1102,35 @@ PRO spice_cat, output_object ;; IDL> spice_cat
   output_object.start
 END
 
-test = 0
+development = 1
+run_tests = development AND 0
 
-IF test THEN setenv, "SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN" $
-ELSE         setenv, "SPICE_CAT_KEYWORDS="
+IF development THEN BEGIN
+   IF run_tests THEN setenv, "SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN" $
+   ELSE              setenv, "SPICE_CAT_KEYWORDS="
 
-spice_cat, o
-
-;
-; The beginnings of unit testing! Can also be used for compoud widgets in
-; isolation!
-;
-; Would be nice with utility functions for creating dummy events (with e.g.
-; row begin/end for table selection
-;
-IF test THEN BEGIN 
-   uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
-            "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
-            "ADD_COLUMN`RIGHT`NWIN`NWIN_INT", $
-            "REMOVE_COLUMN`STUDY_ID", $
-            "REMOVE_COLUMN`STUDYTYP", $
-            "REMOVE_COLUMN`NWIN_INT", $
-            "MOVE`LEFT`DATE-BEG", $
-            "MOVE`RIGHT`DATE-BEG", $
-            "MOVE`RIGHT`DATE-BEG", $
-            "MOVE`RIGHT`DATE-BEG", $
-            "MOVE`RIGHT`DATE-BEG" $
-           ]
-   foreach uval, uvals DO o.send_event, uval
+   spice_cat, o
+   ;;
+   ;; The beginnings of unit testing! Can also be used for compoud widgets in
+   ;; isolation!
+   ;;
+   ;; Would be nice with utility functions for creating dummy events (with e.g.
+   ;; row begin/end for table selection
+   ;;
+   IF run_tests THEN BEGIN 
+      uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
+               "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
+               "ADD_COLUMN`RIGHT`NWIN`NWIN_INT", $
+               "REMOVE_COLUMN`STUDY_ID", $
+               "REMOVE_COLUMN`STUDYTYP", $
+               "REMOVE_COLUMN`NWIN_INT", $
+               "MOVE`LEFT`DATE-BEG", $
+               "MOVE`RIGHT`DATE-BEG", $
+               "MOVE`RIGHT`DATE-BEG", $
+               "MOVE`RIGHT`DATE-BEG", $
+               "MOVE`RIGHT`DATE-BEG" $
+              ]
+      foreach uval, uvals DO o.send_event, uval
+   END
 END
 END
