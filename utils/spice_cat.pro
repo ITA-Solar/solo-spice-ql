@@ -136,6 +136,12 @@ PRO spice_cat::register_rows_selection, sel, clear=clear
      return
   END
   
+  ;; STUPID IDL gives selection events based on previous selection,
+  ;; even after table has been updated (i.e. the selected rows may be
+  ;; gone!!!!!!)
+  sel.top = sel.top < n_elements(self.curr.displayed)
+  sel.bottom = sel.bottom < n_elements(self.curr.displayed)
+
   self.curr.selection = self.curr.displayed[sel.top:sel.bottom].filename
   self.curr.selection_beg = sel.top
   self.curr.selection_end = sel.bottom
@@ -426,6 +432,13 @@ FUNCTION spice_cat::current_column_labels
 END
 
 
+PRO spice_cat::scroll_to_top_without_select
+  old_view = widget_info(self.wid.table_id, /table_view)
+  widget_control, self.wid.table_id, set_table_select=[-1, -1, -1, -1]
+  widget_control, self.wid.table_id, set_table_view=[old_view[0], 0]
+END
+
+
 PRO spice_cat::display_displayed_list
   widget_control, self.wid.table_id, update=1
   
@@ -444,6 +457,7 @@ PRO spice_cat::display_displayed_list
   widget_control,self.wid.table_id, background_color=self.background_colors()
 
   widget_control, self.wid.table_id, update=1
+  self.scroll_to_top_without_select
   
   print, "Update released:", systime(1) - start_time
 END
@@ -768,6 +782,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   IF handle_as_filter_click THEN BEGIN
      column_name = self.curr.column_names[sel.left]
      self.deal_with_click_on_filter_cell,column_name
+     self.scroll_to_top_without_select
   END
 END
 
