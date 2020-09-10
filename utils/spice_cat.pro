@@ -764,10 +764,11 @@ PRO spice_cat::handle_table_cell_sel, ev
   header_click = sel.left EQ sel.right AND sel.top EQ 0 AND sel.bottom EQ num_displayed - 1
   filter_click = single_cell AND sel.top EQ 0
   
-  IF (NOT header_click) AND (NOT filter_click) THEN return 
-  
-  column_name = self.curr.column_names[sel.left]
-  self.deal_with_click_on_filter_cell,column_name
+  handle_as_filter_click = header_click OR filter_click
+  IF handle_as_filter_click THEN BEGIN
+     column_name = self.curr.column_names[sel.left]
+     self.deal_with_click_on_filter_cell,column_name
+  END
 END
 
 
