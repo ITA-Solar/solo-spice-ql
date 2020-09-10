@@ -971,9 +971,6 @@ PRO spice_cat::build_context_menu_datacell, base, ev
   column_name = (tag_names(self.curr.displayed))[ev.col].replace('$', '-')
   cell_value = self.curr.displayed[ev.row].(ev.col).tostring()
   
-;  filename = self.curr.displayed[ev.row].filename
-;  filename_uvalue = "CONTEXT_CLICK_ON_FILENAME`"+filename
-  
   filter_on_value = "Filter on " + column_name + "='" + cell_value + "'"
   filter_on_value_uvalue = "FILTER_ON_PRECISE_CELL_VALUE`" + column_name + "`" + cell_value
   
