@@ -128,7 +128,7 @@ PRO spice_cat::set_message, label, message, select=select
 END
 
 
-PRO spice_cat::register_selection, sel, clear=clear
+PRO spice_cat::register_rows_selection, sel, clear=clear
   IF keyword_set(clear) THEN BEGIN
      self.curr.selection = []
      self.curr.selection_beg = -1
@@ -473,7 +473,7 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   current_filters_as_text = self.curr.filters_as_text
 
   IF filter_as_text NE current_filters_as_text.(column_number) THEN BEGIN
-     self.register_selection, /clear
+     self.register_rows_selection, /clear
      current_filters_as_text.(column_number) = filter_as_text
      self.curr.filters_as_text = current_filters_as_text
      self.create_displayed_list
@@ -576,11 +576,11 @@ PRO spice_cat::handle_remove_column, event, parts
      ELSE IF (where(new_column_names EQ 'FILENAME'))[0] NE -1 THEN newsort = 'FILENAME' $
      ELSE newsort = new_column_names[0]
      self.curr.sort_column = newsort
-     self.register_selection, /clear
+     self.register_rows_selection, /clear
   END
   
   removed_filter = self.filter_as_text(self.get_filter_by_column_name(column_name))
-  IF removed_filter NE "<filter>" THEN self.register_selection, /clear
+  IF removed_filter NE "<filter>" THEN self.register_rows_selection, /clear
 
   self.create_displayed_list, new_column_names
   start_time = systime(1)
@@ -649,7 +649,7 @@ END
 PRO spice_cat::handle_sort, event, parts
   self.curr.sort_order = parts[1]
   self.curr.sort_column = parts[2]
-  self.register_selection, /clear
+  self.register_rows_selection, /clear
   self.build_sort_pulldown
   self.create_displayed_list
   self.display_displayed_list
@@ -744,7 +744,7 @@ PRO spice_cat::handle_table_cell_sel, ev
   ;; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
   
-  IF sel.top GE 1 THEN self.register_selection, sel
+  IF sel.top GE 1 THEN self.register_rows_selection, sel
   
   ;; Only meaningful actions are:
   ;; EITHER to edit the filter:
