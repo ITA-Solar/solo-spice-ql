@@ -25,8 +25,10 @@ Selected files are highlighted in blue
 Context menus (right-click):
 
   Right-click on header: 
+     show full header name
      sort increasing/decreasing
      move column left/right
+     remove column
 
   Right-click on data cell:
      - Click filename... to do what? Start program w/file?
