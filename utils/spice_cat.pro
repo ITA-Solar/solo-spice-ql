@@ -1,3 +1,51 @@
+;+
+; Project     : SOLAR ORBITER - SPICE     
+;                   
+; Name        : SPICE_CAT
+;               
+; Purpose     : Interactively search list of files from spice_fitslist.txt
+;               
+; Explanation : This program allows filtering/sorting/selection of the
+;               contents in spice_fitslist.txt in the $SPICE_DATA/ directory
+;               (but other paths can be specified), generated with
+;               SPICE_GEN_FITSLIST.
+;
+;               See spice_cat_readme.txt for details
+;
+; Use         : spice_cat  (procedure)  OR  filelist=spice_cat()  (function)
+;    
+; Inputs      : None required.
+;               
+; Opt. Inputs : fitslist: Path to the spice_fitslist.txt file to be used
+;               
+; Outputs     : When used as a function, returns list of selected files if any
+;               
+; Opt. Outputs: None.
+;               
+; Keywords    : KEYWORDS: Comma-separated list of keywords to be displayed in
+;                         the table. If not supplied, the list is taken from
+;                         $SPICE_CAT_KEYWORDS. If that is not defined, all
+;                         keywords present in spice_fitslist.txt are
+;                         shown. Note that the application can be quite
+;                         sluggish if many keywords are shown for a long list
+;                         of files (>1000 files).
+;               WIDTHS: Comma-separated list of column width specifications in
+;                       the form of KEYWORD:width (in pixels). Normally taken
+;                       from $SPICE_CAT_KEYWORD_WIDTHS
+;
+; Category    : SPICE_UTILITY
+;               
+; Prev. Hist. : Concept based on cfitslist/sfitslist for CDS/SUMER files
+;
+; Written     : Stein Vidar H. Haugan, UiO, 9 August 2020
+;               
+; Modified    : Version 1, SVHH, 9 August 2020
+;                          Initial version based on sfitslist.pro
+;               Version 2, SVHH, 9 September 2020
+;                          Rewritten from scratch
+;
+; Version     : Version 2, SVHH, 9 September 2020
+;-            
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
 ;;
