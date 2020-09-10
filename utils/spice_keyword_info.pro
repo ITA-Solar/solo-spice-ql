@@ -1,9 +1,9 @@
 FUNCTION spice_keyword_info_header
   text = spice_inline_text()
+;OBT_BEG =        646012990.301 /
 ;LEVEL   = 'L2      '           / Data processing level                          
 ;FILENAME= 'solo_L2_spice-n-exp_20200621T000329_V01_16777432-000.fits' / FI      '
 ;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition   
-;OBT_BEG =        646012990.301 /
 ;STUDYTYP= 'Single Exposure'    / Sit-and-stare, Raster or Single Exposure       
 ;STUDYDES= 'Standard dark for cruise phase' / Description of the study           
 ;STUDY   = 'CAL_DARK_FS_SL04_1.0S_FD' / SPICE Study name                         
