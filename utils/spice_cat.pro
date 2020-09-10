@@ -7,8 +7,8 @@
 ;               
 ; Explanation : This program allows filtering/sorting/selection of the
 ;               contents in spice_fitslist.txt in the $SPICE_DATA/ directory
-;               (but other paths can be specified), generated with
-;               SPICE_GEN_FITSLIST.
+;               (but other paths can be specified, see FITSLIST below),
+;               generated with SPICE_GEN_FITSLIST.
 ;
 ;               See spice_cat_readme.txt for details
 ;
@@ -16,7 +16,7 @@
 ;    
 ; Inputs      : None required.
 ;               
-; Opt. Inputs : fitslist: Path to the spice_fitslist.txt file to be used
+; Opt. Inputs : FITSLIST: Path to the spice_fitslist.txt file to be used
 ;               
 ; Outputs     : When used as a function, returns list of selected files if any
 ;               
@@ -198,10 +198,15 @@ END
 
 
 FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
+  filter = filter.tolower()
+  print, "filter: " + filter
   filter_as_array = self.filter_as_array(filter)
   
-  IF n_elements(filter_as_array) EQ 1 THEN BEGIN 
-     mask = self.d.full_list[*].(full_list_tag_index).matches(filter_as_array[0],/fold_case)
+  IF n_elements(filter_as_array) EQ 1 THEN BEGIN
+     regex_from_glob = filter_as_array.replace("*", ".*")
+     regex_from_glob = regex_from_glob.replace("?", ".")
+     print, "Regex: " + regex_from_glob
+     mask = self.d.full_list[*].(full_list_tag_index).matches(regex_from_glob,/fold_case)
   END ELSE BEGIN
      min = filter_as_array[0]
      max = filter_as_array[1]
@@ -216,11 +221,11 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
      IF filter_as_array[0] EQ "" THEN BEGIN
         mask = replicate(1b,n_elements(self.d.full_list))
      END ELSE BEGIN
-        mask = self.d.full_list[*].(full_list_tag_index) GE min
+        mask = self.d.full_list[*].(full_list_tag_index).tolower() GE min
      END
      
      IF filter_as_array[1] NE "" THEN BEGIN
-        mask = mask AND self.d.full_list[*].(full_list_tag_index) LE max
+        mask = mask AND self.d.full_list[*].(full_list_tag_index).tolower() LE max
      END
   END
   return,mask
@@ -1090,10 +1095,11 @@ PRO spice_cat::parameters, modal=modal, fitslist=fitslist
      column_names = column_names.trim()
      IF total(column_names EQ "DATE-BEG") EQ 0 THEN column_names = ["DATE-BEG", column_names]
      IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
+     IF total(column_names EQ "OBT_BEG") EQ 0 THEN column_names = ["OBT_BEG", column_names]
      self.curr.column_names = column_names
   END
   
-  self.curr.sort_column = 'DATE-BEG'
+  self.curr.sort_column = 'OBT_BEG'
   self.curr.sort_order = "INCREASING"
   
   self.init_column_widths
