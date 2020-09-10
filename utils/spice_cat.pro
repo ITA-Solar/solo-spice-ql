@@ -1066,16 +1066,19 @@ PRO spice_cat::set_background_colors
 END
 
 
-PRO spice_cat::parameters, modal=modal, base=base
-  spice_datadir = getenv("SPICE_DATA")
-  IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATA is blank or not set"
-  
+PRO spice_cat::parameters, modal=modal, fitslist=fitslist
   self.d = dictionary() ;; "Data"
   self.curr = dictionary() ;; Current values
   self.last = dictionary() ;; Last values
   
-  self.d.spice_datadir = spice_datadir
-  self.d.listfilename = concat_dir(spice_datadir, 'spice_fitslist.txt')
+  IF NOT keyword_set(fitslist) THEN BEGIN
+     spice_datadir = getenv("SPICE_DATA")
+     IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATA is blank or not set"
+     fitslist = concat_dir(spice_datadir, 'spice_fitslist.txt')
+  END
+  
+  IF NOT file_test(fitslist, /regular) THEN message, "No spice_fitslist.txt file: " + fitslist
+  self.d.listfilename = fitslist
   
   self.d.modal = keyword_set(modal)
   self.d.programs = ["help", "print"] ;; TODO: plug in Martin's routines
@@ -1116,11 +1119,11 @@ PRO spice_cat::replace_previous_incarnation
 END
 
 
-function spice_cat::init, modal=modal, keywords=keywords, widths=widths
+function spice_cat::init, fitslist, modal=modal, keywords=keywords, widths=widths
   self.replace_previous_incarnation
   IF n_elements(keywords) GT 0 THEN setenv, "SPICE_CAT_KEYWORDS=" + keywords
   IF n_elements(widths) GT 0 THEN setenv, "SPICE_CAT_KEYWORD_WIDTHS=" + widths
-  self.parameters, modal = modal
+  self.parameters, modal = modal, fitslist = fitslist
   self.load_fitslist
   self.create_displayed_list
   self.build_widget
@@ -1134,9 +1137,9 @@ PRO spice_cat_define_structure
 END
 
 
-FUNCTION spice_cat ;; IDL> selection = spice_cat()
+FUNCTION spice_cat, fitslist, keywords=keywords, widths=widths ;; IDL> selection = spice_cat()
   spice_cat_define_structure
-  cat = obj_new('spice_cat',/modal)
+  cat = obj_new('spice_cat',fitslist, /modal, keywords=keywords, widths=widths)
   cat.start ; Blocking
   selection = cat.selection()
   obj_destroy, cat
@@ -1144,20 +1147,21 @@ FUNCTION spice_cat ;; IDL> selection = spice_cat()
 END
 
 
-PRO spice_cat, output_object ;; IDL> spice_cat
+PRO spice_cat, fitslist, output_object=object, keywords=keywords, widths=widths ;; IDL> spice_cat
   spice_cat_define_structure
-  output_object = obj_new('spice_cat', keywords=keywords, widths=widths)
-  output_object.start
+  object = obj_new('spice_cat', fitslist, keywords=keywords, widths=widths)
+  object.start
 END
 
-development = 1
-run_tests = development AND 0
+spice_cat_development = 1
+spice_cat_run_tests = spice_cat_development AND 0
 
-IF development THEN BEGIN
-   IF run_tests THEN setenv, "SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN" $
-   ELSE              setenv, "SPICE_CAT_KEYWORDS="
+IF spice_cat_development THEN BEGIN
+   IF spice_cat_run_tests THEN setenv, "SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN" $
+   ELSE                        setenv, "SPICE_CAT_KEYWORDS="
 
-   spice_cat, o
+   spice_cat, output_object=o ;; , keywords="FILENAME,DATE-BEG"
+   
    ;;
    ;; The beginnings of unit testing! Can also be used for compoud widgets in
    ;; isolation!
@@ -1165,7 +1169,7 @@ IF development THEN BEGIN
    ;; Would be nice with utility functions for creating dummy events (with e.g.
    ;; row begin/end for table selection
    ;;
-   IF run_tests THEN BEGIN 
+   IF spice_cat_run_tests THEN BEGIN 
       uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
                "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
                "ADD_COLUMN`RIGHT`NWIN`NWIN_INT", $
@@ -1180,5 +1184,4 @@ IF development THEN BEGIN
               ]
       foreach uval, uvals DO o.send_event, uval
    END
-END
 END
