@@ -74,6 +74,7 @@ END
 
 
 PRO spice_cat::cleanup
+  print
   print, "Column setup saved for this IDL session"
   print, "To see how to preserve it for future sessions, type spice_cat.setenv_commands_info"
   IF widget_info(self.wid.top_base, /valid_id) THEN widget_control, self.wid.top_base, /destroy
@@ -205,13 +206,11 @@ END
 
 FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
   filter = filter.tolower()
-  print, "filter: " + filter
   filter_as_array = self.filter_as_array(filter)
   
   IF n_elements(filter_as_array) EQ 1 THEN BEGIN
      regex_from_glob = filter_as_array.replace("*", ".*")
      regex_from_glob = regex_from_glob.replace("?", ".")
-     print, "Regex: " + regex_from_glob
      mask = self.d.full_list[*].(full_list_tag_index).matches(regex_from_glob,/fold_case)
   END ELSE BEGIN
      min = filter_as_array[0]
@@ -296,7 +295,6 @@ END
 
 
 PRO spice_cat::create_displayed_list, column_names
-  start_time = systime(1)
   IF NOT self.curr.haskey("column_names") THEN self.curr.column_names = self.d.full_column_names
   
   self.update_current_filters, column_names
@@ -318,8 +316,6 @@ PRO spice_cat::create_displayed_list, column_names
   self.curr.displayed = temporary(new_list)
   self.curr.column_names = (tag_names(self.curr.displayed)).replace('$','-')
   setenv, "SPICE_CAT_KEYWORDS=" + self.curr.column_names.join(',')
-  
-  print, "CREATE_DISPLAYED_LIST:", systime(1)-start_time
 END
 
 
@@ -442,7 +438,6 @@ END
 PRO spice_cat::display_displayed_list
   widget_control, self.wid.table_id, update=1
   
-  start_time = systime(1)
   widget_control, self.wid.table_id, $
                   set_value=self.curr.displayed, $
                   table_ysize=n_elements(self.curr.displayed), $
@@ -458,8 +453,6 @@ PRO spice_cat::display_displayed_list
 
   widget_control, self.wid.table_id, update=1
   self.scroll_to_top_without_select
-  
-  print, "Update released:", systime(1) - start_time
 END
 
 ;;
@@ -576,7 +569,6 @@ END
 
 
 PRO spice_cat::handle_remove_column, event, parts
-  start_time = systime(1)
   column_name = parts[1]
   
   goodix = where(self.curr.column_names NE column_name, count)
@@ -599,7 +591,6 @@ PRO spice_cat::handle_remove_column, event, parts
   self.create_displayed_list, new_column_names
   start_time = systime(1)
   self.display_displayed_list
-  print, "Remove_column:", systime(1)-start_time
 END
 
 
@@ -1169,7 +1160,7 @@ PRO spice_cat, fitslist, output_object=object, keywords=keywords, widths=widths 
   object.start
 END
 
-spice_cat_development = 1
+spice_cat_development = 0
 spice_cat_run_tests = spice_cat_development AND 0
 
 IF spice_cat_development THEN BEGIN
