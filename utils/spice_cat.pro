@@ -444,7 +444,6 @@ PRO spice_cat::display_displayed_list
   widget_control,self.wid.table_id, background_color=self.background_colors()
 
   widget_control, self.wid.table_id, update=1
-  widget_control, self.wid.table_id, set_table_select=[-1, -1, -1, -1]
   
   print, "Update released:", systime(1) - start_time
 END
@@ -767,7 +766,6 @@ PRO spice_cat::handle_table_cell_sel, ev
   
   IF (NOT header_click) AND (NOT filter_click) THEN return 
   
-  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
   column_name = self.curr.column_names[sel.left]
   self.deal_with_click_on_filter_cell,column_name
 END
@@ -853,7 +851,7 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
   
   IF self.d.keyword_info[column_name].type EQ "t" THEN BEGIN
      button_uvalue = "REBUILD_FILTER`" + column_name + "`"
-     button = widget_button(self.wid.filter_base, value="Use regexp", uvalue=button_uvalue)
+     button = widget_button(self.wid.filter_base, value="Use glob pattern", uvalue=button_uvalue)
   END
   
   self.wid.filter_focus_text = min_text
@@ -994,8 +992,6 @@ PRO spice_cat::build_table
   props = table_props.tostruct()
   self.wid.table_id = widget_table(self.wid.table_base, value=self.curr.displayed, _extra=props)
   self.display_displayed_list
-  
-  widget_control,self.wid.table_id,set_table_select=[-1,-1,-1,-1]
 END
 
 
