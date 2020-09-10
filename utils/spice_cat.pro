@@ -954,7 +954,7 @@ PRO spice_cat::build_context_menu_heading, base, ev
 END
 
 
-PRO spice_cat::handle_filter_on_full_value, ev, parts
+PRO spice_cat::handle_filter_on_precise_cell_value, ev, parts
   column_name = parts[1]
   full_value = parts[2]
   IF self.d.keyword_info[column_name].type EQ "t" THEN BEGIN 
@@ -963,6 +963,7 @@ PRO spice_cat::handle_filter_on_full_value, ev, parts
   IF self.d.keyword_info[column_name].type EQ "i" THEN BEGIN
      self.set_filter_by_column_name, column_name, [full_value, full_value]
   END
+  self.scroll_to_top_without_select
 END
 
 
@@ -974,7 +975,7 @@ PRO spice_cat::build_context_menu_datacell, base, ev
 ;  filename_uvalue = "CONTEXT_CLICK_ON_FILENAME`"+filename
   
   filter_on_value = "Filter on " + column_name + "='" + cell_value + "'"
-  filter_on_value_uvalue = "FILTER_ON_FULL_VALUE`" + column_name + "`" + cell_value
+  filter_on_value_uvalue = "FILTER_ON_PRECISE_CELL_VALUE`" + column_name + "`" + cell_value
   
   button = widget_button(base, value=filter_on_value, uvalue=filter_on_value_uvalue)
 END
