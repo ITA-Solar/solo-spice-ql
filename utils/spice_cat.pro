@@ -1067,7 +1067,7 @@ END
 
 
 PRO spice_cat::parameters, modal=modal, fitslist=fitslist
-  self.d = dictionary() ;; "Data"
+  self.d = dictionary()    ;; "Data"
   self.curr = dictionary() ;; Current values
   self.last = dictionary() ;; Last values
   
@@ -1092,7 +1092,7 @@ PRO spice_cat::parameters, modal=modal, fitslist=fitslist
      IF total(column_names EQ "FILENAME") EQ 0 THEN column_names = ["FILENAME", column_names]
      self.curr.column_names = column_names
   END
-
+  
   self.curr.sort_column = 'DATE-BEG'
   self.curr.sort_order = "INCREASING"
   
@@ -1159,7 +1159,7 @@ spice_cat_run_tests = spice_cat_development AND 0
 IF spice_cat_development THEN BEGIN
    IF spice_cat_run_tests THEN setenv, "SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN" $
    ELSE                        setenv, "SPICE_CAT_KEYWORDS="
-
+   
    spice_cat, output_object=o ;; , keywords="FILENAME,DATE-BEG"
    
    ;;
@@ -1184,4 +1184,5 @@ IF spice_cat_development THEN BEGIN
               ]
       foreach uval, uvals DO o.send_event, uval
    END
+END
 END
