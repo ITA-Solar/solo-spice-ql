@@ -3,12 +3,12 @@
 ;                   
 ; Name        : SPICE_CAT
 ;               
-; Purpose     : Interactively search list of files from spice_fitslist.txt
+; Purpose     : Interactively search list of files from spice_catalog.txt
 ;               
 ; Explanation : This program allows filtering/sorting/selection of the
-;               contents in spice_fitslist.txt in the $SPICE_DATA/ directory
-;               (but other paths can be specified, see FITSLIST below),
-;               generated with SPICE_GEN_FITSLIST.
+;               contents in spice_catalog.txt in the $SPICE_DATA/ directory
+;               (but other paths can be specified, see CATALOG below),
+;               generated with SPICE_GEN_CAT.
 ;
 ;               See spice_cat_readme.txt for details
 ;
@@ -16,7 +16,7 @@
 ;    
 ; Inputs      : None required.
 ;               
-; Opt. Inputs : FITSLIST: Path to the spice_fitslist.txt file to be used
+; Opt. Inputs : CATALOG: Path to the spice_catalog.txt file to be used
 ;               
 ; Outputs     : When used as a function, returns list of selected files if any
 ;               
@@ -25,7 +25,7 @@
 ; Keywords    : KEYWORDS: Comma-separated list of keywords to be displayed in
 ;                         the table. If not supplied, the list is taken from
 ;                         $SPICE_CAT_KEYWORDS. If that is not defined, all
-;                         keywords present in spice_fitslist.txt are
+;                         keywords present in spice_catalog.txt are
 ;                         shown. Note that the application can be quite
 ;                         sluggish if many keywords are shown for a long list
 ;                         of files (>1000 files).
@@ -195,12 +195,12 @@ END
 PRO spice_cat::_____________DATA_LOADING_AND_MANIPULATION           & END
 ;;
 
-PRO spice_cat::load_fitslist
-  fitslist = spice_read_fitslist(self.d.listfilename)  ;; Array of orderedhashes()
+PRO spice_cat::load_catalog
+  catalog = spice_read_cat(self.d.cat_filename)  ;; Array of orderedhashes()
   
-  self.d.full_list = fitslist
-  self.d.full_tag_names = tag_names(fitslist[0])
-  self.d.full_column_names = (tag_names(fitslist[0])).replace('$','-')
+  self.d.full_list = catalog
+  self.d.full_tag_names = tag_names(catalog[0])
+  self.d.full_column_names = (tag_names(catalog[0])).replace('$','-')
 END 
 
 
@@ -1072,19 +1072,19 @@ PRO spice_cat::set_background_colors
 END
 
 
-PRO spice_cat::parameters, modal=modal, fitslist=fitslist
+PRO spice_cat::parameters, modal=modal, catalog=catalog
   self.d = dictionary()    ;; "Data"
   self.curr = dictionary() ;; Current values
   self.last = dictionary() ;; Last values
   
-  IF NOT keyword_set(fitslist) THEN BEGIN
+  IF NOT keyword_set(catalog) THEN BEGIN
      spice_datadir = getenv("SPICE_DATA")
      IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATA is blank or not set"
-     fitslist = concat_dir(spice_datadir, 'spice_fitslist.txt')
+     catalog = concat_dir(spice_datadir, 'spice_catalog.txt')
   END
   
-  IF NOT file_test(fitslist, /regular) THEN message, "No spice_fitslist.txt file: " + fitslist
-  self.d.listfilename = fitslist
+  IF NOT file_test(catalog, /regular) THEN message, "No spice_catalog.txt file: " + catalog
+  self.d.cat_filename = catalog
   
   self.d.modal = keyword_set(modal)
   self.d.programs = ["help", "print"] ;; TODO: plug in Martin's routines
@@ -1126,12 +1126,12 @@ PRO spice_cat::replace_previous_incarnation
 END
 
 
-function spice_cat::init, fitslist, modal=modal, keywords=keywords, widths=widths
+function spice_cat::init, catalog, modal=modal, keywords=keywords, widths=widths
   self.replace_previous_incarnation
   IF n_elements(keywords) GT 0 THEN setenv, "SPICE_CAT_KEYWORDS=" + keywords
   IF n_elements(widths) GT 0 THEN setenv, "SPICE_CAT_KEYWORD_WIDTHS=" + widths
-  self.parameters, modal = modal, fitslist = fitslist
-  self.load_fitslist
+  self.parameters, modal = modal, catalog = catalog
+  self.load_catalog
   self.create_displayed_list
   self.build_widget
   
@@ -1144,9 +1144,9 @@ PRO spice_cat_define_structure
 END
 
 
-FUNCTION spice_cat, fitslist, keywords=keywords, widths=widths ;; IDL> selection = spice_cat()
+FUNCTION spice_cat, catalog, keywords=keywords, widths=widths ;; IDL> selection = spice_cat()
   spice_cat_define_structure
-  cat = obj_new('spice_cat',fitslist, /modal, keywords=keywords, widths=widths)
+  cat = obj_new('spice_cat',catalog, /modal, keywords=keywords, widths=widths)
   cat.start ; Blocking
   selection = cat.selection()
   obj_destroy, cat
@@ -1154,9 +1154,9 @@ FUNCTION spice_cat, fitslist, keywords=keywords, widths=widths ;; IDL> selection
 END
 
 
-PRO spice_cat, fitslist, output_object=object, keywords=keywords, widths=widths ;; IDL> spice_cat
+PRO spice_cat, catalog, output_object=object, keywords=keywords, widths=widths ;; IDL> spice_cat
   spice_cat_define_structure
-  object = obj_new('spice_cat', fitslist, keywords=keywords, widths=widths)
+  object = obj_new('spice_cat', catalog, keywords=keywords, widths=widths)
   object.start
 END
 

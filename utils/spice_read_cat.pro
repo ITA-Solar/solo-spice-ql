@@ -1,11 +1,11 @@
-FUNCTION spice_read_fitslist, listfilename
+FUNCTION spice_read_cat, catalog_file
   start_time = systime(1)
-  openr, lun, listfilename, /get_lun
+  openr, lun, catalog_file, /get_lun
   t = ''
   readf, lun, t
   keywords = strsplit(/extract, t, ",")
   tags = keywords.replace("-","$")
-  fitslist = list()
+  catalog = list()
   current_spiobsid = 0
   WHILE NOT eof(lun) DO BEGIN
      readf, lun, t
@@ -17,10 +17,9 @@ FUNCTION spice_read_fitslist, listfilename
         entry.first_raster = "x"
         current_spiobsid = entry.spiobsid
      END
-     fitslist.add, entry
+     catalog.add, entry
   END
   free_lun, lun
-  fits_array = fitslist.toArray()
-  print, "SPICE_READ_FITSLIST used ", systime(1)-start_time, " seconds "
+  fits_array = catalog.toArray()
   return, fits_array
 END 

@@ -1,7 +1,7 @@
 ; SPICE_CAT User Manual
 ;
 ; SPICE_CAT reads a SPICE fits file catalog with metadata about each fits
-; file, generated with SPICE_GEN_FITSLIST, and displays the information in a
+; file, generated with SPICE_GEN_CAT, and displays the information in a
 ; searchable and sortable table.
 ;
 ; When called as a FUNCTION, it returns a list of file names corresponding
@@ -19,9 +19,8 @@
 ;       some files are missing at the beginning of a series of raster
 ;       repetitions.
 ;
-; NOTE: Since L0 files do not have DATE-BEG, the default sort order is set to DATE_OBTIn order to sort L0 files chronologically, use OBT_BEG as the sort
-;       key.
-
+; NOTE: Since L0 files do not have DATE-BEG, the default sort order is set to
+;       DATE_OBT (the on-board time of DATE-BEG).
 ;
 ; ****** FUNCTIONALITIES OF BUTTONS ETC *******
 ;
@@ -101,8 +100,7 @@
 ; ******* ENVIRONMENT VARIABLES *******
 ;
 ;  SPICE_DATA points to the top of the data directory hierarchy (where the
-;  spice_fitslist.txt catalog should reside)
+;  spice_catalog.txt catalog should reside)
 ;
 ;  SPICE_CAT_KEYWORDS is a comma-separated list of the keywords to be shown in
 ;  the table. The environment variable is updated according to 
-
