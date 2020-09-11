@@ -120,7 +120,7 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
      header = spice_gen_cat__get_header(fits_filename)
      
      lines_in_hash[key] = spice_gen_cat__line(header,keyword_info)
-     PRINT,"Files done :",index+1," "+key
+     PRINT,"Files done :",(index+1).toString("(i6)")," "+key
   END
   keyword_list = keyword_info.keys()
   keyword_array = keyword_list.toArray()
