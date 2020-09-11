@@ -40,10 +40,10 @@
 ;               
 ; Modified    : Version 1, SVHH, 9 August 2020
 ;                          Initial version based on sfitslist.pro
-;               Version 2, SVHH, 9 September 2020
+;               Version 2, SVHH, 11 September 2020
 ;                          Rewritten from scratch
 ;
-; Version     : Version 2, SVHH, 9 September 2020
+; Version     : Version 2, SVHH, 11 September 2020
 ;-            
 
 FUNCTION spice_gen_cat__line,header,keyword_info
