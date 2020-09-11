@@ -1,7 +1,7 @@
 ; SPICE_CAT User Manual
 ;
 ; SPICE_CAT reads a SPICE fits file catalog with metadata about each fits
-; file, generated with SPICE_GEN_FITSLIST, and displays the information in a
+; file, generated with SPICE_GEN_CAT, and displays the information in a
 ; searchable and sortable table.
 ;
 ; When called as a FUNCTION, it returns a list of file names corresponding
@@ -10,18 +10,24 @@
 ;
 ;    IDL> files = spice_cat()     OR      IDL> spice_cat
 ;
-; NOTE: Upon reading the catalog, the application generates a synthetic
-;       keyword called FIRST_RASTER. This is set to "x" for files that are the
-;       first file (chronologically) which has this file's value of
-;       SPIOBSID. Since repeated rasters have the same SPIOBSID, this means
-;       that by filtering on this column being equal to "x", you will only see
-;       one line for each raster with multiple repetitions. This works even if
-;       some files are missing at the beginning of a series of raster
-;       repetitions.
+; If your data directory does not already contain a spice_catalog.txt file,
+; generate one by using SPICE_GEN_CAT.
 ;
-; NOTE: Since L0 files do not have DATE-BEG, the default sort order is set to DATE_OBTIn order to sort L0 files chronologically, use OBT_BEG as the sort
-;       key.
-
+; TIP 1: If you have multiple data levels in your SPICE_DATA directory and
+;        only want to work with one level, set the filter for the LEVEL
+;        keyword (third column by default) to e.g. "L2".
+;
+; TIP 2: Upon reading the catalog, the application generates a synthetic
+;        keyword called FIRST_RASTER (shown as the first column by
+;        default). This is set to "x" for files that are the first file
+;        (chronologically) which has this file's value of SPIOBSID. Since
+;        repeated rasters have the same SPIOBSID, this means that by filtering
+;        on this column being equal to "x", you will only see one line for
+;        each raster with multiple repetitions. This works even if some files
+;        are missing at the beginning of a series of raster repetitions.
+;
+; NOTE: Since L0 files do not have DATE-BEG, the default sort order is set to
+;       DATE_OBT (the on-board time of DATE-BEG).
 ;
 ; ****** FUNCTIONALITIES OF BUTTONS ETC *******
 ;
@@ -101,8 +107,7 @@
 ; ******* ENVIRONMENT VARIABLES *******
 ;
 ;  SPICE_DATA points to the top of the data directory hierarchy (where the
-;  spice_fitslist.txt catalog should reside)
+;  spice_catalog.txt catalog should reside)
 ;
 ;  SPICE_CAT_KEYWORDS is a comma-separated list of the keywords to be shown in
 ;  the table. The environment variable is updated according to 
-
