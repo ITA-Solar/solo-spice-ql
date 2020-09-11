@@ -10,14 +10,21 @@
 ;
 ;    IDL> files = spice_cat()     OR      IDL> spice_cat
 ;
-; NOTE: Upon reading the catalog, the application generates a synthetic
-;       keyword called FIRST_RASTER. This is set to "x" for files that are the
-;       first file (chronologically) which has this file's value of
-;       SPIOBSID. Since repeated rasters have the same SPIOBSID, this means
-;       that by filtering on this column being equal to "x", you will only see
-;       one line for each raster with multiple repetitions. This works even if
-;       some files are missing at the beginning of a series of raster
-;       repetitions.
+; If your data directory does not already contain a spice_catalog.txt file,
+; generate one by using SPICE_GEN_CAT.
+;
+; TIP 1: If you have multiple data levels in your SPICE_DATA directory and
+;        only want to work with one level, set the filter for the LEVEL
+;        keyword (third column by default) to e.g. "L2".
+;
+; TIP 2: Upon reading the catalog, the application generates a synthetic
+;        keyword called FIRST_RASTER (shown as the first column by
+;        default). This is set to "x" for files that are the first file
+;        (chronologically) which has this file's value of SPIOBSID. Since
+;        repeated rasters have the same SPIOBSID, this means that by filtering
+;        on this column being equal to "x", you will only see one line for
+;        each raster with multiple repetitions. This works even if some files
+;        are missing at the beginning of a series of raster repetitions.
 ;
 ; NOTE: Since L0 files do not have DATE-BEG, the default sort order is set to
 ;       DATE_OBT (the on-board time of DATE-BEG).
