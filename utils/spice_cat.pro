@@ -1192,4 +1192,5 @@ IF spice_cat_development THEN BEGIN
       foreach uval, uvals DO o.send_event, uval
    END
 END
+; Change, for Terje's sake!
 END
