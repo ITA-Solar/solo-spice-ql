@@ -82,9 +82,6 @@ pro spice_xfiles_cleanup, tlb
   ptr_free, (*info).filelistall
   ptr_free, (*info).filelist
   ptr_free, (*info).file2obsmap
-  ptr_free, (*info).OBSids
-  ptr_free, (*info).OBSreps
-  ptr_free, (*info).spatterns
   ptr_free, info
 end
 
@@ -240,53 +237,33 @@ pro spice_xfiles_searchdir, info
   endfor ;ipath=0,N_ELEMENTS(paths)-1
   print,'days: ', N_ELEMENTS(paths), ' ;   files: ', fcount
   toc
-  stop
+
   tic
   ;now we search the headers for different runs of OBS to display
   OBSdesc=''
   file2obsmap=0
   if N_ELEMENTS(files) gt 0 then begin
-    fitsind = where(strmatch(files, '*.fits') eq 1, count)
-    if count gt 0 then begin
-      fitsfiles = files[fitsind]
-      fitsfiledates = anytim2cal(file2time(file_basename(fitsfiles)), form=8)
-      uniqin = UNIQ(fitsfiledates, sort(fitsfiledates))
-      template={STARTOBS:'', OBSID:'', OBS_DEC:'', OBS_DESC:'', XCEN:0.0, YCEN:0.0, SAT_ROT:0.0, OBSREP:0L}
-      for fit=0,N_ELEMENTS(uniqin)-1 do begin
-        ind = where(fitsfiledates eq fitsfiledates[uniqin[fit]], count)
-        if count gt 0 then begin
-          mreadfits_header, fitsfiles[ind[0]], hdrtemp, only_tags='STARTOBS,OBSID,OBS_DEC,OBS_DESC,XCEN,YCEN,SAT_ROT,OBSREP', template=template
-          ;before 5.9.13 the keyword OBS_DESC was misspelled as OBS_DEC
-          ;so we have to check if it is populated
-          if strcompress(hdrtemp.OBS_DESC, /remove_all) eq '' then hdrtemp.OBS_DESC=hdrtemp.OBS_DEC
-          if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
-          else hdr=[hdr,hdrtemp]
-        endif
-      endfor
-      OBSdesc = get_infox(hdr, 'STARTOBS, OBSID, OBS_DESC, XCEN, YCEN, SAT_ROT', header=header, $
-        format='a,a,a,(f7.1),(f7.1),(f7.1)')
-      OBSdesc = [header, OBSdesc]
-      OBSids = get_infox(hdr, 'OBSID', format='a')
-      OBSreps = get_infox(hdr, 'OBSREP', format='a')
-      OBSreps = long(OBSreps)
-      ;need to map the files to the OBS
-      filedates=long64(anytim2cal(file2time(file_basename(files)), form=8))
-      file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
-      for i=0,N_ELEMENTS(uniqin)-1 do begin
-        OBSdate = long64(fitsfiledates[uniqin[i]])
-        fileind = where(abs(filedates-OBSdate) le 2, count)
-        if count gt 0 then file2obsmap[fileind]=i+1
-      endfor
-    endif
+    file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
+    uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
+    template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', DSUN_AU:0.0, CROTA:0.0}
+    for fit=0,N_ELEMENTS(uniqin)-1 do begin
+      ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
+      if count gt 0 then begin
+        file2obsmap[ind]=fit+1
+        mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,DSUN_AU,CROTA', template=template
+        if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
+        else hdr=[hdr,hdrtemp]
+      endif
+    endfor
+    stop
+    OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, CROTA, STUDYDES', header=header, $
+      format='a,(I12),a,a,(f7.3),(f7.1),a')
+    OBSdesc = [header, OBSdesc]
   endif else files=''
   ptr_free, (*info).filelistall
   (*info).filelistall = ptr_new(files)
   ptr_free, (*info).file2obsmap
   (*info).file2obsmap = ptr_new(file2obsmap)
-  ptr_free, (*info).OBSids
-  (*info).OBSids = ptr_new(OBSids)
-  ptr_free, (*info).OBSreps
-  (*info).OBSreps = ptr_new(OBSreps)
   widget_control, (*info).foundOBS, set_value = OBSdesc
   widget_control, (*info).foundOBS, set_list_select = 1
   ind=where(file2obsmap eq 1, count)
@@ -736,13 +713,13 @@ pro spice_xfiles
     filelist:ptr_new(), $
     filelistall:ptr_new(), $
     file2obsmap:ptr_new(), $
-    OBSids:ptr_new(), $
-    OBSreps:ptr_new(), $
+    ;    OBSids:ptr_new(), $
+    ;    OBSreps:ptr_new(), $
     ;    xmlfolder:xmlfolder, $
     fileselect:'', $
     foundOBS:foundOBS, $
     foundfiles:foundfiles, $
-    spatterns:ptr_new(spatterns), $
+    ;    spatterns:ptr_new(spatterns), $
     ;    searchdroplist:searchdroplist, $
     ;    searchpatternbutton:searchpatternbutton, $
     searchstopbutton:searchstopbutton, $
