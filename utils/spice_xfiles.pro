@@ -12,7 +12,7 @@
 ;
 ;
 ; CATEGORY:
-;       Hansteen/Wikst�l Data analysis SW
+;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
 ;       spice_xfiles
