@@ -102,7 +102,7 @@ pro spice_xfiles_save_params, info, valid_times=valid_times
     ignoretime=(*info).ignoretime
 
     ;update recent time window list
-    if ~ignoretime then begin
+    if ~ignoretime || use_path_prefix[1] then begin
       (*info).recentwindows->newsearch, tstartval, tstopval
       widget_control, (*info).recentdroplist, set_value=(*info).recentwindows->getwindows()
     endif
@@ -151,7 +151,7 @@ pro spice_xfiles_searchdir, info
   if usetree then paths = ssw_time2paths(tstartval, tstopval, (*info).sdir) $
   else paths = (*info).sdir
 
-  tic
+  ;tic
   for ipath=0,N_ELEMENTS(paths)-1 do begin
     stopevent = widget_event((*info).searchstopbutton, /nowait)
     widget_control, /hourglass
@@ -235,10 +235,10 @@ pro spice_xfiles_searchdir, info
 
     endif ;file_test(paths[ipath])
   endfor ;ipath=0,N_ELEMENTS(paths)-1
-  print,'days: ', N_ELEMENTS(paths), ' ;   files: ', fcount
-  toc
+  ;print,'days: ', N_ELEMENTS(paths), ' ;   files: ', fcount
+  ;toc
 
-  tic
+  ;tic
   ;now we search the headers for different runs of OBS to display
   OBSdesc=''
   file2obsmap=0
@@ -255,7 +255,7 @@ pro spice_xfiles_searchdir, info
         else hdr=[hdr,hdrtemp]
       endif
     endfor
-    stop
+
     OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, CROTA, STUDYDES', header=header, $
       format='a,(I12),a,a,(f7.3),(f7.1),a')
     OBSdesc = [header, OBSdesc]
@@ -272,7 +272,7 @@ pro spice_xfiles_searchdir, info
   ptr_free, (*info).filelist
   (*info).filelist = ptr_new(displayfiles)
   widget_control, (*info).foundfiles, set_value = displayfiles
-  toc
+  ;toc
 end
 
 
@@ -447,7 +447,6 @@ end
 
 ; event handler for search directory input fields
 pro spice_xfiles_change_search, event
-  help, event
   widget_control, event.top, get_uvalue = info
   spice_xfiles_search_dir, info
 end
@@ -472,16 +471,18 @@ pro spice_xfiles_search_dir, info
     end
   endcase
   if strmid(top_dir, 0,1, /reverse_offset) ne dirsep then top_dir = top_dir+dirsep
+  level = widget_info((*info).level_choice_droplist, /droplist_select)
+  level = strtrim(string(level), 2)
+  (*info).filter = 'solo_L' + level + '_spice-*.fits'
   widget_control, (*info).use_path_prefix_bg, get_value=use_path_prefix
   if use_path_prefix[0] then begin
-    level = widget_info((*info).level_choice_droplist, /droplist_select)
-    level = strtrim(string(level), 2)
     top_dir = top_dir + 'level' + level + dirsep
   endif
   (*info).sdir = top_dir
   if use_path_prefix[1] then begin
     top_dir = top_dir + 'yyyy' + dirsep + 'mm' + dirsep + 'dd' + dirsep
   endif
+  top_dir = top_dir + (*info).filter
   if use_path_prefix[2] then begin
     top_dir = top_dir + ' -r'
   endif
@@ -492,76 +493,10 @@ end
 ; read the selected file and call xcontrol
 pro spice_xfiles_read, event
   ; define data object and read file
-  ; ...but first a consistency check on the file name
   widget_control, event.top, get_uvalue = info
-  widget_control,/hourglass
-
-  case (*info).datatype of
-    'IRIS' : begin
-      if not stregex((*info).fileselect,/fold_case,'.fits',/bool) then begin
-        if not stregex((*info).fileselect,/fold_case,'.*log',/bool) then begin
-          ok=dialog_message('FITS file must have ".fits" extension!!', $
-            /center,title='Iris_Xfiles warning',/information, $
-            dialog_parent=(*info).tlb)
-          return
-        endif else begin
-          spice_xfiles_logdisplay, info
-          return
-        endelse
-      endif
-      if stregex((*info).fileselect,/fold_case,'raster',/bool) then begin
-        ; find eventual slit jaw images
-        ff=((*info).fileselect)
-        file_head=strmid(ff,0,strpos(ff,'raster')-1)
-        fsij=file_search(file_head+'_SJI*.fits')
-        d=iris_obj([(*info).fileselect,fsij])
-        iris_xcontrol,d,group_leader=(*info).tlb
-      endif else begin
-        ; should be a slit jaw image file...
-        d=iris_sji((*info).fileselect)
-        if not d->badfile() then begin
-          d->ximovie,min(where(d->lwin_read())),group_leader=(*info).tlb
-        endif else begin
-          error=['Dimensions of SJI file not consistent', $
-            'cannot run ximovie']
-          continue=dialog_message(error,dialog_parent=(*info).tlb)
-        endelse
-      endelse
-    end
-    'EIS/CCSDS' : begin
-      if stregex((*info).fileselect,/fold_case,'.fits',/bool) then begin
-        ok=dialog_message('FITS file cannot be read as CCSDS file!!', $
-          /center,title='Iris_Xfiles warning',/information)
-        return
-      endif
-      aux_obj=obj_new('eis_aux',(*info).fileselect)
-      data_obj= obj_new('eis_data',(*info).fileselect, datasource='ccsds', hdr = hdr)
-      xcontrol, data_obj, hdr, aux_obj, $
-        group_leader = (*info).tlb, filename = (*info).fileselect
-    end
-    'EIS/FITS'  : begin
-      if not stregex((*info).fileselect,/fold_case,'.fits',/bool) then begin
-        ok=dialog_message('FITS file must have ".fits" extension!!', $
-          /center,title='Iris_Xfiles warning',/information)
-        return
-      endif
-      aux_obj = obj_new('eis_aux',(*info).fileselect)
-      data_obj = obj_new('eis_data',(*info).fileselect, datasource='fits')
-      if data_obj->getfitslev() eq 2 then begin
-        data_obj->setcomment,'moments'
-        linelist = indgen(data_obj->getnwin())
-        xmap, data_obj, data_obj->gethdr(), aux_obj, $
-          linelist=linelist, group_leader = (*info).tlb
-      endif else begin
-        xcontrol, data_obj, (data_obj->gethdr()), aux_obj, $
-          group_leader = (*info).tlb, filename = (*info).fileselect
-      endelse
-    end
-    'EIS/HK'    : begin
-      hk_packet, (*info).fileselect
-    end
-    else:
-  endcase
+  ff=((*info).fileselect)
+  print,'calling spice_xcontrol with file: ' + ff
+  ;        iris_xcontrol,d,group_leader=(*info).tlb
 end
 
 
@@ -595,7 +530,7 @@ pro spice_xfiles
   if N_ELEMENTS(level) eq 0 then level=2
   if N_ELEMENTS(use_path_prefix) eq 0 then use_path_prefix=[1, 1, 1]
 
-  sfilter = 'solo_L2_spice-*.fits'
+  sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits'
   dirsep = path_sep()
 
 
@@ -695,33 +630,20 @@ pro spice_xfiles
     ignoredatebg:ignoredatebg, $
     getlast5days:getlast5days, $
     filter:sfilter, $
-    ;    sfilters:sfilters, $
-    ;    dsource:dsource, $
-    ;    nsource:nsource, $
-    ;    dsource_dir:dsource_dir, $
-    ;    datatype:datatype, $
     dirsep:dirsep, $
     top_dir_choice_bg:top_dir_choice_bg, $
     top_dir_env_var_field:top_dir_env_var_field, $
     dir_manual_field:dir_manual_field, $
-    ;    dir_manual_button:dir_manual_button, $
     level_choice_droplist:level_choice_droplist, $
     use_path_prefix_bg:use_path_prefix_bg, $
     searchdir:searchdir, $
-    ;    filtercw:filtercw, $
     sdir:'', $
     filelist:ptr_new(), $
     filelistall:ptr_new(), $
     file2obsmap:ptr_new(), $
-    ;    OBSids:ptr_new(), $
-    ;    OBSreps:ptr_new(), $
-    ;    xmlfolder:xmlfolder, $
     fileselect:'', $
     foundOBS:foundOBS, $
     foundfiles:foundfiles, $
-    ;    spatterns:ptr_new(spatterns), $
-    ;    searchdroplist:searchdroplist, $
-    ;    searchpatternbutton:searchpatternbutton, $
     searchstopbutton:searchstopbutton, $
     recentdroplist:recentdroplist, $
     recentwindows:recentwindows}
