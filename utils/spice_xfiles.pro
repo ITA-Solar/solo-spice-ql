@@ -64,7 +64,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-;$Id: spice_xfiles.pro,v 1.81 2020/01/30 09:07:20 mawiesma Exp $
+; $Id: 16.09.2020 11:47 CEST $
 ;-
 
 
