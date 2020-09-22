@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 24.06.2020 15:17 CEST $
+; $Id: 22.09.2020 14:40 CEST $
 
 
 ;+
@@ -982,6 +982,104 @@ FUNCTION spice_data::get_time_vector, window_index
   cdelt = self.get_header_info('cdelt4', window_index)
   time_vector = crval + factor * (findgen(naxis)+1.0-crpix) * cdelt
   return, time_vector
+END
+
+
+;+
+; Description:
+;     returns XCEN in archsec
+;
+; OPTONAL INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float : xcen in arcseconds
+;-
+FUNCTION spice_data::get_xcen, window_index
+  ;returns XCEN in archsec
+  COMPILE_OPT IDL2
+  
+  if N_ELEMENTS(window_index) eq 0 then begin
+    window_index = 0
+  endif else begin
+    IF ~self.check_window_index(window_index) THEN return, !NULL
+  endelse
+  crval = self.get_header_info('crval1', window_index)
+  return, crval
+END
+
+
+;+
+; Description:
+;     returns YCEN in archsec
+;
+; OPTONAL INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float : ycen in arcseconds
+;-
+FUNCTION spice_data::get_ycen, window_index
+  ;returns YCEN in archsec
+  COMPILE_OPT IDL2
+
+  if N_ELEMENTS(window_index) eq 0 then begin
+    window_index = 0
+  endif else begin
+    IF ~self.check_window_index(window_index) THEN return, !NULL
+  endelse
+  crval = self.get_header_info('crval2', window_index)
+  return, crval
+END
+
+
+;+
+; Description:
+;     returns FOV in solar x direction, in arcsec
+;
+; OPTONAL INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float : fovx in arcseconds
+;-
+FUNCTION spice_data::get_fovx, window_index
+  ;returns FOV in solar x direction, in arcsec
+  COMPILE_OPT IDL2
+
+  if N_ELEMENTS(window_index) eq 0 then begin
+    window_index = 0
+  endif else begin
+    IF ~self.check_window_index(window_index) THEN return, !NULL
+  endelse
+  x_coords = self.get_wcs_coord(window_index, /x)
+  minx = min(x_coords, max=maxx)
+  return, maxx-minx
+END
+
+
+;+
+; Description:
+;     returns FOV in solar y direction, in arcsec
+;
+; OPTONAL INPUTS:
+;     window_index : the index of the window
+;
+; OUTPUT:
+;     float : fovy in arcseconds
+;-
+FUNCTION spice_data::get_fovy, window_index
+  ;returns FOV in solar y direction, in arcsec
+  COMPILE_OPT IDL2
+
+  if N_ELEMENTS(window_index) eq 0 then begin
+    window_index = 0
+  endif else begin
+    IF ~self.check_window_index(window_index) THEN return, !NULL
+  endelse
+  x_coords = self.get_wcs_coord(window_index, /y)
+  minx = min(x_coords, max=maxx)
+  return, maxx-minx
 END
 
 
