@@ -36,9 +36,8 @@
 ; PROCEDURE:
 ;       SPICE_XFILES searches through data bases (directories) for data
 ;       files. Which data base and directory can be selected from the
-;       various data sources. The user can provide other data sources
-;       under the "other" button, in which case the directory of data
-;       must be specified, along with the routines to read the data.
+;       various data sources.
+;
 ;
 ; RESTRICTIONS:
 ;
@@ -64,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 16.09.2020 11:47 CEST $
+; $Id: 22.09.2020 14:40 CEST $
 ;-
 
 
@@ -245,19 +244,19 @@ pro spice_xfiles_searchdir, info
   if N_ELEMENTS(files) gt 0 then begin
     file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
     uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
-    template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', DSUN_AU:0.0, CROTA:0.0}
+    template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', DSUN_AU:0.0, CROTA:0.0, CRVAL1:0.0, CRVAL2:0.0}
     for fit=0,N_ELEMENTS(uniqin)-1 do begin
       ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
       if count gt 0 then begin
         file2obsmap[ind]=fit+1
-        mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,DSUN_AU,CROTA', template=template
+        mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
         if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
         else hdr=[hdr,hdrtemp]
       endif
     endfor
 
-    OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, CROTA, STUDYDES', header=header, $
-      format='a,(I12),a,a,(f7.3),(f7.1),a')
+    OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
+      format='a,(I12),a,a,(f7.3),(f7.1),(f7.1),(f7.1),a')
     OBSdesc = [header, OBSdesc]
   endif else files=''
   ptr_free, (*info).filelistall
