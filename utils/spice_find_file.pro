@@ -57,7 +57,7 @@
 ;         iris_find_file rewritten for SPICE
 ;
 ;-
-; $Id: 18.08.2020 13:02 CEST $
+; $Id: 22.09.2020 14:39 CEST $
 
 
 FUNCTION spice_find_file, ttime, $
@@ -96,7 +96,7 @@ FUNCTION spice_find_file, ttime, $
     date_start.time = 0
     date_start=anytim2utc(/ccsds,date_start)
     date_end=anytim2utc(/mjd,ttime)
-    date_end.time = 20864000L - 1
+    date_end.time = 3600*1000L*24 - 1
     date_end=anytim2utc(/ccsds,date_end)
   ENDIF ELSE BEGIN
     tt_mjd=anytim2utc(/mjd,ttime)
