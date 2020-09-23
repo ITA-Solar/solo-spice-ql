@@ -969,9 +969,16 @@ PRO spice_cat::build_context_menu_datacell, base, ev
 END
 
 
+PRO spice_cat::handle_spice_gen_cat, ev, parts
+  spice_gen_cat
+  spice_cat, self.d.cat_filename
+END
+
+
 PRO spice_cat::build_command_buttons
   base = self.wid.button_base
   
+  b = widget_button(base, value="SPICE_GEN_CAT", uvalue="SPICE_GEN_CAT")
   return_or_select = self.d.modal ? "Return selection" : "Exit"
   b = widget_button(base, value=return_or_select, uvalue='EXIT', /align_center)
   
@@ -1192,5 +1199,4 @@ IF spice_cat_development THEN BEGIN
       foreach uval, uvals DO o.send_event, uval
    END
 END
-; Change, for Terje's sake!
 END
