@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 01.07.2020 11:58 CEST $
+; $Id: 23.09.2020 14:01 CEST $
 
 
 ; save as postscript file
@@ -94,9 +94,11 @@ pro spice_xdetector_draw, event
     ticklen=-0.02
   endelse
   erase
+  if *(*info).data->get_missing_value() ne *(*info).data->get_missing_value() then missing=-99999L $
+  else missing=*(*info).data->get_missing_value()
   if (*info).log then begin
     ;im_min=*(*info).data->datamin()>1.
-    ymin = alog10(min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value(), low_limit=0.5), max=ymax, /nan))
+    ymin = alog10(min(iris_histo_opt(*(*info).drawimage,missing=missing, low_limit=0.5), max=ymax, /nan))
     ymax = alog10(ymax)
     mplot_image,alog10(*(*info).drawimage), $
       *(*info).xscale, *(*info).yscale, $
@@ -105,7 +107,7 @@ pro spice_xdetector_draw, event
       xtitle = (*info).xtitle, ytitle = (*info).ytitle,bgblack=bgblack,ticklen=ticklen
   endif else begin
     ;im_min=*(*info).data->datamin()
-    ymin = min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value()), max=ymax, /nan)
+    ymin = min(iris_histo_opt(*(*info).drawimage,missing=missing), max=ymax, /nan)
     mplot_image, *(*info).drawimage, $
       *(*info).xscale, *(*info).yscale, $
       min=ymin,max=ymax, $
@@ -830,6 +832,7 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   ;
   ccd_size = data->get_ccd_size()
   win_positions = intarr(nwin,4)
+  clip_image = intarr(nwin,4)
   open_new_window = 0
   for i=0,nwin-1 do begin
     win_positions[i,*] = data->get_window_position(lindx[i], detector=detectornr, /idl_coord);, /reverse_y, /reverse_x)
@@ -862,6 +865,45 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
   if detector_shown eq 2 then begin
     xscale_pixels = xscale_pixels + ccd_size[0]
     win_positions[*,0:1] = win_positions[*,0:1] - ccd_size[0]
+  endif
+
+  ; data window size in level 2 does not corresponde to
+  ; win_positions due to transformations
+  if data->get_level() eq 2 then begin
+    for i=0,nwin-1 do begin
+      sizey = data->get_header_info('NAXIS2', lindx[i])
+      dy = win_positions[i,3]-win_positions[i,2]+1 - sizey
+      if dy ne 0 then begin
+        dy1 = fix(dy/2.0)
+        dy2 = dy-dy1
+        win_positions[i,2] = win_positions[i,2] - dy1
+        if win_positions[i,2] lt 0 then begin
+          clip_image[i,2] = -1 * win_positions[i,2]
+          win_positions[i,2] = 0
+        endif
+        win_positions[i,3] = win_positions[i,3] + dy2
+        if win_positions[i,3] ge ccd_size[1] then begin
+          clip_image[i,3] = win_positions[i,2] - (ccd_size[1]-1)
+          win_positions[i,3] = ccd_size[1]-1
+        endif
+      endif
+      sizel = data->get_header_info('NAXIS3', lindx[i])
+      dl = sizel - (win_positions[i,1]-win_positions[i,0]+1)
+      if dl ne 0 then begin
+        dl1 = fix(dl/2.0)
+        dl2 = dl-dl1
+        win_positions[i,0] = win_positions[i,0] - dl1
+        if win_positions[i,0] lt 0 then begin
+          clip_image[i,0] = -1 * win_positions[i,0]
+          win_positions[i,0] = 0
+        endif
+        win_positions[i,1] = win_positions[i,1] + dl2
+        if win_positions[i,1] ge ccd_size[0] then begin
+          clip_image[i,1] = win_positions[i,1] - (ccd_size[0]-1)
+          win_positions[i,1] = ccd_size[0]-1
+        endif
+      endif
+    endfor
   endif
   xscale_physical = data->get_lambda_vector(lindx[0], /full_ccd)
   ymin = min(win_positions[*,2])
@@ -905,12 +947,14 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
     big_size[0] = fix( float(big_size[0]) * screensize[1] / float(big_size[1]))
     big_size[1] = fix(screensize[1])
   endif
-  
+
   ;build the initial image
   for i=0,nwin-1 do begin
     window_image = data->get_one_image(lindx[i], current_exp_ind, /debin)
     if data->has_dumbbells(lindx[i]) then window_image = rotate(window_image, 5)
-    detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = window_image
+    size_image = size(window_image)
+    detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = $
+      window_image[clip_image[i,0]:size_image[1]-1-clip_image[i,2], clip_image[i,2]:size_image[2]-1-clip_image[i,3]]
   endfor
 
 
