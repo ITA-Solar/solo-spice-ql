@@ -49,7 +49,11 @@
 FUNCTION spice_gen_cat__line,header,keyword_info
   line = []
   keyword_array = keyword_info.keys()
-  foreach keyword,keyword_array DO line =  [line, trim(fxpar(header,keyword))]
+  foreach keyword,keyword_array DO BEGIN
+     keyword_type = keyword_info[keyword].type
+     missing = keyword_type EQ 't' ? 'MISSING' : 999999
+     line =  [line, trim(fxpar(header,keyword, missing=missing))]
+  END
   RETURN,strjoin(line,string(9b))
 END
 
