@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 23.09.2020 14:01 CEST $
+; $Id: 24.09.2020 11:40 CEST $
 
 
 ; save as postscript file
@@ -170,9 +170,13 @@ pro spice_xdetector_expslider, event
   (*info).detector[*] = !Values.F_NAN
   ; read new data (for selected position) into detector variable
   for i=0,(*info).nwin-1 do begin
+    window_image = *(*info).data->get_one_image((*info).lindx[i], current_exp_ind, /debin)
+    if *(*info).data->has_dumbbells((*info).lindx[i]) then window_image = rotate(window_image, 5)
+    size_image = size(window_image)
     (*info).detector[(*info).win_positions[i,0]:(*info).win_positions[i,1], $
       (*info).win_positions[i,2]:(*info).win_positions[i,3]] $
-      = *(*info).data->get_one_image((*info).lindx[i], current_exp_ind)
+      = window_image[(*info).clip_image[i,0]:size_image[1]-1-(*info).clip_image[i,2], $
+      (*info).clip_image[i,2]:size_image[2]-1-(*info).clip_image[i,3]]
   endfor
   ; display new raster position
   pseudoevent={widget_base,id:0L, $
@@ -1157,6 +1161,7 @@ pro spice_xdetector, data, lindx, group_leader = group_leader, $
     yscale:ptr_new(), $
     data:ptr_new(), $
     win_positions:win_positions, $
+    clip_image:clip_image, $
     xscale_pixels:xscale_pixels, $
     xscale_physical:xscale_physical, $
     yscale_pixels:yscale_pixels, $
