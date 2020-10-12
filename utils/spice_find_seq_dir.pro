@@ -54,7 +54,7 @@
 ;      Ver.1, 16-Jun-2020, Martin Wiesmann
 ;             iris_find_obs_dir rewritten for SPICE
 ;-
-; $Id: 18.08.2020 13:02 CEST $
+; $Id: 11.09.2020 13:03 CEST $
 
 
 FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level, $
@@ -81,6 +81,7 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level
     spice_paths=BREAK_path(spice_data,/nocurrent)
     IF N_ELEMENTS(level) eq 0 THEN level=2
     case level of
+      -1: level_string = ''
       0: level_string = 'level0'
       1: level_string = 'level1'
       2: level_string = 'level2'
@@ -89,7 +90,7 @@ FUNCTION spice_find_seq_dir, start_date, stop_date, top_dir=top_dir, level=level
         return,''
       END
     endcase
-    top_dir=concat_dir(spice_paths,level_string)
+    if level ge 0 then top_dir=concat_dir(spice_paths,level_string)
   ENDIF
 
   ndir=n_elements(top_dir)
