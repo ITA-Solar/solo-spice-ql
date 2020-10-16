@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 28.05.2020 11:43 CEST $
+; $Id: 16.10.2020 11:46 CEST $
 ;-
 ;
 ; save as postscript file
@@ -137,15 +137,17 @@ pro spice_xraster_draw, event
   yvs = (*info).y_scroll_size*yfac  > (*info).y_scroll_size
   ;
   widget_control, (*info).drawid, draw_xsize = xvs, draw_ysize = yvs
-  wdmin=fltarr((*info).nwin)-(*(*info).data->get_missing_value())
-  wdmax=fltarr((*info).nwin)+(*(*info).data->get_missing_value())
+  if *(*info).data->get_missing_value() ne *(*info).data->get_missing_value() then missing=-99999L $
+  else missing=*(*info).data->get_missing_value()
+  wdmin=fltarr((*info).nwin)-missing
+  wdmax=fltarr((*info).nwin)+missing
   ; set up plot scale:
   for i = 0, (*info).nwin-1 do begin
     j = (*info).windows[i]
     for it=0,min([5,nr-1]) do begin
       var=*(*info).data->get_one_image(j,it)
-      wdmin[i]=min([min(iris_histo_opt(var,0.01,/bot_only,missing=*(*info).data->get_missing_value())),wdmin[i]],/nan)
-      wdmax[i]=max([max(iris_histo_opt(var,0.001,/top_only,missing=*(*info).data->get_missing_value())),wdmax[i]],/nan)
+      wdmin[i]=min([min(iris_histo_opt(var,0.01,/bot_only,missing=missing),/nan),wdmin[i]],/nan)
+      wdmax[i]=max([max(iris_histo_opt(var,0.001,/top_only,missing=missing),/nan),wdmax[i]],/nan)
     endfor
     if wdmin[i] gt wdmax[i] then begin
       wdmin[i]=min(var, max=maxtemp)
