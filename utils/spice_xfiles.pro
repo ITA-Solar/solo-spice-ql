@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 22.09.2020 14:40 CEST $
+; $Id: 16.10.2020 11:50 CEST $
 ;-
 
 
@@ -607,8 +607,8 @@ pro spice_xfiles
     , event_pro = 'spice_xfiles_printfilename')
 
   geometry = widget_info(tlb,/geometry)
-  screen = get_screen_size()
-  space = float(screen[1]) - float(geometry.scr_ysize) - 30
+  screen = spice_get_screen_size()
+  space = float(screen[1]) - float(geometry.scr_ysize) - 80
   if space lt 1100 then widget_control,tlb,yoffset=0
   if space gt 900 then space = 900
   space = space / 5.0
