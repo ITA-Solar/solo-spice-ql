@@ -31,6 +31,7 @@
 ;               
 ; Keywords    : fake_factor: Repeat all files fake_factor times (testing)
 ;               reset: Default is true, reset=0 may have side effects 
+;               quiet: Set to suppress message for each added line
 ;
 ; Category    : SPICE_UTILITY
 ;               
@@ -79,12 +80,11 @@ FUNCTION spice_gen_cat__get_header,filename
 END
 
 
-PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
+PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, quiet=quiet
   ON_ERROR,0
   
-  keyword_info = spice_keyword_info(/all)
-  
-  default, reset,1
+  quiet = keyword_set(quiet)
+  default,reset,1
   default,fake_factor, 1
   default,spice_datadir,getenv("SPICE_DATA")
   default,catalog_filedir,spice_datadir
@@ -114,6 +114,7 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
   PRINT,"About to create new " + catalog_filename + " with "+ $
      trim(N_ELEMENTS(fits_filelist))+" elements"
   
+  keyword_info = spice_keyword_info(/all)
   FOREACH fits_filename, fits_filelist, index DO BEGIN
      key = spice_gen_cat__unique_key(fits_filename)
      IF lines_in_hash.haskey(key) THEN BEGIN
@@ -124,7 +125,7 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor
      header = spice_gen_cat__get_header(fits_filename)
      
      lines_in_hash[key] = spice_gen_cat__line(header,keyword_info)
-     PRINT,"Files done :",(index+1).toString("(i6)")," "+key
+     IF NOT quiet THEN PRINT,"Files done :",(index+1).toString("(i6)")," "+key
   END
   keyword_list = keyword_info.keys()
   keyword_array = keyword_list.toArray()
