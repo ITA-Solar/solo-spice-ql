@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 16.10.2020 11:45 CEST $
+; $Id: 22.10.2020 13:35 CEST $
 ;-
 ;
 ;
@@ -96,7 +96,7 @@ end
 ; print filename to console
 pro spice_xcontrol_printfilename, event
   widget_control, event.top, get_uvalue = info
-  print,(*(*info).d)->getfilename()
+  print,(*(*info).d)->get_filename()
 end
 
 ; Display Header in text window
@@ -497,12 +497,14 @@ end
 ; start main program
 ;-----------------------------------------------------------------------------
 
-pro spice_xcontrol, data, group_leader = group_leader
+pro spice_xcontrol, input_data, group_leader = group_leader
 
   if n_params() lt 1 then begin
     message,'spice_xcontrol, data [, group_leader = group]',/cont
     return
   endif
+  
+  data = spice_get_object(input_data)
 
   ;  dirsep=path_sep()
   ;  ; information about data set
