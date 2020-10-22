@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 16.10.2020 11:50 CEST $
+; $Id: 22.10.2020 13:34 CEST $
 ;-
 
 
@@ -489,13 +489,15 @@ pro spice_xfiles_search_dir, info
 end
 
 
-; read the selected file and call xcontrol
+; call spice_xcontrol with the selected file
 pro spice_xfiles_read, event
-  ; define data object and read file
   widget_control, event.top, get_uvalue = info
-  ff=((*info).fileselect)
-  print,'calling spice_xcontrol with file: ' + ff
-  ;        iris_xcontrol,d,group_leader=(*info).tlb
+  file = ((*info).fileselect)
+  if file eq '' then begin
+    box_message,'You need to select a file first'
+  endif else begin
+    spice_xcontrol, file, group_leader=(*info).tlb    
+  endelse
 end
 
 

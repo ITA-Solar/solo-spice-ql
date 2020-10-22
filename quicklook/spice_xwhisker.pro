@@ -49,7 +49,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 25.04.2020 21:56 CEST $
+; $Id: 16.10.2020 11:46 CEST $
 
 
 ; save as postscript file
@@ -615,7 +615,9 @@ pro spice_xwhisker , data, line, group_leader = group_leader, $
     expindx = indgen(nraster)*nexpprp + expnr_at_rp - 1
     image = reform(wd[*, slitpos, expindx])
   endelse
-  wd=iris_histo_opt(wd)
+  if data->get_missing_value() ne data->get_missing_value() then missing=-99999L $
+  else missing=data->get_missing_value()
+  wd=iris_histo_opt(wd,missing=missing)
   imin=min(wd)
   imax=max(wd)
   image=iris_histo_opt(image)
