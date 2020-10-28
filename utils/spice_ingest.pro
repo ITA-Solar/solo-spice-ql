@@ -56,15 +56,12 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 26.10.2020 11:17 CET $
+; $Id: 28.10.2020 13:35 CET $
 
 
 PRO spice_ingest, filename, force=force, index=index, nolevel=nolevel, $
   destination=destination, file_moved=file_moved, help=help, $
   debug=debug
-
-  ;filename='/Users/mawiesma/spice/data/first_images/solo_L0_spice-n-exp_0637083015_V202003091733C_12583153-000.fits'
-  ;filename='/Users/mawiesma/spice/data/level2/solo_L2_spice-n-exp_20200421T135817961_V01_12583408-000.fits'
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
     print,''
@@ -126,11 +123,11 @@ PRO spice_ingest, filename, force=force, index=index, nolevel=nolevel, $
       continue
     ENDIF
 
-    IF ~keyword_set(nolevel) THEN outdir = concat_dir(topdir, 'level'+strtrim(str(file_info.level), 2))
+    IF ~keyword_set(nolevel) THEN outdir = concat_dir(topdir, 'level'+strtrim(string(file_info.level), 2))
     outdir = concat_dir(outdir, time2fid(file_info.datetime, /full_year, delim=path_sep()))
 
     ;check if file to be moved already exists
-    old_files = file_search(outdir, 'solo*.fits')
+    old_files = file_search(concat_dir(outdir,'solo*.fits'))
     filechck=where(file_basename(old_files) EQ file_info.filename,nf)
     IF nf EQ 0 OR keyword_set(force) THEN BEGIN
       file_move,files[ifiles], outdir, /overwrite
