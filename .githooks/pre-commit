@@ -1,5 +1,5 @@
 #!/bin/sh
-date_string="`date +"%d.%m.%Y %H:%M %Z"`"
+date_string="`date +"%Y-%m-%d %H:%M %Z"`"
 for f in $( git diff --cached --name-only --diff-filter=ACM ); do
   # XXX broken: if space in filename(s)
   echo "Modifying version date of file" "$f" "$date_string"
