@@ -15,6 +15,7 @@
 ;
 ; INPUTS:
 ;      Filename: The name and path of a SPICE file. Can be an array of names.
+;                Or a directory, but then the keyword 'SEARCH_FILES' has to be set.
 ;
 ; OPTIONAL INPUTS:
 ;      Index:   If $SPICE_DATA contains multiple paths, then this
@@ -27,13 +28,15 @@
 ;               /force allows the file to be overwritten.
 ;      NOLEVEL: If set, then the level part of the default path is omitted
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
+;      SEARCH_FILES: If set, 'Filename' will be interpreted as a directory,
+;                    and spice files will be searched in this and all subdirectories and then moved.
 ;
 ;      HELP:    If set, then a help message is printed.
 ;
 ; OUTPUTS:
 ;      Moves the SPICE file(s) into the correct location in the local
 ;      SPICE data directory tree.
-;      
+;
 ; OPTIONAL OUTPUTS:
 ;     Destination: A string array of same length than 'Filename'. Contains
 ;                  the paths of each file after the move. This path is identical
@@ -56,12 +59,13 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 28.10.2020 13:35 CET $
+; $Id: 2020-10-28 13:58 CET $
 
 
-PRO spice_ingest, filename, force=force, index=index, nolevel=nolevel, $
-  destination=destination, file_moved=file_moved, help=help, $
-  debug=debug
+PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
+  search_files=search_files, $
+  destination=destination, file_moved=file_moved, $
+  help=help, debug=debug
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
     print,''
@@ -72,12 +76,22 @@ PRO spice_ingest, filename, force=force, index=index, nolevel=nolevel, $
     return
   ENDIF
 
-  nfiles=n_elements(filename)
-  IF nfiles Gt 1 THEN BEGIN
-    files = filename[sort(filename)]
+  IF keyword_set(search_files) THEN BEGIN
+    files = file_search(filename, 'solo*.fits', count=nfiles)
+    IF nfiles EQ 0 THEN BEGIN
+      print, 'No files found'
+      return
+    ENDIF 
+    IF nfiles GT 1 THEN files = files[sort(files)]
   ENDIF ELSE BEGIN
-    files = filename
+    nfiles=n_elements(filename)
+    IF nfiles GT 1 THEN BEGIN
+      files = filename[sort(filename)]
+    ENDIF ELSE BEGIN
+      files = filename
+    ENDELSE
   ENDELSE
+
 
   topdir=getenv('SPICE_DATA')
   IF topdir EQ '' THEN BEGIN
