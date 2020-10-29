@@ -3,7 +3,7 @@
 ;      SPICE_INGEST
 ;
 ; PURPOSE:
-;      This routine takes as input a SPICE filename (or list of files)
+;      This routine takes as input a SPICE filename (or list of files, or a directory)
 ;      and correctly places them in the SPICE data tree, creating new
 ;      directories if necessary. $SPICE_DATA needs to be defined.
 ;
@@ -11,11 +11,12 @@
 ;      SPICE -- file management.
 ;
 ; CALLING SEQUENCE:
-;	     SPICE_INGEST, Filename [, force=force, index=index, help=help]
+;	     SPICE_INGEST, Filename [, index=index, /force, /nolevel, /search_subdir, /help, $
+;	                   destination=destination, file_moved=file_moved, files_found=files_found]
 ;
 ; INPUTS:
 ;      Filename: The name and path of a SPICE file. Can be an array of names.
-;                Or a directory, but then the keyword 'SEARCH_FILES' has to be set.
+;                Or a directory (scalar), then all spice files in this directory will be moved.
 ;
 ; OPTIONAL INPUTS:
 ;      Index:   If $SPICE_DATA contains multiple paths, then this
@@ -28,9 +29,8 @@
 ;               /force allows the file to be overwritten.
 ;      NOLEVEL: If set, then the level part of the default path is omitted
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
-;      SEARCH_FILES: If set, 'Filename' will be interpreted as a directory,
-;                    and spice files will be searched in this and all subdirectories and then moved.
-;
+;      SEARCH_SUBDIR: If set and 'Filename' is a directory, then the program looks for
+;                     spice files recurrently, i.e. in all subdirectories
 ;      HELP:    If set, then a help message is printed.
 ;
 ; OUTPUTS:
@@ -38,11 +38,14 @@
 ;      SPICE data directory tree.
 ;
 ; OPTIONAL OUTPUTS:
-;     Destination: A string array of same length than 'Filename'. Contains
-;                  the paths of each file after the move. This path is identical
+;     Destination: A string array of same length than 'Filename' or, in case 'Filename' is
+;                  a directory, of length of the files found in that directory. Contains
+;                  the paths of each file after the move. This path is identical to its origin
 ;                  if the file hasn't been moved.
-;     File_moved:  int array of same length than 'Filename'. Indicates which files have
+;     File_moved:  int array of same length than 'Destination'. Indicates which files have
 ;                  been moved (1=moved, 0=not moved).
+;     Files_found: A string array of same length than 'Destination'. Contains all file that
+;                  have been found, if input was a directory. Else it is identical to 'Filename'.
 ;
 ; RESTRICTIONS:
 ;      The environment variable SPICE_DATA must be defined.
@@ -59,12 +62,12 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2020-10-28 13:58 CET $
+; $Id: 2020-10-29 11:32 CET $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
-  search_files=search_files, $
-  destination=destination, file_moved=file_moved, $
+  search_subdir=search_subdir, $
+  destination=destination, file_moved=file_moved, files_found=files_found, $
   help=help, debug=debug
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
@@ -75,34 +78,13 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     print,''
     return
   ENDIF
-
-  IF keyword_set(search_files) THEN BEGIN
-    files = file_search(filename, 'solo*.fits', count=nfiles)
-    IF nfiles EQ 0 THEN BEGIN
-      print, 'No files found'
-      return
-    ENDIF 
-    IF nfiles GT 1 THEN files = files[sort(files)]
-  ENDIF ELSE BEGIN
-    nfiles=n_elements(filename)
-    IF nfiles GT 1 THEN BEGIN
-      files = filename[sort(filename)]
-    ENDIF ELSE BEGIN
-      files = filename
-    ENDELSE
-  ENDELSE
-
-
+  
   topdir=getenv('SPICE_DATA')
   IF topdir EQ '' THEN BEGIN
     print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
       print,'               top level of your directory structure. Returning...'
     return
   ENDIF
-
-  destination = files
-  file_moved = intarr(nfiles)
-  debug = keyword_set(debug)
 
   spice_paths=BREAK_path(topdir,/nocurrent)
   np=n_elements(spice_paths)
@@ -128,6 +110,32 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     IF n_params() LT 1 THEN return
   ENDIF
 
+
+  nfiles=n_elements(filename)
+  IF nfiles GT 1 THEN BEGIN
+    files = filename[sort(filename)]
+  ENDIF ELSE BEGIN ; nfiles GT 1
+    IF file_test(filename, /directory) THEN BEGIN
+      IF keyword_set(search_subdir) THEN BEGIN
+        files = file_search(filename, 'solo*.fits', count=nfiles)
+      ENDIF ELSE BEGIN ; keyword_set(search_subdir)
+        files = file_search(concat_dir(outdir,'solo*.fits'), count=nfiles)
+      ENDELSE ; keyword_set(search_subdir)
+      IF nfiles EQ 0 THEN BEGIN
+        print, 'No files found'
+        return
+      ENDIF ; nfiles EQ 0
+      IF nfiles GT 1 THEN files = files[sort(files)]
+    ENDIF ELSE BEGIN ; file_test(filename, /directory)
+      files = filename      
+    ENDELSE ; file_test(filename, /directory)
+  ENDELSE ; nfiles GT 1
+
+
+  files_found = files
+  destination = files
+  file_moved = intarr(nfiles)
+  debug = keyword_set(debug)
 
   FOR ifiles=0,nfiles-1 DO BEGIN
     file_info = spice_file2info(files[ifiles])
