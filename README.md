@@ -65,6 +65,11 @@ In general, all functionalities in the heritage routines will be preserved as fa
     Result = spice_find_file(Time [, LEVEL=LEVEL, TOP_DIR=TOP_DIR, COUNT=COUNT, /SEQUENCE, /ALL, /QUIET ] )
     ```
 * GUI for selection of files and quicklook tools (iris_xfiles, iris_xcontrol)
+    * Implemented
+    * spice_xcontrol will be called by spice_xfiles when user selects a file
+    ```
+    spice_xfiles
+    ```
 * Display EUI/PHI images similar to IRIS SJI images (iris_raster_browser)
 * Display STIX data similar to GOES data (iris_raster_browser)
 
@@ -86,7 +91,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 ## For Developers
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 19.06.2020 14:42 CEST $
+; $Id: 2020-11-02 13:07 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
