@@ -62,7 +62,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2020-10-29 11:32 CET $
+; $Id: 2020-11-02 11:24 CET $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
@@ -88,7 +88,6 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
 
   spice_paths=BREAK_path(topdir,/nocurrent)
   np=n_elements(spice_paths)
-
   IF np EQ 1 || N_ELEMENTS(index) eq 0 THEN BEGIN
     topdir=spice_paths[0]
   ENDIF ELSE BEGIN
