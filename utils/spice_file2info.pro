@@ -27,7 +27,7 @@
 ;                               only available for level 0
 ;         datetime:      str,   date and time in CCSDS format of observation, 
 ;                               for level 0, this is the time the file was downlinked
-;         version:       int,   version number (version of the spice data pipelin),
+;         version:       int,   version number (version of the spice data pipeline),
 ;                               not available for level 0
 ;         spiobsid:      long,  SPICE OBS ID
 ;         rasterno:      int,   raster repetition number
@@ -36,7 +36,7 @@
 ; HISTORY:
 ;      Ver. 1, 17-Jun-2020, Martin Wiesmann
 ;-
-; $Id: 26.10.2020 11:10 CET $
+; $Id: 2020-11-02 11:31 CET $
 
 
 FUNCTION spice_file2info, file
