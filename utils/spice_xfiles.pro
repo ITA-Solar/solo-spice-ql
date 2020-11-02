@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 22.10.2020 13:34 CEST $
+; $Id: 2020-11-02 11:47 CET $
 ;-
 
 
@@ -529,7 +529,7 @@ pro spice_xfiles
   if N_ELEMENTS(top_dir_env_var) eq 0 then top_dir_env_var='SPICE_DATA'
   if N_ELEMENTS(dir_manual) eq 0 then dir_manual='./'
   if N_ELEMENTS(level) eq 0 then level=2
-  if N_ELEMENTS(use_path_prefix) eq 0 then use_path_prefix=[1, 1, 1]
+  if N_ELEMENTS(use_path_prefix) eq 0 then use_path_prefix=[1, 1, 0]
 
   sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits'
   dirsep = path_sep()
