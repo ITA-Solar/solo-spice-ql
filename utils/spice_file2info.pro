@@ -20,13 +20,14 @@
 ;      contains the extracted information.
 ;      info = { $
 ;         is_spice_file: byte,  1 if the file is a spice file, 0 otherwise
+;         filename:      str,   name of the file, without the path
 ;         level:         int,   data level (0, 1 or 2), -1 if unknown
 ;         study_type:    str,   type of study
 ;         sat_time:      str,   internal satellite time of observation, 
 ;                               only available for level 0
 ;         datetime:      str,   date and time in CCSDS format of observation, 
 ;                               for level 0, this is the time the file was downlinked
-;         version:       int,   version number (version of what?),
+;         version:       int,   version number (version of the spice data pipeline),
 ;                               not available for level 0
 ;         spiobsid:      long,  SPICE OBS ID
 ;         rasterno:      int,   raster repetition number
@@ -35,7 +36,7 @@
 ; HISTORY:
 ;      Ver. 1, 17-Jun-2020, Martin Wiesmann
 ;-
-; $Id: 18.06.2020 10:30 CEST $
+; $Id: 2020-11-02 11:31 CET $
 
 
 FUNCTION spice_file2info, file
@@ -48,6 +49,7 @@ FUNCTION spice_file2info, file
   nfile = N_ELEMENTS(file)
 
   info_template = {is_spice_file:0B, $
+    filename:'', $
     level:-1, $
     study_type:'', $
     sat_time:'', $
@@ -59,13 +61,15 @@ FUNCTION spice_file2info, file
   FOR ifile=0,nfile-1 DO BEGIN
     info_temp = info_template
 
-    fname = file_basename(file[ifile])
-    fname = strsplit(fname, '_', /extract)
+    fname0 = file_basename(file[ifile])
+    fname = strsplit(fname0, '_', /extract)
 
     ;first check whether this is a spice file
     IF fname[0] EQ 'solo' && strmatch(fname[2], 'spice-*') THEN BEGIN
 
       info_temp.is_spice_file = 1
+      
+      info_temp.filename = fname0
 
       CASE fname[1] OF
         'L0': info_temp.level=0
