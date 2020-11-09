@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2020-11-02 11:47 CET $
+; $Id: 2020-11-09 12:52 CET $
 ;-
 
 
@@ -140,108 +140,41 @@ pro spice_xfiles_searchdir, info
     return
   endif
 
-  startdate=anytim2cal(tstartval,form=8)
-  stopdate=anytim2cal(tstopval,form=8)
-
+  widget_control, (*info).top_dir_choice_bg, get_value=top_dir_choice
+  dirsep = path_sep()
+  case top_dir_choice of
+    0: begin
+      widget_control, (*info).top_dir_env_var_field, get_value=top_dir_env_var
+      top_dir = getenv(top_dir_env_var)
+      if top_dir eq '' then begin
+        box_message,[top_dir_env_var + ' is not defined', 'using current directory']
+        top_dir = '.' + dirsep
+      endif
+    end
+    1: begin
+      widget_control, (*info).dir_manual_field, get_value=dir_manual
+      top_dir = dir_manual
+    end
+  endcase
+  if strmid(top_dir, 0,1, /reverse_offset) ne dirsep then top_dir = top_dir+dirsep
+  level = widget_info((*info).level_choice_droplist, /droplist_select)
+  level = strtrim(string(level), 2)
   widget_control, (*info).use_path_prefix_bg, get_value=use_path_prefix
-  usetree = use_path_prefix[1]
-  searchsubdir = use_path_prefix[2]
+  no_level = ~use_path_prefix[0]
+  no_tree_struct = ~use_path_prefix[1]
+  search_subdir = use_path_prefix[2]
 
-  if usetree then paths = ssw_time2paths(tstartval, tstopval, (*info).sdir) $
-  else paths = (*info).sdir
+  files = spice_find_file(tstartval, time_end=tstopval, top_dir=top_dir, $
+    no_tree_struct=no_tree_struct, search_subdir=searsubdir, level=level, $
+    no_level=no_level, ignore_time=(*info).ignoretime, /sequence)
+  if size(files, /type) ne 7 then files = files.ToArray(dimension=1)
 
-  ;tic
-  for ipath=0,N_ELEMENTS(paths)-1 do begin
-    stopevent = widget_event((*info).searchstopbutton, /nowait)
-    widget_control, /hourglass
-    if stopevent.id gt 0 then begin
-      box_message,'Canceling search'
-      break
-    endif ;stopevent.id gt 0
 
-    if file_test(paths[ipath]) then begin
-      if strmid(paths[ipath], 0,1, /reverse_offset) ne dirsep then paths[ipath] = paths[ipath]+dirsep
-      if searchsubdir then begin
-        ;normal case
-        ;file_search is slow, use this for windows
-        if !version.os_family ne 'unix' then begin
-          temp = file_search(paths[ipath], (*info).filter, count=fcount)
-        endif else begin ;!version.os_family ne 'unix'
-          temp=!NULL
-          spawn, 'ls ' + paths[ipath], temp0
-          dum = extract_fids(temp0, fidsfound=fidsfound)
-          dirgood = where(fidsfound, fcount2)
-          fcount=0
-          if fcount2 gt 0 then begin
-            temp0=temp0[dirgood]
-            if usetree || ~(*info).ignoretime then begin
-              dirdates=anytim2cal(file2time(temp0), form=8)
-              dirind=where((dirdates ge startdate) AND (dirdates le stopdate), count)
-            endif else begin
-              count=N_ELEMENTS(temp0)
-              dirind=indgen(count)
-            endelse
-            if count gt 0 then begin
-              temp0 = temp0[dirind]
-              for idir=0,count-1 do begin
-                if strmid(temp0[idir], 0,1, /reverse_offset) ne dirsep then temp0[idir] = temp0[idir]+dirsep
-                spawn, 'ls ' + paths[ipath] + temp0[idir], temp1
-                if (*info).filter ne '' then begin
-                  findin = where(strmatch(temp1, (*info).filter, /fold_case) eq 1, fcount0)
-                  if fcount0 gt 0 then temp1 = temp1[findin] $
-                  else temp1=''
-                endif
-                if temp1[0] ne '' then temp1 = paths[ipath]+temp0[idir]+temp1
-                fcount = fcount + fcount0
-                if fcount0 gt 0 then begin
-                  if N_ELEMENTS(temp) eq 0 then temp=temp1 $
-                  else temp=[temp, temp1]
-                endif
-              endfor ;idir=0,count-1
-            endif ;count gt 0
-          endif ;fcount2 gt 0
-        endelse ;!version.os_family ne 'unix' ;test purpose, activates the old version; which is now the version for windows
-      endif else begin ;searchsubdir
-        temp = file_search(paths[ipath]+(*info).filter, count=fcount)
-      endelse ;searchsubdir
-
-      if fcount gt 0 then begin
-        fileinfo_temp = spice_file2info(temp)
-        fgood = where(fileinfo_temp.is_spice_file, fcount)
-        if fcount gt 0 then begin
-          temp=temp[fgood]
-          fileinfo_temp=fileinfo_temp[fgood]
-          if ~usetree && ~(*info).ignoretime then begin
-            filedates=anytim2cal(fileinfo_temp.datetime, form=8)
-            fgood=where((filedates ge startdate) AND (filedates le stopdate), fcount)
-            if fcount gt 0 then begin
-              temp=temp[fgood]
-              fileinfo_temp=fileinfo_temp[fgood]
-            endif
-          endif ;~usetree && ~(*info).ignoretime
-        endif ;fcount2 gt 0
-      endif ;fcount gt 0
-
-      if fcount gt 0 then begin
-        if N_ELEMENTS(files) eq 0 then begin
-          files=temp
-          file_info = fileinfo_temp
-        endif else begin
-          files=[files, temp]
-          file_info = [file_info, fileinfo_temp]
-        endelse
-      endif ;fcount gt 0
-
-    endif ;file_test(paths[ipath])
-  endfor ;ipath=0,N_ELEMENTS(paths)-1
-  ;print,'days: ', N_ELEMENTS(paths), ' ;   files: ', fcount
-  ;toc
-
-  ;tic
   ;now we search the headers for different runs of OBS to display
   OBSdesc=''
   file2obsmap=0
-  if N_ELEMENTS(files) gt 0 then begin
+  if N_ELEMENTS(files) gt 0 && files[0] ne '' then begin
+    file_info = spice_file2info(files)
     file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
     uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
     template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', DSUN_AU:0.0, CROTA:0.0, CRVAL1:0.0, CRVAL2:0.0}
@@ -271,13 +204,12 @@ pro spice_xfiles_searchdir, info
   ptr_free, (*info).filelist
   (*info).filelist = ptr_new(displayfiles)
   widget_control, (*info).foundfiles, set_value = displayfiles
-  ;toc
 end
 
 
-function spice_xfiles_stopsearch, event
-  return, {widget_stopsearch, id:1L, top:0L, handler:0L}
-end
+;function spice_xfiles_stopsearch, event
+;  return, {widget_stopsearch, id:1L, top:0L, handler:0L}
+;end
 
 pro spice_xfiles_event, event
   ;this is just here for the stop button, because apparently I can't define an event_func and event_pro at the same time
@@ -592,7 +524,7 @@ pro spice_xfiles
   label = widget_label(search_path_base, value='     ')
   searchstartbutton = widget_button(search_path_base, value='Start Search', event_pro='spice_xfiles_startsearch')
   label = widget_label(search_path_base, value='     ')
-  searchstopbutton = widget_button(search_path_base, value='Stop Search', event_func='spice_xfiles_stopsearch')
+  ;searchstopbutton = widget_button(search_path_base, value='Stop Search', event_func='spice_xfiles_stopsearch')
 
 
   foundOBS=widget_list(row4, value='', /frame, xsize = 150 $
@@ -645,7 +577,7 @@ pro spice_xfiles
     fileselect:'', $
     foundOBS:foundOBS, $
     foundfiles:foundfiles, $
-    searchstopbutton:searchstopbutton, $
+    ;searchstopbutton:searchstopbutton, $
     recentdroplist:recentdroplist, $
     recentwindows:recentwindows}
   info=ptr_new(info,/no_copy)
