@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2020-11-09 12:52 CET $
+; $Id: 2020-11-09 13:06 CET $
 ;-
 
 
@@ -165,7 +165,7 @@ pro spice_xfiles_searchdir, info
   search_subdir = use_path_prefix[2]
 
   files = spice_find_file(tstartval, time_end=tstopval, top_dir=top_dir, $
-    no_tree_struct=no_tree_struct, search_subdir=searsubdir, level=level, $
+    no_tree_struct=no_tree_struct, search_subdir=search_subdir, level=level, $
     no_level=no_level, ignore_time=(*info).ignoretime, /sequence)
   if size(files, /type) ne 7 then files = files.ToArray(dimension=1)
 
