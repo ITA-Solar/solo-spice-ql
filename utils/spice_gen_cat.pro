@@ -53,7 +53,7 @@ FUNCTION spice_gen_cat__line,header,keyword_info
   foreach keyword,keyword_array DO BEGIN
      keyword_type = keyword_info[keyword].type
      missing = keyword_type EQ 't' ? 'MISSING' : 999999
-     line =  [line, trim(fxpar(header,keyword, missing=missing))]
+     line =  [line, (fxpar(header,keyword, missing=missing)).tostring()]
   END
   RETURN,strjoin(line,string(9b))
 END
@@ -84,19 +84,19 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, q
   ON_ERROR,0
   
   quiet = keyword_set(quiet)
-  default,reset,1
-  default,fake_factor, 1
-  default,spice_datadir,getenv("SPICE_DATA")
-  default,catalog_filedir,spice_datadir
+  spice_default,reset,1
+  spice_default,fake_factor, 1
+  spice_default,spice_datadir,getenv("SPICE_DATA")
+  spice_default,catalog_filedir,spice_datadir
   
   catalog_filename = concat_dir(catalog_filedir,'spice_catalog.txt')
   
   IF keyword_set(reset) THEN file_delete,catalog_filename,/allow_nonexistent
   
-  IF file_exist(catalog_filename) THEN BEGIN
+  IF file_test(catalog_filename, /read) THEN BEGIN
      list = rd_ascii(catalog_filename)
      lines_in_hash = spice_gen_cat__stash_lines_in_hash(list[1:*])
-     print,"Found list, with "+trim(lines_in_hash.count())+" elements"
+     print,"Found list, with "+(lines_in_hash.count()).toString()+" elements"
   END ELSE BEGIN
      PRINT,"No file "+catalog_filename+" found"
      PRINT,"Creating one from scratch"
@@ -112,7 +112,7 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, q
   END
   
   PRINT,"About to create new " + catalog_filename + " with "+ $
-     trim(N_ELEMENTS(fits_filelist))+" elements"
+     (N_ELEMENTS(fits_filelist)).tostring()+" elements"
   
   keyword_info = spice_keyword_info(/all)
   FOREACH fits_filename, fits_filelist, index DO BEGIN
