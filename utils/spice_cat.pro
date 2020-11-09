@@ -45,6 +45,9 @@
 ;                          Rewritten from scratch
 ;
 ; Version     : Version 2, SVHH, 9 September 2020
+;
+;
+; $Id: 2020-11-09 14:03 CET $
 ;-            
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
@@ -1079,7 +1082,7 @@ PRO spice_cat::set_background_colors
 END
 
 
-PRO spice_cat::parameters, modal=modal, catalog=catalog
+FUNCTION spice_cat::parameters, modal=modal, catalog=catalog
   self.d = dictionary()    ;; "Data"
   self.curr = dictionary() ;; Current values
   self.last = dictionary() ;; Last values
@@ -1090,7 +1093,11 @@ PRO spice_cat::parameters, modal=modal, catalog=catalog
      catalog = concat_dir(spice_datadir, 'spice_catalog.txt')
   END
   
-  IF NOT file_test(catalog, /regular) THEN message, "No spice_catalog.txt file: " + catalog
+  IF NOT file_test(catalog, /regular) THEN BEGIN
+    message, "No spice_catalog.txt file: " + catalog, /informational
+    message, 'Please run spice_gen_cat first to generate the catalog.', /informational
+    return, 0
+  ENDIF
   self.d.cat_filename = catalog
   
   self.d.modal = keyword_set(modal)
@@ -1113,6 +1120,7 @@ PRO spice_cat::parameters, modal=modal, catalog=catalog
   self.init_column_widths
   
   self.set_background_colors
+  return, 1
 END
 
 
@@ -1137,12 +1145,13 @@ function spice_cat::init, catalog, modal=modal, keywords=keywords, widths=widths
   self.replace_previous_incarnation
   IF n_elements(keywords) GT 0 THEN setenv, "SPICE_CAT_KEYWORDS=" + keywords
   IF n_elements(widths) GT 0 THEN setenv, "SPICE_CAT_KEYWORD_WIDTHS=" + widths
-  self.parameters, modal = modal, catalog = catalog
-  self.load_catalog
-  self.create_displayed_list
-  self.build_widget
-  
-  return,1
+  IF self.parameters(modal = modal, catalog = catalog) THEN BEGIN
+    self.load_catalog
+    self.create_displayed_list
+    self.build_widget
+
+    return,1    
+  ENDIF ELSE return,0
 END
 
 
@@ -1154,6 +1163,7 @@ END
 FUNCTION spice_cat, catalog, keywords=keywords, widths=widths ;; IDL> selection = spice_cat()
   spice_cat_define_structure
   cat = obj_new('spice_cat',catalog, /modal, keywords=keywords, widths=widths)
+  IF cat eq !NULL then return,!NULL
   cat.start ; Blocking
   selection = cat.selection()
   obj_destroy, cat
