@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2020-11-10 13:27 CET $
+; $Id: 2020-11-10 14:58 CET $
 ;-
 
 
@@ -222,11 +222,23 @@ pro spice_xfiles_event, event
 end
 
 
-;opens new window with the catalog, if user selected files, than those will be displayed
+;opens new window with the catalog, if user selected files, then those will be displayed
 pro spice_xfiles_use_catalog, event
   widget_control, event.top, get_uvalue = info
   files = spice_cat()
-  if files eq !NULL then files=''
+  if files eq !NULL then files='' $
+  else begin
+    topdir = getenv("SPICE_DATA")
+    files_path=[]
+    for i=0,N_ELEMENTS(files)-1 do begin
+      file = file_search(topdir, files[i], count=count)
+      if count gt 0 then begin
+        files_path = [files_path, file[0]]
+      endif
+    endfor
+    if N_ELEMENTS(files_path) eq 0 then files_path=''
+    files=files_path
+  endelse
   spice_xfiles_display_results, files, info
 end
 
