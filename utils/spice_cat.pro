@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2020-11-09 14:03 CET $
+; $Id: 2020-11-10 14:37 CET $
 ;-            
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
@@ -147,6 +147,7 @@ PRO spice_cat::register_rows_selection, sel, clear=clear
   sel.bottom = sel.bottom < n_elements(self.curr.displayed)
 
   self.curr.selection = self.curr.displayed[sel.top:sel.bottom].filename
+  self.curr.selection_path = self.curr.displayed[sel.top:sel.bottom].filepath
   self.curr.selection_beg = sel.top
   self.curr.selection_end = sel.bottom
   widget_control, self.wid.table_id, background_color=self.background_colors()
@@ -155,7 +156,7 @@ END
 
 FUNCTION spice_cat::selection
   IF NOT self.curr.haskey("selection") THEN return, !null
-  return, self.curr.selection
+  return, self.curr.selection_path
 END
 
 

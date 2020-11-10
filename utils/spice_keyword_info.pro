@@ -154,7 +154,9 @@ FUNCTION spice_keyword_info,keywords,all=all
      END
      list = [list, info]
   END
-  
+  info = {SPICE_KEYWORD_INFO, keyword: 'FILEPATH', display_width: 15, type:"t"}
+  list = [list, info]
+
   IF keyword_set(all) THEN keywords = list[*].keyword
   spice_default, keywords, list[*].keyword
   
