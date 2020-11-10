@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2020-11-10 10:13 CET $
+; $Id: 2020-11-10 13:27 CET $
 ;-
 
 
@@ -169,7 +169,12 @@ pro spice_xfiles_searchdir, info
     no_level=no_level, ignore_time=(*info).ignoretime, /sequence)
   if size(files, /type) ne 7 then files = files.ToArray(dimension=1)
 
+  spice_xfiles_display_results, files, info
+end
 
+
+; displays the found files and sequences
+pro spice_xfiles_display_results, files, info
   ;now we search the headers for different runs of OBS to display
   OBSdesc=''
   file2obsmap=0
@@ -214,6 +219,15 @@ end
 pro spice_xfiles_event, event
   ;this is just here for the stop button, because apparently I can't define an event_func and event_pro at the same time
   ;when there is an event_func defined, it ignores event_pro and searches for spice_xfiles_event
+end
+
+
+;opens new window with the catalog, if user selected files, than those will be displayed
+pro spice_xfiles_use_catalog, event
+  widget_control, event.top, get_uvalue = info
+  files = spice_cat()
+  if files eq !NULL then files=''
+  spice_xfiles_display_results, files, info
 end
 
 
@@ -428,7 +442,7 @@ pro spice_xfiles_read, event
   if file eq '' then begin
     box_message,'You need to select a file first'
   endif else begin
-    spice_xcontrol, file, group_leader=(*info).tlb    
+    spice_xcontrol, file, group_leader=(*info).tlb
   endelse
 end
 
@@ -525,6 +539,7 @@ pro spice_xfiles
   searchstartbutton = widget_button(search_path_base, value='Start Search', event_pro='spice_xfiles_startsearch')
   label = widget_label(search_path_base, value='     ')
   ;searchstopbutton = widget_button(search_path_base, value='Stop Search', event_func='spice_xfiles_stopsearch')
+  use_catalog_button = widget_button(search_path_base, value='Use catalog', event_pro='spice_xfiles_use_catalog')
 
 
   foundOBS=widget_list(row4, value='', /frame, xsize = 150 $
