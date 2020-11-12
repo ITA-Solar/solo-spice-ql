@@ -70,7 +70,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 18.08.2020 13:06 CEST $
+; $Id: 2020-11-12 15:13 CET $
 ;-
 ;
 ; save as postscript file
@@ -543,7 +543,7 @@ end
 pro spice_xmap_resize, event
   widget_control, event.top ,get_uvalue = info
   ; set up image in it`s original size:
-  if (*info).xdim eq 2 or (*info).xdim eq 1 or (*info).xdim eq 3 then rotate=4 else rotate=1
+  ;  if (*info).xdim eq 2 or (*info).xdim eq 1 or (*info).xdim eq 3 then rotate=4 else rotate=1
   ;  if (*info).comment eq 'IRIS_moment' then begin
   ;    moment_name=*(*info).data->getmomentnames((*info).dpnr)
   ;    wd=(*(*info).data)->getvar((*info).line)
@@ -553,22 +553,25 @@ pro spice_xmap_resize, event
   ;  endif else begin
   wd=*(*info).wd
   ;  lpx=(*(*info).data-> getwd_def())[(*info).line].line_px
-  cpx=[0,0];(*(*info).data-> getwd_def())[(*info).line].cont_px
+  ;  cpx=[0,0];(*(*info).data-> getwd_def())[(*info).line].cont_px
   sz = size(wd)
-  csz = size(wd[cpx[0]:cpx[1],*,*])
-  ;
+  ;  csz = size(wd[cpx[0]:cpx[1],*,*])
   ;  if (*info).nexpprp eq 1 then begin
-  if csz[3] gt 1 then begin
-    var=wd[cpx[0]:cpx[1],*,*]
-    bad=where(var eq *(*info).data->get_missing_value(),nbad)
-    if nbad ne 0 then var[bad]=!values.f_nan
-    cont = total(var,3,/nan)/csz[3]
-  endif else cont=0.0
+  ;  if csz[3] gt 1 then begin
+  ;    var=wd[cpx[0]:cpx[1],*,*]
+  ;    bad=where(var eq *(*info).data->get_missing_value(),nbad)
+  ;    if nbad ne 0 then var[bad]=!values.f_nan
+  ;    cont = total(var,3,/nan)/csz[3]
+  ;  endif else cont=0.0
+  cont=0
   var=wd
   bad=where(var eq *(*info).data->get_missing_value(),nbad)
   if nbad ne 0 then var[bad]=!values.f_nan
-  stop
-  drawimage = rotate(total(var,3,/nan)/sz[3]-cont,rotate)
+  drawimage = total(var,3,/nan)/sz[3]-cont
+  if *(*info).data->get_sit_and_stare() then begin
+    drawimage = reform(drawimage)
+    drawimage = rotate(drawimage, 1)
+  endif
   ;  endif else begin
   ;    if csz[1] gt 1 then begin
   ;      var=wd[cpx[0]:cpx[1],*,(*info).expindx]
