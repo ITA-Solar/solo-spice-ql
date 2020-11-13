@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 22.09.2020 14:40 CEST $
+; $Id: 2020-11-13 21:20 CET $
 
 
 ;+
@@ -77,11 +77,13 @@ pro spice_data::close
   FOR i=0,self.nwin-1 DO BEGIN
     ptr_free, (*self.window_assoc)[i]
     ptr_free, (*self.window_headers)[i]
+    ptr_free, (*self.window_headers_string)[i]
     ptr_free, (*self.window_wcs)[i]
     IF ptr_valid((*self.window_data)[i]) THEN ptr_free, (*self.window_data)[i]
   ENDFOR
   ptr_free, self.window_assoc
   ptr_free, self.window_headers
+  ptr_free, self.window_headers_string
   ptr_free, self.window_wcs
   ptr_free, self.window_descaled
   ptr_free, self.window_data
@@ -458,19 +460,25 @@ END
 ;
 ; INPUTS:
 ;     window_index : the index of the window this keyword belongs to
-;;
+;
+; KEYWORD PARAMETERS:
+;     lower_dumbbell : if set, the header of the lower dumbbell will be returned
+;     upper_dumbbell : if set, the header of the upper dumbbell will be returned
+;     string : if set, the header will be returned as a string array instead of a structure
+;
 ; OUTPUT:
-;     returns the header as a structure
+;     returns the header as a structure or a string array
 ;-
-FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell
-  ;Returns the header of the given window as a structure
+FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
+  string=string
+  ;Returns the header of the given window as a structure or a string array
   COMPILE_OPT IDL2
 
   IF keyword_set(lower_dumbbell) THEN window_index=self.get_dumbbells_index(/lower)
   IF keyword_set(upper_dumbbell) THEN window_index=self.get_dumbbells_index(/upper)
   IF ~self.check_window_index(window_index) THEN return, !NULL
-  return, *(*self.window_headers)[window_index]
-
+  IF keyword_set(string) then return, *(*self.window_headers_string)[window_index] $
+  ELSE return, *(*self.window_headers)[window_index]
 END
 
 
@@ -516,8 +524,8 @@ FUNCTION spice_data::get_obs_id
   COMPILE_OPT IDL2
 
   obs_id = self.get_header_info('SPIOBSID', 0, -1)
-  IF size(obs_id, /TYPE) NE 7 THEN obs_id = strtrim(string(obs_id),2)
-  return, obs_id
+  IF size(obs_id, /TYPE) NE 7 THEN obs_id = string(obs_id)
+  return, strtrim(obs_id,2)
 END
 
 
@@ -1353,10 +1361,13 @@ PRO spice_data::read_file, file, verbose=verbose
   position = iris_find_winpos(file_lun, self.nwin-1)
   assocs = ptrarr(self.nwin)
   headers = ptrarr(self.nwin)
+  headers_string = ptrarr(self.nwin)
   wcs = ptrarr(self.nwin)
   dumbbells = bytarr(self.nwin)
   FOR iwin = 0, self.nwin-1 DO BEGIN
-    mreadfits_header, file, hdr, extension=iwin
+    headfits, file, hdr, exten=iwin
+    headers_string[iwin] = ptr_new(hdr)
+    hdr = fitshead2struct(hdr)
     headers[iwin] = ptr_new(hdr)
     wcs[iwin] = ptr_new(fitshead2wcs(hdr))
     IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
@@ -1373,6 +1384,7 @@ PRO spice_data::read_file, file, verbose=verbose
   self.window_data = ptr_new(ptrarr(self.nwin))
   self.window_descaled = ptr_new(bytarr(self.nwin))
   self.window_headers = ptr_new(headers)
+  self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
 END
 
