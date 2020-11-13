@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 22.10.2020 15:16 CEST $
+; $Id: 2020-11-13 21:21 CET $
 ;-
 ;
 ;
@@ -60,16 +60,35 @@ end
 
 ; put information about data set in string array
 pro spice_xcontrol_get_data_info, info
-  ;  nwin=*(*info).d->getnwin()
-  ;  nraster=*(*info).d->getnraster()
-  ;  line=strarr(256)
-  ;  line[0] = 'OBSID: '+strtrim(*(*info).d->getobsid(), 2)
-  ;  line[1] = '========================================================'
-  ;  line[2] = 'Number of raster positions: '+strtrim(string(nraster),2)
-  ;  line[3] = 'Number of line windows    : '+strtrim(string(nwin), 2)
-  ;  line[4] = 'Line ID            Wavelength   Line window width/height     '
-  ;  line[5] = '                    ('+string(197b)+'/pixel)              (pixels)          '
-  ;  line[6] = '========================================================'
+  ;nwin=*(*info).d->getnwin()
+  ;nraster=*(*info).d->getnraster()
+  line=strarr(99)
+  line[0] = 'SPIOBSID: '+*(*info).d->get_obs_id()
+  line[1] = 'SEQ_BEG : '+*(*info).d->get_header_info('SEQ_BEG', 0, '')
+  line[2] = 'DATE-BEG: '+*(*info).d->get_start_time()
+  line[3] = 'STUDYTYP: '+*(*info).d->get_header_info('STUDYTYP', 0, '')
+  line[4] = 'STUDYDES: '+*(*info).d->get_header_info('STUDYDES', 0, '')
+  line[5] = 'AUTHOR  : '+*(*info).d->get_header_info('AUTHOR', 0, '')
+  line[6] = 'PURPOSE : '+*(*info).d->get_header_info('PURPOSE', 0, '')
+  line[7] = '========================================================'
+  line[8] = 'CROTA   : '+string(*(*info).d->get_satellite_rotation(), format='(F9.2)')
+  line[9] = 'XCEN    : '+string(*(*info).d->get_xcen(0), format='(F8.1)') + '   ' + $
+    'YCEN    : '+string(*(*info).d->get_ycen(0), format='(F8.1)')
+  line[10] = 'FOVX    : '+string(*(*info).d->get_fovx(0), format='(F8.1)') + '   ' + $
+    'FOVY    : '+string(*(*info).d->get_fovx(0), format='(F8.1)')
+  line[11] = '========================================================'
+  line[12] = 'Number of windows         : '+strtrim(string(*(*info).d->get_number_windows()),2)
+  line[13] = 'Number of raster positions: '+strtrim(string(*(*info).d->get_number_exposures()),2)
+  ;line[14] = 'SPIOBSID: '+*(*info).d->get_obs_id()
+
+
+
+  ;    line[1] = '========================================================'
+  ;    line[2] = 'Number of raster positions: '+strtrim(string(nraster),2)
+  ;    line[3] = 'Number of line windows    : '+strtrim(string(nwin), 2)
+  ;    line[4] = 'Line ID            Wavelength   Line window width/height     '
+  ;    line[5] = '                    ('+string(197b)+'/pixel)              (pixels)          '
+  ;    line[6] = '========================================================'
   ;  j = 7
   ;  for i = 0,nwin-1 do begin
   ;    lineid = strtrim(*(*info).d->getline_id(i), 2)
@@ -90,8 +109,8 @@ pro spice_xcontrol_get_data_info, info
     else: cr=string(10b)
   endcase
   ;
-  line = ['Here we will display', 'some info about', 'this file']
-  (*info).data_textdump = strjoin(line,cr)
+  ;line = ['Here we will display', 'some info about', 'this file']
+  (*info).data_textdump = strjoin(line[0:13],cr)
 end
 
 ; print filename to console
@@ -485,14 +504,16 @@ pro spice_xcontrol, input_data, group_leader = group_leader
 
   ; Select Line window(s)
   lineselect_nuvase = widget_base(lcol, /column, /frame)
-  lineselect_row = widget_base(lineselect_nuvase, /row)
+  lineselect_row = widget_base(lineselect_nuvase, /column)
 
   ; data source label field
   lineselect_label = widget_base(lineselect_nuvase, /row)
   title = 'Select Line window(s)'    ; line select label string
   lslabel = widget_label(lineselect_label, value=title)
 
-  lineselect = cw_bgroup(lineselect_row, /nonexclusive, line_id, column=2, event_func = 'spice_xcontrol_lineselect')
+  if N_ELEMENTS(line_id) gt 3 then column=2 else column=1
+  lineselect = cw_bgroup(lineselect_row, /nonexclusive, line_id, column=column, event_func = 'spice_xcontrol_lineselect')
+  lineall_clear = cw_bgroup(lineselect_row, /nonexclusive, ['all','clear'], column=2, event_func = 'spice_xcontrol_lineselect')
 
   ; Select display tool
   dispselect_base = widget_base(lcol, /column, /frame)
