@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2020-11-13 21:20 CET $
+; $Id: 2020-11-16 21:17 CET $
 
 
 ;+
@@ -1420,6 +1420,7 @@ PRO spice_data__define
     window_data: ptr_new(), $   ; loaded window data (ptrarr)
     window_descaled: ptr_new(), $; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
+    window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one window
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     file_lun: 0}                ; Logical Unit Number of the file
