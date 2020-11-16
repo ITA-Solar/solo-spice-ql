@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-13 21:21 CET $
+; $Id: 2020-11-16 11:10 CET $
 ;-
 ;
 ;
@@ -109,7 +109,6 @@ pro spice_xcontrol_get_data_info, info
     else: cr=string(10b)
   endcase
   ;
-  ;line = ['Here we will display', 'some info about', 'this file']
   (*info).data_textdump = strjoin(line[0:13],cr)
 end
 
@@ -171,7 +170,26 @@ end
 function spice_xcontrol_lineselect, event
   widget_control, event.top, get_uvalue = info
   widget_control, (*info).lineselect, get_value = lineselect
+  widget_control, (*info).lineall_clear, get_value = lineall_clear
+  case event.id of
+    (*info).lineall_clear: begin
+      if event.select eq 0 then return,0
+      if event.value eq 0 then begin
+        lineselect[*]=1
+        lineall_clear=[1,0]
+      endif else begin
+        lineselect[*]=0
+        lineall_clear=[0,1]
+      endelse
+      widget_control, (*info).lineselect, set_value = lineselect
+    end
+    (*info).lineselect: begin
+      lineall_clear[*]=0
+    end
+    else: return,0
+  endcase
   (*info).lines = lineselect
+  widget_control, (*info).lineall_clear, set_value = lineall_clear
   return,0
 end
 
@@ -644,6 +662,7 @@ pro spice_xcontrol, input_data, group_leader = group_leader
     sdo:ptr_new(), $
     moment:ptr_new(), $
     lineselect:lineselect, $
+    lineall_clear:lineall_clear, $
     data_textdump:'', $
     lines:intarr(nwin), $
     sjiref:-1, $
