@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-17 11:08 CET $
+; $Id: 2020-11-17 20:44 CET $
 ;-
 ;
 ;
@@ -124,15 +124,9 @@ pro spice_xcontrol_hdrdisp,event
   ; open text widget window to dump bytes in
   hdr_widget = widget_base(title = 'Header Contents',  $
     group_leader = (*info).tlb,/row)
-
   closefield = widget_base(hdr_widget,/column)
   closebutton = widget_button(closefield, value = 'Close', $
     event_pro = 'spice_xcontrol_hdrdisp_destroy')
-
-  ysz = 60.*n_elements(*(*info).d->gethdr())
-  disp_base = widget_base(hdr_widget,/column)
-  disp_field = widget_text(disp_base, group_leader = (*info).tlb, /scroll, $
-    xs=100, ysize = 50)
 
   case !version.os of
     'MacOS': cr=string(13b)
@@ -140,31 +134,32 @@ pro spice_xcontrol_hdrdisp,event
     else: cr=string(10b)
   endcase
 
-  textall=''
-  hdr=*(*info).d->gethdr(0)
+  tab = widget_tab(hdr_widget, multiline=4)
+  for itab=0,*(*info).d->get_number_windows()-1 do begin
+    disp_base = widget_base(tab,/column, title=*(*info).d->get_window_id(itab))
+    disp_field = widget_text(disp_base, group_leader = (*info).tlb, /scroll, $
+      xs=100, ysize = 50)
 
-  for i=0, n_elements(hdr)-1 do begin
-    textall=textall+hdr[i]+cr
-  endfor
-  for iext=1,*(*info).d->getnwin() do begin
-    hdr=*(*info).d->gethdr(iext)
-    textall=textall+'======= Header for extension '+ $
-      string(iext,format='(i2)')+' ================================'+cr
+    textall=''
+    hdr=*(*info).d->get_header(itab, /string)
     for i=0, n_elements(hdr)-1 do begin
       textall=textall+hdr[i]+cr
     endfor
-  endfor
-
-  widget_control, disp_field, set_value = textall, set_text_top_line=0
+    widget_control, disp_field, set_value = textall, set_text_top_line=0
+  endfor ; itab=0,*(*info).d->get_number_windows()-1
   widget_control, hdr_widget, /realize
 
-  xmanager, 'Display Header Contents', hdr_widget, /no_block, $
+  xmanager, 'DisplayHeaderContents', hdr_widget, /no_block, $
     group_leader = (*info).tlb
 end
 
 ; close Header Display
 pro spice_xcontrol_hdrdisp_destroy, event
   widget_control, event.top,/destroy
+end
+
+; event procedure for header display, 
+pro DisplayHeaderContents_event, event
 end
 
 function spice_xcontrol_lineselect, event
@@ -565,8 +560,8 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   llsubcol3= widget_base(lsubcol3, /column)      ;left column.
   rlsubcol3= widget_base(lsubcol3, /column)      ;right column.
   hdrdispfield = widget_base(llsubcol3, /col)
-  ;  hdrdispbutton= widget_button(hdrdispfield, value='  Display header  ', $
-  ;    event_pro = 'spice_xcontrol_hdrdisp')
+  hdrdispbutton= widget_button(hdrdispfield, value='  Display header  ', $
+    event_pro = 'spice_xcontrol_hdrdisp')
   closefield  = widget_base(rlsubcol3, /column)
   closebutton = widget_button(closefield, value = '  Close   ', $
     event_pro = 'spice_xcontrol_destroy')
