@@ -1,26 +1,38 @@
 ;+
 ; NAME:
-;       SPICE_XCONTROL
+;       SPICE_XCONTROL_DETECTOR
 ;
 ; PURPOSE:
-; SPICE_XCONTROL is the main QL control window. After selecting a
-; file this windows opens with information about the data, and control
-; buttons etc. for the various display methods and data processing
-; options available for a particular set of data.
+;       SPICE_XCONTROL_DETECTOR is a helper function for SPICE_XCONTROL. It returns
+;       the detector views of the two detectors to be displayed. Size of output can
+;       be given in either direction or in both, the direction which is not given is
+;       calculated so that the aspect ratio of detector is the same as the original,
+;       except if both directions are given. If no size is given, the images are 
+;       returned in the original detector size.
 ;
 ; CATEGORY:
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_xcontrol, data, group_leader = group
+;       spice_xcontrol_detector, data [, detector2=detector2, xsize=xsize, ysize=ysize]
 ;
 ; INPUTS:
-; data: data object of type 'spice_data'
+;       data: data object of type 'spice_data'
 ;
-; KEYWORD PARAMETERS:
-; group_leader: Widget ID of parent widget
+; OPTIONAL INPUTS:
+;       xsize: the size the resulting images should have in x-direction. If not provided
+;              this keyword returns the resulting size in x-direction, which is calculated with
+;              size in y-direction and detector aspect ratio, or as original detector size.
+;       xsize: the size the resulting images should have in y-direction. If not provided
+;              this keyword returns the resulting size in y-direction, which is calculated with
+;              size in x-direction and detector aspect ratio, or as original detector size.
+;
+; OPTIONAL OUTPUTs:
+;       detector2: 2-D array containing the image of the second detector, with the windows
+;              plotted in it
 ;
 ; OUTPUTS:
+;       2-D array containing the image of the first detector, with the windows plotted in it
 ;
 ; CALLS:
 ;
@@ -33,7 +45,7 @@
 ; MODIFICATION HISTORY:
 ;     17-Nov-2020: Martin Wiesmann, First version
 ;
-; $Id: 2020-11-17 11:08 CET $
+; $Id: 2020-11-17 11:19 CET $
 ;-
 ;
 
