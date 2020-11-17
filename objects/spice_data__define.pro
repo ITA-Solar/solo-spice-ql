@@ -38,7 +38,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2020-11-16 21:17 CET $
+; $Id: 2020-11-17 20:43 CET $
 
 
 ;+
@@ -1365,7 +1365,7 @@ PRO spice_data::read_file, file, verbose=verbose
   wcs = ptrarr(self.nwin)
   dumbbells = bytarr(self.nwin)
   FOR iwin = 0, self.nwin-1 DO BEGIN
-    headfits, file, hdr, exten=iwin
+    hdr = headfits(file, exten=iwin)
     headers_string[iwin] = ptr_new(hdr)
     hdr = fitshead2struct(hdr)
     headers[iwin] = ptr_new(hdr)
