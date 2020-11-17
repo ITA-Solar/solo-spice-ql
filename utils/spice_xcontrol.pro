@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-16 11:10 CET $
+; $Id: 2020-11-17 11:08 CET $
 ;-
 ;
 ;
@@ -209,13 +209,18 @@ end
 function spice_xcontrol_dispselect, event
   widget_control, event.top, get_uvalue = info
   displaymode = event.value
-  ; displaymode=0: "Line raster display".
+  ; displaymode=0:  "Detector view". This displays the detector by showing
+  ;                  all lines as a function of wavelength an slit position.
+  ;                  Raster position or time is set, and can be changed in
+  ;                  the display widget.
+  ;
+  ; displaymode=1: "Raster Browser" Peter Young's browser
+  ;
+  ; displaymode=2: "Line raster display".
   ;                 This is line profiles as a function of slit position
   ;                 at all raster positions or time (for "sit and stare"
   ;                 studies. Several lines may be displayed in the same
   ;                 window.
-  ;
-  ; displaymode=1: "Raster Browser" Peter Young's browser
   ;
   ; displaymode=2:  "Line profile evolution". This is line profiles as a
   ;                  function of raster position (or time for "sit and stare"
@@ -229,11 +234,6 @@ function spice_xcontrol_dispselect, event
   ;                  calculating 0th order intensity moment of the line
   ;                  profile. Only one line map in each window, but lines
   ;                  can be set and changed also within the widget.
-  ;
-  ; displaymode=4:  "Detector view". This displays the detector by showing
-  ;                  all lines as a function of wavelength an slit position.
-  ;                  Raster position or time is set, and can be changed in
-  ;                  the display widget.
   ;
   warning = 'At least one line must be selected'
   case displaymode of
@@ -461,47 +461,11 @@ pro spice_xcontrol, input_data, group_leader = group_leader
 
   data = spice_get_object(input_data)
 
-  ;  dirsep=path_sep()
   ;  ; information about data set
   nwin = data->get_number_windows()         ; number of line windows
   nraster = (data->get_number_exposures(0))   ; number of raster positions
-  ;  nslitw=(data-> getyw())
-  ;  line_npx = (data-> getxw())
   line_id = data->get_window_id()
-  ;    line_mask = intarr(nwin)
   ;
-  ;  ; construct an image of the detectors
-  ;  bin_sp=data->binning_region('FUV')
-  ;  fuvicon=fltarr(((data->getccd_sz('FUV'))[0])/bin_sp,max(data->getyw()))
-  ;  bin_sp=data->binning_region('NUV')
-  ;  nuvicon=fltarr(((data->getccd_sz('NUV'))[0])/bin_sp,max(data->getyw()))
-  ;  yw=data->getyw()
-  ;  ywmax=max(data->getyw(),ic)
-  ;  ysmax=data->getys(ic)
-  ;  xw=data->getxw()
-  ;  xs=data->getxs()
-  ;  ys=data->getys()-ysmax
-  ;  for i=0,nwin-1 do begin
-  ;    wd=data->getvar(i)
-  ;    imax=data->getinfo('TDP90_'+strtrim(string(i+1),2))
-  ;    if data->getregion(i) eq 'FUV' then begin
-  ;      xss=0
-  ;      if data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
-  ;      key_frame=-1
-  ;      repeat key_frame=key_frame+1 until $
-  ;        max(data->descale_array(wd[xss:xss+xw[i]-1,*,key_frame]),/nan) gt imax/2. or key_frame eq nraster[i]-1
-  ;      fuvicon[xs[i]:xs[i]+xw[i]-1,0:yw[i]-1] = data->descale_array(wd[xss:xss+xw[i]-1,*, key_frame])
-  ;    endif else begin
-  ;      xs[i]=xs[i] ;-(data->getccd('NUV'))[0]
-  ;      key_frame=-1
-  ;      repeat key_frame=key_frame+1 until $
-  ;        max(data->descale_array(wd[*,*,key_frame]),/nan) gt imax/2. or key_frame eq nraster[i]-1
-  ;      nuvicon[xs[i]:xs[i]+xw[i]-1,0:yw[i]-1] = data->descale_array(wd[*,*,key_frame])
-  ;    endelse
-  ;  endfor
-  ;
-  ;  index=where((data->getregion()) eq 'FUV',ct)
-  ;  if ct gt 0 then line_mask[where((data->getregion()) eq 'FUV')]=1
   ;
   ; top level base widget:
   tlb = widget_base(/row, mbar=menubar, $
@@ -547,11 +511,11 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   ;    'Whisker         ', $
   ;    'Intensity map   ']
   tools=['Detector        ', $
-    'Raster Browser         ', $
-    'Xmap', $
+    'Raster Browser      ', $
+    'Raster', $
     'Whisker         ', $
-    'Intensity map   ']
-  ;      if max(nraster) le 1 then tools = tools[0:2]
+    'Intensity map (XMap)']
+  if max(nraster) le 1 then tools = tools[0:2]
   dispselect = cw_bgroup(dispselect_label, row = 5, $
     tools,  event_func = 'spice_xcontrol_dispselect')
 
@@ -560,66 +524,22 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   data_info = widget_text(disp_base, xs=60, ys=20,/scroll)
 
   ; Icons to show layout of windows on detector
-  ;  icon_size=400
-  ;  icon_aspect=1./2.66
-  ;  nuv_icon_base=widget_base(mcol,/col)
-  ;  nuv_icon                   = widget_draw(nuv_icon_base  ,              $
-  ;    retain = 2,                              $
-  ;    XSize       = icon_size,                 $
-  ;    YSize       = icon_size*icon_aspect,     $
-  ;    frame       = 1, event_pro='spice_xcontrol_detnuv',/button_events)
-  ;  line_nuv=min(where(line_mask eq 0,ct))
-  ;
-  ;  fuv_icon_base=widget_base(mcol,/col)
-  ;  fuv_icon                   = widget_draw(fuv_icon_base  ,              $
-  ;    retain = 2,                              $
-  ;    XSize       = icon_size,                 $
-  ;    YSize       = icon_size*icon_aspect,     $
-  ;    frame       = 1, event_pro='spice_xcontrol_detfuv',/button_events)
-  ;  line_fuv=min(where(line_mask,ct))
-  ;  info_base = widget_base(mcol,/col)
-  ;  label='DATE_OBS: '+data->getinfo('DATE_OBS')
-  ;  info_fuv_label = widget_label(info_base, value=label,/align_left)
-  ;  label='XCEN: '+strtrim(string(data->getxcen(),format='(f7.2)'),2)+' ' + $
-  ;    'YCEN: '+strtrim(string(data->getycen(),format='(f7.2)'),2)+' ' + $
-  ;    'FOVX: '+strtrim(string(data->getfovx(),format='(f7.2)'),2)+' ' + $
-  ;    'max(FOVY): '+strtrim(string(max(data->getfovy()),format='(f7.2)'),2)
-  ;  info_fuv_label = widget_label(info_base, value=label,/align_left)
-  ;  label='SAT_ROT: '+strtrim(string(data->getinfo('SAT_ROT'),format='(f6.2)'),2)
-  ;  info_fuv_label = widget_label(info_base, value=label,/align_left)
-  ;  label='OBS_DESC: '+data->getinfo('OBS_DESC')
-  ;  info_fuv_label = widget_label(info_base, value=label,/align_left)
-  ;  label='OBSLABEL: '+data->getinfo('OBSLABEL')+' OBSTITLE: '+data->getinfo('OBSTITLE')
-  ;  info_fuv_label = widget_label(info_base, value=label,/align_left)
-  ;
-  ;  ; SJI images
-  ;
-  ;  sji_size=150
-  ;  sji_nuv_base=widget_base(rcol,/col)
-  ;  sji_nuv1_icon                   = widget_draw(sji_nuv_base  ,             $
-  ;    retain = 2, $
-  ;    XSize       = sji_size,                      $
-  ;    YSize       = sji_size,                      $
-  ;    frame       = 1, event_pro='spice_xcontrol_shownuv1',/button_events)
-  ;  sji_nuv2_icon                   = widget_draw(sji_nuv_base  ,             $
-  ;    retain = 2, $
-  ;    XSize       = sji_size,                      $
-  ;    YSize       = sji_size,                      $
-  ;    frame       = 1, event_pro='spice_xcontrol_shownuv2',/button_events)
-  ;  sji_fuv1_icon                   = widget_draw(sji_nuv_base  ,             $
-  ;    retain = 2, $
-  ;    XSize       = sji_size,                      $
-  ;    YSize       = sji_size,                      $
-  ;    frame       = 1, event_pro='spice_xcontrol_showfuv1',/button_events)
-  ;  sji_fuv2_icon                   = widget_draw(sji_nuv_base  ,             $
-  ;    retain = 2, $
-  ;    XSize       = sji_size,                      $
-  ;    YSize       = sji_size,                      $
-  ;    frame       = 1, event_pro='spice_xcontrol_showfuv2',/button_events)
+  xsize=250
+  detector1 = spice_xcontrol_detector(data, detector2=detector2, xsize=xsize, ysize=ysize)
+  detector_base=widget_base(mcol,/row)
+  detector1_icon                   = widget_draw(detector_base  ,              $
+    retain = 2,                              $
+    XSize       = xsize,                 $
+    YSize       = ysize,     $
+    frame       = 1, event_pro='spice_xcontrol_detnuv',/button_events)
+
+  detector2_icon                   = widget_draw(detector_base  ,              $
+    retain = 2,                              $
+    XSize       = xsize,                 $
+    YSize       = ysize,     $
+    frame       = 1, event_pro='spice_xcontrol_detfuv',/button_events)
 
   ; Solar map showing pointing of raster
-
-
   pointing_size=200
   calc_xysize,pointing_size,pointing_size,xs,ys,nxchar=4,nychar=4
   pointing_base=widget_base(lcol,/row)
@@ -645,10 +565,10 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   llsubcol3= widget_base(lsubcol3, /column)      ;left column.
   rlsubcol3= widget_base(lsubcol3, /column)      ;right column.
   hdrdispfield = widget_base(llsubcol3, /col)
-  ;  hdrdispbutton= widget_button(hdrdispfield, value='Display header  ', $
+  ;  hdrdispbutton= widget_button(hdrdispfield, value='  Display header  ', $
   ;    event_pro = 'spice_xcontrol_hdrdisp')
   closefield  = widget_base(rlsubcol3, /column)
-  closebutton = widget_button(closefield, value = 'Close   ', $
+  closebutton = widget_button(closefield, value = '  Close   ', $
     event_pro = 'spice_xcontrol_destroy')
   printfilesbutton = widget_button(lcol, value = 'Print filename to console', $
     event_pro = 'spice_xcontrol_printfilename')
@@ -682,184 +602,23 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   spice_xcontrol_get_data_info, info
   widget_control, data_info, set_value = (*info).data_textdump, /append
 
-  ;  widget_control, nuv_icon , get_value = drawID1
-  ;  wset,drawID1
-  ;  deticon_resized = congrid(nuvicon,icon_size,icon_size*icon_aspect)
-  ;  bad=where(finite(deticon_resized) eq 0,nbad)
-  ;  if nbad ne 0 then deticon_resized[bad]=data->get_missing_value()
-  ;  ;  nbad=n_elements(where(deticon_resized eq data->missing()))
-  ;  ;  fbad=float(nbad)/float(n_elements(deticon_resized))
-  ;  deticon_min = min(iris_histo_opt(deticon_resized,0.005,missing=data->get_missing_value())>1.e-4)
-  ;  deticon_max = max(iris_histo_opt(deticon_resized,0.005,missing=data->get_missing_value()))
-  ;  deticon_mean=mean(deticon_resized)-deticon_min
-  ;  loadct,9
-  ;  tvscl,alog10(deticon_resized > deticon_min < deticon_max),/nan
-  ;  loadct,0
-  ;  widget_control, fuv_icon , get_value = drawID2
-  ;  wset,drawID2
-  ;  deticon_resized = congrid(fuvicon,icon_size,icon_size*icon_aspect)
-  ;  bad=where(finite(deticon_resized) eq 0,nbad)
-  ;  if nbad ne 0 then deticon_resized[bad]=data->get_missing_value()
-  ;  ;  nbad=n_elements(where(deticon_resized eq data->missing()))
-  ;  ;  fbad=float(nbad)/float(n_elements(deticon_resized))
-  ;  deticon_min = min(iris_histo_opt(deticon_resized,0.01,/bot_only,missing=data->get_missing_value()))
-  ;  deticon_max = max(iris_histo_opt(deticon_resized,0.001,/top_only,missing=data->get_missing_value()))
-  ;  deticon_mean=mean(deticon_resized)-deticon_min
-  ;  loadct,3
-  ;  tvscl,(deticon_resized > deticon_min < deticon_max),/nan
-  loadct,0
-  ;
+  widget_control, detector1_icon , get_value = drawID1
+  wset,drawID1
+  bad=where(finite(detector1) eq 0,nbad)
+  if nbad ne 0 then detector1[bad]=-999
+  deticon_min = min(iris_histo_opt(detector1,0.005,missing=-999)>1.e-4, max=deticon_max, /nan)
+  loadct,9
+  tvscl,alog10(detector1 > deticon_min < deticon_max),/nan
+
+  widget_control, detector2_icon , get_value = drawID2
+  wset,drawID2
+  bad=where(finite(detector2) eq 0,nbad)
+  if nbad ne 0 then detector2[bad]=-999
+  deticon_min = min(iris_histo_opt(detector2,0.005,missing=-999)>1.e-4, max=deticon_max, /nan)
+  loadct,3
+  tvscl,alog10(detector2 > deticon_min < deticon_max),/nan
+
   chars=2.0
-  chars_small=1.0
-  ;  widget_control, sji_nuv1_icon , get_value = drawID
-  ;  wset,drawID
-  ;  lwin=2
-  ;  sji_im=data->getsji(lwin,/noload)
-  ;  if (sji_im[0])[0] eq -1 then begin
-  ;    xyouts,0.5,0.5,'SJI_2796',chars=chars,/normal,alignment=0.5
-  ;  endif else begin
-  ;    imax=data->getinfo('DATAP90',lwin,/sji)
-  ;    key_frame=-1
-  ;    repeat key_frame=key_frame+1 until $
-  ;      max(data->descale_array(sji_im[*,*,key_frame]),/nan) gt imax/2. $
-  ;      or key_frame eq data->getnexp_sji(lwin)-1
-  ;    sji_im=data->descale_array(sji_im[*,*,key_frame])
-  ;    sumsptrl = data->getinfo('SUMSPTRL',lwin,/sji)
-  ;    sumsptrl = sumsptrl eq 0 ? 1:sumsptrl
-  ;    sumspat=data->getinfo('SUMSPAT',lwin,/sji)
-  ;    sumspat = sumspat eq 0 ? 1:sumspat
-  ;    sji_sz=[data->getinfo('NAXIS1',lwin,/sji),data->getinfo('NAXIS2',lwin,/sji)]
-  ;    sji_im=congrid(sji_im,sji_sz[0],sji_sz[1]*sumspat/sumsptrl)
-  ;    sji_im=iris_histo_opt(sji_im[*,*],0.01,missing=data->missing())
-  ;    sji_im_lim=max(sji_im)/1000.
-  ;    xw=data->getfovx_sji(lwin)
-  ;    yw=data->getfovy_sji(lwin)
-  ;    if xw ge yw then begin
-  ;      sji_im_resized = congrid(sji_im,sji_size,sji_size*yw/xw)
-  ;      tvscl,(sji_im_resized>sji_im_lim),0,(1.-yw/xw)/2.*sji_size
-  ;    endif else begin
-  ;      sji_im_resized = congrid(sji_im,sji_size*xw/yw,sji_size)
-  ;      tvscl,(sji_im_resized>sji_im_lim),(1.-xw/yw)/2.*sji_size,0
-  ;    endelse
-  ;    xyouts,0.1,0.1,data->getsji_id(lwin),chars=chars_small,/normal,alignment=0.
-  ;  endelse
-
-  ;  widget_control, sji_nuv2_icon , get_value = drawID
-  ;  wset,drawID
-  ;  lwin=3
-  ;  sji_im=data->getsji(lwin,/noload)
-  ;  if (sji_im[0])[0] eq -1 then begin
-  ;    xyouts,0.5,0.5,'SJI_2832',chars=chars,/normal,alignment=0.5
-  ;  endif else begin
-  ;    imax=data->getinfo('DATAP90',lwin,/sji)
-  ;    key_frame=-1
-  ;    repeat key_frame=key_frame+1 until $
-  ;      max(data->descale_array(sji_im[*,*,key_frame]),/nan) gt imax/2. $
-  ;      or key_frame eq data->getnexp_sji(lwin)-1
-  ;    sji_im=data->descale_array(sji_im[*,*,key_frame])
-  ;    sumsptrl = data->getinfo('SUMSPTRL',lwin,/sji)
-  ;    sumsptrl = sumsptrl eq 0 ? 1:sumsptrl
-  ;    sumspat=data->getinfo('SUMSPAT',lwin,/sji)
-  ;    sumspat = sumspat eq 0 ? 1:sumspat
-  ;    sji_sz=[data->getinfo('NAXIS1',lwin,/sji),data->getinfo('NAXIS2',lwin,/sji)]
-  ;    sji_im=congrid(sji_im,sji_sz[0],sji_sz[1]*sumspat/sumsptrl)
-  ;    sji_im=iris_histo_opt(sji_im[*,*],0.01,missing=data->missing())
-  ;    sji_im_lim=max(sji_im)/1000.
-  ;    xw=data->getfovx_sji(lwin)
-  ;    yw=data->getfovy_sji(lwin)
-  ;    if xw ge yw then begin
-  ;      sji_im_resized = congrid(sji_im,sji_size,sji_size*yw/xw)
-  ;      tvscl,(sji_im_resized>sji_im_lim),0,(1.-yw/xw)/2.*sji_size
-  ;    endif else begin
-  ;      sji_im_resized = congrid(sji_im,sji_size*xw/yw,sji_size)
-  ;      tvscl,(sji_im_resized>sji_im_lim),(1.-xw/yw)/2.*sji_size,0
-  ;    endelse
-  ;    xyouts,0.1,0.1,data->getsji_id(lwin),chars=chars_small,/normal,alignment=0.
-  ;  endelse
-
-  ;  widget_control, sji_fuv1_icon , get_value = drawID
-  ;  wset,drawID
-  ;  lwin=0
-  ;  sji_im=data->getsji(lwin,/noload)
-  ;  if (sji_im[0])[0] eq -1 then begin
-  ;    xyouts,0.5,0.5,'SJI_1330',chars=chars,/normal,alignment=0.5
-  ;  endif else begin
-  ;    imax=data->getinfo('DATAP90',lwin,/sji)
-  ;    key_frame=-1
-  ;    repeat key_frame=key_frame+1 until $
-  ;      max(data->descale_array(sji_im[*,*,key_frame]),/nan) gt imax/2. $
-  ;      or key_frame eq data->getnexp_sji(lwin)-1
-  ;    sji_im=data->descale_array(sji_im[*,*,key_frame])
-  ;    sumsptrl = data->getinfo('SUMSPTRl',lwin,/sji)
-  ;    sumsptrl = sumsptrl eq 0 ? 1:sumsptrl
-  ;    sumspat=data->getinfo('SUMSPAT',lwin,/sji)
-  ;    sumspat = sumspat eq 0 ? 1:sumspat
-  ;    sji_sz=[data->getinfo('NAXIS1',lwin,/sji),data->getinfo('NAXIS2',lwin,/sji)]
-  ;    sji_im=congrid(sji_im,sji_sz[0],sji_sz[1]*sumspat/sumsptrl)
-  ;    sji_im=iris_histo_opt(sji_im[*,*],0.01,missing=data->missing())
-  ;    sji_im_lim=max(sji_im)/1000.
-  ;    xw=data->getfovx_sji(lwin)
-  ;    yw=data->getfovy_sji(lwin)
-  ;    ;    for i=0,data->getnraster(0)-1 do begin
-  ;    ;       sji_im[xys.xs[i]:xys.xs[i]+1,0:yw-1] = $
-  ;    ;         (sji_im[xys.xs[i]:xys.xs[i]+1,0:yw-1]/10.)
-  ;    ;    endfor
-  ;    if xw ge yw then begin
-  ;      sji_im_resized = congrid(sji_im,sji_size,sji_size*yw/xw)
-  ;      tvscl,sji_im_resized>sji_im_lim,0,(1.-yw/xw)/2.*sji_size
-  ;    endif else begin
-  ;      sji_im_resized = congrid(sji_im,sji_size*xw/yw,sji_size)
-  ;      tvscl,sji_im_resized>sji_im_lim,(1.-xw/yw)/2.*sji_size,0
-  ;    endelse
-  ;    xyouts,0.1,0.1,data->getsji_id(lwin),chars=chars_small,/normal,alignment=0.
-  ;  endelse
-
-  ;  widget_control, sji_fuv2_icon , get_value = drawID
-  ;  wset,drawID
-  ;  lwin=1
-  ;  sji_im=data->getsji(lwin,/noload)
-  ;  if (sji_im[0])[0] eq -1 then begin
-  ;    xyouts,0.5,0.5,'SJI_1400',chars=chars,/normal,alignment=0.5
-  ;  endif else begin
-  ;    imax=data->getinfo('DATAP90',lwin,/sji)
-  ;    key_frame=-1
-  ;    repeat key_frame=key_frame+1 until $
-  ;      max(data->descale_array(sji_im[*,*,key_frame]),/nan) gt imax/2. $
-  ;      or key_frame eq data->getnexp_sji(lwin)-1
-  ;    sji_im=data->descale_array(sji_im[*,*,key_frame])
-  ;    sumsptrl = data->getinfo('SUMSPTRL',lwin,/sji)
-  ;    ;sumsptrl = sumsptrf eq 0 ? 1:sumsptrl
-  ;    sumspat=data->getinfo('SUMSPAT',lwin,/sji)
-  ;    sumspat = sumspat eq 0 ? 1:sumspat
-  ;    sji_sz=[data->getinfo('NAXIS1',lwin,/sji),data->getinfo('NAXIS2',lwin,/sji)]
-  ;    sji_im=congrid(sji_im,sji_sz[0],sji_sz[1]*sumspat/sumsptrl)
-  ;    sji_im=iris_histo_opt(sji_im[*,*],0.01,missing=data->missing())
-  ;    sji_im_lim=max(sji_im)/1000.
-  ;    xw=data->getfovx_sji(lwin)
-  ;    yw=data->getfovy_sji(lwin)
-  ;    if xw ge yw then begin
-  ;      sji_im_resized = congrid(sji_im,sji_size,sji_size*yw/xw)
-  ;      tvscl,sji_im_resized>sji_im_lim,0,(1.-yw/xw)/2.*sji_size
-  ;    endif else begin
-  ;      sji_im_resized = congrid(sji_im,sji_size*xw/yw,sji_size)
-  ;      tvscl,sji_im_resized>sji_im_lim,(1.-xw/yw)/2.*sji_size,0
-  ;    endelse
-  ;    xyouts,0.1,0.1,data->getsji_id(lwin),chars=chars_small,/normal,alignment=0.
-  ;  endelse
-
-
-  ; SPICE icon
-
-  ;  widget_control, iris_icon , get_value = drawID1
-  ;  wset,drawID1
-  ;  fileName = concat_dir(getenv('IRIS_ANCILLARY'),'iris_logo.jpg')
-  ;  if (file_info(fileName)).exists then begin
-  ;    read_jpeg,filename,icon
-  ;    icon_resized = congrid(icon,3,iris_icon_size,iris_icon_size*iris_icon_aspect)
-  ;    tvscl,icon_resized,true=1
-  ;  endif else begin
-  ;    xyouts,0.5,0.5,'IRIS',chars=chars,/normal,alignment=0.5
-  ;  endelse
   widget_control, spice_icon , get_value = drawID1
   wset,drawID1
   have_con=have_proc('spice_xfiles',out=fname)
