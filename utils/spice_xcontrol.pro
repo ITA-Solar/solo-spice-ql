@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-17 20:44 CET $
+; $Id: 2020-11-17 20:51 CET $
 ;-
 ;
 ;
@@ -555,18 +555,16 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   ;  momtitle = 'Line fit '
   ;  momplot  = widget_droplist(momfield, value = momnames, title=momtitle, $
   ;    event_pro = 'spice_xcontrol_listmoments')
+
   ; Close and header display buttons
-  lsubcol3 = widget_base(lcol, /row,/frame)
-  llsubcol3= widget_base(lsubcol3, /column)      ;left column.
-  rlsubcol3= widget_base(lsubcol3, /column)      ;right column.
-  hdrdispfield = widget_base(llsubcol3, /col)
-  hdrdispbutton= widget_button(hdrdispfield, value='  Display header  ', $
+  lsubcol3 = widget_base(lcol, /column,/frame)
+  hdrdispbutton= widget_button(lsubcol3, value='  Display header  ', $
     event_pro = 'spice_xcontrol_hdrdisp')
-  closefield  = widget_base(rlsubcol3, /column)
-  closebutton = widget_button(closefield, value = '  Close   ', $
-    event_pro = 'spice_xcontrol_destroy')
-  printfilesbutton = widget_button(lcol, value = 'Print filename to console', $
+  closefield  = widget_base(lsubcol3, /column)
+  printfilesbutton = widget_button(lsubcol3, value = 'Print filename to console', $
     event_pro = 'spice_xcontrol_printfilename')
+  closebutton = widget_button(lsubcol3, value = '  Close   ', $
+    event_pro = 'spice_xcontrol_destroy')
 
   ; SPICE icon
   spice_icon_base=widget_base(rcol,/col)
