@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-18 13:45 CET $
+; $Id: 2020-11-18 14:18 CET $
 ;-
 ;
 ;
@@ -158,7 +158,7 @@ pro spice_xcontrol_hdrdisp_destroy, event
   widget_control, event.top,/destroy
 end
 
-; event procedure for header display, 
+; event procedure for header display,
 pro DisplayHeaderContents_event, event
 end
 
@@ -595,6 +595,9 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   spice_xcontrol_get_data_info, info
   widget_control, data_info, set_value = (*info).data_textdump, /append
 
+  ; get the initial color table
+  TVLCT, red, green, blue, /get
+
   widget_control, detector1_icon , get_value = drawID1
   wset,drawID1
   bad=where(finite(detector1) eq 0,nbad)
@@ -610,8 +613,9 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   deticon_min = min(iris_histo_opt(detector2,0.005,missing=-999)>1.e-4, max=deticon_max, /nan)
   loadct,3
   tvscl,alog10(detector2 > deticon_min < deticon_max),/nan
-  
-  loadct,0
+
+  ; set the inital color table again
+  TVLCT, red, green, blue
 
   chars=2.0
   widget_control, spice_icon , get_value = drawID1
