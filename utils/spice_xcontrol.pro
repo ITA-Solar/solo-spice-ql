@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-17 20:51 CET $
+; $Id: 2020-11-18 13:45 CET $
 ;-
 ;
 ;
@@ -610,6 +610,8 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   deticon_min = min(iris_histo_opt(detector2,0.005,missing=-999)>1.e-4, max=deticon_max, /nan)
   loadct,3
   tvscl,alog10(detector2 > deticon_min < deticon_max),/nan
+  
+  loadct,0
 
   chars=2.0
   widget_control, spice_icon , get_value = drawID1
