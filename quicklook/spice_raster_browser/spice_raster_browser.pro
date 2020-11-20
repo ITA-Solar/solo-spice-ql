@@ -3,7 +3,7 @@
 ;     SPICE_RASTER_BROWSER
 ;
 ; PURPOSE:
-;     This routine is used to browse 3D IRIS data-cubes. It has been
+;     This routine is used to browse 3D SPICE data-cubes. It has been
 ;     adapted from the EIS_RASTER_BROWSER routine available in the
 ;     Hinode/EIS Solarsoft distribution.
 ;
@@ -98,7 +98,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 25.04.2020 21:57 CEST $
+; $Id: 2020-11-20 14:44 CET $
 
 
 ;---------------------

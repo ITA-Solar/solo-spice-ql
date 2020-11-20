@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2020-11-10 14:58 CET $
+; $Id: 2020-11-20 14:44 CET $
 ;-
 
 
@@ -528,7 +528,7 @@ pro spice_xfiles
   getcurrentdate = widget_button(tfieldbuttons, value='Up until now')
   tfield2 = widget_base(row3, /column, event_pro='spice_xfiles_date')
   recentdroplist = widget_droplist(tfield2, value=recentwindows->getwindows(), title='Recent time-windows')
-  ignoredatebg = cw_bgroup(tfield2, ['ignore times (only if no tree structure)'], set_value=[ignoretime], /column, /nonexclusive)
+  ignoredatebg = cw_bgroup(tfield2, ['Ignore times (only if no tree structure)'], set_value=[ignoretime], /column, /nonexclusive)
 
   ; search filter
   row4=widget_base(tlb, /column, /frame, event_pro='spice_xfiles_change_search')
@@ -544,7 +544,7 @@ pro spice_xfiles
   level_base = widget_base(row4, /row)
   level_choice_droplist = widget_droplist(level_base, value=['Level 0', 'Level 1', 'Level 2'], title='Data Level')
   widget_control, level_choice_droplist, set_droplist_select=level
-  use_path_prefix_bg = cw_bgroup(level_base, ['use levelx in path', 'Use Date-tree-structure in path', 'Search subdirectories'], set_value=use_path_prefix, /row, /nonexclusive)
+  use_path_prefix_bg = cw_bgroup(level_base, ['Use levelx in path', 'Use Date-tree-structure in path', 'Search subdirectories'], set_value=use_path_prefix, /row, /nonexclusive)
   search_path_base = widget_base(row4, /row)
   searchdir = cw_field(search_path_base, title='Search Directory  ', value = 'blablabladkjfa/adflkja/dlkfja/', /string, xsize = 100, /noedit)
   label = widget_label(search_path_base, value='     ')
