@@ -6,7 +6,10 @@ https://github.com/ITA-Solar/solo-spice-ql/wiki
 If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics:  
 martin.wiesmann@astro.uio.no  
 s.v.h.haugan@astro.uio.no  
-terje.fredvik@astro.uio.no  
+terje.fredvik@astro.uio.no
+
+
+## Table of Content
 
 - [Quicklook Software](#quicklook-software)
 - [Data Analysis Software](#data-analysis-software)
