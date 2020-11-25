@@ -19,11 +19,17 @@
 ;
 ; OUTPUTS:
 ;      a spice_data object
+;      
+; OPTIONAL OUTPUTS:
+;      is_spice: is 1 if 'file' is a string and this function creates the SPICE_DATA object.
+;                is 1 if 'file' is an object of type SPICE_DATA, 0 otherwise.
+;      object_created: is 1 if 'file' is a string and this function creates the SPICE_DATA object.
+;                0 otherwise.
 ;
 ; HISTORY:
 ;      Ver. 1, 22-Oct-2020, Martin Wiesmann
 ;-
-; $Id: 22.10.2020 13:21 CEST $
+; $Id: 2020-11-25 13:34 CET $
 
 
 FUNCTION spice_get_object, file, is_spice=is_spice, object_created=object_created
