@@ -12,13 +12,10 @@
 ;     The SPICE_DATA__DEFINE procedure is not called directly. An
 ;     object of class SPICE_DATA is created with the following
 ;     statement:
-;                 spice_data = obj_new('spice_data', file, verbose=verbose)
+;                 spice_data = obj_new('spice_data', file)
 ;
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
-;
-; KEYWORD PARAMETERS:
-;     verbose : if set, the initiation of the object prints out some information (not used)
 ;
 ; OUTPUT:
 ;     Object of type SPICE_DATA which describes and contains a SPICE raster
@@ -38,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2020-11-17 20:43 CET $
+; $Id: 2020-11-25 13:33 CET $
 
 
 ;+
@@ -48,19 +45,16 @@
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
 ;
-; KEYWORD PARAMETERS:
-;     verbose : if set, the initiation of the object prints out some information (not used)
-;
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise (not implemented)
 ;-
-FUNCTION spice_data::init, file, verbose=verbose
+FUNCTION spice_data::init, file
   COMPILE_OPT IDL2
 
   self.title = 'SPICE'
   self.ccd_size = [1024, 1024]
   IF n_elements(file) EQ 1 THEN BEGIN
-    self->read_file, file, verbose=verbose
+    self->read_file, file
   ENDIF
   return, 1
 END
@@ -1336,20 +1330,16 @@ END
 ;
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
-;
-; KEYWORD PARAMETERS:
-;     verbose : if set, the initiation of the object prints out some information (not used)
 ;-
-PRO spice_data::read_file, file, verbose=verbose
+PRO spice_data::read_file, file
   ;Reads a file, overwrites any existing data in this object.
   COMPILE_OPT IDL2
 
   IF n_elements(file) NE 1 || size(file, /TYPE) NE 7 THEN BEGIN
-    message, 'spice_data->read_file, file [, verbose=verbose]', /info
+    message, 'spice_data->read_file, file', /info
     return
   ENDIF
   self.close
-  IF keyword_set(verbose) THEN silent=1 ELSE silent=0
   message, 'reading file: ' + file, /info
   self.file = file
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
