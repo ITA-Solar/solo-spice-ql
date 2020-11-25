@@ -12,7 +12,7 @@
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      object = spice_get_object(file)
+;      object = spice_get_object(file [, is_spice=is_spice, object_created=object_created])
 ;
 ; INPUTS:
 ;      file: The name and path of a SPICE file or a spice_data object
@@ -29,7 +29,7 @@
 ; HISTORY:
 ;      Ver. 1, 22-Oct-2020, Martin Wiesmann
 ;-
-; $Id: 2020-11-25 13:34 CET $
+; $Id: 2020-11-25 13:57 CET $
 
 
 FUNCTION spice_get_object, file, is_spice=is_spice, object_created=object_created

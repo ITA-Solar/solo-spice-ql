@@ -16,8 +16,8 @@
 ;       spice_xmap, data, group_leader = groupleader, ncolors=ncolors
 ;
 ; INPUTS:
-;       data: Data object. Based on the structure of the superclass
-;             HW_DATA.
+;       data: Can be either the name and path of a SPICE data file, 
+;             or a SPICE data object.
 ;
 ; KEYWORD PARAMETERS:
 ;       linelist: list of line indexes
@@ -70,7 +70,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2020-11-12 15:13 CET $
+; $Id: 2020-11-25 13:57 CET $
 ;-
 ;
 ; save as postscript file
@@ -739,10 +739,12 @@ pro spice_xmap_linedef, event
   spice_xmap_resize, pseudoevent
 end
 
+
 ; close spice_xmap
 pro spice_xmap_destroy, event
   widget_control, event.top,/destroy
 end
+
 
 pro spice_xmap_cleanup, tlb
   widget_control, tlb, get_uvalue = info
@@ -754,15 +756,19 @@ pro spice_xmap_cleanup, tlb
   ptr_free, info
 end
 
-pro spice_xmap, data, linelist = linelist, group_leader = group_leader, $
-  ncolors = ncolors, filename = filename
+
+pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
+  ncolors = ncolors
 
   if n_params() lt 1 then begin
     message,'spice_xmap,data,linelist=linelist, group_leader=group,ncolors=ncolors',/cont
     return
   endif
 
-  ; drawing window size in relation to screen
+  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
+  if ~is_spice then return
+
+; drawing window size in relation to screen
   if n_elements(scfac) eq 0 then scfac=0.8
   if n_elements(standard_size) eq 0 then standard_size=700
   if n_elements(ncolors) eq 0 then ncolors = (!d.n_colors < 256)

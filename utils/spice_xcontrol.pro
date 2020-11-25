@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-18 14:18 CET $
+; $Id: 2020-11-25 13:57 CET $
 ;-
 ;
 ;
@@ -454,7 +454,8 @@ pro spice_xcontrol, input_data, group_leader = group_leader
     return
   endif
 
-  data = spice_get_object(input_data)
+  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
+  if ~is_spice then return
 
   ;  ; information about data set
   nwin = data->get_number_windows()         ; number of line windows

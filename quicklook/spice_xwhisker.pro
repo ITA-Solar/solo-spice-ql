@@ -13,10 +13,12 @@
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_xwhisker, data, hdr, auxo, line, group_leader = group_leader
+;       spice_xwhisker, data, line [, group_leader = group_leader]
 ;
 ; INPUTS:
-;       data: Data object, based on the superclass HW_DATA
+;       data: Can be either the name and path of a SPICE data file, 
+;             or a SPICE data object.
+;       line: The index of the line window to be displayed
 ;
 ; KEYWORD PARAMETERS:
 ;       group_leader: Widget parent (if any).
@@ -49,7 +51,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 16.10.2020 11:46 CEST $
+; $Id: 2020-11-25 13:57 CET $
 
 
 ; save as postscript file
@@ -557,10 +559,12 @@ pro spice_xwhisker_lineplot, event
   endcase
 end
 
+
 ; close spice_xwhisker
 pro spice_xwhisker_destroy, event
   widget_control, event.top,/destroy
 end
+
 
 pro spice_xwhisker_cleanup, tlb
   widget_control, tlb, get_uvalue = info
@@ -575,13 +579,18 @@ pro spice_xwhisker_cleanup, tlb
   ptr_free, info
 end
 
-pro spice_xwhisker , data, line, group_leader = group_leader, $
+
+pro spice_xwhisker , input_data, line, group_leader = group_leader, $
   ncolors = ncolors
+
   if n_params() lt 2 then begin
     message, $
       'spice_xwhisker,data,line, group_leader = group,ncolors = ncolors',/cont
     return
   endif
+
+  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
+  if ~is_spice then return
 
   if n_elements(ncolors) eq 0 then ncolors = (!d.n_colors < 256)
   if n_elements(drawcolor) eq 0 then drawcolor=!p.color

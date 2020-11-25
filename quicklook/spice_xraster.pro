@@ -14,11 +14,12 @@
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_xraster, data_obj, windows, ncolors=ncolors, $
-;                     group_leader = groupleader
+;       spice_xraster, data, windows [, ncolors=ncolors, $
+;                     group_leader = groupleader]
 ;
 ; INPUTS:
-;       data_obj: Data object. based on the superclass HW_DATA
+;       data: Can be either the name and path of a SPICE data file, 
+;             or a SPICE data object.
 ;
 ; KEYWORD PARAMETERS:
 ;       windows : The index(es) of the line windows to be displayed
@@ -62,7 +63,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 16.10.2020 11:46 CEST $
+; $Id: 2020-11-25 13:57 CET $
 ;-
 ;
 ; save as postscript file
@@ -507,12 +508,15 @@ pro spice_xraster_cleanup, tlb
   ptr_free, info
 end
 
-pro spice_xraster, data, windows, ncolors=ncolors, group_leader = group_leader
+pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_leader
   ;
   if n_params() lt 2 then begin
     message,'spice_xraster,data,windows, ncolors=ncolors,group_leader = group',/cont
     return
   endif
+
+  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
+  if ~is_spice then return
 
   if n_elements(ncolors) eq 0 then ncolors = (!d.n_colors < 256)
   maxexp=200

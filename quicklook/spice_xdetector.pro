@@ -15,8 +15,8 @@
 ;       spice_xdetector, data, lindx, group_leader = groupleader, ncolors=ncolors
 ;
 ; INPUTS:
-;       data: Data object. Must follow the structure of the superclass
-;              HW_DATA (more or less).
+;       data: Can be either the name and path of a SPICE data file, 
+;             or a SPICE data object.
 ;       lindx: Line index array
 ;
 ; KEYWORD PARAMETERS:
@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 24.09.2020 11:40 CEST $
+; $Id: 2020-11-25 13:57 CET $
 
 
 ; save as postscript file
@@ -804,14 +804,18 @@ pro spice_xdetector_cleanup, tlb
   ptr_free, info
 end
 
-pro spice_xdetector, data, lindx, group_leader = group_leader, $
+pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ncolors = ncolors
+  
   if n_params() lt 2 then begin
     message, $
       'spice_xdetector: A data object and line index array must be given', $
       /cont
     return
   endif
+
+  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
+  if ~is_spice then return
 
   if n_elements(ncolors) eq 0 then ncolors = (!d.n_colors < 256)
   if n_elements(drawcolor) eq 0 then drawcolor=!p.color

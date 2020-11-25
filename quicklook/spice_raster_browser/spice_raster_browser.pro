@@ -35,8 +35,8 @@
 ;       chunk_size=chunk_size, retina=retina, no_goes=no_goes]
 ;
 ; INPUTS:
-;     INPUT:  Can be either the name of a SPICE data file, or an SPICE data
-;            object.
+;     INPUT:  Can be either the name and path of a SPICE data file, 
+;             or a SPICE data object.
 ;
 ; KEYWORDS:
 ;     QUIET:   If set, then do not print messages to the IDL command
@@ -98,11 +98,11 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2020-11-20 14:44 CET $
+; $Id: 2020-11-25 13:57 CET $
 
 
 ;---------------------
-PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, $
+PRO spice_raster_browser, input_data, quiet=quiet, yoffsets=yoffsets, $
   chunk_size=chunk_size, retina=retina, no_goes=no_goes
   COMPILE_OPT IDL2
 
@@ -115,13 +115,8 @@ PRO spice_raster_browser, input, quiet=quiet, yoffsets=yoffsets, $
   ;
   ; Below I check if INPUT is a string (i.e., a filename) or an object.
   ;
-  IF datatype(input) EQ 'STR' THEN BEGIN
-    data = spice_object(input)
-    object_created = 1
-  ENDIF ELSE BEGIN
-    data = input
-    object_created = 0
-  ENDELSE
+  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
+  if ~is_spice then return
 
   ;
   ; Check if we have an internet connection.
