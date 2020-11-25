@@ -1,3 +1,4 @@
+; $Id: 2020-11-25 21:19 CET $
 PRO shadow_check, file_hash, duplicate_hash, different_hash
   rm_path, "$HOME/sf", /expand
   rm_path, "$IDL_DIR/lib", /expand

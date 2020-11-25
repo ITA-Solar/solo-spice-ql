@@ -26,6 +26,7 @@
 ;
 ; Keywords: None
 ;
+; $Id: 2020-11-25 21:19 CET $
 ;-
 
 PRO spice_center_window, top_base

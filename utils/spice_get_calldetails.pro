@@ -53,6 +53,8 @@
 ; Modified    : Not yet.
 ;
 ; Version     : 1, 6 May 1998
+;
+; $Id: 2020-11-25 21:19 CET $
 ;-            
 
 FUNCTION spice_get_calldetails,depth

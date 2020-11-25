@@ -45,6 +45,8 @@
 ;                          Rewritten from scratch
 ;
 ; Version     : Version 2, SVHH, 11 September 2020
+;
+; $Id: 2020-11-25 21:19 CET $
 ;-            
 
 FUNCTION spice_gen_cat__line,header,keyword_info

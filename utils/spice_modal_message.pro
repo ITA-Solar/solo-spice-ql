@@ -1,4 +1,5 @@
 ;; TODO: documentation & get better fonts
+; $Id: 2020-11-25 21:19 CET $
 
 PRO spice_modal_message__event_handler, event
   widget_control,event.top,/destroy

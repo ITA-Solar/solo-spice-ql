@@ -1,3 +1,4 @@
+; $Id: 2020-11-25 21:19 CET $
 ; SPICE_CAT User Manual
 ;
 ; SPICE_CAT reads a SPICE fits file catalog with metadata about each fits

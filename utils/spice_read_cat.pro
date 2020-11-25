@@ -1,3 +1,4 @@
+; $Id: 2020-11-25 21:19 CET $
 FUNCTION spice_read_cat, catalog_file
   start_time = systime(1)
   openr, lun, catalog_file, /get_lun

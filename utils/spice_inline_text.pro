@@ -47,6 +47,8 @@ FUNCTION spice_inline_text_help
 ; Modified    : Not yet.
 ;
 ; Version     : 1, 31 July 1998
+;
+; $Id: 2020-11-25 21:19 CET $
 ;-            
 END
 

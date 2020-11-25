@@ -17,6 +17,7 @@
 ;
 ; Keywords: None
 ;
+; $Id: 2020-11-25 21:19 CET $
 ;-
 
 PRO spice_center_overlay_window, new_window, old_window

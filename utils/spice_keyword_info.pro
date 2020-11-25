@@ -1,3 +1,4 @@
+; $Id: 2020-11-25 21:19 CET $
 FUNCTION spice_keyword_info_header
   text = spice_inline_text()
 ;OBT_BEG =        646012990.301 /
