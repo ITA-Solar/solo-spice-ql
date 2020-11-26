@@ -13,7 +13,7 @@
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_xwhisker, data, line [, group_leader = group_leader]
+;       spice_xwhisker, data, line [, group_leader = group_leader, ncolors = ncolors]
 ;
 ; INPUTS:
 ;       data: Can be either the name and path of a SPICE data file, 
@@ -22,6 +22,7 @@
 ;
 ; KEYWORD PARAMETERS:
 ;       group_leader: Widget parent (if any).
+;       ncolors: Number of colors for xraster. Default is !d.n_colors<256.
 ;
 ; OUTPUTS:
 ;       None
@@ -51,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2020-11-26 11:39 CET $
 
 
 ; save as postscript file

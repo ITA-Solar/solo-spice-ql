@@ -13,17 +13,16 @@
 ;       Hansteen/Wikstol Data analysis SW
 ;
 ; CALLING SEQUENCE:
-;       spice_xmap, data, group_leader = groupleader, ncolors=ncolors
+;       spice_xmap, data [, linelist = linelist, group_leader = groupleader, ncolors=ncolors]
 ;
 ; INPUTS:
 ;       data: Can be either the name and path of a SPICE data file, 
 ;             or a SPICE data object.
 ;
 ; KEYWORD PARAMETERS:
-;       linelist: list of line indexes
+;       linelist: list of line indexes, default 0.
 ;       group_leader: Widget parent (if any).
-;       ncolors: Number of colors for spice_xmap. Default is
-;                !d.n_colors<256.
+;       ncolors: Number of colors for spice_xmap. Default is !d.n_colors<256.
 ;
 ; Outputs:
 ;       None
@@ -70,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2020-11-26 11:39 CET $
 ;-
 ;
 ; save as postscript file

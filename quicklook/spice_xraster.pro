@@ -20,12 +20,11 @@
 ; INPUTS:
 ;       data: Can be either the name and path of a SPICE data file, 
 ;             or a SPICE data object.
+;       windows : The index(es) of the line windows to be displayed
 ;
 ; KEYWORD PARAMETERS:
-;       windows : The index(es) of the line windows to be displayed
 ;       group_leader: Widget parent (if any).
-;       ncolors: Number of colors for xraster. Default is
-;                !d.n_colors<256.
+;       ncolors: Number of colors for xraster. Default is !d.n_colors<256.
 ;
 ; OUTPUTS:
 ;       None
@@ -63,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2020-11-26 11:39 CET $
 ;-
 ;
 ; save as postscript file

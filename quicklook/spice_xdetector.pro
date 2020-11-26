@@ -12,7 +12,7 @@
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_xdetector, data, lindx, group_leader = groupleader, ncolors=ncolors
+;       spice_xdetector, data, lindx [, group_leader = groupleader, ncolors=ncolors]
 ;
 ; INPUTS:
 ;       data: Can be either the name and path of a SPICE data file, 
@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2020-11-26 11:39 CET $
 
 
 ; save as postscript file

@@ -9,7 +9,7 @@
 ;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
-;     spice_object, file
+;     obj = spice_object(file)
 ;
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
@@ -33,7 +33,7 @@
 ; HISTORY:
 ;     27-Nov-2019: Martin Wiesmann
 ;-
-; $Id: 2020-11-25 13:33 CET $
+; $Id: 2020-11-26 11:39 CET $
 
 
 FUNCTION spice_object, file
