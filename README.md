@@ -121,18 +121,21 @@ In general, all functionalities in the heritage routines will be preserved as fa
     * Dumbbells shown correctly
     * Animation with ximovie doesn’t work yet, might be a bigger change
     ```
-    spice_xdetector, spice_file/spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
+    spice_xdetector, spice_file/spice_object, window_indices [, group_leader=group_leader, $
+        ncolors = ncolors]
     ```
 * Spectroheliogram viewer (iris_xraster)
     * Initial working version
     * Animation with ximovie doesn’t work yet, might be a bigger change
     ```
-    spice_xraster, spice_file/spice_object, window_indices [, group_leader=group_leader, ncolors = ncolors]
+    spice_xraster, spice_file/spice_object, window_indices [, group_leader=group_leader, $
+        ncolors = ncolors]
     ```
 * Intensity map viewer (iris_xmap)
     * Initial working version
     ```
-    spice_xmap, spice_file/spice_object [, linelist = window_index, group_leader=group_leader, ncolors = ncolors]
+    spice_xmap, spice_file/spice_object [, linelist = window_index, group_leader=group_leader, $
+        ncolors = ncolors]
     ```
 * Interactive line fitting (xcfit)
 * “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
@@ -164,7 +167,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2020-11-26 11:39 CET $
+; $Id: 2020-11-26 11:44 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
