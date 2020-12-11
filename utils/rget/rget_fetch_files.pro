@@ -287,8 +287,9 @@ PRO rget_fetch_files_test
   password = getenv("SPICE_PASSWD")
   user = 'spice'
   
-  url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/source/rget-test'
-  top_dir = '/Users/User/spice_data/'
+  url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/simple'
+  top_dir = conc(getenv("HOME"),"rget-test-deleteme")
+
 ;  spawn, "rsync -av --delete " + top_dir + "/../orig-dest/ " + top_dir
   
   print

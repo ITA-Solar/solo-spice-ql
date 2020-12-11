@@ -287,13 +287,16 @@ FUNCTION rget_make_list, path, write_file=write_file, entry_hash=entry_hash, deb
   return, entry_array
 END
 
+
 PRO rget_make_list_test
 ;  !except = 2
 ;  print, "", "", "***************************************", format='(a)'
 ;  setenv, "SPICE_DATA=~/tmp/rget-test/source/rget-test"
 ;  entries = rget_make_list("~/tmp/rget-test/source/rget-test", /write,
 ;  /debug, entry_hash=entry_hash)
-  entries = rget_make_list(getenv("SPICE_DATA"), /write)
+;  entries = rget_make_list(getenv("SPICE_DATA"), /write)
+  sep = path_sep()
+  entries = rget_make_list(getenv("SPICE_DATA")+sep+"simple-rget-test")
   stop
 ;  
 ;  print, "", "----", format='(a)'
