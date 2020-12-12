@@ -119,7 +119,7 @@ FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=str
   result = self.safe_get(filename = output_file, string_array = string_array, response_code = response_code)
   IF response_code NE 200 THEN self.report_fetch_error, path
   catch, /cancel
-  IF output_file THEN file_move, output_file, filename
+  IF output_file THEN file_move, output_file, filename, /overwrite
   self.info, "Got: " + path, threshold = 1
   return, result
 END
@@ -183,17 +183,21 @@ PRO rget_fetch_files::do_deletes
 END
 
 
-PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_time
+PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   do_fetch = ~ self.d.local_hash.haskey(relative_path)
-  do_fetch = do_fetch || typename(self.d.local_hash[relative_path]) NE "ULONG"
-  do_fetch = do_fetch || (self.d.local_hash[relative_path] < remote_time)
-  IF do_fetch THEN BEGIN
-     self.info, "Fetch " + relative_path
-     output_path = self.d.full_topdir + relative_path
-     result = self.fetch_file(relative_path, filename = output_path)
+  local_rget_file = do_fetch ? !null : self.d.local_hash[relative_path]
+  do_fetch = do_fetch || local_rget_file.time LT remote_rget_file.time
+  do_fetch = do_fetch || local_rget_file.size NE remote_rget_file.size
+  do_fetch = do_fetch || local_rget_file.exec NE remote_rget_file.exec
+  IF NOT do_fetch THEN BEGIN  
+     self.dprint, "Leave alone: " + remote_key
      return
-  END 
-  self.dprint, "Leave alone: " + remote_key
+  END
+
+  self.info, "Fetch " + relative_path
+  output_path = self.d.full_topdir + relative_path
+  result = self.fetch_file(relative_path, filename = output_path)
+  file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
 END
 
 
@@ -241,14 +245,13 @@ END
 PRO rget_fetch_files::do_fetches
   foreach remote_entry, self.d.remote_hash, rem_key DO BEGIN
      remote_key = rem_key
+     rem_key = rem_key + ''
      entry_type = typename(remote_entry)
      is_dir = remote_key.endswith('/') AND entry_type EQ "UNDEFINED"
-     ;; ?? For a normal file, remote_entry is a struct...?????
-     ;; So why does this work on mac/linux?
      CASE 1 OF
         is_dir                            : self.make_directory, remote_key
         entry_type EQ "STRING"            : self.make_symlink, remote_key, remote_entry
-        entry_type EQ "ULONG"             : self.maybe_fetch_file, remote_key, remote_entry
+        entry_type EQ "RGET_FILE_STRUCT"  : self.maybe_fetch_file, remote_key, remote_entry
      END
   END
 END
