@@ -8,7 +8,7 @@ FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=p
   self.d = dictionary()
   
   full_topdir = (file_search(top_dir, /fully_qualify_path, /test_directory, /mark_directory))[0]
-  full_topdir = linux_path(full_topdir)
+  full_topdir = full_topdir.replace('\','/')
   is_directory = full_topdir.endswith('/')
   IF ~ is_directory THEN message, "Destination "  + top_dir + " is NOT a directory"
   self.d.full_topdir = full_topdir
@@ -19,6 +19,7 @@ FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=p
   self.d.neturl = self.neturl_object(username = username, password = password)
   
   self.make_fetch
+
   return, 1
 END
 

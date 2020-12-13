@@ -22,7 +22,7 @@ FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, recursion_l
   self.d.debug = keyword_set(debug)
   self.d.topdir = topdir
   self.d.full_topdir = file_search(topdir, /fully_qualify_path, /mark_directory)
-  self.d.full_topdir = linux_path(self.d.full_topdir)
+  self.d.full_topdir = self.d.full_topdir.replace('\','/')
   self.d.clipped_topdir = self.d.full_topdir.substring(0, self.d.full_topdir.strlen()-2)
   self.d.recursion_list = recursion_list
   IF self.detect_recursion() THEN return, 0
@@ -35,7 +35,7 @@ END
 FUNCTION rget_make_list::relative_path, absolute_path
   IF absolute_path EQ !null THEN return, !null
   qualified_path = (file_search(absolute_path, /fully_qualify_path, /mark_directory))[0]
-  qualified_path = linux_path(qualified_path)
+  qualified_path = qualified_path.replace('\','/')
   internal = qualified_path.startswith(self.d.full_topdir)
   IF NOT internal THEN return, absolute_path
   return, strmid(qualified_path, self.d.full_topdir.strlen(), 1000)
@@ -60,7 +60,7 @@ FUNCTION rget_make_list::list_as_hash, relative_list_or_arr
   hash = orderedhash()
   foreach entry, arr DO BEGIN
      parts = entry.split(' ` |  ->  ')
-     parts[0] = linux_path(parts[0])
+     parts[0] = parts[0].replace('\','/')
      is_dir = n_elements(parts) EQ 1 AND parts[0].endswith('/')
      is_file = n_elements(parts) EQ 4 AND entry.contains(' ` ')
      is_link = n_elements(parts) EQ 2 AND entry.contains('  ->  ')
@@ -234,7 +234,7 @@ END
 
 PRO rget_make_list::make_list
   files = file_search(self.d.full_topdir, "*", /expand_tilde, /expand_environment, /match_initial_dot,/mark_directory)
-  files = linux_path(files)
+  files = files.replace('\','/')
   IF total(files.contains("`")) GT 0 THEN message, "Sorry, some file name(s) contain '`'"
   self.d.list = list()
   foreach file, files DO BEGIN
