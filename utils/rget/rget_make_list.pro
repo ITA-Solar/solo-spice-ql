@@ -141,10 +141,14 @@ END
 
 
 PRO rget_make_list::handle_external_file, file_info, relative_path,  link_destination
-  link_destination = self.d.full_topdir + link_destination
+  link_is_absolute = link_destination.startswith('/')
+  IF NOT link_is_absolute THEN BEGIN
+     
+     link_destination = self.d.full_topdir + link_destination
+  END 
   destination_info = file_info(link_destination)
   entry = relative_path + " ` " + self.file_details(destination_info)
-  self.dprint, "SYMLINK(ext):   " + entry + "(" + link_destination + ")", level = 2
+  self.dprint, "SYMLINK(ext):   " + entry + "(" + link_destination + ")"
   self.d.list.add, entry
 END
 
@@ -166,15 +170,6 @@ END
 ;;    the files are inside the tree, otherwise they are not
 ;;    visible.
 ;;
-PRO rget_make_list::handle_ok_symlink, file_info, relative_path
-  link_destination = file_readlink(file_info.name)
-  regular = file_info.regular
-  self.dprint,relative_path, " =*> " + link_destination, level = 2
-  CASE 1 OF 
-     regular:  self.handle_external_file, file_info, relative_path, link_destination
-     ELSE:     self.handle_external_directory, file_info, relative_path, link_destination
-  END
-END
 
 
 PRO rget_make_list::handle_directory, file_info, relative_path
@@ -205,8 +200,8 @@ PRO rget_make_list::make_list
      relative_path = self.relative_path(file_info.name)
      CASE 1 OF
         file_info.dangling_symlink: self.info,"Ignoring dangling symlink: "+relative_path
-        file_info.symlink:          self.handle_ok_symlink, file_info, relative_path 
         file_info.directory:        self.handle_directory, file_info, relative_path
+        file_info.symlink:          self.handle_regular_file, file_info, relative_path
         file_info.regular:          self.handle_regular_file, file_info, relative_path
         ELSE: BEGIN
            message,"Ooops: Not sure what this is:", /continue
@@ -255,10 +250,10 @@ PRO rget_make_list_test
 ;  /debug, entry_hash=entry_hash)
 ;  entries = rget_make_list(getenv("SPICE_DATA"), /write)
   path = getenv("HOME")+"/rget-test-deleteme
-  entries = rget_make_list(path)
+  entries = rget_make_list(path, /debug, /verbose)
+  
+  print, "", "----", entries, format='(a)'
   stop
-;  
-;  print, "", "----", format='(a)'
   
 ;  foreach entry, entries DO print, entry
   
