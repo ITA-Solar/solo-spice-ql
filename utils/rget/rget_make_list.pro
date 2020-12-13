@@ -95,29 +95,8 @@ FUNCTION rget_make_list::detect_recursion
 END
 
 
-FUNCTION rget_make_list::symlink_is_internal, file_info, link_destination
-  ;; An absolute link may still be pointing inside the source directory, and
-  ;; should be translated to a relative path
-  IF link_destination.startswith('/') THEN BEGIN
-     relative_destination = self.relative_path(link_destination)
-     IF relative_destination.startswith('/') THEN return, 0
-     link_destination = relative_destination
-     return, 1b
-  END
-  
-  ;; It's a relative link, but may of course still point outside the source
-  ;; tree! Using the fully qualified (absolute) path (file_info.name) to the
-  ;; *link*, "calculate" the final *destination*. Then *recurse*, pretending
-  ;; that the link started out as an absolute link! Problem solved (above)
-  ;;
-  current_dir = file_dirname(file_info.name, /mark_directory)
-  link_destination = current_dir + link_destination
-  return, self.symlink_is_internal(file_info, link_destination)
-END
-
-
 ;; External links: 
-;
+;;
 ;; Create a new instance of ourselves, giving it the absolute path to the
 ;; external directory. We receive a list of the contents in the external
 ;; directory, as *relative* paths. Then we pretend it was lying right here in
@@ -161,23 +140,18 @@ FUNCTION rget_make_list::file_details, file_info
 END
 
 
-PRO rget_make_list::handle_external_file, file_info, relative_path,  link_destination, $
-                                          windows=windows
-  windows_mark = keyword_set(windows) ? "# " : ""
+PRO rget_make_list::handle_external_file, file_info, relative_path,  link_destination
   IF keyword_set(windows) THEN link_destination = self.d.full_topdir + link_destination
   destination_info = file_info(link_destination)
   entry = relative_path + " ` " + self.file_details(destination_info)
-  self.dprint, windows_mark + "SYMLINK(ext):   " + entry + "(" + link_destination + ")", level = 2
-  self.d.list.add, windows_mark + entry
+  self.dprint, "SYMLINK(ext):   " + entry + "(" + link_destination + ")", level = 2
+  self.d.list.add, entry
 END
 
 
 PRO rget_make_list::handle_internal_symlink, file_info, relative_path, link_destination
-  entry = relative_path + "  ->  " + "./" + link_destination
-  self.dprint, "SYMLINK(int):   " + entry + (file_info.directory ? "/" : ""), level = 2
-  self.d.list.add, entry
-  IF file_info.regular THEN self.handle_external_file, file_info, relative_path, link_destination, /windows
-  IF file_info.directory THEN self.handle_external_directory, file_info, relative_path, link_destination, /windows
+  IF file_info.regular THEN self.handle_external_file, file_info, relative_path, link_destination
+  IF file_info.directory THEN self.handle_external_directory, file_info, relative_path, link_destination
 END
 
 
