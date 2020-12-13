@@ -292,18 +292,17 @@ PRO rget_fetch_files_test
   user = 'spice'
   
   url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/simple'
-  top_dir = conc(getenv("HOME"),"rget-test-deleteme")
+  top_dir = getenv("HOME")+"/rget-test-deleteme"
 
-;  spawn, "rsync -av --delete " + top_dir + "/../orig-dest/ " + top_dir
-  
   print
   print, "**********************************************************************"
   print, "**********************************************************************"
 
-  rget_fetch_files,url, top_dir, dict, debug=0, user = user, password = password, verbose=0
+  rget_fetch_files,url, top_dir, dict, debug=2, user = user, password = password, verbose=2
   
-  print, "", "******** Testing *********", "", format='(a)'
-  spawn, "diff -r  ~/tmp/rget-test/source/rget-test/  ~/tmp/rget-test/dest/|& grep -v 'recursive'"
+;  print, "", "******** Testing *********", "", format='(a)'
+;  spawn, "rsync -av --delete " + toop_dir + "/../orig-dest/ " + top_dir
+;  spawn, "diff -r  ~/tmp/rget-test/source/rget-test/  ~/tmp/rget-test/dest/|& grep -v 'recursive'"
 END
 
 test = getenv("USER") EQ "steinhh"
