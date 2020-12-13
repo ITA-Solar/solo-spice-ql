@@ -149,12 +149,6 @@ PRO rget_make_list::handle_external_file, file_info, relative_path,  link_destin
 END
 
 
-PRO rget_make_list::handle_internal_symlink, file_info, relative_path, link_destination
-  IF file_info.regular THEN self.handle_external_file, file_info, relative_path, link_destination
-  IF file_info.directory THEN self.handle_external_directory, file_info, relative_path, link_destination
-END
-
-
 ;; FILE_SEARCH does not follow symlinked directories.
 ;;
 ;; 1. If symlink points below top_dir then list as symlink, no
@@ -174,11 +168,9 @@ END
 ;;
 PRO rget_make_list::handle_ok_symlink, file_info, relative_path
   link_destination = file_readlink(file_info.name)
-  internal = self.symlink_is_internal(file_info, link_destination)
   regular = file_info.regular
-  self.dprint,relative_path, " => " + link_destination, "(internal: "+internal.tostring()+")", level = 2
+  self.dprint,relative_path, " =*> " + link_destination, level = 2
   CASE 1 OF 
-     internal: self.handle_internal_symlink, file_info, relative_path, link_destination
      regular:  self.handle_external_file, file_info, relative_path, link_destination
      ELSE:     self.handle_external_directory, file_info, relative_path, link_destination
   END
