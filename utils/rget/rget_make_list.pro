@@ -15,7 +15,7 @@
 ;; self.info, ... , level=level        ; Informative, only when threshold <= verbose
 
 FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, recursion_list=recursion_list
-  dprint = self.dprint::init(debug = debug)
+  dprint = self.dprint::init(debug = debug, verbose=verbose)
   IF n_elements(recursion_list) EQ 0 THEN recursion_list = []
   IF NOT file_test(topdir, /directory) THEN message, "Not a directory: " + topdir
   self.d = dictionary()
@@ -23,7 +23,6 @@ FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, recursion_l
   self.d.topdir = topdir
   self.d.full_topdir = file_search(topdir, /fully_qualify_path, /mark_directory)
   self.d.full_topdir = self.d.full_topdir.replace('\','/')
-  self.d.clipped_topdir = self.d.full_topdir.substring(0, self.d.full_topdir.strlen()-2)
   self.d.recursion_list = recursion_list
   IF self.detect_recursion() THEN return, 0
   self.d.places_visited = [self.d.full_topdir]
@@ -36,8 +35,8 @@ FUNCTION rget_make_list::relative_path, absolute_path
   IF absolute_path EQ !null THEN return, !null
   qualified_path = (file_search(absolute_path, /fully_qualify_path, /mark_directory))[0]
   qualified_path = qualified_path.replace('\','/')
-  internal = qualified_path.startswith(self.d.full_topdir)
-  IF NOT internal THEN return, absolute_path
+  is_internal = qualified_path.startswith(self.d.full_topdir)
+  IF NOT is_internal THEN return, absolute_path
   return, strmid(qualified_path, self.d.full_topdir.strlen(), 1000)
 END
 
@@ -275,7 +274,7 @@ END
 
 
 FUNCTION rget_make_list, path, write_file=write_file, entry_hash=entry_hash, debug=debug, verbose=verbose
-  make_list_obj = obj_new('rget_make_list', path, debug=debug)
+  make_list_obj = obj_new('rget_make_list', path, debug=debug, verbose=verbose)
   
   entry_array = make_list_obj.list_as_array()
   
