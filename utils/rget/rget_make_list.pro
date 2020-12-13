@@ -294,7 +294,8 @@ PRO rget_make_list_test
 ;  entries = rget_make_list("~/tmp/rget-test/source/rget-test", /write,
 ;  /debug, entry_hash=entry_hash)
 ;  entries = rget_make_list(getenv("SPICE_DATA"), /write)
-  entries = rget_make_list(getenv("SPICE_DATA")+"/simple-rget-test")
+  path = getenv("HOME")+"/rget-test-deleteme
+  entries = rget_make_list(path)
   stop
 ;  
 ;  print, "", "----", format='(a)'
