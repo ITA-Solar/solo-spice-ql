@@ -141,7 +141,7 @@ END
 
 
 PRO rget_make_list::handle_external_file, file_info, relative_path,  link_destination
-  IF keyword_set(windows) THEN link_destination = self.d.full_topdir + link_destination
+  link_destination = self.d.full_topdir + link_destination
   destination_info = file_info(link_destination)
   entry = relative_path + " ` " + self.file_details(destination_info)
   self.dprint, "SYMLINK(ext):   " + entry + "(" + link_destination + ")", level = 2
