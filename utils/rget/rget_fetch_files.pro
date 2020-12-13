@@ -191,7 +191,7 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   do_fetch = do_fetch || local_rget_file.size NE remote_rget_file.size
   do_fetch = do_fetch || local_rget_file.exec NE remote_rget_file.exec
   IF NOT do_fetch THEN BEGIN  
-     self.dprint, "Leave alone: " + remote_key
+     self.dprint, "Leave alone: " + relative_path
      return
   END
 
