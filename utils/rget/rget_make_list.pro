@@ -211,12 +211,6 @@ PRO rget_make_list::handle_ok_symlink, file_info, relative_path
 END
 
 
-PRO rget_make_list::handle_dangling_symlink, file_info, relative_path
-  link_destination = file_readlink(file_info.name)
-  self.d.list.add, relative_path + "  ->  !!" + link_destination
-END
-
-
 PRO rget_make_list::handle_directory, file_info, relative_path
   new_relative_path = self.relative_path(file_info.name)
   IF new_relative_path NE relative_path THEN stop
@@ -244,7 +238,7 @@ PRO rget_make_list::make_list
      
      relative_path = self.relative_path(file_info.name)
      CASE 1 OF
-        file_info.dangling_symlink: self.handle_dangling_symlink, file_info, relative_path
+        file_info.dangling_symlink: self.info,"Ignoring dangling symlink: "+relative_path
         file_info.symlink:          self.handle_ok_symlink, file_info, relative_path 
         file_info.directory:        self.handle_directory, file_info, relative_path
         file_info.regular:          self.handle_regular_file, file_info, relative_path
