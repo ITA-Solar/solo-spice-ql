@@ -230,6 +230,11 @@ FUNCTION rget_make_list, path, write_file=write_file, entry_hash=entry_hash, deb
   return, entry_array
 END
 
+PRO rget_make_list, path, write_file=write_file, entry_hash=entry_hash, debug=debug, $
+                    verbose=verbose,  max_allowed_depth=max_allowed_depth
+  list = rget_make_list(path, write_file=write_file, entry_hash=entry_hash, debug=debug, $
+                        verbose=verbose, max_allowed_depth=max_allowed_depth)
+END
 
 PRO rget_make_list_test
 ;  !except = 2
