@@ -1,13 +1,13 @@
-FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, recursion_list=recursion_list
+FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, max_allowed_depth=max_allowed_depth
   dprint = self.dprint::init(debug = debug, verbose=verbose)
-  IF n_elements(recursion_list) EQ 0 THEN recursion_list = []
   IF NOT file_test(topdir, /directory) THEN message, "Not a directory: " + topdir
   self.d = dictionary()
   self.d.debug = keyword_set(debug)
   self.d.topdir = topdir
   self.d.full_topdir = file_search(topdir, /fully_qualify_path, /mark_directory)
   self.d.full_topdir = self.d.full_topdir.replace('\','/')
-  self.d.recursion_list = recursion_list
+  IF n_elements(max_allowed_depth) EQ 0 THEN max_allowed_depth = 100
+  self.d.max_allowed_depth = max_allowed_depth
   IF self.detect_recursion() THEN return, 0
   self.d.places_visited = [self.d.full_topdir]
   self.make_list
@@ -63,35 +63,27 @@ END
 
 
 FUNCTION rget_make_list::detect_recursion
-  IF n_elements(self.d.recursion_list) EQ 0 THEN return, 0
+  IF self.d.max_allowed_depth EQ 0 THEN return, 0
+  current_depth = n_elements(self.d.topdir.split("/"))
+  IF current_depth LE self.d.max_allowed_depth THEN return, 0
   
-  foreach visited, self.d.recursion_list DO BEGIN
-     info = file_info(visited)
-     IF info.dangling_symlink THEN CONTINUE ;; Otherwise would trigger !error
-     IF file_same(visited, self.d.full_topdir) THEN BEGIN
-        self.info, "Recursion detected, these two are the same:"
-        self.info, " -> " + visited 
-        self.info, " -> " + self.d.full_topdir
-        return, 1
-     END
-  END
-  return, 0
+  print, "** Possible recursive symlinking detected!"
+  print, "** Current directory depth: " + current_depth.toString()
+  print, "** Path: " + self.d.topdir
+  print, "** max_allowed_depth = " + self.d.max_allowed_depth.tostring()
+  print, "** Use rget_make_list(..., max_allowed_depth=N)"
+  print, "** Setting max_allowed_depth to zero means no limit"
+  print, "** IGNORING " + self.d.topdir
+  return, 1
 END
 
 
 ;; External links: 
 ;;
 ;; Create a new instance of ourselves, giving it the absolute path to the
-;; external directory. We receive a list of the contents in the external
-;; directory, as *relative* paths. Then we pretend it was lying right here in
-;; the first place.
-;;
-;; To detect recursions, we add our *own* topdir (only) to the recursion list
-;; and send that to the child object. That means the child object will detect
-;; recursions directly to our top, *not* to other places inside "us". However,
-;; if there *is* a loop, we will eventually end up examining this particular
-;; link once more - and at *that* point, the recursion list we pass on to the
-;; new child will already contain that path, so it refuses to go on.
+;; linked directory. We receive a list of the contents in the linked
+;; directory, as *relative* paths. Then we pretend they were lying right here
+;; in the first place.
 
 PRO rget_make_list::handle_external_directory, file_info, relative_path, link_destination, windows=windows
   windows_mark = keyword_set(windows) ? "# " : ""
@@ -99,9 +91,9 @@ PRO rget_make_list::handle_external_directory, file_info, relative_path, link_de
   self.d.list.add, windows_mark + relative_path
   
   ;;
-  new_recursion_list = [self.d.recursion_list, self.d.full_topdir]
-  sublist_obj = obj_new('rget_make_list', file_info.name, recursion_list=new_recursion_list, $
-                        debug=self.debug(/level), verbose=self.verbose(/level))
+  sublist_obj = obj_new('rget_make_list', file_info.name, $
+                        debug=self.debug(/level), verbose=self.verbose(/level), $
+                        max_allowed_depth=max_allowed_depth)
   
   IF sublist_obj EQ !null THEN return ; Recursion detected
 
@@ -222,8 +214,11 @@ PRO rget_make_list__define
 END
 
 
-FUNCTION rget_make_list, path, write_file=write_file, entry_hash=entry_hash, debug=debug, verbose=verbose
-  make_list_obj = obj_new('rget_make_list', path, debug=debug, verbose=verbose)
+FUNCTION rget_make_list, path, write_file=write_file, entry_hash=entry_hash, debug=debug, $
+                         verbose=verbose,  max_allowed_depth=max_allowed_depth
+  
+  make_list_obj = obj_new('rget_make_list', path, debug=debug, verbose=verbose, $
+                          max_allowed_depth=max_allowed_depth)
   
   entry_array = make_list_obj.list_as_array()
   
