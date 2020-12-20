@@ -206,6 +206,7 @@ PRO rget_make_list::make_list
      IF file EQ '' THEN continue
      file_info = file_info(file)
      
+     print, file
      relative_path = self.relative_path(file_info.name)
      CASE 1 OF
         file_info.dangling_symlink: self.info,"Ignoring dangling symlink: "+relative_path
