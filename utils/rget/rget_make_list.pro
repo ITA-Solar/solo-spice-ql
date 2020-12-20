@@ -164,7 +164,8 @@ END
 
 
 PRO rget_make_list::make_list
-  files = file_search(self.d.full_topdir, "*", /expand_tilde, /expand_environment, /match_initial_dot,/mark_directory)
+  _extra = {expand_tilde:1, expand_environment:1, match_initial_dot:1, mark_directory:1}
+  files = file_search(self.d.full_topdir, "*", _strict_extra=_extra)
   files = files.replace('\','/')
   IF total(files.contains("`")) GT 0 THEN message, "Sorry, some file name(s) contain '`'"
   self.d.list = list()
@@ -221,7 +222,7 @@ END
 
 PRO rget_make_list_test
   path = getenv("HOME")+"/rget-test-deleteme
-  entries = rget_make_list(path, /verbose, debug=0)
+  entries = rget_make_list(path, /quiet)
   
   print, "", "----", entries, format='(a)'
   stop
