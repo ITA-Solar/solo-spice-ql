@@ -1,19 +1,3 @@
-;; NOTE: The /fully_qualify_path flag does NOT mean "physical" path But we are
-;;       safe: as long as a symlink ends up with a path that starts with the
-;;       fully qualified topdir, it must be under that topdir anyway.
-;;
-;;       However, symlink chains that physically speaking end up inside the
-;;       source directory through a different route will be handled as an
-;;       externally symlinked directory. C'mon! Who would do that?
-;;
-;;       ALSO: we "follow" symlinks by swapping in the link contents,
-;;       and if the link contents contain "../" then those elements
-;;       are "resolved".
-;;
-
-;; TODO: Add
-;; self.info, ... , level=level        ; Informative, only when threshold <= verbose
-
 FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, recursion_list=recursion_list
   dprint = self.dprint::init(debug = debug, verbose=verbose)
   IF n_elements(recursion_list) EQ 0 THEN recursion_list = []
