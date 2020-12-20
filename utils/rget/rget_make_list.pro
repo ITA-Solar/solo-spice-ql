@@ -1,6 +1,8 @@
-FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, max_allowed_depth=max_allowed_depth
-  dprint = self.dprint::init(debug = debug, verbose=verbose)
-  IF NOT file_test(topdir, /directory) THEN message, "Not a directory: " + topdir
+FUNCTION rget_make_list::init, topdir, max_allowed_depth=max_allowed_depth, $
+                               debug=debug, verbose=verbose, quiet=quiet
+  dprint = self.dprint::init(debug = debug, verbose=verbose, quiet=quiet)
+  
+  IF NOT file_test(topdir, /directory) THEN message, "TOPDIR is not a directory: " + topdir
   self.d = dictionary()
   self.d.debug = keyword_set(debug)
   self.d.topdir = topdir
@@ -131,22 +133,14 @@ END
 
 ;; FILE_SEARCH does not follow symlinked directories.
 ;;
-;; 1. If symlink points below top_dir then list as symlink, no
-;;    matter what the destination is (directory or file, or even
-;;    nothing). The link has to be there, full stop, and we don't
-;;    want to duplicate files unnecessarily. Return.
-;;
-;; EXTERNAL links:
-;;
-;; 2. If destination is regular file, list it as if the symlink
+;; 1. If destination is regular file, list it as if the symlink
 ;;    is a regular file, but use DESTINATION file date!
 ;;    (TODO: What if destination is another link? Follow!!?)
 ;;
-;; 3. If destination is a directory, traverse it and pretend
-;;    the files are inside the tree, otherwise they are not
-;;    visible.
+;; 2. If destination is a directory, traverse it and pretend
+;;    the files are inside the tree
 ;;
-PRO rget_make_list::handle_ok_symlink, file_info, relative_path
+PRO rget_make_list::handle_valid_symlink, file_info, relative_path
   link_destination = file_readlink(file_info.name)
   regular = file_info.regular
   self.dprint,relative_path, " =*> " + link_destination, level = 2
@@ -181,12 +175,11 @@ PRO rget_make_list::make_list
      file =  file.replace("[", "\[")
      IF file EQ '' THEN continue
      file_info = file_info(file)
-     
-     print, file
      relative_path = self.relative_path(file_info.name)
+     self.info, "Found: " + relative_path, /level
      CASE 1 OF
         file_info.dangling_symlink: self.info,"Ignoring dangling symlink: "+relative_path
-        file_info.symlink:          self.handle_ok_symlink, file_info, relative_path 
+        file_info.symlink:          self.handle_valid_symlink, file_info, relative_path 
         file_info.directory:        self.handle_directory, file_info, relative_path
         file_info.regular:          self.handle_regular_file, file_info, relative_path
         ELSE: BEGIN
@@ -214,47 +207,26 @@ PRO rget_make_list__define
 END
 
 
-FUNCTION rget_make_list, path, write_file=write_file, entry_hash=entry_hash, debug=debug, $
-                         verbose=verbose,  max_allowed_depth=max_allowed_depth
+FUNCTION rget_make_list, path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra
   
-  make_list_obj = obj_new('rget_make_list', path, debug=debug, verbose=verbose, $
-                          max_allowed_depth=max_allowed_depth)
+  make_list_obj = obj_new('rget_make_list', path, max_allowed_depth=max_allowed_depth, _extra=_extra)
   
   entry_array = make_list_obj.list_as_array()
-  
-  IF arg_present(entry_hash) THEN BEGIN
-     entry_hash = make_list_obj.list_as_hash(entry_array)
-  END
   
   IF keyword_set(write_file) THEN make_list_obj.write_file, write_file
   return, entry_array
 END
 
-PRO rget_make_list, path, write_file=write_file, entry_hash=entry_hash, debug=debug, $
-                    verbose=verbose,  max_allowed_depth=max_allowed_depth
-  list = rget_make_list(path, write_file=write_file, entry_hash=entry_hash, debug=debug, $
-                        verbose=verbose, max_allowed_depth=max_allowed_depth)
+PRO rget_make_list, path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra
+  list = rget_make_list(path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra)
 END
 
 PRO rget_make_list_test
-;  !except = 2
-;  print, "", "", "***************************************", format='(a)'
-;  setenv, "SPICE_DATA=~/tmp/rget-test/source/rget-test"
-;  entries = rget_make_list("~/tmp/rget-test/source/rget-test", /write,
-;  /debug, entry_hash=entry_hash)
-;  entries = rget_make_list(getenv("SPICE_DATA"), /write)
   path = getenv("HOME")+"/rget-test-deleteme
-  entries = rget_make_list(path, /debug, /verbose)
+  entries = rget_make_list(path, /verbose, debug=0)
   
   print, "", "----", entries, format='(a)'
   stop
-  
-;  foreach entry, entries DO print, entry
-  
-;  print, "", "----", format='(a)'
-;  print, "", "---", "RSYNCing results",format='(a)'
-;  spawn, "rsync -av --delete ~/tmp/rget-test/source/ " + $
-;         "osdcapps@astro-sdc-db:/astro/astro-sdc-fs/d1/sdc/roslo/vol/spice/rget-test/source/"
 END
 
 test = getenv("USER") EQ "steinhh"
