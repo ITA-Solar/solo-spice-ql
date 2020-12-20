@@ -80,19 +80,18 @@ FUNCTION rget_make_list::detect_recursion
 END
 
 
-;; External links: 
+;; Symbolic links to directories: 
 ;;
 ;; Create a new instance of ourselves, giving it the absolute path to the
 ;; linked directory. We receive a list of the contents in the linked
 ;; directory, as *relative* paths. Then we pretend they were lying right here
 ;; in the first place.
 
-PRO rget_make_list::handle_external_directory, file_info, relative_path, link_destination, windows=windows
+PRO rget_make_list::handle_symlink_directory, file_info, relative_path, link_destination, windows=windows
   windows_mark = keyword_set(windows) ? "# " : ""
   self.dprint, windows_mark + "Descending into " + relative_path, format = '(a)', level = 2
   self.d.list.add, windows_mark + relative_path
   
-  ;;
   sublist_obj = obj_new('rget_make_list', file_info.name, $
                         debug=self.debug(/level), verbose=self.verbose(/level), $
                         max_allowed_depth=max_allowed_depth)
@@ -118,7 +117,7 @@ FUNCTION rget_make_list::file_details, file_info
 END
 
 
-PRO rget_make_list::handle_external_file, file_info, relative_path,  link_destination
+PRO rget_make_list::handle_symlink_file, file_info, relative_path,  link_destination
   link_is_absolute = link_destination.startswith('/')
   IF NOT link_is_absolute THEN BEGIN
      
@@ -145,8 +144,8 @@ PRO rget_make_list::handle_valid_symlink, file_info, relative_path
   regular = file_info.regular
   self.dprint,relative_path, " =*> " + link_destination, level = 2
   CASE 1 OF 
-     regular:  self.handle_external_file, file_info, relative_path, link_destination
-     ELSE:     self.handle_external_directory, file_info, relative_path, link_destination
+     regular:  self.handle_symlink_file, file_info, relative_path, link_destination
+     ELSE:     self.handle_symlink_directory, file_info, relative_path, link_destination
   END
 END
 
