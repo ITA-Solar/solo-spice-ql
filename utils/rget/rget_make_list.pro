@@ -87,10 +87,9 @@ END
 ;; directory, as *relative* paths. Then we pretend they were lying right here
 ;; in the first place.
 
-PRO rget_make_list::handle_symlink_directory, file_info, relative_path, link_destination, windows=windows
-  windows_mark = keyword_set(windows) ? "# " : ""
-  self.dprint, windows_mark + "Descending into " + relative_path, format = '(a)', level = 2
-  self.d.list.add, windows_mark + relative_path
+PRO rget_make_list::handle_symlink_directory, file_info, relative_path, link_destination
+  self.dprint, "Descending into " + relative_path, format = '(a)', level = 2
+  self.d.list.add, relative_path
   
   sublist_obj = obj_new('rget_make_list', file_info.name, $
                         debug=self.debug(/level), verbose=self.verbose(/level), $
@@ -101,9 +100,9 @@ PRO rget_make_list::handle_symlink_directory, file_info, relative_path, link_des
   sublist_entries = sublist_obj.list_as_array()
   foreach sublist_entry, sublist_entries DO BEGIN
      sublist_relative_path = relative_path + sublist_entry
-     self.d.list.add, windows_mark + sublist_relative_path
+     self.d.list.add, sublist_relative_path
   END
-  self.dprint, windows_mark + "Done descending", level = 2
+  self.dprint, "Done descending", level = 2
 END
 
 
