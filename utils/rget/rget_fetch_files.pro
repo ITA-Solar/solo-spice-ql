@@ -55,14 +55,38 @@ function rget_fetch_files::fetch_string_array,path
 end
 
 
+PRO rget_fetch_files::create_file_if_zero_length, file, header_file
+  IF file_test(file) THEN return
+  openr, lun, header_file, /get_lun
+  tx = ''
+  ok = 0
+  WHILE NOT eof(lun) AND NOT ok DO BEGIN
+     readf, lun, tx
+     IF tx.tolower() EQ 'content-length: 0' THEN ok = 1
+  END
+  free_lun, lun
+  IF ok THEN BEGIN
+     openw, lun, file, /get_lun
+     free_lun, lun
+  END
+END
+
+
 FUNCTION rget_fetch_files::fetch_file, path, filename
   url = self.d.top_url + path
   credentials = self.curl_credentials()
   temp_file = filename+'.rget-tmp'
-  curl = "curl --fail --remote-time -o " + temp_file + " " + credentials + " " + url
+  header_file = filename + '.rget-hdr'
+  curl = "curl --fail --remote-time"
+  curl += " --dump-header " + header_file
+  curl += " -o " + temp_file
+  curl += " " + credentials
+  curl += " " + url
   self.dprint,"Executing: "+curl
   spawn,curl,result,err,exit_status=exit_status
-  if exit_status eq 0 then begin
+  if exit_status eq 0 then BEGIN
+     self.create_file_if_zero_length, temp_file, header_file
+     file_delete, header_file, /allow_nonexist
      file_move, temp_file, filename, /overwrite
      return,1
   end 
