@@ -119,8 +119,8 @@ END
 PRO rget_make_list::handle_symlink_file, file_info, relative_path,  link_destination
   link_is_absolute = link_destination.startswith('/')
   IF NOT link_is_absolute THEN BEGIN
-     
-     link_destination = self.d.full_topdir + link_destination
+     starting_location = self.d.full_topdir + file_dirname(relative_path) + "/"
+     link_destination = starting_location + link_destination
   END 
   destination_info = file_info(link_destination)
   entry = relative_path + " ` " + self.file_details(destination_info)
@@ -228,7 +228,6 @@ PRO rget_make_list_test
   stop
 END
 
-test = getenv("USER") EQ "steinhh"
-IF test THEN rget_make_list_test
+IF getenv("USER") EQ "steinhh" THEN rget_make_list_test
 
 END
