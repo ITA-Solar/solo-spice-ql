@@ -115,26 +115,6 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
 END
 
 
-FUNCTION rget_fetch_files::calculate_relative_link, link_name, link_target
-  IF link_target.substring(0, 1) EQ '!!' THEN return, link_target
-  name_parts   = link_name.split('/')
-  target_parts = link_target.split('/')
-  FOR num_common=0, n_elements(name_parts)-2 DO BEGIN
-     IF target_parts[num_common] NE name_parts[num_common] THEN BREAK
-  END
-  ;; We need to go up the non-common path
-  go_up = n_elements(name_parts) - num_common - 1
-  self.dprint, "SOURCE: " + link_name
-  self.dprint, "DEST  : " + link_target
-  up_string = ""
-  FOR i=0, go_up - 1 DO up_string += "../"  
-  down_string = (target_parts[num_common:*]).join('/')
-  relative_link = up_string + down_string
-  self.dprint, "RELATIVE: " + relative_link, "", format = '(a)'
-  return, relative_link
-END
-
-
 PRO rget_fetch_files::make_directory, directory
   self.info, "Directory " + self.d.full_topdir + directory, level = 1
   file_mkdir, self.d.full_topdir + directory
