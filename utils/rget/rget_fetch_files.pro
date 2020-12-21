@@ -152,7 +152,6 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
      is_ok_so_far = is_ok_so_far AND (local_rget_file.size EQ remote_rget_file.size)
      is_ok_so_far = is_ok_so_far AND (local_rget_file.exec EQ remote_rget_file.exec)
   END
-  
   IF is_ok_so_far THEN BEGIN  
      self.info, "Leave alone: " + relative_path, level = 1
      return
