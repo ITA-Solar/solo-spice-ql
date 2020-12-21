@@ -63,31 +63,28 @@ FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=str
   url = self.d.top_url + path
   credentials = self.d.username
   IF self.d.password THEN credentials = credentials + ':' + self.d.password
-  IF credentials THEN credentials = "--user " + credentials
-  IF keyword_set(string_array) THEN BEGIN
-     curl = "curl " + credentials + " " + url
-     print, "Executing: " + curl
-     spawn, curl, result, err_result, exit_status=exit_status
-     print, "Result: " + result, format='(a)'
-     return, result
-  END
-  
-;  output_file = filename + '.rget_tmp' : ""
-  curl = "curl -o " + output_file + " " + path
-  stop
-  catch, err
-  IF err NE 0 THEN BEGIN
-     catch, /cancel
-     self.report_fetch_error, path
-     message, /reissue
-  END
-  
-  result = self.safe_get(filename = output_file, string_array = string_array, response_code = response_code)
-  IF response_code NE 200 THEN self.report_fetch_error, path
-  catch, /cancel
-  IF output_file THEN file_move, output_file, filename, /overwrite
-  self.info, "Got: " + path, level = 2
-  return, result
+  IF credentials THEN credentials = '--user "' + credentials + '"'
+
+  IF keyword_set(string_array) THEN return,self.fetch_string_array(url,credentials)
+
+  temp_file = filename+'.rget-tmp'
+  curl = "curl --fail --remote-time -o " + temp_file + " " + credentials + " " + url
+  self.info,"Executing: "+curl
+  spawn,curl,result,err,exit_status=exit_status
+  if exit_status eq 0 then begin
+     file_move, temp_file, filename, /overwrite
+     return,filename
+  end 
+
+  messages=["** Error fetching "+url,$
+            "** curl exit status: "+exit_status.toString()]
+  self.info,messages,format='(a)'
+  openw,lun,filename+'.rget-report',/get_lun
+  printf,lun,messages,format='(a)'
+  printf,lun,"stdout: "+result,format='(a)'
+  printf,lun,"stderr: "+err
+  free_lun,lun
+  return, 0
 END
 
 
