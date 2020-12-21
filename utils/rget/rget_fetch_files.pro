@@ -42,6 +42,22 @@ PRO rget_fetch_files::report_fetch_error, url
   message, /reissue
 END
 
+function rget_fetch_files::fetch_string_array,url,credentials
+  curl = "curl " + credentials + " --fail " + url
+  self.info, "Executing: " + curl,/level
+  spawn, curl, result, err_result, exit_status=exit_status
+  if exit_status eq 0 then begin
+     self.info,"RGET-LIST: " + result, format='(a)',/level
+     return, result
+  end 
+  message,/continue,"curl error, exit status "+exit_status.toString()
+  print,"Curl output:"
+  print,"  : "+result,format='(a)'
+  print,"Curl error output:"
+  print,"  : "+err_result
+  message,"Won't go on"
+end
+
 
 FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=string_array
   url = self.d.top_url + path
