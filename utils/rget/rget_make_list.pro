@@ -195,6 +195,7 @@ PRO rget_make_list::write_file, output_file
   IF typename(output_file) NE "STRING" THEN output_file = self.d.full_topdir + "RGET-LIST"
   self.info, "", "Will write list to file " + output_file, format = '(a)'
   openw, lun, output_file, /get_lun
+  printf, lun, "#RGET-LIST"
   printf, lun, self.list_as_array(), format='(a)'
   free_lun, lun
 END
