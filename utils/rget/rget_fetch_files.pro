@@ -14,43 +14,12 @@ FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=p
   IF NOT top_url.endswith('/') THEN top_url += '/'
   self.d.top_url = top_url
   
-  self.d.neturl = self.neturl_object(username = username, password = password)
+  self.d.username = username
+  self.d.password = password
   
   self.make_fetch
 
   return, 1
-END
-
-
-FUNCTION rget_fetch_files::neturl_object, top_url, username=username, password=password
-  url_parts = parse_url(self.d.top_url)
-  IF url_parts.query NE '' THEN message, "The URL can't have any query parts"
-  
-  url_parts.username = url_parts.username ? url_parts.username :  username
-  url_parts.password = url_parts.password ? url_parts.password : password
-  
-  neturl = obj_new('IDLnetURL')
-  
-  neturl.SetProperty, url_username=url_parts.username, url_password=url_parts.password
-  neturl.SetProperty, url_host=url_parts.host
-  
-  self.d.url_parts = url_parts
-  
-  neturl.SetProperty, headers = 'User-Agent: IDLnetURL/rget_fetch_files'
-  neturl.SetProperty, verbose = !true
-  
-  neturl.SetProperty, url_path = url_parts.path
-  return, neturl
-END
-
-
-FUNCTION rget_fetch_files::reverse_parse_url
-  url_parts = self.d.url_parts
-  url = url_parts.scheme + "://"
-  IF url_parts.username NE '' THEN url += url_parts.username
-  IF url_parts.password NE '' THEN url += ":" + url_parts.password
-  IF url_parts.username NE '' THEN url += "@"
-  url += self.d
 END
 
 
@@ -74,39 +43,21 @@ PRO rget_fetch_files::report_fetch_error, url
 END
 
 
-;; STUPID IDLnetURL can't fetch empty files without throwing an error!
-;;
-;; We deal with those here, but reissue MESSAGE if the error is "something
-;; else"
-FUNCTION rget_fetch_files::safe_get, string_array=string_array, filename=filename, response_code=response_code
-  catch, err
-  IF err NE 0 THEN BEGIN
-     catch, /cancel
-     self.d.neturl.getproperty,response_code=response_code, response_header=response_header
-     zero_length = 'Content-Length: 0' + string([13b, 10b])
-     ok = response_code EQ 200 AND response_header.contains(zero_length)
-     IF ok THEN self.dprint, "NETURL.GET zero-length file detected", format = '(A)'
-     IF NOT ok THEN message, /reissue
-     
-     ;; EMPTY FILE!
-     IF keyword_set(string_array) THEN return, ''
-     ;; Make empty destination file:
-     openw, lun, filename, /get_lun
-     free_lun, lun
-     return, filename
-  END
-  IF keyword_set(filename) THEN file_mkdir, file_dirname(filename)
-  result = self.d.neturl.get(string_array = string_array, filename = filename)
-  self.d.neturl.getproperty, response_code = response_code
-  catch, /cancel
-  return, result
-END
-
-
 FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=string_array
-  path = self.d.url_parts.path + path
-  self.d.neturl.SetProperty, url_path = path
-  output_file = keyword_set(filename) ? filename + '.rget_fetch_files' : ''
+  url = self.d.top_url + path
+  credentials = self.d.username
+  IF self.d.password THEN credentials = credentials + ':' + self.d.password
+  IF credentials THEN credentials = "--user " + credentials
+  IF keyword_set(string_array) THEN BEGIN
+     curl = "curl " + credentials + " " + url
+     print, "Executing: " + curl
+     spawn, curl, result, err_result, exit_status=exit_status
+     return, result
+  END
+  
+;  output_file = filename + '.rget_tmp' : ""
+  curl = "curl -o " + output_file + " " + path
+  stop
   catch, err
   IF err NE 0 THEN BEGIN
      catch, /cancel
