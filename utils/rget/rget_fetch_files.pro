@@ -24,7 +24,20 @@ FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=p
 END
 
 
-function rget_fetch_files::fetch_string_array,url,credentials
+function rget_fetch_files::curl_credentials
+  credentials = self.d.username
+  IF self.d.password THEN credentials = credentials + ':' + self.d.password
+  IF credentials THEN begin
+     quotes = !version.os_family.tolower() eq "windows" ? '"' : "'"
+     credentials = "--user " + quotes + credentials + quotes
+  end
+  return,credentials
+end
+
+
+function rget_fetch_files::fetch_string_array,path
+  url = self.d.top_url + path
+  credentials = self.curl_credentials()
   curl = "curl " + credentials + " --fail " + url
   self.info, "Executing: " + curl,/level
   spawn, curl, result, err_result, exit_status=exit_status
@@ -33,6 +46,7 @@ function rget_fetch_files::fetch_string_array,url,credentials
      return, result
   end 
   message,/continue,"curl error, exit status "+exit_status.toString()
+  print,curl
   print,"Curl output:"
   print,"  : "+result,format='(a)'
   print,"Curl error output:"
@@ -41,14 +55,9 @@ function rget_fetch_files::fetch_string_array,url,credentials
 end
 
 
-FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=string_array
+FUNCTION rget_fetch_files::fetch_file, path, filename
   url = self.d.top_url + path
-  credentials = self.d.username
-  IF self.d.password THEN credentials = credentials + ':' + self.d.password
-  IF credentials THEN credentials = '--user "' + credentials + '"'
-
-  IF keyword_set(string_array) THEN return,self.fetch_string_array(url,credentials)
-
+  credentials = self.curl_credentials()
   temp_file = filename+'.rget-tmp'
   curl = "curl --fail --remote-time -o " + temp_file + " " + credentials + " " + url
   self.dprint,"Executing: "+curl
@@ -75,7 +84,7 @@ END
 
 
 PRO rget_fetch_files::fetch_rget_list
-  rget_list = self.fetch_file("RGET-LIST", /string_array)
+  rget_list = self.fetch_string_array("RGET-LIST")
   if rget_list[0] ne "#RGET-LIST" then begin
      message,"Remote RGET-LIST corrupt?",/continue
      message,"First line is not '#RGET-LIST'",/continue
@@ -117,7 +126,7 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   END
   self.info, "Fetch " + relative_path
   output_path = self.d.full_topdir + relative_path
-  result = self.fetch_file(relative_path, filename = output_path)
+  result = self.fetch_file(relative_path, output_path)
   if result then file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
 END
 
@@ -170,14 +179,17 @@ PRO rget_fetch_files, url, top_dir, dict_out, debug=debug, user=user, password=p
 END  
 
 
-PRO rget_fetch_files_test,debug=debug,verbose=verbose
+PRO rget_fetch_files_test,debug=debug,verbose=verbose,delete=delete
   !except = 2
   password = getenv("SPICE_PASSWD")
   user = 'spice'
+  if n_elements(delete) eq 0 then delete=0
   
   url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/simple'
   top_dir = getenv("HOME")+"/rget-fetch-test-deleteme"
-;  file_delete, top_dir, /recursive, /allow_nonexist
+  if delete eq 1 then file_delete, top_dir, /recursive, /allow_nonexist
+  if delete eq 2 then file_delete, top_dir+"/non-empty"
+  if delete eq 3 then file_delete, top_dir+"/subdir2",/recursive
   file_mkdir, top_dir
   
   print, "**********************************************************************"
@@ -186,8 +198,6 @@ PRO rget_fetch_files_test,debug=debug,verbose=verbose
   rget_fetch_files,url, top_dir, dict, debug=debug, user = user, password = password,verbose=verbose
 END
 
-test = getenv("USER") EQ "steinhh"
-
-IF test THEN rget_fetch_files_test, debug=debug, verbose=verbose
+IF getenv("USER") EQ "steinhh" THEN rget_fetch_files_test, debug=debug, verbose=verbose,delete=delete
 
 end
