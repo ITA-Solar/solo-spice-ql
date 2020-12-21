@@ -23,25 +23,6 @@ FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=p
 END
 
 
-PRO rget_fetch_files::report_fetch_error, url
-  print, "", "***********************************", format='(a)'
-  print, "*** Error in fetching " + url, format='(a)'
-  IF self.d.url_parts.username NE '' THEN print, "*** USERNAME: " + self.d.url_parts.username
-  IF self.d.url_parts.username NE '' THEN print, "*** PASSWORD: " + self.d.url_parts.password
-  self.d.neturl.getproperty, $
-     response_code = code, response_header = header, response_filename = filename
-  print, "***"
-  print, "*** Response_code: ", code
-  header = header.split(string([13b, 10b]))
-  print, "*** Header: " + header, format='(a)'
-  print, "***"
-  print, "*** Filename: '" + filename + "'"
-  print, "***************************************", "", format='(a)'
-  help, (error_state = !error_state)
-  print
-  message, /reissue
-END
-
 function rget_fetch_files::fetch_string_array,url,credentials
   curl = "curl " + credentials + " --fail " + url
   self.info, "Executing: " + curl,/level
