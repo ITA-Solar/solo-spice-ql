@@ -128,44 +128,6 @@ PRO rget_fetch_files::fetch_rget_list
   self.d.remote_hash = RGET_MAKE_LIST.list_as_hash(self.d.remote_array)
 END
 
-;; TODO: Windows: remove symlink entries
-PRO rget_fetch_files::clean_hash_for_platform, hash
-  compile_opt idl2
-  remove_keys = []
-
-  add_entries = hash()
-  
-;  IF strlowcase(!version.os_family) EQ "unix" THEN BEGIN
-;     foreach entry, hash, key DO BEGIN
-;        IF key.contains('# ') THEN BEGIN
-;           self.dprint, "Cleaning Windows item: " + key
-;           remove_keys = [remove_keys, key]
-;        END
-;     END
-;  END ELSE BEGIN
-;     foreach entry, hash, key DO BEGIN
-;        IF typename(entry) EQ "STRING" THEN BEGIN
-;           self.dprint, "Cleaning symlink " + key + " -> " + entry
-;           remove_keys = [remove_keys, key]
-;           CONTINUE
-;        END
-;        IF key.contains('# ') THEN BEGIN
-;           new_key = key.substring(2)
-;           WHILE new_key.contains('# ') DO new_key = new_key.replace('# ', '')
-;           self.dprint, "Transforming key " + key + " => " + new_key
-;           add_entries[new_key] = entry
-;           remove_keys = [remove_keys, key]
-;           CONTINUE
-;        END
-;     END
-;  END
-  
-  foreach key, remove_keys DO hash.remove, key
-  foreach entry, add_entries, key DO hash[key] = entry
-  return
- END
-
-
 PRO rget_fetch_files::do_deletes
   ;; Reverse order to ensure files are deleted before directories
   local_keys_reverse = reverse((self.d.local_hash.keys()).toarray())
@@ -261,8 +223,6 @@ PRO rget_fetch_files::make_fetch
   self.d.local_array = rget_make_list(self.d.full_topdir, debug=0)
   self.d.local_hash = rget_make_list.list_as_hash(self.d.local_array)
   self.fetch_rget_list
-  self.clean_hash_for_platform, self.d.local_hash
-  self.clean_hash_for_platform, self.d.remote_hash
   self.dprint, "", "---", "", format='(a)'
   self.do_deletes
   self.dprint, "", "---", "", format='(a)'
