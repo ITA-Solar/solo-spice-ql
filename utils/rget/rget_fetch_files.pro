@@ -1,4 +1,5 @@
-FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=password, debug=debug, verbose=verbose
+FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=password, $
+                                 debug=debug, verbose=verbose
   dprint = self.dprint::init(debug=debug, verbose=verbose)
   
   IF n_elements(username) EQ 0 THEN username = ''
@@ -50,17 +51,21 @@ FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=str
 
   temp_file = filename+'.rget-tmp'
   curl = "curl --fail --remote-time -o " + temp_file + " " + credentials + " " + url
-  self.info,"Executing: "+curl
+  self.dprint,"Executing: "+curl
   spawn,curl,result,err,exit_status=exit_status
   if exit_status eq 0 then begin
      file_move, temp_file, filename, /overwrite
-     return,filename
+     return,1
   end 
 
+  report_file = filename+'.rget-failure-report'
   messages=["** Error fetching "+url,$
+            "** "+curl,$
             "** curl exit status: "+exit_status.toString()]
   self.info,messages,format='(a)'
-  openw,lun,filename+'.rget-report',/get_lun
+  self.info,"** Details in "+report_file
+  if credentials then messages = messages.replace(credentials,'--user <username>:<password>')
+  openw,lun,report_file,/get_lun
   printf,lun,messages,format='(a)'
   printf,lun,"stdout: "+result,format='(a)'
   printf,lun,"stderr: "+err
@@ -113,7 +118,7 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   self.info, "Fetch " + relative_path
   output_path = self.d.full_topdir + relative_path
   result = self.fetch_file(relative_path, filename = output_path)
-  file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
+  if result then file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
 END
 
 
