@@ -92,9 +92,17 @@ END
 
 
 PRO rget_fetch_files::fetch_rget_list
-  self.d.remote_array = self.fetch_file("RGET-LIST", /string_array)
+  rget_list = self.fetch_file("RGET-LIST", /string_array)
+  if rget_list[0] ne "#RGET-LIST" then begin
+     message,"Remote RGET-LIST corrupt?",/continue
+     message,"First line is not '#RGET-LIST'",/continue
+     print," : "+rget_list,format='(a)'
+     message,"Can't continue"
+  end
+  self.d.remote_array = rget_list[1:*]
   self.d.remote_hash = RGET_MAKE_LIST.list_as_hash(self.d.remote_array)
 END
+
 
 PRO rget_fetch_files::do_deletes
   ;; Reverse order to ensure files are deleted before directories
