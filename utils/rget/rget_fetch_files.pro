@@ -184,7 +184,7 @@ PRO rget_fetch_files, url, top_dir, dict_out, debug=debug, user=user, password=p
 END  
 
 
-PRO rget_fetch_files_test
+PRO rget_fetch_files_test,debug=debug,verbose=verbose
   !except = 2
   password = getenv("SPICE_PASSWD")
   user = 'spice'
@@ -197,11 +197,11 @@ PRO rget_fetch_files_test
   print, "**********************************************************************"
   print, "**********************************************************************"
 
-  rget_fetch_files,url, top_dir, dict, debug=0, user = user, password = password ;, /verbose
+  rget_fetch_files,url, top_dir, dict, debug=debug, user = user, password = password,verbose=verbose
 END
 
 test = getenv("USER") EQ "steinhh"
 
-IF test THEN rget_fetch_files_test
+IF test THEN rget_fetch_files_test, debug=debug, verbose=verbose
 
 end
