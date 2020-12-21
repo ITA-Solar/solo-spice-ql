@@ -51,7 +51,6 @@ FUNCTION rget_fetch_files::reverse_parse_url
   IF url_parts.password NE '' THEN url += ":" + url_parts.password
   IF url_parts.username NE '' THEN url += "@"
   url += self.d
-  
 END
 
 
@@ -136,30 +135,31 @@ PRO rget_fetch_files::clean_hash_for_platform, hash
 
   add_entries = hash()
   
-  IF strlowcase(!version.os_family) EQ "unix" THEN BEGIN
-     foreach entry, hash, key DO BEGIN
-        IF key.contains('# ') THEN BEGIN
-           self.dprint, "Cleaning Windows item: " + key
-           remove_keys = [remove_keys, key]
-        END
-     END
-  END ELSE BEGIN
-     foreach entry, hash, key DO BEGIN
-        IF typename(entry) EQ "STRING" THEN BEGIN
-           self.dprint, "Cleaning symlink " + key + " -> " + entry
-           remove_keys = [remove_keys, key]
-           CONTINUE
-        END
-        IF key.contains('# ') THEN BEGIN
-           new_key = key.substring(2)
-           WHILE new_key.contains('# ') DO new_key = new_key.replace('# ', '')
-           self.dprint, "Transforming key " + key + " => " + new_key
-           add_entries[new_key] = entry
-           remove_keys = [remove_keys, key]
-           CONTINUE
-        END
-     END
-  END
+;  IF strlowcase(!version.os_family) EQ "unix" THEN BEGIN
+;     foreach entry, hash, key DO BEGIN
+;        IF key.contains('# ') THEN BEGIN
+;           self.dprint, "Cleaning Windows item: " + key
+;           remove_keys = [remove_keys, key]
+;        END
+;     END
+;  END ELSE BEGIN
+;     foreach entry, hash, key DO BEGIN
+;        IF typename(entry) EQ "STRING" THEN BEGIN
+;           self.dprint, "Cleaning symlink " + key + " -> " + entry
+;           remove_keys = [remove_keys, key]
+;           CONTINUE
+;        END
+;        IF key.contains('# ') THEN BEGIN
+;           new_key = key.substring(2)
+;           WHILE new_key.contains('# ') DO new_key = new_key.replace('# ', '')
+;           self.dprint, "Transforming key " + key + " => " + new_key
+;           add_entries[new_key] = entry
+;           remove_keys = [remove_keys, key]
+;           CONTINUE
+;        END
+;     END
+;  END
+  
   foreach key, remove_keys DO hash.remove, key
   foreach entry, add_entries, key DO hash[key] = entry
   return
