@@ -52,6 +52,7 @@ FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=str
      curl = "curl " + credentials + " " + url
      print, "Executing: " + curl
      spawn, curl, result, err_result, exit_status=exit_status
+     print, "Result: " + result, format='(a)'
      return, result
   END
   
