@@ -118,7 +118,7 @@ FUNCTION rget_fetch_files::fetch_file, path, filename=filename, string_array=str
   IF response_code NE 200 THEN self.report_fetch_error, path
   catch, /cancel
   IF output_file THEN file_move, output_file, filename, /overwrite
-  self.info, "Got: " + path, threshold = 1
+  self.info, "Got: " + path, level = 2
   return, result
 END
 
@@ -145,17 +145,18 @@ END
 
 
 PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
-  do_fetch = NOT self.d.local_hash.haskey(relative_path)
-  local_rget_file = do_fetch ? !null : self.d.local_hash[relative_path]
-  ;; Use short-circuiting || in case local_rget_file is !null
-  do_fetch = do_fetch || local_rget_file.time LT remote_rget_file.time
-  do_fetch = do_fetch || local_rget_file.size NE remote_rget_file.size
-  do_fetch = do_fetch || local_rget_file.exec NE remote_rget_file.exec
-  IF NOT do_fetch THEN BEGIN  
-     self.dprint, "Leave alone: " + relative_path
+  is_ok_so_far = self.d.local_hash.haskey(relative_path)
+  IF is_ok_so_far THEN BEGIN
+     local_rget_file = self.d.local_hash[relative_path]
+     is_ok_so_far = is_ok_so_far AND (local_rget_file.time GE remote_rget_file.time)
+     is_ok_so_far = is_ok_so_far AND (local_rget_file.size EQ remote_rget_file.size)
+     is_ok_so_far = is_ok_so_far AND (local_rget_file.exec EQ remote_rget_file.exec)
+  END
+  
+  IF is_ok_so_far THEN BEGIN  
+     self.info, "Leave alone: " + relative_path, level = 1
      return
   END
-
   self.info, "Fetch " + relative_path
   output_path = self.d.full_topdir + relative_path
   result = self.fetch_file(relative_path, filename = output_path)
@@ -184,7 +185,7 @@ END
 
 
 PRO rget_fetch_files::make_directory, directory
-  self.info, "Directory " + self.d.full_topdir + directory
+  self.info, "Directory " + self.d.full_topdir + directory, level = 1
   file_mkdir, self.d.full_topdir + directory
 END
 
@@ -238,13 +239,13 @@ PRO rget_fetch_files_test
   
   url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/simple'
   top_dir = getenv("HOME")+"/rget-fetch-test-deleteme"
-  file_delete, top_dir, /recursive
+;  file_delete, top_dir, /recursive, /allow_nonexist
   file_mkdir, top_dir
   
   print, "**********************************************************************"
   print, "**********************************************************************"
 
-  rget_fetch_files,url, top_dir, dict, debug=2, user = user, password = password, verbose=2
+  rget_fetch_files,url, top_dir, dict, debug=0, user = user, password = password ;, /verbose
 END
 
 test = getenv("USER") EQ "steinhh"
