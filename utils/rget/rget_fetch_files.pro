@@ -183,21 +183,6 @@ FUNCTION rget_fetch_files::calculate_relative_link, link_name, link_target
 END
 
 
-
-;; TODO: Move this into rget_make_list!
-PRO rget_fetch_files::make_symlink, link_name, link_target
-  self.dprint, "", "ln -s " + link_name + " -> " + link_target, format = '(a)'
-  IF link_name.startswith('./') THEN link_name = link_name.substring(2)
-  relative_link = self.calculate_relative_link(link_name, link_target)
-  IF relative_link.startswith('!!') THEN BEGIN
-     self.info, "Ignoring dangling symlink: " + link_name + " -> " + link_target, format = '(a)'
-     return
-  END
-  verbose = self.debug() || self.verbose()
-  file_link, relative_link, self.d.full_topdir + link_name, verbose=verbose, /noexpand_path
-END
-
-
 PRO rget_fetch_files::make_directory, directory
   self.info, "Directory " + self.d.full_topdir + directory
   file_mkdir, self.d.full_topdir + directory
@@ -212,7 +197,6 @@ PRO rget_fetch_files::do_fetches
      is_dir = remote_key.endswith('/') AND entry_type EQ "UNDEFINED"
      CASE 1 OF
         is_dir                            : self.make_directory, remote_key
-        entry_type EQ "STRING"            : self.make_symlink, remote_key, remote_entry
         entry_type EQ "RGET_FILE_STRUCT"  : self.maybe_fetch_file, remote_key, remote_entry
      END
   END
