@@ -85,7 +85,7 @@ FUNCTION rget_fetch_files::safe_get, string_array=string_array, filename=filenam
      self.d.neturl.getproperty,response_code=response_code, response_header=response_header
      zero_length = 'Content-Length: 0' + string([13b, 10b])
      ok = response_code EQ 200 AND response_header.contains(zero_length)
-     IF ok THEN self.dprint, "NETURL.GET zero-length file detected", format = '(A,$)'
+     IF ok THEN self.dprint, "NETURL.GET zero-length file detected", format = '(A)'
      IF NOT ok THEN message, /reissue
      
      ;; EMPTY FILE!
