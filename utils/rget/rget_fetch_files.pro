@@ -182,11 +182,6 @@ PRO rget_fetch_files__define
 END
 
 
-;; For debugging purposes
-FUNCTION rget_fetch_files::dict
-  return, self.d
-END
-
 PRO rget_fetch_files, url, top_dir, dict_out, debug=debug, user=user, password=password, verbose=verbose
   o = obj_new('rget_fetch_files', url, top_dir, debug=debug, user=user, password=password, verbose=verbose)
   dict_out = o.dict()
