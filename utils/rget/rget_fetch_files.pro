@@ -106,22 +106,6 @@ PRO rget_fetch_files::fetch_rget_list
 END
 
 
-PRO rget_fetch_files::do_deletes
-  ;; Reverse order to ensure files are deleted before directories
-  local_keys_reverse = reverse((self.d.local_hash.keys()).toarray())
-  foreach key, local_keys_reverse DO BEGIN
-     do_delete = ~ self.d.remote_hash.haskey(key)
-     local_type = typename(self.d.local_hash[key])
-     remote_type = do_delete ? "" : typename(self.d.remote_hash[key])
-     do_delete = do_delete || (local_type NE remote_type)
-     IF do_delete THEN BEGIN
-        self.info, "Deleting " + self.d.full_topdir + key
-        file_delete, self.d.full_topdir + key
-     END
-  END
-END
-
-
 PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   is_ok_so_far = self.d.local_hash.haskey(relative_path)
   IF is_ok_so_far THEN BEGIN
@@ -158,6 +142,22 @@ PRO rget_fetch_files::do_fetches
      CASE 1 OF
         is_dir                            : self.make_directory, remote_key
         entry_type EQ "RGET_FILE_STRUCT"  : self.maybe_fetch_file, remote_key, remote_entry
+     END
+  END
+END
+
+
+PRO rget_fetch_files::do_deletes
+  ;; Reverse order to ensure files are deleted before directories
+  local_keys_reverse = reverse((self.d.local_hash.keys()).toarray())
+  foreach key, local_keys_reverse DO BEGIN
+     do_delete = ~ self.d.remote_hash.haskey(key)
+     local_type = typename(self.d.local_hash[key])
+     remote_type = do_delete ? "" : typename(self.d.remote_hash[key])
+     do_delete = do_delete || (local_type NE remote_type)
+     IF do_delete THEN BEGIN
+        self.info, "Deleting " + self.d.full_topdir + key
+        file_delete, self.d.full_topdir + key
      END
   END
 END
