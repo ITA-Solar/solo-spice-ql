@@ -55,54 +55,40 @@ function rget_fetch_files::fetch_string_array,path
 end
 
 
-PRO rget_fetch_files::create_file_if_zero_length, file, header_file
-  IF file_test(file) THEN return
-  openr, lun, header_file, /get_lun
-  tx = ''
-  ok = 0
-  WHILE NOT eof(lun) AND NOT ok DO BEGIN
-     readf, lun, tx
-     IF tx.tolower() EQ 'content-length: 0' THEN ok = 1
+PRO rget_fetch_files::create_file_if_necessary, temp_file, is_zero_length
+  IF file_test(temp_file) THEN return
+  IF NOT is_zero_length THEN BEGIN
+     self.info, "** Non-zero-length source file did not arrive, but curl status was 0", level = -2
+     self.info, "** Creating a zero-length file " + temp_file, level = -2
+  END ELSE BEGIN
+     self.info, "** Creating zero-length file " + temp_file, level = 1
   END
+  openw, lun, temp_file, /get_lun
   free_lun, lun
-  IF ok THEN BEGIN
-     openw, lun, file, /get_lun
-     free_lun, lun
-  END
 END
 
 
-FUNCTION rget_fetch_files::fetch_file, path, filename
+FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   url = self.d.top_url + path
   credentials = self.curl_credentials()
   temp_file = filename+'.rget-tmp'
-  header_file = filename + '.rget-hdr'
   curl = "curl --fail --remote-time"
-  curl += " --dump-header " + header_file
   curl += " -o " + temp_file
   curl += " " + credentials
   curl += " " + url
   self.dprint,"Executing: "+curl
   spawn,curl,result,err,exit_status=exit_status
   if exit_status eq 0 then BEGIN
-     self.create_file_if_zero_length, temp_file, header_file
-     file_delete, header_file, /allow_nonexist
+     self.create_file_if_necessary, temp_file, is_zero_length
      file_move, temp_file, filename, /overwrite
      return,1
   end 
-
-  report_file = filename+'.rget-failure-report'
-  messages=["** Error fetching "+url,$
-            "** "+curl,$
-            "** curl exit status: "+exit_status.toString()]
-  self.info,messages,format='(a)'
-  self.info,"** Details in "+report_file
-  if credentials then messages = messages.replace(credentials,'--user <username>:<password>')
-  openw,lun,report_file,/get_lun
-  printf,lun,messages,format='(a)'
-  printf,lun,"stdout: "+result,format='(a)'
-  printf,lun,"stderr: "+err
-  free_lun,lun
+  ;; We don't want credentials to be piped to a log file:
+  if credentials then curl = curl.replace(credentials,'--user <username>:<password>')
+  self.info, "** Error fetching "+url, level = -2
+  self.info, "** "+curl, level = -2
+  self.info, "** curl exit status: "+exit_status.toString(), level = -2
+  self.info, "", level = -2
   return, 0
 END
 
@@ -150,8 +136,9 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
      return
   END
   self.info, "Fetch " + relative_path
+  is_zero_length = remote_rget_file.size EQ 0
   output_path = self.d.full_topdir + relative_path
-  result = self.fetch_file(relative_path, output_path)
+  result = self.fetch_file(relative_path, output_path, is_zero_length)
   if result then file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
 END
 
