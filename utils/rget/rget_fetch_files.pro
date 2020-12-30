@@ -35,26 +35,6 @@ function rget_fetch_files::curl_credentials
 end
 
 
-function rget_fetch_files::fetch_string_array,path
-  url = self.d.top_url + path
-  credentials = self.curl_credentials()
-  curl = "curl " + credentials + " --fail " + url
-  self.info, "Executing: " + curl,/level
-  spawn, curl, result, err_result, exit_status=exit_status
-  if exit_status eq 0 then begin
-     self.info,"RGET-LIST: " + result, format='(a)',/level
-     return, result
-  end 
-  message,/continue,"curl error, exit status "+exit_status.toString()
-  print,curl
-  print,"Curl output:"
-  print,"  : "+result,format='(a)'
-  print,"Curl error output:"
-  print,"  : "+err_result
-  message,"Won't go on"
-end
-
-
 PRO rget_fetch_files::create_file_if_necessary, temp_file, is_zero_length
   IF file_test(temp_file) THEN return
   IF NOT is_zero_length THEN BEGIN
@@ -92,18 +72,6 @@ FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   return, 0
 END
 
-
-PRO rget_fetch_files::fetch_rget_list
-  rget_list = self.fetch_string_array("RGET-LIST")
-  if rget_list[0] ne "#RGET-LIST" then begin
-     message,"Remote RGET-LIST corrupt?",/continue
-     message,"First line is not '#RGET-LIST'",/continue
-     print," : "+rget_list,format='(a)'
-     message,"Can't continue"
-  end
-  self.d.remote_array = rget_list[1:*]
-  self.d.remote_hash = RGET_MAKE_LIST.list_as_hash(self.d.remote_array)
-END
 
 
 PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
@@ -163,6 +131,39 @@ PRO rget_fetch_files::do_deletes
 END
 
 
+function rget_fetch_files::fetch_string_array,path
+  url = self.d.top_url + path
+  credentials = self.curl_credentials()
+  curl = "curl " + credentials + " --fail " + url
+  self.info, "Executing: " + curl,/level
+  spawn, curl, result, err_result, exit_status=exit_status
+  if exit_status eq 0 then begin
+     self.info,"RGET-LIST: " + result, format='(a)',/level
+     return, result
+  end 
+  message,/continue,"curl error, exit status "+exit_status.toString()
+  print,curl
+  print,"Curl output:"
+  print,"  : "+result,format='(a)'
+  print,"Curl error output:"
+  print,"  : "+err_result
+  message,"Won't go on"
+end
+
+
+PRO rget_fetch_files::fetch_rget_list
+  rget_list = self.fetch_string_array("RGET-LIST")
+  if rget_list[0] ne "#RGET-LIST" then begin
+     message,"Remote RGET-LIST corrupt?",/continue
+     message,"First line is not '#RGET-LIST'",/continue
+     print," : "+rget_list,format='(a)'
+     message,"Can't continue"
+  end
+  self.d.remote_array = rget_list[1:*]
+  self.d.remote_hash = RGET_MAKE_LIST.list_as_hash(self.d.remote_array)
+END
+
+
 PRO rget_fetch_files::make_fetch
   self.d.local_array = rget_make_list(self.d.full_topdir, debug=0)
   self.d.local_hash = rget_make_list.list_as_hash(self.d.local_array)
@@ -172,6 +173,7 @@ PRO rget_fetch_files::make_fetch
   self.dprint, "", "---", "", format='(a)'
   self.do_fetches
 END
+
 
 PRO rget_fetch_files__define
   ;; We use some static routines
