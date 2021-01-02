@@ -1,3 +1,55 @@
+;+
+; NAME:
+;      RGET_MAKE_LIST
+;
+; PURPOSE:
+;
+;      Given the path to a directory, it creates an RGET-LIST (see below). The
+;      list may optionally be written to a file (default file name is
+;      path/RGET-LIST).
+;
+;      Can be invoked both as a FUNCTION and as a PRO. When invoked as a
+;      function, it returns the contents of the RGET-LIST.
+;
+;      This program is only meant for unix/linux platforms. It follows
+;      symlinks the same way a web browser would do, through recursion. The
+;      possibility of symlink loops is handled by throwing an error if the
+;      path depth exceeds the value of the keyword max_allowed_depth (default
+;      value is 100), unless max_allowed_depth is set to 0, in which case
+;      there is no handling of symlink loops.
+;
+; ADDITIONAL INFORMATION:
+;
+;      An RGET-LIST contains a list of all files and subdirectories in a
+;      directory, one line per directory/file.
+;
+;      Each line contains the name of the file/directory, for files also the
+;      UNIX ctime of the file, the file size, and a flag that is "x" for
+;      executable files and "-" for non-executable files.
+;
+;      This allows a quick comparison between a remote web server's
+;      directory and the corresponding local directory, so only files with
+;      non-matching attributes need to be fetched.
+;
+;      The term "RGET" stems from a concatenation of rsync and wget.
+;
+; CATEGORY:
+;      GENERAL/UTILITY
+;
+; CALLING SEQUENCE:
+;      RGET_MAKE_LIST,PATH [,/write_file] [,max_allowed_depth=N]
+;
+; INPUTS:
+;      PATH: The path to a directory to be scanned for files that will be
+;            included in the RGET-LIST
+;
+; OUTPUTS:
+;      When called as a function, it returns the RGET-LIST created
+;
+; HISTORY:
+;      Ver. 1, January 2021
+;-
+
 FUNCTION rget_make_list::init, topdir, max_allowed_depth=max_allowed_depth, $
                                debug=debug, verbose=verbose, quiet=quiet
   dprint = self.rget_dprint::init(debug = debug, verbose=verbose, quiet=quiet)
@@ -207,6 +259,8 @@ PRO rget_make_list__define
 END
 
 
+;; Invoked as a function, e.g. rget_list = rget_make_list(path)
+;;
 FUNCTION rget_make_list, path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra
   
   make_list_obj = obj_new('rget_make_list', path, max_allowed_depth=max_allowed_depth, _extra=_extra)
@@ -217,9 +271,14 @@ FUNCTION rget_make_list, path, write_file=write_file, max_allowed_depth=max_allo
   return, entry_array
 END
 
+;; Invoked as a procedure, e.g. rget_make_list,path
+;;
 PRO rget_make_list, path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra
   list = rget_make_list(path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra)
 END
+
+
+;;;;;;;;;;;;;;;;; TESTING PURPOSES ;;;;;;;;;;;;;;;;;;;;;;
 
 PRO rget_make_list_test
   path = getenv("HOME")+"/rget-test-deleteme
