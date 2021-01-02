@@ -1,3 +1,40 @@
+;+
+; NAME:
+;      RGET_FETCH_FILES
+;
+; PURPOSE:
+;
+;      Given a URL pointing to a remote directory and the path to an existing
+;      local directory, an inventory of the files contained in the local
+;      directory is created using RGET_MAKE_LIST (see that for an explanation
+;      of what an RGET-LIST contains).
+;
+;      A corresponding list is fetched from the remote web server (named
+;      RGET-LIST, located in the top directory). The two lists are then
+;      compared, and any file/directory that is not in the local directory is
+;      fetched using curl. For files there is also a comparison of the file
+;      ctime, the size, and the execute bit (ignored on Windows). If any of
+;      those do not match, the file is fetched.
+;
+; CATEGORY:
+;      GENERAL/UTILITY
+;
+; CALLING SEQUENCE:
+;      RGET_FETCH_FILES, url_to_remote_top_dir, path_to_local_top_dir
+;
+; INPUTS:
+;      url_to_remote_top_dir: URL pointing to the remote top directory to be
+;                             mirrored.
+;
+;      path_to_local_top_dir: Path to the local top directory (destination)
+;
+; OUTPUTS:
+;      None.
+;
+; HISTORY:
+;      Ver. 1, January 2021, Stein Haugan
+;-
+
 FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=password, $
                                  debug=debug, verbose=verbose
   dprint = self.rget_dprint::init(debug=debug, verbose=verbose)

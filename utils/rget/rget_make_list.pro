@@ -11,7 +11,7 @@
 ;      Can be invoked both as a FUNCTION and as a PRO. When invoked as a
 ;      function, it returns the contents of the RGET-LIST.
 ;
-;      This program is only meant for unix/linux platforms. It follows
+;      This program is only meant/tested for unix/linux platforms. It follows
 ;      symlinks the same way a web browser would do, through recursion. The
 ;      possibility of symlink loops is handled by throwing an error if the
 ;      path depth exceeds the value of the keyword max_allowed_depth (default
@@ -38,16 +38,17 @@
 ;
 ; CALLING SEQUENCE:
 ;      RGET_MAKE_LIST,PATH [,/write_file] [,max_allowed_depth=N]
+;      rget_list = RGET_MAKE_LIST(PATH [,/write_file] [,max_allowed_depth=N])
 ;
 ; INPUTS:
 ;      PATH: The path to a directory to be scanned for files that will be
 ;            included in the RGET-LIST
 ;
 ; OUTPUTS:
-;      When called as a function, it returns the RGET-LIST created
+;      When called as a function, it returns the RGET-LIST
 ;
 ; HISTORY:
-;      Ver. 1, January 2021
+;      Ver. 1, January 2021, Stein Haugan
 ;-
 
 FUNCTION rget_make_list::init, topdir, max_allowed_depth=max_allowed_depth, $
