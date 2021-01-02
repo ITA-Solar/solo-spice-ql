@@ -1,6 +1,5 @@
-;; NOTE: This should be placed in what Emacs on Windows refers to as
-;; ~/.emacs, but that is *actually* $HOME/AppData/Roaming/.emacs!
-
+;; NOTE: Load from ~/.emacs with e.g. (load "z:/dot-emacs-windows.txt)
+;; NOTE: ~/.emacs (interpreted by emacs), is *actually* $HOME/AppData/Roaming/.emacs!
 ;; NOTE: Start emacs:
 ;; "c:\Program Files (x86)\Emacs\i686\bin\emacs.exe" --chdir z:\ z:\rget_fetch_files.pro
 
@@ -26,6 +25,7 @@
                             ("SETPROPERTY" .t)
                             ("GETPROPERTY" .t)))
 
+(setq mouse-buffer-menu-mode-mult 1000)
 
 ;; Some setting can only be done from a mode hook.  Here is an example:
 (add-hook 'idlwave-mode-hook
