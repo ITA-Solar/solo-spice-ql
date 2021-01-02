@@ -88,7 +88,8 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
      return
   END
   remote_size_string = " (" + remote_rget_file.size.tostring() + "b)"
-  self.info, "Fetching " + relative_path + remote_size_string
+  remote_exe_string = remote_rget_file.exec EQ "x" ? " (executable)" : ""
+  self.info, "Fetching " + relative_path + remote_size_string + remote_exe_string
   is_zero_length = remote_rget_file.size EQ 0
   output_path = self.d.full_topdir + relative_path
   result = self.fetch_file(relative_path, output_path, is_zero_length)
