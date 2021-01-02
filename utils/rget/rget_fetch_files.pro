@@ -81,6 +81,7 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
      time_matches =  local_rget_file.time EQ remote_rget_file.time
      size_matches = local_rget_file.size EQ remote_rget_file.size
      exec_matches = local_rget_file.exec EQ remote_rget_file.exec
+     exec_matches = exec_matches OR !version.os_family.tolower() eq "windows"
      is_ok_so_far = time_matches AND time_matches AND exec_matches
   END
   IF is_ok_so_far THEN BEGIN  
