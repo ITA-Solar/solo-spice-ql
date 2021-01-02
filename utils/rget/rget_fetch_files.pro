@@ -1,6 +1,6 @@
 FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=password, $
                                  debug=debug, verbose=verbose
-  dprint = self.dprint::init(debug=debug, verbose=verbose)
+  dprint = self.rget_dprint::init(debug=debug, verbose=verbose)
   
   IF n_elements(username) EQ 0 THEN username = ''
   IF n_elements(password) EQ 0 THEN password = ''
@@ -178,7 +178,7 @@ END
 PRO rget_fetch_files__define
   ;; We use some static routines
   resolve_routine, "rget_make_list", /compile_full_file
-  dummy = {rget_fetch_files, inherits dprint, d: dictionary()}
+  dummy = {rget_fetch_files, inherits rget_dprint, d: dictionary()}
 END
 
 

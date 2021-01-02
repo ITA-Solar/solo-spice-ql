@@ -1,6 +1,6 @@
 FUNCTION rget_make_list::init, topdir, max_allowed_depth=max_allowed_depth, $
                                debug=debug, verbose=verbose, quiet=quiet
-  dprint = self.dprint::init(debug = debug, verbose=verbose, quiet=quiet)
+  dprint = self.rget_dprint::init(debug = debug, verbose=verbose, quiet=quiet)
   
   IF NOT file_test(topdir, /directory) THEN message, "TOPDIR is not a directory: " + topdir
   self.d = dictionary()
@@ -201,7 +201,7 @@ PRO rget_make_list::write_file, output_file
 END
 
 PRO rget_make_list__define
-  dummy = {rget_make_list, inherits dprint, $
+  dummy = {rget_make_list, inherits rget_dprint, $
            d: dictionary() $
           }
 END
