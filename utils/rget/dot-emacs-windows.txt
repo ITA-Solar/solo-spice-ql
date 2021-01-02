@@ -44,10 +44,11 @@
     (idlwave-action-and-binding "<" '(idlwave-surround 1 1))
     (idlwave-action-and-binding ">" '(idlwave-surround 1 1 '(?-)))
     (idlwave-action-and-binding "&" '(idlwave-surround 1 1))
+    (idlwave-action-and-binding "+" '(idlwave-surround 1 1))
+    (idlwave-action-and-binding "-" '(idlwave-surround 1 1))
 
     ;; Only pad after comma and with exactly 1 space
     (idlwave-action-and-binding "," '(idlwave-surround nil 1))
-    (idlwave-action-and-binding "&" '(idlwave-surround 1 1))
 
     ;; Pad only after '->', remove any space before the arrow
     (idlwave-action-and-binding "->"  '(idlwave-surround 0 -1 nil 2))
