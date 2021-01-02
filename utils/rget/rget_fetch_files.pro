@@ -64,10 +64,10 @@ END
 function rget_fetch_files::curl_credentials
   credentials = self.d.username
   IF self.d.password THEN credentials = credentials + ':' + self.d.password
-  IF credentials THEN begin
+  IF credentials THEN BEGIN
      quotes = !version.os_family.tolower() eq "windows" ? '"' : "'"
      credentials = "--user " + quotes + credentials + quotes
-  end
+  END
   return,credentials
 end
 
@@ -95,13 +95,13 @@ FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   curl += " " + url
   self.dprint,"Executing: "+curl
   spawn,curl,result,err,exit_status=exit_status
-  if exit_status eq 0 then BEGIN
+  IF exit_status EQ 0 THEN BEGIN
      self.create_file_if_necessary, temp_file, is_zero_length
      file_move, temp_file, filename, /overwrite
      return,1
-  end 
+  END
   ;; We don't want credentials to be piped to a log file:
-  if credentials then curl = curl.replace(credentials,'--user <username>:<password>')
+  IF credentials THEN curl = curl.replace(credentials,'--user <username>:<password>')
   self.info, "** Error fetching "+url, level = -2
   self.info, "** "+curl, level = -2
   self.info, "** curl exit status: "+exit_status.toString(), level = -2
@@ -131,7 +131,7 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   is_zero_length = remote_rget_file.size EQ 0
   output_path = self.d.full_topdir + relative_path
   result = self.fetch_file(relative_path, output_path, is_zero_length)
-  if result then file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
+  IF result THEN file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
 END
 
 
@@ -193,12 +193,12 @@ end
 
 PRO rget_fetch_files::fetch_rget_list
   rget_list = self.fetch_string_array("RGET-LIST")
-  if rget_list[0] ne "#RGET-LIST" then begin
-     message,"Remote RGET-LIST corrupt?",/continue
-     message,"First line is not '#RGET-LIST'",/continue
+  IF rget_list[0] NE "#RGET-LIST" THEN BEGIN
+     message,"Remote RGET-LIST corrupt?",/CONTINUE
+     message,"First line is not '#RGET-LIST'",/CONTINUE
      print," : "+rget_list,format='(a)'
      message,"Can't continue"
-  end
+  END
   self.d.remote_array = rget_list[1:*]
   self.d.remote_hash = RGET_MAKE_LIST.list_as_hash(self.d.remote_array)
 END
@@ -231,13 +231,13 @@ PRO rget_fetch_files_test,debug=debug,verbose=verbose,delete=delete
   !except = 2
   password = getenv("SPICE_PASSWD")
   user = 'spice'
-  if n_elements(delete) eq 0 then delete=0
+  IF n_elements(delete) EQ 0 THEN delete=0
   
   url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/simple'
   top_dir = getenv("HOME")+"/rget-fetch-test-deleteme"
-  if delete eq 1 then file_delete, top_dir, /recursive, /allow_nonexist
-  if delete eq 2 then file_delete, top_dir+"/non-empty"
-  if delete eq 3 then file_delete, top_dir+"/subdir2",/recursive
+  IF delete EQ 1 then file_delete, top_dir, /recursive, /allow_nonexist
+  IF delete EQ 2 then file_delete, top_dir+"/non-empty"
+  IF delete EQ 3 then file_delete, top_dir+"/subdir2",/recursive
   file_mkdir, top_dir
   
   print, "**********************************************************************"
