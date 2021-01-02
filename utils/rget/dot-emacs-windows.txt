@@ -1,5 +1,8 @@
-(global-set-key (kbd "C-o") 'idlwave-shell-save-and-run)
+;; NOTE: This should be placed in what Emacs on Windows refers to as
+;; ~/.emacs, but that is *actually* $HOME/AppData/Roaming/.emacs!
 
+;; NOTE: Start emacs:
+;; "c:\Program Files (x86)\Emacs\i686\bin\emacs.exe" --chdir z:\ z:\rget_fetch_files.pro
 
 (setq idlwave-block-indent 3)           ; Indentation settings
 (setq idlwave-main-block-indent 3)
@@ -12,7 +15,7 @@
 (setq idlwave-expand-generic-end t)     ; convert END to ENDIF etc...
 (setq idlwave-reserved-word-upcase t)   ; Make reserved words upper case
                                         ; (with abbrevs only)
-(setq idlwave-abbrev-change-case nil)   ; Don't force case of expansions
+(setq idlwave-abbrev-change-case t)     ; Force case of expansions
 (setq idlwave-hang-indent-regexp ": ")  ; Change from "- " for auto-fill
 (setq idlwave-show-block nil)           ; Turn off blinking to begin
 (setq idlwave-abbrev-move t)            ; Allow abbrevs to move point
@@ -61,13 +64,8 @@
     (local-set-key "\r" 'idlwave-newline)
     ;; (local-set-key "\C-j" 'idlwave-newline) ; My preference.
 
-    ;; Some personal abbreviations
-    (define-abbrev idlwave-mode-abbrev-table
-      (concat idlwave-abbrev-start-char "wb") "widget_base()"
-      (idlwave-keyword-abbrev 1))
-    (define-abbrev idlwave-mode-abbrev-table
-      (concat idlwave-abbrev-start-char "on") "obj_new()"
-      (idlwave-keyword-abbrev 1))
+    (local-set-key "\C-c\C-c" 'idlwave-shell-save-and-run)
+    
     ))
 
 (custom-set-variables
@@ -85,4 +83,3 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
