@@ -87,7 +87,8 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
      self.info, "Leave alone: " + relative_path, level = 1
      return
   END
-  self.info, "Fetch " + relative_path
+  remote_size_string = " (" + remote_rget_file.size.tostring() + "b)"
+  self.info, "Fetching " + relative_path + remote_size_string
   is_zero_length = remote_rget_file.size EQ 0
   output_path = self.d.full_topdir + relative_path
   result = self.fetch_file(relative_path, output_path, is_zero_length)
@@ -182,9 +183,8 @@ PRO rget_fetch_files__define
 END
 
 
-PRO rget_fetch_files, url, top_dir, dict_out, debug=debug, user=user, password=password, verbose=verbose
+PRO rget_fetch_files, url, top_dir, debug=debug, user=user, password=password, verbose=verbose
   o = obj_new('rget_fetch_files', url, top_dir, debug=debug, user=user, password=password, verbose=verbose)
-  dict_out = o.dict()
 END  
 
 
@@ -204,7 +204,7 @@ PRO rget_fetch_files_test,debug=debug,verbose=verbose,delete=delete
   print, "**********************************************************************"
   print, "**********************************************************************"
 
-  rget_fetch_files,url, top_dir, dict, debug=debug, user = user, password = password,verbose=verbose
+  rget_fetch_files,url, top_dir, debug=debug, user = user, password = password,verbose=verbose
 END
 
 IF getenv("USER") EQ "steinhh" THEN rget_fetch_files_test, debug=debug, verbose=verbose,delete=delete
