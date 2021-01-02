@@ -54,8 +54,6 @@
     (idlwave-action-and-binding "->"  '(idlwave-surround 0 -1 nil 2))
 
     ;; Set some personal bindings
-    ;; (In this case, makes ',' have the normal self-insert behavior.)
-    (local-set-key "," 'self-insert-command)
     (local-set-key [f5] 'idlwave-shell-break-here)
     (local-set-key [f6] 'idlwave-shell-clear-current-bp)
 
@@ -63,7 +61,6 @@
     ;; A similar function that does _not_ reindent the original
     ;; line is on "\C-j" (The default for emacs programming modes).
     (local-set-key "\r" 'idlwave-newline)
-    ;; (local-set-key "\C-j" 'idlwave-newline) ; My preference.
 
     (local-set-key "\C-c\C-c" 'idlwave-shell-save-and-run)
     
