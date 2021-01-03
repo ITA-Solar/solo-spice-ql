@@ -4,7 +4,7 @@
 ;; "c:\Program Files (x86)\Emacs\i686\bin\emacs.exe" --chdir z:\ z:\rget_fetch_files.pro
 
 (setq idlwave-block-indent 3)           ; Indentation settings
-(setq idlwave-main-block-indent 3)
+(setq idlwave-main-block-indent 2)
 (setq idlwave-end-offset -3)
 (setq idlwave-continuation-indent 1)
 (setq idlwave-begin-line-comment "^;[^;]")  ; Leave ";" but not ";;"
