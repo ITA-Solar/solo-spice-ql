@@ -283,9 +283,9 @@ END
 
 PRO rget_make_list_test
   path = getenv("HOME")+"/rget-test-deleteme
-  entries = rget_make_list(path, /quiet)
+  entries = rget_make_list(path)
   
-  print, "", "----", entries, format='(a)'
+  print, "", "rget_make_list_test result:",": " + entries, "-", format='(a)'
   stop
 END
 
