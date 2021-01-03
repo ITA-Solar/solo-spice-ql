@@ -61,7 +61,7 @@ FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=p
 END
 
 
-function rget_fetch_files::curl_credentials
+FUNCTION rget_fetch_files::curl_credentials
   credentials = self.d.username
   IF self.d.password THEN credentials = credentials + ':' + self.d.password
   IF credentials THEN BEGIN
@@ -171,7 +171,7 @@ PRO rget_fetch_files::do_deletes
 END
 
 
-function rget_fetch_files::fetch_string_array,path
+FUNCTION rget_fetch_files::fetch_string_array,path
   url = self.d.top_url + path
   credentials = self.curl_credentials()
   curl = "curl " + credentials + " --fail " + url
