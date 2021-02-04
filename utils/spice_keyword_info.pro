@@ -9,7 +9,20 @@ FUNCTION spice_keyword_info_header
 ;STUDYDES= 'Standard dark for cruise phase' / Description of the study           
 ;STUDY   = 'CAL_DARK_FS_SL04_1.0S_FD' / SPICE Study name                         
 ;PURPOSE = 'Calibration/Dark'   / Purpose of study (Science/Calibration/Checkout)
-;XPOSURE =             0.600000 / [s] Total effective exposure time              
+;XPOSURE =             0.600000 / [s] Total effective exposure time  
+;
+;CNAME1  = '            '       /  
+;CRVAL1  =              1.00000 / 
+;CDELT1  =              2.00000 /
+;CUNIT1  = '            '       / 
+;CTYPE1  = '            '       /
+;                               /
+;CNAME2  = '            '       /  
+;CRVAL2  =              3.00000 / 
+;CDELT2  =              4.00000 /
+;CUNIT2  = '            '       / 
+;CTYPE2  = '            '       /
+;                               /
 ;AUTHOR  = 'Tim Grundy'         / Author of study                                
 ;OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID                     
 ;READMODE= 'Destructive'        / Destructive or non-destructive                 
