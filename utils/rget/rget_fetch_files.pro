@@ -110,18 +110,26 @@ FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
 END
 
 
-
-PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
+FUNCTION rget_fetch_files::file_is_ok, relative_path, remote_rget_file
   is_ok_so_far = self.d.local_hash.haskey(relative_path)
   IF is_ok_so_far THEN BEGIN
      local_rget_file = self.d.local_hash[relative_path]
      time_matches =  local_rget_file.time EQ remote_rget_file.time
      size_matches = local_rget_file.size EQ remote_rget_file.size
      exec_matches = local_rget_file.exec EQ remote_rget_file.exec
-     exec_matches = exec_matches OR !version.os_family.tolower() eq "windows"
+     ignore_exec = !version.os_family.tolower() eq "windows"
+     IF NOT exec_matches AND ignore_exec THEN BEGIN
+        self.info,"Ignoring exec diff on Windows: " + relative_path
+     END
+     exec_matches = exec_matches OR ignore_exec
      is_ok_so_far = time_matches AND time_matches AND exec_matches
   END
-  IF is_ok_so_far THEN BEGIN  
+  return, is_ok_so_far
+END
+
+PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
+  file_is_ok = self.file_is_ok(relative_path, remote_rget_file)
+  IF file_is_ok THEN BEGIN  
      self.info, "Leave alone: " + relative_path, level = 1
      return
   END
@@ -132,11 +140,12 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   output_path = self.d.full_topdir + relative_path
   result = self.fetch_file(relative_path, output_path, is_zero_length)
   IF result THEN file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
+  file_chmod, output_path, /u_write
 END
 
 
 PRO rget_fetch_files::make_directory, directory
-  self.info, "Directory " + self.d.full_topdir + directory, level = 1
+  self.info, "Making directory " + self.d.full_topdir + directory
   file_mkdir, self.d.full_topdir + directory
 END
 
@@ -236,9 +245,10 @@ PRO rget_fetch_files_test,debug=debug,verbose=verbose,delete=delete
   url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/simple'
   top_dir = getenv("HOME")+"/rget-fetch-test-deleteme"
   IF delete EQ 1 then file_delete, top_dir, /recursive, /allow_nonexist
-  IF delete EQ 2 then file_delete, top_dir+"/non-empty"
-  IF delete EQ 3 then file_delete, top_dir+"/subdir2",/recursive
+  IF delete EQ 2 then file_delete, top_dir+"/non-empty", /allow_nonexist
+  IF delete EQ 3 then file_delete, top_dir+"/subdir2",/recursive, /allow_nonexist
   file_mkdir, top_dir
+  file_chmod, top_dir, /u_write
   
   print, "**********************************************************************"
   print, "**********************************************************************"
