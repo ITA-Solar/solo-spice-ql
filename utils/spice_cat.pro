@@ -61,7 +61,7 @@ PRO spice_cat::setenv_commands_info
   print
   print, 'setenv, "SPICE_CAT_KEYWORDS=' + getenv("SPICE_CAT_KEYWORDS") + '"'
   print
-  print, 'setenv, "SPICE_CAT_KEYWORD_WIDTHS="' + getenv("SPICE_CAT_KEYWORD_WIDTHS") + '"'
+  print, 'setenv, "SPICE_CAT_KEYWORD_WIDTHS=' + getenv("SPICE_CAT_KEYWORD_WIDTHS") + '"'
   print
 END
 
