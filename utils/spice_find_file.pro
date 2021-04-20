@@ -20,7 +20,7 @@
 ; CALLING SEQUENCE:
 ;     Result = SPICE_FIND_FILE(time_start [, time_end=time_end, level=level, $
 ;       top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-;       /SEQUENCE, /ALL, /NO_LEVEL, /NO_TREE_STRUCT, /SEARCH_SUBDIR, /QUIET ] )
+;       /SEQUENCE, /ALL, /NO_LEVEL, /NO_TREE_STRUCT, /SEARCH_SUBDIR, /IGNORE_TIME ] )
 ;
 ; INPUTS:
 ;     TIME_START: This can be in any format accepted by the ANYTIM suite of
@@ -90,7 +90,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2020-11-09 12:52 CET $
+; $Id: 2021-04-20 21:01 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
