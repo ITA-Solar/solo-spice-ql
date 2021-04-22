@@ -27,6 +27,11 @@
 ;        OPTION+CLICK  Select a new spatial pixel
 ;        COMMAND+CLICK Zoom out from image.
 ;
+;     If you are using the *Mac trackpad* on a *VNC screen*, we
+;     recommend using BetterTouchTool with e.g. "TipTap Left" set to
+;     trigger a middle click, which selects a new spatial pixel.
+;
+;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE; QuickLook.
 ;
@@ -98,7 +103,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2021-04-22 10:01 CEST $
 
 
 ;---------------------
