@@ -1,30 +1,68 @@
-;; NOTE: The /fully_qualify_path flag does NOT mean "physical" path But we are
-;;       safe: as long as a symlink ends up with a path that starts with the
-;;       fully qualified topdir, it must be under that topdir anyway.
-;;
-;;       However, symlink chains that physically speaking end up inside the
-;;       source directory through a different route will be handled as an
-;;       externally symlinked directory. C'mon! Who would do that?
-;;
-;;       ALSO: we "follow" symlinks by swapping in the link contents,
-;;       and if the link contents contain "../" then those elements
-;;       are "resolved".
-;;
+;+
+; NAME:
+;      RGET_MAKE_LIST
+;
+; PURPOSE:
+;
+;      Given the path to a directory, it creates an RGET-LIST (see below). The
+;      list may optionally be written to a file (default file name is
+;      path/RGET-LIST).
+;
+;      Can be invoked both as a FUNCTION and as a PRO. When invoked as a
+;      function, it returns the contents of the RGET-LIST.
+;
+;      This program is only meant/tested for unix/linux platforms. It follows
+;      symlinks the same way a web browser would do, through recursion. The
+;      possibility of symlink loops is handled by throwing an error if the
+;      path depth exceeds the value of the keyword max_allowed_depth (default
+;      value is 100), unless max_allowed_depth is set to 0, in which case
+;      there is no handling of symlink loops.
+;
+; ADDITIONAL INFORMATION:
+;
+;      An RGET-LIST contains a list of all files and subdirectories in a
+;      directory, one line per directory/file.
+;
+;      Each line contains the name of the file/directory, for files also the
+;      UNIX ctime of the file, the file size, and a flag that is "x" for
+;      executable files and "-" for non-executable files.
+;
+;      This allows a quick comparison between a remote web server's
+;      directory and the corresponding local directory, so only files with
+;      non-matching attributes need to be fetched.
+;
+;      The term "RGET" stems from a concatenation of rsync and wget.
+;
+; CATEGORY:
+;      GENERAL/UTILITY
+;
+; CALLING SEQUENCE:
+;      RGET_MAKE_LIST,PATH [,/write_file] [,max_allowed_depth=N]
+;      rget_list = RGET_MAKE_LIST(PATH [,/write_file] [,max_allowed_depth=N])
+;
+; INPUTS:
+;      PATH: The path to a directory to be scanned for files that will be
+;            included in the RGET-LIST
+;
+; OUTPUTS:
+;      When called as a function, it returns the RGET-LIST
+;
+; HISTORY:
+;      Ver. 1, January 2021, Stein Haugan
+;-
 
-;; TODO: Add
-;; self.info, ... , level=level        ; Informative, only when threshold <= verbose
-
-FUNCTION rget_make_list::init, topdir, debug=debug, verbose=verbose, recursion_list=recursion_list
-  dprint = self.dprint::init(debug = debug)
-  IF n_elements(recursion_list) EQ 0 THEN recursion_list = []
-  IF NOT file_test(topdir, /directory) THEN message, "Not a directory: " + topdir
+FUNCTION rget_make_list::init, topdir, max_allowed_depth=max_allowed_depth, $
+                               debug=debug, verbose=verbose, quiet=quiet
+  dprint = self.rget_dprint::init(debug = debug, verbose=verbose, quiet=quiet)
+  
+  IF NOT file_test(topdir, /directory) THEN message, "TOPDIR is not a directory: " + topdir
   self.d = dictionary()
   self.d.debug = keyword_set(debug)
   self.d.topdir = topdir
   self.d.full_topdir = file_search(topdir, /fully_qualify_path, /mark_directory)
-  self.d.full_topdir = linux_path(self.d.full_topdir)
-  self.d.clipped_topdir = self.d.full_topdir.substring(0, self.d.full_topdir.strlen()-2)
-  self.d.recursion_list = recursion_list
+  self.d.full_topdir = self.d.full_topdir.replace('\','/')
+  IF n_elements(max_allowed_depth) EQ 0 THEN max_allowed_depth = 100
+  self.d.max_allowed_depth = max_allowed_depth
   IF self.detect_recursion() THEN return, 0
   self.d.places_visited = [self.d.full_topdir]
   self.make_list
@@ -35,9 +73,9 @@ END
 FUNCTION rget_make_list::relative_path, absolute_path
   IF absolute_path EQ !null THEN return, !null
   qualified_path = (file_search(absolute_path, /fully_qualify_path, /mark_directory))[0]
-  qualified_path = linux_path(qualified_path)
-  internal = qualified_path.startswith(self.d.full_topdir)
-  IF NOT internal THEN return, absolute_path
+  qualified_path = qualified_path.replace('\','/')
+  is_internal = qualified_path.startswith(self.d.full_topdir)
+  IF NOT is_internal THEN return, absolute_path
   return, strmid(qualified_path, self.d.full_topdir.strlen(), 1000)
 END
 
@@ -60,7 +98,7 @@ FUNCTION rget_make_list::list_as_hash, relative_list_or_arr
   hash = orderedhash()
   foreach entry, arr DO BEGIN
      parts = entry.split(' ` |  ->  ')
-     parts[0] = linux_path(parts[0])
+     parts[0] = parts[0].replace('\','/')
      is_dir = n_elements(parts) EQ 1 AND parts[0].endswith('/')
      is_file = n_elements(parts) EQ 4 AND entry.contains(' ` ')
      is_link = n_elements(parts) EQ 2 AND entry.contains('  ->  ')
@@ -80,75 +118,44 @@ END
 
 
 FUNCTION rget_make_list::detect_recursion
-  IF n_elements(self.d.recursion_list) EQ 0 THEN return, 0
+  IF self.d.max_allowed_depth EQ 0 THEN return, 0
+  current_depth = n_elements(self.d.topdir.split("/"))
+  IF current_depth LE self.d.max_allowed_depth THEN return, 0
   
-  foreach visited, self.d.recursion_list DO BEGIN
-     info = file_info(visited)
-     IF info.dangling_symlink THEN CONTINUE ;; Otherwise would trigger !error
-     IF file_same(visited, self.d.full_topdir) THEN BEGIN
-        self.info, "Recursion detected, these two are the same:"
-        self.info, " -> " + visited 
-        self.info, " -> " + self.d.full_topdir
-        return, 1
-     END
-  END
-  return, 0
+  print, "** Possible recursive symlinking detected!"
+  print, "** Current directory depth: " + current_depth.toString()
+  print, "** Path: " + self.d.topdir
+  print, "** max_allowed_depth = " + self.d.max_allowed_depth.tostring()
+  print, "** Use rget_make_list(..., max_allowed_depth=N)"
+  print, "** Setting max_allowed_depth to zero means no limit"
+  print, "** IGNORING " + self.d.topdir
+  return, 1
 END
 
 
-FUNCTION rget_make_list::symlink_is_internal, file_info, link_destination
-  ;; An absolute link may still be pointing inside the source directory, and
-  ;; should be translated to a relative path
-  IF link_destination.startswith('/') THEN BEGIN
-     relative_destination = self.relative_path(link_destination)
-     IF relative_destination.startswith('/') THEN return, 0
-     link_destination = relative_destination
-     return, 1b
-  END
-  
-  ;; It's a relative link, but may of course still point outside the source
-  ;; tree! Using the fully qualified (absolute) path (file_info.name) to the
-  ;; *link*, "calculate" the final *destination*. Then *recurse*, pretending
-  ;; that the link started out as an absolute link! Problem solved (above)
-  ;;
-  current_dir = file_dirname(file_info.name, /mark_directory)
-  link_destination = current_dir + link_destination
-  return, self.symlink_is_internal(file_info, link_destination)
-END
-
-
-;; External links: 
-;
-;; Create a new instance of ourselves, giving it the absolute path to the
-;; external directory. We receive a list of the contents in the external
-;; directory, as *relative* paths. Then we pretend it was lying right here in
-;; the first place.
+;; Symbolic links to directories: 
 ;;
-;; To detect recursions, we add our *own* topdir (only) to the recursion list
-;; and send that to the child object. That means the child object will detect
-;; recursions directly to our top, *not* to other places inside "us". However,
-;; if there *is* a loop, we will eventually end up examining this particular
-;; link once more - and at *that* point, the recursion list we pass on to the
-;; new child will already contain that path, so it refuses to go on.
+;; Create a new instance of ourselves, giving it the absolute path to the
+;; linked directory. We receive a list of the contents in the linked
+;; directory, as *relative* paths. Then we pretend they were lying right here
+;; in the first place.
 
-PRO rget_make_list::handle_external_directory, file_info, relative_path, link_destination, windows=windows
-  windows_mark = keyword_set(windows) ? "# " : ""
-  self.dprint, windows_mark + "Descending into " + relative_path, format = '(a)', level = 2
-  self.d.list.add, windows_mark + relative_path
+PRO rget_make_list::handle_symlink_directory, file_info, relative_path, link_destination
+  self.dprint, "Descending into " + relative_path, format = '(a)', level = 2
+  self.d.list.add, relative_path
   
-  ;;
-  new_recursion_list = [self.d.recursion_list, self.d.full_topdir]
-  sublist_obj = obj_new('rget_make_list', file_info.name, recursion_list=new_recursion_list, $
-                        debug=self.debug(/level), verbose=self.verbose(/level))
+  sublist_obj = obj_new('rget_make_list', file_info.name, $
+                        debug=self.debug(/level), verbose=self.verbose(/level), $
+                        max_allowed_depth=max_allowed_depth)
   
   IF sublist_obj EQ !null THEN return ; Recursion detected
 
   sublist_entries = sublist_obj.list_as_array()
   foreach sublist_entry, sublist_entries DO BEGIN
      sublist_relative_path = relative_path + sublist_entry
-     self.d.list.add, windows_mark + sublist_relative_path
+     self.d.list.add, sublist_relative_path
   END
-  self.dprint, windows_mark + "Done descending", level = 2
+  self.dprint, "Done descending", level = 2
 END
 
 
@@ -162,59 +169,36 @@ FUNCTION rget_make_list::file_details, file_info
 END
 
 
-PRO rget_make_list::handle_external_file, file_info, relative_path,  link_destination, $
-                                          windows=windows
-  windows_mark = keyword_set(windows) ? "# " : ""
-  IF keyword_set(windows) THEN link_destination = self.d.full_topdir + link_destination
+PRO rget_make_list::handle_symlink_file, file_info, relative_path,  link_destination
+  link_is_absolute = link_destination.startswith('/')
+  IF NOT link_is_absolute THEN BEGIN
+     starting_location = self.d.full_topdir + file_dirname(relative_path) + "/"
+     link_destination = starting_location + link_destination
+  END 
   destination_info = file_info(link_destination)
   entry = relative_path + " ` " + self.file_details(destination_info)
-  self.dprint, windows_mark + "SYMLINK(ext):   " + entry + "(" + link_destination + ")", level = 2
-  self.d.list.add, windows_mark + entry
-END
-
-
-PRO rget_make_list::handle_internal_symlink, file_info, relative_path, link_destination
-  entry = relative_path + "  ->  " + "./" + link_destination
-  self.dprint, "SYMLINK(int):   " + entry + (file_info.directory ? "/" : ""), level = 2
+  self.dprint, "SYMLINK(ext):   " + entry + "(" + link_destination + ")"
   self.d.list.add, entry
-  IF file_info.regular THEN self.handle_external_file, file_info, relative_path, link_destination, /windows
-  IF file_info.directory THEN self.handle_external_directory, file_info, relative_path, link_destination, /windows
 END
 
 
 ;; FILE_SEARCH does not follow symlinked directories.
 ;;
-;; 1. If symlink points below top_dir then list as symlink, no
-;;    matter what the destination is (directory or file, or even
-;;    nothing). The link has to be there, full stop, and we don't
-;;    want to duplicate files unnecessarily. Return.
-;;
-;; EXTERNAL links:
-;;
-;; 2. If destination is regular file, list it as if the symlink
+;; 1. If destination is regular file, list it as if the symlink
 ;;    is a regular file, but use DESTINATION file date!
 ;;    (TODO: What if destination is another link? Follow!!?)
 ;;
-;; 3. If destination is a directory, traverse it and pretend
-;;    the files are inside the tree, otherwise they are not
-;;    visible.
+;; 2. If destination is a directory, traverse it and pretend
+;;    the files are inside the tree
 ;;
-PRO rget_make_list::handle_ok_symlink, file_info, relative_path
+PRO rget_make_list::handle_valid_symlink, file_info, relative_path
   link_destination = file_readlink(file_info.name)
-  internal = self.symlink_is_internal(file_info, link_destination)
   regular = file_info.regular
-  self.dprint,relative_path, " => " + link_destination, "(internal: "+internal.tostring()+")", level = 2
+  self.dprint,relative_path, " =*> " + link_destination, level = 2
   CASE 1 OF 
-     internal: self.handle_internal_symlink, file_info, relative_path, link_destination
-     regular:  self.handle_external_file, file_info, relative_path, link_destination
-     ELSE:     self.handle_external_directory, file_info, relative_path, link_destination
+     regular:  self.handle_symlink_file, file_info, relative_path, link_destination
+     ELSE:     self.handle_symlink_directory, file_info, relative_path, link_destination
   END
-END
-
-
-PRO rget_make_list::handle_dangling_symlink, file_info, relative_path
-  link_destination = file_readlink(file_info.name)
-  self.d.list.add, relative_path + "  ->  !!" + link_destination
 END
 
 
@@ -233,8 +217,9 @@ END
 
 
 PRO rget_make_list::make_list
-  files = file_search(self.d.full_topdir, "*", /expand_tilde, /expand_environment, /match_initial_dot,/mark_directory)
-  files = linux_path(files)
+  _extra = {expand_tilde:1, expand_environment:1, match_initial_dot:1, mark_directory:1}
+  files = file_search(self.d.full_topdir, "*", _strict_extra=_extra)
+  files = files.replace('\','/')
   IF total(files.contains("`")) GT 0 THEN message, "Sorry, some file name(s) contain '`'"
   self.d.list = list()
   foreach file, files DO BEGIN
@@ -242,11 +227,11 @@ PRO rget_make_list::make_list
      file =  file.replace("[", "\[")
      IF file EQ '' THEN continue
      file_info = file_info(file)
-     
      relative_path = self.relative_path(file_info.name)
+     self.info, "Found: " + relative_path, /level
      CASE 1 OF
-        file_info.dangling_symlink: self.handle_dangling_symlink, file_info, relative_path
-        file_info.symlink:          self.handle_ok_symlink, file_info, relative_path 
+        file_info.dangling_symlink: self.info,"Ignoring dangling symlink: "+relative_path
+        file_info.symlink:          self.handle_valid_symlink, file_info, relative_path 
         file_info.directory:        self.handle_directory, file_info, relative_path
         file_info.regular:          self.handle_regular_file, file_info, relative_path
         ELSE: BEGIN
@@ -263,53 +248,47 @@ PRO rget_make_list::write_file, output_file
   IF typename(output_file) NE "STRING" THEN output_file = self.d.full_topdir + "RGET-LIST"
   self.info, "", "Will write list to file " + output_file, format = '(a)'
   openw, lun, output_file, /get_lun
+  printf, lun, "#RGET-LIST"
   printf, lun, self.list_as_array(), format='(a)'
   free_lun, lun
 END
 
 PRO rget_make_list__define
-  dummy = {rget_make_list, inherits dprint, $
+  dummy = {rget_make_list, inherits rget_dprint, $
            d: dictionary() $
           }
 END
 
 
-FUNCTION rget_make_list, path, write_file=write_file, entry_hash=entry_hash, debug=debug, verbose=verbose
-  make_list_obj = obj_new('rget_make_list', path, debug=debug)
+;; Invoked as a function, e.g. rget_list = rget_make_list(path)
+;;
+FUNCTION rget_make_list, path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra
+  
+  make_list_obj = obj_new('rget_make_list', path, max_allowed_depth=max_allowed_depth, _extra=_extra)
   
   entry_array = make_list_obj.list_as_array()
-  
-  IF arg_present(entry_hash) THEN BEGIN
-     entry_hash = make_list_obj.list_as_hash(entry_array)
-  END
   
   IF keyword_set(write_file) THEN make_list_obj.write_file, write_file
   return, entry_array
 END
 
-
-PRO rget_make_list_test
-;  !except = 2
-;  print, "", "", "***************************************", format='(a)'
-;  setenv, "SPICE_DATA=~/tmp/rget-test/source/rget-test"
-;  entries = rget_make_list("~/tmp/rget-test/source/rget-test", /write,
-;  /debug, entry_hash=entry_hash)
-;  entries = rget_make_list(getenv("SPICE_DATA"), /write)
-  sep = path_sep()
-  entries = rget_make_list(getenv("SPICE_DATA")+sep+"simple-rget-test")
-  stop
-;  
-;  print, "", "----", format='(a)'
-  
-;  foreach entry, entries DO print, entry
-  
-;  print, "", "----", format='(a)'
-;  print, "", "---", "RSYNCing results",format='(a)'
-;  spawn, "rsync -av --delete ~/tmp/rget-test/source/ " + $
-;         "osdcapps@astro-sdc-db:/astro/astro-sdc-fs/d1/sdc/roslo/vol/spice/rget-test/source/"
+;; Invoked as a procedure, e.g. rget_make_list,path
+;;
+PRO rget_make_list, path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra
+  list = rget_make_list(path, write_file=write_file, max_allowed_depth=max_allowed_depth, _extra=_extra)
 END
 
-test = getenv("USER") EQ "steinhh"
-IF test THEN rget_make_list_test
+
+;;;;;;;;;;;;;;;;; TESTING PURPOSES ;;;;;;;;;;;;;;;;;;;;;;
+
+PRO rget_make_list_test
+  path = getenv("HOME")+"/rget-test-deleteme
+  entries = rget_make_list(path)
+  
+  print, "", "rget_make_list_test result:",": " + entries, "-", format='(a)'
+  stop
+END
+
+IF getenv("USER") EQ "steinhh" THEN rget_make_list_test
 
 END
