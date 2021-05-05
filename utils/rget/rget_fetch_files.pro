@@ -94,7 +94,10 @@ FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   curl += " " + credentials
   curl += " " + url
   self.dprint,"Executing: "+curl
+  tmp=getenv("LD_LIBRARY_PATH")
+  setenv,"LD_LIBRARY_PATH="
   spawn,curl,result,err,exit_status=exit_status
+  setenv,"LD_LIBRARY_PATH="+tmp
   IF exit_status EQ 0 THEN BEGIN
      self.create_file_if_necessary, temp_file, is_zero_length
      file_move, temp_file, filename, /overwrite
@@ -185,7 +188,10 @@ FUNCTION rget_fetch_files::fetch_string_array,path
   credentials = self.curl_credentials()
   curl = "curl " + credentials + " --fail " + url
   self.info, "Executing: " + curl,/level
+  tmp=getenv("LD_LIBRARY_PATH")
+  setenv,"LD_LIBRARY_PATH="
   spawn, curl, result, err_result, exit_status=exit_status
+  setenv,"LD_LIBRARY_PATH="+tmp
   if exit_status eq 0 then begin
      self.info,"RGET-LIST: " + result, format='(a)',/level
      return, result
@@ -238,7 +244,7 @@ END
 
 PRO rget_fetch_files_test,debug=debug,verbose=verbose,delete=delete
   !except = 2
-  password = getenv("SPICE_PASSWD")
+  password = getenv("SPICE_PWD")
   user = 'spice'
   IF n_elements(delete) EQ 0 THEN delete=0
   
