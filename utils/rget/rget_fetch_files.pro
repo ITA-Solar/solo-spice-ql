@@ -60,7 +60,22 @@ FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=p
   return, 1
 END
 
+;; IDL 8.5 messes up the (DY)LD_LIBRARY_PATHs - before spawning they
+;; must be blanked to run normal programs reliably
+;;
+PRO rget_fetch_files::save_and_blank_library_paths
+  self.d.ld_library_path = getenv("LD_LIBRARY_PATH")
+  setenv, "LD_LIBRARY_PATH="
+  self.d.dyld_library_path = getenv("DYLD_LIBRARY_PATH")
+  setenv, "DYLD_LIBRARY_PATH="
+END
 
+PRO rget_fetch_files::restore_library_paths
+  setenv, "LD_LIBRARY_PATH=" + self.d.ld_library_path
+  setenv, "DYLD_LIBRARY_PATH=" + self.d.dyld_library_path
+END
+  
+  
 FUNCTION rget_fetch_files::curl_credentials
   credentials = self.d.username
   IF self.d.password THEN credentials = credentials + ':' + self.d.password
@@ -94,10 +109,11 @@ FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   curl += " " + credentials
   curl += " " + url
   self.dprint,"Executing: "+curl
-  tmp=getenv("LD_LIBRARY_PATH")
-  setenv,"LD_LIBRARY_PATH="
-  spawn,curl,result,err,exit_status=exit_status
-  setenv,"LD_LIBRARY_PATH="+tmp
+  
+  self.save_and_blank_library_paths
+  spawn,curl,result,err,exit_status=exit_status, /null_stdin
+  self.restore_library_paths
+  
   IF exit_status EQ 0 THEN BEGIN
      self.create_file_if_necessary, temp_file, is_zero_length
      file_move, temp_file, filename, /overwrite
@@ -188,10 +204,11 @@ FUNCTION rget_fetch_files::fetch_string_array,path
   credentials = self.curl_credentials()
   curl = "curl " + credentials + " --fail " + url
   self.info, "Executing: " + curl,/level
-  tmp=getenv("LD_LIBRARY_PATH")
-  setenv,"LD_LIBRARY_PATH="
-  spawn, curl, result, err_result, exit_status=exit_status
-  setenv,"LD_LIBRARY_PATH="+tmp
+  
+  self.save_and_blank_library_paths
+  spawn, curl, result, err_result, exit_status=exit_status, /null_stdin
+  self.restore_library_paths
+  
   if exit_status eq 0 then begin
      self.info,"RGET-LIST: " + result, format='(a)',/level
      return, result
