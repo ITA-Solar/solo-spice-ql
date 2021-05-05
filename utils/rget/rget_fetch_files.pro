@@ -146,6 +146,7 @@ FUNCTION rget_fetch_files::file_is_ok, relative_path, remote_rget_file
   return, is_ok_so_far
 END
 
+
 PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   file_is_ok = self.file_is_ok(relative_path, remote_rget_file)
   IF file_is_ok THEN BEGIN  
@@ -158,8 +159,7 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   is_zero_length = remote_rget_file.size EQ 0
   output_path = self.d.full_topdir + relative_path
   result = self.fetch_file(relative_path, output_path, is_zero_length)
-  IF result THEN file_chmod, output_path, a_execute=remote_rget_file.exec EQ "x"
-  file_chmod, output_path, /u_write
+  IF result AND remote_rget_file.exec EQ "x" THEN file_chmod, output_path, /a_execute
 END
 
 
