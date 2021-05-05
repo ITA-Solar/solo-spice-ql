@@ -78,7 +78,7 @@ END
   
 FUNCTION rget_fetch_files::curl_credentials
   credentials = self.d.username
-  IF self.d.password THEN credentials = credentials + ':' + self.d.password
+  IF credentials THEN credentials += ':' + self.d.password
   IF credentials THEN BEGIN
      quotes = !version.os_family.tolower() eq "windows" ? '"' : "'"
      credentials = "--user " + quotes + credentials + quotes
