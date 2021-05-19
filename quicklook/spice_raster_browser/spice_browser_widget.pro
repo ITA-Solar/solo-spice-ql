@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 01.07.2020 10:56 CEST $
+; $Id: 2021-05-19 12:44 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -816,7 +816,10 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ; 'spectra' contains the 1D spectrum for each window. Note that I pad
   ; each spectrum to be the maximum size of all of the spectrum windows
   ;
-  nl=data->get_header_info('NAXIS3', 0)
+  nl = intarr(data->get_number_windows())
+  FOR i=0,data->get_number_windows()-1 DO BEGIN
+    nl[i] = data->get_header_info('NAXIS3', i)
+  END
   spectra=fltarr(max(nl),n_plot_window)
 
   ;
