@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2020-11-26 11:39 CET $
+; $Id: 2021-05-19 12:43 CEST $
 
 
 ; save as postscript file
@@ -875,12 +875,12 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     win_positions[*,0:1] = win_positions[*,0:1] - ccd_size[0]
   endif
 
-  ; data window size in level 2 does not corresponde to
+  ; data window size in level 2 does not correspond to
   ; win_positions due to transformations
   if data->get_level() eq 2 then begin
     for i=0,nwin-1 do begin
       sizey = data->get_header_info('NAXIS2', lindx[i])
-      dy = win_positions[i,3]-win_positions[i,2]+1 - sizey
+      dy = sizey - (win_positions[i,3]-win_positions[i,2]+1)
       if dy ne 0 then begin
         dy1 = fix(dy/2.0)
         dy2 = dy-dy1
