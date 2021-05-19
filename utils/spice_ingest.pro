@@ -62,7 +62,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2020-11-02 11:24 CET $
+; $Id: 2021-05-18 15:50 CEST $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
@@ -118,7 +118,7 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
       IF keyword_set(search_subdir) THEN BEGIN
         files = file_search(filename, 'solo*.fits', count=nfiles)
       ENDIF ELSE BEGIN ; keyword_set(search_subdir)
-        files = file_search(concat_dir(outdir,'solo*.fits'), count=nfiles)
+        files = file_search(concat_dir(filename,'solo*.fits'), count=nfiles)
       ENDELSE ; keyword_set(search_subdir)
       IF nfiles EQ 0 THEN BEGIN
         print, 'No files found'
@@ -144,13 +144,17 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
       continue
     ENDIF
 
-    IF ~keyword_set(nolevel) THEN outdir = concat_dir(topdir, 'level'+strtrim(string(file_info.level), 2))
+    outdir = topdir
+    IF ~keyword_set(nolevel) THEN outdir = concat_dir(outdir, 'level'+strtrim(string(file_info.level), 2))
     outdir = concat_dir(outdir, time2fid(file_info.datetime, /full_year, delim=path_sep()))
 
     ;check if file to be moved already exists
     old_files = file_search(concat_dir(outdir,'solo*.fits'))
     filechck=where(file_basename(old_files) EQ file_info.filename,nf)
     IF nf EQ 0 OR keyword_set(force) THEN BEGIN
+      IF ~file_test(outdir, /directory) THEN BEGIN
+        file_mkdir, outdir
+      ENDIF
       file_move,files[ifiles], outdir, /overwrite
       destination[ifiles] = concat_dir(outdir, file_info.filename)
       file_moved[ifiles] = 1

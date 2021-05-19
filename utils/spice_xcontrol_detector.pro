@@ -45,7 +45,7 @@
 ; MODIFICATION HISTORY:
 ;     17-Nov-2020: Martin Wiesmann, First version
 ;
-; $Id: 2020-11-17 11:19 CET $
+; $Id: 2021-05-19 12:43 CEST $
 ;-
 ;
 
@@ -65,12 +65,12 @@ FUNCTION spice_xcontrol_detector, data, detector2=detector2, xsize=xsize, ysize=
     endif
   endfor
 
-  ; data window size in level 2 does not corresponde to
+  ; data window size in level 2 does not correspond to
   ; win_positions due to transformations
   if data->get_level() eq 2 then begin
     for i=0,nwin-1 do begin
       sizey = data->get_header_info('NAXIS2', i)
-      dy = win_positions[i,3]-win_positions[i,2]+1 - sizey
+      dy = sizey - (win_positions[i,3]-win_positions[i,2]+1)
       if dy ne 0 then begin
         dy1 = fix(dy/2.0)
         dy2 = dy-dy1
@@ -132,7 +132,7 @@ FUNCTION spice_xcontrol_detector, data, detector2=detector2, xsize=xsize, ysize=
       if data->has_dumbbells(ind) then window_image = rotate(window_image, 5)
       size_image = size(window_image)
       detector[win_positions[ind,0]:win_positions[ind,1], win_positions[ind,2]:win_positions[ind,3]] = $
-        window_image[clip_image[ind,0]:size_image[1]-1-clip_image[ind,2], clip_image[ind,2]:size_image[2]-1-clip_image[ind,3]]
+        window_image[clip_image[ind,0]:size_image[1]-1-clip_image[ind,1], clip_image[ind,2]:size_image[2]-1-clip_image[ind,3]]
     endfor
     case idet of
       1: detector1 = congrid(detector, xsize, ysize)
