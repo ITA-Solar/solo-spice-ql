@@ -4,10 +4,14 @@ FUNCTION spice_keyword_info_header
 ;OBT_BEG =        646012990.301 /
 ;LEVEL   = 'L2      '           / Data processing level                          
 ;FILENAME= 'solo_L2_spice-n-exp_20200621T000329_V01_16777432-000.fits' / FI      '
-;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition   
-;STUDYTYP= 'Single Exposure'    / Sit-and-stare, Raster or Single Exposure       
+;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition  
+;SPIOBSID=             16777434 / SPICE Observation ID 
+;RASTERNO=                    0 / Raster number (starting at 0)                    
+;STUDYTYP= 'Single Exposure'    / Sit-and-stare, Raster or Single Exposure
+;MISOSTUD=                 1785 / Ground study ID used in MISO planning tool     
 ;STUDYDES= 'Standard dark for cruise phase' / Description of the study           
-;STUDY   = 'CAL_DARK_FS_SL04_1.0S_FD' / SPICE Study name                         
+;STUDY   = 'CAL_DARK_FS_SL04_1.0S_FD' / SPICE Study name     
+;OBS_DESC= 'Standard first light observations' / Observation description  
 ;PURPOSE = 'Calibration/Dark'   / Purpose of study (Science/Calibration/Checkout)
 ;XPOSURE =             0.600000 / [s] Total effective exposure time  
 ;
@@ -23,16 +27,16 @@ FUNCTION spice_keyword_info_header
 ;CUNIT2  = '            '       / 
 ;CTYPE2  = '            '       /
 ;                               /
-;AUTHOR  = 'Tim Grundy'         / Author of study                                
+;AUTHOR  = 'Tim Grundy'         / Author of study  
+;STP     =                  122 / SoLO Short-Term Plan number   
+;DSUN_AU =       0.521442615073 / [AU] S/C distance from Sun    
+;CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
 ;OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID                     
-;READMODE= 'Destructive'        / Destructive or non-destructive                 
-;TRIGGERD= 'None    '           / Event that triggered observation               
-;TARGET  = 'None    '           / Planned type of target                         
+;READMODE= 'Destructive'        / Destructive or non-destructive                                         
 ;SOOPNAME= 'None    '           / SOOP Campaign name(s)                          
 ;SOOPTYPE= '000     '           / SOOP Campaign name code(s)                     
 ;NRASTERS=                    1 / Number of planned rasters for this SPIOBSID    
-;RASTERNO=                    0 / Raster number (starting at 0)                  
-;STUDY_ID=                   54 / On-board Study ID slot (0-63)                  
+;STUDY_ID=                   54 / On-board Study ID slot (0-63)       
 ;XSTART  =                    4 / [arcsec] Slit x offset rel. to S/C boresight   
 ;FOCUSPOS=                10601 / Focus position                                 
 ;NWIN    =                    2 / Total number of windows (incl. any dumbbells)  
@@ -41,6 +45,8 @@ FUNCTION spice_keyword_info_header
 ;NWIN_INT=                    0 / Number of Intensity-windows                    
 ;                                                                                
 ;
+;STUDYFLG=                    0 / Study flags                                    
+;NOSPECTR=                    0 / Applies only to dumbbells    
 ;DBLEXP  =                    0 / If set, double exposure is enabled             
 ;DBLEXPNO=                    0 / Applies only when DBLEXP=1                     
 ;DARKMAP =                    0 / If set, a dark map was subtracted on-board     
@@ -49,11 +55,7 @@ FUNCTION spice_keyword_info_header
 ;
 ;COMPRESS= 'Focal Uncompressed' / Compression description                        
 ;COMP_RAT=              1.00000 / Compression ratio decompressed/compressed      
-;
-;NSEGMENT=                    1 / Number of segments per window                  
-;OBS_TYPE= 'oooo    '           / Unique code for OBS_MODE                       
-;SPIOBSID=             16777434 / SPICE Observation ID                           
-;DARKSPID=                   -1 / SPIOBSID of dark subtracted on-board           
+;                        
 ;
 ;VERS_SW = '2101    '           / UiO SVN revision number of L2 pipeline         
 ;VERS_CAL= '2097    '           / UiO SVN revision number of calibration software
@@ -70,16 +72,8 @@ FUNCTION spice_keyword_info_header
 ;           ------------------------------------------------------               
 ;TELAPSE =       0.599999904633 / [s] Elapsed time between beg. and end of acqu. 
 ;CREATOR = 'SDP-SPICE'          / Name of pipeline                               
-;CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
 ;                                                                                
-;                                                                                
-;           -------------------------------------                                
-;           | STUDYFLG and its derived keywords |                                
-;           -------------------------------------                                
-;STUDYFLG=                    0 / Study flags                                    
-;NOSPECTR=                    0 / Applies only to dumbbells                      
-;                                                                                
-;                                                                                
+;                                                                              
 ;           -----------------------------------------------                      
 ;           | Keywords valid for this HDU (WINDOW0_74.73) |                      
 ;           -----------------------------------------------                      
@@ -122,7 +116,7 @@ FUNCTION spice_keyword_info_header
 ;           ----------------------------                                         
 ;           | Solar Ephemeris Keywords |                                         
 ;           ----------------------------                                         
-;DSUN_AU =       0.521442615073 / [AU] S/C distance from Sun                     
+                 
 ;SOLAR_B0=        6.53806062476 / [deg] Tilt angle of Solar North toward S/C     
 ;SOLAR_P0=        22.3339674130 / [deg] S/C Celestial North to Solar North angle 
 ;HGLT_OBS=        6.53806062476 / [deg] S/C Heliographic latitude (B0 angle)     
@@ -130,17 +124,56 @@ FUNCTION spice_keyword_info_header
 ;  
 ;OBS_VR  =        3365.57054359 / [m/s] Radial velocity of S/C away from the Sun 
 ;  
-;PRPROC1 = 'spice_prep_dark_offset_correction' / Name of procedure performing PRS
-;PRPVER1 = '0.9     '           / Version of procedure PRPROC1                   
-;PRMODE1 = 'dark corrected'     / Processing mode of step 1                      
+;PRSTEP1 = 'DARK-SUBTRACTION'   / Type of processing, step 4                     
+;PRPROC1 = 'spice_prep_dark_offset_correction.pro' / Name of procedure, step 4   
+;PRPVER1 = '1.2     '           / Version of procedure, step 4                   
+;PRPARA1 = 'dark_spiobsid=33554603' / Parameters for PRPROC4                     
+;PRLIB1A = 'uio-spice-pipeline' / Software library containing PRPROC4 
+;  
+;PRSTEP2 = 'Y-BINNING'  / XML decoding, decompression if applicable, etc 
+;PRPROC2 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
+;PRPVER2 = '02.01.01'           / Version of procedure, step 1      
+;PRPARA2 = 'asdfasdfdsfdasf' / Parameters for PRPROC1 
+;PRLIB2A = 'uio_spice_pipeline' / Software library containing PRPROC1
+; 
+;PRSTEP3 = 'LAMBDA-BINNING'  / XML decoding, decompression if applicable, etc 
+;PRPROC3 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
+;PRPVER3 = '02.01.01'           / Version of procedure, step 1      
+;PRPARA3 = 'asdfasdfdsfdasf' / Parameters for PRPROC1 
+;PRLIB3A = 'uio_spice_pipeline' / Software library containing PRPROC1
+;  
+;PRSTEP4 = 'COMPRESSION'  / XML decoding, decompression if applicable, etc 
+;PRPROC4 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
+;PRPVER4 = '02.01.01'           / Version of procedure, step 1 
+;PRPARA4 = 'asdfasdfdsfdasf' / Parameters for PRPROC2 
+;PRLIB4A = 'uio_spice_pipeline' / Software library containing PRPROC1
+;  
+;PRSTEP5 = 'TELEMETRY-PARSING'  / XML decoding, decompression if applicable, etc 
+;PRPROC5 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
+;PRPVER5 = '02.01.01'           / Version of procedure, step 1 
+;PRPARA5 = 'asdfasdfdsfdasf' / Parameters for PRPROC2 
+;PRLIB5A = 'uio_spice_pipeline' / Software library containing PRPROC1                
 ;                                                                                
-;PRPROC2 = 'spice_prep_flat_field_correction' / Name of procedure performing PRST
-;PRPVER2 = '0.9     '           / Version of procedure PRPROC2                   
-;PRMODE2 = 'flafield corrected' / Processing mode of step 2                      
+;PRSTEP6 = 'FLATFIELDING'       / Type of processing, step 5                     
+;PRPROC6 = 'spice_prep_flat_field_correction.pro' / Name of procedure, step 5    
+;PRPVER6 = '1.2     '           / Version of procedure, step 5                   
+;PRPARA6 = 'ground-calibration flat field' / Parameters for PRPROC5              
+;PRLIB6A = 'uio-spice-pipeline' / Software library containing PRPROC5            
 ;                                                                                
-;PRPROC3 = 'spice_prep_distortion_correction' / Name of procedure performing PRST
-;PRPVER3 = '0.9     '           / Version of procedure PRPROC3                   
-;PRPARA3 = '2020-05-20'         / Parameters for PRPROC3                         
+;PRSTEP7 = 'SPATIAL-SPECTRAL-DISTORTION-CORRECTION' / Type of processing, step 6 
+;PRPROC7 = 'spice_prep_distortion_correction.pro' / Name of procedure, step 6    
+;PRPVER7 = '2.1     '           / Version of procedure, step 6                   
+;PRPARA7 = 'distortion correction matrix version: 2021-04-12' / Parameters for PR
+;PRLIB7A = 'uio-spice-pipeline' / Software library containing PRPROC6            
+;                                                                                
+;PRSTEP8 = 'RADIOMETRIC-CALIBRATION' / Type of processing, step 7                
+;PRPROC8 = 'spice_prep_radiometric_calibration.pro' / Name of procedure, step 7  
+;PRPVER8 = '1.2     '           / Version of procedure, step 7                   
+;PRPARA8 = 'based on comparison to QS SUMER spectrum' / Parameters for PRPROC7   
+;PRLIB8A = 'uio-spice-pipeline' / Software library containing 
+;  
+;MIRRDELT=              0.00000 / Slope of linear fit to MIRRPOS                 
+;SMIRRDEL=              0.00000 / Sigma of slope of linear fit to MIRRPOS 
 ;-
   text = text[0 : -2]
   text = strmid(text, 1, 1000)
