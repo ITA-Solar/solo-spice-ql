@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Tool this feature should be added to***
+**Tool this feature should be added to**
 E.g. SPICE_XDETECTOR
 
 **Is your feature request related to a problem? Please describe.**
