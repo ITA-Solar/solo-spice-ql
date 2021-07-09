@@ -134,6 +134,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;         modified from iris_getwindata
+;       Version 2, 8-Jul-2021, William Thompson, corrected time calculation
 ;-
 ; $Id: 27.04.2020 11:38 CEST $
 
@@ -408,7 +409,7 @@ dark_unc=0
 
   time=ti1
 
-  ti1=anytim2tai(d->get_start_time()+ti1)
+  ti1=anytim2tai(d->get_start_time())+ti1
   ;ti2=d->ti2tai(ti2)
 
   ti1=anytim2utc(ti1,/ccsds)
