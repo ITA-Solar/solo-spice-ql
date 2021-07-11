@@ -136,7 +136,7 @@
 ;         modified from iris_getwindata
 ;       Version 2, 8-Jul-2021, William Thompson, corrected time calculation
 ;-
-; $Id: 27.04.2020 11:38 CEST $
+; $Id: 2021-07-11 09:45 CEST $
 
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
