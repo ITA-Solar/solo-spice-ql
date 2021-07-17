@@ -563,7 +563,7 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
   animenu = widget_button(optmenu, value = 'Create Animation', uvalue='anim', $
     event_pro = 'spice_xraster_control_anim')
   wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
-  angstr = string("305B)+'ngstr'+string("370B)+'m'
+  angstr = string('305'oB)+'ngstr'+string('370'oB)+'m'
   pixmenu=widget_button(wscalemenu, value='Pixels',event_pro='spice_xraster_wpix')
   angstrmenu=widget_button(wscalemenu, value=angstr,event_pro='spice_xraster_wangstr')
   sscalemenu=widget_button(optmenu, value='Change spatial scale',/menu)
