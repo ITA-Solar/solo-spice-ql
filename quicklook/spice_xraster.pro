@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2020-11-26 11:39 CET $
+; $Id: 2021-07-27 12:33 CEST $
 ;-
 ;
 ; save as postscript file
@@ -179,7 +179,7 @@ pro spice_xraster_draw, event
       ymin = wdmin[i]
       ymax = wdmax[i]
       if it eq 0 then ytitle=*(*info).data->get_window_id(j)+' '+(*info).ytitle else ytitle=''
-      br_panel,it,i,nx=nr,ny=(*info).nwin,order=0,ydist=3,/xlabel,ytop=3,xright=5
+      spice_br_panel,it,i,nx=nr,ny=(*info).nwin,order=0,ydist=3,/xlabel,ytop=3,xright=5
       plot_image,drawimage,origin=origin,scale=scale,/nosquare, $
         xtitle = (*info).xtitle, xticks = nxticks, ytitle=ytitle,min=ymin,max=ymax
       if i eq 0 then xyouts,timepos[0],timepos[1],'t = '+ $
@@ -187,7 +187,7 @@ pro spice_xraster_draw, event
         alignment=0.0,chars=tcharsize,color=255
     endfor
   endfor
-  br_panel,/reset
+  spice_br_panel,/reset
   !p.multi = 0
   !p.charsize = 1.0
   ;create colorbar (if plot to 'PS' then skip colorbar:
