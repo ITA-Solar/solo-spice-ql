@@ -3,7 +3,10 @@
 Find detailed information in our wikipage:   
 https://github.com/ITA-Solar/solo-spice-ql/wiki
 
-If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics:  
+If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics:
+Preferably by raising a new issue here: https://github.com/ITA-Solar/solo-spice-ql/issues
+
+or else by mail to:
 martin.wiesmann@astro.uio.no  
 s.v.h.haugan@astro.uio.no  
 terje.fredvik@astro.uio.no
@@ -167,7 +170,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2020-11-26 11:44 CET $
+; $Id: 2021-08-12 21:10 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
