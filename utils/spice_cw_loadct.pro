@@ -77,7 +77,7 @@
 ;                       Copied to SPICE rep. and renamed to spice_xcfit_block
 ;
 ; Version     :
-; $Id: 2021-08-26 14:57 CEST $
+; $Id: 2021-08-26 15:04 CEST $
 ;-            
 
 
@@ -213,11 +213,8 @@ PRO spice_cw_loadct_event,ev
 
   spice_cw_loadct_adj_ctable,ev
 
-
-      parent = Widget_Info(ev.id, /Parent)
-      print,' parent : ', parent
-  newevent = {SPICE_CW_LOADCT_NEW_CT, ID:ev.id, TOP:ev.top, HANDLER:0L}
-  widget_control, ev.top, send_event = newevent
+  ; send an event out to the top widget to notify it that color table changed
+  widget_control, ev.top, send_event = {SPICE_CW_LOADCT_NEW_CT, ID:ev.id, TOP:ev.top, HANDLER:0L}
 END
 
 
@@ -247,12 +244,17 @@ PRO spice_cw_loadct_newstart,ev
   ELSE               loadct,table_no,/silent
   
   spice_cw_loadct_adj_ctable,/initialize
+
+  ; send an event out to the top widget to notify it that color table changed
+  widget_control, ev.top, send_event = {SPICE_CW_LOADCT_NEW_CT, ID:ev.id, TOP:ev.top, HANDLER:0L}
 END
 
 PRO spice_cw_loadct_reverse,ev
   
   reverse_colors
   
+  ; send an event out to the top widget to notify it that color table changed
+  widget_control, ev.top, send_event = {SPICE_CW_LOADCT_NEW_CT, ID:ev.id, TOP:ev.top, HANDLER:0L}
 END
 
 
