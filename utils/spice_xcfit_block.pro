@@ -185,7 +185,7 @@
 ;                       Copied to SPICE rep. and renamed to spice_xcfit_block
 ;
 ; Version     :
-; $Id: 2021-08-27 10:04 CEST $
+; $Id: 2021-08-27 14:24 CEST $
 ;-
 
 
