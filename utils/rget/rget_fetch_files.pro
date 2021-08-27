@@ -100,6 +100,19 @@ PRO rget_fetch_files::create_file_if_necessary, temp_file, is_zero_length
 END
 
 
+PRO rget_fetch_files::spawn, command, stdout, stderr, exit_status=exit_status
+  IF !version.os_family ne 'unix' THEN BEGIN
+     spawn, command, stdout, stderr, exit_status=exit_status, /null_stdin, /noshell
+  END ELSE BEGIN
+     commands = strsplit(command, ' +', /regex, /extract)
+     commands = commands.replace("'", "")
+     commands = commands.replace("'", "")
+     spawn, commands, stdout, stderr, exit_status=exit_status, /null_stdin, /noshell
+  END
+END
+
+
+
 FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   url = self.d.top_url + path
   credentials = self.curl_credentials()
@@ -111,7 +124,7 @@ FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   self.dprint,"Executing: "+curl
   
   self.save_and_blank_library_paths
-  spawn,curl,result,err,exit_status=exit_status, /null_stdin
+  self.spawn, curl, result, err,exit_status=exit_status
   self.restore_library_paths
   
   IF exit_status EQ 0 THEN BEGIN
@@ -119,6 +132,7 @@ FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
      file_move, temp_file, filename, /overwrite
      return,1
   END
+
   ;; We don't want credentials to be piped to a log file:
   IF credentials THEN curl = curl.replace(credentials,'--user <username>:<password>')
   self.info, "** Error fetching "+url, level = -2
@@ -185,15 +199,29 @@ END
 
 PRO rget_fetch_files::do_deletes
   ;; Reverse order to ensure files are deleted before directories
-  local_keys_reverse = reverse((self.d.local_hash.keys()).toarray())
+  print, "Getting keys in reverse order"
+  local_hash = self.d.local_hash
+  stop
+  print, "got local_hash"
+  local_keys = local_hash.keys()
+  print, "got keys"
+  local_keys_array = local_keys.toarray()
+  print, "Got array"
+  local_keys_reverse = reverse(local_keys_array)
+;  local_keys_reverse = reverse((self.d.local_hash.keys()).toarray())
+  print, "Got keys in reverse order"
   foreach key, local_keys_reverse DO BEGIN
+     print, "Considering " + key
      do_delete = ~ self.d.remote_hash.haskey(key)
      local_type = typename(self.d.local_hash[key])
      remote_type = do_delete ? "" : typename(self.d.remote_hash[key])
      do_delete = do_delete || (local_type NE remote_type)
      IF do_delete THEN BEGIN
         self.info, "Deleting " + self.d.full_topdir + key
-        file_delete, self.d.full_topdir + key
+        catch, err
+        IF err EQ 0 THEN file_delete, self.d.full_topdir + key
+        catch, /cancel
+        IF err NE 0 THEN self.info, "Could not delete " + self.d.full_topdir + key
      END
   END
 END
@@ -209,10 +237,8 @@ FUNCTION rget_fetch_files::fetch_string_array,path
   spawn, curl, result, err_result, exit_status=exit_status, /null_stdin
   self.restore_library_paths
   
-  if exit_status eq 0 then begin
-     self.info,"RGET-LIST: " + result, format='(a)',/level
-     return, result
-  end 
+  if exit_status eq 0 then return, result
+
   message,/continue,"curl error, exit status "+exit_status.toString()
   print,curl
   print,"Curl output:"
@@ -225,6 +251,7 @@ end
 
 PRO rget_fetch_files::fetch_rget_list
   rget_list = self.fetch_string_array("RGET-LIST")
+  self.info,"RGET-LIST: " + rget_list, format='(a)',/level
   IF rget_list[0] NE "#RGET-LIST" THEN BEGIN
      message,"Remote RGET-LIST corrupt?",/CONTINUE
      message,"First line is not '#RGET-LIST'",/CONTINUE
@@ -232,17 +259,22 @@ PRO rget_fetch_files::fetch_rget_list
      message,"Can't continue"
   END
   self.d.remote_array = rget_list[1:*]
+  print, "Parsing RGET-LIST"
   self.d.remote_hash = RGET_MAKE_LIST.list_as_hash(self.d.remote_array)
+  print, "Done parsing RGET-LIST"
 END
 
 
 PRO rget_fetch_files::make_fetch
+  self.info, "Making local file list"
   self.d.local_array = rget_make_list(self.d.full_topdir, debug=0)
   self.d.local_hash = rget_make_list.list_as_hash(self.d.local_array)
+  stop
+  self.info, "Fetching remote file list"
   self.fetch_rget_list
-  self.dprint, "", "---", "", format='(a)'
+  self.info, "", "Doing deletes", "", format='(a)'
   self.do_deletes
-  self.dprint, "", "---", "", format='(a)'
+  self.info, "", "Doing fetches", "", format='(a)'
   self.do_fetches
 END
 
@@ -279,6 +311,15 @@ PRO rget_fetch_files_test,debug=debug,verbose=verbose,delete=delete
   rget_fetch_files,url, top_dir, debug=debug, user = user, password = password,verbose=verbose
 END
 
+PRO rget_fetch_files_test_ssw
+  tstart = systime(1)
+  rget_fetch_files,"https://sohowww.nascom.nasa.gov/solarsoft/","/astro/astro-sdc-fs/d1/sdc/roslo/rget_ssw",/verbose, /debug
+  tend =  systime(1)
+  print, "Fetch of SSW took: ", (tend - tstart)/60, "minutes"
+  
+END
+
 IF getenv("USER") EQ "steinhh" THEN rget_fetch_files_test, debug=debug, verbose=verbose,delete=delete
 
 end
+
