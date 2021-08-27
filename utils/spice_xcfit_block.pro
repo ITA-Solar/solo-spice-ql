@@ -185,7 +185,7 @@
 ;                       Copied to SPICE rep. and renamed to spice_xcfit_block
 ;
 ; Version     :
-; $Id: 2021-08-27 14:55 CEST $
+; $Id: 2021-08-27 15:30 CEST $
 ;-
 
 
@@ -2027,4 +2027,11 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
      FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
   END ELSE ana = info.int.a
   
+END
+
+IF getenv("USER") EQ "steinhh" THEN BEGIN
+   ana = restore_analysis("$HOME/idl/solo-spice-ql/test_data/eis_l1_20210806_105401_0.ana")
+   spice_xcfit_block, ana=ana
+END
+
 END
