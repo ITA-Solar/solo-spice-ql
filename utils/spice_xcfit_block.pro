@@ -185,7 +185,7 @@
 ;                       Copied to SPICE rep. and renamed to spice_xcfit_block
 ;
 ; Version     :
-; $Id: 2021-08-30 11:57 CEST $
+; $Id: 2021-08-30 12:15 CEST $
 ;-
 
 
@@ -1370,9 +1370,11 @@ PRO spice_xcfit_block_event,ev
   ;stop
   if tag_names(ev, /Structure_name) eq 'SPICE_CW_LOADCT_NEW_CT' then begin
     print, 'new color table or so...'
-        spice_xcfit_block_visitp,info
-  widget_control,ev.top,set_uvalue=info,/no_copy
-
+    spice_cw_cubeview_force_redraw, info.int.data_id
+    spice_cw_cubeview_force_redraw, info.int.residual_id
+    spice_cw_cubeview_force_redraw, info.int.result_id
+     ;   spice_xcfit_block_visitp,info
+    widget_control,ev.top,set_uvalue=info,/no_copy
     return
   endif
 

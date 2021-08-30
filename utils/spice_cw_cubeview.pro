@@ -301,12 +301,14 @@ PRO spice_cw_cubeview_upd_info,info
 END
 
 pro spice_cw_cubeview_force_redraw, id
+  print,'force redraw'
   stash = widget_info(id,/child)
   widget_control,stash,get_uvalue=info,/no_copy
   spice_cw_cubeview_get_image,info,im_arr,set,/newdata
   widget_control,info.int.image_id,set_value=set
   IF n_elements(im_arr) GT 0 THEN $
     widget_control,info.int.image_id,set_value=im_arr
+  widget_control,stash,set_uvalue=info,/no_copy
 end
 
 ;;
