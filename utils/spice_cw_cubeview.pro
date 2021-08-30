@@ -300,9 +300,13 @@ PRO spice_cw_cubeview_upd_info,info
   IF since_version('4.0.1') THEN widget_control,info.int.mybase,update=1
 END
 
-pro spice_cw_cubeview_force_redraw
-
-
+pro spice_cw_cubeview_force_redraw, id
+  stash = widget_info(id,/child)
+  widget_control,stash,get_uvalue=info,/no_copy
+  spice_cw_cubeview_get_image,info,im_arr,set,/newdata
+  widget_control,info.int.image_id,set_value=set
+  IF n_elements(im_arr) GT 0 THEN $
+    widget_control,info.int.image_id,set_value=im_arr
 end
 
 ;;
@@ -511,7 +515,7 @@ FUNCTION spice_cw_cubeview_event,ev
      ENDCASE
   END
   
-  event = {id:ev.handler,$ ;; CW_CUBEVIEW_EVENT - Must have fixed number of
+  event = {id:ev.handler,$ ;; SPICE_CW_CUBEVIEW_EVENT - Must have fixed number of
            $                    ; elements in focus!               
            top:ev.top,$
            handler:0l,$
