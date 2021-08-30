@@ -150,7 +150,7 @@
 ;                            taken as physical (i.e., to be used for scaling
 ;                            the image size).
 ;
-; Calls       : cw_cubeview(), cw_flipswitch(), spice_cw_loadct(), cw_plotz(),
+; Calls       : spice_cw_cubeview(), cw_flipswitch(), spice_cw_loadct(), cw_plotz(),
 ;               cw_pselect(), cwf_status(), default, exist(),
 ;               handle_killer_hookup, mk_analysis(), mk_comp_poly(),
 ;               ndim_indices(), parcheck, typ()
@@ -185,7 +185,7 @@
 ;                       Copied to SPICE rep. and renamed to spice_xcfit_block
 ;
 ; Version     :
-; $Id: 2021-08-27 15:30 CEST $
+; $Id: 2021-08-30 11:57 CEST $
 ;-
 
 
@@ -1983,13 +1983,13 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
 ;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
-  info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a.data_h,$
+  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
                                  scale=scale,phys_scale=phys_scale)
   
-  info.int.residual_id = cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
+  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
@@ -1999,7 +1999,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   IF keyword_set(scale) THEN r_scale = scale(1:*)
   IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale(1:*)
   
-  info.int.result_id = cw_cubeview(result_b,value=this_result,$
+  info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames(1:*),$
                                    title=title, origin=r_origin, $
