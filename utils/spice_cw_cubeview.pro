@@ -105,9 +105,12 @@
 ;                       Will no longer redraw display etc. after a set_value
 ;                       operation when there is *no* change in the "ext"
 ;                       part of the info structure
+;               Version 7, Martin Wiesmann, 25 August 2021
+;                       Copied to SPICE rep. and renamed to spice_cw_cubeview
 ;
-; Version     : 6, 6 May 1998
-;-            
+; Version     :
+; $Id: 2021-09-02 14:33 CEST $
+;-
 
 ;;
 ;; Extract plot from data cube
