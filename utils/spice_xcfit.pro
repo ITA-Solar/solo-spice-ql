@@ -312,7 +312,7 @@
 ;                       Copied to SPICE rep. and renamed to spice_xcfit
 ;
 ; Version     :
-; $Id: 2021-09-02 14:36 CEST $
+; $Id: 2021-09-02 14:56 CEST $
 ;-            
 
 ;
@@ -887,6 +887,7 @@ PRO spice_xcfit,x,y,fit,use_current_value=use_current_value,no_change=no_change,
   
   ;; Make sure we have initialized the window system
   window,/free,/pixmap,xsize=5,ysize=5
+  loadct,0
   tvlct,r,g,b,/get
   wdelete
   
