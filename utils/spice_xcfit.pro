@@ -1,7 +1,7 @@
 ;+
 ; Project     : SOHO - CDS     
 ;                   
-; Name        : XCFIT
+; Name        : SPICE_XCFIT
 ;               
 ; Purpose     : Interactive design of component fit structure
 ;               
@@ -113,13 +113,13 @@
 ;                      structure in the FIT parameter.
 ;
 ;               Exit : Discard changes - will exit and leave the FIT parameter
-;                      as it was on entering XCFIT (if it was previously
+;                      as it was on entering SPICE_XCFIT (if it was previously
 ;                      undefined it will now contain a fit structure with a
 ;                      zero-order background tag).
 ;
-;               Exit : Flag as FAILED/IMPOSSIBLE - is used when the XCFIT
+;               Exit : Flag as FAILED/IMPOSSIBLE - is used when the SPICE_XCFIT
 ;                      program is called from other programs, such as
-;                      XCFIT_BLOCK.
+;                      XCFIT_BLOCK or SPICE_XCFIT_BLOCK.
 ;
 ;               Auto-fit:OFF(ON) : This is a status toggle, turning on or off
 ;                                  automatic refitting after each modification
@@ -176,7 +176,7 @@
 ;               program with three (undefined) variables, X, Y and FIT, i.e.,
 ;
 ;               IDL> delvar,x,y,fit
-;               IDL> xcfit,x,y,fit
+;               IDL> spice_xcfit,x,y,fit
 ;               
 ;               When the input parameter X is not defined, a dummy spectrum
 ;               will be created, with a constant background and three gaussian
@@ -235,7 +235,7 @@
 ;               its Include switch is turned "OFF", and then press the "Purge
 ;               components" button.
 ;
-;               When you're satisfied with a fit, exit the XCFIT program using
+;               When you're satisfied with a fit, exit the SPICE_XCFIT program using
 ;               the Exit - Save changes button.
 ;
 ;               Now, if you'd like to use the designed fit inside e.g., a
@@ -248,7 +248,7 @@
 ;               component fit. This may then be applied to other data sets
 ;               in a non-interactive way.
 ;               
-; Use         : XCFIT,X,Y,FIT [,WEIGHTS=WEIGHTS]
+; Use         : SPICE_XCFIT,X,Y,FIT [,WEIGHTS=WEIGHTS]
 ;    
 ; Inputs      : X,Y : The spectrum to be fitted. One-dimensional arrays, same
 ;                     number of elements.
@@ -312,14 +312,14 @@
 ;                       Copied to SPICE rep. and renamed to spice_xcfit
 ;
 ; Version     :
-; $Id: 2021-09-02 14:33 CEST $
+; $Id: 2021-09-02 14:36 CEST $
 ;-            
 
 ;
 ; Re-evaluates the current fit, computes finely sampled
 ; values for overplotting
 ;
-PRO xcfit_reeval,info
+PRO spice_xcfit_reeval,info
   
   handle_value,info.fit_handle,fit,/no_copy
   
@@ -336,7 +336,7 @@ END
 ;
 ; Re-plots the current, evaluated fit
 ;
-PRO xcfit_replot,info
+PRO spice_xcfit_replot,info
   widget_control,info.spec_id,set_value={replot:1}
   oplot,info.xfine,info.yfine,color=1
   widget_control,info.spec_id,get_value=plott
@@ -376,7 +376,7 @@ END
 ;
 ; Find best fit based on current state
 ;
-PRO xcfit_refit,info,nofit=nofit
+PRO spice_xcfit_refit,info,nofit=nofit
   ;; This could take time..
   widget_control,/hourglass
   
@@ -403,8 +403,8 @@ PRO xcfit_refit,info,nofit=nofit
   handle_value,info.fit_handle,fit,/set,/no_copy 
   
   ;; Plot results
-  xcfit_reeval,info
-  xcfit_replot,info
+  spice_xcfit_reeval,info
+  spice_xcfit_replot,info
   
   ;; Update displayed values
   handle_value,info.fit_handle,fit,/no_copy 
@@ -418,7 +418,7 @@ END
 ;
 ; Remake the section of the display showing details of the fit structure
 ;
-PRO xcfit_remake,info
+PRO spice_xcfit_remake,info
   handle_value,info.fit_handle,fit,/no_copy
   ;; Update screen
   xupdate,info.fit_base,0
@@ -437,7 +437,7 @@ END
 ;
 ; Add a line component, guess initial/max/min components etc.
 ;
-PRO xcfit_addcomp,info,velocity=velocity,blue_means_negative_velocity=blue
+PRO spice_xcfit_addcomp,info,velocity=velocity,blue_means_negative_velocity=blue
   ;; This takes time..
   widget_control,/hourglass
   
@@ -556,14 +556,14 @@ PRO xcfit_addcomp,info,velocity=velocity,blue_means_negative_velocity=blue
   ;; Store fit info..
   handle_value,info.fit_handle,fit,/set,/no_copy
   
-  xcfit_remake,info
+  spice_xcfit_remake,info
 END
 
 
 ;
 ; Event handling
 ;
-PRO xcfit_event,ev
+PRO spice_xcfit_event,ev
   
   widget_control,/hourglass
   
@@ -584,22 +584,22 @@ PRO xcfit_event,ev
      
   'ERRPLOT_F_ON':BEGIN
      info.ploterr_f = 1b
-     xcfit_replot,info
+     spice_xcfit_replot,info
      ENDCASE
      
   'ERRPLOT_F_OFF':BEGIN
      info.ploterr_f = 0b
-     xcfit_replot,info
+     spice_xcfit_replot,info
      ENDCASE
      
   'ERRPLOT_R_ON':BEGIN
      info.ploterr_r = 1b
-     xcfit_replot,info
+     spice_xcfit_replot,info
      ENDCASE
      
   'ERRPLOT_R_OFF':BEGIN
      info.ploterr_r = 0b
-     xcfit_replot,info
+     spice_xcfit_replot,info
      ENDCASE
      
   'DISCARD':BEGIN                
@@ -623,20 +623,20 @@ PRO xcfit_event,ev
 ;
   'AUTOFIT_ON':BEGIN
      info.autofit = 1
-     xcfit_refit,info
+     spice_xcfit_refit,info
      ENDCASE
      
   'AUTOFIT_OFF':BEGIN
      info.autofit = 0
-     xcfit_reeval,info
-     xcfit_replot,info
+     spice_xcfit_reeval,info
+     spice_xcfit_replot,info
      ENDCASE
 
 ;
 ; Calculate fit
 ;
   'REFIT':BEGIN
-     xcfit_refit,info
+     spice_xcfit_refit,info
      ENDCASE
      
 ;
@@ -645,10 +645,10 @@ PRO xcfit_event,ev
   'FIT':BEGIN
      handle_value,ev.fit_handle,fit
      handle_value,info.fit_handle,fit,/set,/no_copy
-     IF info.autofit THEN xcfit_refit,info $
+     IF info.autofit THEN spice_xcfit_refit,info $
      ELSE BEGIN
-        xcfit_reeval,info
-        xcfit_replot,info
+        spice_xcfit_reeval,info
+        spice_xcfit_replot,info
      END
      ENDCASE
      
@@ -657,29 +657,29 @@ PRO xcfit_event,ev
 ;                  position
 ;
   'ADD_ABS':BEGIN
-     xcfit_addcomp,info
-     IF info.autofit THEN xcfit_refit,info $ 
+     spice_xcfit_addcomp,info
+     IF info.autofit THEN spice_xcfit_refit,info $
      ELSE begin
-        xcfit_reeval,info
-        xcfit_replot,info
+        spice_xcfit_reeval,info
+        spice_xcfit_replot,info
      END
      ENDCASE
      
   'ADD_VEL+':BEGIN
-     xcfit_addcomp,info,/velocity
-     IF info.autofit THEN xcfit_refit,info $
+     spice_xcfit_addcomp,info,/velocity
+     IF info.autofit THEN spice_xcfit_refit,info $
      ELSE BEGIN
-        xcfit_reeval,info
-        xcfit_replot,info
+        spice_xcfit_reeval,info
+        spice_xcfit_replot,info
      END 
      ENDCASE
 
   'ADD_VEL-':BEGIN
-     xcfit_addcomp,info,/velocity,/blue_means_negative_velocity
-     IF info.autofit THEN xcfit_refit,info $
+     spice_xcfit_addcomp,info,/velocity,/blue_means_negative_velocity
+     IF info.autofit THEN spice_xcfit_refit,info $
      ELSE BEGIN
-        xcfit_reeval,info
-        xcfit_replot,info
+        spice_xcfit_reeval,info
+        spice_xcfit_replot,info
      END 
      ENDCASE
 
@@ -691,8 +691,8 @@ PRO xcfit_event,ev
      sort_cfit,fit,/nosort,/purge
      info.ncomp = n_elements(tag_names(fit))
      handle_value,info.fit_handle,fit,/set,/no_copy
-     xcfit_remake,info
-     xcfit_replot,info
+     spice_xcfit_remake,info
+     spice_xcfit_replot,info
      END
      
 ;
@@ -702,32 +702,32 @@ PRO xcfit_event,ev
      handle_value,info.fit_handle,fit,/no_copy
      sort_cfit,fit,['comp_gauss','comp_bgauss','comp_voigt'],1
      handle_value,info.fit_handle,fit,/set,/no_copy
-     xcfit_remake,info
-     xcfit_replot,info
+     spice_xcfit_remake,info
+     spice_xcfit_replot,info
      ENDCASE
      
   'SORT_COMP_POS-':BEGIN
      handle_value,info.fit_handle,fit,/no_copy
      sort_cfit,fit,'comp_gauss',1,/decreasing
      handle_value,info.fit_handle,fit,/set,/no_copy
-     xcfit_remake,info
-     xcfit_replot,info
+     spice_xcfit_remake,info
+     spice_xcfit_replot,info
      ENDCASE
      
   'SORT_COMP_AMP+':BEGIN
      handle_value,info.fit_handle,fit,/no_copy
      sort_cfit,fit,'comp_gauss',0
      handle_value,info.fit_handle,fit,/set,/no_copy
-     xcfit_remake,info
-     xcfit_replot,info
+     spice_xcfit_remake,info
+     spice_xcfit_replot,info
      ENDCASE
      
   'SORT_COMP_AMP-':BEGIN
      handle_value,info.fit_handle,fit,/no_copy
      sort_cfit,fit,'comp_gauss',0,/decreasing
      handle_value,info.fit_handle,fit,/set,/no_copy
-     xcfit_remake,info
-     xcfit_replot,info
+     spice_xcfit_remake,info
+     spice_xcfit_replot,info
      ENDCASE
      
 ;
@@ -742,8 +742,8 @@ PRO xcfit_event,ev
         END
      END
      handle_value,info.fit_handle,fit,/set,/no_copy
-     xcfit_reeval,info
-     xcfit_replot,info
+     spice_xcfit_reeval,info
+     spice_xcfit_replot,info
      handle_value,info.fit_handle,fit,/no_copy
      widget_control,info.fit_id,set_value=fit
      handle_value,info.fit_handle,fit,/set,/no_copy
@@ -760,7 +760,7 @@ PRO xcfit_event,ev
            fit.(c).param(p).initial = fit.(c).param(p).value
         END
      END
-     IF info.autofit THEN xcfit_refit,info
+     IF info.autofit THEN spice_xcfit_refit,info
      widget_control,info.fit_id,set_value=fit
      handle_value,info.fit_handle,fit,/no_copy,/set
      ENDCASE
@@ -772,7 +772,7 @@ PRO xcfit_event,ev
      ev.set.replot = 0
      widget_control,info.resid_id,set_value=ev.set
      widget_control,ev.id,set_value=ev.set
-     xcfit_replot,info
+     spice_xcfit_replot,info
      widget_control,info.wle_id,set_value='@'+trim(ev.set.xfocus)
      ;; This doesn't make sense, but it's that bloody IDL v 5 bug again
      ;; We must fool the fit_id base into thinking that it's size has
@@ -793,7 +793,7 @@ PRO xcfit_event,ev
      ev.set.replot = 0
      widget_control,ev.id,set_value=ev.set
      widget_control,info.spec_id,set_value=ev.set
-     xcfit_replot,info
+     spice_xcfit_replot,info
      widget_control,info.wle_id,set_value='@'+trim(ev.set.xfocus)
      ;; This doesn't make sense, but it's that bloody IDL v 5 bug again
      ;; We must fool the fit_id base into thinking that it's size has
@@ -821,8 +821,8 @@ PRO xcfit_event,ev
      ENDCASE
      
   'REPLOT':BEGIN
-     xcfit_reeval,info
-     xcfit_replot,info
+     spice_xcfit_reeval,info
+     spice_xcfit_replot,info
      ENDCASE
 ;
 ; Decide which kind of profile to add next.
@@ -841,7 +841,7 @@ END
 
 
 
-PRO xcfit,x,y,fit,use_current_value=use_current_value,no_change=no_change,$
+PRO spice_xcfit,x,y,fit,use_current_value=use_current_value,no_change=no_change,$
          weights=weights,failed=failed
   on_error,0
   ;;
@@ -909,7 +909,7 @@ PRO xcfit,x,y,fit,use_current_value=use_current_value,no_change=no_change,$
   ;;
   ;; Build widget.
   ;;
-  base = widget_base(/column,title='XCFIT')
+  base = widget_base(/column,title='SPICE_XCFIT')
   
   upper = widget_base(base,/row)
   upper2 = widget_base(base,/row)
@@ -1041,7 +1041,7 @@ PRO xcfit,x,y,fit,use_current_value=use_current_value,no_change=no_change,$
                           value=[[x],[y]],psym=10,zoom=zoom,focusi=focusi,$
                           title = 'SPECTRUM/FIT',xplotscale=info.spec_scaler)
   
-  xcfit_reeval,info
+  spice_xcfit_reeval,info
   
   info.resid_scaler = xplotscale(group_leader=base,map=0)
   butt = widget_base(base,/row)
@@ -1060,11 +1060,11 @@ PRO xcfit,x,y,fit,use_current_value=use_current_value,no_change=no_change,$
   
   widget_control,base,/realize
   
-  xcfit_refit,info,nofit=keyword_set(use_current_value)
+  spice_xcfit_refit,info,nofit=keyword_set(use_current_value)
   
   widget_control,base,set_uvalue=info,/no_copy
   
-  xmanager,'xcfit',base,/modal
+  xmanager,'spice_xcfit',base,/modal
   
   WHILE xalive(base) DO xmanager
   
@@ -1089,7 +1089,7 @@ PRO xcfit,x,y,fit,use_current_value=use_current_value,no_change=no_change,$
 END
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; End of 'xcfit.pro'.
+; End of 'spice_xcfit.pro'.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
