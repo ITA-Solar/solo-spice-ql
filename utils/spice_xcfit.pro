@@ -310,9 +310,10 @@
 ;			Allow sorting of BGauss and Voigt profiles.
 ;               Version 8, Martin Wiesmann, 25 August 2021
 ;                       Copied to SPICE rep. and renamed to spice_xcfit
+;                       Initialises now with color table 0 (loadct,0)
 ;
 ; Version     :
-; $Id: 2021-09-02 14:56 CEST $
+; $Id: 2021-09-10 10:20 CEST $
 ;-            
 
 ;

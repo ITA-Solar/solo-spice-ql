@@ -183,9 +183,11 @@
 ;                       collision with new IDL built-in lambda function.
 ;               Version 9, Martin Wiesmann, 25 August 2021
 ;                       Copied to SPICE rep. and renamed to spice_xcfit_block
+;                       handles new event from spice_cw_loadct and calls spice_cw_cubeview_force_redraw
+;                       in spice_xcfit_block_event
 ;
 ; Version     :
-; $Id: 2021-08-30 12:15 CEST $
+; $Id: 2021-09-10 10:20 CEST $
 ;-
 
 
@@ -1356,24 +1358,13 @@ PRO spice_xcfit_block_set_initial,info,average=average_flag
 END
 
 PRO spice_xcfit_block_event,ev
-  print,'start --- spice_xcfit_block_event'
-  help,ev
-  print,'end   --- spice_xcfit_block_event'
   widget_control,/hourglass
   widget_control,ev.top,get_uvalue=info,/no_copy
   widget_control,ev.id,get_uvalue=uvalue
-  help,info
-  help,uvalue
-  ;help,info.int
-  ;help,info.ext
-  ;print,ev.focus
-  ;stop
   if tag_names(ev, /Structure_name) eq 'SPICE_CW_LOADCT_NEW_CT' then begin
-    print, 'new color table or so...'
     spice_cw_cubeview_force_redraw, info.int.data_id
     spice_cw_cubeview_force_redraw, info.int.residual_id
     spice_cw_cubeview_force_redraw, info.int.result_id
-     ;   spice_xcfit_block_visitp,info
     widget_control,ev.top,set_uvalue=info,/no_copy
     return
   endif
@@ -1383,9 +1374,7 @@ PRO spice_xcfit_block_event,ev
   
   mark = n_elements(uvalue) GT 1
 
-  print,'uvalue(0)',uvalue(0)
-
-  CASE uvalue(0) OF 
+  CASE uvalue(0) OF
   'EXIT':BEGIN
      handle_value,info.int.store_info_h,info,/set,/no_copy
      widget_control,ev.top,/destroy
@@ -1613,13 +1602,6 @@ PRO spice_xcfit_block_event,ev
 END
 
 
-pro spice_get_event, event
-  print,'start --- spice_get_event'
-  help,event
-  print,'end   --- spice_get_event'
-end
-
-
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana
@@ -1772,7 +1754,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   buttons_col = widget_base(buttons_n_colors_r,/column,_extra=sml)
   
   ;; Color table selector: SPICE_CW_LOADCT
-  color_selector = widget_base(buttons_n_colors_r, /row, event_pro='spice_get_event', _extra=sml)
+  color_selector = widget_base(buttons_n_colors_r, /row, _extra=sml)
   colors = spice_cw_loadct(color_selector,/frame)
 
   buttons1 = widget_base(buttons_col,/row,_extra=sml)

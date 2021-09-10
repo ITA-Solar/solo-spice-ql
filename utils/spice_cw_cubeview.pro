@@ -107,9 +107,10 @@
 ;                       part of the info structure
 ;               Version 7, Martin Wiesmann, 25 August 2021
 ;                       Copied to SPICE rep. and renamed to spice_cw_cubeview
+;                       Implemented method spice_cw_cubeview_force_redraw
 ;
 ; Version     :
-; $Id: 2021-09-02 14:33 CEST $
+; $Id: 2021-09-10 10:20 CEST $
 ;-
 
 ;;
@@ -303,8 +304,10 @@ PRO spice_cw_cubeview_upd_info,info
   IF since_version('4.0.1') THEN widget_control,info.int.mybase,update=1
 END
 
+;;
+;; Redraw the widgets with the images
+;;
 pro spice_cw_cubeview_force_redraw, id
-  print,'force redraw'
   stash = widget_info(id,/child)
   widget_control,stash,get_uvalue=info,/no_copy
   spice_cw_cubeview_get_image,info,im_arr,set,/newdata
