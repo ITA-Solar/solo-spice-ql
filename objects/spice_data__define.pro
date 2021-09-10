@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2020-11-25 13:33 CET $
+; $Id: 2021-08-12 21:06 CEST $
 
 
 ;+
@@ -116,6 +116,34 @@ pro spice_data::help, description=description, _extra=_extra
     obj_help, self, description=description, _extra=_extra $
   ELSE $
     obj_help, self, _extra=_extra
+END
+
+
+;+
+; Description:
+;     Calls xcfit_block with the data of the chosen window(s)
+;
+; KEYWORD PARAMETERS:
+;     description : if set, the header info of the class will also be printed.
+;
+;-
+pro spice_data::xcfit_block, window_index
+  ;Calls xcfit_block with the data of the chosen window(s)
+  COMPILE_OPT IDL2
+
+  window_index = 0
+
+  lam = self->get_lambda_vector(window_index)
+  help,lam
+  da = self->get_window_data(window_index, /load)
+  help,da
+  s = size(da)
+  da = reform(da, s[3], s[1], s[2], s[4])
+  help,da
+  wts = fltarr(4,4,4,4)
+  miss = self->get_missing_value()
+
+  XCFIT_BLOCK,LAM,DA,WTS,FIT,MISS,RESULT,RESID,INCLUDE,CONST
 END
 
 

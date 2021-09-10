@@ -74,10 +74,12 @@
 ;		Version 5, William Thompson, GSFC, 8 April 1998
 ;			Changed !D.N_COLORS to !D.TABLE_SIZE for 24-bit displays
 ;               Version 6, Martin Wiesmann, 26 August 2021
-;                       Copied to SPICE rep. and renamed to spice_xcfit_block
+;                       Copied to SPICE rep. and renamed to spice_cw_loadct
+;                       An event is now sent to parent widget, if color table changes, this happens in
+;                       spice_cw_loadct_event, spice_cw_loadct_newstart and spice_cw_loadct_reverse
 ;
 ; Version     :
-; $Id: 2021-08-26 15:04 CEST $
+; $Id: 2021-09-10 10:20 CEST $
 ;-            
 
 
@@ -206,11 +208,7 @@ END
      
      
 PRO spice_cw_loadct_event,ev
-  ; Only events from the wiget_draw come here
-  print,'start --- spice_cw_loadct_event'
-  help,ev
-  print,'end   --- spice_cw_loadct_event'
-
+  ; Only events from the widget_draw come here
   spice_cw_loadct_adj_ctable,ev
 
   ; send an event out to the top widget to notify it that color table changed
@@ -233,10 +231,6 @@ PRO spice_cw_loadct_realize,id
 END
 
 PRO spice_cw_loadct_newstart,ev
-   print,'start --- spice_cw_loadct_newstart'
-  help,ev
-  print,'end   --- spice_cw_loadct_newstart'
-
   WIDGET_CONTROL,ev.id,get_uvalue=table_no
   WIDGET_CONTROL,WIDGET_INFO(ev.handler,/child),get_uvalue=file
   
