@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-09-14 14:41 CEST $
+; $Id: 2021-09-14 15:00 CEST $
 
 
 ;+
@@ -127,7 +127,7 @@ END
 ;     description : if set, the header info of the class will also be printed.
 ;
 ;-
-pro spice_data::xcfit_block, window_index
+function spice_data::xcfit_block, window_index
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
@@ -135,7 +135,7 @@ pro spice_data::xcfit_block, window_index
 
   if ~self->get_number_exposures(window_index) then begin
     print, 'single exposure data, do not start xcfit_block'
-    return
+    return, -1
   endif
 
   data = self->get_window_data(window_index, /load)
@@ -158,8 +158,25 @@ pro spice_data::xcfit_block, window_index
   lambda = fix(lambda, type=type_data)
   miss = self->get_missing_value()
 
-  SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDuals, INCLUDE, CONST
+  SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
   help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDuals, INCLUDE, CONST
+
+  ana = {history: '', $
+    lambda:lambda, $
+    data:data, $
+    weights:weights, $
+    fit:fit, $
+    result:result, $
+    residual:residual, $
+    include:include, $
+    const:const, $
+    filename:'', $
+    datasource:'', $
+    definition:'', $
+    missing:miss, $
+    label:''}
+
+  return, ana
 END
 
 
