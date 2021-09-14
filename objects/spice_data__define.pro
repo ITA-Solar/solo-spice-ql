@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-08-12 21:06 CEST $
+; $Id: 2021-09-14 14:41 CEST $
 
 
 ;+
@@ -131,19 +131,35 @@ pro spice_data::xcfit_block, window_index
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
-  window_index = 0
+  if N_ELEMENTS(window_index) eq 0 then window_index = 0
 
-  lam = self->get_lambda_vector(window_index)
-  help,lam
-  da = self->get_window_data(window_index, /load)
-  help,da
-  s = size(da)
-  da = reform(da, s[3], s[1], s[2], s[4])
-  help,da
-  wts = fltarr(4,4,4,4)
+  if ~self->get_number_exposures(window_index) then begin
+    print, 'single exposure data, do not start xcfit_block'
+    return
+  endif
+
+  data = self->get_window_data(window_index, /load)
+  lambda = self->get_wcs_coord(window_index, /lambda)
+
+  size_data = size(data)
+  if self->get_sit_and_stare() then begin
+    print, 'sit_and_stare'
+    lambda = transpose(lambda, [2, 0, 1, 3])
+    data = transpose(data, [2, 0, 1, 3])
+    weights = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value=1.0)
+  endif else begin
+    print, 'not sit_and_stare'
+    lambda = reform(lambda)
+    lambda = transpose(lambda, [2, 0, 1])
+    data = transpose(data, [2, 0, 1])
+    weights = make_array(size_data[3], size_data[1], size_data[2], value=1.0)
+  endelse
+  type_data = size(data, /type)
+  lambda = fix(lambda, type=type_data)
   miss = self->get_missing_value()
 
-  XCFIT_BLOCK,LAM,DA,WTS,FIT,MISS,RESULT,RESID,INCLUDE,CONST
+  SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDuals, INCLUDE, CONST
+  help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDuals, INCLUDE, CONST
 END
 
 
