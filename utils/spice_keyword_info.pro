@@ -1,6 +1,10 @@
 ; $Id: 2020-11-25 21:19 CET $
 FUNCTION spice_keyword_info_header
   text = spice_inline_text()
+;NAXIS1  =                    1 /
+;NAXIS2  =                    1 /
+;NAXIS3  =                    1 /
+;NAXIS4  =                    1 /
 ;OBT_BEG =        646012990.301 /
 ;LEVEL   = 'L2      '           / Data processing level                          
 ;FILENAME= 'solo_L2_spice-n-exp_20200621T000329_V01_16777432-000.fits' / FI      '
