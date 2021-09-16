@@ -5,7 +5,7 @@
 ;               
 ; Purpose     : Design/apply multi-component fit to data block
 ;               
-; Explanation : See documentation for XCFIT, CFIT, and CFIT_BLOCK first.
+; Explanation : See documentation for SPICE_XCFIT, CFIT, and CFIT_BLOCK first.
 ;
 ;               SPICE_XCFIT_BLOCK is an interface to visualize and modify component
 ;               fits applied to a block of spectral data, and to keep track of
@@ -43,7 +43,7 @@
 ;               
 ;          View/tweak
 ;               
-;               Pushing this button starts XCFIT, showing the data and the
+;               Pushing this button starts SPICE_XCFIT, showing the data and the
 ;               corresponding fit from the current point in the data
 ;               array. You can modify permanently the INCLUDE and CONST status
 ;               for any component/parameter for this point. You may also
@@ -68,7 +68,7 @@
 ;               
 ;          Adjust / Adjust (global) MIN/MAX values, names etc
 ;
-;               This button starts XCFIT in the same mode as when you press
+;               This button starts SPICE_XCFIT in the same mode as when you press
 ;               the View/tweak button, but if you alter the MIN/MAX values, or
 ;               the component names, variable names etc, this will be
 ;               permanently changed in the global fit. Be careful not to leave
@@ -80,9 +80,9 @@
 ;
 ;          Redesign / Discard all results, redesign fit structure
 ;
-;               Use this button to start XCFIT in a mode where you can change
+;               Use this button to start SPICE_XCFIT in a mode where you can change
 ;               the fit structure by adding, removing (purging), and sorting
-;               components. This will, however, leave XCFIT in the blue as to
+;               components. This will, however, leave SPICE_XCFIT in the blue as to
 ;               which parts of any calculated results correspond to which
 ;               components/parameters, so unless you use either the "Flag as
 ;               FAILED/IMPOSSIBLE" or "Discard changes" exit options, ALL
@@ -187,7 +187,7 @@
 ;                       in spice_xcfit_block_event
 ;
 ; Version     :
-; $Id: 2021-09-10 10:20 CEST $
+; $Id: 2021-09-16 13:49 CEST $
 ;-
 
 
@@ -1117,7 +1117,7 @@ PRO spice_xcfit_block_adjustfit,info
   ;; But we want the *global* values for the const/include..etc..
   ;; Allow editing - of the original fit, but with the data from this point
   
-  xcfit,lambda,spec,orgfit,weights=weights,/no_change,failed=ignore_failed
+  spice_xcfit,lambda,spec,orgfit,weights=weights,/no_change,failed=ignore_failed
   
   ;; Update status display
   widget_control,info.int.status1_id,set_value=orgfit
@@ -1139,7 +1139,7 @@ END
 PRO spice_xcfit_block_alterfit,info
   spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
   orgfit = fit
-  xcfit,lambda,spec,fit,weights=weights,/use_current_value,failed=failed
+  spice_xcfit,lambda,spec,fit,weights=weights,/use_current_value,failed=failed
   handle_value,info.int.a.fit_h,fit,/set
   IF NOT match_struct(orgfit,fit) THEN BEGIN
      widget_control,/hourglass
@@ -1519,7 +1519,7 @@ PRO spice_xcfit_block_event,ev
      handle_value,info.int.a.fit_h,orgfit
      spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
      currentfit = fit
-     xcfit,lambda,spec,fit,weights=weights,/use_current_value,/no_change,$
+     spice_xcfit,lambda,spec,fit,weights=weights,/use_current_value,/no_change,$
         failed=failed
      IF NOT match_struct(currentfit,fit) OR failed THEN $
         spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed
