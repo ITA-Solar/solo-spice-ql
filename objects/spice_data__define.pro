@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-09-14 15:00 CEST $
+; $Id: 2021-09-17 14:29 CEST $
 
 
 ;+
@@ -158,23 +158,39 @@ function spice_data::xcfit_block, window_index
   lambda = fix(lambda, type=type_data)
   miss = self->get_missing_value()
 
-  SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
-  help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDuals, INCLUDE, CONST
+  print, 'before'
+  help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
 
-  ana = {history: '', $
-    lambda:lambda, $
-    data:data, $
-    weights:weights, $
-    fit:fit, $
-    result:result, $
-    residual:residual, $
-    include:include, $
-    const:const, $
-    filename:'', $
-    datasource:'', $
-    definition:'', $
-    missing:miss, $
-    label:''}
+  ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
+
+  help,ana
+
+  ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
+  SPICE_XCFIT_BLOCK, ana=ana
+
+  print, 'after'
+  help,ana
+
+  handle_value, ana.result_h, result
+  help,result
+  handle_value,ana.fit_h,fit
+  help,fit
+  ;stop
+
+  ;ana = {history: '', $
+  ;  lambda:lambda, $
+  ;  data:data, $
+  ;  weights:weights, $
+  ;  fit:fit, $
+  ;  result:result, $
+  ;  residual:residual, $
+  ;  include:include, $
+  ;  const:const, $
+  ;  filename:'', $
+  ;  datasource:'', $
+  ;  definition:'', $
+  ;  missing:miss, $
+  ;  label:''}
 
   return, ana
 END
