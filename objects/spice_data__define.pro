@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-09-17 14:29 CEST $
+; $Id: 2021-09-24 20:46 CEST $
 
 
 ;+
@@ -139,6 +139,9 @@ function spice_data::xcfit_block, window_index
   endif
 
   data = self->get_window_data(window_index, /load)
+  ind = where(data ne data, count)
+  print, 'data ne data', count
+  if count gt 0 then data[ind] = -1000.0
   lambda = self->get_wcs_coord(window_index, /lambda)
 
   size_data = size(data)
@@ -157,6 +160,7 @@ function spice_data::xcfit_block, window_index
   type_data = size(data, /type)
   lambda = fix(lambda, type=type_data)
   miss = self->get_missing_value()
+  miss = -1000.0d
 
   print, 'before'
   help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
