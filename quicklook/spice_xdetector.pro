@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2021-05-19 12:43 CEST $
+; $Id: 2021-10-26 14:28 CEST $
 
 
 ; save as postscript file
@@ -879,7 +879,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ; win_positions due to transformations
   if data->get_level() eq 2 then begin
     for i=0,nwin-1 do begin
-      sizey = data->get_header_info('NAXIS2', lindx[i])
+      sizey = data->get_header_info('NAXIS2', lindx[i])* data->get_spatial_binning(lindx[i])
       dy = sizey - (win_positions[i,3]-win_positions[i,2]+1)
       if dy ne 0 then begin
         dy1 = fix(dy/2.0)
@@ -895,7 +895,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
           win_positions[i,3] = ccd_size[1]-1
         endif
       endif
-      sizel = data->get_header_info('NAXIS3', lindx[i])
+      sizel = data->get_header_info('NAXIS3', lindx[i])* data->get_spectral_binning(lindx[i])
       dl = sizel - (win_positions[i,1]-win_positions[i,0]+1)
       if dl ne 0 then begin
         dl1 = fix(dl/2.0)
