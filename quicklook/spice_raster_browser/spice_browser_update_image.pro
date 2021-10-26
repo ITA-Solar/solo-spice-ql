@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 2021-10-26 14:18 CEST $
 
 
 PRO spice_browser_update_image, state, pwin
@@ -52,7 +52,7 @@ PRO spice_browser_update_image, state, pwin
   iwin=state.wid_data.iwin[pwin]
   nx=state.wid_data.nx
   nxpos=state.wid_data.nxpos
-  ny=state.wid_data.ny
+  ny=state.data->get_header_info('NAXIS2', iwin)
   nl=state.data->get_header_info('NAXIS3', iwin)
 
   exptime=replicate(state.data->get_exposure_time(iwin), state.data->get_number_exposures(iwin))
@@ -93,7 +93,7 @@ PRO spice_browser_update_image, state, pwin
   ;  ENDELSE
 
   wd=fltarr(wwidth,nx,ny)
-  img=fltarr(nx,ny+40)
+  img=state.images[*,*,0]
   ;
   IF state.wid_data.rast_direct EQ 0 THEN BEGIN
     i0=x1
