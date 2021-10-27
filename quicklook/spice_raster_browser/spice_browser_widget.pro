@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2021-10-26 14:18 CEST $
+; $Id: 2021-10-27 21:20 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -809,7 +809,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ; I add an additional 30 pixels in Y in order to handle Y-offsets
   ; between the FUV1, FUV2 and NUV channels.
   ;
-  images=fltarr(wid_data.nxpos,wid_data.ny+400,n_plot_window)
+  images=fltarr(wid_data.nxpos,wid_data.ny+1100,n_plot_window)
 
 
   ;
@@ -825,7 +825,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   ; I use this for storing exposure images
   ;
-  expimages=fltarr(max(nl),wid_data.ny+400,n_plot_window)
+  expimages=fltarr(max(nl),wid_data.ny+1100,n_plot_window)
 
   ;
   ; This loads the array of SJI images.
