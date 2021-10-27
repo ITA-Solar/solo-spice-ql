@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2020-11-26 11:39 CET $
+; $Id: 2021-10-27 10:48 CEST $
 ;-
 ;
 ; save as postscript file
@@ -566,7 +566,8 @@ pro spice_xmap_resize, event
   var=wd
   bad=where(var eq *(*info).data->get_missing_value(),nbad)
   if nbad ne 0 then var[bad]=!values.f_nan
-  drawimage = total(var,3,/nan)/sz[3]-cont
+  if sz[0] ge 3 then drawimage = total(var,3,/nan)/sz[3]-cont $
+  else drawimage = var-cont
   if *(*info).data->get_sit_and_stare() then begin
     drawimage = reform(drawimage)
     drawimage = rotate(drawimage, 1)
