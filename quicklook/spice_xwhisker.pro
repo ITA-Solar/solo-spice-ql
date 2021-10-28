@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2020-11-26 11:39 CET $
+; $Id: 2021-10-27 11:20 CEST $
 
 
 ; save as postscript file
@@ -110,9 +110,14 @@ pro spice_xwhisker_draw, event
   ;xscale=xscale[pos[0]-px[0]:pos[0]-px[0]+pos[1]-1]
   sit_and_stare=(*info).sit_and_stare
   if ~(*info).xdim_unit then begin
-    xpos=indgen(sz[1])
+    if sz[0] eq 1 then xpos = [-0.5, 0.5] $
+    else xpos=indgen(sz[1])
   endif else begin
     xpos=*(*info).data->get_lambda_vector((*info).line)
+    if N_ELEMENTS(xpos) eq 1 then begin
+      cdelt = *(*info).data.get_resolution((*info).line,/lambda) / 2.0
+      xpos = [xpos-cdelt, xpos+cdelt]
+    endif
   endelse
   xscale=xpos
   if ~(*info).ydim_unit then begin
@@ -122,7 +127,11 @@ pro spice_xwhisker_draw, event
     else ypos=*(*info).data->get_instr_x_vector((*info).line)
   endelse
   yscale=ypos
-  drawimage = congrid((*info).image, (*info).d_xsz, (*info).d_ysz)
+  if sz[0] eq 1 then begin
+    drawimage = [[(*info).image], [(*info).image]]
+    drawimage = transpose(drawimage, [1,0])
+  endif else drawimage = (*info).image
+  drawimage = congrid(drawimage, (*info).d_xsz, (*info).d_ysz)
   (*info).xticks=fix((*info).d_xsz/100)
   sz = size(drawimage)
   ptr_free,(*info).xscale

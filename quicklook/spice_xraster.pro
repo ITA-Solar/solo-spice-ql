@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2021-07-27 12:33 CEST $
+; $Id: 2021-10-26 14:49 CEST $
 ;-
 ;
 ; save as postscript file
@@ -158,8 +158,13 @@ pro spice_xraster_draw, event
     ; wavelength scale of NUV/FUV1/FUV2
     if ~(*info).xdim_unit then begin
       lambda=indgen(sz[1])
+      if N_ELEMENTS(lambda) eq 1 then  lambda = [lambda-0.5, lambda+0.5]
     endif else begin
       lambda=*(*info).data->get_lambda_vector(j)
+      if N_ELEMENTS(lambda) eq 1 then begin
+        cdelt = *(*info).data.get_resolution(j,/lambda) / 2.0
+        lambda = [lambda-cdelt, lambda+cdelt]
+      endif
     endelse
     if ~(*info).ydim_unit then begin
       ypos=indgen(sz[2])
