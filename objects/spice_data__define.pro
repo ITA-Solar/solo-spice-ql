@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-09-24 20:46 CEST $
+; $Id: 2021-11-03 14:26 CET $
 
 
 ;+
@@ -165,9 +165,22 @@ function spice_data::xcfit_block, window_index
   print, 'before'
   help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
 
-  ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
+  adef = generate_adef(data, LAMbda)
+  print,''
+  print,'adef'
+  help,adef
+
+  ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
+  ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
 
   help,ana
+  handle_value,ana.fit_h,fit
+  help,fit
+  ;stop
+
+  print,'fitting...'
+  cfit_block, analysis=ana, quiet=quiet, /double, /x_face
+
 
   ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
   SPICE_XCFIT_BLOCK, ana=ana
