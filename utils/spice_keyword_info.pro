@@ -184,7 +184,7 @@ FUNCTION spice_keyword_info_header
   return, [text, '']
 END
 
-FUNCTION spice_keyword_info,keywords,all=all
+FUNCTION spice_keyword_info,requested_keywords,all=all
   header = spice_keyword_info_header()
   first_eight = (strmid(header, 0, 8)).trim()
   all_keywords = first_eight(where(first_eight NE ""))
@@ -206,11 +206,11 @@ FUNCTION spice_keyword_info,keywords,all=all
      list = [list, info]
   END
   
-  IF keyword_set(all) THEN keywords = list[*].keyword
-  spice_default, keywords, list[*].keyword
+  IF keyword_set(all) THEN requested_keywords = list[*].keyword
+  spice_default, requested_keywords, list[*].keyword
   
   keyword_info_hash = orderedhash()
-  foreach keyword, keywords, index DO BEGIN
+  foreach keyword, requested_keywords, index DO BEGIN
      info = reform(list[where(list[*].keyword EQ keyword,count)])
      IF count NE 1 THEN message,"Huh? This shouldn't happen! Should be one and only one match!"
      keyword_info_hash[keyword] = info
@@ -218,6 +218,14 @@ FUNCTION spice_keyword_info,keywords,all=all
   return,keyword_info_hash
 END
 
+PRO spice_keyword_info_as_json, requested_keywords, all=all
+  infos = spice_keyword_info(requested_keywords, all=all)
+  print, "["
+  foreach info, infos DO BEGIN
+     print, "   {", format='(a,$)'
+     print, "KEYWORD: " + info.keyword
+  END
+END 
 
 a = spice_keyword_info()
 END
