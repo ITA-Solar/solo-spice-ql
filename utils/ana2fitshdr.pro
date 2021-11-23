@@ -22,7 +22,7 @@
 ; HISTORY:
 ;      Ver. 1, 28-Sep-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-23 14:44 CET $
+; $Id: 2021-11-23 15:28 CET $
 
 
 FUNCTION ana2fitshdr, ana, $
@@ -69,7 +69,7 @@ FUNCTION ana2fitshdr, ana, $
     end
   endcase
 
-  all_headers = ptrarr(5)
+  all_headers = ptrarr(7)
   n_dims = size(result, /n_dimensions)
 
 
@@ -190,6 +190,8 @@ FUNCTION ana2fitshdr, ana, $
     fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
 
+  all_headers[1] = ptr_new(hdr)
+
   print,''
   print,'--- data ---'
   print,''
@@ -222,6 +224,8 @@ FUNCTION ana2fitshdr, ana, $
     fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
     fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
+
+  all_headers[2] = ptr_new(hdr)
 
   print,''
   print,'--- lambda ---'
@@ -256,6 +260,8 @@ FUNCTION ana2fitshdr, ana, $
     fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
 
+  all_headers[3] = ptr_new(hdr)
+
   print,''
   print,'--- residuals ---'
   print,''
@@ -288,6 +294,8 @@ FUNCTION ana2fitshdr, ana, $
     fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
     fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
+
+  all_headers[4] = ptr_new(hdr)
 
   print,''
   print,'--- weights ---'
@@ -323,6 +331,8 @@ FUNCTION ana2fitshdr, ana, $
     fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
 
+  all_headers[5] = ptr_new(hdr)
+
   print,''
   print,'--- include ---'
   print,''
@@ -356,6 +366,8 @@ FUNCTION ana2fitshdr, ana, $
     fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
     fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
+
+  all_headers[6] = ptr_new(hdr)
 
   print,''
   print,'--- const ---'
