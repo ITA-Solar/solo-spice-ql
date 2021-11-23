@@ -22,7 +22,7 @@
 ; HISTORY:
 ;      Ver. 1, 28-Sep-2021, Martin Wiesmann
 ;-
-; $Id: 2021-10-15 14:27 CEST $
+; $Id: 2021-11-23 14:44 CET $
 
 
 FUNCTION ana2fitshdr, ana, $
@@ -80,7 +80,7 @@ FUNCTION ana2fitshdr, ana, $
   if keyword_set(extension) then mkhdr, hdr, result, /image $
   else mkhdr, hdr, result, /extend
 
-  if filename eq '' then postfix = fns('##########', randomu(seed, /ulong)) $
+  if filename eq '' then postfix = fns('##########', randomu(seed, /long)) $
   else postfix = filename
   fxaddpar, hdr, 'EXTNAME', 'Results of ANA '+postfix, 'Extension name'
 
