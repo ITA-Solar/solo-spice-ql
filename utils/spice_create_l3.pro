@@ -29,7 +29,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2021-11-23 14:43 CET $
+; $Id: 2021-11-23 21:01 CET $
 
 
 pro spice_create_l3, spice_object, window_index
@@ -96,7 +96,7 @@ pro spice_create_l3, spice_object, window_index
     window,0
     handle_value,ana.result_h,result
     help,result
-    stop
+    ;stop
     ;pih, result[0,*,*]
     cfit_block, analysis=ana, quiet=quiet, /double, /x_face
     handle_value,ana.result_h,result
@@ -106,6 +106,9 @@ pro spice_create_l3, spice_object, window_index
     if iwindow gt 0 then extension=1 else extension=0
     headers = ana2fitshdr(ana, extension=extension)
     help,headers
+
+    h = spice_ana2fitshdr_results(ana, l2_header=self->get_header(window_index, /string))
+    ;return
 
     stop
 
