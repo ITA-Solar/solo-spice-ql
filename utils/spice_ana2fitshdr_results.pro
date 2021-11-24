@@ -22,10 +22,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-23 21:01 CET $
+; $Id: 2021-11-24 10:47 CET $
 
 
-FUNCTION spice_ana2fitshdr_results, ana, l2_header=l2_header, $
+FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
+  window_index=window_index, filename_l3=filename_l3, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, DATA=DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME=FILENAME, DATASOURCE=DATASOURCE, $
@@ -91,16 +92,27 @@ FUNCTION spice_ana2fitshdr_results, ana, l2_header=l2_header, $
     millisecond:0}
   datetime = anytim(datetime, /ccsds)
   fxaddpar, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
+  fxaddpar, hdr, '', ' '
 
-  filename_l2 = fxpar(l2_header, 'FILENAME')
+  filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
   file_info_l2 = spice_file2info(filename_l2)
-  fxaddpar, hdr, 'EXTNAME', 'Results of ANA for OBS ' + strtrim(string(file_info_l2.spiobsid), 2) + $
-    ', rno ' + strtrim(string(file_info_l2.rasterno), 2) + $
-    ', win ' + strtrim(string(window_index), 2),  $
+  fxaddpar, hdr, 'EXTNAME', 'Results of ANA for OBS ' + $
+    strtrim(string(file_info_l2.spiobsid), 2) + $
+    fns('-###', file_info_l2.rasterno) + $
+    fns('_##', window_index),  $
     'Extension name'
+  print, 'EXTNAME    ;  ', 'Results of ANA for OBS ' + strtrim(string(file_info_l2.spiobsid), 2) + $
+    fns('-###', file_info_l2.rasterno) + $
+    fns(':##', window_index),  $
+    '   ;  Extension name'
 
   filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  fxaddpar, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
   print, filename_l3
+
+  extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
+  fxaddpar, hdr, 'EXTNAML2', extname_l2, 'Extension name in level 2 file'
+  fxaddpar, hdr, 'FILENAL2', filename_l2, 'Level 2 filename'
   stop
 
   ; Add keywords valid for whole ANA
