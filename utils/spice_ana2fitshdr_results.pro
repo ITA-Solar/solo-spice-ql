@@ -22,7 +22,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-26 13:40 CET $
+; $Id: 2021-11-26 14:33 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
@@ -77,8 +77,10 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
   ; Create result header
   ; ------
 
+  fits_util = obj_new('oslo_fits_util')
   if keyword_set(extension) then mkhdr, hdr, result, /image $
   else mkhdr, hdr, result, /extend
+  print,hdr
 
   ; Add time to DATE
   caldat, systime(/julian), month, day, year, hour, minute, second
@@ -91,104 +93,94 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
     second:second, $
     millisecond:0}
   datetime = anytim(datetime, /ccsds)
-  fxaddpar, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
-  fxaddpar, hdr, '', ' '
+  fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
+  fits_util->add, hdr, '', ' '
 
   filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
   file_info_l2 = spice_file2info(filename_l2)
   obs_def = strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno) + $
-    fns('_##', window_index),  $
-  fxaddpar, hdr, 'EXTNAME', 'Results of ANA for OBS ' + obs_def, 'Extension name'
+    fns('_##', window_index)
+  fits_util->add, hdr, 'EXTNAME', 'Results of ANA for OBS ' + obs_def, 'Extension name'
   print, 'EXTNAME    ;  ', 'Results of ANA for OBS ' + obs_def, '   ;  Extension name'
 
   filename_l3 = filename_l2.replace('_L2_', '_L3_')
-  fxaddpar, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
+  fits_util->add, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
   print, filename_l3
 
   extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
-  fxaddpar, hdr, 'EXTNAML2', extname_l2, 'Extension name in level 2 file'
-  fxaddpar, hdr, 'FILENAL2', filename_l2, 'Level 2 filename'
-  
+  fits_util->add, hdr, 'EXTNAML2', extname_l2, 'Extension name in level 2 file'
+  fits_util->add, hdr, 'FILENAL2', filename_l2, 'Level 2 filename'
+  print,hdr
 
   ; Add keywords valid for whole ANA
-  fxaddpar, hdr, '', ' '
-  fxaddpar, hdr, '', ' '
-  fxaddpar, hdr, '', '  -------------------------------------'
-  fxaddpar, hdr, '', '  | Keywords describing the whole ANA |'
-  fxaddpar, hdr, '', '  -------------------------------------'
-  fxaddpar, hdr, 'ANAFILE', filename, 'ANA filename'
-  fxaddpar, hdr, 'ANADSRC', datasource, 'ANA datasource'
-  fxaddpar, hdr, 'ANADEF', definition, 'ANA definition'
-  fxaddpar, hdr, 'ANAMISS', missing, 'ANA missing value in fitted data'
-  fxaddpar, hdr, 'ANALABEL', label, 'ANA label'
+  fits_util->add_description, hdr, 'Keywords describing the whole ANA'
+  fits_util->add, hdr, 'ANAFILE', filename, 'ANA filename'
+  fits_util->add, hdr, 'ANADSRC', datasource, 'ANA datasource'
+  fits_util->add, hdr, 'ANADEF', definition, 'ANA definition'
+  fits_util->add, hdr, 'ANAMISS', missing, 'ANA missing value in fitted data'
+  fits_util->add, hdr, 'ANALABEL', label, 'ANA label'
   ind = where(history NE '', count)
   if count gt 0 then history_string = strjoin(history[ind], ';') $
   else history_string = ''
-  fxaddpar, hdr, 'ANAHISTO', history_string, 'ANA history'
+  fits_util->add, hdr, 'ANAHISTO', history_string, 'ANA history'
+  n_components = N_TAGS(fit)
+  fits_util->add, hdr, 'COMPCNT', n_components, 'Number of fit components'
 
-  fxaddpar, hdr, 'RESEXT', 'Results of ANA for OBS '+obs_def, 'Extension name of results'
-  fxaddpar, hdr, 'DATAEXT', 'Data input to ANA for OBS '+obs_def, 'Extension name of data'
-  fxaddpar, hdr, 'LAMBDEXT', 'Lambda of ANA for OBS '+obs_def, 'Extension name of lambda'
-  fxaddpar, hdr, 'RESIDEXT', 'Residuals of ANA for OBS '+obs_def, 'Extension name of residuals'
-  fxaddpar, hdr, 'WGTEXT', 'Weights of ANA for OBS '+obs_def, 'Extension name of weights'
-  fxaddpar, hdr, 'INCLEXT', 'Includes of ANA for OBS '+obs_def, 'Extension name of includes'
-  fxaddpar, hdr, 'CONSTEXT', 'Constants of ANA for OBS '+obs_def, 'Extension name of constants'
+  fits_util->add, hdr, 'RESEXT', 'Results of ANA for OBS '+obs_def, 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', 'Data input to ANA for OBS '+obs_def, 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', 'Lambda of ANA for OBS '+obs_def, 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', 'Residuals of ANA for OBS '+obs_def, 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', 'Weights of ANA for OBS '+obs_def, 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', 'Includes of ANA for OBS '+obs_def, 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', 'Constants of ANA for OBS '+obs_def, 'Extension name of constants'
 
 
-  for itag=0,N_TAGS(fit)-1 do begin
+  for itag=0,n_components-1 do begin
     ; Add keywords for each fit component
     fitnr = fns('##', itag)
-    fxaddpar, hdr, '', ' '
-    fxaddpar, hdr, '', ' '
-    fxaddpar, hdr, '', '  ----------------------------------------'
-    fxaddpar, hdr, '', '  | Keywords describing fit component '+fitnr+' |'
-    fxaddpar, hdr, '', '  ----------------------------------------'
+    fits_util->add_description, hdr, 'Keywords describing fit component '+fitnr
     fit_cur = fit.(itag)
-    fxaddpar, hdr, 'CMPTYP'+fitnr, fit_cur.FUNC_NAME, 'Type of fit component '+fitnr
-    fxaddpar, hdr, 'CMPNAM'+fitnr, fit_cur.NAME, 'Name of fit component '+fitnr
+    fits_util->add, hdr, 'CMPTYP'+fitnr, fit_cur.FUNC_NAME, 'Type of fit component '+fitnr
+    fits_util->add, hdr, 'CMPNAM'+fitnr, fit_cur.NAME, 'Name of fit component '+fitnr
     ind = where(fit_cur.description NE '', count)
     if count gt 0 then description = strjoin(fit_cur.description[ind], ';') $
     else description = ''
-    fxaddpar, hdr, 'CMPDES'+fitnr, description, 'Description of fit component '+fitnr
-    fxaddpar, hdr, 'CMPMUL'+fitnr, fit_cur.MULTIPLICATIVE, 'Indicates whether component is multiplicative'
-    fxaddpar, hdr, 'CMPINC'+fitnr, fit_cur.INCLUDE, 'Indicates whether component is included in fit'
+    fits_util->add, hdr, 'CMPDES'+fitnr, description, 'Description of fit component '+fitnr
+    fits_util->add, hdr, 'CMPMUL'+fitnr, fit_cur.MULTIPLICATIVE, 'Indicates whether component is multiplicative'
+    fits_util->add, hdr, 'CMPINC'+fitnr, fit_cur.INCLUDE, 'Indicates whether component is included in fit'
     n_params = N_ELEMENTS(fit_cur.param)
-    fxaddpar, hdr, 'CMPCNT'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
+    fits_util->add, hdr, 'PARCNT'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
 
     for ipar=0,n_params-1 do begin
       ; Add keywords for each fit parameter
       param = fit_cur.param[ipar]
       parnr = string(byte(ipar+97))
-      fxaddpar, hdr, 'PRNAM'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRNAM'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
       ind = where(param.description NE '', count)
       if count gt 0 then description = strjoin(param.description[ind], ';') $
       else description = ''
-      fxaddpar, hdr, 'PRDES'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
-      fxaddpar, hdr, 'PRINI'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
-      fxaddpar, hdr, 'PRVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
-      fxaddpar, hdr, 'PRMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
-      fxaddpar, hdr, 'PRMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
-      fxaddpar, hdr, 'PRTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient in Lambda=PRVAL*PRTRA+PRTRB'
-      fxaddpar, hdr, 'PRTRB'+fitnr+parnr, param.trans_b, 'Linear offset in Lambda=PRVAL*PRTRA+PRTRB'
-      fxaddpar, hdr, 'PRCON'+fitnr+parnr, param.const, 'Indicates whether parameter is constant'
+      fits_util->add, hdr, 'PRDES'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRINI'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient in Lambda=PRVAL*PRTRA+PRTRB'
+      fits_util->add, hdr, 'PRTRB'+fitnr+parnr, param.trans_b, 'Linear offset in Lambda=PRVAL*PRTRA+PRTRB'
+      fits_util->add, hdr, 'PRCON'+fitnr+parnr, param.const, 'Indicates whether parameter is constant'
     endfor ; ipar0,n_params-1
   endfor ; itag=0,N_TAGS(fit)-1
 
   ; Add keywords for Chi^2
   fitnr = fns('##', N_TAGS(fit))
-  fxaddpar, hdr, '', ' '
-  fxaddpar, hdr, '', ' '
-  fxaddpar, hdr, '', '  ----------------------------------------'
-  fxaddpar, hdr, '', '  | Keywords describing fit component '+fitnr+' |'
-  fxaddpar, hdr, '', '  ----------------------------------------'
-  fxaddpar, hdr, 'CMPTYP'+fitnr, 'Error of fit curve (Chi^2)', 'Type of component '+fitnr
-  fxaddpar, hdr, 'CMPNAM'+fitnr, 'Chi^2', 'Name of component '+fitnr
-  fxaddpar, hdr, 'CMPCNT'+fitnr, 1, 'Number of parameters in component '+fitnr
+  fits_util->add_description, hdr, 'Keywords describing fit component '+fitnr
+  fits_util->add, hdr, 'CMPTYP'+fitnr, 'Error of fit curve (Chi^2)', 'Type of component '+fitnr
+  fits_util->add, hdr, 'CMPNAM'+fitnr, 'Chi^2', 'Name of component '+fitnr
+  fits_util->add, hdr, 'CMPCNT'+fitnr, 1, 'Number of parameters in component '+fitnr
 
   ; Add WCS keywords
-  fxaddpar, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
-  fxaddpar, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
+  fits_util->add, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
+  fits_util->add, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
   for idim=1,n_dims-1 do begin
     idim_str = strtrim(string(idim+1), 2)
     case idim of
@@ -196,9 +188,11 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
       2: dim_name = '3rd'
       else: dim_name = idim_str+'th'
     end
-    fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
-    fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
+    fits_util->add, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
+    fits_util->add, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
+  
+  fits_util->clean_header, hdr
 
 
   print,''
