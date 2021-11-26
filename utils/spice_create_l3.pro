@@ -29,7 +29,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2021-11-24 10:47 CET $
+; $Id: 2021-11-26 14:30 CET $
 
 
 pro spice_create_l3, spice_object, window_index
@@ -107,7 +107,7 @@ pro spice_create_l3, spice_object, window_index
     ;headers = ana2fitshdr(ana, extension=extension)
     ;help,headers
 
-    h = spice_ana2fitshdr_results(ana, l2_header=self->get_header(window_index[iwindow], /string), $
+    h = spice_ana2fitshdr_results(ana, header_l2=self->get_header(window_index[iwindow], /string), $
       window_index=window_index[iwindow], extension=extension, filename_l3=filename_l3)
     help, h
     help, filename_l3
