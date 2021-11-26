@@ -22,7 +22,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-24 10:47 CET $
+; $Id: 2021-11-26 13:40 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
@@ -96,15 +96,11 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
 
   filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
   file_info_l2 = spice_file2info(filename_l2)
-  fxaddpar, hdr, 'EXTNAME', 'Results of ANA for OBS ' + $
-    strtrim(string(file_info_l2.spiobsid), 2) + $
+  obs_def = strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno) + $
     fns('_##', window_index),  $
-    'Extension name'
-  print, 'EXTNAME    ;  ', 'Results of ANA for OBS ' + strtrim(string(file_info_l2.spiobsid), 2) + $
-    fns('-###', file_info_l2.rasterno) + $
-    fns(':##', window_index),  $
-    '   ;  Extension name'
+  fxaddpar, hdr, 'EXTNAME', 'Results of ANA for OBS ' + obs_def, 'Extension name'
+  print, 'EXTNAME    ;  ', 'Results of ANA for OBS ' + obs_def, '   ;  Extension name'
 
   filename_l3 = filename_l2.replace('_L2_', '_L3_')
   fxaddpar, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
@@ -113,9 +109,14 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
   extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
   fxaddpar, hdr, 'EXTNAML2', extname_l2, 'Extension name in level 2 file'
   fxaddpar, hdr, 'FILENAL2', filename_l2, 'Level 2 filename'
-  stop
+  
 
   ; Add keywords valid for whole ANA
+  fxaddpar, hdr, '', ' '
+  fxaddpar, hdr, '', ' '
+  fxaddpar, hdr, '', '  -------------------------------------'
+  fxaddpar, hdr, '', '  | Keywords describing the whole ANA |'
+  fxaddpar, hdr, '', '  -------------------------------------'
   fxaddpar, hdr, 'ANAFILE', filename, 'ANA filename'
   fxaddpar, hdr, 'ANADSRC', datasource, 'ANA datasource'
   fxaddpar, hdr, 'ANADEF', definition, 'ANA definition'
@@ -126,16 +127,24 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
   else history_string = ''
   fxaddpar, hdr, 'ANAHISTO', history_string, 'ANA history'
 
-  fxaddpar, hdr, 'RESIDEXT', 'Residuals of ANA '+postfix, 'Extension name of residuals'
-  fxaddpar, hdr, 'WGTEXT', 'Weights of ANA '+postfix, 'Extension name of weights'
-  fxaddpar, hdr, 'INCLEXT', 'Includes of ANA '+postfix, 'Extension name of includes'
-  fxaddpar, hdr, 'CONSTEXT', 'Constants of ANA '+postfix, 'Extension name of constants'
+  fxaddpar, hdr, 'RESEXT', 'Results of ANA for OBS '+obs_def, 'Extension name of results'
+  fxaddpar, hdr, 'DATAEXT', 'Data input to ANA for OBS '+obs_def, 'Extension name of data'
+  fxaddpar, hdr, 'LAMBDEXT', 'Lambda of ANA for OBS '+obs_def, 'Extension name of lambda'
+  fxaddpar, hdr, 'RESIDEXT', 'Residuals of ANA for OBS '+obs_def, 'Extension name of residuals'
+  fxaddpar, hdr, 'WGTEXT', 'Weights of ANA for OBS '+obs_def, 'Extension name of weights'
+  fxaddpar, hdr, 'INCLEXT', 'Includes of ANA for OBS '+obs_def, 'Extension name of includes'
+  fxaddpar, hdr, 'CONSTEXT', 'Constants of ANA for OBS '+obs_def, 'Extension name of constants'
 
 
   for itag=0,N_TAGS(fit)-1 do begin
     ; Add keywords for each fit component
-    fit_cur = fit.(itag)
     fitnr = fns('##', itag)
+    fxaddpar, hdr, '', ' '
+    fxaddpar, hdr, '', ' '
+    fxaddpar, hdr, '', '  ----------------------------------------'
+    fxaddpar, hdr, '', '  | Keywords describing fit component '+fitnr+' |'
+    fxaddpar, hdr, '', '  ----------------------------------------'
+    fit_cur = fit.(itag)
     fxaddpar, hdr, 'CMPTYP'+fitnr, fit_cur.FUNC_NAME, 'Type of fit component '+fitnr
     fxaddpar, hdr, 'CMPNAM'+fitnr, fit_cur.NAME, 'Name of fit component '+fitnr
     ind = where(fit_cur.description NE '', count)
@@ -168,6 +177,11 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
 
   ; Add keywords for Chi^2
   fitnr = fns('##', N_TAGS(fit))
+  fxaddpar, hdr, '', ' '
+  fxaddpar, hdr, '', ' '
+  fxaddpar, hdr, '', '  ----------------------------------------'
+  fxaddpar, hdr, '', '  | Keywords describing fit component '+fitnr+' |'
+  fxaddpar, hdr, '', '  ----------------------------------------'
   fxaddpar, hdr, 'CMPTYP'+fitnr, 'Error of fit curve (Chi^2)', 'Type of component '+fitnr
   fxaddpar, hdr, 'CMPNAM'+fitnr, 'Chi^2', 'Name of component '+fitnr
   fxaddpar, hdr, 'CMPCNT'+fitnr, 1, 'Number of parameters in component '+fitnr
