@@ -22,7 +22,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-30 14:28 CET $
+; $Id: 2021-11-30 14:34 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
@@ -140,30 +140,30 @@ FUNCTION spice_ana2fitshdr_results, ana, header_l2=header_l2, $
     fits_util->add, hdr, 'CMPNAM'+fitnr, fit_cur.NAME, 'Name of fit component '+fitnr
     ind = where(fit_cur.description NE '', count)
     if count gt 0 then description = strjoin(fit_cur.description[ind], ';') $
-  else description = ''
-  fits_util->add, hdr, 'CMPDES'+fitnr, description, 'Description of fit component '+fitnr
-  fits_util->add, hdr, 'CMPMUL'+fitnr, fit_cur.MULTIPLICATIVE, 'Indicates whether component is multiplicative'
-  fits_util->add, hdr, 'CMPINC'+fitnr, fit_cur.INCLUDE, 'Indicates whether component is included in fit'
-  n_params = N_ELEMENTS(fit_cur.param)
-  fits_util->add, hdr, 'PARCNT'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
+    else description = ''
+    fits_util->add, hdr, 'CMPDES'+fitnr, description, 'Description of fit component '+fitnr
+    fits_util->add, hdr, 'CMPMUL'+fitnr, fit_cur.MULTIPLICATIVE, 'Indicates whether component is multiplicative'
+    fits_util->add, hdr, 'CMPINC'+fitnr, fit_cur.INCLUDE, 'Indicates whether component is included in fit'
+    n_params = N_ELEMENTS(fit_cur.param)
+    fits_util->add, hdr, 'PARCNT'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
 
-  for ipar=0,n_params-1 do begin
-    ; Add keywords for each fit parameter
-    param = fit_cur.param[ipar]
-    parnr = string(byte(ipar+97))
-    fits_util->add, hdr, 'PRNAM'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
-    ind = where(param.description NE '', count)
-    if count gt 0 then description = strjoin(param.description[ind], ';') $
-  else description = ''
-  fits_util->add, hdr, 'PRDES'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
-  fits_util->add, hdr, 'PRINI'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
-  fits_util->add, hdr, 'PRVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
-  fits_util->add, hdr, 'PRMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
-  fits_util->add, hdr, 'PRMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
-  fits_util->add, hdr, 'PRTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient in Lambda=PRVAL*PRTRA+PRTRB'
-  fits_util->add, hdr, 'PRTRB'+fitnr+parnr, param.trans_b, 'Linear offset in Lambda=PRVAL*PRTRA+PRTRB'
-  fits_util->add, hdr, 'PRCON'+fitnr+parnr, param.const, 'Indicates whether parameter is constant'
-  endfor ; ipar0,n_params-1
+    for ipar=0,n_params-1 do begin
+      ; Add keywords for each fit parameter
+      param = fit_cur.param[ipar]
+      parnr = string(byte(ipar+97))
+      fits_util->add, hdr, 'PRNAM'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
+      ind = where(param.description NE '', count)
+      if count gt 0 then description = strjoin(param.description[ind], ';') $
+      else description = ''
+      fits_util->add, hdr, 'PRDES'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRINI'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PRTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient in Lambda=PRVAL*PRTRA+PRTRB'
+      fits_util->add, hdr, 'PRTRB'+fitnr+parnr, param.trans_b, 'Linear offset in Lambda=PRVAL*PRTRA+PRTRB'
+      fits_util->add, hdr, 'PRCON'+fitnr+parnr, param.const, 'Indicates whether parameter is constant'
+    endfor ; ipar0,n_params-1
   endfor ; itag=0,N_TAGS(fit)-1
 
   ; Add keywords for Chi^2
