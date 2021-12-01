@@ -3,7 +3,7 @@
 ;      SPICE_ANA2FITSHDR_RESULTS
 ;
 ; PURPOSE:
-;      This function returns a fits header made from an ANA object or file.
+;      This function returns a fits header made from the Results of an ANA object or file.
 ;      The fits header contains all fit components as keywords and the original
 ;      level 2 header keywords. The WCS keywords are adapted to the result
 ;      cube given by ANA.
@@ -12,15 +12,18 @@
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      header = spice_ana2fitshdr_results(header_l2=header_l2, $
-;         filename_l3=filename_l3, $
-;         /EXTENSION, $
-;         HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME=FILENAME, $
-;         DATASOURCE=DATASOURCE, $
-;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+;      header = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
+;        filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, $
+;        EXTENSION=EXTENSION, $
+;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
+;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the level 2 file.
+;      datetime: Date and time string.
+;      filename_l3: The filename the level 3 will/should get
+;      filename_l2: The filename of the level 2 file
+;      obs_def: A string defining the SPICE OBS (SPIOBS-rasno_winno)
 ;      HISTORY: A string array.
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
@@ -44,54 +47,28 @@
 ;      a fits header (string array)
 ;
 ; OPTIONAL OUTPUTS:
-;      filename_l3: The filename the level 3 will/should get
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-30 15:34 CET $
+; $Id: 2021-12-01 11:49 CET $
 
 
-FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, $
-  filename_l3=filename_l3, EXTENSION=EXTENSION, $
+FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
+  filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, $
+  EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
-  DATASOURCE=DATASOURCE, $
-  DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
+  DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
 
-
-  n_dims = size(result, /n_dimensions)
-
-
-  ; ------
-  ; Create result header
-  ; ------
 
   fits_util = obj_new('oslo_fits_util')
   if keyword_set(extension) then mkhdr, hdr, result, /image $
   else mkhdr, hdr, result, /extend
 
-  ; Add time to DATE
-  caldat, systime(/julian), month, day, year, hour, minute, second
-  datetime = {CDS_EXT_TIME, $
-    year:year, $
-    month:month, $
-    day:day, $
-    hour:hour, $
-    minute:minute, $
-    second:second, $
-    millisecond:0}
-  datetime = anytim(datetime, /ccsds)
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
-  file_info_l2 = spice_file2info(filename_l2)
-  obs_def = strtrim(string(file_info_l2.spiobsid), 2) + $
-    fns('-###', file_info_l2.rasterno) + $
-    fns('_##', fxpar(header_l2, 'WINNO', missing=99))
   fits_util->add, hdr, 'EXTNAME', 'Results of ANA for OBS ' + obs_def, 'Extension name'
-
-  filename_l3 = filename_l2.replace('_L2_', '_L3_')
   fits_util->add, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
 
   extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
@@ -196,7 +173,7 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, $
 
   fits_util->add, hdr, 'CTYPE3', fxpar(header_l2, 'CTYPE2', missing=''), 'Type of 3rd coordinate'
   fits_util->add, hdr, 'CNAME3', fxpar(header_l2, 'CNAME2', missing=''), 'Name of 3rd coordinate'
-  fits_util->add, hdr, 'CUNIT3', fxpar(header_l2, 'CUNIT2', missing=''), 'Units for 3rd coordinate (for CRVAL2, CDELT2)'
+  fits_util->add, hdr, 'CUNIT3', fxpar(header_l2, 'CUNIT2', missing=''), 'Units for 3rd coordinate (for CRVAL3, CDELT3)'
   fits_util->add, hdr, 'CRVAL3', fxpar(header_l2, 'CRVAL2', missing=0), '[arcsec] 3rd coordinate of reference point'
   fits_util->add, hdr, 'CDELT3', fxpar(header_l2, 'CDELT2', missing=0), '[arcsec] Increment of 3rd coord at ref point'
   fits_util->add, hdr, 'CRPIX3', fxpar(header_l2, 'CRPIX2', missing=0), '[pixel] 3rd pixel index of reference point '

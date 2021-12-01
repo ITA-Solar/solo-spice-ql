@@ -67,7 +67,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-30 15:38 CET $
+; $Id: 2021-12-01 11:49 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
@@ -113,16 +113,40 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
     end
   endcase
 
+  ; Add time to DATE
+  caldat, systime(/julian), month, day, year, hour, minute, second
+  datetime = {CDS_EXT_TIME, $
+    year:year, $
+    month:month, $
+    day:day, $
+    hour:hour, $
+    minute:minute, $
+    second:second, $
+    millisecond:0}
+  datetime = anytim(datetime, /ccsds)
+
+  filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
+  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  file_info_l2 = spice_file2info(filename_l2)
+  obs_def = strtrim(string(file_info_l2.spiobsid), 2) + $
+    fns('-###', file_info_l2.rasterno) + $
+    fns('_##', fxpar(header_l2, 'WINNO', missing=99))
+
 
   ; ------
   ; Create result header
   ; ------
 
-  hdr = spice_ana2fitshdr_results(header_l2=header_l2, $
-    filename_l3=filename_l3, EXTENSION=EXTENSION, $
+  hdr = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
+    filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, $
+    EXTENSION=EXTENSION, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
-    DATASOURCE=DATASOURCE, $
-    DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+    DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+    
+    
+    hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
+    obs_def=obs_def, $
+    DATA=DATA)
     
   return, hdr
 end
