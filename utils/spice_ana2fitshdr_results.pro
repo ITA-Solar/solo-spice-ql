@@ -51,7 +51,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 13:01 CET $
+; $Id: 2021-12-02 15:08 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -156,7 +156,7 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
   fits_util->add, hdr, 'CUNIT1', ' ', 'Units for 1st coordinate (for CRVAL1, CDELT1)'
   fits_util->add, hdr, 'CRVAL1', 1.0, '[] 1st coordinate of reference point'
-  fits_util->add, hdr, 'CDELT1', 0.0, '[] Increment of 1st coord at ref point'
+  fits_util->add, hdr, 'CDELT1', 1.0, '[] Increment of 1st coord at ref point'
   fits_util->add, hdr, 'CRPIX1', 1.0, '[pixel] 1st pixel index of reference point'
   fits_util->add, hdr, 'PC1_1', 1.0, 'Default value, no rotation'
   sxdelpar, hdr, 'PC1_2'
