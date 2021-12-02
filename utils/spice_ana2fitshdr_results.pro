@@ -51,7 +51,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-01 11:56 CET $
+; $Id: 2021-12-02 13:01 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -190,11 +190,6 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'BUNIT', ' '
 
   fits_util->clean_header, hdr
-
-  print,''
-  print,'--- results ---'
-  print,''
-  print,hdr
 
   return, hdr
 end

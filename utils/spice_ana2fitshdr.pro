@@ -25,12 +25,12 @@
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided
 ;      header_l2: The header (string array) of the level 2 file.
-; 
+;
 ; KEYWORDS:
 ;      extension: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the level 3 file.
 ;                 If not set, this will be the primary header.
-; 
+;
 ; OPTIONAL INPUTS:
 ;      All of the following optional inputs must be provided if 'ana' is not
 ;      provided. If 'ana' is provided, they will be ignored/overwritten.
@@ -67,7 +67,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-01 11:56 CET $
+; $Id: 2021-12-02 13:01 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
@@ -132,6 +132,8 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
     fns('-###', file_info_l2.rasterno) + $
     fns('_##', fxpar(header_l2, 'WINNO', missing=99))
 
+  all_headers = ptrarr(7)
+
 
   ; ------
   ; Create result header
@@ -142,11 +144,65 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
     EXTENSION=EXTENSION, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
-    
-    
-    hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
+
+  all_headers[0] = ptr_new(hdr)
+
+  print,''
+  print,'--- results ---'
+  print,''
+  print,hdr
+
+
+  ; ------
+  ; Create data header
+  ; ------
+
+  hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
     obs_def=obs_def, $
     DATA=DATA)
-    
-  return, hdr
+
+  all_headers[1] = ptr_new(hdr)
+
+  print,''
+  print,'--- results ---'
+  print,''
+  print,hdr
+
+
+  ; ------
+  ; Create lambda header
+  ; ------
+
+  mkhdr, hdr, lambda, /image
+  fxaddpar, hdr, 'EXTNAME', 'Lambda of ANA '+postfix, 'Extension name'
+  fxaddpar, hdr, 'RESEXT', 'Results of ANA '+postfix, 'Extension name of results'
+  fxaddpar, hdr, 'DATAEXT', 'Data input to ANA '+postfix, 'Extension name of data'
+  fxaddpar, hdr, 'LAMBDEXT', 'Lambda of ANA '+postfix, 'Extension name of lambda'
+  fxaddpar, hdr, 'RESIDEXT', 'Residuals of ANA '+postfix, 'Extension name of residuals'
+  fxaddpar, hdr, 'WGTEXT', 'Weights of ANA '+postfix, 'Extension name of weights'
+  fxaddpar, hdr, 'INCLEXT', 'Includes of ANA '+postfix, 'Extension name of includes'
+  fxaddpar, hdr, 'CONSTEXT', 'Constants of ANA '+postfix, 'Extension name of constants'
+
+  ; Add WCS keywords
+  for idim=0,n_dims-1 do begin
+    idim_str = strtrim(string(idim+1), 2)
+    case idim of
+      0: dim_name = '1st'
+      1: dim_name = '2nd'
+      2: dim_name = '3rd'
+      else: dim_name = idim_str+'th'
+    end
+    fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
+    fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
+  endfor ; idim=1,n_dims-1
+
+  all_headers[2] = ptr_new(hdr)
+
+  print,''
+  print,'--- lambda ---'
+  print,''
+  print,hdr
+
+
+  return, all_headers
 end

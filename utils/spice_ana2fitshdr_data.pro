@@ -38,7 +38,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-01 11:56 CET $
+; $Id: 2021-12-02 13:01 CET $
 
 
 FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
@@ -47,7 +47,7 @@ FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
   
 
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, data, /extend
+  mkhdr, hdr, data, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
@@ -114,11 +114,6 @@ FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'BUNIT', bunit, comment
 
   fits_util->clean_header, hdr
-
-  print,''
-  print,'--- data ---'
-  print,''
-  print,hdr
 
   return, hdr
 end
