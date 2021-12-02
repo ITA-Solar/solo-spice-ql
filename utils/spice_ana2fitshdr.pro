@@ -66,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 15:10 CET $
+; $Id: 2021-12-02 15:20 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
@@ -76,6 +76,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
 
+  print_headers = 0
   input_type = size(ana, /type)
   case input_type of
     7: begin
@@ -146,10 +147,12 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   all_headers[0] = ptr_new(hdr)
 
-  print,''
-  print,'--- results ---'
-  print,''
-  print,hdr
+  if print_headers then begin
+    print,''
+    print,'--- results ---'
+    print,''
+    print,hdr
+  endif
 
 
   ; ------
@@ -162,10 +165,12 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   all_headers[1] = ptr_new(hdr)
 
-  print,''
-  print,'--- data ---'
-  print,''
-  print,hdr
+  if print_headers then begin
+    print,''
+    print,'--- data ---'
+    print,''
+    print,hdr
+  endif
 
 
   ; ------
@@ -178,10 +183,12 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   all_headers[2] = ptr_new(hdr)
 
-  print,''
-  print,'--- lambda ---'
-  print,''
-  print,hdr
+  if print_headers then begin
+    print,''
+    print,'--- lambda ---'
+    print,''
+    print,hdr
+  endif
 
 
   ; ------
@@ -194,10 +201,12 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   all_headers[3] = ptr_new(hdr)
 
-  print,''
-  print,'--- residuals ---'
-  print,''
-  print,hdr
+  if print_headers then begin
+    print,''
+    print,'--- residuals ---'
+    print,''
+    print,hdr
+  endif
 
 
   ; ------
@@ -210,10 +219,12 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   all_headers[4] = ptr_new(hdr)
 
-  print,''
-  print,'--- weights ---'
-  print,''
-  print,hdr
+  if print_headers then begin
+    print,''
+    print,'--- weights ---'
+    print,''
+    print,hdr
+  endif
 
 
   ; ------
@@ -226,10 +237,12 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   all_headers[5] = ptr_new(hdr)
 
-  print,''
-  print,'--- include ---'
-  print,''
-  print,hdr
+  if print_headers then begin
+    print,''
+    print,'--- include ---'
+    print,''
+    print,hdr
+  endif
 
 
   ; ------
@@ -242,10 +255,12 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   all_headers[6] = ptr_new(hdr)
 
-  print,''
-  print,'--- const ---'
-  print,''
-  print,hdr
+  if print_headers then begin
+    print,''
+    print,'--- const ---'
+    print,''
+    print,hdr
+  endif
 
 
   return, all_headers
