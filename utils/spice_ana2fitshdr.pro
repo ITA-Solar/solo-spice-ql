@@ -66,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 14:25 CET $
+; $Id: 2021-12-02 14:36 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
@@ -188,28 +188,9 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
   ; Create residuals header
   ; ------
 
-  mkhdr, hdr, residual, /image
-  fxaddpar, hdr, 'EXTNAME', 'Residuals of ANA '+postfix, 'Extension name'
-  fxaddpar, hdr, 'RESEXT', 'Results of ANA '+postfix, 'Extension name of results'
-  fxaddpar, hdr, 'DATAEXT', 'Data input to ANA '+postfix, 'Extension name of data'
-  fxaddpar, hdr, 'LAMBDEXT', 'Lambda of ANA '+postfix, 'Extension name of lambda'
-  fxaddpar, hdr, 'RESIDEXT', 'Residuals of ANA '+postfix, 'Extension name of residuals'
-  fxaddpar, hdr, 'WGTEXT', 'Weights of ANA '+postfix, 'Extension name of weights'
-  fxaddpar, hdr, 'INCLEXT', 'Includes of ANA '+postfix, 'Extension name of includes'
-  fxaddpar, hdr, 'CONSTEXT', 'Constants of ANA '+postfix, 'Extension name of constants'
-
-  ; Add WCS keywords
-  for idim=0,n_dims-1 do begin
-    idim_str = strtrim(string(idim+1), 2)
-    case idim of
-      0: dim_name = '1st'
-      1: dim_name = '2nd'
-      2: dim_name = '3rd'
-      else: dim_name = idim_str+'th'
-    end
-    fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
-    fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
-  endfor ; idim=1,n_dims-1
+  hdr = spice_ana2fitshdr_residuals(header_l2=header_l2, datetime=datetime, $
+    obs_def=obs_def, $
+    RESIDUAL=RESIDUAL)
 
   all_headers[3] = ptr_new(hdr)
 
@@ -218,7 +199,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
   print,''
   print,hdr
 
-
+stop
   ; ------
   ; Create weights header
   ; ------
