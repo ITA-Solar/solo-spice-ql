@@ -4,20 +4,14 @@
 ;
 ; PURPOSE:
 ;      This function returns a fits header made from the Data of an ANA object or file.
-;      The fits header contains all fit components as keywords and the original
-;      level 2 header keywords. The WCS keywords are adapted to the result
-;      cube given by ANA.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      header = spice_ana2fitshdr_data(header_l2=header_l2, $
-;         filename_l3=filename_l3, $
-;         /EXTENSION, $
-;         HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME=FILENAME, $
-;         DATASOURCE=DATASOURCE, $
-;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+;      header = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
+;      obs_def=obs_def, $
+;      DATA=DATA)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the level 2 file.
@@ -38,7 +32,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 13:01 CET $
+; $Id: 2021-12-02 14:25 CET $
 
 
 FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
