@@ -66,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 15:08 CET $
+; $Id: 2021-12-02 15:10 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
@@ -214,7 +214,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
   print,'--- weights ---'
   print,''
   print,hdr
-stop
+
 
   ; ------
   ; Create include header
