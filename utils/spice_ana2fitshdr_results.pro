@@ -51,7 +51,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 15:08 CET $
+; $Id: 2021-12-03 12:49 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -182,7 +182,7 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
 
   pc4_1 = fxpar(header_l2, 'PC4_1', missing=-9999)
   if pc4_1 gt -9998 then begin
-    fits_util->add, hdr, 'PC4_2', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 2 to coord 4 due to roll', atfter='PC4_4'
+    fits_util->add, hdr, 'PC4_2', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 2 to coord 4 due to roll', after='PC4_4'
   endif
 
   fits_util->add, hdr, 'BTYPE', ' '
