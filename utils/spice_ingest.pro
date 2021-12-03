@@ -44,7 +44,7 @@
 ;                  if the file hasn't been moved.
 ;     File_moved:  int array of same length than 'Destination'. Indicates which files have
 ;                  been moved (1=moved, 0=not moved).
-;     Files_found: A string array of same length than 'Destination'. Contains all file that
+;     Files_found: A string array of same length than 'Destination'. Contains all files that
 ;                  have been found, if input was a directory. Else it is identical to 'Filename'.
 ;
 ; RESTRICTIONS:
@@ -62,7 +62,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2021-05-18 15:50 CEST $
+; $Id: 2021-12-03 11:59 CET $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
