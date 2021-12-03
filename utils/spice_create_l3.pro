@@ -29,7 +29,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2021-12-03 12:00 CET $
+; $Id: 2021-12-03 12:50 CET $
 
 
 pro spice_create_l3, spice_object, window_index
@@ -102,6 +102,8 @@ pro spice_create_l3, spice_object, window_index
     handle_value,ana.result_h,result
     help,result
     ;pih, result[0,0,*,*]
+
+    SPICE_XCFIT_BLOCK, ana=ana
 
     if iwindow gt 0 then extension=1 else extension=0
 
