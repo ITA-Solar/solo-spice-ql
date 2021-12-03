@@ -36,7 +36,7 @@
 ; HISTORY:
 ;      Ver. 1, 17-Jun-2020, Martin Wiesmann
 ;-
-; $Id: 2020-11-02 11:31 CET $
+; $Id: 2021-12-03 11:59 CET $
 
 
 FUNCTION spice_file2info, file
@@ -75,6 +75,7 @@ FUNCTION spice_file2info, file
         'L0': info_temp.level=0
         'L1': info_temp.level=1
         'L2': info_temp.level=2
+        'L3': info_temp.level=3
         ELSE: BEGIN
           message, 'Cannot determine level of data in file: ' + file[ifile], /info
         END
