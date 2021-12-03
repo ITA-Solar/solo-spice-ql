@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-11-23 14:43 CET $
+; $Id: 2021-12-03 12:49 CET $
 
 
 ;+
@@ -226,9 +226,6 @@ pro spice_data::create_l3, window_index
   COMPILE_OPT IDL2
 
   spice_create_l3, self, window_index
-
-stop
-
 END
 
 
