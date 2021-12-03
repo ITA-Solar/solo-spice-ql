@@ -14,7 +14,7 @@
 ;      header = spice_ana2fitshdr(ana, header_l2=header_l2, $
 ;         [filename_l3=filename_l3, $
 ;         /EXTENSION, $
-;         HISTORY=HISTORY, LAMBDA=LAMBDA, DATA=DATA, WEIGHTS=WEIGHTS, $
+;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
 ;         CONST=CONST, FILENAME=FILENAME, DATASOURCE=DATASOURCE, $
 ;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL] )
@@ -30,14 +30,15 @@
 ;                 i.e. if this is not the first window in the level 3 file.
 ;                 If not set, this will be the primary header.
 ;
-; OPTIONAL INPUTS:
+; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ana' is not
-;      provided. If 'ana' is provided, they will be ignored/overwritten.
+;      provided. If 'ana' is provided, they will be overwritten and can be used
+;      as output.
 ;      HISTORY: A string array.
 ;      LAMBDA: An array of wavelength values. Either one value for
 ;              every point in the data array, or a one-dimensional
 ;              array to go with all the spectra in the data array.
-;      DATA: Data Array. Up to 7-dimensional data array, with spectra
+;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with spectra
 ;            along the first dimension.
 ;      WEIGHTS: Weights to use in the fitting process. No default!
 ;      FIT: The component fit structure
@@ -66,12 +67,12 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 15:20 CET $
+; $Id: 2021-12-03 11:31 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
   filename_l3=filename_l3, EXTENSION=EXTENSION, $
-  HISTORY=HISTORY, LAMBDA=LAMBDA, DATA=DATA, WEIGHTS=WEIGHTS, $
+  HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
@@ -86,7 +87,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
     8: begin
       handle_value,ana.history_h,history,/no_copy
       handle_value,ana.lambda_h,lambda,/no_copy
-      handle_value,ana.data_h,data,/no_copy
+      handle_value,ana.data_h,input_data,/no_copy
       handle_value,ana.weights_h,weights,/no_copy
       handle_value,ana.fit_h,fit,/no_copy
       handle_value,ana.result_h,result,/no_copy
@@ -161,7 +162,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
 
   hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
     obs_def=obs_def, $
-    DATA=DATA)
+    INPUT_DATA=INPUT_DATA)
 
   all_headers[1] = ptr_new(hdr)
 

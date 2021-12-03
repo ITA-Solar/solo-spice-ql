@@ -11,13 +11,13 @@
 ; CALLING SEQUENCE:
 ;      header = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
 ;      obs_def=obs_def, $
-;      DATA=DATA)
+;      INPUT_DATA=INPUT_DATA)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the level 2 file.
 ;      datetime: Date and time string.
 ;      obs_def: A string defining the SPICE OBS (SPIOBS-rasno_winno)
-;      DATA: Data Array. Up to 7-dimensional data array, with spectra
+;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with spectra
 ;            along the first dimension.
 ; 
 ; KEYWORDS:
@@ -32,16 +32,16 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 14:25 CET $
+; $Id: 2021-12-03 11:31 CET $
 
 
 FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
   obs_def=obs_def, $
-  DATA=DATA
+  INPUT_DATA=INPUT_DATA
   
 
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, data, /image
+  mkhdr, hdr, INPUT_DATA, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '

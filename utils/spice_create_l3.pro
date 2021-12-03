@@ -29,7 +29,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2021-11-30 15:33 CET $
+; $Id: 2021-12-03 11:31 CET $
 
 
 pro spice_create_l3, spice_object, window_index
@@ -89,10 +89,10 @@ pro spice_create_l3, spice_object, window_index
     help,fit
     ;stop
 
-    print, ''
+    print, ' ==========='
     print,'fitting window ' + strtrim(string(iwindow+1), 2) + ' of ' + strtrim(string(N_ELEMENTS(window_index)), 2)
     print, 'this may take a while'
-    print, ''
+    print, ' ==========='
     window,0
     handle_value,ana.result_h,result
     help,result
@@ -104,16 +104,27 @@ pro spice_create_l3, spice_object, window_index
     ;pih, result[0,0,*,*]
 
     if iwindow gt 0 then extension=1 else extension=0
-    ;headers = ana2fitshdr(ana, extension=extension)
-    ;help,headers
 
-    h = spice_ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow], /string), $
-      extension=extension, filename_l3=filename_l3)
-    help, h
+    headers = spice_ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow], /string), $
+      extension=extension, filename_l3=filename_l3, $
+      HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
+      FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
+      CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+
+    help, headers
     help, filename_l3
+    help,const
+    help,result
+    help,fit
+    help,INPUT_DATA
     ;return
 
     stop
+
+;    for iheaders=0,N_ELEMENTS(headers)-1 do begin
+;      if iwindow eq 0 && iheaders eq 0 then append=1 else append=0
+;      writefits, file, auxdata2, header, append=append
 
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
