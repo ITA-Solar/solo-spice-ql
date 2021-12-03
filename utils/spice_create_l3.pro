@@ -29,7 +29,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2021-12-03 11:31 CET $
+; $Id: 2021-12-03 11:49 CET $
 
 
 pro spice_create_l3, spice_object, window_index
@@ -114,19 +114,35 @@ pro spice_create_l3, spice_object, window_index
 
     help, headers
     help, filename_l3
-    help,const
     help,result
-    help,fit
     help,INPUT_DATA
+    help,lambda
+    help,residual
+    help,weights
+    help,include
+    help,const
+    help,fit
     ;return
 
+
+    file = filepath(filename_l3, /tmp)
+    help,file
     stop
 
-;    for iheaders=0,N_ELEMENTS(headers)-1 do begin
-;      if iwindow eq 0 && iheaders eq 0 then append=1 else append=0
-;      writefits, file, auxdata2, header, append=append
+    writefits, file, RESULT, *headers[0], append=extension
+    writefits, file, INPUT_DATA, *headers[1], /append
+    writefits, file, LAMBDA, *headers[2], /append
+    writefits, file, RESIDUAL, *headers[3], /append
+    writefits, file, WEIGHTS, *headers[4], /append
+    writefits, file, INCLUDE, *headers[5], /append
+    writefits, file, CONST, *headers[6], /append
+
+    d= readfits(file,h)
+    stop
 
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
+
+    spice_ingest,'file'
 
 end
