@@ -11,7 +11,7 @@
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      header = spice_ana2fitshdr(ana, header_l2=header_l2, $
+;      headers = spice_ana2fitshdr(ana, header_l2=header_l2, $
 ;         [filename_l3=filename_l3, $
 ;         /EXTENSION, $
 ;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
@@ -67,7 +67,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-03 11:31 CET $
+; $Id: 2021-12-03 11:49 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
