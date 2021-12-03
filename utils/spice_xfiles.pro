@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2020-11-20 14:44 CET $
+; $Id: 2021-12-03 13:08 CET $
 ;-
 
 
@@ -454,7 +454,13 @@ pro spice_xfiles_read, event
   if file eq '' then begin
     box_message,'You need to select a file first'
   endif else begin
-    spice_xcontrol, file, group_leader=(*info).tlb
+    file_info = spice_file2info(file)
+    if file_info.level eq 3 then begin
+      print, 'level 3 quicklook coming soon...'
+      return
+    endif else begin
+      spice_xcontrol, file, group_leader=(*info).tlb
+    endelse
   endelse
 end
 
@@ -542,7 +548,7 @@ pro spice_xfiles
   dir_manual_field = cw_field(dir_manual_base, title='', value = dir_manual, /string, /return_events, xsize = 100)
   dir_manual_button = widget_button(dir_manual_base, value='Change', event_pro='spice_xfiles_changesdir')
   level_base = widget_base(row4, /row)
-  level_choice_droplist = widget_droplist(level_base, value=['Level 0', 'Level 1', 'Level 2'], title='Data Level')
+  level_choice_droplist = widget_droplist(level_base, value=['Level 0', 'Level 1', 'Level 2', 'Level 3'], title='Data Level')
   widget_control, level_choice_droplist, set_droplist_select=level
   use_path_prefix_bg = cw_bgroup(level_base, ['Use levelx in path', 'Use Date-tree-structure in path', 'Search subdirectories'], set_value=use_path_prefix, /row, /nonexclusive)
   search_path_base = widget_base(row4, /row)
