@@ -51,7 +51,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-03 12:49 CET $
+; $Id: 2021-12-07 21:02 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -105,6 +105,7 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
     fit_cur = fit.(itag)
     fits_util->add, hdr, 'CMPTYP'+fitnr, fit_cur.FUNC_NAME, 'Type of fit component '+fitnr
     fits_util->add, hdr, 'CMPNAM'+fitnr, fit_cur.NAME, 'Name of fit component '+fitnr
+    fits_util->add, hdr, 'CMPSTR'+fitnr, fit_cur.FUNC_STRING, 'Function string of fit component '+fitnr
     ind = where(fit_cur.description NE '', count)
     if count gt 0 then description = strjoin(fit_cur.description[ind], ';') $
     else description = ''
