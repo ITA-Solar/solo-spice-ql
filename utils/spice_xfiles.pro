@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2021-12-03 13:08 CET $
+; $Id: 2021-12-09 15:17 CET $
 ;-
 
 
@@ -456,8 +456,8 @@ pro spice_xfiles_read, event
   endif else begin
     file_info = spice_file2info(file)
     if file_info.level eq 3 then begin
-      print, 'level 3 quicklook coming soon...'
-      return
+      ana = fits2ana(file)
+      spice_xcfit_block,ana=ana
     endif else begin
       spice_xcontrol, file, group_leader=(*info).tlb
     endelse
