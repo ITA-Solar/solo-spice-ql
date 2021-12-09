@@ -12,7 +12,7 @@
 ;
 ; CALLING SEQUENCE:
 ;      headers = spice_ana2fitshdr(ana, header_l2=header_l2, $
-;         [filename_l3=filename_l3, $
+;         n_windows=n_windows [, filename_l3=filename_l3, $
 ;         /EXTENSION, $
 ;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
@@ -24,6 +24,7 @@
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided
 ;      header_l2: The header (string array) of the level 2 file.
+;      n_windows: number of windows to be included in level 3 file.
 ;
 ; KEYWORDS:
 ;      extension: If set, then this header will be marked to be an extension,
@@ -67,10 +68,10 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-03 11:49 CET $
+; $Id: 2021-12-09 21:58 CET $
 
 
-FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
+FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   filename_l3=filename_l3, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
@@ -141,7 +142,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, $
   ; ------
 
   hdr = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-    filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, $
+    filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, n_windows=n_windows, $
     EXTENSION=EXTENSION, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)

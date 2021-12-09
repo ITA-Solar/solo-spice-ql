@@ -13,7 +13,7 @@
 ;
 ; CALLING SEQUENCE:
 ;      header = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-;        filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, $
+;        filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, n_windows=n_windows, $
 ;        EXTENSION=EXTENSION, $
 ;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
 ;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
@@ -24,6 +24,7 @@
 ;      filename_l3: The filename the level 3 will/should get
 ;      filename_l2: The filename of the level 2 file
 ;      obs_def: A string defining the SPICE OBS (SPIOBS-rasno_winno)
+;      n_windows: number of windows to be included in level 3 file.
 ;      HISTORY: A string array.
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
@@ -51,11 +52,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-07 21:02 CET $
+; $Id: 2021-12-09 21:58 CET $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
-  filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, $
+  filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, n_windows=n_windows, $
   EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
@@ -189,6 +190,9 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'BTYPE', ' '
   fits_util->add, hdr, 'UCD', ' '
   fits_util->add, hdr, 'BUNIT', ' '
+
+  fits_util->add, hdr, 'NWIN', n_windows, 'Number of windows'
+  fits_util->add, hdr, 'NWIN_L2', fxpar(header_l2, 'NWIN', missing=0), 'Total number of windows (incl. db and int win)', after='NWIN'
 
   fits_util->clean_header, hdr
 
