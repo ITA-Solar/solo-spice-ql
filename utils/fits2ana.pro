@@ -20,9 +20,9 @@ fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_202
     fitnr = fns('##', icomp)
     n_params = fxpar(hdr, 'PARCNT'+fitnr, missing=0)
     stc = mk_component_stc(n_params)
-    stc.FUNC_NAME = fxpar(hdr, 'CMPTYP'+fitnr, missing='')
-    stc.NAME = fxpar(hdr, 'CMPNAM'+fitnr, missing='')
-    stc.FUNC_STRING = fxpar(hdr, 'CMPSTR'+fitnr, missing='')
+    stc.FUNC_NAME = strtrim(fxpar(hdr, 'CMPTYP'+fitnr, missing=''), 2)
+    stc.NAME = strtrim(fxpar(hdr, 'CMPNAM'+fitnr, missing=''), 2)
+    stc.FUNC_STRING = strtrim(fxpar(hdr, 'CMPSTR'+fitnr, missing=''), 2)
     stc.description[*] = ''
     description = fxpar(hdr, 'CMPDES'+fitnr, missing='')
     stc.description = strtrim(strsplit(description,';',/extract,count=count), 2)
@@ -33,17 +33,17 @@ fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_202
       ; Get keywords for each fit parameter
       parnr = string(byte(ipar+97))
       param = stc.param[ipar]
-      param.name = fxpar(hdr, 'PRNAM'+fitnr+parnr, missing='')
+      param.name = strtrim(fxpar(hdr, 'PRNAM'+fitnr+parnr, missing=''), 2)
       param.description[*] = ''
       description = fxpar(hdr, 'PRDES'+fitnr+parnr, missing='')
       param.description = strtrim(strsplit(description,';',/extract,count=count), 2)
-      param.initial = fxpar(hdr, 'PRINI'+fitnr+parnr, missing='')
-      param.value = fxpar(hdr, 'PRVAL'+fitnr+parnr, missing='')
-      param.max_val = fxpar(hdr, 'PRMAX'+fitnr+parnr, missing='')
-      param.min_val = fxpar(hdr, 'PRMIN'+fitnr+parnr, missing='')
-      param.trans_a = fxpar(hdr, 'PRTRA'+fitnr+parnr, missing='')
-      param.trans_b = fxpar(hdr, 'PRTRB'+fitnr+parnr, missing='')
-      param.const = fxpar(hdr, 'PRCON'+fitnr+parnr, missing='')
+      param.initial = fxpar(hdr, 'PRINI'+fitnr+parnr, missing=0)
+      param.value = fxpar(hdr, 'PRVAL'+fitnr+parnr, missing=0)
+      param.max_val = fxpar(hdr, 'PRMAX'+fitnr+parnr, missing=0)
+      param.min_val = fxpar(hdr, 'PRMIN'+fitnr+parnr, missing=0)
+      param.trans_a = fxpar(hdr, 'PRTRA'+fitnr+parnr, missing=0)
+      param.trans_b = fxpar(hdr, 'PRTRB'+fitnr+parnr, missing=0)
+      param.const = fxpar(hdr, 'PRCON'+fitnr+parnr, missing=0)
       stc.param[ipar] = param
     endfor ; ipar=0,n_params-1
 
