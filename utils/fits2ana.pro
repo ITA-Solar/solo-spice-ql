@@ -1,10 +1,12 @@
 function fits2ana, fitsfile
-fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_20201119T102559_V03_33554593-000.fits'
 
+  if N_ELEMENTS(fitsfile) eq 0 then fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_20201119T102559_V03_33554593-000.fits'
+
+  result = readfits(fitsfile, hdr)
   n_windows = fxpar(hdr, 'NWIN', missing=0)
   for iwin=0,n_windows-1 do begin
     extension = iwin*7
-    result = readfits(fitsfile, hdr, ext=extension)
+    if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
 
     ;extract info from header
     filename = fxpar(hdr, 'ANAFILE', missing='')
