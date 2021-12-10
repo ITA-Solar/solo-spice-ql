@@ -1,21 +1,23 @@
-function fits2ana, fitsfile
+function fits2ana, fitsfile, titles=titles
 
   if N_ELEMENTS(fitsfile) eq 0 then fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_20201119T102559_V03_33554593-000.fits'
 
   result = readfits(fitsfile, hdr)
   n_windows = fxpar(hdr, 'NWIN', missing=0)
+  titles = strarr(n_windows)
   for iwin=0,n_windows-1 do begin
     extension = iwin*7
     if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
 
     ;extract info from header
-    filename = fxpar(hdr, 'ANAFILE', missing='')
-    datasource = fxpar(hdr, 'ANADSRC', missing='')
-    definition = fxpar(hdr, 'ANADEF', missing='')
+    filename = strtrim(fxpar(hdr, 'ANAFILE', missing=''), 2)
+    datasource = strtrim(fxpar(hdr, 'ANADSRC', missing=''), 2)
+    definition = strtrim(fxpar(hdr, 'ANADEF', missing=''), 2)
     missing = fxpar(hdr, 'ANAMISS', missing=0)
-    label = fxpar(hdr, 'ANALABEL', missing='')
+    label = strtrim(fxpar(hdr, 'ANALABEL', missing=''), 2)
     history = fxpar(hdr, 'ANAHISTO', missing='')
     history = strtrim(strsplit(history,';',/extract,count=count), 2)
+    titles[iwin] = strtrim(fxpar(hdr, 'EXTNAML2', missing=''), 2)
 
     ; extract fit components
     tag_names = hash()

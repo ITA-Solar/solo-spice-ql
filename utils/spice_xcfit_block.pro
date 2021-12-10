@@ -135,8 +135,15 @@
 ;               CONST : Array to keep the CONST status of each parameter at
 ;                       each point.
 ;
+;               TITLE : A string to be used as the title of the widget.
+;
+;               ANALYSIS : A structure containing all the necessary information.
+;                          Same structure as is returned by mk_analysis().
+;                          If ANALYSIS is provided the following inputs are ignored:
+;                          LAM, DA, WTS, FIT, MISS
+;
 ;                      
-; Opt. Inputs : INCLUDE, CONST
+; Opt. Inputs : INCLUDE, CONST, TITLE, ANALYSIS
 ;               
 ; Outputs     : FIT, RESULT, RESID, INCLUDE, CONST
 ;               
@@ -187,7 +194,7 @@
 ;                       in spice_xcfit_block_event
 ;
 ; Version     :
-; $Id: 2021-09-16 13:49 CEST $
+; $Id: 2021-12-10 13:38 CET $
 ;-
 
 
@@ -1604,7 +1611,7 @@ END
 
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
-                analysis=ana
+                analysis=ana, title=title
   
   on_error,2
   
@@ -1661,7 +1668,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
      END
      
   END
-  
+
+  IF N_ELEMENTS(title) EQ 0 THEN title=''
   IF NOT exist(fit) THEN fit = {bg:mk_comp_poly([median(data)])}
   
   szd = size(data)
@@ -1694,7 +1702,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   sml = {xpad:1,ypad:1,space:1}
   
-  base = widget_base(/row,title='SPICE_XCFIT_BLOCK',_extra=sml)
+  base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml)
   
   leftside_col = widget_base(base,/column,_extra=sml)
   center_col = widget_base(base,/column,_extra=sml)
