@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-08-12 21:06 CEST $
+; $Id: 2021-12-03 12:49 CET $
 
 
 ;+
@@ -124,26 +124,108 @@ END
 ;     Calls xcfit_block with the data of the chosen window(s)
 ;
 ; KEYWORD PARAMETERS:
-;     description : if set, the header info of the class will also be printed.
+;     window_index : the index of the desired window
 ;
 ;-
-pro spice_data::xcfit_block, window_index
+function spice_data::xcfit_block, window_index
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
-  window_index = 0
+  if N_ELEMENTS(window_index) eq 0 then window_index = 0
 
-  lam = self->get_lambda_vector(window_index)
-  help,lam
-  da = self->get_window_data(window_index, /load)
-  help,da
-  s = size(da)
-  da = reform(da, s[3], s[1], s[2], s[4])
-  help,da
-  wts = fltarr(4,4,4,4)
+  if ~self->get_number_exposures(window_index) then begin
+    print, 'single exposure data, do not start xcfit_block'
+    return, -1
+  endif
+
+  data = self->get_window_data(window_index, /load)
+  ind = where(data ne data, count)
+  print, 'data ne data', count
+  if count gt 0 then data[ind] = -1000.0
+  lambda = self->get_wcs_coord(window_index, /lambda)
+
+  size_data = size(data)
+  if self->get_sit_and_stare() then begin
+    print, 'sit_and_stare'
+    lambda = transpose(lambda, [2, 0, 1, 3])
+    data = transpose(data, [2, 0, 1, 3])
+    weights = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value=1.0)
+  endif else begin
+    print, 'not sit_and_stare'
+    lambda = reform(lambda)
+    lambda = transpose(lambda, [2, 0, 1])
+    data = transpose(data, [2, 0, 1])
+    weights = make_array(size_data[3], size_data[1], size_data[2], value=1.0)
+  endelse
+  type_data = size(data, /type)
+  lambda = fix(lambda, type=type_data)
   miss = self->get_missing_value()
+  miss = -1000.0d
 
-  XCFIT_BLOCK,LAM,DA,WTS,FIT,MISS,RESULT,RESID,INCLUDE,CONST
+  print, 'before'
+  help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
+
+  adef = generate_adef(data, LAMbda)
+  print,''
+  print,'adef'
+  help,adef
+
+  ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
+  ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
+
+  help,ana
+  handle_value,ana.fit_h,fit
+  help,fit
+  ;stop
+
+  print,'fitting...'
+  cfit_block, analysis=ana, quiet=quiet, /double, /x_face
+
+
+  ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
+  SPICE_XCFIT_BLOCK, ana=ana
+
+  print, 'after'
+  help,ana
+
+  handle_value, ana.result_h, result
+  help,result
+  handle_value,ana.fit_h,fit
+  help,fit
+  ;stop
+
+  ;ana = {history: '', $
+  ;  lambda:lambda, $
+  ;  data:data, $
+  ;  weights:weights, $
+  ;  fit:fit, $
+  ;  result:result, $
+  ;  residual:residual, $
+  ;  include:include, $
+  ;  const:const, $
+  ;  filename:'', $
+  ;  datasource:'', $
+  ;  definition:'', $
+  ;  missing:miss, $
+  ;  label:''}
+
+  return, ana
+END
+
+
+;+
+; Description:
+;     Creates a level 3 file from the level 2
+;
+; KEYWORD PARAMETERS:
+;     window_index : the index of the desired window
+;
+;-
+pro spice_data::create_l3, window_index
+  ;Creates level 3 SPICE files with the data of the chosen window(s)
+  COMPILE_OPT IDL2
+
+  spice_create_l3, self, window_index
 END
 
 
