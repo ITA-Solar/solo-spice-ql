@@ -1,3 +1,41 @@
+;+
+; NAME:
+;     FITS2ANA
+;
+; PURPOSE:
+;     fits2ana reads a FITS file and returns ana structure(s). The input FITS file must contain all the necessary
+;     extensions and keywords. ANA2FITS creates the correct FITS files. An ana structure is used by e.g. xcfit_block,
+;     it is created by e.g. mk_analysis.
+;
+; CATEGORY:
+;     FITS -- utility
+;
+; CALLING SEQUENCE:
+;     anas = fits2ana(fitsfile [ ,titles=titles])
+;
+; INPUTS:
+;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
+;
+; OUTPUT:
+;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
+;
+; OPTIONAL OUTPUT:
+;     titles: returns the keyword EXTNAML2 for each window in a string array
+;
+; CALLS:
+;
+; COMMON BLOCKS:
+;
+; PROCEDURE:
+;
+; RESTRICTIONS:
+;
+; HISTORY:
+;     23-Nov-2021: Martin Wiesmann
+;-
+; $Id: 2022-01-04 13:59 CET $
+
+
 function fits2ana, fitsfile, titles=titles
 
   if N_ELEMENTS(fitsfile) eq 0 then fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_20201119T102559_V03_33554593-000.fits'
