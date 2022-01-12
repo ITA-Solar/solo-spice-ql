@@ -23,15 +23,22 @@
 ; HISTORY:
 ;      Ver. 1, 18-Oct-2021, Martin Wiesmann
 ;-
-; $Id: 2021-11-03 14:26 CET $
+; $Id: 2022-01-12 09:56 CET $
 
 
-FUNCTION generate_adef, data, lam
+FUNCTION generate_adef, data, lam, widmin=widmin
   ;; Automatically generate cfit analysis definitions based on input intensity and
   ;; wavelength arrays
   sz = size(data)
-  meanprofile = total(total(data,2),2)/(sz[2]*sz[3])
-
+  
+  badix = where(data ne data, n_bad, complement=goodix)
+  IF n_bad GT 0 THEN data[badix] = min(data[goodix]) > 0
+  
+  ;meanprofile = total(total(data,2),2)/(sz[2]*sz[3])
+  meanprofile = rebin(data,sz[1],1,1)
+  
+  IF n_bad GT 0 THEN data[badix] = (typename(data) EQ 'FLOAT') ? !values.f_nan : !values.d_nan
+  
   peakinds = gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5,/sort,/plot)
   npeaks = n_elements(peakinds)
 
@@ -52,7 +59,7 @@ FUNCTION generate_adef, data, lam
 
   intmin = fltarr(npeaks)          ; minimum intensity is 0
   lammin = (lam0 - dlam) > min(lam); v0 - v
-  widmin = (wid0 - 0.04) >  0.02   ; random guess...
+  IF NOT keyword_set(widmin) THEN widmin = (wid0 - 0.04) >  0.02   ; random guess...
 
   intmax = int0*100;30000                 ; More random guessing
   lammax = (lam0 + dlam) < max(lam) ; v0 + v

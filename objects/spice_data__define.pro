@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2021-12-03 12:49 CET $
+; $Id: 2022-01-12 09:56 CET $
 
 
 ;+
@@ -139,9 +139,9 @@ function spice_data::xcfit_block, window_index
   endif
 
   data = self->get_window_data(window_index, /load)
-  ind = where(data ne data, count)
-  print, 'data ne data', count
-  if count gt 0 then data[ind] = -1000.0
+  ;ind = where(data ne data, count)
+  ;print, 'data ne data', count
+  ;if count gt 0 then data[ind] = -1000.0
   lambda = self->get_wcs_coord(window_index, /lambda)
 
   size_data = size(data)
@@ -164,8 +164,14 @@ function spice_data::xcfit_block, window_index
 
   print, 'before'
   help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
-
-  adef = generate_adef(data, LAMbda)
+  
+  detector = self->get_header_info('DETECTOR', window_index)
+  widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
+  widmin = widmin_pixels * self->get_header_info('CDELT3', window_index)
+  
+  adef = generate_adef(data, LAMbda, widmin=widmin)
+  badix = where(data ne data, n_bad)
+  IF n_bad GT 0 THEN data[badix] = miss
   print,''
   print,'adef'
   help,adef
