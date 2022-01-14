@@ -34,7 +34,6 @@ FUNCTION generate_adef, data, lam, widmin=widmin
   badix = where(data ne data, n_bad, complement=goodix)
   IF n_bad GT 0 THEN data[badix] = min(data[goodix]) > 0
   
-  
   meanprofile = rebin(data,sz[1],1,1)
   
   IF n_bad GT 0 THEN data[badix] = (typename(data) EQ 'FLOAT') ? !values.f_nan : !values.d_nan
