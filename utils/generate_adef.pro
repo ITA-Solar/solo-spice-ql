@@ -37,7 +37,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin
   meanprofile = rebin(data,sz[1],1,1)
   
   IF n_bad GT 0 THEN data[badix] = (typename(data) EQ 'FLOAT') ? !values.f_nan : !values.d_nan
-  
+  print,'I want to check in this line'
   peakinds = gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5,/sort,/plot)
   npeaks = n_elements(peakinds)
 
