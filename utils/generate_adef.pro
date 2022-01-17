@@ -27,7 +27,7 @@
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines. 
 ;-
-; $Id: 2022-01-17 11:01 CET $
+; $Id: 2022-01-17 11:27 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin
@@ -56,7 +56,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin
   FOR i=0,npeaks-1 DO lam0[i] = median(lampeak[i,*,*])
   FOR i=0,npeaks-1 DO wid0[i] = lam0[i] - median(lamfwhm[i,*,*])
 
-  v = 75.                       ; Max shift in km/s
+  v = 150.                       ; Max shift in km/s
   dlam = v*lam0/3.e5            ; Max shift in Aangstrom
 
   intmin = fltarr(npeaks)          ; minimum intensity is 0
