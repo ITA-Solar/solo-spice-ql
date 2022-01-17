@@ -23,8 +23,11 @@
 ;
 ; HISTORY:
 ;      Ver. 1, 18-Oct-2021, Martin Wiesmann
+;      Ver. 1.1, 17-Jan-2022, Terje Fredvik: minimum line width is determined
+;                                            by the instrument optics and
+;                                            should be the same for all lines. 
 ;-
-; $Id: 2022-01-17 10:26 CET $
+; $Id: 2022-01-17 11:01 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin
@@ -58,7 +61,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin
 
   intmin = fltarr(npeaks)          ; minimum intensity is 0
   lammin = (lam0 - dlam) > min(lam); v0 - v
-  IF NOT keyword_set(widmin) THEN widmin = (wid0 - 0.04) >  0.02   ; random guess...
+  IF NOT keyword_set(widmin) THEN widmin = min*(wid0 - 0.04) >  0.02)   ; random guess...
 
   intmax = int0*100;30000                 ; More random guessing
   lammax = (lam0 + dlam) < max(lam) ; v0 + v
@@ -67,7 +70,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin
   FOR i=0,n_elements(peakinds)-1 DO BEGIN
      gauss = mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
                            max_arr=[intmax[i],lammax[i],widmax[i]], $
-                           min_arr=[intmin[i],lammin[i],widmin[i]], $
+                           min_arr=[intmin[i],lammin[i],widmin], $
                            trans_a=[1,1,0.424661], trans_b=[0,0,0], $
                            const=[0b,0b,0b])
      lam0txt = trim(lam0[i],'(F6.2)')
