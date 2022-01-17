@@ -6,28 +6,6 @@
 ;      This function returns an array of fits headers made from an ANA object or file.
 ;
 ;
-;
-;
-; I don't use any advanced commands in Git, stash very seldom, squashing and reordering never so far.
-; I do quite often create a new branch, do some changes there (commit, push)
-; and then merge it to develop branch (or some other)
-; to create a new branch I use the terminal for some reason:
-;
-; create new branch
-; git checkout -b mwiesman/feature/sqflags
-;
-; push new branch
-; git push --set-upstream origin mwiesman/feature/dqptypes
-;
-; but I'm sure that's also possibly using the DeskHub
-;
-; Merging I do that on the github webpage, not locally on my computer
-; although that's of course also possible.
-; On github, you can view a branch, and then there is a button to Create a new pull request.
-; Edit it and create it. And then you can merge the branches, or someone else
-;
-;
-;
 ; CATEGORY:
 ;      XXX -- utility
 ;
