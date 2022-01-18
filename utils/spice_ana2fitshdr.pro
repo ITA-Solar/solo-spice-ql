@@ -27,7 +27,7 @@
 ;      n_windows: number of windows to be included in level 3 file.
 ;
 ; KEYWORDS:
-;      extension: If set, then this header will be marked to be an extension,
+;      EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the level 3 file.
 ;                 If not set, this will be the primary header.
 ;
@@ -68,7 +68,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-09 21:58 CET $
+; $Id: 2022-01-18 14:24 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $

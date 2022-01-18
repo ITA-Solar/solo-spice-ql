@@ -22,7 +22,7 @@
 ;           must be provided
 ;
 ; KEYWORDS:
-;      extension: If set, then this header will be marked to be an extension,
+;      EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the level 3 file.
 ;                 If not set, this will be the primary header.
 ;
@@ -60,7 +60,7 @@
 ; HISTORY:
 ;      Ver. 1, 28-Sep-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-03 11:31 CET $
+; $Id: 2022-01-18 14:24 CET $
 
 
 FUNCTION ana2fitshdr, ana, $
