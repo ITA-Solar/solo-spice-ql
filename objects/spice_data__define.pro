@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2022-01-12 09:56 CET $
+; $Id: 2022-01-18 10:58 CET $
 
 
 ;+
@@ -118,6 +118,34 @@ pro spice_data::help, description=description, _extra=_extra
     obj_help, self, _extra=_extra
 END
 
+FUNCTION spice_data::get_slit_y_range
+;;
+;;+
+;;  The length of the 2",4" and 6" slits are 600 pixels. At both ends of the slits
+;;  there is a ~48 y-pixel gap with no throughput, then a dumbbell region of
+;;  ~32 y-pixels.
+;;     Some times a readout window contains only the pixels (or a  range) of
+;;  600 pixel slit region, and if one or both dumbbells are downlinked they
+;;  are read out separately.
+;;     However, quite often the detectors are read out in full 1024 pixel
+;;  height. Such a readout window therefore contains both the spectral
+;;  information from the slit, dumbbell information, and several regions with
+;;  no signal (both between the slit region and the dumbbell regions, and
+;;  between the dumbbell and the detector edges). 
+;;     In theory it should be simple to pick out the spectral region, but the solar
+;;  spectrum does not fall on the same y-pixels (nor x-pixels for that matter)
+;;  from one observation to the next. There's of course also the issue with
+;;  slanted and skewed L2 spectrum due to geometrical correction.
+;;      We therefore need to find a clever way to identify the spectral region, since
+;;  we should use this and only this region for 
+;;  A) extracting a mean line profile to be used as the basis for the initial
+;;     values of the fit
+;;  B) line fitting 
+;;  It doens't make much sense to do a gaussian line fit to dumbbell data or to non-illuminated pixels.
+;;
+;;  For the time being we skip the "clever" part and just extract a
+;;  representative region that should always contain only spectral region pixels. 
+END
 
 ;+
 ; Description:
@@ -139,9 +167,7 @@ function spice_data::xcfit_block, window_index
   endif
 
   data = self->get_window_data(window_index, /load)
-  ;ind = where(data ne data, count)
-  ;print, 'data ne data', count
-  ;if count gt 0 then data[ind] = -1000.0
+  ;; Only do fit on the spectral part of the window!
   lambda = self->get_wcs_coord(window_index, /lambda)
 
   size_data = size(data)
@@ -168,6 +194,8 @@ function spice_data::xcfit_block, window_index
   detector = self->get_header_info('DETECTOR', window_index)
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
   widmin = widmin_pixels * self->get_header_info('CDELT3', window_index)
+  
+ 
   
   adef = generate_adef(data, LAMbda, widmin=widmin)
   badix = where(data ne data, n_bad)

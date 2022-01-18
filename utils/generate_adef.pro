@@ -27,7 +27,7 @@
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines. 
 ;-
-; $Id: 2022-01-17 11:27 CET $
+; $Id: 2022-01-18 10:58 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin
@@ -61,7 +61,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin
 
   intmin = fltarr(npeaks)          ; minimum intensity is 0
   lammin = (lam0 - dlam) > min(lam); v0 - v
-  IF NOT keyword_set(widmin) THEN widmin = min*(wid0 - 0.04) >  0.02)   ; random guess...
+  IF NOT keyword_set(widmin) THEN widmin = min((wid0 - 0.04) >  0.02)  ; random guess...
 
   intmax = int0*100;30000                 ; More random guessing
   lammax = (lam0 + dlam) < max(lam) ; v0 + v
