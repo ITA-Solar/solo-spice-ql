@@ -6,16 +6,13 @@
 ;     spice_object returns a 'spice_data' object.
 ;
 ; CATEGORY:
-;     Solar Orbiter - SPICE; QuickLook.
+;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
-;     spice_object, file [, verbose=verbose]
+;     obj = spice_object(file)
 ;
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
-;
-; KEYWORD PARAMETERS:
-;     verbose : if set, the initiation of the object prints out some information
 ;
 ; OUTPUTS:
 ;     Object of type SPICE_DATA which describes and contains
@@ -36,9 +33,10 @@
 ; HISTORY:
 ;     27-Nov-2019: Martin Wiesmann
 ;-
+; $Id: 2020-11-26 11:39 CET $
 
 
-FUNCTION spice_object, file, verbose=verbose
+FUNCTION spice_object, file
   COMPILE_OPT IDL2
   
   IF N_ELEMENTS(file) NE 1 || $ 
@@ -47,7 +45,7 @@ FUNCTION spice_object, file, verbose=verbose
       print, 'file input must be a scalar string ending with .fits'
       return, -1
   ENDIF ELSE BEGIN
-    return, obj_new('spice_data', file, verbose=verbose)
+    return, obj_new('spice_data', file)
   ENDELSE
 
 END
