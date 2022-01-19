@@ -63,7 +63,7 @@
 ; HISTORY:
 ;      Ver. 1, 28-Sep-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-19 14:03 CET $
+; $Id: 2022-01-19 14:07 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, $
@@ -208,8 +208,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, $
   fits_util->add, hdr, 'CMPCNT'+fitnr, 1, 'Number of parameters in component '+fitnr
 
   ; Add WCS keywords
-  fxaddpar, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
-  fxaddpar, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
+  fits_util->add, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
+  fits_util->add, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
   for idim=1,n_dims-1 do begin
     idim_str = strtrim(string(idim+1), 2)
     case idim of
@@ -217,14 +217,13 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, $
       2: dim_name = '3rd'
       else: dim_name = idim_str+'th'
     end
-    fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
-    fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
+    fits_util->add, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
+    fits_util->add, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
 
   fits_util->add, hdr, 'NWIN', n_windows, 'Number of windows'
 
   fits_util->clean_header, hdr
-
   all_headers[0] = ptr_new(hdr)
 
   if print_headers then begin
@@ -239,15 +238,20 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, $
   ; Create data header
   ; ------
 
-  mkhdr, hdr, input_data, /image
-  fxaddpar, hdr, 'EXTNAME', 'Data input to ANA '+postfix, 'Extension name'
-  fxaddpar, hdr, 'RESEXT', 'Results of ANA '+postfix, 'Extension name of results'
-  fxaddpar, hdr, 'DATAEXT', 'Data input to ANA '+postfix, 'Extension name of data'
-  fxaddpar, hdr, 'LAMBDEXT', 'Lambda of ANA '+postfix, 'Extension name of lambda'
-  fxaddpar, hdr, 'RESIDEXT', 'Residuals of ANA '+postfix, 'Extension name of residuals'
-  fxaddpar, hdr, 'WGTEXT', 'Weights of ANA '+postfix, 'Extension name of weights'
-  fxaddpar, hdr, 'INCLEXT', 'Includes of ANA '+postfix, 'Extension name of includes'
-  fxaddpar, hdr, 'CONSTEXT', 'Constants of ANA '+postfix, 'Extension name of constants'
+  mkhdr, hdr, INPUT_DATA, /image
+
+  fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
+  fits_util->add, hdr, '', ' '
+
+  fits_util->add, hdr, 'EXTNAME', 'Data input to ANA '+postfix, 'Extension name of data'
+
+  fits_util->add, hdr, 'RESEXT', 'Results of ANA '+postfix, 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', 'Data input to ANA '+postfix, 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', 'Lambda of ANA '+postfix, 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', 'Residuals of ANA '+postfix, 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', 'Weights of ANA '+postfix, 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', 'Includes of ANA '+postfix, 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', 'Constants of ANA '+postfix, 'Extension name of constants'
 
   ; Add WCS keywords
   for idim=0,n_dims-1 do begin
@@ -258,10 +262,11 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, $
       2: dim_name = '3rd'
       else: dim_name = idim_str+'th'
     end
-    fxaddpar, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
-    fxaddpar, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
+    fits_util->add, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
+    fits_util->add, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
   endfor ; idim=1,n_dims-1
 
+  fits_util->clean_header, hdr
   all_headers[1] = ptr_new(hdr)
 
   if print_headers then begin
