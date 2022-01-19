@@ -12,11 +12,11 @@
 ;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      headers = ana2fits(ana, filename_out=filename_out, $
+;      ana2fits, ana, filename_out=filename_out, $
 ;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
 ;         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL] )
+;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL]
 ;
 ; INPUTS:
 ;      ana: The name and path of an ANA file or an ANA object.
@@ -56,12 +56,11 @@
 ;      LABEL: A string.
 ;
 ; OUTPUTS:
-;      a pointer array, containing 7 FITS keyword headers
 ;
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-01-19 14:55 CET $
+; $Id: 2022-01-19 22:11 CET $
 
 
 PRO ana2fits, ana, n_windows=n_windows, filename_out=filename_out, $
@@ -106,7 +105,7 @@ PRO ana2fits, ana, n_windows=n_windows, filename_out=filename_out, $
 
       else: begin
         print, 'wrong input'
-        return, -1
+        return
       end
     endcase
 
