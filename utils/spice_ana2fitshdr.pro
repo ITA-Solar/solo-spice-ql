@@ -24,7 +24,7 @@
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided
 ;      header_l2: The header (string array) of the level 2 file.
-;      n_windows: number of windows to be included in level 3 file.
+;      n_windows: total number of windows to be included in level 3 file.
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
@@ -68,7 +68,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-18 14:24 CET $
+; $Id: 2022-01-19 14:03 CET $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
