@@ -10,7 +10,7 @@
 ;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      headers = ana2fitshdr(ana, n_windows=n_windows, $
+;      headers = ana2fitshdr(ana, n_windows=n_windows, filename_out=filename_out, $
 ;         /EXTENSION, $
 ;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
@@ -63,7 +63,7 @@
 ; HISTORY:
 ;      Ver. 1, 28-Sep-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-19 14:15 CET $
+; $Id: 2022-01-19 14:55 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, $
