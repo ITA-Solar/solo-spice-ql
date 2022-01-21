@@ -3,50 +3,34 @@
 ;      GENERATE_ADEF
 ;
 ; PURPOSE:
-;      This function returns an array of fits headers made from an ANA object or file.
-;
-;
-;
-;
-; I don't use any advanced commands in Git, stash very seldom, squashing and reordering never so far.
-; I do quite often create a new branch, do some changes there (commit, push)
-; and then merge it to develop branch (or some other)
-; to create a new branch I use the terminal for some reason:
-;
-; create new branch
-; git checkout -b mwiesman/feature/sqflags
-;
-; push new branch
-; git push --set-upstream origin mwiesman/feature/dqptypes
-;
-; but I'm sure that's also possibly using the DeskHub
-;
-; Merging I do that on the github webpage, not locally on my computer
-; although that's of course also possible.
-; On github, you can view a branch, and then there is a button to Create a new pull request.
-; Edit it and create it. And then you can merge the branches, or someone else
-;
-;
+;      This function finds peaks and widths of lines in a given spectrum.
+;      It returns those values in form of fit components, defined in mk_comp_gauss().
 ;
 ; CATEGORY:
-;      XXX -- utility
+;      Fitting -- utility
 ;
 ; CALLING SEQUENCE:
-;      adef = generate_adf(data, lambda)
+;      adef = generate_adef(data, lam, widmin=widmin)
 ;
 ; INPUTS:
-;      data: data
-;      lambda: lambda
+;      data: The data cube to be analysed. The first dimension must be the wavelength.
+;      lambda: A cube of same size as data. Contains the wavelength of each pixel in 'data'.
+;
+; OPTIONAL INPUTS:
+;      widmin: Minimum width of a gaussian fit
 ;
 ; OUTPUTS:
-;      adef
+;      Structure containing a list of found fit components, including background component.
 ;
 ; OPTIONAL OUTPUTS:
+;
+; CALLS:
+;      gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
 ;
 ; HISTORY:
 ;      Ver. 1, 18-Oct-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-17 10:26 CET $
+; $Id: 2022-01-18 14:16 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin

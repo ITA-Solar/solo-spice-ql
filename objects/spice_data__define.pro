@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2022-01-12 09:56 CET $
+; $Id: 2022-01-19 22:10 CET $
 
 
 ;+
@@ -184,8 +184,11 @@ function spice_data::xcfit_block, window_index
   help,fit
   ;stop
 
-  print,'fitting...'
-  cfit_block, analysis=ana, quiet=quiet, /double, /x_face
+  print, ' ==========='
+  print,'fitting data'
+  print, 'this may take a while'
+  print, ' ==========='
+  cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
 
 
   ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
