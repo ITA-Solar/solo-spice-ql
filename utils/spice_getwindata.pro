@@ -136,7 +136,7 @@
 ;         modified from iris_getwindata
 ;       Version 2, 8-Jul-2021, William Thompson, corrected time calculation
 ;-
-; $Id: 2021-07-11 09:45 CEST $
+; $Id: 2022-01-21 14:45 CET $
 
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
@@ -439,11 +439,14 @@ dark_unc=0
   ; sit-and-stare will be set to nexp_prp=100 whereas for EIS it would
   ; be 1. It seems nexp_prp is always 1 for IRIS so I'm just
   ; going to set it to 1. This keyword does not exist in SPICE, so we 
-  ; have to add it.
+  ; have to add it. Same for nexp.
   ;
   hdr2=add_tag(hdr,0,'NEXP_PRP')
   hdr=temporary(hdr2)
   hdr.nexp_prp=1
+  hdr2=add_tag(hdr,0,'NEXP')
+  hdr=temporary(hdr2)
+  hdr.nexp=d->get_number_exposures(iwin)
 
 
   ;

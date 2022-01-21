@@ -3,7 +3,7 @@
 ;      SPICE_ANA2FITSHDR_DATA
 ;
 ; PURPOSE:
-;      This function returns a fits header made from the Data of an ANA object or file.
+;      This function returns a fits header made from the data of an ANA object or file.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
@@ -32,7 +32,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-03 11:31 CET $
+; $Id: 2022-01-18 14:24 CET $
 
 
 FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
