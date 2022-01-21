@@ -3,7 +3,7 @@
 ;      SPICE_ANA2FITSHDR_CONST
 ;
 ; PURPOSE:
-;      This function returns a fits header made from the weights cube of an ANA object or file.
+;      This function returns a fits header made from the const cube of an ANA object or file.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
@@ -32,7 +32,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 15:08 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 FUNCTION spice_ana2fitshdr_const, header_l2=header_l2, datetime=datetime, $

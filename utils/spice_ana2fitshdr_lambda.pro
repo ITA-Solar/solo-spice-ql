@@ -3,7 +3,7 @@
 ;      SPICE_ANA2FITSHDR_LAMBDA
 ;
 ; PURPOSE:
-;      This function returns a fits header made from the Lambda cube of an ANA object or file.
+;      This function returns a fits header made from the lambda cube of an ANA object or file.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
@@ -33,7 +33,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 14:28 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 FUNCTION spice_ana2fitshdr_lambda, header_l2=header_l2, datetime=datetime, $

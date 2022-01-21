@@ -3,23 +3,29 @@
 ;      GENERATE_ADEF
 ;
 ; PURPOSE:
-;      This function returns an array of fits headers made from an ANA object or file.
-;
+;      This function finds peaks and widths of lines in a given spectrum.
+;      It returns those values in form of fit components, defined in mk_comp_gauss().
 ;
 ; CATEGORY:
-;      XXX -- utility
+;      Fitting -- utility
 ;
 ; CALLING SEQUENCE:
-;      adef = generate_adf(data, lambda)
+;      adef = generate_adef(data, lam, widmin=widmin)
 ;
 ; INPUTS:
-;      data: data
-;      lambda: lambda
+;      data: The data cube to be analysed. The first dimension must be the wavelength.
+;      lambda: A cube of same size as data. Contains the wavelength of each pixel in 'data'.
+;
+; OPTIONAL INPUTS:
+;      widmin: Minimum width of a gaussian fit
 ;
 ; OUTPUTS:
-;      adef
+;      Structure containing a list of found fit components, including background component.
 ;
 ; OPTIONAL OUTPUTS:
+;
+; CALLS:
+;      gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
 ;
 ; HISTORY:
 ;      Ver. 1, 18-Oct-2021, Martin Wiesmann
@@ -27,7 +33,7 @@
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines. 
 ;-
-; $Id: 2022-01-18 10:58 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin

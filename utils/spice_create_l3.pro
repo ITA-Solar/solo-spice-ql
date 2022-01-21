@@ -3,22 +3,27 @@
 ;     SPICE_CREATE_L3
 ;
 ; PURPOSE:
-;     spice_create_l3 creates a SPICE level 3 file from a level 2 file
+;     spice_create_l3 creates a SPICE level 3 file from a level 2 file. The level 3 file is saved as a
+;     FITS file and moved into the directory $SPICE_DATA/level3/ .
 ;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
-;     The SPICE_CREATE_L3 procedure is
-;                 spice_create_l3
+;     spice_create_l3, spice_object, window_index
 ;
 ; INPUTS:
-;     file : path of a SPICE FITS file.
+;     spice_object : a SPICE_DATA object.
+;
+; OPTIONAL INPUTS:
+;     window_index : One or more window indices of windows that should be included in level 3 file.
+;                    If not provided, all windows will be included.
 ;
 ; OUTPUT:
-;     Level 3 files
+;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;
 ; CALLS:
+;     generate_adef, mk_analysis, cfit_block, SPICE_XCFIT_BLOCK, spice_ana2fitshdr, writefits, spice_ingest
 ;
 ; COMMON BLOCKS:
 ;
@@ -29,7 +34,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2021-12-21 10:44 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 pro spice_create_l3, spice_object, window_index
