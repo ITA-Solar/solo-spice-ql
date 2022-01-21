@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
 ;-
-; $Id: 2022-01-18 10:58 CET $
+; $Id: 2022-01-21 10:02 CET $
 
 
 ;+
@@ -141,10 +141,13 @@ FUNCTION spice_data::get_slit_y_range
 ;;  A) extracting a mean line profile to be used as the basis for the initial
 ;;     values of the fit
 ;;  B) line fitting 
-;;  It doens't make much sense to do a gaussian line fit to dumbbell data or to non-illuminated pixels.
+;;  It doesn't make much sense to do a gaussian line fit to dumbbell data or to non-illuminated pixels.
 ;;
 ;;  For the time being we skip the "clever" part and just extract a
-;;  representative region that should always contain only spectral region pixels. 
+;;  representative region that should always contain only spectral region
+;;  pixels. 
+  
+  
 END
 
 ;+
@@ -280,11 +283,16 @@ END
 ; KEYWORD PARAMETERS:
 ;     load : if set, the data is read from the file and returned as an array
 ;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
+;     spectral: if set, only return spectral data, i.e. ignore parts of the
+;               detector that lies above/below the dumbbells, between the slit
+;               and the dumbbells, and the dumbbell regions
+;               themselves. Keyword is ignored if window_index is not a
+;               narrow-slit spectral window (2", 4", og 6").
 ;
 ; OUTPUT:
 ;     returns either a link to the data, or the array itself
 ;-
-FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale
+FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale, spectral=spectral
   ;Returns a link to the data of window, or the data itself if keyword load is set
   COMPILE_OPT IDL2
 
@@ -299,6 +307,10 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
       data = *(*self.window_data)[window_index]
     ENDIF ELSE BEGIN
       data = (*(*self.window_assoc)[window_index])[0]
+      IF keywords_set(spectral) THEN BEGIN 
+         
+      ENDIF
+       
       IF ~keyword_set(nodescale) THEN data = self.descale_array(data, window_index)
       (*self.window_descaled)[window_index] = descaled
       IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
