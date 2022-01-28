@@ -135,14 +135,19 @@
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;         modified from iris_getwindata
 ;       Version 2, 8-Jul-2021, William Thompson, corrected time calculation
+;       Version 3, 25-Jan-2022, Terje Fredvik. Added keyword nodumbell, if set
+;       mask any pixels with contributions from the dumbbells, or any other
+;       pixels below or above the narrow slit. Added keyword
+;       approximated_slit, if set (when nodumbbell is set) use a quicker way 
+;       of estimating the pixels to be masked
 ;-
-; $Id: 2021-07-11 09:45 CEST $
+; $Id: 2022-01-28 16:57 CET $
 
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
   ixrange=ixrange, normalize=normalize, quiet=quiet, $
-  calib=calib, perang=perang
+  calib=calib, perang=perang, nodumbbell=nodumbbell, approximated_slit=approximated_slit
 
 
 
@@ -231,7 +236,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
 
   ;
   ; Extract the data array.
-  wd = d->get_window_data(iwin, /load)
+  wd = d->get_window_data(iwin, /load, nodumbbell=nodumbbell, approximated_slit=approximated_slit)
 
   t1=systime(1)
 
