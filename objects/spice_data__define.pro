@@ -34,8 +34,12 @@
 ;
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
+;     28-Jam-2022: Terje Fredvik - New method ::mask_region_outside_slit with
+;                  a little army of help methods is now called when the
+;                  NODUMBBELL keyword is set when calling ::get_window_data.
+;                  * The NODUMBBELL keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-01-21 12:59 CET $
+; $Id: 2022-01-28 16:56 CET $
 
 
 ;+
@@ -81,6 +85,7 @@ pro spice_data::close
   ptr_free, self.window_wcs
   ptr_free, self.window_descaled
   ptr_free, self.window_data
+  ptr_free, self.slit_y_range
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -118,37 +123,6 @@ pro spice_data::help, description=description, _extra=_extra
     obj_help, self, _extra=_extra
 END
 
-FUNCTION spice_data::get_slit_y_range
-;;
-;;+
-;;  The length of the 2",4" and 6" slits are 600 pixels. At both ends of the slits
-;;  there is a ~48 y-pixel gap with no throughput, then a dumbbell region of
-;;  ~32 y-pixels.
-;;     Some times a readout window contains only the pixels (or a  range) of
-;;  600 pixel slit region, and if one or both dumbbells are downlinked they
-;;  are read out separately.
-;;     However, quite often the detectors are read out in full 1024 pixel
-;;  height. Such a readout window therefore contains both the spectral
-;;  information from the slit, dumbbell information, and several regions with
-;;  no signal (both between the slit region and the dumbbell regions, and
-;;  between the dumbbell and the detector edges). 
-;;     In theory it should be simple to pick out the spectral region, but the solar
-;;  spectrum does not fall on the same y-pixels (nor x-pixels for that matter)
-;;  from one observation to the next. There's of course also the issue with
-;;  slanted and skewed L2 spectrum due to geometrical correction.
-;;      We therefore need to find a clever way to identify the spectral region, since
-;;  we should use this and only this region for 
-;;  A) extracting a mean line profile to be used as the basis for the initial
-;;     values of the fit
-;;  B) line fitting 
-;;  It doesn't make much sense to do a gaussian line fit to dumbbell data or to non-illuminated pixels.
-;;
-;;  For the time being we skip the "clever" part and just extract a
-;;  representative region that should always contain only spectral region
-;;  pixels. 
-  
-  
-END
 
 ;+
 ; Description:
@@ -158,7 +132,7 @@ END
 ;     window_index : the index of the desired window
 ;
 ;-
-function spice_data::xcfit_block, window_index
+function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
@@ -169,7 +143,7 @@ function spice_data::xcfit_block, window_index
     return, -1
   endif
 
-  data = self->get_window_data(window_index, /load)
+  data = self->get_window_data(window_index, /load, /nodumbbell, approximated_slit=approximated_slit)
   ;; Only do fit on the spectral part of the window!
   lambda = self->get_wcs_coord(window_index, /lambda)
 
@@ -274,11 +248,474 @@ END
 ;---------------------------------------------------------
 
 
+
+
+;------------------------------------------------
+; ::mask_region_outside_slit and its help methods
+;------------------------------------------------
+
+; First a few help methods that are only used for making plots for debugging purposes:
+PRO spice_data::debug_plot_dumbbell_range, window_index, lower_dumbbell_range, upper_dumbbell_range
+  loadct,12,/silent
+  naxis3 = self->get_header_info('NAXIS3',window_index)
+  plots,[0,naxis3],[upper_dumbbell_range[0],upper_dumbbell_range[0]],color=150,line=2
+  plots,[0,naxis3],[upper_dumbbell_range[1],upper_dumbbell_range[1]],color=150,line=2
+  
+  plots,[0,naxis3],[lower_dumbbell_range[0],lower_dumbbell_range[0]],color=150,line=2
+  plots,[0,naxis3],[lower_dumbbell_range[1],lower_dumbbell_range[1]],color=150,line=2
+  loadct,3,/silent
+END
+
+
+PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
+  window,1, xp=4200
+  loadct,3,/silent
+  
+  data = self->get_window_data(window_index,/load)
+  !p.multi = [0,2,1]
+  
+  plot_image,transpose(sigrange(reform(data[0,*,*]),fraction=0.9))
+  lower_dumbbell_range = self->get_dumbbell_range(window_index)
+  upper_dumbbell_range = self->get_dumbbell_range(window_index, /upper)
+  
+  nbin2 = self->get_header_info('NBIN2',window_index)
+  IF nbin2 NE 1 THEN BEGIN 
+     lower_dumbbell_range = self->get_rebinned_indices(lower_dumbbell_range, nbin2)
+     upper_dumbbell_range = self->get_rebinned_indices(upper_dumbbell_range, nbin2)
+  ENDIF
+  
+  self->debug_plot_dumbbell_range, window_index, lower_dumbbell_range, upper_dumbbell_range
+  
+  masked_data = self->get_window_data(window_index,/load,/nodumbbell)
+  plot_image,transpose(sigrange(reform(masked_data[0,*,*]),fraction=0.9))
+  
+  loadct,12,/silent
+  
+  naxis3 = self->get_header_info('NAXIS3',window_index)
+  nbin2 = self->get_header_info('NBIN2',window_index)
+  slit_y_range = self->get_rebinned_indices(*self.slit_y_range, nbin2)
+  plots,[-4000,naxis3],[slit_y_range[0],slit_y_range[0]],/data,color=50
+  plots,[-4000,naxis3],[slit_y_range[1],slit_y_range[1]],/data,color=50
+END
+
+
+PRO spice_data::debug_plot_intensity, slit_y_range, y_intensity, dumbbell_max_ix, upper=upper
+  loadct,12,/silent
+  default, upper, keyword_set(upper)
+  
+  slit_y_range = slit_y_range
+  smooth_factor = 32
+  
+  detector = (upper) ? ' SW' : ' LW'
+  title = file_basename(self.file)+detector
+  plot,y_intensity, ytitle='Intensity', xtitle='Y pixel index',title=title,yr=[0,max(y_intensity)],/yst,psym=-2,xr=[0,n_elements(y_intensity)],/xst
+  y_intensity_smooth = smooth(y_intensity,smooth_factor)
+  oplot,y_intensity_smooth,color=150
+  
+  plots,[slit_y_range[0], slit_y_range[0]], [0,max(y_intensity)], thick=2,color=50, line=(upper) ? 2 : 0
+  plots,[slit_y_range[1], slit_y_range[1]], [0,max(y_intensity)], thick=2,color=50, line=(upper) ? 0 : 2
+  
+  xyouts, dumbbell_max_ix, max(y_intensity)*0.1,trim(dumbbell_max_ix),color=150  
+  
+  ix = (upper) ? slit_y_range[1] : slit_y_range[0]
+  xyouts, ix, max(y_intensity)*0.85,trim(ix),charsize=2,color=50  
+END
+
+
+PRO spice_data::debug_plot_slit_y_range, window_index, slit_y_range, $
+                                         y_intensity_SW, upper_dumbbell_max_ix, $
+                                         y_intensity_LW, lower_dumbbell_max_ix
+
+  window,0,xp=2570,xs=1450,yp=-70,ys=1140
+  !p.multi = [0, 1, 2]
+  
+  self->debug_plot_intensity, slit_y_range, y_intensity_SW, upper_dumbbell_max_ix, /upper
+  self->debug_plot_intensity, slit_y_range, y_intensity_LW, lower_dumbbell_max_ix
+  
+  !p.multi = 0
+  
+  self->debug_put_unmasked_and_masked_data_both_detectors, window_index
+END
+
+; End of help debug plot help methods 
+
+
+FUNCTION spice_data::get_slit_edge, dumbbell_max_ix, upper=upper
+  ;;
+  ;; +
+  ;;  Description:
+  ;;      Returns the index of the end pixel closest to the dumbbell_max_ix
+  ;;      index, i.e. the upper slit end if upper keyword is set.
+  ;;
+  ;;      (See ::mask_region_outside_slit for full description of the masking
+  ;;      code!)
+  ;;   
+  ;;      The half width of the dumbbell and width of the gap between the slit
+  ;;      edges and the dumbbell as seen in a geometrically corrected L2 file
+  ;;      are nothing but conservative estimations. It's better to
+  ;;      overestimate the length of the slit region, and thereby ending up
+  ;;      with a few unusable pixels at both ends, instead of throwing away
+  ;;      perfectly good pixels. 
+  ;;     
+  ;;      The hardcoded numbers below are not set in stone and may be 
+  ;       changed after more testing.
+  ;; -
+  dumbbell_half_width = floor(32./2)
+  gap_width = floor(46.)
+  dumbbell_max_displacement = dumbbell_half_width+gap_width
+  
+  sign = (keyword_set(upper)) ? -1 : 1
+  dumbbell_max_displacement *= sign
+  
+  return, dumbbell_max_ix+dumbbell_max_displacement
+END
+
+
+FUNCTION spice_data::data_includes_dumbbell, window_index, upper=upper
+  ;;
+  ;; Description:
+  ;; 1) The same y range is downlinked for all windows on both detectors.
+  ;; Due to the tilt of the spectrum on the detector most observations are
+  ;; downlinked in 768 y pixels high windows in order to ensure that the slit
+  ;; data is complete for all windows on both detectors. This means that
+  ;; normally the
+  ;;   - SW detector windows contain data from the upper dumbbell region, the 
+  ;;   - LW detector windows contain data from the lower dumbbell region.
+  ;; 2) The spectrum is not always placed at the same y pixels on the detector, i.e. the
+  ;; dumbbells do not cover the same y pixels from one observation to the
+  ;; next. 
+  ;; As a result, when checking that dumbbell data is indeed included in the
+  ;; data cube, we look at a L1 file where the spectrum's placement on the
+  ;; detector is
+  ;;     - Low:  to find the upper edge of the lower LW dumbbell (the low  file will give a  lower limit)
+  ;;     - High: to find the lower edge of the upper SW dumbbell (the high file will give an upper limit) 
+  ;; -
+  ;; 
+  
+  upper_edge_of_lower_dumbbell_in_L1_full_detector_LW = 160 ;; From L1 67109112-000, spectrum is low on the detector
+  lower_edge_of_upper_dumbbell_in_L1_full_detector_SW = 810 ;; From L1 50331769-000, spectrum is high on the detector
+
+  
+  pxbeg2 = self->get_header_info('PXBEG2', window_index)
+  pxend2 = self->get_header_info('PXEND2', window_index)
+    
+  data_includes_dumbbell = (keyword_set(upper)) ? pxend2 GT lower_edge_of_upper_dumbbell_in_L1_full_detector_SW : $
+                                                  pxbeg2 LT upper_edge_of_lower_dumbbell_in_L1_full_detector_LW
+  
+  return, data_includes_dumbbell
+END
+
+
+FUNCTION spice_data::get_dumbbell_range, window_index, upper=upper
+  ;;
+  ;;+
+  ;; Description:
+  ;;    Returns the approximate y range of the dumbbell in the datacube, given
+  ;;    in debinned indices.
+  ;;
+  ;;    Hard coded numbers giving the approximate y range of the dumbbells were
+  ;;    found by going through hundreds of L2 files. The range should be wide
+  ;;    enough to cover the dumbbells both for files where the spectrum is 
+  ;;    placed high and files where the placement is low.
+  ;;-
+  nbin2 = self->get_header_info('NBIN2',window_index)
+  n_y = self->get_header_info('NAXIS2', window_index)*nbin2
+  n_y_full_detector = 1024
+  
+  half_diff = (n_y_full_detector-n_y)/2.
+
+  dumbbell_range = (keyword_set(upper)) ? [840, 915] - half_diff : [105,180] - half_diff
+  
+  return, dumbbell_range
+END
+
+
+FUNCTION spice_data::get_approximated_dumbbell_max_ix, window_index, upper=upper
+  dumbbell_range = self->get_dumbbell_range(window_index, upper = upper)
+  return, round(dumbbell_range[0]+ (dumbbell_range[1]-dumbbell_range[0])/2.)
+END
+
+
+FUNCTION spice_data::get_dumbbell_max_ix, y_intensity, window_index, upper=upper, approximated_slit=approximated_slit
+  
+  IF ~self->data_includes_dumbbell(window_index, upper=upper) THEN $
+     return, (keyword_set(upper)) ? self->get_header_info('NAXIS2',window_index)-1 : 0
+  
+  IF keyword_set(approximated_slit) THEN return, self->get_approximated_dumbbell_max_ix(window_index, upper=upper)
+    
+  smooth_factor = 32 ;; This seems to be enough to smooth out any structures in the dumbbells
+  y_intensity_smooth = smooth(y_intensity,smooth_factor)
+    
+  dumbbell_range = self->get_dumbbell_range(window_index, upper=upper)
+  
+  dumbbell_max_intensity = max(y_intensity_smooth[dumbbell_range[0]:dumbbell_range[1]], max_ix)
+  mean_intensity = mean(y_intensity_smooth)
+  
+  dumbbell_probably_off_disc = dumbbell_max_intensity LT mean_intensity
+  IF dumbbell_probably_off_disc THEN return, self->get_approximated_dumbbell_max_ix(window_index, upper = upper)
+  
+  dumbbell_max_ix =  max_ix + dumbbell_range[0]
+                      
+  return, dumbbell_max_ix
+END
+
+
+FUNCTION spice_data::get_y_intensity, all_data
+  all_data[where(all_data ne all_data)]=median(all_data)
+  sz = size(all_data)
+  y_intensity = reform(rebin(all_data,1,sz[2],1)) > 0
+  
+  return, y_intensity
+END 
+
+FUNCTION spice_data::check_if_already_included, window_index, included_winnos
+  already_included = 0
+  
+  header = self->get_header(window_index,/string)
+  prsteps =  fxpar(header,'PRSTEP*')        ;; MARTIN: the get_header_info method doesn't support wildcards, so I have to use fxpar!
+  IF prsteps[-1] NE 'WINDOW-CONCATENATION' THEN return,0
+  
+  prparan = self->get_header_info('PRPARA'+trim(n_elements(prsteps)),window_index)
+  concatenated_winnos = prparan.extract('([0-9],*)+')
+  FOR included_ct=0,n_elements(included_winnos)-1 DO IF concatenated_winnos.contains(trim(included_winnos[included_ct])) THEN already_included =  1
+  
+  return, already_included
+END
+
+
+PRO spice_data::add_window, all_data, data, window_index, included_winnos
+  IF all_data EQ !NULL THEN BEGIN 
+     data_has_been_debinned_in_y = (self->get_header_info('NBIN2',window_index) NE 0)
+     naxis1 =  self->get_header_info('NAXIS1',window_index)
+     naxis3 =  self->get_header_info('NAXIS3',window_index)
+     naxis4 =  self->get_header_info('NAXIS4',window_index)
+     
+     size_y = (data_has_been_debinned_in_y) ? (size(data))[2] : naxis2
+     all_data = reform(data, naxis1, size_y, naxis3, naxis4)  
+     included_winnos = 0
+  ENDIF ELSE BEGIN 
+     this_window_has_already_been_included_as_a_part_of_a_concatenated_window = self->check_if_already_included(window_index,included_winnos)
+     IF NOT this_window_has_already_been_included_as_a_part_of_a_concatenated_window THEN BEGIN 
+        size_all_data = size(all_data)
+        width_all_windows_including_this =  size_all_data[3] + self->get_header_info('NAXIS3',window_index)
+    
+        all_data_new = make_array(size_all_data[1], size_all_data[2], width_all_windows_including_this, size_all_data[4])
+        
+        all_data_new[*, *, 0:size_all_data[3]-1,*] = all_data
+        
+        completeness = self->get_header_info('COMPLETE',window_index)
+        incomplete = completeness.contains('I')
+        last_x_ix = (incomplete) ? (size(data))[1]-1 : size_all_data[1]-1
+        
+        all_data_new[0:last_x_ix, *, size_all_data[3]:*, *] = data
+        
+        all_data = reform(all_data_new, size_all_data[1], size_all_data[2], width_all_windows_including_this, size_all_data[4])
+        included_winnos = [included_winnos, self->get_header_info('WINNO',window_index)]
+     ENDIF
+     
+  ENDELSE 
+END
+
+
+PRO spice_data::debin_y_dimension, data, nbin2
+  sz = size(data)
+  sit_and_stare = sz[0] EQ 4
+  sz4 = (sit_and_stare) ? sz[4] : 1
+  
+  data = rebin(data, sz[1], sz[2]*nbin2, sz[3], sz4)
+END
+
+
+PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
+  ;;
+  ;;+
+  ;; Description:
+  ;;     Create one data array per detector, each containing all data cubes
+  ;;     of all the detector's windows, i.e. 
+  ;;     (NAXIS1, NAXIS2, total(NAXIS3),NAXIS4). If windows have been concatenated
+  ;;     include the data from a concatenated window only once. Any windows that are binned 
+  ;;     in the y dimension are debinned to ensure that all windows have the
+  ;;     same NAXIS2. 
+  ;;-
+  n_windows = self->get_number_windows()
+  FOR window_index = 0,n_windows-1 DO BEGIN 
+     data = self->get_window_data(window_index,/load)
+    
+     dumbbell = self->get_header_info('DUMBBELL', window_index) NE 0
+     intensity_window = self->get_header_info('WIN_TYPE', window_index) EQ 'Intensity-window'    
+     IF NOT dumbbell AND NOT intensity_window THEN BEGIN 
+        nbin2 = self->get_header_info('NBIN2', window_index)
+      
+        IF nbin2 NE 1 THEN self->debin_y_dimension, data, nbin2
+        
+        CASE trim(self->get_header_info('DETECTOR', window_index)) OF 
+           'SW': self->add_window, all_data_SW, data, window_index, included_winnos 
+           'LW': self->add_window, all_data_LW, data, window_index, included_winnos
+        ENDCASE 
+            
+     ENDIF 
+
+  ENDFOR 
+END
+
+
+PRO spice_data::get_y_intensity_both_detectors, y_intensity_SW, y_intensity_LW
+  self->get_all_data_both_detectors, all_data_SW, all_data_LW
+  
+  IF all_data_SW EQ !NULL OR all_data_LW EQ !NULL THEN BEGIN 
+     message, (all_data_SW EQ !NULL) ? 'SW':'LW' + ' detector contains no data - using approximated slit range',/info
+     y_intensity_sw = !NULL
+     y_intensity_lw = !NULL
+     return
+  ENDIF 
+
+  y_intensity_SW = self->get_y_intensity(all_data_SW)
+  y_intensity_LW = self->get_y_intensity(all_data_LW)
+END
+
+
+FUNCTION spice_data::get_rebinned_indices, indices, nbin2
+  binned_indices = (indices-1)/nbin2+1
+  return, binned_indices
+END
+
+  
+  
+FUNCTION spice_data::get_slit_y_range, data, window_index, approximated_slit=approximated_slit
+  
+  nbin2 = self->get_header_info('NBIN2', window_index)
+     
+  IF *self.slit_y_range NE !NULL THEN return, (nbin2 EQ 1) ? *self.slit_y_range : self->get_rebinned_indices(*self.slit_y_range, nbin2)
+ 
+  IF ~keyword_set(approximated_slit) THEN BEGIN
+     self->get_y_intensity_both_detectors, y_intensity_SW, y_intensity_LW
+     approximated_slit = (y_intensity_SW EQ !NULL OR y_intensity_LW EQ !NULL)
+     IF approximated_slit THEN message,'No windows on the ' + ((y_intensity_sw EQ !NULL) ? 'SW':'LW')+' detector, using approximated slit y range',/info
+  ENDIF
+  
+  lower_dumbbell_max_ix = self->get_dumbbell_max_ix(y_intensity_LW, window_index, approximated_slit = approximated_slit)
+  lower_slit_edge_ix = self->get_slit_edge(lower_dumbbell_max_ix)
+  
+  upper_dumbbell_max_ix = self->get_dumbbell_max_ix(y_intensity_SW, window_index, approximated_slit = approximated_slit, /upper)
+  upper_slit_edge_ix = self->get_slit_edge(upper_dumbbell_max_ix,/upper)
+  
+  slit_y_range = [lower_slit_edge_ix, upper_slit_edge_ix]
+  
+  *self.slit_y_range = slit_y_range
+  
+  debug = 1
+  IF debug AND ~keyword_set(approximated_slit) THEN self->debug_plot_slit_y_range, window_index, slit_y_range, $
+                                               y_intensity_SW, upper_dumbbell_max_ix,  $
+                                               y_intensity_LW, lower_dumbbell_max_ix
+     
+  return, (nbin2 EQ 1) ? *self.slit_y_range : self->get_rebinned_indices(*self.slit_y_range, nbin2)
+END
+
+
+FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated_slit=approximated_slit
+  ;;
+  ;;+
+  ;; Description:
+  ;;     Returns the input data array with any pixels that are above or 
+  ;;     below the narrow slit region set to NaN. This method is called when
+  ;;     ::get_window_data is called with the nodumbbell keyword set. 
+  ;;
+  ;;     And now a little background story:
+  ;;     The height of the 2",4" and 6" slits is 600 pixels. At both ends of the slits
+  ;;     there is a ~48 y-pixel gap with no throughput, then a dumbbell region of
+  ;;     ~32 y-pixels.
+  ;;     
+  ;;     A standard readout window was originally planned to include only
+  ;;     the 600 pixels of the slit region (or a range of pixels in this
+  ;;     region), and optionally one or both dumbbells for a single of these
+  ;;     windows. 
+  ;;
+  ;;     However, the spectra turned out to be tilted on the detectors, the 
+  ;;     tilt angles are not the same on the detetors, and the spectra of the
+  ;;     two detetors are displaced the y direction relative to one another. 
+  ;;     In order to ensure that the windows contain the full slit on both
+  ;;     detectors the new default window height is therefore 768 pixels. This
+  ;;     means that narrow slit windows on the SW detector will contain the
+  ;;     full upper dumbbell and the LW windows will contain the full lower
+  ;;     dumbbell. 
+  ;; 
+  ;;     The L1 to L2 calibration includes a geometrical correction
+  ;;     of tilts, slants, rotations and displacements. In theory the
+  ;;     dumbbells should fall on the same pixels in very observation. 
+  ;;     However, the spectra for a given detector may be shifted +/- 10
+  ;;     pixels or so from one observation to another. The shift probably
+  ;;     happens when the slit is changed. 
+  ;;
+  ;;     Therefore, the help methods of this method determines the slit y
+  ;;     range based on an estimation of the locations of the dumbbell
+  ;;     regions:
+  ;; 
+  ;;         1: For each detector, make a 1D array containg the intensity 
+  ;;            along the y direction [::get_y_intensity_both_detectors]
+  ;;         2: Smooth the y intensity arrays heavily in order to estimate the
+  ;;            midpoint of the dumbbell (i.e. the upper dumbbell for the SW y
+  ;;            intensity array, the lower dummbell for the LW y array). Special
+  ;;            care is taken if the dumbbells are not present in the data
+  ;;            cube due to a non-standard window height, or if one of the
+  ;;            dumbbells can't be identified (typically if the dumbbell falls
+  ;;            off-limb). [::get_dumbbell_max_ix]
+  ;;         3: Take the approximate number of pixels between the dumbbell
+  ;;            midpoints and slit edges into account when estimating the slit
+  ;;            y range [::get_slit_edge]
+  ;;         5: Set all pixels in the data cube that are below or above the slit y
+  ;;            range to NaN
+  ;;
+  ;; INPUTS:
+  ;;     data:         a 4D data cube returned by ::get_window_data
+  ;;     window_index: the index of the desired window
+  ;;
+  ;; KEYWORD PARAMETERS:
+  ;;     approximated_slit: if set, a default value of the dumbbell midpoint
+  ;;                        is used instead of trying to estimating the
+  ;;                        midpoint
+  ;; 
+  ;; OUTPUT:
+  ;;     Returns the data cube that was given as input, but with any pixels
+  ;;     below or above the narrow slit set to NaN.
+  ;; 
+  ;; SIDE EFFECTS:
+  ;;     If approximated_slit is not set, then ::get_window_data(/load) will be called
+  ;;     for all windows in the file once. The structure tag self.slit_y_range
+  ;;     will be set the first time this method is called. A later call of
+  ;;     this method will use the value of self.slit_y_range.
+  ;;-
+  ;;
+  
+  level = self->get_level()
+  IF level NE 2 THEN BEGIN 
+     message,'NODUMBBELL applies to L2 files only, returning unmodified data array',/info
+     return, data
+  ENDIF
+  
+  dumbbell  = self->get_header_info('DUMBBELL', window_index) NE 0
+  wide_slit = self->get_header_info('SLIT_WID', window_index) EQ 30
+  IF dumbbell OR wide_slit THEN BEGIN 
+     message,'NODUMBBELL applies to narrow slit observations only, returning unmodified data array',/info
+     return, data 
+  ENDIF
+  
+  slit_y_range = self->get_slit_y_range(data, window_index, approximated_slit = approximated_slit)
+
+  print,'Slit range: '+ ((keyword_set(approximated_slit)) ? '(approximated slit) ': '')+trim(slit_y_range[0])+' - '+trim(slit_y_range[1])
+  
+  data[*,0:slit_y_range[0],*,*] = !values.f_nan
+  data[*,slit_y_range[1]:*,*,*] = !values.f_nan
+
+  return, data
+END
+
+
 ;+
 ; Description:
 ;     Returns the data of the specified window. If 'load' keyword is set,
 ;     the function returns a copy of the array, otherwise a link to the
-;     array in the file.
+;     array in the file. If 'load' and 'nodumbbell' keywords are set any
+;     pixels below and above the slit are set to NaN in the returned array 
 ;
 ; INPUTS:
 ;     window_index : the index of the desired window
@@ -286,16 +723,19 @@ END
 ; KEYWORD PARAMETERS:
 ;     load : if set, the data is read from the file and returned as an array
 ;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
-;     spectral: if set, only return spectral data, i.e. ignore parts of the
-;               detector that lies above/below the dumbbells, between the slit
-;               and the dumbbells, and the dumbbell regions
-;               themselves. Keyword is ignored if window_index is not a
-;               narrow-slit spectral window (2", 4", og 6").
+;     nodumbbell: if set, call ::mask_regions_outside_slit in order to mask
+;                 any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lies above/below the dumbbells, 
+;                 in the gap between the slit ends and the dumbbells, and the 
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
 ;
 ; OUTPUT:
 ;     returns either a link to the data, or the array itself
 ;-
-FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale, spectral=spectral
+FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale, nodumbbell=nodumbbell, approximated_slit=approximated_slit
   ;Returns a link to the data of window, or the data itself if keyword load is set
   COMPILE_OPT IDL2
 
@@ -310,15 +750,17 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
       data = *(*self.window_data)[window_index]
     ENDIF ELSE BEGIN
       data = (*(*self.window_assoc)[window_index])[0]
-      IF keywords_set(spectral) THEN BEGIN 
-         
-      ENDIF
+
        
       IF ~keyword_set(nodescale) THEN data = self.descale_array(data, window_index)
       (*self.window_descaled)[window_index] = descaled
       IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
       (*self.window_data)[window_index] = ptr_new(data)
-    ENDELSE
+      
+
+   ENDELSE
+    IF keyword_set(nodumbbell) THEN $
+       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit)
   ENDIF ELSE BEGIN
     data = *(*self.window_assoc)[window_index]
   ENDELSE
@@ -1535,6 +1977,7 @@ PRO spice_data::read_file, file
   self.window_headers = ptr_new(headers)
   self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
+  self.slit_y_range = ptr_new(/allocate)
 END
 
 
@@ -1571,6 +2014,7 @@ PRO spice_data__define
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
     window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one window
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
-    dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
+    dumbbells: [-1, -1], $ ; contains the index of the window with [lower, upper] dumbbell
+    slit_y_range:ptr_new(), $ ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
     file_lun: 0}                ; Logical Unit Number of the file
 END
