@@ -34,12 +34,12 @@
 ;
 ; HISTORY:
 ;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
-;     28-Jam-2022: Terje Fredvik - New method ::mask_region_outside_slit with
+;     31-Jan-2022: Terje Fredvik - New method ::mask_region_outside_slit with
 ;                  a little army of help methods is now called when the
-;                  NODUMBBELL keyword is set when calling ::get_window_data.
-;                  * The NODUMBBELL keyword is set when xcfit_block is called.  
+;                  SLIT_ONLY keyword is set when calling ::get_window_data.
+;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-01-28 16:56 CET $
+; $Id: 2022-01-31 13:37 CET $
 
 
 ;+
@@ -143,7 +143,7 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
     return, -1
   endif
 
-  data = self->get_window_data(window_index, /load, /nodumbbell, approximated_slit=approximated_slit)
+  data = self->get_window_data(window_index, /load, /slit_only, approximated_slit=approximated_slit)
   ;; Only do fit on the spectral part of the window!
   lambda = self->get_wcs_coord(window_index, /lambda)
 
@@ -274,7 +274,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
   data = self->get_window_data(window_index,/load)
   !p.multi = [0,2,1]
   
-  plot_image,transpose(sigrange(reform(data[0,*,*]),fraction=0.9))
+  plot_image,transpose(sigrange(reform(data[0,*,*]),fraction=0.9)),title='Unmasked',ytitle='Y pixel index',xtitle='Lambda pixel index'
   lower_dumbbell_range = self->get_dumbbell_range(window_index)
   upper_dumbbell_range = self->get_dumbbell_range(window_index, /upper)
   
@@ -286,8 +286,8 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
   
   self->debug_plot_dumbbell_range, window_index, lower_dumbbell_range, upper_dumbbell_range
   
-  masked_data = self->get_window_data(window_index,/load,/nodumbbell)
-  plot_image,transpose(sigrange(reform(masked_data[0,*,*]),fraction=0.9))
+  masked_data = self->get_window_data(window_index,/load,/slit_only)
+  plot_image,transpose(sigrange(reform(masked_data[0,*,*]),fraction=0.9)),title='Masked',ytitle='Y pixel index',xtitle='Lambda pixel index'
   
   loadct,12,/silent
   
@@ -296,6 +296,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
   slit_y_range = self->get_rebinned_indices(*self.slit_y_range, nbin2)
   plots,[-4000,naxis3],[slit_y_range[0],slit_y_range[0]],/data,color=50
   plots,[-4000,naxis3],[slit_y_range[1],slit_y_range[1]],/data,color=50
+  
 END
 
 
@@ -311,6 +312,7 @@ PRO spice_data::debug_plot_intensity, slit_y_range, y_intensity, dumbbell_max_ix
   plot,y_intensity, ytitle='Intensity', xtitle='Y pixel index',title=title,yr=[0,max(y_intensity)],/yst,psym=-2,xr=[0,n_elements(y_intensity)],/xst
   y_intensity_smooth = smooth(y_intensity,smooth_factor)
   oplot,y_intensity_smooth,color=150
+  xyouts, n_elements(y_intensity)*0.9, max(y_intensity)*0.9, detector,color=255,charsize=4
   
   plots,[slit_y_range[0], slit_y_range[0]], [0,max(y_intensity)], thick=2,color=50, line=(upper) ? 2 : 0
   plots,[slit_y_range[1], slit_y_range[1]], [0,max(y_intensity)], thick=2,color=50, line=(upper) ? 0 : 2
@@ -319,6 +321,9 @@ PRO spice_data::debug_plot_intensity, slit_y_range, y_intensity, dumbbell_max_ix
   
   ix = (upper) ? slit_y_range[1] : slit_y_range[0]
   xyouts, ix, max(y_intensity)*0.85,trim(ix),charsize=2,color=50  
+  xyouts, ix, max(y_intensity)*0.80,((upper)?'Upper':'Lower')+' slit edge',charsize=1.5,color=50  
+  
+  xyouts, n_elements(y_intensity)/2.5, max(y_intensity)*0.9, 'Estimated slit length: '+trim(slit_y_range[1]-slit_y_range[0]+1)+' pixels',charsize=1.5,color=50
 END
 
 
@@ -432,7 +437,8 @@ END
 
 FUNCTION spice_data::get_approximated_dumbbell_max_ix, window_index, upper=upper
   dumbbell_range = self->get_dumbbell_range(window_index, upper = upper)
-  return, round(dumbbell_range[0]+ (dumbbell_range[1]-dumbbell_range[0])/2.)
+  just_to_be_on_the_safe_side = (keyword_set(upper)) ? 10 : -10
+  return, round(dumbbell_range[0]+ (dumbbell_range[1]-dumbbell_range[0])/2.) + just_to_be_on_the_safe_side
 END
 
 
@@ -581,7 +587,7 @@ END
 
   
   
-FUNCTION spice_data::get_slit_y_range, data, window_index, approximated_slit=approximated_slit
+FUNCTION spice_data::get_slit_y_range, data, window_index, approximated_slit=approximated_slit, debug_plot=debug_plot
   
   nbin2 = self->get_header_info('NBIN2', window_index)
      
@@ -603,22 +609,41 @@ FUNCTION spice_data::get_slit_y_range, data, window_index, approximated_slit=app
   
   *self.slit_y_range = slit_y_range
   
-  debug = 1
-  IF debug AND ~keyword_set(approximated_slit) THEN self->debug_plot_slit_y_range, window_index, slit_y_range, $
-                                               y_intensity_SW, upper_dumbbell_max_ix,  $
-                                               y_intensity_LW, lower_dumbbell_max_ix
-     
+  IF keyword_set(debug_plot) THEN BEGIN 
+     IF keyword_set(approximated_slit) THEN self->get_y_intensity_both_detectors, y_intensity_SW, y_intensity_LW
+     self->debug_plot_slit_y_range, window_index, slit_y_range, $
+                                    y_intensity_SW, upper_dumbbell_max_ix,  $
+                                    y_intensity_LW, lower_dumbbell_max_ix
+  ENDIF
+  
   return, (nbin2 EQ 1) ? *self.slit_y_range : self->get_rebinned_indices(*self.slit_y_range, nbin2)
 END
 
 
-FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated_slit=approximated_slit
+FUNCTION spice_data::check_if_data_may_be_masked, window_index
+  level = self->get_level()
+  IF level NE 2 THEN BEGIN 
+     message,'SLIT_ONLY applies to L2 files only, returning unmodified data array',/info
+     return, 0
+  ENDIF
+  
+  dumbbell  = self->get_header_info('DUMBBELL', window_index) NE 0
+  wide_slit = self->get_header_info('SLIT_WID', window_index) EQ 30
+  IF dumbbell OR wide_slit THEN BEGIN 
+     message,'SLIT_ONLY applies to narrow slit observations only, returning unmodified data array',/info
+     return, 0 
+  ENDIF
+  
+return,1  
+END
+
+FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated_slit=approximated_slit, debug_plot=debug_plot
   ;;
   ;;+
   ;; Description:
   ;;     Returns the input data array with any pixels that are above or 
   ;;     below the narrow slit region set to NaN. This method is called when
-  ;;     ::get_window_data is called with the nodumbbell keyword set. 
+  ;;     ::get_window_data is called with the slit_only keyword set. 
   ;;
   ;;     And now a little background story:
   ;;     The height of the 2",4" and 6" slits is 600 pixels. At both ends of the slits
@@ -626,29 +651,34 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;;     ~32 y-pixels.
   ;;     
   ;;     A standard readout window was originally planned to include only
-  ;;     the 600 pixels of the slit region (or a range of pixels in this
+  ;;     the 600 pixels of the slit region (or a sub-range of pixels in this
   ;;     region), and optionally one or both dumbbells for a single of these
   ;;     windows. 
   ;;
   ;;     However, the spectra turned out to be tilted on the detectors, the 
   ;;     tilt angles are not the same on the detetors, and the spectra of the
-  ;;     two detetors are displaced the y direction relative to one another. 
+  ;;     two detetors are displaced in the y direction relative to one another. 
   ;;     In order to ensure that the windows contain the full slit on both
-  ;;     detectors the new default window height is therefore 768 pixels. This
-  ;;     means that narrow slit windows on the SW detector will contain the
+  ;;     detectors the new default window height is therefore 768 pixels. The
+  ;;     result is that all narrow slit windows on the SW detector will contain the
   ;;     full upper dumbbell and the LW windows will contain the full lower
-  ;;     dumbbell. 
+  ;;     dumbbell.
   ;; 
   ;;     The L1 to L2 calibration includes a geometrical correction
   ;;     of tilts, slants, rotations and displacements. In theory the
-  ;;     dumbbells should fall on the same pixels in very observation. 
-  ;;     However, the spectra for a given detector may be shifted +/- 10
-  ;;     pixels or so from one observation to another. The shift probably
-  ;;     happens when the slit is changed. 
+  ;;     dumbbells should fall on the same pixels in every observation and it
+  ;;     should be easy to mask them. However, the spectra for a given
+  ;;     detector may be shifted +/- 10 pixels or so from one observation to
+  ;;     another. The shift probably happens when the slit is changed but it's
+  ;;     not fully understood. 
   ;;
-  ;;     Therefore, the help methods of this method determines the slit y
-  ;;     range based on an estimation of the locations of the dumbbell
-  ;;     regions:
+  ;;     Therefore, we need to determine where the y slit range based on the
+  ;;     observational data. It's hard to set up fool proof criteria for
+  ;;     determining the slit edges based on the signal from the slit
+  ;;     itself, since the signal often is very weak. The dumbbell signal on the
+  ;;     other hand is normally much stronger. Therefore, the help methods of 
+  ;;     this method determine the slit y range by first estimating the
+  ;;     locations of the dumbbell regions:
   ;; 
   ;;         1: For each detector, make a 1D array containg the intensity 
   ;;            along the y direction [::get_y_intensity_both_detectors]
@@ -656,8 +686,8 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;;            midpoint of the dumbbell (i.e. the upper dumbbell for the SW y
   ;;            intensity array, the lower dummbell for the LW y array). Special
   ;;            care is taken if the dumbbells are not present in the data
-  ;;            cube due to a non-standard window height, or if one of the
-  ;;            dumbbells can't be identified (typically if the dumbbell falls
+  ;;            cube due to a non-standard window height, or if one (or both) of the
+  ;;            dumbbells can't be identified (typically if a dumbbell falls
   ;;            off-limb). [::get_dumbbell_max_ix]
   ;;         3: Take the approximate number of pixels between the dumbbell
   ;;            midpoints and slit edges into account when estimating the slit
@@ -672,7 +702,11 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;; KEYWORD PARAMETERS:
   ;;     approximated_slit: if set, a default value of the dumbbell midpoint
   ;;                        is used instead of trying to estimating the
-  ;;                        midpoint
+  ;;                        midpoint. To be on the safe side a few pixels are
+  ;;                        added (upper dumbbell) or subtracted (lower
+  ;;                        dumbbell) from the estimated midpoint to make sure
+  ;;                        that no slit data is masked in the case of an
+  ;;                        unusaully low or high placement of the spectra.
   ;; 
   ;; OUTPUT:
   ;;     Returns the data cube that was given as input, but with any pixels
@@ -686,23 +720,11 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;;-
   ;;
   
-  level = self->get_level()
-  IF level NE 2 THEN BEGIN 
-     message,'NODUMBBELL applies to L2 files only, returning unmodified data array',/info
-     return, data
-  ENDIF
+  data_may_be_masked = self->check_if_data_may_be_masked(window_index)
+  IF ~data_may_be_masked THEN return, data
   
-  dumbbell  = self->get_header_info('DUMBBELL', window_index) NE 0
-  wide_slit = self->get_header_info('SLIT_WID', window_index) EQ 30
-  IF dumbbell OR wide_slit THEN BEGIN 
-     message,'NODUMBBELL applies to narrow slit observations only, returning unmodified data array',/info
-     return, data 
-  ENDIF
-  
-  slit_y_range = self->get_slit_y_range(data, window_index, approximated_slit = approximated_slit)
+  slit_y_range = self->get_slit_y_range(data, window_index, approximated_slit = approximated_slit, debug_plot=debug_plot)
 
-  print,'Slit range: '+ ((keyword_set(approximated_slit)) ? '(approximated slit) ': '')+trim(slit_y_range[0])+' - '+trim(slit_y_range[1])
-  
   data[*,0:slit_y_range[0],*,*] = !values.f_nan
   data[*,slit_y_range[1]:*,*,*] = !values.f_nan
 
@@ -714,7 +736,7 @@ END
 ; Description:
 ;     Returns the data of the specified window. If 'load' keyword is set,
 ;     the function returns a copy of the array, otherwise a link to the
-;     array in the file. If 'load' and 'nodumbbell' keywords are set any
+;     array in the file. If 'load' and 'slit_only' keywords are set any
 ;     pixels below and above the slit are set to NaN in the returned array 
 ;
 ; INPUTS:
@@ -723,7 +745,7 @@ END
 ; KEYWORD PARAMETERS:
 ;     load : if set, the data is read from the file and returned as an array
 ;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
-;     nodumbbell: if set, call ::mask_regions_outside_slit in order to mask
+;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
 ;                 any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lies above/below the dumbbells, 
@@ -735,7 +757,7 @@ END
 ; OUTPUT:
 ;     returns either a link to the data, or the array itself
 ;-
-FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale, nodumbbell=nodumbbell, approximated_slit=approximated_slit
+FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale, slit_only=slit_only, approximated_slit=approximated_slit, debug_plot=debug_plot
   ;Returns a link to the data of window, or the data itself if keyword load is set
   COMPILE_OPT IDL2
 
@@ -759,8 +781,8 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
       
 
    ENDELSE
-    IF keyword_set(nodumbbell) THEN $
-       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit)
+    IF keyword_set(slit_only) THEN $
+       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
   ENDIF ELSE BEGIN
     data = *(*self.window_assoc)[window_index]
   ENDELSE
