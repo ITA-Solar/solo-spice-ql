@@ -34,7 +34,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-01-18 14:38 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 pro spice_create_l3, spice_object, window_index
