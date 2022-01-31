@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-01-31 13:37 CET $
+; $Id: 2022-01-31 16:46 CET $
 
 
 ;+
@@ -753,6 +753,13 @@ END
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
+;     approximated_slit: to be used in cimbination with keyword slit_only. If both
+;                 keywords are set, use a fixed (conservative) value for the slit
+;                 range, i.e. do not estimate the slit length based on the
+;                 position of the dumbbells.
+;     debug_plot: to be used in combination with keywords slit_only (and
+;                 optionally approximated_slit). If set, make plots to
+;                 illustrate which part of the window is being masked. 
 ;
 ; OUTPUT:
 ;     returns either a link to the data, or the array itself
