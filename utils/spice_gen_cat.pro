@@ -46,7 +46,7 @@
 ;
 ; Version     : Version 2, SVHH, 11 September 2020
 ;
-; $Id: 2020-11-25 21:19 CET $
+; $Id: 2022-02-08 12:43 CET $
 ;-            
 
 FUNCTION spice_gen_cat__line,header,keyword_info
@@ -93,14 +93,17 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, q
   
   catalog_filename = concat_dir(catalog_filedir,'spice_catalog.txt')
   
-  IF keyword_set(reset) THEN file_delete,catalog_filename,/allow_nonexistent
+  IF keyword_set(reset) THEN BEGIN 
+     original_catalog_filename = catalog_filename
+     catalog_filename +=  '_not_ready_yet'
+  ENDIF
   
   IF file_test(catalog_filename, /read) THEN BEGIN
      list = rd_ascii(catalog_filename)
      lines_in_hash = spice_gen_cat__stash_lines_in_hash(list[1:*])
      print,"Found list, with "+(lines_in_hash.count()).toString()+" elements"
   END ELSE BEGIN
-     PRINT,"No file "+catalog_filename+" found"
+     PRINT, (keyword_set(reset)) ? original_catalog_filename+" reset" : "No file "+catalog_filename+" found"
      PRINT,"Creating one from scratch"
      lines_in_hash = hash()
   END
@@ -139,6 +142,8 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, q
      foreach key,keys DO printf,catalog_lun,lines_in_hash[key],format="(a)"
   END
   FREE_LUN,catalog_lun
+  
+  file_move, catalog_filename, original_catalog_filename,/overwrite
 END
 
 ;spice_gen_cat
