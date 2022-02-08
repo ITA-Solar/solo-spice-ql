@@ -43,10 +43,13 @@
 ;                          Initial version based on sfitslist.pro
 ;               Version 2, SVHH, 11 September 2020
 ;                          Rewritten from scratch
+;               Version 3, TF, 8 February 2022
+;                          When keyword RESET is set: do not delete old
+;                          catalog file before new catalog file is generated
 ;
-; Version     : Version 2, SVHH, 11 September 2020
+; Version     : Version 3, TF, 8 Februrary 2022
 ;
-; $Id: 2022-02-08 12:43 CET $
+; $Id: 2022-02-08 12:50 CET $
 ;-            
 
 FUNCTION spice_gen_cat__line,header,keyword_info
