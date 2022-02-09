@@ -63,7 +63,7 @@
 ; HISTORY:
 ;      Ver. 1, 28-Sep-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-19 14:55 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, $

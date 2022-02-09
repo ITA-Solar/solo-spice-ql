@@ -33,7 +33,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-18 14:24 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 FUNCTION spice_ana2fitshdr_lambda, header_l2=header_l2, datetime=datetime, $

@@ -60,7 +60,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-01-20 11:21 CET $
+; $Id: 2022-01-21 12:59 CET $
 
 
 PRO ana2fits, ana, n_windows=n_windows, filename_out=filename_out, $
