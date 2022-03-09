@@ -41,8 +41,12 @@ This will open a window, which lets you search your local hard disk for spice fi
 
 ## Data Analysis Software
 
-Coming soon:
 * SPICE wrapper for xcfit (Interactive line fitting)
+    * Initial working version
+    ```
+    ana = spice_object->xcfit_block(window_index)
+    ```
+Coming soon:
 * “Masking” - averaging spectra over spatial regions (à la eis_mask_spectrum/pixel_mask_gui)
 
 
@@ -174,7 +178,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-03-09 12:08 CET $
+; $Id: 2022-03-09 13:26 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
