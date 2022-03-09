@@ -141,6 +141,10 @@ In general, all functionalities in the heritage routines will be preserved as fa
         ncolors = ncolors]
     ```
 * Interactive line fitting (xcfit)
+    * Initial working version
+    ```
+    ana = spice_object->xcfit_block(window_index)
+    ```
 * “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
 * S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file)
     * Implemented
@@ -170,7 +174,7 @@ Specialised routines for displaying secondary derived products such as temperatu
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2021-08-12 21:10 CEST $
+; $Id: 2022-03-09 12:08 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
