@@ -2,5 +2,5 @@
 .DS_Store
 *\#.gitignore\#
 \#*.pro\#
-*.\#*.pro
+*.\#*.pro*
 *.pro~
