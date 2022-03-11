@@ -23,7 +23,9 @@
 ; OPTIONAL INPUTS:
 ;
 ; OUTPUTS:
-;      A 2-dimensional vector of size (2 x npolygon), containing all the coordinates of the vertices of the polygon.
+;      A 2-dimensional vector of size (2 x nvertices), containing all the coordinates of the vertices of the polygon.
+;      The vertices are ordered in pairs that form an edge of the polygon, i.e. [*,i] and [*,i+1] is such a pair,
+;      where i is divisible by 2. The edges of the polygon are unordered.
 ;
 ; OPTIONAL OUTPUTS:
 ;      xpolygon: A 1-dimensional vector with the x-components of the vertices of the polygon.
@@ -32,7 +34,7 @@
 ; HISTORY:
 ;      Ver. 1, 10-Mar-2022, Martin Wiesmann
 ;-
-; $Id: 2022-03-11 10:59 CET $
+; $Id: 2022-03-11 12:50 CET $
 
 
 FUNCTION vector2polygon, x_in, y_in, xpolygon=xpolygon, ypolygon=ypolygon
@@ -58,7 +60,6 @@ FUNCTION vector2polygon, x_in, y_in, xpolygon=xpolygon, ypolygon=ypolygon
   xpolygon = intarr(size_hull[2]*2)
   ypolygon = xpolygon
   FOR ihull=0,size_hull[2]-1 DO BEGIN
-    print, hull[*,ihull]
     xpolygon[ihull*2] = x[hull[0, ihull]]
     ypolygon[ihull*2] = y[hull[0, ihull]]
     xpolygon[ihull*2+1] = x[hull[1, ihull]]
