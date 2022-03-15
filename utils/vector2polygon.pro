@@ -30,11 +30,21 @@
 ; OPTIONAL OUTPUTS:
 ;      xpolygon: A 1-dimensional vector with the x-components of the vertices of the polygon.
 ;      ypolygon: A 1-dimensional vector with the y-components of the vertices of the polygon.
+; 
+; EXAMPLE USAGE:
+;      points = fix(99*randomu(seed, 2, 33))
+;      vector = vector2polygon(points, xpolygon=xpolygon, ypolygon=ypolygon)
+;      plot, points[0,*], points[1,*], psym=7, color=230, xstyle=2, ystyle=2
+;      for i=0,(size(vector))[2]/2-1 do begin
+;        xvertices = [vector[0,2*i], vector[0,2*i+1]]
+;        yvertices = [vector[1,2*i], vector[1,2*i+1]]
+;        oplot, xvertices, yvertices, color=180
+;      endfor
 ;
 ; HISTORY:
 ;      Ver. 1, 10-Mar-2022, Martin Wiesmann
 ;-
-; $Id: 2022-03-11 12:50 CET $
+; $Id: 2022-03-15 11:34 CET $
 
 
 FUNCTION vector2polygon, x_in, y_in, xpolygon=xpolygon, ypolygon=ypolygon
