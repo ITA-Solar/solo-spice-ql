@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-01-31 16:46 CET $
+; $Id: 2022-03-16 14:23 CET $
 
 
 ;+
@@ -130,6 +130,8 @@ END
 ;
 ; KEYWORD PARAMETERS:
 ;     window_index : the index of the desired window
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;
 ;-
 function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit
