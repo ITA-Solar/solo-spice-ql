@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-16 14:26 CET $
+; $Id: 2022-03-16 14:27 CET $
 
 
 ;+
@@ -168,8 +168,8 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   miss = self->get_missing_value()
   miss = -1000.0d
 
-  print, 'before'
-  help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
+  ;print, 'before'
+  ;help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
   
   detector = self->get_header_info('DETECTOR', window_index)
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
@@ -187,9 +187,9 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
 
-  help,ana
-  handle_value,ana.fit_h,fit
-  help,fit
+  ;help,ana
+  ;handle_value,ana.fit_h,fit
+  ;help,fit
   ;stop
 
   if ~keyword_set(no_fitting) then begin
@@ -204,29 +204,14 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
   SPICE_XCFIT_BLOCK, ana=ana
 
-  print, 'after'
-  help,ana
+  ;print, 'after'
+  ;help,ana
 
-  handle_value, ana.result_h, result
-  help,result
-  handle_value,ana.fit_h,fit
-  help,fit
+  ;handle_value, ana.result_h, result
+  ;help,result
+  ;handle_value,ana.fit_h,fit
+  ;help,fit
   ;stop
-
-  ;ana = {history: '', $
-  ;  lambda:lambda, $
-  ;  data:data, $
-  ;  weights:weights, $
-  ;  fit:fit, $
-  ;  result:result, $
-  ;  residual:residual, $
-  ;  include:include, $
-  ;  const:const, $
-  ;  filename:'', $
-  ;  datasource:'', $
-  ;  definition:'', $
-  ;  missing:miss, $
-  ;  label:''}
 
   return, ana
 END
