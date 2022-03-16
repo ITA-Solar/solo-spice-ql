@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-16 14:23 CET $
+; $Id: 2022-03-16 14:26 CET $
 
 
 ;+
@@ -132,9 +132,10 @@ END
 ;     window_index : the index of the desired window
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
 ;
 ;-
-function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit
+function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
@@ -191,11 +192,13 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   help,fit
   ;stop
 
-  print, ' ==========='
-  print,'fitting data'
-  print, 'this may take a while'
-  print, ' ==========='
-  cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
+  if ~keyword_set(no_fitting) then begin
+    print, ' ==========='
+    print,'fitting data'
+    print, 'this may take a while'
+    print, ' ==========='
+    cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
+  endif
 
 
   ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
