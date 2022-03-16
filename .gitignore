@@ -1,6 +1,6 @@
 .idea
+.project
 .DS_Store
-*\#.gitignore\#
-\#*.pro\#
-*.\#*.pro*
-*.pro~
+*~
+#*
+test_data/
