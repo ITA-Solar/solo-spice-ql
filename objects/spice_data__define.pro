@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-16 14:27 CET $
+; $Id: 2022-03-17 10:50 CET $
 
 
 ;+
@@ -126,16 +126,19 @@ END
 
 ;+
 ; Description:
-;     Calls xcfit_block with the data of the chosen window(s)
+;     Calls xcfit_block with the data of the chosen window and returns an analysis structure
+;     that contains estimated fit components and the fit.
 ;
 ; KEYWORD PARAMETERS:
 ;     window_index : the index of the desired window
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
+;     no_widget: If set, xcfit_block will not be called
 ;
 ;-
-function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting
+function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
+  no_widget=no_widget
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
@@ -168,14 +171,9 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   miss = self->get_missing_value()
   miss = -1000.0d
 
-  ;print, 'before'
-  ;help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
-  
   detector = self->get_header_info('DETECTOR', window_index)
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
-  widmin = widmin_pixels * self->get_header_info('CDELT3', window_index)
-  
- 
+  widmin = widmin_pixels * self->get_header_info('CDELT3', window_index) 
   
   adef = generate_adef(data, LAMbda, widmin=widmin)
   badix = where(data ne data, n_bad)
@@ -187,11 +185,6 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
 
-  ;help,ana
-  ;handle_value,ana.fit_h,fit
-  ;help,fit
-  ;stop
-
   if ~keyword_set(no_fitting) then begin
     print, ' ==========='
     print,'fitting data'
@@ -201,17 +194,10 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   endif
 
 
-  ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
-  SPICE_XCFIT_BLOCK, ana=ana
-
-  ;print, 'after'
-  ;help,ana
-
-  ;handle_value, ana.result_h, result
-  ;help,result
-  ;handle_value,ana.fit_h,fit
-  ;help,fit
-  ;stop
+  if ~keyword_set(no_widget) then begin    
+    ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
+    SPICE_XCFIT_BLOCK, ana=ana
+  endif
 
   return, ana
 END
