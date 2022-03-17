@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-17 13:37 CET $
+; $Id: 2022-03-17 15:21 CET $
 
 
 ;+
@@ -128,9 +128,11 @@ END
 ; Description:
 ;     Calls xcfit_block with the data of the chosen window and returns an analysis structure
 ;     that contains estimated fit components and the fit.
+;     This function is also called by 'create_l3' method, to get the ANA structure, which is
+;     then saved into a level 3 FITS file.
 ;
 ; KEYWORD PARAMETERS:
-;     window_index : the index of the desired window, default is 0.
+;     window_index : The index of the desired window, default is 0.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
@@ -208,7 +210,7 @@ END
 ;     Creates a level 3 file from the level 2
 ;
 ; KEYWORD PARAMETERS:
-;     window_index : the index of the desired window, default is all windows
+;     window_index : The index of the desired window, default is all windows.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
