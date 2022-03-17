@@ -19,6 +19,12 @@
 ;     window_index : One or more window indices of windows that should be included in level 3 file.
 ;                    If not provided, all windows will be included.
 ;
+; KEYWORD PARAMETERS:
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
+;     no_widget: If set, xcfit_block will not be called
+;
 ; OUTPUT:
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;
@@ -34,85 +40,29 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-01-21 12:59 CET $
+; $Id: 2022-03-17 13:37 CET $
 
 
-pro spice_create_l3, spice_object, window_index
+pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
+  no_widget=no_widget
   COMPILE_OPT IDL2
 
   if typename(spice_object) NE 'SPICE_DATA' then begin
     print, 'Need a spice_object as input'
     return
   endif
-  self = spice_object
-  if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
+
+  if N_ELEMENTS(window_index) eq 0 then window_index = indgen(spice_object->get_number_windows())
 
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
-    if ~self->get_number_exposures(window_index[iwindow]) then begin
-      print, 'single exposure data, do not start xcfit_block'
-      return
-    endif
-
-    data = self->get_window_data(window_index[iwindow], /load)
-    ind = where(data ne data, count)
-    print, 'data ne data', count
-    if count gt 0 then data[ind] = -1000.0
-    lambda = self->get_wcs_coord(window_index[iwindow], /lambda)
-
-    size_data = size(data)
-    if self->get_sit_and_stare() then begin
-      print, 'sit_and_stare'
-      lambda = transpose(lambda, [2, 0, 1, 3])
-      data = transpose(data, [2, 0, 1, 3])
-      weights = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value=1.0)
-    endif else begin
-      print, 'not sit_and_stare'
-      lambda = reform(lambda)
-      lambda = transpose(lambda, [2, 0, 1])
-      data = transpose(data, [2, 0, 1])
-      weights = make_array(size_data[3], size_data[1], size_data[2], value=1.0)
-    endelse
-    type_data = size(data, /type)
-    lambda = fix(lambda, type=type_data)
-    miss = self->get_missing_value()
-    miss = -1000.0d
-
-    print, 'before'
-    help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
-
-    adef = generate_adef(data, LAMbda)
-    print,''
-    print,'adef'
-    help,adef
-
-    ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
-    ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
-
-    help,ana
-    handle_value,ana.fit_h,fit
-    help,fit
-    ;stop
-
-    print, ' ==========='
-    print,'fitting window ' + strtrim(string(iwindow+1), 2) + ' of ' + strtrim(string(N_ELEMENTS(window_index)), 2)
-    print, 'this may take a while'
-    print, ' ==========='
-    window,0
-    handle_value,ana.result_h,result
-    help,result
-    ;stop
-    ;pih, result[0,*,*]
-    cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
-    handle_value,ana.result_h,result
-    help,result
-    ;pih, result[0,0,*,*]
-
-    SPICE_XCFIT_BLOCK, ana=ana
+    ana = spice_object->xcfit_block(window_index[iwindow], approximated_slit=approximated_slit, no_fitting=no_fitting, $
+      no_widget=no_widget)
+    if size(ana, /type) NE 8 then continue
 
     if iwindow gt 0 then extension=1 else extension=0
 
-    headers = spice_ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow], /string), $
+    headers = spice_ana2fitshdr(ana, header_l2=spice_object->get_header(window_index[iwindow], /string), $
       extension=extension, filename_l3=filename_l3, n_windows=N_ELEMENTS(window_index), $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
@@ -129,7 +79,6 @@ pro spice_create_l3, spice_object, window_index
     help,include
     help,const
     help,fit
-    ;return
 
     if iwindow eq 0 then begin
       file = filepath(filename_l3, /tmp)
@@ -146,8 +95,6 @@ pro spice_create_l3, spice_object, window_index
     writefits, file, CONST, *headers[6], /append
 
     d= readfits(file,h)
-    ;stop
-
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 

@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-17 10:50 CET $
+; $Id: 2022-03-17 13:37 CET $
 
 
 ;+
@@ -130,7 +130,7 @@ END
 ;     that contains estimated fit components and the fit.
 ;
 ; KEYWORD PARAMETERS:
-;     window_index : the index of the desired window
+;     window_index : the index of the desired window, default is 0.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
@@ -208,14 +208,20 @@ END
 ;     Creates a level 3 file from the level 2
 ;
 ; KEYWORD PARAMETERS:
-;     window_index : the index of the desired window
+;     window_index : the index of the desired window, default is all windows
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
+;     no_widget: If set, xcfit_block will not be called
 ;
 ;-
-pro spice_data::create_l3, window_index
+pro spice_data::create_l3, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
+  no_widget=no_widget
   ;Creates level 3 SPICE files with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
-  spice_create_l3, self, window_index
+  spice_create_l3, self, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
+    no_widget=no_widget
 END
 
 
