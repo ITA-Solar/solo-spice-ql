@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-17 15:21 CET $
+; $Id: 2022-03-18 14:40 CET $
 
 
 ;+
@@ -1980,6 +1980,7 @@ PRO spice_data::read_file, file
     CASE hdr.BITPIX OF
       16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
       -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
+      -64: assocs[iwin] = ptr_new(assoc(file_lun, dblarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
       ELSE: message,'unsupported datatype ' + strtrim(string(hdr.BITPIX), 2)
     ENDCASE
 
