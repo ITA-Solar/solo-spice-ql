@@ -173,15 +173,15 @@ Level 3 data products will be produced in the standard data pipeline, and the se
 The output format for Level 3 data will be fits files, with individual data products stored in separate extensions that may be read using standard fits software. Direct products from line fits (intensity/velocity/widths) will be viewable and modifiable using XCFIT.
 Specialised routines for displaying secondary derived products such as temperature maps, etc., are not planned at this point.
 
-    ```
-    spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [, no_fitting=no_fitting] [, no_widget=no_widget] )
-    ```
+```
+spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [, no_fitting=no_fitting] [, no_widget=no_widget] )
+```
 
 ## For Developers
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-03-18 14:44 CET $
+; $Id: 2022-03-21 12:59 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
