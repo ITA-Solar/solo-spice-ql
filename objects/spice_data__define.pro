@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-21 11:26 CET $
+; $Id: 2022-03-21 11:56 CET $
 
 
 ;+
@@ -202,22 +202,33 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   endif
 
   if keyword_set(no_fitting) && keyword_set(no_widget) then begin
-    handle_value, ana.result_h, result
-    help, result
-    handle_value, ana.data_h, data
-    help, data
-    handle_value, ana.lambda_h, lambda
-    help, lambda
-    handle_value, ana.residual_h, residual
-    help, residual
-    handle_value, ana.weights_h, weights
-    help, weights
-    handle_value, ana.include_h, include
-    help, include
-    handle_value, ana.const_h, const
-    help, const
     handle_value, ana.fit_h, fit
-    help, fit
+    n_components = N_TAGS(fit)
+    n_params = 0
+    for itag=0,n_components-1 do begin
+      fit_cur = fit.(itag)
+      n_params = n_params + N_ELEMENTS(fit_cur.param)
+    endfor
+    handle_value, ana.data_h, data
+    sdata = size(data)
+    if sdata[0] eq 3 then begin
+      result = dblarr(n_params+1, sdata[2], sdata[3])
+      residual = fltarr(sdata[1], sdata[2], sdata[3])
+      include = bytarr(n_components, sdata[2], sdata[3])
+      const = bytarr(n_params, sdata[2], sdata[3])
+    endif else if sdata[0] eq 4 then begin
+      result = dblarr(n_params+1, sdata[2], sdata[3], sdata[4])
+      residual = fltarr(sdata[1], sdata[2], sdata[3], sdata[4])
+      include = bytarr(n_components, sdata[2], sdata[3], sdata[4])
+      const = bytarr(n_params, sdata[2], sdata[3], sdata[4])
+    endif else begin
+      print, 'data cube has wrong number of dimensions.'
+      stop
+    endelse
+    handle_value, ana.result_h, result, /no_copy, /set
+    handle_value, ana.residual_h, residual, /no_copy, /set
+    handle_value, ana.include_h, include, /no_copy, /set
+    handle_value, ana.const_h, const, /no_copy, /set
   endif
 
   return, ana
