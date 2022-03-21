@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-18 14:40 CET $
+; $Id: 2022-03-21 11:26 CET $
 
 
 ;+
@@ -50,7 +50,7 @@
 ;     file : path of a SPICE FITS file.
 ;
 ; OUTPUT:
-;     1 (True) if initialization succeeded, 0 (False) otherwise (not implemented)
+;     1 (True) if initialization succeeded, 0 (False) otherwise
 ;-
 FUNCTION spice_data::init, file
   COMPILE_OPT IDL2
@@ -59,8 +59,8 @@ FUNCTION spice_data::init, file
   self.ccd_size = [1024, 1024]
   IF n_elements(file) EQ 1 THEN BEGIN
     self->read_file, file
-  ENDIF
-  return, 1
+    return, 1
+  ENDIF ELSE return, 0
 END
 
 
@@ -199,6 +199,25 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   if ~keyword_set(no_widget) then begin    
     ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
     SPICE_XCFIT_BLOCK, ana=ana
+  endif
+
+  if keyword_set(no_fitting) && keyword_set(no_widget) then begin
+    handle_value, ana.result_h, result
+    help, result
+    handle_value, ana.data_h, data
+    help, data
+    handle_value, ana.lambda_h, lambda
+    help, lambda
+    handle_value, ana.residual_h, residual
+    help, residual
+    handle_value, ana.weights_h, weights
+    help, weights
+    handle_value, ana.include_h, include
+    help, include
+    handle_value, ana.const_h, const
+    help, const
+    handle_value, ana.fit_h, fit
+    help, fit
   endif
 
   return, ana
