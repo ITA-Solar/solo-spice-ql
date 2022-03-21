@@ -10,7 +10,8 @@
 ;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
-;     spice_create_l3, spice_object, window_index
+;     spice_create_l3, spice_object [, window_index] [, approximated_slit=approximated_slit] [, no_fitting=no_fitting]
+;       [, no_widget=no_widget]
 ;
 ; INPUTS:
 ;     spice_object : a SPICE_DATA object.
@@ -40,7 +41,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-03-17 13:37 CET $
+; $Id: 2022-03-21 11:07 CET $
 
 
 pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
@@ -69,22 +70,7 @@ pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 
-    help, headers
-    help, filename_l3
-    help,result
-    help,INPUT_DATA
-    help,lambda
-    help,residual
-    help,weights
-    help,include
-    help,const
-    help,fit
-
-    if iwindow eq 0 then begin
-      file = filepath(filename_l3, /tmp)
-      help,file
-      ;stop
-    endif
+    if iwindow eq 0 then file = filepath(filename_l3, /tmp)
 
     writefits, file, RESULT, *headers[0], append=extension
     writefits, file, INPUT_DATA, *headers[1], /append
@@ -99,8 +85,6 @@ pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 
   spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, /force
-  print,files_found
-  print,file_moved
-  print,destination
+  print, 'Level 3 file saved to: ', destination
 
 end
