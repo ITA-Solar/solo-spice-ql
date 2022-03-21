@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-21 11:56 CET $
+; $Id: 2022-03-21 13:49 CET $
 
 
 ;+
@@ -215,11 +215,13 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
       result = dblarr(n_params+1, sdata[2], sdata[3])
       residual = fltarr(sdata[1], sdata[2], sdata[3])
       include = bytarr(n_components, sdata[2], sdata[3])
+      include[*] = 1
       const = bytarr(n_params, sdata[2], sdata[3])
     endif else if sdata[0] eq 4 then begin
       result = dblarr(n_params+1, sdata[2], sdata[3], sdata[4])
       residual = fltarr(sdata[1], sdata[2], sdata[3], sdata[4])
       include = bytarr(n_components, sdata[2], sdata[3], sdata[4])
+      include[*] = 1
       const = bytarr(n_params, sdata[2], sdata[3], sdata[4])
     endif else begin
       print, 'data cube has wrong number of dimensions.'
