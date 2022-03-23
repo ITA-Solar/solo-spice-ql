@@ -6,7 +6,7 @@ https://github.com/ITA-Solar/solo-spice-ql/wiki
 If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics:
 Preferably by raising a new issue here: https://github.com/ITA-Solar/solo-spice-ql/issues
 
-or else by mail to:
+or else by mail to:  
 martin.wiesmann@astro.uio.no  
 s.v.h.haugan@astro.uio.no  
 terje.fredvik@astro.uio.no
@@ -41,8 +41,12 @@ This will open a window, which lets you search your local hard disk for spice fi
 
 ## Data Analysis Software
 
-Coming soon:
 * SPICE wrapper for xcfit (Interactive line fitting)
+    * Initial working version
+    ```
+    ana = spice_object->xcfit_block(window_index)
+    ```
+Coming soon:
 * “Masking” - averaging spectra over spatial regions (à la eis_mask_spectrum/pixel_mask_gui)
 
 
@@ -141,6 +145,10 @@ In general, all functionalities in the heritage routines will be preserved as fa
         ncolors = ncolors]
     ```
 * Interactive line fitting (xcfit)
+    * Initial working version
+    ```
+    ana = spice_object->xcfit_block(window_index)
+    ```
 * “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
 * S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file)
     * Implemented
@@ -165,12 +173,15 @@ Level 3 data products will be produced in the standard data pipeline, and the se
 The output format for Level 3 data will be fits files, with individual data products stored in separate extensions that may be read using standard fits software. Direct products from line fits (intensity/velocity/widths) will be viewable and modifiable using XCFIT.
 Specialised routines for displaying secondary derived products such as temperature maps, etc., are not planned at this point.
 
+```
+spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [, no_fitting=no_fitting] [, no_widget=no_widget] )
+```
 
 ## For Developers
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2021-08-12 21:10 CEST $
+; $Id: 2022-03-21 13:02 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
