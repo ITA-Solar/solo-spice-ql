@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.  
 ;-
-; $Id: 2022-03-16 14:27 CET $
+; $Id: 2022-03-21 13:49 CET $
 
 
 ;+
@@ -50,7 +50,7 @@
 ;     file : path of a SPICE FITS file.
 ;
 ; OUTPUT:
-;     1 (True) if initialization succeeded, 0 (False) otherwise (not implemented)
+;     1 (True) if initialization succeeded, 0 (False) otherwise
 ;-
 FUNCTION spice_data::init, file
   COMPILE_OPT IDL2
@@ -59,8 +59,8 @@ FUNCTION spice_data::init, file
   self.ccd_size = [1024, 1024]
   IF n_elements(file) EQ 1 THEN BEGIN
     self->read_file, file
-  ENDIF
-  return, 1
+    return, 1
+  ENDIF ELSE return, 0
 END
 
 
@@ -126,16 +126,21 @@ END
 
 ;+
 ; Description:
-;     Calls xcfit_block with the data of the chosen window(s)
+;     Calls xcfit_block with the data of the chosen window and returns an analysis structure
+;     that contains estimated fit components and the fit.
+;     This function is also called by 'create_l3' method, to get the ANA structure, which is
+;     then saved into a level 3 FITS file.
 ;
 ; KEYWORD PARAMETERS:
-;     window_index : the index of the desired window
+;     window_index : The index of the desired window, default is 0.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
+;     no_widget: If set, xcfit_block will not be called
 ;
 ;-
-function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting
+function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
+  no_widget=no_widget
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
@@ -168,14 +173,9 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   miss = self->get_missing_value()
   miss = -1000.0d
 
-  ;print, 'before'
-  ;help, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST
-  
   detector = self->get_header_info('DETECTOR', window_index)
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
-  widmin = widmin_pixels * self->get_header_info('CDELT3', window_index)
-  
- 
+  widmin = widmin_pixels * self->get_header_info('CDELT3', window_index) 
   
   adef = generate_adef(data, LAMbda, widmin=widmin)
   badix = where(data ne data, n_bad)
@@ -187,11 +187,6 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
 
-  ;help,ana
-  ;handle_value,ana.fit_h,fit
-  ;help,fit
-  ;stop
-
   if ~keyword_set(no_fitting) then begin
     print, ' ==========='
     print,'fitting data'
@@ -201,17 +196,42 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   endif
 
 
-  ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
-  SPICE_XCFIT_BLOCK, ana=ana
+  if ~keyword_set(no_widget) then begin    
+    ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
+    SPICE_XCFIT_BLOCK, ana=ana
+  endif
 
-  ;print, 'after'
-  ;help,ana
-
-  ;handle_value, ana.result_h, result
-  ;help,result
-  ;handle_value,ana.fit_h,fit
-  ;help,fit
-  ;stop
+  if keyword_set(no_fitting) && keyword_set(no_widget) then begin
+    handle_value, ana.fit_h, fit
+    n_components = N_TAGS(fit)
+    n_params = 0
+    for itag=0,n_components-1 do begin
+      fit_cur = fit.(itag)
+      n_params = n_params + N_ELEMENTS(fit_cur.param)
+    endfor
+    handle_value, ana.data_h, data
+    sdata = size(data)
+    if sdata[0] eq 3 then begin
+      result = dblarr(n_params+1, sdata[2], sdata[3])
+      residual = fltarr(sdata[1], sdata[2], sdata[3])
+      include = bytarr(n_components, sdata[2], sdata[3])
+      include[*] = 1
+      const = bytarr(n_params, sdata[2], sdata[3])
+    endif else if sdata[0] eq 4 then begin
+      result = dblarr(n_params+1, sdata[2], sdata[3], sdata[4])
+      residual = fltarr(sdata[1], sdata[2], sdata[3], sdata[4])
+      include = bytarr(n_components, sdata[2], sdata[3], sdata[4])
+      include[*] = 1
+      const = bytarr(n_params, sdata[2], sdata[3], sdata[4])
+    endif else begin
+      print, 'data cube has wrong number of dimensions.'
+      stop
+    endelse
+    handle_value, ana.result_h, result, /no_copy, /set
+    handle_value, ana.residual_h, residual, /no_copy, /set
+    handle_value, ana.include_h, include, /no_copy, /set
+    handle_value, ana.const_h, const, /no_copy, /set
+  endif
 
   return, ana
 END
@@ -222,14 +242,20 @@ END
 ;     Creates a level 3 file from the level 2
 ;
 ; KEYWORD PARAMETERS:
-;     window_index : the index of the desired window
+;     window_index : The index of the desired window, default is all windows.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
+;     no_widget: If set, xcfit_block will not be called
 ;
 ;-
-pro spice_data::create_l3, window_index
+pro spice_data::create_l3, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
+  no_widget=no_widget
   ;Creates level 3 SPICE files with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
-  spice_create_l3, self, window_index
+  spice_create_l3, self, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
+    no_widget=no_widget
 END
 
 
@@ -1986,6 +2012,7 @@ PRO spice_data::read_file, file
     CASE hdr.BITPIX OF
       16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
       -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
+      -64: assocs[iwin] = ptr_new(assoc(file_lun, dblarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
       ELSE: message,'unsupported datatype ' + strtrim(string(hdr.BITPIX), 2)
     ENDCASE
 
