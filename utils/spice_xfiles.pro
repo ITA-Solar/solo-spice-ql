@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2021-12-10 13:38 CET $
+; $Id: 2022-03-28 13:25 CEST $
 ;-
 
 
@@ -461,7 +461,7 @@ pro spice_xfiles_read, event
       box_message,['found '+strtrim(string(n_ana),2)+' windows, loaded all of them', $
         'xcfit_block will be opened for each, one after the other', $
         'close xcfit_block with the button "File/Exit->Exit"']
-      for iana=0,n_ana-1 do spice_xcfit_block,ana=ana[iana], title=titles[iana]
+      for iana=0,n_ana-1 do xcfit_block,ana=ana[iana], title=titles[iana]
     endif else begin
       spice_xcontrol, file, group_leader=(*info).tlb
     endelse
