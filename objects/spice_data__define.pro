@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-03-28 13:12 CEST $
+; $Id: 2022-03-28 13:25 CEST $
 
 
 ;+
@@ -197,8 +197,8 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
 
 
   if ~keyword_set(no_widget) then begin
-    ;SPICE_XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
-    SPICE_XCFIT_BLOCK, ana=ana
+    ;XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
+    XCFIT_BLOCK, ana=ana
   endif
 
   if keyword_set(no_fitting) && keyword_set(no_widget) then begin
