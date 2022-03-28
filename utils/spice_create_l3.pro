@@ -30,7 +30,7 @@
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;
 ; CALLS:
-;     generate_adef, mk_analysis, cfit_block, SPICE_XCFIT_BLOCK, spice_ana2fitshdr, writefits, spice_ingest
+;     generate_adef, mk_analysis, cfit_block, XCFIT_BLOCK, spice_ana2fitshdr, writefits, spice_ingest
 ;
 ; COMMON BLOCKS:
 ;
@@ -41,7 +41,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-03-21 11:07 CET $
+; $Id: 2022-03-28 13:25 CEST $
 
 
 pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
