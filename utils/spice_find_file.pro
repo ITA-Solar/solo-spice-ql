@@ -90,7 +90,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-03-31 10:22 CEST $
+; $Id: 2022-03-31 11:20 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -179,12 +179,37 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     IF fcount GT 0 THEN BEGIN
       files=files[fgood]
       fileinfo=fileinfo[fgood]
+      count0=fcount
     ENDIF ELSE count0=0
   ENDIF
 
   IF count0 EQ 0 THEN BEGIN
     print, 'no SPICE files found'
     return,''
+  ENDIF
+  
+  
+  ; Remove duplicates of files
+  ind_keep = []
+  ind_keep_not = []
+  FOR i=0,count0-1 DO BEGIN
+    IF where(ind_keep eq i) GE 0 || where(ind_keep_not eq i) GE 0 THEN continue
+    ind = where(fileinfo.spiobsid eq fileinfo[i].spiobsid AND $
+      fileinfo.rasterno eq fileinfo[i].rasterno AND $
+      fileinfo.level eq fileinfo[i].level, count)
+    IF count GT 1 THEN BEGIN
+      max_version = max(fileinfo[ind].version, max_ind)
+      ind_keep = [ind_keep, ind[max_ind]]
+      remove, max_ind, ind
+      ind_keep_not = [ind_keep_not, ind]
+    ENDIF ELSE BEGIN
+      ind_keep = [ind_keep, i]
+    ENDELSE
+  ENDFOR
+  IF N_ELEMENTS(ind_keep_not) GT 0 THEN BEGIN
+    files=files[ind_keep]
+    fileinfo=fileinfo[ind_keep]
+    count0=N_ELEMENTS(ind_keep)
   ENDIF
 
 
