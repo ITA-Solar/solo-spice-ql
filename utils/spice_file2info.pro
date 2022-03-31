@@ -21,7 +21,7 @@
 ;      info = { $
 ;         is_spice_file: byte,  1 if the file is a spice file, 0 otherwise
 ;         filename:      str,   name of the file, without the path
-;         level:         int,   data level (0, 1 or 2), -1 if unknown
+;         level:         int,   data level (0, 1, 2 or 3), -1 if unknown
 ;         study_type:    str,   type of study
 ;         sat_time:      str,   internal satellite time of observation, 
 ;                               only available for level 0
@@ -36,7 +36,7 @@
 ; HISTORY:
 ;      Ver. 1, 17-Jun-2020, Martin Wiesmann
 ;-
-; $Id: 2021-12-03 11:59 CET $
+; $Id: 2022-03-31 10:23 CEST $
 
 
 FUNCTION spice_file2info, file
