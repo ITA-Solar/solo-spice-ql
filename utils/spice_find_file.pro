@@ -33,7 +33,7 @@
 ;     TIME_END: This can be in any format accepted by the ANYTIM suite of
 ;               routines. For example, '1-jan-2010', '2010-01-01 05:00'. This is
 ;               the end of the time window to be searched.
-;     LEVEL:    Desired level of the data (0, 1 or 2 (default))
+;     LEVEL:    Desired level of the data (0, 1, 2 (default) or 3)
 ;     TOP_DIR:  Top directory in which the SPICE data lies. If not provided
 ;               the path given in $SPICE_DATA is searched.
 ;     PATH_INDEX: If $SPICE_DATA or TOP_DIR contains multiple paths, then this
@@ -62,23 +62,23 @@
 ; OUTPUTS:
 ;     A string or string array containing the full path to a SPICE file or files.
 ;     If there are no matches, then an empty string is returned. If the keyword
-;     SEQUENCE is set, then a LIST is returned.
+;     SEQUENCE is set and TIME_END is provided, then a LIST is returned.
 ;
 ; OPTIONAL OUTPUTS:
 ;     COUNT_FILE:An integer containing the number of matching files.
 ;     COUNT_SEQ: An integer containing the number of matching sequences,
-;                only non-zeo if SEQUENCE is set.
+;                only non-zero if SEQUENCE is set.
 ;
 ; EXAMPLE:
 ;     IDL> file=spice_find_file('2020/05/28 16:04:00.000')
-;               returns the closes file to this date/time
+;               returns the closest file to this date/time
 ;     IDL> file=spice_find_file('28-may-2020 16:04',/all)
 ;               returns all files from the given date
 ;     IDL> file=spice_find_file('2020-05-28T16:04:00.000', /sequence)
 ;               returns all files of the sequence closest to this date/time
 ;     IDL> file=spice_find_file('2020-05-28T16:04:00.000', time_end='2020-06-03T23:59:59', /sequence)
 ;               returns a list, where each element is a string array containing files for one sequence
-;     IDL> file=spice_find_file('2020-05028T16:04:00', /no_tree_stuct, /ignore_time, search_subdir)
+;     IDL> file=spice_find_file('2020-05028T16:04:00', /no_tree_stuct, /ignore_time, /search_subdir)
 ;               returns all level 2 files that are in $SPICE_DATA
 ;
 ; CALLS:
@@ -90,7 +90,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2021-04-20 21:01 CEST $
+; $Id: 2022-03-31 11:20 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -179,12 +179,37 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     IF fcount GT 0 THEN BEGIN
       files=files[fgood]
       fileinfo=fileinfo[fgood]
+      count0=fcount
     ENDIF ELSE count0=0
   ENDIF
 
   IF count0 EQ 0 THEN BEGIN
     print, 'no SPICE files found'
     return,''
+  ENDIF
+  
+  
+  ; Remove duplicates of files
+  ind_keep = []
+  ind_keep_not = []
+  FOR i=0,count0-1 DO BEGIN
+    IF where(ind_keep eq i) GE 0 || where(ind_keep_not eq i) GE 0 THEN continue
+    ind = where(fileinfo.spiobsid eq fileinfo[i].spiobsid AND $
+      fileinfo.rasterno eq fileinfo[i].rasterno AND $
+      fileinfo.level eq fileinfo[i].level, count)
+    IF count GT 1 THEN BEGIN
+      max_version = max(fileinfo[ind].version, max_ind)
+      ind_keep = [ind_keep, ind[max_ind]]
+      remove, max_ind, ind
+      ind_keep_not = [ind_keep_not, ind]
+    ENDIF ELSE BEGIN
+      ind_keep = [ind_keep, i]
+    ENDELSE
+  ENDFOR
+  IF N_ELEMENTS(ind_keep_not) GT 0 THEN BEGIN
+    files=files[ind_keep]
+    fileinfo=fileinfo[ind_keep]
+    count0=N_ELEMENTS(ind_keep)
   ENDIF
 
 
@@ -232,7 +257,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
       endfor
       return,seq_list
     ENDIF ELSE BEGIN ; keyword_set(sequence)
-      files = files(fgood)
+      files = files[fgood]
       count_file = fcount
       return,files
     ENDELSE ; keyword_set(sequence)
