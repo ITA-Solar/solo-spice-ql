@@ -21,6 +21,7 @@ terje.fredvik@astro.uio.no
 - [File Management Utilities](#file-management-utilities)
 - [Currently Planned Software](#currently-planned-software)
 - [Level 3 Data Products](#level-3-data-products)
+- [SPICE unspecific tools](#spice-unspecific-tools)
 - [For Developers](#for-developers)
 
 
@@ -177,11 +178,20 @@ Specialised routines for displaying secondary derived products such as temperatu
 spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [, no_fitting=no_fitting] [, no_widget=no_widget] )
 ```
 
+
+## SPICE unspecific tools
+
+* ANA2FITS
+    * This procedures saves all information of one or more ANA structures into a FITS file. ANA structures are used in CFIT, CFit_BLOCK, XCFIT, XCFIT_BLOCK.
+* FITS2ANA
+    * This function reads a FITS file that was written by ANA2FITS and returns one or more ANA structures.
+
+
 ## For Developers
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-03-21 13:02 CET $
+; $Id: 2022-04-04 11:53 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
