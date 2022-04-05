@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-03-28 13:25 CEST $
+; $Id: 2022-04-05 13:15 CEST $
 
 
 ;+
@@ -242,7 +242,7 @@ END
 ;     Creates a level 3 file from the level 2
 ;
 ; KEYWORD PARAMETERS:
-;     window_index : The index of the desired window, default is all windows.
+;     window_index : The index of the desired window(s), default is all windows.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
