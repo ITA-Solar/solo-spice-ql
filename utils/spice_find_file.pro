@@ -3,16 +3,14 @@
 ;     SPICE_FIND_FILE
 ;
 ; PURPOSE:
-;     This routine returns the name (or names) of SPICE raster files
-;     that correspond to the specified time. The logic for what
-;     filename(s) is returned is as follows.
+;     This routine returns the path(s) and name(s) of SPICE raster files that correspond 
+;     to the specified time or lie within a given time window. The logic for what filename(s) is returned is as follows.
 ;
-;     If time lies between two files of the same sequence, the older
-;     one is returned. Otherwise, the file that is nearest time
-;     is returned.
+;     If only the start time is given, then the file closest to that time is returned or, if SEQUENCE keyword is set, 
+;     all files with the same SPIOBSID as the file closest to that time are returned.
 ;
-;     The routine only checks the specified day and the previous day
-;     for the existence of files.
+;     If both, the end and start time are given, all files within the time window are returned or, 
+;     if SEQUENCE keyword is set, all SPICE observations that have at least one file within the time window are returned.
 ;
 ; CATEGORY:
 ;      SPICE -- file management.
@@ -40,12 +38,13 @@
 ;               keyword allows you to specify which path should be searched. Default is 0.
 ;
 ; KEYWORD PARAMETERS:
-;     SEQUENCE: If set, then all files of the sequence that the
-;               found files belong to will be returned, i.e. the time window to
-;               be searched is expanded to include files outside of the given time
-;               window, but only sequences that have at least one file in the given
-;               time window are returned.
-;               If set and TIME_END is provided the returned value will be a list.
+;     SEQUENCE: If set, then all files of the sequence that the found files belong to will 
+;               be returned, i.e. the time window to be searched is expanded to include files 
+;               outside of the given time window, but only sequences (= Spice observations) 
+;               that have at least one file in the given time window are returned. 
+;               If set and 'time_end' is provided, the returned value will be a LIST 
+;               in which each element is a string or string array with paths to SPICE FITS files 
+;               that belong to the same sequence.
 ;     ALL:      If set, then all filenames for the specified day will be returned.
 ;               Ignored if TIME_END is provided or if NO_TREE_STRUCT or SEQUENCE is set.
 ;     NO_LEVEL: If set, then the level part of the default path is omitted
@@ -60,9 +59,10 @@
 ;               all files that are stored locally
 ;
 ; OUTPUTS:
-;     A string or string array containing the full path to a SPICE file or files.
-;     If there are no matches, then an empty string is returned. If the keyword
-;     SEQUENCE is set and TIME_END is provided, then a LIST is returned.
+;     A string or string array containing the full path to a SPICE file or files. 
+;     If there are no matches, then an empty string is returned. If the keyword SEQUENCE is set 
+;     and time_end is provided, then a LIST is returned in which each element is a string or 
+;     string array with paths to SPICE FITS files that belong to the same SPICE observation.
 ;
 ; OPTIONAL OUTPUTS:
 ;     COUNT_FILE:An integer containing the number of matching files.
@@ -90,7 +90,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-03-31 11:20 CEST $
+; $Id: 2022-03-31 15:05 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
