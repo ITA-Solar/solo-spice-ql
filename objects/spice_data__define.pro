@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-04-29 14:33 CEST $
+; $Id: 2022-04-29 15:28 CEST $
 
 
 ;+
@@ -2020,9 +2020,56 @@ PRO spice_data::read_file, file
   ENDFOR ; iwin = 0, self.nwin-1
   
   FXBOPEN, bin_unit, file, self.nwin
-  FXBFIND, bin_unit, 'TTYPE', COLUMNS, bin_table_values, N_FOUND
+  FXBFIND, bin_unit, 'WCSN', WCSN_ind, WCSN, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  print,wcsn
+  FXBFIND, bin_unit, 'TFORM', TFORM_ind, TFORM, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  print,tform
+  FXBFIND, bin_unit, 'TTYPE', TTYPE_ind, TTYPE, N_FOUND, comments=comments
+  WCSN = strtrim(WCSN, 2)
+  print,ttype
+  print,comments
+  FXBFIND, bin_unit, 'TDIM', TDIM_ind, TDIM, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  print,tdim
+  FXBFIND, bin_unit, 'TUNIT', TUNIT_ind, TUNIT, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  print,tunit
+  FXBFIND, bin_unit, 'TDMIN', TDMIN_ind, TDMIN, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  print,tdmin
+  FXBFIND, bin_unit, 'TDMAX', TDMAX_ind, TDMAX, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  print,tdmax
+  FXBFIND, bin_unit, 'TDESC', TDESC_ind, TDESC, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  print,tdesc
   FXBCLOSE, bin_unit
-  
+  tunit_desc = tunit
+  FOR i=0,N_ELEMENTS(tunit)-1 DO BEGIN
+    unit = stregex(comments[i], '\[.*\]', /extract)
+    IF strtrim(TUNIT[i]) EQ '' THEN BEGIN
+      IF strlen(unit) GE 2 THEN BEGIN
+        tunit[i] = strtrim(strmid(unit, 1, strlen(unit)-2), 2)
+        tunit_desc[i] = strtrim(strmid(comments[i], strlen(unit)+2), 2)
+      ENDIF ELSE BEGIN
+        tunit_desc[i] = strtrim(comments[i], 2)        
+      ENDELSE
+    ENDIF
+    IF strtrim(TUNIT[i]) EQ '' THEN BEGIN
+      unit = stregex(comments[i], '\[.*\]', /extract)
+      IF strlen(unit) GE 2 THEN BEGIN
+        tunit[i] = strtrim(strmid(unit, 1, strlen(unit)-2), 2)
+        tunit_desc[i] = strtrim(strmid(comments[i], strlen(unit)+2), 2)
+      ENDIF ELSE BEGIN
+        tunit_desc[i] = strtrim(comments[i], 2)
+      ENDELSE
+    ENDIF
+  ENDFOR
+  print,tunit
+  print,tunit_desc
+stop  
   self.window_assoc = ptr_new(assocs)
   self.window_data = ptr_new(ptrarr(self.nwin))
   self.window_descaled = ptr_new(bytarr(self.nwin))
@@ -2030,7 +2077,7 @@ PRO spice_data::read_file, file
   self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
   self.slit_y_range = ptr_new(/allocate)
-  self.bin_table_columns = ptr_new(bin_table_values)
+  self.bin_table_columns = ptr_new(TTYPE)
 END
 
 
