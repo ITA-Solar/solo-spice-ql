@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-04-05 13:15 CEST $
+; $Id: 2022-04-29 14:33 CEST $
 
 
 ;+
@@ -86,6 +86,7 @@ pro spice_data::close
   ptr_free, self.window_descaled
   ptr_free, self.window_data
   ptr_free, self.slit_y_range
+  ptr_free, self.bin_table_columns
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -2017,6 +2018,11 @@ PRO spice_data::read_file, file
     ENDCASE
 
   ENDFOR ; iwin = 0, self.nwin-1
+  
+  FXBOPEN, bin_unit, file, self.nwin
+  FXBFIND, bin_unit, 'TTYPE', COLUMNS, bin_table_values, N_FOUND
+  FXBCLOSE, bin_unit
+  
   self.window_assoc = ptr_new(assocs)
   self.window_data = ptr_new(ptrarr(self.nwin))
   self.window_descaled = ptr_new(bytarr(self.nwin))
@@ -2024,6 +2030,7 @@ PRO spice_data::read_file, file
   self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
   self.slit_y_range = ptr_new(/allocate)
+  self.bin_table_columns = ptr_new(bin_table_values)
 END
 
 
@@ -2060,7 +2067,8 @@ PRO spice_data__define
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
     window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one window
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
-    dumbbells: [-1, -1], $ ; contains the index of the window with [lower, upper] dumbbell
-    slit_y_range:ptr_new(), $ ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    file_lun: 0}                ; Logical Unit Number of the file
+    dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
+    slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
+    file_lun: 0, $              ; Logical Unit Number of the file
+    bin_table_columns: ptr_new()}; Pointer to string array which contains all columns in the bintable 
 END
