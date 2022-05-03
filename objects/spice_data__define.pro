@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-03 15:01 CEST $
+; $Id: 2022-05-03 15:20 CEST $
 
 
 ;+
@@ -1964,6 +1964,27 @@ FUNCTION spice_data::get_dumbbells_index, lower=lower, upper=upper
   if keyword_set(lower) then return, self.dumbbells[0]
   if keyword_set(upper) then return, self.dumbbells[1]
   return, self.dumbbells
+END
+
+
+
+;---------------------------------------------------------
+; Binary table methods
+;---------------------------------------------------------
+
+
+;+
+; Description:
+;     Returns a list of column tags that can be found in the binary extension table.
+;
+; OUTPUT:
+;     string array
+;-
+FUNCTION spice_data::get_bin_column_tags
+  ;Returns a list of column tags that can be found in the binary extension table.
+  COMPILE_OPT IDL2
+
+  return, (*self.bin_table_columns).type
 END
 
 
