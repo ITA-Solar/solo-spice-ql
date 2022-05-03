@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-03 14:44 CEST $
+; $Id: 2022-05-03 15:01 CEST $
 
 
 ;+
@@ -86,6 +86,9 @@ pro spice_data::close
   ptr_free, self.window_descaled
   ptr_free, self.window_data
   ptr_free, self.slit_y_range
+  for i=0,self.n_bin_table_columns-1 do begin
+    if ptr_valid((*self.bin_table_columns)[i].values) then ptr_free, (*self.bin_table_columns)[i].values
+  endfor
   ptr_free, self.bin_table_columns
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
@@ -2035,17 +2038,17 @@ PRO spice_data::read_file, file
   TDMIN = strtrim(TDMIN, 2)
   FXBFIND, bin_unit, 'TDMAX', TDMAX_ind, TDMAX, N_FOUND
   TDMAX = strtrim(TDMAX, 2)
-  help,tdmax
   FXBFIND, bin_unit, 'TDESC', TDESC_ind, TDESC, N_FOUND
   TDESC = strtrim(TDESC, 2)
   FXBCLOSE, bin_unit
 
+  self.n_bin_table_columns = N_ELEMENTS(tunit)
   temp_column = {wcsn:'', form:'', type:'', dim:'', unit:'', unit_desc:'', dmin:'', dmax:'', desc:'', values:ptr_new()}
-  bin_table_columns = make_array(N_ELEMENTS(tunit), value=temp_column)
+  bin_table_columns = make_array(self.n_bin_table_columns, value=temp_column)
   ; Get unit and unit description
   tunit_temp = tunit
   tunit_desc = tunit
-  FOR i=0,N_ELEMENTS(tunit)-1 DO BEGIN
+  FOR i=0,self.n_bin_table_columns-1 DO BEGIN
     unit = stregex(comments[i], '\[.*\]', /extract)
     IF strlen(unit) GE 2 THEN BEGIN
       tunit_temp[i] = strtrim(strmid(unit, 1, strlen(unit)-2), 2)
@@ -2116,5 +2119,6 @@ PRO spice_data__define
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
     file_lun: 0, $              ; Logical Unit Number of the file
-    bin_table_columns: ptr_new()}; Pointer to string array which contains all columns in the bintable 
+    bin_table_columns: ptr_new(), $; Pointer to string array which contains all columns in the binary extension table
+    n_bin_table_columns: 0}     ; Number of columns in the binary extension table
 END
