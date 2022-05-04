@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-04-05 13:15 CEST $
+; $Id: 2022-05-04 11:59 CEST $
 
 
 ;+
@@ -86,6 +86,10 @@ pro spice_data::close
   ptr_free, self.window_descaled
   ptr_free, self.window_data
   ptr_free, self.slit_y_range
+  for i=0,self.n_bin_table_columns-1 do begin
+    if ptr_valid((*self.bin_table_columns)[i].values) then ptr_free, (*self.bin_table_columns)[i].values
+  endfor
+  ptr_free, self.bin_table_columns
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -1965,6 +1969,70 @@ END
 
 
 ;---------------------------------------------------------
+; Binary table methods
+;---------------------------------------------------------
+
+
+;+
+; Description:
+;     Returns a list of column tags that can be found in the binary extension table.
+;
+; OUTPUT:
+;     string array
+;-
+FUNCTION spice_data::get_bin_column_tags
+  ;Returns a list of column tags that can be found in the binary extension table.
+  COMPILE_OPT IDL2
+
+  return, (*self.bin_table_columns).type
+END
+
+
+;+
+; Description:
+;     Returns the content of one or more columns found in the binary extension table. If given tag does not
+;     exist, the same structure is returned, but with empty strings.
+;
+; OPTIONAL INPUTS:
+;     tags : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
+;            be returned.
+;
+; OUTPUT:
+;     array of structure of type:
+;             {wcsn:'', form:'', type:'', dim:'', unit:'', unit_desc:'', dmin:'', dmax:'', desc:'', values:ptr_new()}
+;-
+FUNCTION spice_data::get_bin_column_data, tags
+  ;Returns the content of one or more columns found in the binary extension table.
+  COMPILE_OPT IDL2
+
+  IF N_ELEMENTS(tags) eq 0 THEN tags = self.get_bin_column_tags()
+  temp_column = {wcsn:'', form:'', type:'', dim:'', unit:'', unit_desc:'', dmin:'', dmax:'', desc:'', values:ptr_new()}
+  result = make_array(N_ELEMENTS(tags), value=temp_column)
+  file_open = 0
+  FOR i=0,N_ELEMENTS(tags)-1 DO BEGIN
+    ind = where((*self.bin_table_columns).type eq tags[i], count)
+    IF count GT 0 THEN BEGIN
+      ind=ind[0]
+      IF ~ptr_valid((*self.bin_table_columns)[ind].values) THEN BEGIN
+        ;load column values
+        IF ~file_open THEN BEGIN
+          FXBOPEN, unit, self.get_filename(), self.get_number_windows()
+          file_open = 1
+        ENDIF ; ~file_open
+        data = !NULL
+        FXBREAD, unit, data, tags[i]
+        (*self.bin_table_columns)[i].values = ptr_new(data)
+      ENDIF ; ~ptr_valid((*self.bin_table_columns)[ind].values)
+      result[i] = (*self.bin_table_columns)[ind]
+    ENDIF ; count GT 0
+  ENDFOR ; i=0,N_ELEMENTS(tags)-1
+  IF file_open THEN FXBCLOSE, unit
+  return, result
+END
+
+
+
+;---------------------------------------------------------
 ; I/O and related methods for loading data
 ;---------------------------------------------------------
 
@@ -2017,6 +2085,57 @@ PRO spice_data::read_file, file
     ENDCASE
 
   ENDFOR ; iwin = 0, self.nwin-1
+  
+  FXBOPEN, bin_unit, file, self.nwin
+  FXBFIND, bin_unit, 'WCSN', WCSN_ind, WCSN, N_FOUND
+  WCSN = strtrim(WCSN, 2)
+  FXBFIND, bin_unit, 'TFORM', TFORM_ind, TFORM, N_FOUND
+  TFORM = strtrim(TFORM, 2)
+  FXBFIND, bin_unit, 'TTYPE', TTYPE_ind, TTYPE, N_FOUND, comments=comments
+  TTYPE = strtrim(TTYPE, 2)
+  comments = strcompress(strtrim(comments, 2))
+  FXBFIND, bin_unit, 'TDIM', TDIM_ind, TDIM, N_FOUND
+  TDIM = strtrim(TDIM, 2)
+  FXBFIND, bin_unit, 'TUNIT', TUNIT_ind, TUNIT, N_FOUND
+  TUNIT = strtrim(TUNIT, 2)
+  FXBFIND, bin_unit, 'TDMIN', TDMIN_ind, TDMIN, N_FOUND
+  TDMIN = strtrim(TDMIN, 2)
+  FXBFIND, bin_unit, 'TDMAX', TDMAX_ind, TDMAX, N_FOUND
+  TDMAX = strtrim(TDMAX, 2)
+  FXBFIND, bin_unit, 'TDESC', TDESC_ind, TDESC, N_FOUND
+  TDESC = strtrim(TDESC, 2)
+  FXBCLOSE, bin_unit
+
+  self.n_bin_table_columns = N_ELEMENTS(tunit)
+  temp_column = {wcsn:'', form:'', type:'', dim:'', unit:'', unit_desc:'', dmin:'', dmax:'', desc:'', values:ptr_new()}
+  bin_table_columns = make_array(self.n_bin_table_columns, value=temp_column)
+  ; Get unit and unit description
+  tunit_temp = tunit
+  tunit_desc = tunit
+  FOR i=0,self.n_bin_table_columns-1 DO BEGIN
+    unit = stregex(comments[i], '\[.*\]', /extract)
+    IF strlen(unit) GE 2 THEN BEGIN
+      tunit_temp[i] = strtrim(strmid(unit, 1, strlen(unit)-2), 2)
+      tunit_desc[i] = strtrim(strmid(comments[i], strlen(unit)+1), 2)
+    ENDIF ELSE BEGIN
+      tunit_temp[i] = ''
+      tunit_desc[i] = comments[i]
+    ENDELSE
+    IF TUNIT[i] EQ '' THEN BEGIN
+      tunit[i] = tunit_temp[i]
+    ENDIF
+
+    bin_table_columns[i].wcsn = wcsn[i]
+    bin_table_columns[i].form = tform[i]
+    bin_table_columns[i].type = ttype[i]
+    bin_table_columns[i].dim = tdim[i]
+    bin_table_columns[i].unit = tunit[i]
+    bin_table_columns[i].unit_desc = tunit_desc[i]
+    bin_table_columns[i].dmin = tdmin[i]
+    bin_table_columns[i].dmax = tdmax[i]
+    bin_table_columns[i].desc = tdesc[i]
+  ENDFOR
+
   self.window_assoc = ptr_new(assocs)
   self.window_data = ptr_new(ptrarr(self.nwin))
   self.window_descaled = ptr_new(bytarr(self.nwin))
@@ -2024,6 +2143,7 @@ PRO spice_data::read_file, file
   self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
   self.slit_y_range = ptr_new(/allocate)
+  self.bin_table_columns = ptr_new(bin_table_columns)
 END
 
 
@@ -2060,7 +2180,9 @@ PRO spice_data__define
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
     window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one window
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
-    dumbbells: [-1, -1], $ ; contains the index of the window with [lower, upper] dumbbell
-    slit_y_range:ptr_new(), $ ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    file_lun: 0}                ; Logical Unit Number of the file
+    dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
+    slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
+    file_lun: 0, $              ; Logical Unit Number of the file
+    bin_table_columns: ptr_new(), $; Pointer to string array which contains all columns in the binary extension table
+    n_bin_table_columns: 0}     ; Number of columns in the binary extension table
 END
