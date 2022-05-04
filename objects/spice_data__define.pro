@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-03 15:20 CEST $
+; $Id: 2022-05-04 11:10 CEST $
 
 
 ;+
@@ -1985,6 +1985,49 @@ FUNCTION spice_data::get_bin_column_tags
   COMPILE_OPT IDL2
 
   return, (*self.bin_table_columns).type
+END
+
+
+;+
+; Description:
+;     Returns the content of one or more columns found in the binary extension table. If given tag does not
+;     exist, the same structure is returned, but with empty strings.
+;
+; OPTIONAL INPUTS:
+;     tags : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
+;            be returned.
+;
+; OUTPUT:
+;     array of structure of type:
+;             {wcsn:'', form:'', type:'', dim:'', unit:'', unit_desc:'', dmin:'', dmax:'', desc:'', values:ptr_new()}
+;-
+FUNCTION spice_data::get_bin_columns, tags
+  ;Returns the content of one or more columns found in the binary extension table.
+  COMPILE_OPT IDL2
+
+  IF N_ELEMENTS(tags) eq 0 THEN tags = self.get_bin_column_tags()
+  temp_column = {wcsn:'', form:'', type:'', dim:'', unit:'', unit_desc:'', dmin:'', dmax:'', desc:'', values:ptr_new()}
+  result = make_array(N_ELEMENTS(tags), value=temp_column)
+  file_open = 0
+  FOR i=0,N_ELEMENTS(tags)-1 DO BEGIN
+    ind = where((*self.bin_table_columns).type eq tags[i], count)
+    IF count GT 0 THEN BEGIN
+      ind=ind[0]
+      IF ~ptr_valid((*self.bin_table_columns)[ind].values) THEN BEGIN
+        ;load column values
+        IF ~file_open THEN BEGIN
+          FXBOPEN, unit, self.get_filename(), self.get_number_windows()
+          file_open = 1
+        ENDIF ; ~file_open
+        data = !NULL
+        FXBREAD, unit, data, tags[i]
+        (*self.bin_table_columns)[i].values = ptr_new(data)
+      ENDIF ; ~ptr_valid((*self.bin_table_columns)[ind].values)
+      result[i] = (*self.bin_table_columns)[ind]
+    ENDIF ; count GT 0
+  ENDFOR ; i=0,N_ELEMENTS(tags)-1
+  IF file_open THEN FXBCLOSE, unit
+  return, result
 END
 
 
