@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-04 11:59 CEST $
+; $Id: 2022-05-04 13:46 CEST $
 
 
 ;+
@@ -1975,7 +1975,7 @@ END
 
 ;+
 ; Description:
-;     Returns a list of column tags that can be found in the binary extension table.
+;     This method returns a list of column tags that can be found in the binary extension table.
 ;
 ; OUTPUT:
 ;     string array
@@ -1990,8 +1990,8 @@ END
 
 ;+
 ; Description:
-;     Returns the content of one or more columns found in the binary extension table. If given tag does not
-;     exist, the same structure is returned, but with empty strings.
+;     This method returns the content of one or more columns found in the binary extension table.
+;     If the given tag does not exist, the same structure is returned with empty strings.
 ;
 ; OPTIONAL INPUTS:
 ;     tags : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
