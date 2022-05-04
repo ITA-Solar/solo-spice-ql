@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-04 11:10 CEST $
+; $Id: 2022-05-04 11:59 CEST $
 
 
 ;+
@@ -2001,7 +2001,7 @@ END
 ;     array of structure of type:
 ;             {wcsn:'', form:'', type:'', dim:'', unit:'', unit_desc:'', dmin:'', dmax:'', desc:'', values:ptr_new()}
 ;-
-FUNCTION spice_data::get_bin_columns, tags
+FUNCTION spice_data::get_bin_column_data, tags
   ;Returns the content of one or more columns found in the binary extension table.
   COMPILE_OPT IDL2
 
