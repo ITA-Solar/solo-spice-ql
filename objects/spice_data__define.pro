@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-05 11:14 CEST $
+; $Id: 2022-05-05 11:32 CEST $
 
 
 ;+
@@ -177,9 +177,9 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
   miss = self->get_missing_value()
   miss = -1000.0d
 
-  detector = self->get_header_info('DETECTOR', window_index)
+  detector = self->get_header_keyword('DETECTOR', window_index)
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
-  widmin = widmin_pixels * self->get_header_info('CDELT3', window_index)
+  widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
   adef = generate_adef(data, LAMbda, widmin=widmin)
   badix = where(data ne data, n_bad)
@@ -277,7 +277,7 @@ END
 ; First a few help methods that are only used for making plots for debugging purposes:
 PRO spice_data::debug_plot_dumbbell_range, window_index, lower_dumbbell_range, upper_dumbbell_range
   loadct,12,/silent
-  naxis3 = self->get_header_info('NAXIS3',window_index)
+  naxis3 = self->get_header_keyword('NAXIS3',window_index)
   plots,[0,naxis3],[upper_dumbbell_range[0],upper_dumbbell_range[0]],color=150,line=2
   plots,[0,naxis3],[upper_dumbbell_range[1],upper_dumbbell_range[1]],color=150,line=2
 
@@ -298,7 +298,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
   lower_dumbbell_range = self->get_dumbbell_range(window_index)
   upper_dumbbell_range = self->get_dumbbell_range(window_index, /upper)
 
-  nbin2 = self->get_header_info('NBIN2',window_index)
+  nbin2 = self->get_header_keyword('NBIN2',window_index)
   IF nbin2 NE 1 THEN BEGIN
     lower_dumbbell_range = self->get_rebinned_indices(lower_dumbbell_range, nbin2)
     upper_dumbbell_range = self->get_rebinned_indices(upper_dumbbell_range, nbin2)
@@ -311,8 +311,8 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
 
   loadct,12,/silent
 
-  naxis3 = self->get_header_info('NAXIS3',window_index)
-  nbin2 = self->get_header_info('NBIN2',window_index)
+  naxis3 = self->get_header_keyword('NAXIS3',window_index)
+  nbin2 = self->get_header_keyword('NBIN2',window_index)
   slit_y_range = self->get_rebinned_indices(*self.slit_y_range, nbin2)
   plots,[-4000,naxis3],[slit_y_range[0],slit_y_range[0]],/data,color=50
   plots,[-4000,naxis3],[slit_y_range[1],slit_y_range[1]],/data,color=50
@@ -421,8 +421,8 @@ FUNCTION spice_data::data_includes_dumbbell, window_index, upper=upper
   lower_edge_of_upper_dumbbell_in_L1_full_detector_SW = 810 ;; From L1 50331769-000, spectrum is high on the detector
 
 
-  pxbeg2 = self->get_header_info('PXBEG2', window_index)
-  pxend2 = self->get_header_info('PXEND2', window_index)
+  pxbeg2 = self->get_header_keyword('PXBEG2', window_index)
+  pxend2 = self->get_header_keyword('PXEND2', window_index)
 
   data_includes_dumbbell = (keyword_set(upper)) ? pxend2 GT lower_edge_of_upper_dumbbell_in_L1_full_detector_SW : $
     pxbeg2 LT upper_edge_of_lower_dumbbell_in_L1_full_detector_LW
@@ -443,8 +443,8 @@ FUNCTION spice_data::get_dumbbell_range, window_index, upper=upper
   ;;    enough to cover the dumbbells both for files where the spectrum is
   ;;    placed high and files where the placement is low.
   ;;-
-  nbin2 = self->get_header_info('NBIN2',window_index)
-  n_y = self->get_header_info('NAXIS2', window_index)*nbin2
+  nbin2 = self->get_header_keyword('NBIN2',window_index)
+  n_y = self->get_header_keyword('NAXIS2', window_index)*nbin2
   n_y_full_detector = 1024
 
   half_diff = (n_y_full_detector-n_y)/2.
@@ -465,7 +465,7 @@ END
 FUNCTION spice_data::get_dumbbell_max_ix, y_intensity, window_index, upper=upper, approximated_slit=approximated_slit
 
   IF ~self->data_includes_dumbbell(window_index, upper=upper) THEN $
-    return, (keyword_set(upper)) ? self->get_header_info('NAXIS2',window_index)-1 : 0
+    return, (keyword_set(upper)) ? self->get_header_keyword('NAXIS2',window_index)-1 : 0
 
   IF keyword_set(approximated_slit) THEN return, self->get_approximated_dumbbell_max_ix(window_index, upper=upper)
 
@@ -498,10 +498,10 @@ FUNCTION spice_data::check_if_already_included, window_index, included_winnos
   already_included = 0
 
   header = self->get_header(window_index,/string)
-  prsteps =  fxpar(header,'PRSTEP*')        ;; MARTIN: the get_header_info method doesn't support wildcards, so I have to use fxpar!
+  prsteps =  fxpar(header,'PRSTEP*')        ;; MARTIN: the get_header_keyword method doesn't support wildcards, so I have to use fxpar!
   IF prsteps[-1] NE 'WINDOW-CONCATENATION' THEN return,0
 
-  prparan = self->get_header_info('PRPARA'+trim(n_elements(prsteps)),window_index)
+  prparan = self->get_header_keyword('PRPARA'+trim(n_elements(prsteps)),window_index)
   concatenated_winnos = prparan.extract('([0-9],*)+')
   FOR included_ct=0,n_elements(included_winnos)-1 DO IF concatenated_winnos.contains(trim(included_winnos[included_ct])) THEN already_included =  1
 
@@ -511,10 +511,10 @@ END
 
 PRO spice_data::add_window, all_data, data, window_index, included_winnos
   IF all_data EQ !NULL THEN BEGIN
-    data_has_been_debinned_in_y = (self->get_header_info('NBIN2',window_index) NE 0)
-    naxis1 =  self->get_header_info('NAXIS1',window_index)
-    naxis3 =  self->get_header_info('NAXIS3',window_index)
-    naxis4 =  self->get_header_info('NAXIS4',window_index)
+    data_has_been_debinned_in_y = (self->get_header_keyword('NBIN2',window_index) NE 0)
+    naxis1 =  self->get_header_keyword('NAXIS1',window_index)
+    naxis3 =  self->get_header_keyword('NAXIS3',window_index)
+    naxis4 =  self->get_header_keyword('NAXIS4',window_index)
 
     size_y = (data_has_been_debinned_in_y) ? (size(data))[2] : naxis2
     all_data = reform(data, naxis1, size_y, naxis3, naxis4)
@@ -523,20 +523,20 @@ PRO spice_data::add_window, all_data, data, window_index, included_winnos
     this_window_has_already_been_included_as_a_part_of_a_concatenated_window = self->check_if_already_included(window_index,included_winnos)
     IF NOT this_window_has_already_been_included_as_a_part_of_a_concatenated_window THEN BEGIN
       size_all_data = size(all_data)
-      width_all_windows_including_this =  size_all_data[3] + self->get_header_info('NAXIS3',window_index)
+      width_all_windows_including_this =  size_all_data[3] + self->get_header_keyword('NAXIS3',window_index)
 
       all_data_new = make_array(size_all_data[1], size_all_data[2], width_all_windows_including_this, size_all_data[4])
 
       all_data_new[*, *, 0:size_all_data[3]-1,*] = all_data
 
-      completeness = self->get_header_info('COMPLETE',window_index)
+      completeness = self->get_header_keyword('COMPLETE',window_index)
       incomplete = completeness.contains('I')
       last_x_ix = (incomplete) ? (size(data))[1]-1 : size_all_data[1]-1
 
       all_data_new[0:last_x_ix, *, size_all_data[3]:*, *] = data
 
       all_data = reform(all_data_new, size_all_data[1], size_all_data[2], width_all_windows_including_this, size_all_data[4])
-      included_winnos = [included_winnos, self->get_header_info('WINNO',window_index)]
+      included_winnos = [included_winnos, self->get_header_keyword('WINNO',window_index)]
     ENDIF
 
   ENDELSE
@@ -567,14 +567,14 @@ PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
   FOR window_index = 0,n_windows-1 DO BEGIN
     data = self->get_window_data(window_index,/load)
 
-    dumbbell = self->get_header_info('DUMBBELL', window_index) NE 0
-    intensity_window = self->get_header_info('WIN_TYPE', window_index) EQ 'Intensity-window'
+    dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
+    intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
     IF NOT dumbbell AND NOT intensity_window THEN BEGIN
-      nbin2 = self->get_header_info('NBIN2', window_index)
+      nbin2 = self->get_header_keyword('NBIN2', window_index)
 
       IF nbin2 NE 1 THEN self->debin_y_dimension, data, nbin2
 
-      CASE trim(self->get_header_info('DETECTOR', window_index)) OF
+      CASE trim(self->get_header_keyword('DETECTOR', window_index)) OF
         'SW': self->add_window, all_data_SW, data, window_index, included_winnos
         'LW': self->add_window, all_data_LW, data, window_index, included_winnos
       ENDCASE
@@ -609,7 +609,7 @@ END
 
 FUNCTION spice_data::get_slit_y_range, data, window_index, approximated_slit=approximated_slit, debug_plot=debug_plot
 
-  nbin2 = self->get_header_info('NBIN2', window_index)
+  nbin2 = self->get_header_keyword('NBIN2', window_index)
 
   IF *self.slit_y_range NE !NULL THEN return, (nbin2 EQ 1) ? *self.slit_y_range : self->get_rebinned_indices(*self.slit_y_range, nbin2)
 
@@ -647,8 +647,8 @@ FUNCTION spice_data::check_if_data_may_be_masked, window_index
     return, 0
   ENDIF
 
-  dumbbell  = self->get_header_info('DUMBBELL', window_index) NE 0
-  wide_slit = self->get_header_info('SLIT_WID', window_index) EQ 30
+  dumbbell  = self->get_header_keyword('DUMBBELL', window_index) NE 0
+  wide_slit = self->get_header_keyword('SLIT_WID', window_index) EQ 30
   IF dumbbell OR wide_slit THEN BEGIN
     message,'SLIT_ONLY applies to narrow slit observations only, returning unmodified data array',/info
     return, 0
@@ -846,8 +846,8 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, n
     message, 'missing input, usage: get_one_image, window_index, exposure_index [, nodescale=nodescale]', /info
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
-  IF self.get_sit_and_stare() THEN naxis = self.get_header_info('NAXIS4', window_index) $
-  ELSE naxis = self.get_header_info('NAXIS1', window_index)
+  IF self.get_sit_and_stare() THEN naxis = self.get_header_keyword('NAXIS4', window_index) $
+  ELSE naxis = self.get_header_keyword('NAXIS1', window_index)
   IF exposure_index LT 0 || exposure_index GE naxis  THEN BEGIN
     print, 'exposure_index needs to be a scalar number between 0 and '+strtrim(string(naxis-1),2)
     return, !NULL
@@ -915,8 +915,8 @@ FUNCTION spice_data::descale_array, array, window_index
     return, !NULL
   ENDIF
 
-  bscale = self.get_header_info('BSCALE', window_index, 1)
-  bzero = self.get_header_info('BZERO', window_index, 0)
+  bscale = self.get_header_keyword('BSCALE', window_index, 1)
+  bzero = self.get_header_keyword('BZERO', window_index, 0)
   return, array * bscale + bzero
 END
 
@@ -1006,7 +1006,7 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
 
   ccd_size = self.get_ccd_size()
 
-  PXBEG3 = self.get_header_info('PXBEG3', window_index)
+  PXBEG3 = self.get_header_keyword('PXBEG3', window_index)
   IF PXBEG3 LT 0 THEN BEGIN
     message, 'PXBEG3 < 0: '+strtrim(string(PXBEG3))+' < 0', /info
     detector = 1
@@ -1019,7 +1019,7 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
     detector = 1
   ENDELSE
 
-  PXEND3 = self.get_header_info('PXEND3', window_index)
+  PXEND3 = self.get_header_keyword('PXEND3', window_index)
   IF PXEND3 LT 0 THEN message, 'PXEND3 < 0: '+strtrim(string(PXEND3))+' < 0', /info
   IF PXEND3 LT PXBEG3 THEN BEGIN
     IF self.has_dumbbells(window_index) && keyword_set(reverse_x) THEN BEGIN
@@ -1033,12 +1033,12 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
   IF PXEND3 GT 2*ccd_size[0] THEN $
     message, 'PXEND3 > 2 * CCD-size: '+strtrim(string(PXEND3))+' > '+strtrim(string(2*ccd_size[0])), /info
 
-  PXBEG2 = self.get_header_info('PXBEG2', window_index)
+  PXBEG2 = self.get_header_keyword('PXBEG2', window_index)
   IF PXBEG2 LT 0 THEN message, 'PXBEG2 < 0: '+strtrim(string(PXBEG2))+' < 0', /info
   IF PXBEG2 GT ccd_size[1] THEN $
     message, 'PXBEG2 > CCD-size: '+strtrim(string(PXBEG2))+' > '+strtrim(string(ccd_size[1])), /info
 
-  PXEND2 = self.get_header_info('PXEND2', window_index)
+  PXEND2 = self.get_header_keyword('PXEND2', window_index)
   IF PXEND2 LT 0 THEN message, 'PXEND2 < 0: '+strtrim(string(PXEND2))+' < 0', /info
   IF PXEND2 GT PXBEG2 THEN message, 'PXEND2 > PXBEG2: '+strtrim(string(PXEND2))+' > '+strtrim(string(PXBEG2)), /info
   IF PXEND2 GT ccd_size[1] THEN $
@@ -1070,12 +1070,12 @@ END
 ; OUTPUT:
 ;     returns the keyword value, 'missing_value' or !NULL
 ;-
-FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exists=exists
+FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, exists=exists
   ;Returns the specified keyword from the window, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 2 THEN BEGIN
-    message, 'missing input, usage: get_header_info, keyword, window_index [, missing_value, exists=exists]', /info
+    message, 'missing input, usage: get_header_keyword, keyword, window_index [, missing_value, exists=exists]', /info
     return, !NULL
   ENDIF ELSE IF N_ELEMENTS(keyword) NE 1 || SIZE(keyword, /TYPE) NE 7 THEN BEGIN
     message, 'keyword needs to be a scalar string', /info
@@ -1095,6 +1095,16 @@ FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exis
     ELSE return, missing_value
   ENDELSE
 
+END
+
+
+;+
+; Description:
+;     This method is deprecated, but still available for compatibility reasons.
+;     get_header_keyword instead replaces this method. See there for documentation
+;-
+FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exists=exists
+  return, self.get_header_keyword, keyword, window_index, missing_value, exists=exists
 END
 
 
@@ -1167,7 +1177,7 @@ FUNCTION spice_data::get_obs_id
   ;returns SPICE OBS ID
   COMPILE_OPT IDL2
 
-  obs_id = self.get_header_info('SPIOBSID', 0, -1)
+  obs_id = self.get_header_keyword('SPIOBSID', 0, -1)
   IF size(obs_id, /TYPE) NE 7 THEN obs_id = string(obs_id)
   return, strtrim(obs_id,2)
 END
@@ -1184,7 +1194,7 @@ FUNCTION spice_data::get_start_time
   ;returns start date and time of observation in UTC format
   COMPILE_OPT IDL2
 
-  start_time = self.get_header_info('DATE-BEG', 0, '')
+  start_time = self.get_header_keyword('DATE-BEG', 0, '')
   return, start_time
 END
 
@@ -1200,7 +1210,7 @@ FUNCTION spice_data::get_end_time
   ;returns end date and time of observation in UTC format
   COMPILE_OPT IDL2
 
-  end_time = self.get_header_info('DATE-END', 0, '')
+  end_time = self.get_header_keyword('DATE-END', 0, '')
   return, end_time
 END
 
@@ -1216,7 +1226,7 @@ FUNCTION spice_data::get_sit_and_stare
   ;returns 1 if raster is a sit-and-stare, 0 otherwise
   COMPILE_OPT IDL2
 
-  sit_and_stare = self.get_header_info('STUDYTYP', 0) EQ 'Sit-and-stare'
+  sit_and_stare = self.get_header_keyword('STUDYTYP', 0) EQ 'Sit-and-stare'
   return, sit_and_stare
 END
 
@@ -1235,7 +1245,7 @@ FUNCTION spice_data::get_level, low_latency=low_latency
   ;returns the level of the file
   COMPILE_OPT IDL2
 
-  level_string = self.get_header_info('LEVEL', 0)
+  level_string = self.get_header_keyword('LEVEL', 0)
   low_latency = 0
   CASE level_string OF
     'LL01': BEGIN
@@ -1267,7 +1277,7 @@ FUNCTION spice_data::get_variable_unit
   ;returns BUNIT, physical units of the data
   COMPILE_OPT IDL2
 
-  bunit = self.get_header_info('BUNIT', 0, '')
+  bunit = self.get_header_keyword('BUNIT', 0, '')
   return, bunit
 END
 
@@ -1283,7 +1293,7 @@ FUNCTION spice_data::get_variable_type
   ;returns BTYPE, type of data in images
   COMPILE_OPT IDL2
 
-  btype = self.get_header_info('BTYPE', 0, '')
+  btype = self.get_header_keyword('BTYPE', 0, '')
   return, btype
 END
 
@@ -1299,7 +1309,7 @@ FUNCTION spice_data::get_satellite_rotation
   ;returns S/C CCW roll relative to Solar north in degrees
   COMPILE_OPT IDL2
 
-  crota = self.get_header_info('CROTA', 0)
+  crota = self.get_header_keyword('CROTA', 0)
   return, crota
 END
 
@@ -1315,7 +1325,7 @@ FUNCTION spice_data::get_missing_value
   ;returns the value for missing pixels
   COMPILE_OPT IDL2
 
-  missing = self.get_header_info('BLANK', 0)
+  missing = self.get_header_keyword('BLANK', 0)
   if N_ELEMENTS(missing) EQ 0 && self->get_level() EQ 2 THEN missing = !values.f_nan
   return, missing
 END
@@ -1357,15 +1367,15 @@ FUNCTION spice_data::get_window_id, window_index
   IF n_params() EQ 0 THEN BEGIN
     window_id = strarr(self.get_number_windows())
     FOR i = 0, self.get_number_windows()-1 DO BEGIN
-      window_id[i] = self.get_header_info('EXTNAME', i)
+      window_id[i] = self.get_header_keyword('EXTNAME', i)
     ENDFOR
   ENDIF ELSE BEGIN
     IF N_ELEMENTS(window_index) eq 1 THEN BEGIN
-      window_id = self.get_header_info('EXTNAME', window_index[0])
+      window_id = self.get_header_keyword('EXTNAME', window_index[0])
     ENDIF ELSE BEGIN
       window_id = strarr(N_ELEMENTS(window_index))
       FOR i = 0,N_ELEMENTS(window_index)-1 DO BEGIN
-        window_id[i] = self.get_header_info('EXTNAME', window_index[i])
+        window_id[i] = self.get_header_keyword('EXTNAME', window_index[i])
       ENDFOR
     ENDELSE
   ENDELSE
@@ -1414,12 +1424,12 @@ FUNCTION spice_data::get_number_exposures, window_index
   IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
     n_exp = intarr(self.get_number_windows())
     FOR iwin=0,self.get_number_windows()-1 DO BEGIN
-      IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_info('NAXIS4', iwin) $
-      ELSE n_exp[iwin] = self.get_header_info('NAXIS1', iwin)
+      IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_keyword('NAXIS4', iwin) $
+      ELSE n_exp[iwin] = self.get_header_keyword('NAXIS1', iwin)
     ENDFOR
   ENDIF ELSE BEGIN
-    IF self.get_sit_and_stare() THEN n_exp = self.get_header_info('NAXIS4', window_index) $
-    ELSE n_exp = self.get_header_info('NAXIS1', window_index)
+    IF self.get_sit_and_stare() THEN n_exp = self.get_header_keyword('NAXIS4', window_index) $
+    ELSE n_exp = self.get_header_keyword('NAXIS1', window_index)
   ENDELSE
   return, n_exp
 END
@@ -1444,10 +1454,10 @@ FUNCTION spice_data::get_number_y_pixels, window_index
   IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
     n_slit = intarr(self.get_number_windows)
     FOR iwin=0,self.get_number_windows-1 DO BEGIN
-      n_slit[iwin] = self.get_header_info('NAXIS2', iwin)
+      n_slit[iwin] = self.get_header_keyword('NAXIS2', iwin)
     ENDFOR
   ENDIF ELSE BEGIN
-    n_slit = self.get_header_info('NAXIS2', window_index)
+    n_slit = self.get_header_keyword('NAXIS2', window_index)
   ENDELSE
   return, n_slit
 END
@@ -1467,7 +1477,7 @@ FUNCTION spice_data::get_exposure_time, window_index
   ;returns the exposure time of the given window per exposure
   COMPILE_OPT IDL2
 
-  exptime = self.get_header_info('XPOSURE', window_index)
+  exptime = self.get_header_keyword('XPOSURE', window_index)
   return, exptime
 END
 
@@ -1499,10 +1509,10 @@ FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
     IF keyword_set(pixels) THEN BEGIN
       axes = axes + ' [pixels]'
     ENDIF ELSE BEGIN
-      axes[0] = axes[0] + ' [' + strtrim(self.get_header_info('CUNIT1', 0),2) + ']'
-      axes[1] = axes[1] + ' [' + strtrim(self.get_header_info('CUNIT2', 0),2) + ']'
-      axes[2] = axes[2] + ' [' + strtrim(self.get_header_info('CUNIT3', 0),2) + ']'
-      axes[3] = axes[3] + ' [' + strtrim(self.get_header_info('CUNIT4', 0),2) + ']'
+      axes[0] = axes[0] + ' [' + strtrim(self.get_header_keyword('CUNIT1', 0),2) + ']'
+      axes[1] = axes[1] + ' [' + strtrim(self.get_header_keyword('CUNIT2', 0),2) + ']'
+      axes[2] = axes[2] + ' [' + strtrim(self.get_header_keyword('CUNIT3', 0),2) + ']'
+      axes[3] = axes[3] + ' [' + strtrim(self.get_header_keyword('CUNIT4', 0),2) + ']'
     ENDELSE
   ENDIF
   IF N_ELEMENTS(axis) eq 0 THEN return, axes
@@ -1524,14 +1534,14 @@ FUNCTION spice_data::get_instr_x_vector, window_index
   ;returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
 
-  crval = self.get_header_info('crval1', window_index)
-  naxis = self.get_header_info('naxis1', window_index)
-  crpix = self.get_header_info('crpix1', window_index)
-  cdelt = self.get_header_info('cdelt1', window_index)
-  pc1_1 = self.get_header_info('PC1_1', window_index)
+  crval = self.get_header_keyword('crval1', window_index)
+  naxis = self.get_header_keyword('naxis1', window_index)
+  crpix = self.get_header_keyword('crpix1', window_index)
+  cdelt = self.get_header_keyword('cdelt1', window_index)
+  pc1_1 = self.get_header_keyword('PC1_1', window_index)
   x_vector = crval + cdelt * pc1_1 * (findgen(naxis)+1.0-crpix)
   IF naxis EQ 1 THEN BEGIN
-    naxis = self.get_header_info('naxis4', window_index)
+    naxis = self.get_header_keyword('naxis4', window_index)
     x_vector = replicate(x_vector, naxis)
   ENDIF
   return, x_vector
@@ -1557,16 +1567,16 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   ;returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
-  crval = self.get_header_info('crval2', window_index)
-  crpix = self.get_header_info('crpix2', window_index)
-  cdelt = self.get_header_info('cdelt2', window_index)
-  pc2_2 = self.get_header_info('PC2_2', window_index)
+  crval = self.get_header_keyword('crval2', window_index)
+  crpix = self.get_header_keyword('crpix2', window_index)
+  cdelt = self.get_header_keyword('cdelt2', window_index)
+  pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
     PXBEG3 = (self.get_window_position(window_index, /reverse_y, /no_warning))[2]
     cripx = crpix + PXBEG3
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
-    naxis = self.get_header_info('naxis2', window_index)
+    naxis = self.get_header_keyword('naxis2', window_index)
   ENDELSE
   y_vector = crval + cdelt * pc2_2 * (findgen(naxis)+1.0-crpix)
   return, y_vector
@@ -1592,15 +1602,15 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   ;returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
 
-  crval = self.get_header_info('crval3', window_index)
-  cdelt = self.get_header_info('cdelt3', window_index)
-  crpix = self.get_header_info('crpix3', window_index)
+  crval = self.get_header_keyword('crval3', window_index)
+  cdelt = self.get_header_keyword('cdelt3', window_index)
+  crpix = self.get_header_keyword('crpix3', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG3 = self.get_header_info('PXBEG3', window_index)
+    PXBEG3 = self.get_header_keyword('PXBEG3', window_index)
     cripx = crpix + PXBEG3
     naxis = (self.get_ccd_size())[0]
   ENDIF ELSE BEGIN
-    naxis = self.get_header_info('naxis3', window_index)
+    naxis = self.get_header_keyword('naxis3', window_index)
   ENDELSE
   lambda_vector = crval + (findgen(naxis)+1.0-crpix) * cdelt
   return, lambda_vector
@@ -1621,17 +1631,17 @@ FUNCTION spice_data::get_time_vector, window_index
   ;returns a vector containing the time for each pixel in fourth dimension
   COMPILE_OPT IDL2
 
-  crval = self.get_header_info('crval4', window_index)
-  naxis = self.get_header_info('naxis4', window_index)
+  crval = self.get_header_keyword('crval4', window_index)
+  naxis = self.get_header_keyword('naxis4', window_index)
   IF naxis EQ 1  THEN BEGIN
-    naxis = self.get_header_info('naxis1', window_index)
-    crpix = self.get_header_info('crpix1', window_index)
-    factor = self.get_header_info('PC4_1', window_index, 1)
+    naxis = self.get_header_keyword('naxis1', window_index)
+    crpix = self.get_header_keyword('crpix1', window_index)
+    factor = self.get_header_keyword('PC4_1', window_index, 1)
   ENDIF ELSE BEGIN
-    crpix = self.get_header_info('crpix4', window_index)
+    crpix = self.get_header_keyword('crpix4', window_index)
     factor = 1
   ENDELSE
-  cdelt = self.get_header_info('cdelt4', window_index)
+  cdelt = self.get_header_keyword('cdelt4', window_index)
   time_vector = crval + factor * (findgen(naxis)+1.0-crpix) * cdelt
   return, time_vector
 END
@@ -1656,7 +1666,7 @@ FUNCTION spice_data::get_xcen, window_index
   endif else begin
     IF ~self.check_window_index(window_index) THEN return, !NULL
   endelse
-  crval = self.get_header_info('crval1', window_index)
+  crval = self.get_header_keyword('crval1', window_index)
   return, crval
 END
 
@@ -1680,7 +1690,7 @@ FUNCTION spice_data::get_ycen, window_index
   endif else begin
     IF ~self.check_window_index(window_index) THEN return, !NULL
   endelse
-  crval = self.get_header_info('crval2', window_index)
+  crval = self.get_header_keyword('crval2', window_index)
   return, crval
 END
 
@@ -1787,10 +1797,10 @@ FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambd
 
   IF size_pixels[0] EQ 0 THEN BEGIN
     IF N_ELEMENTS(axis_ind) EQ 1 THEN BEGIN
-      naxis1 = self.get_header_info('naxis1', window_index)
-      naxis2 = self.get_header_info('naxis2', window_index)
-      naxis3 = self.get_header_info('naxis3', window_index)
-      naxis4 = self.get_header_info('naxis4', window_index)
+      naxis1 = self.get_header_keyword('naxis1', window_index)
+      naxis2 = self.get_header_keyword('naxis2', window_index)
+      naxis3 = self.get_header_keyword('naxis3', window_index)
+      naxis4 = self.get_header_keyword('naxis4', window_index)
       return, reform(coords[axis_ind,*,*,*,*], [naxis1, naxis2, naxis3, naxis4])
     ENDIF
     return, coords
@@ -1826,13 +1836,13 @@ FUNCTION spice_data::get_resolution, window_index, x=x, y=y, lambda=lambda, time
   ;returns a vector containing the resolution of each dimension, or a scalar if a keyword is set
   COMPILE_OPT IDL2
 
-  cdelt1 = self.get_header_info('cdelt1', window_index)
+  cdelt1 = self.get_header_keyword('cdelt1', window_index)
   IF keyword_set(x) then return, cdelt1
-  cdelt2 = self.get_header_info('cdelt2', window_index)
+  cdelt2 = self.get_header_keyword('cdelt2', window_index)
   IF keyword_set(y) then return, cdelt2
-  cdelt3 = self.get_header_info('cdelt3', window_index)
+  cdelt3 = self.get_header_keyword('cdelt3', window_index)
   IF keyword_set(lambda) then return, cdelt3
-  cdelt4 = self.get_header_info('cdelt4', window_index)
+  cdelt4 = self.get_header_keyword('cdelt4', window_index)
   IF keyword_set(time) then return, cdelt4
   return, [cdelt1, cdelt2, cdelt3, cdelt4]
 END
@@ -1857,7 +1867,7 @@ FUNCTION spice_data::get_spatial_binning, window_index
   IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
   bin2 = intarr(N_ELEMENTS(window_index))
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    bin2[i] = self.get_header_info('NBIN2', window_index[i])
+    bin2[i] = self.get_header_keyword('NBIN2', window_index[i])
   ENDFOR
   return, bin2
 END
@@ -1882,7 +1892,7 @@ FUNCTION spice_data::get_spectral_binning, window_index
   IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
   bin3 = intarr(N_ELEMENTS(window_index))
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    bin3[i] = self.get_header_info('NBIN3', window_index[i])
+    bin3[i] = self.get_header_keyword('NBIN3', window_index[i])
   ENDFOR
   return, bin3
 END
