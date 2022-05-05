@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-05 13:48 CEST $
+; $Id: 2022-05-05 14:03 CEST $
 
 
 ;+
@@ -2186,56 +2186,6 @@ FUNCTION spice_data::get_bintable_info
     bintable_columns[index].ttype = strup(strtrim(column, 2))
     bintable_columns[index].extension = extension
   endforeach
-  
-
-  FXBOPEN, bin_unit, file, self.nwin
-  FXBFIND, bin_unit, 'WCSN', WCSN_ind, WCSN, N_FOUND
-  WCSN = strtrim(WCSN, 2)
-  FXBFIND, bin_unit, 'TFORM', TFORM_ind, TFORM, N_FOUND
-  TFORM = strtrim(TFORM, 2)
-  FXBFIND, bin_unit, 'TTYPE', TTYPE_ind, TTYPE, N_FOUND, comments=comments
-  TTYPE = strtrim(TTYPE, 2)
-  comments = strcompress(strtrim(comments, 2))
-  FXBFIND, bin_unit, 'TDIM', TDIM_ind, TDIM, N_FOUND
-  TDIM = strtrim(TDIM, 2)
-  FXBFIND, bin_unit, 'TUNIT', TUNIT_ind, TUNIT, N_FOUND
-  TUNIT = strtrim(TUNIT, 2)
-  FXBFIND, bin_unit, 'TDMIN', TDMIN_ind, TDMIN, N_FOUND
-  TDMIN = strtrim(TDMIN, 2)
-  FXBFIND, bin_unit, 'TDMAX', TDMAX_ind, TDMAX, N_FOUND
-  TDMAX = strtrim(TDMAX, 2)
-  FXBFIND, bin_unit, 'TDESC', TDESC_ind, TDESC, N_FOUND
-  TDESC = strtrim(TDESC, 2)
-  FXBCLOSE, bin_unit
-
-  bin_table_columns = make_array(self.n_bin_table_columns, value=temp_column)
-  ; Get unit and unit description
-  tunit_temp = tunit
-  tunit_desc = tunit
-  FOR i=0,self.n_bin_table_columns-1 DO BEGIN
-    unit = stregex(comments[i], '\[.*\]', /extract)
-    IF strlen(unit) GE 2 THEN BEGIN
-      tunit_temp[i] = strtrim(strmid(unit, 1, strlen(unit)-2), 2)
-      tunit_desc[i] = strtrim(strmid(comments[i], strlen(unit)+1), 2)
-    ENDIF ELSE BEGIN
-      tunit_temp[i] = ''
-      tunit_desc[i] = comments[i]
-    ENDELSE
-    IF TUNIT[i] EQ '' THEN BEGIN
-      tunit[i] = tunit_temp[i]
-    ENDIF
-
-    bin_table_columns[i].wcsn = wcsn[i]
-    bin_table_columns[i].form = tform[i]
-    bin_table_columns[i].type = ttype[i]
-    bin_table_columns[i].dim = tdim[i]
-    bin_table_columns[i].unit = tunit[i]
-    bin_table_columns[i].unit_desc = tunit_desc[i]
-    bin_table_columns[i].dmin = tdmin[i]
-    bin_table_columns[i].dmax = tdmax[i]
-    bin_table_columns[i].desc = tdesc[i]
-  ENDFOR
-
 END
 
 
