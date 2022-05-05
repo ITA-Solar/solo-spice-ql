@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-05 14:03 CEST $
+; $Id: 2022-05-05 14:52 CEST $
 
 
 ;+
@@ -86,10 +86,10 @@ pro spice_data::close
   ptr_free, self.window_descaled
   ptr_free, self.window_data
   ptr_free, self.slit_y_range
-  ;for i=0,self.n_bin_table_columns-1 do begin
-  ;  if ptr_valid((*self.bin_table_columns)[i].values) then ptr_free, (*self.bin_table_columns)[i].values
-  ;endfor
-  ;ptr_free, self.bin_table_columns
+  for i=0,self.n_bintable_columns-1 do begin
+    if ptr_valid((*self.bintable_columns)[i].values) then ptr_free, (*self.bintable_columns)[i].values
+  endfor
+  ptr_free, self.bintable_columns
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -2026,7 +2026,7 @@ FUNCTION spice_data::get_bintable_data, ttypes
   result = make_array(N_ELEMENTS(ttypes_up), value=temp_column)
   file_open = 0
   FOR i=0,N_ELEMENTS(ttypes_up)-1 DO BEGIN
-    ind = where((*self.bintable_columns).type eq ttypes_up[i], count)
+    ind = where((*self.bintable_columns).ttype eq ttypes_up[i], count)
     IF count GT 0 THEN BEGIN
       ind=ind[0]
       
@@ -2042,15 +2042,15 @@ FUNCTION spice_data::get_bintable_data, ttypes
       
         hdr = fxbheader(unit)
         col_num = strtrim(string(fxbcolnum(unit, ttypes_up[i])), 2)
-        (*self.bintable_columns)[ind].wcsn = fxpar(hdr, 'WCSN'+col_num, missing='')
-        (*self.bintable_columns)[ind].tform = fxpar(hdr, 'TFORM'+col_num, missing='')
-        (*self.bintable_columns)[ind].ttype = fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment)
+        (*self.bintable_columns)[ind].wcsn = strtrim(fxpar(hdr, 'WCSN'+col_num, missing=''), 2)
+        (*self.bintable_columns)[ind].tform = strtrim(fxpar(hdr, 'TFORM'+col_num, missing=''), 2)
+        (*self.bintable_columns)[ind].ttype = strtrim(fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment), 2)
         comment = strtrim(strcompress(comment), 2)
-        (*self.bintable_columns)[ind].tdim = fxpar(hdr, 'TDIM'+col_num, missing='')
-        (*self.bintable_columns)[ind].tdmin = fxpar(hdr, 'TDMIN'+col_num, missing='')
-        (*self.bintable_columns)[ind].tdmax = fxpar(hdr, 'TDMAX'+col_num, missing='')
-        (*self.bintable_columns)[ind].tdesc = fxpar(hdr, 'TDESC'+col_num, missing='')
-        strtrim(tunit = fxpar(hdr, 'TUNIT'+col_num, missing=''), 2)
+        (*self.bintable_columns)[ind].tdim = strtrim(fxpar(hdr, 'TDIM'+col_num, missing=''), 2)
+        (*self.bintable_columns)[ind].tdmin = strtrim(fxpar(hdr, 'TDMIN'+col_num, missing=''), 2)
+        (*self.bintable_columns)[ind].tdmax = strtrim(fxpar(hdr, 'TDMAX'+col_num, missing=''), 2)
+        (*self.bintable_columns)[ind].tdesc = strtrim(fxpar(hdr, 'TDESC'+col_num, missing=''), 2)
+        tunit = strtrim(fxpar(hdr, 'TUNIT'+col_num, missing=''), 2)
         tunit_comment = stregex(comment, '\[.*\]', /extract)
         IF strlen(tunit_comment) GE 2 THEN BEGIN
           tunit_temp = strtrim(strmid(tunit_comment, 1, strlen(tunit_comment)-2), 2)
@@ -2140,7 +2140,7 @@ PRO spice_data::read_file, file
   self.window_wcs = ptr_new(wcs)
   self.slit_y_range = ptr_new(/allocate)
   
-  ;self.get_bintable_info
+  self.get_bintable_info
 END
 
 
@@ -2165,18 +2165,18 @@ END
 ;     It will not load the data itself. This is done when the user calls the method
 ;     spice_data::get_bintable_data(ttypes)
 ;-
-FUNCTION spice_data::get_bintable_info
+PRO spice_data::get_bintable_info
   COMPILE_OPT IDL2
   
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
     extension:'', values:ptr_new()}
 
   var_keys = self.get_header_keyword('VAR_KEYS', 0, '')
-  var_keys = strsplit(var_keys, ',', count=count)
+  var_keys = strsplit(var_keys, ',', count=count, /extract)
   extension = ''
   self.n_bintable_columns = count
   if count eq 0 then bintable_columns = make_array(1, value=temp_column) $
-  else bintable_columns = make_array(self.n_bin_table_columns, value=temp_column)
+  else bintable_columns = make_array(self.n_bintable_columns, value=temp_column)
   foreach column, var_keys, index do begin
     entry = strsplit(column, ';', count=count, /extract)
     if count eq 2 then begin
@@ -2186,6 +2186,7 @@ FUNCTION spice_data::get_bintable_info
     bintable_columns[index].ttype = strup(strtrim(column, 2))
     bintable_columns[index].extension = extension
   endforeach
+  self.bintable_columns = ptr_new(bintable_columns)
 END
 
 
