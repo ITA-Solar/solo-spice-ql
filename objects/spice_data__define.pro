@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-05 11:10 CEST $
+; $Id: 2022-05-05 11:14 CEST $
 
 
 ;+
@@ -2086,6 +2086,42 @@ PRO spice_data::read_file, file
 
   ENDFOR ; iwin = 0, self.nwin-1
   
+  self.window_assoc = ptr_new(assocs)
+  self.window_data = ptr_new(ptrarr(self.nwin))
+  self.window_descaled = ptr_new(bytarr(self.nwin))
+  self.window_headers = ptr_new(headers)
+  self.window_headers_string = ptr_new(headers_string)
+  self.window_wcs = ptr_new(wcs)
+  self.slit_y_range = ptr_new(/allocate)
+  
+  self.get_bintable_info
+END
+
+
+;+
+; Description:
+;     Returns the input filename
+;
+; OUTPUT:
+;     string
+;-
+FUNCTION spice_data::get_filename
+  ;returns the input filename
+  COMPILE_OPT IDL2
+
+  return, self.file
+END
+
+
+;+
+; Description:
+;     This methods collects information about the binary table extension(s)
+;     It will not load the data itself. This is done when the user calls the method
+;     spice_data::get_bintable_data(ttypes)
+;-
+FUNCTION spice_data::get_bintable_info
+  COMPILE_OPT IDL2
+
   FXBOPEN, bin_unit, file, self.nwin
   FXBFIND, bin_unit, 'WCSN', WCSN_ind, WCSN, N_FOUND
   WCSN = strtrim(WCSN, 2)
@@ -2136,29 +2172,6 @@ PRO spice_data::read_file, file
     bin_table_columns[i].desc = tdesc[i]
   ENDFOR
 
-  self.window_assoc = ptr_new(assocs)
-  self.window_data = ptr_new(ptrarr(self.nwin))
-  self.window_descaled = ptr_new(bytarr(self.nwin))
-  self.window_headers = ptr_new(headers)
-  self.window_headers_string = ptr_new(headers_string)
-  self.window_wcs = ptr_new(wcs)
-  self.slit_y_range = ptr_new(/allocate)
-  self.bin_table_columns = ptr_new(bin_table_columns)
-END
-
-
-;+
-; Description:
-;     Returns the input filename
-;
-; OUTPUT:
-;     string
-;-
-FUNCTION spice_data::get_filename
-  ;returns the input filename
-  COMPILE_OPT IDL2
-
-  return, self.file
 END
 
 
