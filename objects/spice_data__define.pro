@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-05 11:32 CEST $
+; $Id: 2022-05-05 11:45 CEST $
 
 
 ;+
@@ -86,10 +86,10 @@ pro spice_data::close
   ptr_free, self.window_descaled
   ptr_free, self.window_data
   ptr_free, self.slit_y_range
-  for i=0,self.n_bin_table_columns-1 do begin
-    if ptr_valid((*self.bin_table_columns)[i].values) then ptr_free, (*self.bin_table_columns)[i].values
-  endfor
-  ptr_free, self.bin_table_columns
+  ;for i=0,self.n_bin_table_columns-1 do begin
+  ;  if ptr_valid((*self.bin_table_columns)[i].values) then ptr_free, (*self.bin_table_columns)[i].values
+  ;endfor
+  ;ptr_free, self.bin_table_columns
   IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
@@ -1104,7 +1104,7 @@ END
 ;     get_header_keyword instead replaces this method. See there for documentation
 ;-
 FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exists=exists
-  return, self.get_header_keyword, keyword, window_index, missing_value, exists=exists
+  return, self.get_header_keyword(keyword, window_index, missing_value, exists=exists)
 END
 
 
@@ -2104,7 +2104,7 @@ PRO spice_data::read_file, file
   self.window_wcs = ptr_new(wcs)
   self.slit_y_range = ptr_new(/allocate)
   
-  self.get_bintable_info
+  ;self.get_bintable_info
 END
 
 
@@ -2131,6 +2131,8 @@ END
 ;-
 FUNCTION spice_data::get_bintable_info
   COMPILE_OPT IDL2
+  
+  var_keys = self.get_header_keyword('VAR_KEYS', 0, '')
 
   FXBOPEN, bin_unit, file, self.nwin
   FXBFIND, bin_unit, 'WCSN', WCSN_ind, WCSN, N_FOUND
