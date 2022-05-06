@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-06 13:21 CEST $
+; $Id: 2022-05-06 13:26 CEST $
 
 
 ;+
@@ -2001,7 +2001,9 @@ END
 ;+
 ; Description:
 ;     This method returns the content of one or more columns found in the binary extension table.
-;     If the given tag does not exist, the same structure is returned with empty strings.
+;     If the given tag does not exist, the same structure is returned with empty fields, except the
+;     tag 'TTYPE' is populated with the provided ttype. When requesting the data of only one TTYPE,
+;     one can set the keyword VALUES_ONLY to receive the data only as an array, instead of the structure.
 ;
 ; OPTIONAL INPUTS:
 ;     ttypes : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
@@ -2011,11 +2013,12 @@ END
 ;     array of structure of type:
 ;             {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
 ;               extension:'', values:ptr_new()}
+;     or the data only, i.e. an array of numbers.
 ;
 ; KEYWORDS:
 ;     values_only: If set then only the values in the binary table extension is returned as an array,
 ;                  no the default output structure with metadata. This keyword is ignored if more than
-;                  one TTYPES have been provided.
+;                  one TTYPES have been provided. If the desired TTYPE does not exist, a !NULL is returned.
 ;-
 FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
   ;Returns the content of one or more columns found in the binary extension table.
