@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-05 14:52 CEST $
+; $Id: 2022-05-06 12:58 CEST $
 
 
 ;+
@@ -2016,18 +2016,20 @@ FUNCTION spice_data::get_bintable_data, ttypes
   ;Returns the content of one or more columns found in the binary extension table.
   COMPILE_OPT IDL2
 
+  IF self.n_bintable_columns EQ 0 THEN BEGIN
+    print, 'No binary table extension with variable keywords in this FITS file.'
+  ENDIF
   IF N_ELEMENTS(ttypes) eq 0 THEN BEGIN
-    ttypes_up = self.get_bintable_ttypes()
-  ENDIF ELSE BEGIN
-    ttypes_up = strup(strtrim(ttypes, 2))
-  ENDELSE
+    ttypes = self.get_bintable_ttypes()
+  ENDIF
+  ttypes_up = strup(strtrim(ttypes, 2))
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
     extension:'', values:ptr_new()}
   result = make_array(N_ELEMENTS(ttypes_up), value=temp_column)
   file_open = 0
   FOR i=0,N_ELEMENTS(ttypes_up)-1 DO BEGIN
     ind = where((*self.bintable_columns).ttype eq ttypes_up[i], count)
-    IF count GT 0 THEN BEGIN
+    IF count GT 0 && self.n_bintable_columns GT 0 THEN BEGIN
       ind=ind[0]
       
       IF ~ptr_valid((*self.bintable_columns)[ind].values) THEN BEGIN
@@ -2068,9 +2070,9 @@ FUNCTION spice_data::get_bintable_data, ttypes
       ENDIF ; ~ptr_valid((*self.bintable_columns)[ind].values)
 
       result[i] = (*self.bintable_columns)[ind]
-    ENDIF ELSE BEGIN ; count GT 0
+    ENDIF ELSE BEGIN ; count GT 0 && self.n_bintable_columns GT 0
       result[i].ttype = ttypes[i]
-    ENDELSE ; count GT 0
+    ENDELSE ; count GT 0 && self.n_bintable_columns GT 0
   ENDFOR ; i=0,N_ELEMENTS(ttypes_up)-1
   IF file_open THEN FXBCLOSE, unit
   return, result
