@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-06 12:58 CEST $
+; $Id: 2022-05-06 13:21 CEST $
 
 
 ;+
@@ -2011,8 +2011,13 @@ END
 ;     array of structure of type:
 ;             {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
 ;               extension:'', values:ptr_new()}
+;
+; KEYWORDS:
+;     values_only: If set then only the values in the binary table extension is returned as an array,
+;                  no the default output structure with metadata. This keyword is ignored if more than
+;                  one TTYPES have been provided.
 ;-
-FUNCTION spice_data::get_bintable_data, ttypes
+FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
   ;Returns the content of one or more columns found in the binary extension table.
   COMPILE_OPT IDL2
 
@@ -2068,13 +2073,23 @@ FUNCTION spice_data::get_bintable_data, ttypes
         (*self.bintable_columns)[ind].tunit_desc = tunit_desc
         
       ENDIF ; ~ptr_valid((*self.bintable_columns)[ind].values)
-
       result[i] = (*self.bintable_columns)[ind]
+      
     ENDIF ELSE BEGIN ; count GT 0 && self.n_bintable_columns GT 0
       result[i].ttype = ttypes[i]
+      
     ENDELSE ; count GT 0 && self.n_bintable_columns GT 0
   ENDFOR ; i=0,N_ELEMENTS(ttypes_up)-1
   IF file_open THEN FXBCLOSE, unit
+  IF keyword_set(values_only) && N_ELEMENTS(ttypes) EQ 1 THEN BEGIN
+    IF ptr_valid(result.values) THEN BEGIN
+      result_temp = *result.values
+      ptr_free, result.values
+      result = result_temp
+    ENDIF ELSE BEGIN
+      result = !NULL
+    ENDELSE
+  ENDIF
   return, result
 END
 
