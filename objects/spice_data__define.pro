@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-06 13:26 CEST $
+; $Id: 2022-05-08 21:21 CEST $
 
 
 ;+
@@ -1066,11 +1066,15 @@ END
 ;
 ; OPTIONAL OUTPUT:
 ;     exists : boolean, True if keyword exists
+;     variable_values : array, contains the variable values for this keyword, if this keyword is present
+;                       in the binary table extension 'VARIABLE-KEYWORDS', otherwise !NULL.
+;                       Calls the method spice_data::get_bintable_data with the VALUES_ONLY keyword set.
 ;
 ; OUTPUT:
 ;     returns the keyword value, 'missing_value' or !NULL
 ;-
-FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, exists=exists
+FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, exists=exists, $
+  variable_values=variable_values
   ;Returns the specified keyword from the window, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
 
@@ -1086,6 +1090,10 @@ FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, e
   ; '-' becomes '_D$'
   temp = strsplit(keyword, '-', count=count, /extract)
   IF count GT 1 THEN keyword = strjoin(temp, '_D$')
+
+  IF ARG_PRESENT(variable_values) THEN BEGIN
+    variable_values = self.get_bintable_data(keyword, /values_only)
+  ENDIF
 
   exists = TAG_EXIST(*(*self.window_headers)[window_index], keyword, index=index)
   IF exists THEN BEGIN
