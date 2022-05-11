@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-08 21:21 CEST $
+; $Id: 2022-05-11 14:31 CEST $
 
 
 ;+
@@ -1053,25 +1053,27 @@ END
 
 ;+
 ; Description:
-;     Returns the specified keyword from the given window, if the keyword
-;     does not exist 'missing_value' is returned if it is provided, !NULL otherwise.
+;     This method returns the specified keyword from the given window, if the keyword does not exist 
+;     'missing_value' is returned if it is provided, !NULL otherwise. This method can also return 
+;     the variable values of a keyword, if it is available in the binary table extension. 
+;     See keyword VARIABLE_VALUES.
 ;
 ; INPUTS:
-;     keyword : string, the header keyword to be returned
-;     window_index : the index of the window this keyword belongs to
+;     keyword : string, The header keyword for which the value should be returned.
+;     window_index : The index of the window this keyword belongs to.
 ;
 ; OPTIONAL INPUTS:
 ;     missing_value : the value that should be returned, if the keyword does not exist
 ;                     if this is not provided !NULL is returned
 ;
 ; OPTIONAL OUTPUT:
-;     exists : boolean, True if keyword exists
+;     exists : boolean, Set this to a named variable. This variable will be set to 1, if the keyword exists, 0 otherwise.
 ;     variable_values : array, contains the variable values for this keyword, if this keyword is present
 ;                       in the binary table extension 'VARIABLE-KEYWORDS', otherwise !NULL.
 ;                       Calls the method spice_data::get_bintable_data with the VALUES_ONLY keyword set.
 ;
 ; OUTPUT:
-;     returns the keyword value, 'missing_value' or !NULL
+;     Returns either the keyword value, the MISSING_VALUE or !NULL.
 ;-
 FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, exists=exists, $
   variable_values=variable_values
@@ -2025,7 +2027,7 @@ END
 ;
 ; KEYWORDS:
 ;     values_only: If set then only the values in the binary table extension is returned as an array,
-;                  no the default output structure with metadata. This keyword is ignored if more than
+;                  not the default output structure with metadata. This keyword is ignored if more than
 ;                  one TTYPES have been provided. If the desired TTYPE does not exist, a !NULL is returned.
 ;-
 FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
@@ -2091,7 +2093,9 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
       
     ENDELSE ; count GT 0 && self.n_bintable_columns GT 0
   ENDFOR ; i=0,N_ELEMENTS(ttypes_up)-1
+  
   IF file_open THEN FXBCLOSE, unit
+  
   IF keyword_set(values_only) && N_ELEMENTS(ttypes) EQ 1 THEN BEGIN
     IF ptr_valid(result.values) THEN BEGIN
       result_temp = *result.values
@@ -2101,6 +2105,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
       result = !NULL
     ENDELSE
   ENDIF
+  
   return, result
 END
 
