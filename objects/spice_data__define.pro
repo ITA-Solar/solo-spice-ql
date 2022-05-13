@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-11 14:31 CEST $
+; $Id: 2022-05-13 13:47 CEST $
 
 
 ;+
@@ -1070,13 +1070,17 @@ END
 ;     exists : boolean, Set this to a named variable. This variable will be set to 1, if the keyword exists, 0 otherwise.
 ;     variable_values : array, contains the variable values for this keyword, if this keyword is present
 ;                       in the binary table extension 'VARIABLE-KEYWORDS', otherwise !NULL.
-;                       Calls the method spice_data::get_bintable_data with the VALUES_ONLY keyword set.
+;                       Calls the method spice_data::get_bintable_data with the VALUES_ONLY keyword.
+;
+; KEYWORDS:
+;     values_only: If set then only the values in the binary table extension are returned to VARIABLE_VALUES as an array,
+;                  instead of the default output structure with metadata.
 ;
 ; OUTPUT:
 ;     Returns either the keyword value, the MISSING_VALUE or !NULL.
 ;-
 FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, exists=exists, $
-  variable_values=variable_values
+  variable_values=variable_values, values_only=values_only
   ;Returns the specified keyword from the window, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
 
@@ -1094,7 +1098,7 @@ FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, e
   IF count GT 1 THEN keyword = strjoin(temp, '_D$')
 
   IF ARG_PRESENT(variable_values) THEN BEGIN
-    variable_values = self.get_bintable_data(keyword, /values_only)
+    variable_values = self.get_bintable_data(keyword, values_only=values_only)
   ENDIF
 
   exists = TAG_EXIST(*(*self.window_headers)[window_index], keyword, index=index)
@@ -2026,8 +2030,8 @@ END
 ;     or the data only, i.e. an array of numbers.
 ;
 ; KEYWORDS:
-;     values_only: If set then only the values in the binary table extension is returned as an array,
-;                  not the default output structure with metadata. This keyword is ignored if more than
+;     values_only: If set then only the values in the binary table extension are returned as an array,
+;                  instead of the default output structure with metadata. This keyword is ignored if more than
 ;                  one TTYPES have been provided. If the desired TTYPE does not exist, a !NULL is returned.
 ;-
 FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
@@ -2098,9 +2102,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
   
   IF keyword_set(values_only) && N_ELEMENTS(ttypes) EQ 1 THEN BEGIN
     IF ptr_valid(result.values) THEN BEGIN
-      result_temp = *result.values
-      ptr_free, result.values
-      result = result_temp
+      result = *result.values
     ENDIF ELSE BEGIN
       result = !NULL
     ENDELSE
