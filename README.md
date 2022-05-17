@@ -1,6 +1,6 @@
 # SPICE Quicklook and Data Analysis Software
 
-Find detailed information in [[our wiki page|wiki]] 
+Find detailed information in [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki) [
  [our wiki pagewiki] our wikipage: https://github.com/ITA-Solar/solo-spice-ql/wiki
 
 If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics:
