@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-18 10:31 CEST $
+; $Id: 2022-05-18 13:49 CEST $
 
 
 ;+
@@ -1085,7 +1085,7 @@ FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, e
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 2 THEN BEGIN
-    message, 'missing input, usage: get_header_keyword, keyword, window_index [, missing_value, exists=exists]', /info
+    message, 'missing input, usage: get_header_keyword, keyword, window_index [, missing_value, exists=exists, variable_values=variable_values, values_only=values_only]', /info
     return, !NULL
   ENDIF ELSE IF N_ELEMENTS(keyword) NE 1 || SIZE(keyword, /TYPE) NE 7 THEN BEGIN
     message, 'keyword needs to be a scalar string', /info
