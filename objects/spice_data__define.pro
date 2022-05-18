@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-13 13:47 CEST $
+; $Id: 2022-05-18 10:31 CEST $
 
 
 ;+
@@ -2062,7 +2062,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
         ENDIF ; ~file_open
         data = !NULL
         FXBREAD, unit, data, ttypes_up[i]
-        (*self.bintable_columns)[i].values = ptr_new(data)
+        (*self.bintable_columns)[ind].values = ptr_new(data)
       
         hdr = fxbheader(unit)
         col_num = strtrim(string(fxbcolnum(unit, ttypes_up[i])), 2)

@@ -1,15 +1,8 @@
 # SPICE Quicklook and Data Analysis Software
 
-Find detailed information in our wikipage:   
-https://github.com/ITA-Solar/solo-spice-ql/wiki
+For more detailed information, see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/%23-SPICE-IDL-Quicklook-and-Data-Analysis-Software).
 
-If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics:
-Preferably by raising a new issue here: https://github.com/ITA-Solar/solo-spice-ql/issues
-
-or else by mail to:  
-martin.wiesmann@astro.uio.no  
-s.v.h.haugan@astro.uio.no  
-terje.fredvik@astro.uio.no
+If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics, preferably by raising a new issue here: https://github.com/ITA-Solar/solo-spice-ql/issues or else by mail to: martin.wiesmann@astro.uio.no, s.v.h.haugan@astro.uio.no, terje.fredvik@astro.uio.no (will change to prits@astro.uio.no)
 
 
 ## Table of Content
@@ -58,19 +51,16 @@ Coming soon:
 
 ## SPICE Data Object
 
-We defined a SPICE data object, called SPICE_DATA, which can be initiated with a SPICE FITS file. This object contains many methods to handle the data and the header contained in the given FITS file. It can be created using this command:
+We defined a SPICE data object, called SPICE_DATA, which can be initiated with a SPICE FITS file. This object contains many methods to handle the data and the header contained in the given FITS file. It can be created using one of these commands:
 ```
-IDL> obj = obj_new('spice_data', spice_file)
+IDL> obj = spice_data(spice_file)            ; short form
+
+IDL> obj = obj_new('spice_data', spice_file) ; long form
+```
+Then, to print out all available methods of the object:
+```
 IDL> obj->help
 ```
-The second line will print out all available methods of the object.
-
-Alternatively, the object can be created using the function SPICE_OBJECT:
-```
-IDL> obj = spice_object(spice_file)
-IDL> obj->help
-```
-
 
 ## File Management Utilities
 
