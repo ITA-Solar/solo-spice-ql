@@ -1,8 +1,8 @@
 # SPICE Quicklook and Data Analysis Software
 
-For more detailed information, see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/%23-SPICE-IDL-Quicklook-and-Data-Analysis-Software).
+For more detailed information, see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/).
 
-If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics, preferably by raising a new issue here: https://github.com/ITA-Solar/solo-spice-ql/issues or else by mail to: martin.wiesmann@astro.uio.no, s.v.h.haugan@astro.uio.no, terje.fredvik@astro.uio.no (will change to prits@astro.uio.no)
+If you find any bugs, please report them to the PRITS group at the Institute of Theoretical Astrophysics, preferably by raising a new issue here: https://github.com/ITA-Solar/solo-spice-ql/issues or else by mail to: prits-group@astro.uio.no
 
 
 ## Table of Content
