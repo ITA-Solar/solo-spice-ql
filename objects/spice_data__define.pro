@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-18 13:49 CEST $
+; $Id: 2022-05-20 09:46 CEST $
 
 
 ;+
@@ -1124,18 +1124,19 @@ END
 
 ;+
 ; Description:
-;     Returns the header of the given window
+;     Returns the header of the given window, either as a structure or as a string array.
 ;
 ; INPUTS:
-;     window_index : the index of the window this keyword belongs to
+;     window_index : The index of the window for which the header should be returned.
+;                    This index will be ignored if either LOWER_DUMBBELL or UPPER_DUMBBELL is set.
 ;
 ; KEYWORD PARAMETERS:
-;     lower_dumbbell : if set, the header of the lower dumbbell will be returned
-;     upper_dumbbell : if set, the header of the upper dumbbell will be returned
-;     string : if set, the header will be returned as a string array instead of a structure
+;     lower_dumbbell : If set, the header of the lower dumbbell will be returned.
+;     upper_dumbbell : If set, the header of the upper dumbbell will be returned.
+;     string : If set, the header will be returned as a string array instead of a structure.
 ;
 ; OUTPUT:
-;     returns the header as a structure or a string array
+;     Returns the header as a structure or a string array.
 ;-
 FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
   string=string
