@@ -13,7 +13,7 @@
 ;               This file is used by SPICE_CAT in order to search/filter
 ;               the list of files for those files that the user wants.
 ;
-; Use         : SPICE_GEN_CAT [,FITSDIR [,LISTDIR]]
+; Use         : SPICE_GEN_CAT [,FITSDIR [,CATALOG_DIR]]
 ;    
 ; Inputs      : None required.
 ;               
@@ -46,19 +46,26 @@
 ;               Version 3, TF, 8 February 2022
 ;                          When keyword RESET is set: do not delete old
 ;                          catalog file before new catalog file is generated
+;               Version 4, SVHH, 31 May 2022
+;                          Populate FILE_PATH and ICON_PATH with file path
+;                          relative to SPICE_DATA
 ;
-; Version     : Version 3, TF, 8 Februrary 2022
+; Version     : Version 4, SVHH, 31 May 2022
 ;
-; $Id: 2022-02-08 12:50 CET $
+; $Id: 2022-05-31 16:10 CEST $
 ;-            
 
-FUNCTION spice_gen_cat__line,header,keyword_info
+FUNCTION spice_gen_cat__line,header,keyword_info, relative_path
   line = []
   keyword_array = keyword_info.keys()
   foreach keyword,keyword_array DO BEGIN
      keyword_type = keyword_info[keyword].type
      missing = keyword_type EQ 't' ? 'MISSING' : 999999
-     line =  [line, (fxpar(header,keyword, missing=missing)).tostring()]
+     value = (fxpar(header,keyword, missing=missing)).tostring()
+     IF keyword EQ "FILE_PATH" OR keyword EQ "ICON_PATH" THEN BEGIN
+        value = relative_path
+     END
+     line =  [line, value]
   END
   RETURN,strjoin(line,string(9b))
 END
@@ -85,16 +92,17 @@ FUNCTION spice_gen_cat__get_header,filename
 END
 
 
-PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, quiet=quiet
+PRO spice_gen_cat,spice_datadir,catalog_dir, reset=reset, fake_factor=fake_factor, quiet=quiet
   ON_ERROR,0
   
   quiet = keyword_set(quiet)
   spice_default,reset,1
   spice_default,fake_factor, 1
   spice_default,spice_datadir,getenv("SPICE_DATA")
-  spice_default,catalog_filedir,spice_datadir
+  spice_default,catalog_dir,spice_datadir
   
-  catalog_filename = concat_dir(catalog_filedir,'spice_catalog.txt')
+  spice_datadir = expand_path(spice_datadir)
+  catalog_filename = concat_dir(catalog_dir,'spice_catalog.txt')
   
   IF keyword_set(reset) THEN BEGIN 
      original_catalog_filename = catalog_filename
@@ -131,8 +139,9 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, q
      END
      
      header = spice_gen_cat__get_header(fits_filename)
-     
-     lines_in_hash[key] = spice_gen_cat__line(header,keyword_info)
+     relative_filename = fits_filename.replace(spice_datadir + "/", "")
+     relative_path = file_dirname(relative_filename)
+     lines_in_hash[key] = spice_gen_cat__line(header,keyword_info, relative_path)
      IF NOT quiet THEN PRINT,"Files done :",(index+1).toString("(i6)")," "+key
   END
   keyword_list = keyword_info.keys()
@@ -142,12 +151,14 @@ PRO spice_gen_cat,spice_datadir,listdir, reset=reset, fake_factor=fake_factor, q
   OPENW,catalog_lun,catalog_filename,/get_lun
   printf,catalog_lun,comma_separated_keywords
   FOR fake=0, fake_factor-1 DO BEGIN 
-     foreach key,keys DO printf,catalog_lun,lines_in_hash[key],format="(a)"
+     foreach key,keys DO BEGIN
+        printf,catalog_lun,lines_in_hash[key],format="(a)"
+     END
   END
   FREE_LUN,catalog_lun
   
   file_move, catalog_filename, original_catalog_filename,/overwrite
 END
 
-;spice_gen_cat
-;END
+spice_gen_cat, "$HOME/tmp/spice_data/level0"
+END
