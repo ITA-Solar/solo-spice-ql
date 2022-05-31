@@ -178,54 +178,77 @@ FUNCTION spice_keyword_info_header
 ;  
 ;MIRRDELT=              0.00000 / Slope of linear fit to MIRRPOS                 
 ;SMIRRDEL=              0.00000 / Sigma of slope of linear fit to MIRRPOS 
+;
 ;-
   text = text[0 : -2]
   text = strmid(text, 1, 1000)
   return, [text, '']
 END
 
-FUNCTION spice_keyword_info,requested_keywords,all=all
-  header = spice_keyword_info_header()
-  first_eight = (strmid(header, 0, 8)).trim()
-  all_keywords = first_eight(where(first_eight NE ""))
-  all_keywords = ['FIRST_RASTER', all_keywords]
-  list = []
-  foreach keyword, all_keywords DO BEGIN
+FUNCTION spice_keyword_get_info, header, keyword
      val = fxpar(header, keyword)
      datatype = size(val, /tname)
      CASE datatype OF
-        "STRING" : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width: 15, type:"t"}
-        "INT"    : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  3, type:"i"}
-        "LONG"   : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  4, type:"i"}
-        "DOUBLE" : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  5, type:"i"}
+        "STRING" : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width: 15, type:"t", webcat_type:"t"}
+        "INT"    : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  5, type:"i", webcat_type:"i"}
+        "LONG"   : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  8, type:"i", webcat_type:"l"}
+        "FLOAT"  : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  6, type:"i", webcat_type:"f"}
+        "DOUBLE" : info = {SPICE_KEYWORD_INFO, keyword: keyword, display_width:  8, type:"i", webcat_type:"f"}
      END
      IF keyword EQ "FIRST_RASTER" OR keyword EQ "LEVEL" THEN BEGIN
         info.display_width = 2
         info.type = "t"
+        info.webcat_type = "t"
      END
-     list = [list, info]
-  END
+     IF keyword EQ "FILE_PATH" THEN BEGIN
+        info.display_width = 15
+        info.type = "t"
+        info.webcat_type = "t"
+     END
+     IF keyword EQ "ICON_PATH" THEN BEGIN
+        info.display_width = 15
+        info.type = "t"
+        info.webcat_type = "icon_base_path"
+     END
+     return, info
+END
+
+FUNCTION spice_keyword_info,requested_keywords,all=all
+  header = spice_keyword_info_header()
+  first_eight = (strmid(header, 0, 8)).trim()
   
-  IF keyword_set(all) THEN requested_keywords = list[*].keyword
-  spice_default, requested_keywords, list[*].keyword
+  IF n_elements(requested_keywords) EQ 0 THEN BEGIN
+     all_keywords = first_eight(where(first_eight NE ""))
+     all_keywords = ['FIRST_RASTER', all_keywords]
+     all_keywords = [all_keywords, 'FILE_PATH', 'ICON_PATH']
+     requested_keywords = all_keywords
+  END 
   
   keyword_info_hash = orderedhash()
-  foreach keyword, requested_keywords, index DO BEGIN
-     info = reform(list[where(list[*].keyword EQ keyword,count)])
-     IF count NE 1 THEN message,"Huh? This shouldn't happen! Should be one and only one match!"
+  foreach keyword, requested_keywords DO BEGIN
+     info = spice_keyword_get_info(header, keyword)
      keyword_info_hash[keyword] = info
   END
+  
   return,keyword_info_hash
 END
 
-PRO spice_keyword_info_as_json, requested_keywords, all=all
+FUNCTION spice_keyword_info_as_json, requested_keywords, all=all
   infos = spice_keyword_info(requested_keywords, all=all)
-  print, "["
+  
+  index = 0
+  print, "{"
   foreach info, infos DO BEGIN
-     print, "   {", format='(a,$)'
-     print, "KEYWORD: " + info.keyword
+     print, '   "' + info.keyword + '" : ', format='(a,$)'
+     print, ' { "type" : "' + info.webcat_type + '", ', format='(a,$)'
+     print, '   "display_width" : ', format='(a,$)'
+     print, info.display_width.toString() + ' }',  format='(a,$)'
+     IF index++ LT n_elements(infos)-1 THEN print, ','
   END
+  print
+  print, "}"
 END 
 
 a = spice_keyword_info()
+b = spice_keyword_info_as_json()
 END
