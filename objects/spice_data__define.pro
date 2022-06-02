@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-20 09:46 CEST $
+; $Id: 2022-06-02 11:47 CEST $
 
 
 ;+
@@ -155,7 +155,7 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
     return, -1
   endif
 
-  data = self->get_window_data(window_index, /load, /slit_only, approximated_slit=approximated_slit)
+  data = self->get_window_data(window_index, /slit_only, approximated_slit=approximated_slit)
   ;; Only do fit on the spectral part of the window!
   lambda = self->get_wcs_coord(window_index, /lambda)
 
@@ -291,7 +291,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
   window,1, xp=4200
   loadct,3,/silent
 
-  data = self->get_window_data(window_index,/load)
+  data = self->get_window_data(window_index)
   !p.multi = [0,2,1]
 
   plot_image,transpose(sigrange(reform(data[0,*,*]),fraction=0.9)),title='Unmasked',ytitle='Y pixel index',xtitle='Lambda pixel index'
@@ -306,7 +306,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
 
   self->debug_plot_dumbbell_range, window_index, lower_dumbbell_range, upper_dumbbell_range
 
-  masked_data = self->get_window_data(window_index,/load,/slit_only)
+  masked_data = self->get_window_data(window_index,/slit_only)
   plot_image,transpose(sigrange(reform(masked_data[0,*,*]),fraction=0.9)),title='Masked',ytitle='Y pixel index',xtitle='Lambda pixel index'
 
   loadct,12,/silent
@@ -565,7 +565,7 @@ PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
   ;;-
   n_windows = self->get_number_windows()
   FOR window_index = 0,n_windows-1 DO BEGIN
-    data = self->get_window_data(window_index,/load)
+    data = self->get_window_data(window_index)
 
     dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
     intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
@@ -733,7 +733,7 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;;     below or above the narrow slit set to NaN.
   ;;
   ;; SIDE EFFECTS:
-  ;;     If approximated_slit is not set, then ::get_window_data(/load) will be called
+  ;;     If approximated_slit is not set, then ::get_window_data() will be called
   ;;     for all windows in the file once. The structure tag self.slit_y_range
   ;;     will be set the first time this method is called. A later call of
   ;;     this method will use the value of self.slit_y_range.
@@ -763,7 +763,8 @@ END
 ;     window_index : the index of the desired window
 ;
 ; KEYWORD PARAMETERS:
-;     load : if set, the data is read from the file and returned as an array
+;     noload : if set, the data is NOT read from the file and returned as an array,
+;                 instead a link to the data is returned
 ;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
 ;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
 ;                 any y regions in a narrow slit data cube that don't contain
@@ -773,7 +774,7 @@ END
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
-;     approximated_slit: to be used in cimbination with keyword slit_only. If both
+;     approximated_slit: to be used in combination with keyword slit_only. If both
 ;                 keywords are set, use a fixed (conservative) value for the slit
 ;                 range, i.e. do not estimate the slit length based on the
 ;                 position of the dumbbells.
@@ -784,8 +785,9 @@ END
 ; OUTPUT:
 ;     returns either a link to the data, or the array itself
 ;-
-FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale, slit_only=slit_only, approximated_slit=approximated_slit, debug_plot=debug_plot
-  ;Returns a link to the data of window, or the data itself if keyword load is set
+FUNCTION spice_data::get_window_data, window_index, noload=noload, nodescale=nodescale, slit_only=slit_only, approximated_slit=approximated_slit, $
+  debug_plot=debug_plot
+  ;Returns the data of a window, or the link to the data if keyword noload is set
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 1 THEN BEGIN
@@ -793,7 +795,7 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
 
-  IF keyword_set(load) THEN BEGIN
+  IF ~keyword_set(noload) THEN BEGIN
     IF keyword_set(nodescale) THEN descaled=2 ELSE descaled=1
     IF (*self.window_descaled)[window_index] EQ descaled THEN BEGIN
       data = *(*self.window_data)[window_index]
@@ -853,7 +855,7 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, n
     return, !NULL
   ENDIF
 
-  data = self.get_window_data(window_index, /load, nodescale=nodescale)
+  data = self.get_window_data(window_index, nodescale=nodescale)
   IF self.get_sit_and_stare() THEN BEGIN
     data = reform(data[0,*,*,exposure_index])
   ENDIF ELSE BEGIN
@@ -896,8 +898,8 @@ END
 ;+
 ; Description:
 ;     Descales the array, using BSCALE and BZERO keywords in the header.
-;     If you get the data from this object via get_window_data() without
-;     setting the keyword 'load', you will have to call this method yourself.
+;     If you get the data from this object via get_window_data() while
+;     setting the keyword 'noload', you will have to call this method yourself.
 ;
 ; INPUTS:
 ;     array : a numeric array

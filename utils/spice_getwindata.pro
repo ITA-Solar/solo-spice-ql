@@ -141,7 +141,7 @@
 ;       approximated_slit, if set (when slit_only is set) use a quicker way 
 ;       of estimating the pixels to be masked
 ;-
-; $Id: 2022-01-31 13:38 CET $
+; $Id: 2022-06-02 11:47 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
@@ -235,7 +235,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
 
   ;
   ; Extract the data array.
-  wd = d->get_window_data(iwin, /load, slit_only=slit_only, approximated_slit=approximated_slit)
+  wd = d->get_window_data(iwin, slit_only=slit_only, approximated_slit=approximated_slit)
 
   t1=systime(1)
 

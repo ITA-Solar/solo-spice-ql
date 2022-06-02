@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 2022-06-02 11:47 CEST $
 
 
 PRO spice_browser_plot_sji, state
@@ -144,7 +144,7 @@ PRO spice_browser_plot_sji, state
       title = 'Lower Dumbbell'
     ENDELSE
     IF window_index LT 0 THEN continue
-    ;data = state.data->get_window_data(window_index, /load)
+    ;data = state.data->get_window_data(window_index)
     ;help, data
     ;stop
     image = state.data->get_one_image(window_index, 0)
