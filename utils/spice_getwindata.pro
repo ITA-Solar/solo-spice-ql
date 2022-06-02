@@ -48,6 +48,17 @@
 ;       PERANG:    If set, the intensities are returned in units of
 ;                  erg/cm2/s/sr/Angstrom. To be used in conjunction
 ;                  with /CALIB; ignored otherwise.
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUTS:
 ;       Structure with data and header information. The structure is
@@ -141,12 +152,12 @@
 ;       approximated_slit, if set (when slit_only is set) use a quicker way 
 ;       of estimating the pixels to be masked
 ;-
-; $Id: 2022-06-02 11:47 CEST $
+; $Id: 2022-06-02 14:29 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
   ixrange=ixrange, normalize=normalize, quiet=quiet, $
-  calib=calib, perang=perang, slit_only=slit_only, approximated_slit=approximated_slit
+  calib=calib, perang=perang, no_masking=no_masking, approximated_slit=approximated_slit
 
 
 
@@ -235,7 +246,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
 
   ;
   ; Extract the data array.
-  wd = d->get_window_data(iwin, slit_only=slit_only, approximated_slit=approximated_slit)
+  wd = d->get_window_data(iwin, no_masking=no_masking, approximated_slit=approximated_slit)
 
   t1=systime(1)
 

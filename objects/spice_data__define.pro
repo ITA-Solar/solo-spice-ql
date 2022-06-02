@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-02 13:29 CEST $
+; $Id: 2022-06-02 14:29 CEST $
 
 
 ;+
@@ -139,14 +139,23 @@ END
 ;     window_index : The index of the desired window, default is 0.
 ; 
 ; KEYWORD PARAMETERS:
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
 ;     no_widget: If set, xcfit_block will not be called.
 ;
 ;-
-function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
-  no_widget=no_widget
+function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  no_fitting=no_fitting, no_widget=no_widget
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
@@ -157,7 +166,7 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
     return, -1
   endif
 
-  data = self->get_window_data(window_index, /slit_only, approximated_slit=approximated_slit)
+  data = self->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit)
   ;; Only do fit on the spectral part of the window!
   lambda = self->get_wcs_coord(window_index, /lambda)
 
@@ -276,21 +285,19 @@ END
 ;     window_index : The index of the desired window, default is 0.
 ;
 ; KEYWORD PARAMETERS:
-;     slit_only: If set, call ::mask_regions_outside_slit in order to mask
-;                 any y regions in a narrow slit data cube that don't contain
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
-;                 detector that lies above/below the dumbbells,
+;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension. *It is recommended to set this keyword.*
-;     approximated_slit: To be used in combination with keyword slit_only. If both
-;                 keywords are set, use a fixed (conservative) value for the slit
-;                 range, i.e. do not estimate the slit length based on the
-;                 position of the dumbbells.
-;     debug_plot: To be used in combination with keywords slit_only (and
-;                 optionally approximated_slit). If set, make plots to
-;                 illustrate which part of the window is being masked.
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
+;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
+;                 This keyword is ignored if NO_MASKING is set.
 ;
 ; OPTIONAL OUTPUTS:
 ;      DATA: Data Array. Rearranged so that the spectra is on the first dimension.
@@ -302,7 +309,7 @@ END
 ;               declared as "FAILED". Set to -1000.0.
 ;
 ;-
-PRO spice_data::transform_data_for_ana, window_index, slit_only=slit_only, approximated_slit=approximated_slit, $
+PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   debug_plot=debug_plot, $
   DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
   ;Transforms data so that it can be used with cfit_block and xcfit_block.
@@ -310,7 +317,7 @@ PRO spice_data::transform_data_for_ana, window_index, slit_only=slit_only, appro
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
 
-  data = self->get_window_data(window_index, slit_only=slit_only, approximated_slit=approximated_slit, debug_plot=debug_plot)
+  data = self->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot)
   ;; Only do fit on the spectral part of the window!
   lambda = self->get_wcs_coord(window_index, /lambda)
 
@@ -342,36 +349,34 @@ END
 ;     window_index : The index of the desired window, default is 0.
 ; 
 ; KEYWORD PARAMETERS:
-;     slit_only: If set, call ::mask_regions_outside_slit in order to mask
-;                 any y regions in a narrow slit data cube that don't contain
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
-;                 detector that lies above/below the dumbbells,
+;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension. *It is recommended to set this keyword.*
-;     approximated_slit: To be used in combination with keyword slit_only. If both
-;                 keywords are set, use a fixed (conservative) value for the slit
-;                 range, i.e. do not estimate the slit length based on the
-;                 position of the dumbbells.
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
 ;     init_all_cubes: If set, then all cubes within the ANA will be initialised,
 ;                 otherwise, the cubes RESULT, RESIDUALS, INCLUDE and CONSTANT will
 ;                 be undefined.
-;     debug_plot: To be used in combination with keywords slit_only (and
-;                 optionally approximated_slit). If set, make plots to
-;                 illustrate which part of the window is being masked.
+;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
+;                 This keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
 ;
 ;-
-FUNCTION spice_data::mk_analysis, window_index, slit_only=slit_only, approximated_slit=approximated_slit, $
+FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   init_all_cubes=init_all_cubes, debug_plot=debug_plot
   ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
   
-  self->transform_data_for_ana, window_index, slit_only=slit_only, approximated_slit=approximated_slit, $
+  self->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
     debug_plot=debug_plot, $
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
 
@@ -464,7 +469,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
 
   self->debug_plot_dumbbell_range, window_index, lower_dumbbell_range, upper_dumbbell_range
 
-  masked_data = self->get_window_data(window_index,/slit_only)
+  masked_data = self->get_window_data(window_index)
   plot_image,transpose(sigrange(reform(masked_data[0,*,*]),fraction=0.9)),title='Masked',ytitle='Y pixel index',xtitle='Lambda pixel index'
 
   loadct,12,/silent
@@ -801,14 +806,14 @@ END
 FUNCTION spice_data::check_if_data_may_be_masked, window_index
   level = self->get_level()
   IF level NE 2 THEN BEGIN
-    message,'SLIT_ONLY applies to L2 files only, returning unmodified data array',/info
+    message,'MASK_REGIONS_OUTSIDE_SLIT applies to L2 files only, returning unmodified data array',/info
     return, 0
   ENDIF
 
   dumbbell  = self->get_header_keyword('DUMBBELL', window_index) NE 0
   wide_slit = self->get_header_keyword('SLIT_WID', window_index) EQ 30
   IF dumbbell OR wide_slit THEN BEGIN
-    message,'SLIT_ONLY applies to narrow slit observations only, returning unmodified data array',/info
+    message,'MASK_REGIONS_OUTSIDE_SLIT applies to narrow slit observations only, returning unmodified data array',/info
     return, 0
   ENDIF
 
@@ -821,7 +826,7 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;; Description:
   ;;     Returns the input data array with any pixels that are above or
   ;;     below the narrow slit region set to NaN. This method is called when
-  ;;     ::get_window_data is called with the slit_only keyword set.
+  ;;     ::get_window_data is called if the no_masking keyword is NOT set.
   ;;
   ;;     And now a little background story:
   ;;     The height of the 2",4" and 6" slits is 600 pixels. At both ends of the slits
@@ -912,10 +917,10 @@ END
 
 ;+
 ; Description:
-;     Returns the data of the specified window. If 'load' keyword is set,
-;     the function returns a copy of the array, otherwise a link to the
-;     array in the file. If 'load' and 'slit_only' keywords are set any
-;     pixels below and above the slit are set to NaN in the returned array
+;     Returns the data of the specified window. If 'noload' keyword is set,
+;     the function returns a link to the array in the file, otherise a copy of the array.
+;     Pixels below and above the slit are set to NaN in the returned array, except if
+;     either 'noload' or 'no_masking' is set.
 ;
 ; INPUTS:
 ;     window_index : the index of the desired window
@@ -924,27 +929,25 @@ END
 ;     noload : if set, the data is NOT read from the file and returned as an array,
 ;                 instead a link to the data is returned
 ;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
-;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
-;                 any y regions in a narrow slit data cube that don't contain
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
-;                 detector that lies above/below the dumbbells,
+;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
-;     approximated_slit: to be used in combination with keyword slit_only. If both
-;                 keywords are set, use a fixed (conservative) value for the slit
-;                 range, i.e. do not estimate the slit length based on the
-;                 position of the dumbbells.
-;     debug_plot: to be used in combination with keywords slit_only (and
-;                 optionally approximated_slit). If set, make plots to
-;                 illustrate which part of the window is being masked.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
+;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
+;                 This keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
 ;     returns either a link to the data, or the array itself
 ;-
-FUNCTION spice_data::get_window_data, window_index, noload=noload, nodescale=nodescale, slit_only=slit_only, approximated_slit=approximated_slit, $
-  debug_plot=debug_plot
+FUNCTION spice_data::get_window_data, window_index, noload=noload, nodescale=nodescale, $
+  no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot
   ;Returns the data of a window, or the link to the data if keyword noload is set
   COMPILE_OPT IDL2
 
@@ -968,7 +971,7 @@ FUNCTION spice_data::get_window_data, window_index, noload=noload, nodescale=nod
 
 
     ENDELSE
-    IF keyword_set(slit_only) THEN $
+    IF ~keyword_set(no_masking) THEN $
       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
   ENDIF ELSE BEGIN
     data = *(*self.window_assoc)[window_index]
