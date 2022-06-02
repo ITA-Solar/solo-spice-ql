@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-02 13:09 CEST $
+; $Id: 2022-06-02 13:29 CEST $
 
 
 ;+
@@ -276,19 +276,19 @@ END
 ;     window_index : The index of the desired window, default is 0.
 ;
 ; KEYWORD PARAMETERS:
-;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
+;     slit_only: If set, call ::mask_regions_outside_slit in order to mask
 ;                 any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lies above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension. It is recommended to set this keyword.
-;     approximated_slit: to be used in combination with keyword slit_only. If both
+;                 dumbbell extension. *It is recommended to set this keyword.*
+;     approximated_slit: To be used in combination with keyword slit_only. If both
 ;                 keywords are set, use a fixed (conservative) value for the slit
 ;                 range, i.e. do not estimate the slit length based on the
 ;                 position of the dumbbells.
-;     debug_plot: to be used in combination with keywords slit_only (and
+;     debug_plot: To be used in combination with keywords slit_only (and
 ;                 optionally approximated_slit). If set, make plots to
 ;                 illustrate which part of the window is being masked.
 ;
@@ -342,19 +342,22 @@ END
 ;     window_index : The index of the desired window, default is 0.
 ; 
 ; KEYWORD PARAMETERS:
-;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
+;     slit_only: If set, call ::mask_regions_outside_slit in order to mask
 ;                 any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lies above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension. It is recommended to set this keyword.
-;     approximated_slit: to be used in combination with keyword slit_only. If both
+;                 dumbbell extension. *It is recommended to set this keyword.*
+;     approximated_slit: To be used in combination with keyword slit_only. If both
 ;                 keywords are set, use a fixed (conservative) value for the slit
 ;                 range, i.e. do not estimate the slit length based on the
 ;                 position of the dumbbells.
-;     debug_plot: to be used in combination with keywords slit_only (and
+;     init_all_cubes: If set, then all cubes within the ANA will be initialised,
+;                 otherwise, the cubes RESULT, RESIDUALS, INCLUDE and CONSTANT will
+;                 be undefined.
+;     debug_plot: To be used in combination with keywords slit_only (and
 ;                 optionally approximated_slit). If set, make plots to
 ;                 illustrate which part of the window is being masked.
 ;
@@ -362,7 +365,7 @@ END
 ;
 ;-
 FUNCTION spice_data::mk_analysis, window_index, slit_only=slit_only, approximated_slit=approximated_slit, $
-  debug_plot=debug_plot
+  init_all_cubes=init_all_cubes, debug_plot=debug_plot
   ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
@@ -381,6 +384,38 @@ FUNCTION spice_data::mk_analysis, window_index, slit_only=slit_only, approximate
   IF n_bad GT 0 THEN data[badix] = missing
 
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
+  
+  if keyword_set(init_all_cubes) then begin
+    handle_value, ana.fit_h, fit
+    n_components = N_TAGS(fit)
+    n_params = 0
+    for itag=0,n_components-1 do begin
+      fit_cur = fit.(itag)
+      n_params = n_params + N_ELEMENTS(fit_cur.param)
+    endfor
+    handle_value, ana.data_h, data
+    sdata = size(data)
+    if sdata[0] eq 3 then begin
+      result = dblarr(n_params+1, sdata[2], sdata[3])
+      residual = fltarr(sdata[1], sdata[2], sdata[3])
+      include = bytarr(n_components, sdata[2], sdata[3])
+      include[*] = 1
+      const = bytarr(n_params, sdata[2], sdata[3])
+    endif else if sdata[0] eq 4 then begin
+      result = dblarr(n_params+1, sdata[2], sdata[3], sdata[4])
+      residual = fltarr(sdata[1], sdata[2], sdata[3], sdata[4])
+      include = bytarr(n_components, sdata[2], sdata[3], sdata[4])
+      include[*] = 1
+      const = bytarr(n_params, sdata[2], sdata[3], sdata[4])
+    endif else begin
+      print, 'data cube has wrong number of dimensions.'
+      stop
+    endelse
+    handle_value, ana.result_h, result, /no_copy, /set
+    handle_value, ana.residual_h, residual, /no_copy, /set
+    handle_value, ana.include_h, include, /no_copy, /set
+    handle_value, ana.const_h, const, /no_copy, /set
+  endif
   return, ana
 END
 
