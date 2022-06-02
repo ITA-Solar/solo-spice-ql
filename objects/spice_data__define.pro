@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-02 14:29 CEST $
+; $Id: 2022-06-02 14:43 CEST $
 
 
 ;+
@@ -728,7 +728,7 @@ PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
   ;;-
   n_windows = self->get_number_windows()
   FOR window_index = 0,n_windows-1 DO BEGIN
-    data = self->get_window_data(window_index)
+    data = self->get_window_data(window_index, /no_masking)
 
     dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
     intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
