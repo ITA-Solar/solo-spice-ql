@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-02 11:47 CEST $
+; $Id: 2022-06-02 12:54 CEST $
 
 
 ;+
@@ -261,6 +261,70 @@ pro spice_data::create_l3, window_index, approximated_slit=approximated_slit, no
   spice_create_l3, self, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
     no_widget=no_widget
 END
+
+
+;+
+; Description:
+;     This procedure transforms the data of a chosen window, so that it can be used
+;     in CFIT_BLOCK and XCFIT_BLOCK.
+;
+; KEYWORD PARAMETERS:
+;     window_index : The index of the desired window, default is 0.
+;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
+;                 any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lies above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: to be used in combination with keyword slit_only. If both
+;                 keywords are set, use a fixed (conservative) value for the slit
+;                 range, i.e. do not estimate the slit length based on the
+;                 position of the dumbbells.
+;     debug_plot: to be used in combination with keywords slit_only (and
+;                 optionally approximated_slit). If set, make plots to
+;                 illustrate which part of the window is being masked.
+;
+; OPTIONAL OUTPUTS:
+;      DATA: Data Array. Rearranged so that the spectra is on the first dimension.
+;      LAMBDA: An array of wavelength values. One value for every point in the data array.
+;      WEIGHTS: Weights to use in the fitting process. Same dimensions as DATA.
+;               All points are set to 1.0.
+;      MISSING: The MISSING value, used to flag missing data points,
+;               and parameter values at points where the fit has been
+;               declared as "FAILED". Set to -1000.0.
+;
+;-
+PRO spice_data::transform_data_for_ana, window_index, slit_only=slit_only, approximated_slit=approximated_slit, $
+  debug_plot=debug_plot, $
+  DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
+  ;Transforms data so that it can be used with cfit_block and xcfit_block.
+  COMPILE_OPT IDL2
+
+  if N_ELEMENTS(window_index) eq 0 then window_index = 0
+
+  data = self->get_window_data(window_index, slit_only=slit_only, approximated_slit=approximated_slit, debug_plot=debug_plot)
+  ;; Only do fit on the spectral part of the window!
+  lambda = self->get_wcs_coord(window_index, /lambda)
+
+  size_data = size(data)
+  if self->get_sit_and_stare() then begin
+    lambda = transpose(lambda, [2, 0, 1, 3])
+    data = transpose(data, [2, 0, 1, 3])
+    weights = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value=1.0)
+  endif else begin
+    lambda = reform(lambda)
+    lambda = transpose(lambda, [2, 0, 1])
+    data = transpose(data, [2, 0, 1])
+    weights = make_array(size_data[3], size_data[1], size_data[2], value=1.0)
+  endelse
+  type_data = size(data, /type)
+  lambda = fix(lambda, type=type_data)
+  missing = self->get_missing_value()
+  missing = -1000.0d
+END
+
 
 
 ;---------------------------------------------------------
