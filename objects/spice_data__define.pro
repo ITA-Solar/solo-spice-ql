@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-02 12:54 CEST $
+; $Id: 2022-06-02 13:04 CEST $
 
 
 ;+
@@ -323,6 +323,57 @@ PRO spice_data::transform_data_for_ana, window_index, slit_only=slit_only, appro
   lambda = fix(lambda, type=type_data)
   missing = self->get_missing_value()
   missing = -1000.0d
+END
+
+
+;+
+; Description:
+;     This procedure creates an ANA (analysis structure) with the data of a chosen window, so that it can be used
+;     in CFIT_BLOCK and XCFIT_BLOCK. Fit components are estimated and added to ANA.
+;     Calls TRANSFORM_DATA_FOR_ANA.
+;
+; KEYWORD PARAMETERS:
+;     window_index : The index of the desired window, default is 0.
+;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
+;                 any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lies above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: to be used in combination with keyword slit_only. If both
+;                 keywords are set, use a fixed (conservative) value for the slit
+;                 range, i.e. do not estimate the slit length based on the
+;                 position of the dumbbells.
+;     debug_plot: to be used in combination with keywords slit_only (and
+;                 optionally approximated_slit). If set, make plots to
+;                 illustrate which part of the window is being masked.
+;
+; OUTPUT:
+;
+;-
+FUNCTION spice_data::mk_analysis, window_index, slit_only=slit_only, approximated_slit=approximated_slit, $
+  debug_plot=debug_plot
+  ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
+  COMPILE_OPT IDL2
+
+  if N_ELEMENTS(window_index) eq 0 then window_index = 0
+  
+  self->transform_data_for_ana, window_index, slit_only=slit_only, approximated_slit=approximated_slit, $
+    debug_plot=debug_plot, $
+    DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
+
+  detector = self->get_header_keyword('DETECTOR', window_index)
+  widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
+  widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
+
+  adef = generate_adef(data, LAMbda, widmin=widmin)
+  badix = where(data ne data, n_bad)
+  IF n_bad GT 0 THEN data[badix] = missing
+
+  ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
+  return, ana
 END
 
 
