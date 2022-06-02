@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-02 13:04 CEST $
+; $Id: 2022-06-02 13:09 CEST $
 
 
 ;+
@@ -135,12 +135,14 @@ END
 ;     This function is also called by 'create_l3' method, to get the ANA structure, which is
 ;     then saved into a level 3 FITS file.
 ;
-; KEYWORD PARAMETERS:
+; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
+; 
+; KEYWORD PARAMETERS:
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget: If set, xcfit_block will not be called
+;     no_widget: If set, xcfit_block will not be called.
 ;
 ;-
 function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
@@ -245,12 +247,14 @@ END
 ; Description:
 ;     Creates a level 3 file from the level 2
 ;
-; KEYWORD PARAMETERS:
+; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window(s), default is all windows.
+;
+; KEYWORD PARAMETERS:
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget: If set, xcfit_block will not be called
+;     no_widget: If set, xcfit_block will not be called.
 ;
 ;-
 pro spice_data::create_l3, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
@@ -268,8 +272,10 @@ END
 ;     This procedure transforms the data of a chosen window, so that it can be used
 ;     in CFIT_BLOCK and XCFIT_BLOCK.
 ;
-; KEYWORD PARAMETERS:
+; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
+;
+; KEYWORD PARAMETERS:
 ;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
 ;                 any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
@@ -277,7 +283,7 @@ END
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension.
+;                 dumbbell extension. It is recommended to set this keyword.
 ;     approximated_slit: to be used in combination with keyword slit_only. If both
 ;                 keywords are set, use a fixed (conservative) value for the slit
 ;                 range, i.e. do not estimate the slit length based on the
@@ -332,8 +338,10 @@ END
 ;     in CFIT_BLOCK and XCFIT_BLOCK. Fit components are estimated and added to ANA.
 ;     Calls TRANSFORM_DATA_FOR_ANA.
 ;
-; KEYWORD PARAMETERS:
+; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
+; 
+; KEYWORD PARAMETERS:
 ;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
 ;                 any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
@@ -341,7 +349,7 @@ END
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension.
+;                 dumbbell extension. It is recommended to set this keyword.
 ;     approximated_slit: to be used in combination with keyword slit_only. If both
 ;                 keywords are set, use a fixed (conservative) value for the slit
 ;                 range, i.e. do not estimate the slit length based on the
