@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-02 14:43 CEST $
+; $Id: 2022-06-03 14:50 CEST $
 
 
 ;+
@@ -454,7 +454,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
   window,1, xp=4200
   loadct,3,/silent
 
-  data = self->get_window_data(window_index)
+  data = self->get_window_data(window_index, /no_masking)
   !p.multi = [0,2,1]
 
   plot_image,transpose(sigrange(reform(data[0,*,*]),fraction=0.9)),title='Unmasked',ytitle='Y pixel index',xtitle='Lambda pixel index'
@@ -997,11 +997,23 @@ END
 ;     nodescale : if set, does not call descale_array
 ;     debin : if set, the image will be expanded if binning is GT 1, and data values
 ;             will be divided by the binning value
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
 ;     returns the desired 2-dimensional image, as an array
 ;-
-FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale
+FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale, $
+  no_masking=no_masking, approximated_slit=approximated_slit
   ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
   COMPILE_OPT IDL2
 
@@ -1016,7 +1028,7 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, n
     return, !NULL
   ENDIF
 
-  data = self.get_window_data(window_index, nodescale=nodescale)
+  data = self.get_window_data(window_index, nodescale=nodescale, no_masking=no_masking, approximated_slit=approximated_slit)
   IF self.get_sit_and_stare() THEN BEGIN
     data = reform(data[0,*,*,exposure_index])
   ENDIF ELSE BEGIN

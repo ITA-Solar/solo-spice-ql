@@ -45,7 +45,7 @@
 ; MODIFICATION HISTORY:
 ;     17-Nov-2020: Martin Wiesmann, First version
 ;
-; $Id: 2021-10-26 12:49 CEST $
+; $Id: 2022-06-03 14:50 CEST $
 ;-
 ;
 
@@ -128,7 +128,7 @@ FUNCTION spice_xcontrol_detector, data, detector2=detector2, xsize=xsize, ysize=
     inddet = where(detector_nr eq idet, count)
     for i=0,count-1 do begin
       ind=inddet[i]
-      window_image = data->get_one_image(ind, 0, /debin)
+      window_image = data->get_one_image(ind, 0, /debin, /no_masking)
       if data->has_dumbbells(ind) then window_image = rotate(window_image, 5)
       size_image = size(window_image)
       detector[win_positions[ind,0]:win_positions[ind,1], win_positions[ind,2]:win_positions[ind,3]] = $
