@@ -18,6 +18,15 @@
 ;
 ; OPTIONAL INPUTS:
 ;      widmin: Minimum width of a gaussian fit
+;      VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignore if /POSITION is set.
+;      
+; KEYWORDS:
+;      position: If set, then the line position is NOT represented by the velocity
+;              relative to a lab wavelength, but as the wavelength.
 ;
 ; OUTPUTS:
 ;      Structure containing a list of found fit components, including background component.
@@ -33,10 +42,10 @@
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines. 
 ;-
-; $Id: 2022-06-09 13:26 CEST $
+; $Id: 2022-06-09 14:53 CEST $
 
 
-FUNCTION generate_adef, data, lam, widmin=widmin
+FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity
   ;; Automatically generate cfit analysis definitions based on input intensity and
   ;; wavelength arrays
   sz = size(data)
@@ -72,32 +81,21 @@ FUNCTION generate_adef, data, lam, widmin=widmin
   intmax = int0*100;30000                 ; More random guessing
   lammax = (lam0 + dlam) < max(lam) ; v0 + v
   widmax = wid0 + 0.04              ; A final shot in the dark
+  
+  IF ~keyword_set(position) THEN BEGIN
+    IF N_ELEMENTS(velocity) EQ 0 THEN vel=0.0 $
+    ELSE vel = velocity
+  ENDIF
 
   FOR i=0,n_elements(peakinds)-1 DO BEGIN
      gauss = mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
                            max_arr=[intmax[i],lammax[i],widmax[i]], $
                            min_arr=[intmin[i],lammin[i],widmin], $
-                           trans_a=[1,1,0.424661], trans_b=[0,0,0], $
-                           const=[0b,0b,0b])
+                           ;trans_a=[1,1,0.424661], trans_b=[0,0,0], $
+                           const=[0b,0b,0b], velocity=vel)
      lam0txt = trim(lam0[i],'(F6.2)')
      gauss.name = 'AutoGauss'+lam0txt
      gaussians[i] = gauss
-     print, 'pty ', int0[i]
-     print, 'ptx ', lam0[i]
-     print, 'defwid ', wid0[i]
-     print, 'max_arr=[intmax[i],lammax[i],widmax[i]] ', [intmax[i],lammax[i],widmax[i]]
-     print, 'min_arr=[intmin[i],lammin[i],widmin] ', [intmin[i],lammin[i],widmin]
-     print, 'trans_a=[1,1,0.424661]'
-     print, 'trans_b=[0,0,0]'
-     print, 'const=[0b,0b,0b]'
-     ;print, 'max_lam = maxpos ', maxpos
-     ;print, 'min_lam = minpos ', minpos
-     ;print, 'min_fwhm = minwid ', minwid
-     ;print, 'max_fwhm = maxwid ', maxwid
-     ;print, 'min_intens=0.0001'
-     ;print, 'velocity=vel ', vel
-     help, gauss
-     stop
   ENDFOR
 
 
