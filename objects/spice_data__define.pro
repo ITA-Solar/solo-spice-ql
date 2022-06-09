@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-09 11:15 CEST $
+; $Id: 2022-06-09 11:29 CEST $
 
 
 ;+
@@ -155,9 +155,12 @@ function spice_data::xcfit_block, window_index, no_masking=no_masking, approxima
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-  ana = spice_object->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
-  if size(ana, /type) NE 8 then continue
-  XCFIT_BLOCK, ana=ana
+  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit)
+  if size(ana, /type) EQ 8 then begin
+    XCFIT_BLOCK, ana=ana    
+  endif else begin
+    print, 'Something went wrong when trying to produce an ANA structure.
+  endelse
 
   return, ana
 END
