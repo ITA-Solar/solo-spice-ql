@@ -1,16 +1,16 @@
 ;+
 ; NAME:
-;     SPICE_CREATE_L3
+;     SPICE_CREATE_L3_FILE
 ;
 ; PURPOSE:
-;     spice_create_l3 creates a SPICE level 3 file from a level 2 file. The level 3 file is saved as a
+;     spice_create_l3_file creates a SPICE level 3 file from a level 2 file. The level 3 file is saved as a
 ;     FITS file and moved into the directory $SPICE_DATA/level3/ .
 ;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
-;     spice_create_l3, spice_object [, window_index] [, no_masking=no_masking] [, approximated_slit=approximated_slit]
+;     spice_create_l3_file, spice_object [, window_index] [, no_masking=no_masking] [, approximated_slit=approximated_slit]
 ;     [, no_fitting=no_fitting] [, no_widget=no_widget]
 ;
 ; INPUTS:
@@ -32,7 +32,7 @@
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget: If set, xcfit_block will not be called
+;     no_widget:  If set, xcfit_block will not be called
 ;
 ; OUTPUT:
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
@@ -49,10 +49,10 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-09 10:48 CEST $
+; $Id: 2022-06-09 10:56 CEST $
 
 
-pro spice_create_l3, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+pro spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget
   COMPILE_OPT IDL2
 

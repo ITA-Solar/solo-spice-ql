@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-03 14:50 CEST $
+; $Id: 2022-06-09 10:56 CEST $
 
 
 ;+
@@ -260,19 +260,27 @@ END
 ;     window_index : The index of the desired window(s), default is all windows.
 ;
 ; KEYWORD PARAMETERS:
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget: If set, xcfit_block will not be called.
+;     no_widget:  If set, xcfit_block will not be called
 ;
 ;-
-pro spice_data::create_l3, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
-  no_widget=no_widget
-  ;Creates level 3 SPICE files with the data of the chosen window(s)
+pro spice_data::create_l3_file,  window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  no_fitting=no_fitting, no_widget=no_widget
+  ;Creates a level 3 SPICE file with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
-  spice_create_l3, self, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
-    no_widget=no_widget
+  spice_create_l3_file, self, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+    no_fitting=no_fitting, no_widget=no_widget
 END
 
 
