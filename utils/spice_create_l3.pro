@@ -10,8 +10,8 @@
 ;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
-;     spice_create_l3, spice_object [, window_index] [, approximated_slit=approximated_slit] [, no_fitting=no_fitting]
-;       [, no_widget=no_widget]
+;     spice_create_l3, spice_object [, window_index] [, no_masking=no_masking] [, approximated_slit=approximated_slit]
+;     [, no_fitting=no_fitting] [, no_widget=no_widget]
 ;
 ; INPUTS:
 ;     spice_object : a SPICE_DATA object.
@@ -21,6 +21,14 @@
 ;                    If not provided, all windows will be included.
 ;
 ; KEYWORD PARAMETERS:
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
@@ -41,11 +49,11 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-03-28 13:25 CEST $
+; $Id: 2022-06-09 10:48 CEST $
 
 
-pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
-  no_widget=no_widget
+pro spice_create_l3, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  no_fitting=no_fitting, no_widget=no_widget
   COMPILE_OPT IDL2
 
   if typename(spice_object) NE 'SPICE_DATA' then begin
@@ -57,12 +65,23 @@ pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_
 
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
-    ana = spice_object->xcfit_block(window_index[iwindow], approximated_slit=approximated_slit, no_fitting=no_fitting, $
-      no_widget=no_widget)
+    ana = spice_object->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
+      /init_all_cubes)
     if size(ana, /type) NE 8 then continue
+    
+    if ~keyword_set(no_fitting) then begin
+      print, '====================='
+      print, 'fitting data'
+      print, 'this may take a while'
+      print, '====================='
+      cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
+    endif
+
+    if ~keyword_set(no_widget) then begin
+      XCFIT_BLOCK, ana=ana
+    endif
 
     if iwindow gt 0 then extension=1 else extension=0
-
     headers = spice_ana2fitshdr(ana, header_l2=spice_object->get_header(window_index[iwindow], /string), $
       extension=extension, filename_l3=filename_l3, n_windows=N_ELEMENTS(window_index), $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
@@ -71,7 +90,6 @@ pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 
     if iwindow eq 0 then file = filepath(filename_l3, /tmp)
-
     writefits, file, RESULT, *headers[0], append=extension
     writefits, file, INPUT_DATA, *headers[1], /append
     writefits, file, LAMBDA, *headers[2], /append
@@ -79,8 +97,6 @@ pro spice_create_l3, spice_object, window_index, approximated_slit=approximated_
     writefits, file, WEIGHTS, *headers[4], /append
     writefits, file, INCLUDE, *headers[5], /append
     writefits, file, CONST, *headers[6], /append
-
-    d= readfits(file,h)
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 
