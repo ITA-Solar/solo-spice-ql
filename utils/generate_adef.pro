@@ -33,7 +33,7 @@
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines. 
 ;-
-; $Id: 2022-01-21 12:59 CET $
+; $Id: 2022-06-09 13:26 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin
@@ -82,6 +82,22 @@ FUNCTION generate_adef, data, lam, widmin=widmin
      lam0txt = trim(lam0[i],'(F6.2)')
      gauss.name = 'AutoGauss'+lam0txt
      gaussians[i] = gauss
+     print, 'pty ', int0[i]
+     print, 'ptx ', lam0[i]
+     print, 'defwid ', wid0[i]
+     print, 'max_arr=[intmax[i],lammax[i],widmax[i]] ', [intmax[i],lammax[i],widmax[i]]
+     print, 'min_arr=[intmin[i],lammin[i],widmin] ', [intmin[i],lammin[i],widmin]
+     print, 'trans_a=[1,1,0.424661]'
+     print, 'trans_b=[0,0,0]'
+     print, 'const=[0b,0b,0b]'
+     ;print, 'max_lam = maxpos ', maxpos
+     ;print, 'min_lam = minpos ', minpos
+     ;print, 'min_fwhm = minwid ', minwid
+     ;print, 'max_fwhm = maxwid ', maxwid
+     ;print, 'min_intens=0.0001'
+     ;print, 'velocity=vel ', vel
+     help, gauss
+     stop
   ENDFOR
 
 
