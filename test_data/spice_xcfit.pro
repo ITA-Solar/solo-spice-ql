@@ -544,9 +544,9 @@ PRO xcfit_addcomp,info,velocity=velocity,blue_means_negative_velocity=blue
 	  print, 'min_fwhm = minwid ', minwid
 	  print, 'max_fwhm = maxwid ', maxwid
 	  print, 'min_intens=0.0001'
-	  print, 'velocity=vel ', vel
-	  help, gauss
-	  stop
+	  ;print, 'velocity=vel ', vel
+	  ;help, gauss
+	  ;stop
 
 	  ENDCASE
   
