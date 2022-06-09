@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-09 10:56 CEST $
+; $Id: 2022-06-09 11:15 CEST $
 
 
 ;+
@@ -132,8 +132,6 @@ END
 ; Description:
 ;     Calls xcfit_block with the data of the chosen window and returns an analysis structure
 ;     that contains estimated fit components and the fit.
-;     This function is also called by 'create_l3' method, to get the ANA structure, which is
-;     then saved into a level 3 FITS file.
 ;
 ; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
@@ -150,103 +148,16 @@ END
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;                 The keyword is ignored if NO_MASKING is set.
-;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget: If set, xcfit_block will not be called.
 ;
 ;-
-function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  no_fitting=no_fitting, no_widget=no_widget
+function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-
-  if ~self->get_number_exposures(window_index) then begin
-    print, 'single exposure data, do not start xcfit_block'
-    return, -1
-  endif
-
-  data = self->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit)
-  ;; Only do fit on the spectral part of the window!
-  lambda = self->get_wcs_coord(window_index, /lambda)
-
-  size_data = size(data)
-  if self->get_sit_and_stare() then begin
-    print, 'sit_and_stare'
-    lambda = transpose(lambda, [2, 0, 1, 3])
-    data = transpose(data, [2, 0, 1, 3])
-    weights = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value=1.0)
-  endif else begin
-    print, 'not sit_and_stare'
-    lambda = reform(lambda)
-    lambda = transpose(lambda, [2, 0, 1])
-    data = transpose(data, [2, 0, 1])
-    weights = make_array(size_data[3], size_data[1], size_data[2], value=1.0)
-  endelse
-  type_data = size(data, /type)
-  lambda = fix(lambda, type=type_data)
-  miss = self->get_missing_value()
-  miss = -1000.0d
-
-  detector = self->get_header_keyword('DETECTOR', window_index)
-  widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
-  widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
-
-  adef = generate_adef(data, LAMbda, widmin=widmin)
-  badix = where(data ne data, n_bad)
-  IF n_bad GT 0 THEN data[badix] = miss
-  print,''
-  print,'adef'
-  help,adef
-
-  ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
-  ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
-
-  if ~keyword_set(no_fitting) then begin
-    print, ' ==========='
-    print,'fitting data'
-    print, 'this may take a while'
-    print, ' ==========='
-    cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
-  endif
-
-
-  if ~keyword_set(no_widget) then begin
-    ;XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
-    XCFIT_BLOCK, ana=ana
-  endif
-
-  if keyword_set(no_fitting) && keyword_set(no_widget) then begin
-    handle_value, ana.fit_h, fit
-    n_components = N_TAGS(fit)
-    n_params = 0
-    for itag=0,n_components-1 do begin
-      fit_cur = fit.(itag)
-      n_params = n_params + N_ELEMENTS(fit_cur.param)
-    endfor
-    handle_value, ana.data_h, data
-    sdata = size(data)
-    if sdata[0] eq 3 then begin
-      result = dblarr(n_params+1, sdata[2], sdata[3])
-      residual = fltarr(sdata[1], sdata[2], sdata[3])
-      include = bytarr(n_components, sdata[2], sdata[3])
-      include[*] = 1
-      const = bytarr(n_params, sdata[2], sdata[3])
-    endif else if sdata[0] eq 4 then begin
-      result = dblarr(n_params+1, sdata[2], sdata[3], sdata[4])
-      residual = fltarr(sdata[1], sdata[2], sdata[3], sdata[4])
-      include = bytarr(n_components, sdata[2], sdata[3], sdata[4])
-      include[*] = 1
-      const = bytarr(n_params, sdata[2], sdata[3], sdata[4])
-    endif else begin
-      print, 'data cube has wrong number of dimensions.'
-      stop
-    endelse
-    handle_value, ana.result_h, result, /no_copy, /set
-    handle_value, ana.residual_h, residual, /no_copy, /set
-    handle_value, ana.include_h, include, /no_copy, /set
-    handle_value, ana.const_h, const, /no_copy, /set
-  endif
+  ana = spice_object->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+  if size(ana, /type) NE 8 then continue
+  XCFIT_BLOCK, ana=ana
 
   return, ana
 END
