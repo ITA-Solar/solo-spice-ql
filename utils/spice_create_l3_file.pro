@@ -19,6 +19,12 @@
 ; OPTIONAL INPUTS:
 ;     window_index : One or more window indices of windows that should be included in level 3 file.
 ;                    If not provided, all windows will be included.
+;     VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
@@ -33,6 +39,8 @@
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
 ;     no_widget:  If set, xcfit_block will not be called
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
 ;
 ; OUTPUT:
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
@@ -49,11 +57,11 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-09 10:56 CEST $
+; $Id: 2022-06-13 10:47 CEST $
 
 
 pro spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  no_fitting=no_fitting, no_widget=no_widget
+  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
   COMPILE_OPT IDL2
 
   if typename(spice_object) NE 'SPICE_DATA' then begin
@@ -66,7 +74,7 @@ pro spice_create_l3_file, spice_object, window_index, no_masking=no_masking, app
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
     ana = spice_object->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      /init_all_cubes)
+      /init_all_cubes, position=position, velocity=velocity)
     if size(ana, /type) NE 8 then continue
     
     if ~keyword_set(no_fitting) then begin

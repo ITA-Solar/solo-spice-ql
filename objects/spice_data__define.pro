@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-13 10:24 CEST $
+; $Id: 2022-06-13 10:47 CEST $
 
 
 ;+
@@ -135,6 +135,12 @@ END
 ;
 ; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
+;     VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
 ; 
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
@@ -148,14 +154,17 @@ END
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;                 The keyword is ignored if NO_MASKING is set.
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
 ;
 ;-
-function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit
+function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  position=position, velocity=velocity
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit)
+  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity)
   if size(ana, /type) EQ 8 then begin
     XCFIT_BLOCK, ana=ana    
   endif else begin
@@ -172,6 +181,12 @@ END
 ;
 ; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window(s), default is all windows.
+;     VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
@@ -186,15 +201,17 @@ END
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
 ;     no_widget:  If set, xcfit_block will not be called
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
 ;
 ;-
 pro spice_data::create_l3_file,  window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  no_fitting=no_fitting, no_widget=no_widget
+  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
   ;Creates a level 3 SPICE file with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
   spice_create_l3_file, self, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-    no_fitting=no_fitting, no_widget=no_widget
+    no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
 END
 
 
