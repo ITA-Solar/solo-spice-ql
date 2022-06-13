@@ -106,6 +106,8 @@
 ;               Version 3, SVHH, 27 May 1997
 ;                       Changed default values of min/max intensities to
 ;                       relate to the initial intensity.
+;               Version 4, Martin Wiesmann, 13 Juni 2022
+;                       Changed the parameter names
 ;
 ; Version     : 3, 27 May 1997
 ;-            

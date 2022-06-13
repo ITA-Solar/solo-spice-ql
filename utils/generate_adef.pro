@@ -42,8 +42,10 @@
 ;      Ver. 1.1, 17-Jan-2022, Terje Fredvik: minimum line width is determined
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines. 
+;      Ver. 1.2, 13-Jun-2022, Martin Wiesmann: position is now by default represented as
+;                                            velocity, added keywords velocity and position.
 ;-
-; $Id: 2022-06-13 10:24 CEST $
+; $Id: 2022-06-13 13:37 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity
