@@ -22,7 +22,8 @@
 ;                 the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength
 ;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
-;                 This input is ignore if /POSITION is set.
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
 ;      
 ; KEYWORDS:
 ;      position: If set, then the line position is NOT represented by the velocity
@@ -42,7 +43,7 @@
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines. 
 ;-
-; $Id: 2022-06-09 14:53 CEST $
+; $Id: 2022-06-13 10:24 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity
@@ -88,7 +89,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
   ENDIF
 
   FOR i=0,n_elements(peakinds)-1 DO BEGIN
-     gauss = mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
+     gauss = spice_mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
                            max_arr=[intmax[i],lammax[i],widmax[i]], $
                            min_arr=[intmin[i],lammin[i],widmin], $
                            ;trans_a=[1,1,0.424661], trans_b=[0,0,0], $
