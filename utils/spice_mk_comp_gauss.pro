@@ -230,7 +230,7 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
   ;;
   parm = stc.param(0)
   
-  parm.name = 'Amplitude'
+  parm.name = 'intensity'
   parm.description = $
      ['This parameter describes the amplitude of the Gaussian, in the same',$
       'units as the data being fitted']
@@ -245,13 +245,13 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
   ;;
   parm = stc.param(1)
   
-  parm.name = 'Position'
   parm.description = [positiontx]
   
   IF keyword_set(velocity) THEN BEGIN
      
      ;; We're guaranteed that position was given in velocity 
      
+     parm.name = 'velocity'
      parm.initial = position
      
      ;; When velocity is set, max/min_lam always represent +/- 0.5 c
@@ -276,6 +276,7 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
      parm.trans_b = trans_b(1)
      
   END ELSE BEGIN
+     parm.name = 'lambda'
      parm.initial = position
      
      ;; When velocity is not set, max/min_vel always represent +/- 0.5 c
@@ -315,7 +316,7 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
   
   parm = stc.param(2)
   
-  parm.name = 'Width'
+  parm.name = 'width'
   parm.description = $
      ['The width of the Gaussian.',$
       'Described as the FWHM, when a = 0.5/sqrt(2*alog(2)) = 0.4246609,',$
