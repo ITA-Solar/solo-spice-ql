@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-13 10:47 CEST $
+; $Id: 2022-06-13 13:01 CEST $
 
 
 ;+
@@ -1246,7 +1246,7 @@ END
 
 ;+
 ; Description:
-;     Returns the header of the given window, either as a structure or as a string array.
+;     Returns the header of the given window, either as a string array or as astructure.
 ;
 ; INPUTS:
 ;     window_index : The index of the window for which the header should be returned.
@@ -1255,21 +1255,21 @@ END
 ; KEYWORD PARAMETERS:
 ;     lower_dumbbell : If set, the header of the lower dumbbell will be returned.
 ;     upper_dumbbell : If set, the header of the upper dumbbell will be returned.
-;     string : If set, the header will be returned as a string array instead of a structure.
+;     structure : If set, the header will be returned as a structure instead of a string array.
 ;
 ; OUTPUT:
-;     Returns the header as a structure or a string array.
+;     Returns the header as a string array or a structure.
 ;-
 FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
-  string=string
-  ;Returns the header of the given window as a structure or a string array
+  structure=structure
+  ;Returns the header of the given window as a string array or a structure 
   COMPILE_OPT IDL2
 
   IF keyword_set(lower_dumbbell) THEN window_index=self.get_dumbbells_index(/lower)
   IF keyword_set(upper_dumbbell) THEN window_index=self.get_dumbbells_index(/upper)
   IF ~self.check_window_index(window_index) THEN return, !NULL
-  IF keyword_set(string) then return, *(*self.window_headers_string)[window_index] $
-  ELSE return, *(*self.window_headers)[window_index]
+  IF keyword_set(structure) then return, *(*self.window_headers)[window_index] $
+  ELSE return, *(*self.window_headers_string)[window_index]
 END
 
 
