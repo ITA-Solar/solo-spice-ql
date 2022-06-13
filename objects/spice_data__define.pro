@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-09 11:29 CEST $
+; $Id: 2022-06-13 10:24 CEST $
 
 
 ;+
@@ -269,7 +269,13 @@ END
 ;
 ; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
-; 
+;     VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
+;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
@@ -285,6 +291,8 @@ END
 ;     init_all_cubes: If set, then all cubes within the ANA will be initialised,
 ;                 otherwise, the cubes RESULT, RESIDUALS, INCLUDE and CONSTANT will
 ;                 be undefined.
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
 ;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
 ;                 This keyword is ignored if NO_MASKING is set.
 ;
@@ -292,7 +300,7 @@ END
 ;
 ;-
 FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  init_all_cubes=init_all_cubes, debug_plot=debug_plot
+  init_all_cubes=init_all_cubes, debug_plot=debug_plot, position=position, velocity=velocity
   ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
@@ -306,7 +314,7 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
-  adef = generate_adef(data, LAMbda, widmin=widmin)
+  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity)
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
 
