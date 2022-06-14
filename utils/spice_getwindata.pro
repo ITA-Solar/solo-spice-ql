@@ -152,7 +152,7 @@
 ;       approximated_slit, if set (when slit_only is set) use a quicker way 
 ;       of estimating the pixels to be masked
 ;-
-; $Id: 2022-06-02 14:29 CEST $
+; $Id: 2022-06-14 11:54 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
@@ -435,7 +435,7 @@ dark_unc=0
   ; just set to zero, but others have real values that are used in the
   ; software.
   ;
-  hdr=d->get_header(iwin)
+  hdr=d->get_header(iwin, /structure)
   hdr2=add_tag(hdr,0,'YWS')
   hdr=temporary(hdr2)
   hdr2=add_tag(hdr,0,'RAST_ID')

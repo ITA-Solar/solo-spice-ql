@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-13 13:01 CEST $
+; $Id: 2022-06-14 11:54 CEST $
 
 
 ;+
@@ -607,7 +607,7 @@ END
 FUNCTION spice_data::check_if_already_included, window_index, included_winnos
   already_included = 0
 
-  header = self->get_header(window_index,/string)
+  header = self->get_header(window_index)
   prsteps =  fxpar(header,'PRSTEP*')        ;; MARTIN: the get_header_keyword method doesn't support wildcards, so I have to use fxpar!
   IF prsteps[-1] NE 'WINDOW-CONCATENATION' THEN return,0
 

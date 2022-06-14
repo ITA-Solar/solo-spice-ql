@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2022-06-14 11:54 CEST $
 ;-
 ;
 ;
@@ -141,7 +141,7 @@ pro spice_xcontrol_hdrdisp,event
       xs=100, ysize = 50)
 
     textall=''
-    hdr=*(*info).d->get_header(itab, /string)
+    hdr=*(*info).d->get_header(itab)
     for i=0, n_elements(hdr)-1 do begin
       textall=textall+hdr[i]+cr
     endfor
