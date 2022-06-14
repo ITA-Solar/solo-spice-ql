@@ -58,7 +58,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-14 12:13 CEST $
+; $Id: 2022-06-14 13:19 CEST $
 
 
 FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -67,7 +67,7 @@ FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking
 
   if typename(spice_object) NE 'SPICE_DATA' then begin
     print, 'Need a spice_object as input'
-    return
+    return, ''
   endif
 
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(spice_object->get_number_windows())
