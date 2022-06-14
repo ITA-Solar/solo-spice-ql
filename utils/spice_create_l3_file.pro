@@ -43,6 +43,7 @@
 ;                 relative to a lab wavelength, but as the wavelength.
 ;
 ; OUTPUT:
+;     The path and name of the Level 3 FITS file.
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;
 ; CALLS:
@@ -57,10 +58,10 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-14 11:54 CEST $
+; $Id: 2022-06-14 12:07 CEST $
 
 
-pro spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
   COMPILE_OPT IDL2
 
@@ -110,5 +111,6 @@ pro spice_create_l3_file, spice_object, window_index, no_masking=no_masking, app
 
   spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, /force
   print, 'Level 3 file saved to: ', destination
+  return, destination
 
-end
+END
