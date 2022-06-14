@@ -10,8 +10,8 @@
 ;     Solar Orbiter - SPICE.
 ;
 ; CALLING SEQUENCE:
-;     spice_create_l3_file, spice_object [, window_index] [, no_masking=no_masking] [, approximated_slit=approximated_slit]
-;     [, no_fitting=no_fitting] [, no_widget=no_widget]
+;     l3_file = spice_create_l3_file(spice_object [, window_index] [, no_masking=no_masking] [, approximated_slit=approximated_slit]
+;     [, no_fitting=no_fitting] [, no_widget=no_widget] [, velocity=velocity] [, position=position] )
 ;
 ; INPUTS:
 ;     spice_object : a SPICE_DATA object.
@@ -58,7 +58,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-14 12:07 CEST $
+; $Id: 2022-06-14 12:13 CEST $
 
 
 FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
