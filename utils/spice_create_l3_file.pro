@@ -58,7 +58,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-14 13:19 CEST $
+; $Id: 2022-06-15 14:44 CEST $
 
 
 FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -75,7 +75,7 @@ FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
     ana = spice_object->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      /init_all_cubes, position=position, velocity=velocity)
+      position=position, velocity=velocity)
     if size(ana, /type) NE 8 then continue
     
     if ~keyword_set(no_fitting) then begin
@@ -83,7 +83,7 @@ FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking
       print, 'fitting data'
       print, 'this may take a while'
       print, '====================='
-      cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
+      cfit_block, analysis=ana, /quiet, /double, /x_face, smart=1
     endif
 
     if ~keyword_set(no_widget) then begin
