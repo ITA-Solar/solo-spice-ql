@@ -52,7 +52,7 @@
 ;
 ; Version     : Version 4, SVHH, 31 May 2022
 ;
-; $Id: 2022-06-15 15:19 CEST $
+; $Id: 2022-06-15 18:00 CEST $
 ;-            
 
 FUNCTION spice_gen_cat__line,header,keyword_info, relative_path
@@ -103,7 +103,7 @@ PRO spice_gen_cat,spice_datadir,catalog_dir, fake_factor=fake_factor, quiet=quie
   spice_datadir = expand_path(spice_datadir)
   catalog_filename = concat_dir(catalog_dir,'spice_catalog.txt')
   catalog_tmp_filename = catalog_filename + ".tmp"
-  keyword_info_filename = concat_dir(catalog_dir, 'keyword_info.txt')
+  keyword_info_filename = concat_dir(catalog_dir, 'keyword_info.json')
   keyword_info_tmp_filename = keyword_info_filename + ".tmp"
   
   lines_in_hash = hash()
