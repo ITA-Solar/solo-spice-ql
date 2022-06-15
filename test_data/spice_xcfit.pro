@@ -526,7 +526,7 @@ PRO xcfit_addcomp,info,velocity=velocity,blue_means_negative_velocity=blue
 
       ELSE: begin		;Default is normal Gaussian profile
 
-	  gauss = mk_comp_gauss([pty,ptx,defwid],	$
+	  gauss = spice_mk_comp_gauss([pty,ptx,defwid],	$
 			max_lam=maxpos,min_lam=minpos,$
                         min_fwhm = minwid,max_fwhm = maxwid,$
                         min_intens=0.0001,velocity=vel)
@@ -544,6 +544,7 @@ PRO xcfit_addcomp,info,velocity=velocity,blue_means_negative_velocity=blue
 	  print, 'min_fwhm = minwid ', minwid
 	  print, 'max_fwhm = maxwid ', maxwid
 	  print, 'min_intens=0.0001'
+	  help,vel
 	  ;print, 'velocity=vel ', vel
 	  ;help, gauss
 	  ;stop
