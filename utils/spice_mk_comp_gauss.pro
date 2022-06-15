@@ -209,16 +209,21 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
   
   implied_velocity = abs(abs(trans_b(1)/c) - abs(trans_a(1))) LT 0.001
   
-  IF implied_velocity THEN positiontx = $
+  IF implied_velocity THEN BEGIN
+    positiontx = $
      ['The line position is described as a velocity shift in km/s ',$
       'relative to the "lab wavelength" (~'+trim(trans_b(1))+').',$
       '',$
       'NOTE: Having a negative linear transformation A coefficient', $
       'means that blueshifts correspond to a positive velocity, and',$
-      'a positive linear trans. A works the other way around.'] $
-  ELSE positiontx = $
+      'a positive linear trans. A works the other way around.']
+    param1_name='velocity'
+  ENDIF ELSE BEGIN
+    positiontx = $
      ['The line position is described by the wavelengt at the center',$
       'of the gaussian']
+    param1_name='lambda'
+  ENDELSE
   
   stc.description = $
      ['This component is a single Gaussian, with three parameters,',$
@@ -248,12 +253,12 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
   parm = stc.param(1)
   
   parm.description = [positiontx]
+  parm.name = param1_name
   
   IF keyword_set(velocity) THEN BEGIN
      
      ;; We're guaranteed that position was given in velocity 
      
-     parm.name = 'velocity'
      parm.initial = position
      
      ;; When velocity is set, max/min_lam always represent +/- 0.5 c
@@ -278,7 +283,6 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
      parm.trans_b = trans_b(1)
      
   END ELSE BEGIN
-     parm.name = 'lambda'
      parm.initial = position
      
      ;; When velocity is not set, max/min_vel always represent +/- 0.5 c
