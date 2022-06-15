@@ -52,7 +52,7 @@
 ;
 ; Version     : Version 4, SVHH, 31 May 2022
 ;
-; $Id: 2022-05-31 16:10 CEST $
+; $Id: 2022-06-15 15:19 CEST $
 ;-            
 
 FUNCTION spice_gen_cat__line,header,keyword_info, relative_path
@@ -92,32 +92,21 @@ FUNCTION spice_gen_cat__get_header,filename
 END
 
 
-PRO spice_gen_cat,spice_datadir,catalog_dir, reset=reset, fake_factor=fake_factor, quiet=quiet
+PRO spice_gen_cat,spice_datadir,catalog_dir, fake_factor=fake_factor, quiet=quiet
   ON_ERROR,0
   
   quiet = keyword_set(quiet)
-  spice_default,reset,1
   spice_default,fake_factor, 1
   spice_default,spice_datadir,getenv("SPICE_DATA")
   spice_default,catalog_dir,spice_datadir
   
   spice_datadir = expand_path(spice_datadir)
   catalog_filename = concat_dir(catalog_dir,'spice_catalog.txt')
+  catalog_tmp_filename = catalog_filename + ".tmp"
+  keyword_info_filename = concat_dir(catalog_dir, 'keyword_info.txt')
+  keyword_info_tmp_filename = keyword_info_filename + ".tmp"
   
-  IF keyword_set(reset) THEN BEGIN 
-     original_catalog_filename = catalog_filename
-     catalog_filename +=  '_not_ready_yet'
-  ENDIF
-  
-  IF file_test(catalog_filename, /read) THEN BEGIN
-     list = rd_ascii(catalog_filename)
-     lines_in_hash = spice_gen_cat__stash_lines_in_hash(list[1:*])
-     print,"Found list, with "+(lines_in_hash.count()).toString()+" elements"
-  END ELSE BEGIN
-     PRINT, (keyword_set(reset)) ? original_catalog_filename+" reset" : "No file "+catalog_filename+" found"
-     PRINT,"Creating one from scratch"
-     lines_in_hash = hash()
-  END
+  lines_in_hash = hash()
   
   fits_filelist = file_search(spice_datadir,"*.fits")
   IF fits_filelist(0) EQ '' THEN BEGIN
@@ -128,7 +117,7 @@ PRO spice_gen_cat,spice_datadir,catalog_dir, reset=reset, fake_factor=fake_facto
   END
   
   PRINT,"About to create new " + catalog_filename + " with "+ $
-     (N_ELEMENTS(fits_filelist)).tostring()+" elements"
+        (N_ELEMENTS(fits_filelist)).tostring()+" elements"
   
   keyword_info = spice_keyword_info(/all)
   FOREACH fits_filename, fits_filelist, index DO BEGIN
@@ -144,20 +133,24 @@ PRO spice_gen_cat,spice_datadir,catalog_dir, reset=reset, fake_factor=fake_facto
      lines_in_hash[key] = spice_gen_cat__line(header,keyword_info, relative_path)
      IF NOT quiet THEN PRINT,"Files done :",(index+1).toString("(i6)")," "+key
   END
-  keyword_list = keyword_info.keys()
-  keyword_array = keyword_list.toArray()
-  comma_separated_keywords = keyword_array.join(",")
-  keys = (lines_in_hash.keys()).sort()
-  OPENW,catalog_lun,catalog_filename,/get_lun
+  
+  comma_separated_keywords = ((keyword_info.keys()).toArray()).join(",")
+  
+  OPENW,catalog_lun,catalog_tmp_filename,/get_lun
   printf,catalog_lun,comma_separated_keywords
+  keys = (lines_in_hash.keys()).sort()
   FOR fake=0, fake_factor-1 DO BEGIN 
      foreach key,keys DO BEGIN
         printf,catalog_lun,lines_in_hash[key],format="(a)"
      END
   END
   FREE_LUN,catalog_lun
+  file_move, catalog_tmp_filename, catalog_filename,/overwrite
   
-  file_move, catalog_filename, original_catalog_filename,/overwrite
+  openw, lun, keyword_info_tmp_filename, /get_lun
+  printf, lun, json_serialize(keyword_info, /lowercase)
+  free_lun, lun
+  file_move, keyword_info_tmp_filename, keyword_info_filename, /overwrite
 END
 
 spice_gen_cat, "$HOME/tmp/spice_data/level0"
