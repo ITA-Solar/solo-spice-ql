@@ -27,7 +27,7 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-16 15:25 CEST $
+; $Id: 2022-06-16 15:32 CEST $
 
 
 PRO spice_create_level3_jpeg_presentation
@@ -120,8 +120,8 @@ PRO spice_create_level3_jpeg_presentation
         a[3].hide=0
         a[3].showtext=1
         
-        im.save,filename+fns('##',itag+1)+'_'+param.name+'_512.jpg', height=512
-        im.save,filename+fns('##',itag+1)+'_'+param.name+'_1024.jpg', height=1024
+        im.save,filename+fns('##',itag+1)+'_'+param.name+'_512.jpg', height=512, border=5
+        im.save,filename+fns('##',itag+1)+'_'+param.name+'_1024.jpg', height=1024, border=5
         im.close
         
         ipartotal++
