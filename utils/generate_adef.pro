@@ -45,7 +45,7 @@
 ;      Ver. 1.2, 13-Jun-2022, Martin Wiesmann: position is now by default represented as
 ;                                            velocity, added keywords velocity and position.
 ;-
-; $Id: 2022-06-17 12:01 CEST $
+; $Id: 2022-06-17 12:08 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity
@@ -85,7 +85,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
   intmax = int0*100;30000                 ; More random guessing
   lammax = (lam0 + dlam) < max(lam) ; v0 + v
   widmax = wid0 + 0.04              ; A final shot in the dark
-  
+
   ; taken from xcfit:
   widmax = 10*wid0
   widmin = 0.1*wid0
@@ -96,20 +96,17 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
   ENDIF
 
   FOR i=0,n_elements(peakinds)-1 DO BEGIN
-    print,'[int0[i],lam0[i],wid0[i]]',[int0[i],lam0[i],wid0[i]]
-    print,'max_arr=[intmax[i],lammax[i],widmax[i]]',[intmax[i],lammax[i],widmax[i]]
-    print,'min_arr=[intmin[i],lammin[i],widmin]',[intmin[i],lammin[i],widmin]
-    print,'const=[0b,0b,0b], velocity=vel'
-;    gauss = spice_mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
-;      max_arr=[intmax[i],lammax[i],widmax[i]], $
-;      min_arr=[intmin[i],lammin[i],widmin], $
-;      ;trans_a=[1,1,0.424661], trans_b=[0,0,0], $
-;      ;const=[0b,0b,0b], $
-;      velocity=vel)
+    ;    gauss = spice_mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
+    ;      max_arr=[intmax[i],lammax[i],widmax[i]], $
+    ;      min_arr=[intmin[i],lammin[i],widmin], $
+    ;      ;trans_a=[1,1,0.424661], trans_b=[0,0,0], $
+    ;      ;const=[0b,0b,0b], $
+    ;      velocity=vel)
     gauss = mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
-      max_lam=lammax[i],min_lam=lammin[i],$
-                        min_fwhm = widmin[i],max_fwhm = widmax[i],$
-                        min_intens=intmin[i],velocity=vel)
+      max_lam=lammax[i], min_lam=lammin[i],$
+      min_fwhm = widmin[i], max_fwhm = widmax[i],$
+      min_intens=intmin[i], $
+      velocity=vel)
     IF ~keyword_set(position) AND keyword_set(blue_means_negative_velocity) THEN BEGIN
       gauss.param(1).trans_a = -gauss.param(1).trans_a
     ENDIF
