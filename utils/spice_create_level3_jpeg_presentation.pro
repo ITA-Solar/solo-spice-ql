@@ -27,7 +27,7 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-17 13:35 CEST $
+; $Id: 2022-06-17 15:24 CEST $
 
 
 PRO spice_create_level3_jpeg_presentation, meta_data
@@ -47,6 +47,12 @@ PRO spice_create_level3_jpeg_presentation, meta_data
 
   if N_ELEMENTS(meta_data) EQ 0 then restore, meta_data_file
   ind = where(meta_data.l3_created, ndata)
+  
+  c = colortable(3)
+  ct_r=reform(c[*,0])
+  ct_g=reform(c[*,1])
+  ct_b=reform(c[*,2])
+
   
   ;for idata=0,ndata-1 do begin
   for idata=0,0 do begin
@@ -94,12 +100,13 @@ PRO spice_create_level3_jpeg_presentation, meta_data
       for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
         
-        im=image(reform(result[ipartotal,*,*]), axis_style=0, rgb_table=3, min_value=-10)
+        image_data = reform(result[ipartotal,*,*])
+        ;im=image(reform(result[ipartotal,*,*]), axis_style=0, rgb_table=3, min_value=-10)
         ;im.save,filename+fns('##',itag+1)+'_'+param.name+'_64.png', height=64, border=0
-        im.save,filename+param.name+'_64.png', height=64, border=0
-        im.close
+        ;im.save,filename+param.name+'_64.png', height=64, border=0
+        ;im.close
         
-        im=image(reform(result[ipartotal,*,*]), axis_style=2, rgb_table=3, min_value=-10, $
+        im=image(image_data, axis_style=2, rgb_table=3, min_value=-10, $
           xtitle='Solar X [arcsec]', ytitle='Solar Y [arcsec]')
         a = im.AXES
         a[0].coord_transform=xcoord_transform
@@ -127,6 +134,27 @@ PRO spice_create_level3_jpeg_presentation, meta_data
         im.save,filename+param.name+'_512.jpg', height=512, border=5
         im.save,filename+param.name+'_1024.jpg', height=1024, border=5
         im.close
+        
+        ; 64px png image
+        ind = where(image_data lt -999.9 AND image_data gt -1000.1, count, complement=gooddata)
+        image_min = min(image_data[gooddata], max=image_max)
+        image_min = image_min - (image_max-image_min)/10
+        if count gt 0 then image_data[ind]=image_min
+        size_image = size(image_data)
+        magnification = 64d/size_image[2]
+        image_small = rot(image_data, 0, magnification, /interp)
+        factor = 255d/(image_max-image_min)
+        image_small = (image_small - image_min) * factor
+        image_small = UINT(image_small)
+        dx = size_image[1]*magnification/2
+        x0 = floor(size_image[1]/2.0-dx)
+        x1 = ceil(size_image[1]/2.0+dx)
+        y0 = floor(size_image[2]/2.0-32)
+        y1 = ceil(size_image[2]/2.0+32)-1
+        image_small = image_small[x0:x1, y0:y1]
+
+        write_png, filename+param.name+'_64.png', image_small, ct_r, ct_g, ct_b
+
         
         ipartotal++
       endfor ; ipar0,n_params-1
