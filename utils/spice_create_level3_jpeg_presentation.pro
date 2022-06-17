@@ -27,11 +27,12 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-16 15:32 CEST $
+; $Id: 2022-06-17 13:35 CEST $
 
 
-PRO spice_create_level3_jpeg_presentation
+PRO spice_create_level3_jpeg_presentation, meta_data
 
+  root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'
   meta_data_file = '/Users/mawiesma/Documents/spice/generate_l3_meta_data.sav'
   meta_data_template = { $
     file:'', $
@@ -43,13 +44,12 @@ PRO spice_create_level3_jpeg_presentation
     image_small_created:0b, $
     image_large_created:0b $
   }
-  root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'
 
-  restore, meta_data_file
+  if N_ELEMENTS(meta_data) EQ 0 then restore, meta_data_file
   ind = where(meta_data.l3_created, ndata)
   
   ;for idata=0,ndata-1 do begin
-  for idata=0,1 do begin
+  for idata=0,0 do begin
     ana = fits2ana(meta_data[ind[idata]].l3_file, titles=titles)
     ;handle_value,ana.data_h,data,/no_copy
     handle_value,ana.result_h,result,/no_copy
@@ -87,14 +87,16 @@ PRO spice_create_level3_jpeg_presentation
     
     n_components = N_TAGS(fit)
     ipartotal=0
-    for itag=0,n_components-1 do begin
+    ;for itag=0,n_components-1 do begin
+    for itag=0,0 do begin
       fit_cur = fit.(itag)
       n_params = N_ELEMENTS(fit_cur.param)
       for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
         
         im=image(reform(result[ipartotal,*,*]), axis_style=0, rgb_table=3, min_value=-10)
-        im.save,filename+fns('##',itag+1)+'_'+param.name+'_64.png', height=64, border=0
+        ;im.save,filename+fns('##',itag+1)+'_'+param.name+'_64.png', height=64, border=0
+        im.save,filename+param.name+'_64.png', height=64, border=0
         im.close
         
         im=image(reform(result[ipartotal,*,*]), axis_style=2, rgb_table=3, min_value=-10, $
@@ -120,14 +122,16 @@ PRO spice_create_level3_jpeg_presentation
         a[3].hide=0
         a[3].showtext=1
         
-        im.save,filename+fns('##',itag+1)+'_'+param.name+'_512.jpg', height=512, border=5
-        im.save,filename+fns('##',itag+1)+'_'+param.name+'_1024.jpg', height=1024, border=5
+        ;im.save,filename+fns('##',itag+1)+'_'+param.name+'_512.jpg', height=512, border=5
+        ;im.save,filename+fns('##',itag+1)+'_'+param.name+'_1024.jpg', height=1024, border=5
+        im.save,filename+param.name+'_512.jpg', height=512, border=5
+        im.save,filename+param.name+'_1024.jpg', height=1024, border=5
         im.close
         
         ipartotal++
       endfor ; ipar0,n_params-1
     endfor ; itag=0,N_TAGS(fit)-1
 
-    stop
+    ;stop
   endfor ; idata=0,ndata-1
 END

@@ -95,6 +95,7 @@ pro spice_generate_l3
     
     restore, meta_data_file
     ndata = N_ELEMENTS(meta_data)
+    meta_data[*].l3_created = 0
     
   endelse ; ~file_exist(meta_data_file)
   
@@ -114,6 +115,8 @@ pro spice_generate_l3
     meta_data[idata].l3_created = 1b
     meta_data[idata].l3_file = l3_file
     save, meta_data, filename=meta_data_file
+    
+    spice_create_level3_jpeg_presentation, meta_data[idata]
     
   endfor ; idata=0,ndata-1
 
