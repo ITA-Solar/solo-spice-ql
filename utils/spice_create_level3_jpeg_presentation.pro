@@ -27,7 +27,7 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-20 13:28 CEST $
+; $Id: 2022-06-20 14:03 CEST $
 
 
 PRO spice_create_level3_jpeg_presentation, meta_data
@@ -69,9 +69,7 @@ PRO spice_create_level3_jpeg_presentation, meta_data
     date_dirs = strjoin(date_dirs[-3:-1], '/')
     filename = root_dir + date_dirs + '/' + l3_filename + '_'
     file_mkdir, root_dir + date_dirs
-    ;help,data
-    ;help,result
-    ;help,fit
+
     hdr0 = headfits(meta_data[ind[idata]].l3_file, exten=0) ; for real exten must be (winno-1)*7 or so...
     hdr = headfits(meta_data[ind[idata]].l3_file, exten=fxpar(hdr0,'dataext'))
     hdr = fitshead2struct(hdr)
@@ -86,10 +84,6 @@ PRO spice_create_level3_jpeg_presentation, meta_data
     ycoord_transform = [yrange[0], (yrange[1]-yrange[0])/size_result[3]]
     yrange2 = [coords[2,0,-1,0], coords[2,0,-1,-1]]
     ycoord_transform2 = [yrange2[0], (yrange2[1]-yrange2[0])/size_result[3]]
-    ;print,xrange,yrange
-    ;print,xcoord_transform,ycoord_transform
-    ;print,xrange2,yrange2
-    ;print,xcoord_transform2,ycoord_transform2
     
     n_components = N_TAGS(fit)
     ipartotal=0
@@ -101,11 +95,40 @@ PRO spice_create_level3_jpeg_presentation, meta_data
         param = fit_cur.param[ipar]
         
         image_data = reform(result[ipartotal,*,*])
+        size_image = size(image_data)
+        startrow = 0
+        for i=0,size_image[2]/2-1 do begin
+          ind = where(image_data[*,i] lt -999.9 AND image_data[*,i] gt -1000.1, count, ncomplement=ncomplement)
+          if ncomplement gt 0 then begin
+            startrow = i
+            break
+          endif
+        endfor
+        endrow = size_image[2]-1
+        for i=size_image[2]-1,size_image[2]/2,-1 do begin
+          ind = where(image_data[*,i] lt -999.9 AND image_data[*,i] gt -1000.1, count, ncomplement=ncomplement)
+          if ncomplement gt 0 then begin
+            endrow = i
+            break
+          endif
+        endfor
+        image_data = image_data[*,startrow:endrow]
+        size_image = size(image_data)
+        xrange = [coords[1,0,0,startrow], coords[1,0,-1,startrow]]
+        xcoord_transform = [xrange[0], (xrange[1]-xrange[0])/size_image[1]]
+        xrange2 = [coords[1,0,0,endrow], coords[1,0,-1,endrow]]
+        xcoord_transform2 = [xrange2[0], (xrange2[1]-xrange2[0])/size_image[1]]
+        yrange = [coords[2,0,0,startrow], coords[2,0,0,endrow]]
+        ycoord_transform = [yrange[0], (yrange[1]-yrange[0])/size_image[2]]
+        yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,endrow]]
+        ycoord_transform2 = [yrange2[0], (yrange2[1]-yrange2[0])/size_image[2]]
+
         ;im=image(reform(result[ipartotal,*,*]), axis_style=0, rgb_table=3, min_value=-10)
         ;im.save,filename+fns('##',itag+1)+'_'+param.name+'_64.png', height=64, border=0
         ;im.save,filename+param.name+'_64.png', height=64, border=0
         ;im.close
         
+        ;image_data[*,2:4] = 999
         im=image(image_data, axis_style=2, rgb_table=3, min_value=-10, $
           xtitle='Solar X [arcsec]', ytitle='Solar Y [arcsec]')
         a = im.AXES
