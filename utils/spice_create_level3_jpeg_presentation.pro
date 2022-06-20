@@ -27,7 +27,7 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-20 14:03 CEST $
+; $Id: 2022-06-20 14:43 CEST $
 
 
 PRO spice_create_level3_jpeg_presentation, meta_data
@@ -48,10 +48,23 @@ PRO spice_create_level3_jpeg_presentation, meta_data
   if N_ELEMENTS(meta_data) EQ 0 then restore, meta_data_file
   ind = where(meta_data.l3_created, ndata)
   
+  ; Red Temperature (intensity/default)
   c = colortable(3)
-  ct_r=reform(c[*,0])
-  ct_g=reform(c[*,1])
-  ct_b=reform(c[*,2])
+  ct1_r=reform(c[*,0])
+  ct1_g=reform(c[*,1])
+  ct1_b=reform(c[*,2])
+
+  ; Blue-Red (velocity)
+  c = colortable(33)
+  ct2_r=reform(c[*,0])
+  ct2_g=reform(c[*,1])
+  ct2_b=reform(c[*,2])
+
+  ; Blue/Green/Red/Yellow (width)
+  c = colortable(4)
+  ct3_r=reform(c[*,0])
+  ct3_g=reform(c[*,1])
+  ct3_b=reform(c[*,2])
 
   
   ;for idata=0,ndata-1 do begin
@@ -94,6 +107,7 @@ PRO spice_create_level3_jpeg_presentation, meta_data
       for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
         
+        ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal,*,*])
         size_image = size(image_data)
         startrow = 0
@@ -122,14 +136,40 @@ PRO spice_create_level3_jpeg_presentation, meta_data
         ycoord_transform = [yrange[0], (yrange[1]-yrange[0])/size_image[2]]
         yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,endrow]]
         ycoord_transform2 = [yrange2[0], (yrange2[1]-yrange2[0])/size_image[2]]
+        
+        ind = where(image_data lt -999.9 AND image_data gt -1000.1, count, complement=gooddata)
+        image_min = min(image_data[gooddata], max=image_max)
+        image_min = image_min - (image_max-image_min)/10
+        if count gt 0 then image_data[ind]=!Values.F_NAN
 
-        ;im=image(reform(result[ipartotal,*,*]), axis_style=0, rgb_table=3, min_value=-10)
+       case param.name of
+          'velocity': begin
+            colortab = 33
+            ct_r = ct2_r
+            ct_g = ct2_g
+            ct_b = ct2_b
+          end
+          'width' : begin
+            colortab = 4
+            ct_r = ct3_r
+            ct_g = ct3_g
+            ct_b = ct3_b
+          end
+          else: begin
+            colortab = 3
+            ct_r = ct1_r
+            ct_g = ct1_g
+            ct_b = ct1_b
+          end
+        endcase
+
+        ;im=image(reform(result[ipartotal,*,*]), axis_style=0, rgb_table=colortab, min_value=-10)
         ;im.save,filename+fns('##',itag+1)+'_'+param.name+'_64.png', height=64, border=0
         ;im.save,filename+param.name+'_64.png', height=64, border=0
         ;im.close
         
         ;image_data[*,2:4] = 999
-        im=image(image_data, axis_style=2, rgb_table=3, min_value=-10, $
+        im=image(image_data, axis_style=2, rgb_table=colortab, $ ;min_value=-10, $
           xtitle='Solar X [arcsec]', ytitle='Solar Y [arcsec]')
         a = im.AXES
         a[0].coord_transform=xcoord_transform
@@ -164,7 +204,7 @@ PRO spice_create_level3_jpeg_presentation, meta_data
         image_small = rot(image_data, 0, magnification, /interp)
         ind = where(image_small lt -999.9 AND image_small gt -1000.1, count, complement=gooddata)
         image_min = min(image_small[gooddata], max=image_max)
-        image_min = image_min - (image_max-image_min)/10
+        image_min = image_min - (image_max-image_min)/20
         if count gt 0 then image_small[ind]=image_min
         factor = 255d/(image_max-image_min)
         image_small = (image_small - image_min) * factor
