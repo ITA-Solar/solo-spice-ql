@@ -73,13 +73,13 @@ pro spice_generate_l3
       ;stop
     endfor ; ifile=0,count_file-1
 
-    help,goodfiles
+    ;help,goodfiles
     sorted_index = sort(goodcat)
     goodfiles = goodfiles[sorted_index]
     goodwinno = goodwinno[sorted_index]
     goodextname = goodextname[sorted_index]
     goodcat = goodcat[sorted_index]
-    print,goodcat, goodextname
+    ;print,goodcat, goodextname
     
     ndata = N_ELEMENTS(goodfiles)
     meta_data = make_array(ndata, value=meta_data_template)
@@ -95,7 +95,7 @@ pro spice_generate_l3
     
     restore, meta_data_file
     ndata = N_ELEMENTS(meta_data)
-    meta_data[*].l3_created = 0
+    ;meta_data[*].l3_created = 0
     
   endelse ; ~file_exist(meta_data_file)
   
