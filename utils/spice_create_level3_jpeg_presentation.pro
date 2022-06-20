@@ -27,7 +27,7 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-17 15:24 CEST $
+; $Id: 2022-06-20 13:28 CEST $
 
 
 PRO spice_create_level3_jpeg_presentation, meta_data
@@ -136,13 +136,13 @@ PRO spice_create_level3_jpeg_presentation, meta_data
         im.close
         
         ; 64px png image
-        ind = where(image_data lt -999.9 AND image_data gt -1000.1, count, complement=gooddata)
-        image_min = min(image_data[gooddata], max=image_max)
-        image_min = image_min - (image_max-image_min)/10
-        if count gt 0 then image_data[ind]=image_min
         size_image = size(image_data)
         magnification = 64d/size_image[2]
         image_small = rot(image_data, 0, magnification, /interp)
+        ind = where(image_small lt -999.9 AND image_small gt -1000.1, count, complement=gooddata)
+        image_min = min(image_small[gooddata], max=image_max)
+        image_min = image_min - (image_max-image_min)/10
+        if count gt 0 then image_small[ind]=image_min
         factor = 255d/(image_max-image_min)
         image_small = (image_small - image_min) * factor
         image_small = UINT(image_small)
