@@ -129,6 +129,11 @@ PRO spice_test_privat, file_number
     image_small_created:0b, $
     image_large_created:0b $
   }
+  ana = fits2ana(l3_file)
+  help,ana
+  handle_value,ana.result_h,res
+  help,res
+  stop
   spice_create_level3_jpeg_presentation, meta_data
   stop
 
