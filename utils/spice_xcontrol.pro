@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2022-06-14 11:54 CEST $
+; $Id: 2022-06-21 12:28 CEST $
 ;-
 ;
 ;
@@ -443,6 +443,18 @@ pro spice_xcontrol_moments, fit, event
   return
 end
 
+;create level 3 files
+pro spice_xcontrol_create_l3, event
+  widget_control, event.top, get_uvalue = info
+  widget_control, (*info).lineselect, get_value = lineselect
+  IF total(lineselect) EQ 0 THEN BEGIN
+    answer = dialog_message('You need to select at least one window.')
+  ENDIF ELSE BEGIN
+    window_index = where(lineselect)
+    l3_file = *(*info).d->create_l3_file(window_index)
+  ENDELSE
+end
+
 ;-----------------------------------------------------------------------------
 ; start main program
 ;-----------------------------------------------------------------------------
@@ -488,6 +500,9 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   lineselect_label = widget_base(lineselect_nuvase, /row)
   title = 'Select Line window(s)'    ; line select label string
   lslabel = widget_label(lineselect_label, value=title)
+  lslabel = widget_label(lineselect_label, value='      ')
+  create_l3_button = widget_button(lineselect_label, value='Create level 3 files', $
+    event_pro='spice_xcontrol_create_l3')
 
   if N_ELEMENTS(line_id) gt 3 then column=2 else column=1
   lineselect = cw_bgroup(lineselect_row, /nonexclusive, line_id, column=column, event_func = 'spice_xcontrol_lineselect')
