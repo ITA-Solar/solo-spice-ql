@@ -1,7 +1,7 @@
 PRO spice_test_privat, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=500
+  IF N_ELEMENTS(file_number) NE 1 then file_number=501
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
@@ -86,11 +86,13 @@ PRO spice_test_privat, file_number
     ;LOSTPLNPIXLIST[C III 977 - Peak]
     402: file = '/Users/mawiesma/data/spice/level2/2021/09/14/solo_L2_spice-n-ras_20210914T043532_V04_67109161-000.fits'
     500: file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+    501: file = '/Users/mawiesma/data/spice/level2/2022/04/12/solo_L2_spice-n-exp_20220412T080039_V01_117440593-000.fits' ; single exposure
     else: file = ''
   ENDCASE
 
 
-  window_index = 5
+  window_index = 5 ; for 500
+  window_index = 0
 
 
   obj = spice_object(file)
@@ -100,12 +102,14 @@ PRO spice_test_privat, file_number
   obj->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
     debug_plot=debug_plot, $
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
+  help,data,lambda,weights,missing
+  stop
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
   ;xcfit_block,ana=ana
   ;help,ana
-  ;stop
+  stop
 
   ;ana = obj->xcfit_block(window_index)
   ;handle_value, ana.fit_h, fit
@@ -113,9 +117,20 @@ PRO spice_test_privat, file_number
   ;stop
   ;help,ana
 
-  ;l3_file = obj->create_l3_file(window_index)
-  ;print,l3_file
-  ;stop
+  l3_file = obj->create_l3_file(window_index, /no_widget)
+  print,l3_file
+  meta_data = { $
+    file:'L2-file', $
+    winno:0, $
+    extname:'TEST', $
+    category:0, $
+    l3_created:0b, $
+    l3_file:l3_file, $
+    image_small_created:0b, $
+    image_large_created:0b $
+  }
+  spice_create_level3_jpeg_presentation, meta_data
+  stop
 
   ;print, obj->get_header(window_index)
   ana = fits2ana('/Users/mawiesma/data/spice/level3/2022/04/04/solo_L3_spice-n-ras_20220404T195533_V02_100664048-000.fits')
