@@ -14,7 +14,9 @@ pro spice_generate_l3
 
   if ~file_exist(meta_data_file) then begin
 
-    files = spice_find_file('1-jan-2022', time_end='1-jun-2022', count_file=count_file)
+    ;files = spice_find_file('1-jan-2022', time_end='1-jun-2022', count_file=count_file)
+    files = spice_find_file('10-apr-2022', time_end='1-jun-2022', count_file=count_file)
+    files = reverse(files)
     help,files
 
     goodfiles = []
@@ -22,22 +24,24 @@ pro spice_generate_l3
     goodextname = []
     goodcat = []
     for ifile=0,count_file-1 do begin
-      mreadfits_header, files[ifile], hdrtemp, only_tags='PURPOSE,NWIN'
+      mreadfits_header, files[ifile], hdrtemp, only_tags='PURPOSE,NWIN,NAXIS1,NAXIS4'
       ;print,hdrtemp.purpose
       if hdrtemp.purpose ne 'Science' then continue
-      cur_cat = 5
+      if hdrtemp.naxis1 eq 1 && hdrtemp.naxis4 eq 1 then continue
+      cur_cat = 6
       for iext=0,hdrtemp.nwin-1 do begin
         mreadfits_header, files[ifile], hdrtemp, only_tags='extname', ext=iext
         ;print,'  '+hdrtemp.extname
-        if hdrtemp.extname.contains('C III') || $
-          hdrtemp.extname.contains('Ly Beta') || $
-          hdrtemp.extname.contains('Lyman Beta') || $
-          hdrtemp.extname.contains('Lyb') || $
-          hdrtemp.extname.contains('O VI 1032') || $
-          hdrtemp.extname.contains('Ne VIII 770') $
-          then begin
+        ;if hdrtemp.extname.contains('C III') || $
+        ;  hdrtemp.extname.contains('Ly Beta') || $
+        ;  hdrtemp.extname.contains('Lyman Beta') || $
+        ;  hdrtemp.extname.contains('Lyb') || $
+        ;  hdrtemp.extname.contains('O VI 1032') || $
+        ;  hdrtemp.extname.contains('Ne VIII 770') $
+        ;  then begin
 
           print,'  '+hdrtemp.extname
+          cat = 5
           if hdrtemp.extname.contains('C III') then cat = 1
           if hdrtemp.extname.contains('Ly Beta') then cat = 2
           if hdrtemp.extname.contains('Lyman Beta') then cat = 2
@@ -51,10 +55,10 @@ pro spice_generate_l3
             cur_extname = hdrtemp.extname
           endif
 
-        endif ; hdrtemp.extname.contains
+        ;endif ; hdrtemp.extname.contains
       endfor ; iext=0,hdrtemp.nwin-1
 
-      if cur_cat lt 5 then begin
+      if cur_cat lt 6 then begin
 
         if N_ELEMENTS(goodfiles) eq 0 then begin
           goodfiles = files[ifile]
@@ -74,11 +78,11 @@ pro spice_generate_l3
     endfor ; ifile=0,count_file-1
 
     ;help,goodfiles
-    sorted_index = sort(goodcat)
-    goodfiles = goodfiles[sorted_index]
-    goodwinno = goodwinno[sorted_index]
-    goodextname = goodextname[sorted_index]
-    goodcat = goodcat[sorted_index]
+;    sorted_index = sort(goodcat)
+;    goodfiles = goodfiles[sorted_index]
+;    goodwinno = goodwinno[sorted_index]
+;    goodextname = goodextname[sorted_index]
+;    goodcat = goodcat[sorted_index]
     ;print,goodcat, goodextname
     
     ndata = N_ELEMENTS(goodfiles)
