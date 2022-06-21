@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-14 12:07 CEST $
+; $Id: 2022-06-21 11:05 CEST $
 
 
 ;+
@@ -269,7 +269,10 @@ PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, app
     data = transpose(data, [2, 0, 1, 3])
     weights = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value=1.0)
   endif else begin
-    lambda = reform(lambda)
+    naxis1 = self.get_header_keyword('naxis1', window_index)
+    naxis2 = self.get_header_keyword('naxis2', window_index)
+    naxis3 = self.get_header_keyword('naxis3', window_index)
+    lambda = reform(lambda, [naxis1, naxis2, naxis3])
     lambda = transpose(lambda, [2, 0, 1])
     data = transpose(data, [2, 0, 1])
     weights = make_array(size_data[3], size_data[1], size_data[2], value=1.0)
