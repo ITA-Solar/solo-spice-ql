@@ -14,7 +14,7 @@
 ; CALLING SEQUENCE:
 ;      header = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
 ;        filename_l3=filename_l3, filename_l2=filename_l2, exension_names=exension_names, n_windows=n_windows, $
-;        EXTENSION=EXTENSION, $
+;        winno=winno, EXTENSION=EXTENSION, $
 ;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
 ;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 ;
@@ -53,7 +53,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-24 13:26 CEST $
+; $Id: 2022-06-24 13:49 CEST $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -146,6 +146,7 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'CMPTYP'+fitnr, 'Error of fit curve (Chi^2)', 'Type of component '+fitnr
   fits_util->add, hdr, 'CMPNAM'+fitnr, 'Chi^2', 'Name of component '+fitnr
   fits_util->add, hdr, 'CMP_NP'+fitnr, 1, 'Number of parameters in component '+fitnr
+  ipar=0
   parnr = string(byte(ipar+97))
   fits_util->add, hdr, 'PNAME'+fitnr+parnr, 'Chi^2', 'Name of parameter '+parnr+' for component '+fitnr
 
