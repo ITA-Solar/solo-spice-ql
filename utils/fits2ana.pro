@@ -33,7 +33,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-01-04 13:59 CET $
+; $Id: 2022-06-24 14:09 CEST $
 
 
 function fits2ana, fitsfile, titles=titles
@@ -48,23 +48,23 @@ function fits2ana, fitsfile, titles=titles
     if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
 
     ;extract info from header
-    filename = strtrim(fxpar(hdr, 'ANAFILE', missing=''), 2)
-    datasource = strtrim(fxpar(hdr, 'ANADSRC', missing=''), 2)
-    definition = strtrim(fxpar(hdr, 'ANADEF', missing=''), 2)
-    missing = fxpar(hdr, 'ANAMISS', missing=0)
-    label = strtrim(fxpar(hdr, 'ANALABEL', missing=''), 2)
-    history = fxpar(hdr, 'ANAHISTO', missing='')
+    filename = strtrim(fxpar(hdr, 'ANA_FILE', missing=''), 2)
+    datasource = strtrim(fxpar(hdr, 'ANA_SRC', missing=''), 2)
+    definition = strtrim(fxpar(hdr, 'ANA_DEF', missing=''), 2)
+    missing = fxpar(hdr, 'ANA_MISS', missing=0)
+    label = strtrim(fxpar(hdr, 'ANA_LABL', missing=''), 2)
+    history = fxpar(hdr, 'ANA_HIST', missing='')
     history = strtrim(strsplit(history,';',/extract,count=count), 2)
     titles[iwin] = strtrim(fxpar(hdr, 'EXTNAML2', missing=''), 2)
 
     ; extract fit components
     tag_names = hash()
     fit_components_hash = orderedhash()
-    n_components = fxpar(hdr, 'COMPCNT', missing=0)
+    n_components = fxpar(hdr, 'ANA_NCOMP', missing=0)
     for icomp=0,n_components-1 do begin
       ; Get keywords for each fit component
-      fitnr = fns('##', icomp)
-      n_params = fxpar(hdr, 'PARCNT'+fitnr, missing=0)
+      fitnr = strtrim(string(icomp+1), 2)
+      n_params = fxpar(hdr, 'CMP_NP'+fitnr, missing=0)
       stc = mk_component_stc(n_params)
       stc.FUNC_NAME = strtrim(fxpar(hdr, 'CMPTYP'+fitnr, missing=''), 2)
       stc.NAME = strtrim(fxpar(hdr, 'CMPNAM'+fitnr, missing=''), 2)
@@ -79,17 +79,17 @@ function fits2ana, fitsfile, titles=titles
         ; Get keywords for each fit parameter
         parnr = string(byte(ipar+97))
         param = stc.param[ipar]
-        param.name = strtrim(fxpar(hdr, 'PRNAM'+fitnr+parnr, missing=''), 2)
+        param.name = strtrim(fxpar(hdr, 'PNAME'+fitnr+parnr, missing=''), 2)
         param.description[*] = ''
-        description = fxpar(hdr, 'PRDES'+fitnr+parnr, missing='')
+        description = fxpar(hdr, 'PDESC'+fitnr+parnr, missing='')
         param.description = strtrim(strsplit(description,';',/extract,count=count), 2)
-        param.initial = fxpar(hdr, 'PRINI'+fitnr+parnr, missing=0)
-        param.value = fxpar(hdr, 'PRVAL'+fitnr+parnr, missing=0)
-        param.max_val = fxpar(hdr, 'PRMAX'+fitnr+parnr, missing=0)
-        param.min_val = fxpar(hdr, 'PRMIN'+fitnr+parnr, missing=0)
-        param.trans_a = fxpar(hdr, 'PRTRA'+fitnr+parnr, missing=0)
-        param.trans_b = fxpar(hdr, 'PRTRB'+fitnr+parnr, missing=0)
-        param.const = fxpar(hdr, 'PRCON'+fitnr+parnr, missing=0)
+        param.initial = fxpar(hdr, 'PINIT'+fitnr+parnr, missing=0)
+        param.value = fxpar(hdr, 'PVAL'+fitnr+parnr, missing=0)
+        param.max_val = fxpar(hdr, 'PMAX'+fitnr+parnr, missing=0)
+        param.min_val = fxpar(hdr, 'PMIN'+fitnr+parnr, missing=0)
+        param.trans_a = fxpar(hdr, 'PTRNA'+fitnr+parnr, missing=0)
+        param.trans_b = fxpar(hdr, 'PTRNB'+fitnr+parnr, missing=0)
+        param.const = fxpar(hdr, 'PCONS'+fitnr+parnr, missing=0)
         stc.param[ipar] = param
       endfor ; ipar=0,n_params-1
 
