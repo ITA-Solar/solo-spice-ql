@@ -11,7 +11,9 @@
 ;     FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;     anas = fits2ana(fitsfile [ ,titles=titles])
+;     anas = fits2ana(fitsfile [ ,headers_results=headers_results, headers_data=headers_data, $
+;       headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+;       headers_include=headers_include, headers_contants=headers_contants])
 ;
 ; INPUTS:
 ;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
@@ -20,7 +22,13 @@
 ;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
 ;
 ; OPTIONAL OUTPUT:
-;     titles: returns the keyword EXTNAML2 for each window in a string array
+;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
+;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
+;     headers_lambda: A pointer array, containing the headers of the lambda extensions as string arrays.
+;     headers_residuals: A pointer array, containing the headers of the residuals extensions as string arrays.
+;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
+;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
+;     headers_contants: A pointer array, containing the headers of the constants extensions as string arrays.
 ;
 ; CALLS:
 ;
@@ -33,19 +41,51 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-24 14:09 CEST $
+; $Id: 2022-06-24 14:33 CEST $
 
 
-function fits2ana, fitsfile, titles=titles
+function fits2ana, fitsfile, headers_results=headers_results, headers_data=headers_data, $
+  headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+  headers_include=headers_include, headers_contants=headers_contants
 
   if N_ELEMENTS(fitsfile) eq 0 then fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_20201119T102559_V03_33554593-000.fits'
 
   result = readfits(fitsfile, hdr)
   n_windows = fxpar(hdr, 'NWIN', missing=0)
-  titles = strarr(n_windows)
+  get_headers = bytarr(7)
+  if arg_present(headers_results) then begin
+    headers_results = ptrarr(n_windows)
+    get_headers[0] = 1
+    headers_results[0] = ptr_new(hdr)
+  endif
+  if arg_present(headers_data) then begin
+    headers_data = ptrarr(n_windows)
+    get_headers[1] = 1
+  endif
+  if arg_present(headers_lambda) then begin
+    headers_lambda = ptrarr(n_windows)
+    get_headers[2] = 1
+  endif
+  if arg_present(headers_residuals) then begin
+    headers_residuals = ptrarr(n_windows)
+    get_headers[3] = 1
+  endif
+  if arg_present(headers_weights) then begin
+    headers_weights = ptrarr(n_windows)
+    get_headers[4] = 1
+  endif
+  if arg_present(headers_include) then begin
+    headers_include = ptrarr(n_windows)
+    get_headers[5] = 1
+  endif
+  if arg_present(headers_contants) then begin
+    headers_contants = ptrarr(n_windows)
+    get_headers[6] = 1
+  endif
   for iwin=0,n_windows-1 do begin
     extension = iwin*7
     if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
+    if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
 
     ;extract info from header
     filename = strtrim(fxpar(hdr, 'ANA_FILE', missing=''), 2)
@@ -55,7 +95,6 @@ function fits2ana, fitsfile, titles=titles
     label = strtrim(fxpar(hdr, 'ANA_LABL', missing=''), 2)
     history = fxpar(hdr, 'ANA_HIST', missing='')
     history = strtrim(strsplit(history,';',/extract,count=count), 2)
-    titles[iwin] = strtrim(fxpar(hdr, 'EXTNAML2', missing=''), 2)
 
     ; extract fit components
     tag_names = hash()
@@ -116,11 +155,17 @@ function fits2ana, fitsfile, titles=titles
     fit = fit_components_hash.tostruct(/no_copy)
 
     data = readfits(fitsfile, hdr, ext=extension+1)
+    if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
     lambda = readfits(fitsfile, hdr, ext=extension+2)
+    if get_headers[2] then headers_lambda[iwin] = ptr_new(hdr)
     residual = readfits(fitsfile, hdr, ext=extension+3)
+    if get_headers[3] then headers_residuals[iwin] = ptr_new(hdr)
     weights = readfits(fitsfile, hdr, ext=extension+4)
+    if get_headers[4] then headers_weights[iwin] = ptr_new(hdr)
     include = readfits(fitsfile, hdr, ext=extension+5)
+    if get_headers[5] then headers_include[iwin] = ptr_new(hdr)
     const = readfits(fitsfile, hdr, ext=extension+6)
+    if get_headers[6] then headers_contants[iwin] = ptr_new(hdr)
 
     IF NOT exist(ana) THEN ana = mk_analysis()
 
