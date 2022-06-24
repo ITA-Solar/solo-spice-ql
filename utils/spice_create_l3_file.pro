@@ -58,7 +58,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-15 14:44 CEST $
+; $Id: 2022-06-24 11:30 CEST $
 
 
 FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -77,6 +77,7 @@ FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking
     ana = spice_object->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
       position=position, velocity=velocity)
     if size(ana, /type) NE 8 then continue
+    original_data = spice_object->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit)
     
     if ~keyword_set(no_fitting) then begin
       print, '====================='
@@ -96,11 +97,12 @@ FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+      original_data=original_data)
 
     if iwindow eq 0 then file = filepath(filename_l3, /tmp)
     writefits, file, RESULT, *headers[0], append=extension
-    writefits, file, INPUT_DATA, *headers[1], /append
+    writefits, file, original_data, *headers[1], /append
     writefits, file, LAMBDA, *headers[2], /append
     writefits, file, RESIDUAL, *headers[3], /append
     writefits, file, WEIGHTS, *headers[4], /append

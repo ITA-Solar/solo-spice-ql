@@ -12,7 +12,7 @@
 ;
 ; CALLING SEQUENCE:
 ;      headers = spice_ana2fitshdr(ana, header_l2=header_l2, $
-;         n_windows=n_windows [, filename_l3=filename_l3, $
+;         n_windows=n_windows, original_data=original_data [, filename_l3=filename_l3, $
 ;         /EXTENSION, $
 ;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
@@ -25,6 +25,10 @@
 ;           must be provided
 ;      header_l2: The header (string array) of the level 2 file.
 ;      n_windows: total number of windows to be included in level 3 file.
+;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
+;                     from the level 2 FITS file. Spectra is not in the first dimension.
+;                     This data cube will saved into the FITS file. Thus it cannot be used
+;                     directly in the ANA structure when read back in.
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
@@ -68,7 +72,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-24 11:10 CEST $
+; $Id: 2022-06-24 11:30 CEST $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
@@ -76,7 +80,8 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-  DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
+  DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+  original_data=original_data
 
   print_headers = 0
   input_type = size(ana, /type)
@@ -164,7 +169,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
 
   hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
     extension_name_prefix=extension_name_prefix, $
-    INPUT_DATA=INPUT_DATA)
+    original_data=original_data)
 
   all_headers[1] = ptr_new(hdr)
 
