@@ -27,7 +27,7 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-20 14:43 CEST $
+; $Id: 2022-06-24 14:33 CEST $
 
 
 PRO spice_create_level3_jpeg_presentation, meta_data
@@ -69,7 +69,7 @@ PRO spice_create_level3_jpeg_presentation, meta_data
   
   ;for idata=0,ndata-1 do begin
   for idata=0,0 do begin
-    ana = fits2ana(meta_data[ind[idata]].l3_file, titles=titles)
+    ana = fits2ana(meta_data[ind[idata]].l3_file)
     ;handle_value,ana.data_h,data,/no_copy
     handle_value,ana.result_h,result,/no_copy
     handle_value,ana.fit_h,fit,/no_copy
