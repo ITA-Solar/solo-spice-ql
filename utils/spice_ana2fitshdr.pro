@@ -29,6 +29,7 @@
 ;                     from the level 2 FITS file. Spectra is not in the first dimension.
 ;                     This data cube will saved into the FITS file. Thus it cannot be used
 ;                     directly in the ANA structure when read back in.
+;      winno: Window number (starting at 0) within this study in this level 3 file
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
@@ -72,11 +73,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-24 11:30 CEST $
+; $Id: 2022-06-24 13:26 CEST $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
-  filename_l3=filename_l3, EXTENSION=EXTENSION, $
+  filename_l3=filename_l3, winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
@@ -149,7 +150,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
 
   hdr = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
     filename_l3=filename_l3, filename_l2=filename_l2, extension_name_prefix=extension_name_prefix, n_windows=n_windows, $
-    EXTENSION=EXTENSION, $
+    winno=winno, EXTENSION=EXTENSION, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 

@@ -58,7 +58,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-24 11:30 CEST $
+; $Id: 2022-06-24 13:26 CEST $
 
 
 FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -93,7 +93,7 @@ FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking
 
     if iwindow gt 0 then extension=1 else extension=0
     headers = spice_ana2fitshdr(ana, header_l2=spice_object->get_header(window_index[iwindow]), $
-      extension=extension, filename_l3=filename_l3, n_windows=N_ELEMENTS(window_index), $
+      extension=extension, filename_l3=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $

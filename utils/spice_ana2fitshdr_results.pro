@@ -36,6 +36,7 @@
 ;               and parameter values at points where the fit has been
 ;               declared as "FAILED".
 ;      LABEL: A string.
+;      winno: Window number (starting at 0) within this study in this level 3 file
 ; 
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
@@ -52,12 +53,12 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-24 11:10 CEST $
+; $Id: 2022-06-24 13:26 CEST $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   filename_l3=filename_l3, filename_l2=filename_l2, exension_names=exension_names, n_windows=n_windows, $
-  EXTENSION=EXTENSION, $
+  winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
 
@@ -73,22 +74,22 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
 
   extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
-  fits_util->add, hdr, 'EXTNAML2', extname_l2, 'Extension name in level 2 file'
-  fits_util->add, hdr, 'FILENAL2', filename_l2, 'Level 2 filename'
+  fits_util->add, hdr, 'L2EXTNAM', extname_l2, 'Extension name in level 2 file'
+  fits_util->add, hdr, 'L2FILENA', filename_l2, 'Level 2 filename'
 
   ; Add keywords valid for whole ANA
   fits_util->add_description, hdr, 'Keywords describing the whole ANA'
-  fits_util->add, hdr, 'ANAFILE', filename_ana, 'ANA filename'
-  fits_util->add, hdr, 'ANADSRC', datasource, 'ANA datasource'
-  fits_util->add, hdr, 'ANADEF', definition, 'ANA definition'
-  fits_util->add, hdr, 'ANAMISS', missing, 'ANA missing value in fitted data'
-  fits_util->add, hdr, 'ANALABEL', label, 'ANA label'
+  fits_util->add, hdr, 'ANA_FILE', filename_ana, 'ANA filename'
+  fits_util->add, hdr, 'ANA_SRC', datasource, 'ANA datasource'
+  fits_util->add, hdr, 'ANA_DEF', definition, 'ANA definition'
+  fits_util->add, hdr, 'ANA_MISS', missing, 'ANA missing value in fitted data'
+  fits_util->add, hdr, 'ANA_LABL', label, 'ANA label'
   ind = where(history NE '', count)
   if count gt 0 then history_string = strjoin(history[ind], ';') $
   else history_string = ''
-  fits_util->add, hdr, 'ANAHISTO', history_string, 'ANA history'
+  fits_util->add, hdr, 'ANA_HIST', history_string, 'ANA history'
   n_components = N_TAGS(fit)
-  fits_util->add, hdr, 'COMPCNT', n_components, 'Number of fit components'
+  fits_util->add, hdr, 'ANA_NCOMP', n_components, 'Number of fit components'
 
   fits_util->add, hdr, 'RESEXT', extension_name_prefix+'results', 'Extension name of results'
   fits_util->add, hdr, 'DATAEXT', extension_name_prefix+'data', 'Extension name of data'
@@ -98,10 +99,14 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'INCLEXT', extension_name_prefix+'includes', 'Extension name of includes'
   fits_util->add, hdr, 'CONSTEXT', extension_name_prefix+'constants', 'Extension name of constants'
 
+  fits_util->add, hdr, '', ' '
+  fits_util->add, hdr, 'NXDIM', 1, 'Number of dimensions absorbed by analysis'
+  fits_util->add, hdr, 'XDIMTY1', fxpar(header_l2, 'CTYPE1', missing=''), 'Type of 1st dimension absorbed by analysis'
+  fits_util->add, hdr, 'XDIMEX1', extension_name_prefix+'lambda', 'Extension name of 1st dimension absorbed by analysis'
 
   for itag=0,n_components-1 do begin
     ; Add keywords for each fit component
-    fitnr = fns('##', itag)
+    fitnr = strtrim(string(itag+1), 2)
     fits_util->add_description, hdr, 'Keywords describing fit component '+fitnr
     fit_cur = fit.(itag)
     fits_util->add, hdr, 'CMPTYP'+fitnr, fit_cur.FUNC_NAME, 'Type of fit component '+fitnr
@@ -114,33 +119,35 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
     fits_util->add, hdr, 'CMPMUL'+fitnr, fit_cur.MULTIPLICATIVE, 'Indicates whether component is multiplicative'
     fits_util->add, hdr, 'CMPINC'+fitnr, fit_cur.INCLUDE, 'Indicates whether component is included in fit'
     n_params = N_ELEMENTS(fit_cur.param)
-    fits_util->add, hdr, 'PARCNT'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
+    fits_util->add, hdr, 'CMP_NP'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
 
     for ipar=0,n_params-1 do begin
       ; Add keywords for each fit parameter
       param = fit_cur.param[ipar]
       parnr = string(byte(ipar+97))
-      fits_util->add, hdr, 'PRNAM'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PNAME'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
       ind = where(param.description NE '', count)
       if count gt 0 then description = strjoin(param.description[ind], ';') $
       else description = ''
-      fits_util->add, hdr, 'PRDES'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PRINI'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PRVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PRMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PRMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PRTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient in Lambda=PRVAL*PRTRA+PRTRB'
-      fits_util->add, hdr, 'PRTRB'+fitnr+parnr, param.trans_b, 'Linear offset in Lambda=PRVAL*PRTRA+PRTRB'
-      fits_util->add, hdr, 'PRCON'+fitnr+parnr, param.const, 'Indicates whether parameter is constant'
+      fits_util->add, hdr, 'PDESC'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PINIT'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PTRNA'+fitnr+parnr, param.trans_a, 'Linear coefficient A in Lambda=PVAL*PTRNA+PTRNB'
+      fits_util->add, hdr, 'PTRNB'+fitnr+parnr, param.trans_b, 'Linear coefficient B in Lambda=PVAL*PTRNA+PTRNB'
+      fits_util->add, hdr, 'PCONS'+fitnr+parnr, param.const, 'Indicates whether parameter '+parnr+' for component '+fitnr+'is constant'
     endfor ; ipar0,n_params-1
   endfor ; itag=0,N_TAGS(fit)-1
 
   ; Add keywords for Chi^2
-  fitnr = fns('##', N_TAGS(fit))
+  fitnr = strtrim(string(n_components+1), 2)
   fits_util->add_description, hdr, 'Keywords describing fit component '+fitnr
   fits_util->add, hdr, 'CMPTYP'+fitnr, 'Error of fit curve (Chi^2)', 'Type of component '+fitnr
   fits_util->add, hdr, 'CMPNAM'+fitnr, 'Chi^2', 'Name of component '+fitnr
-  fits_util->add, hdr, 'CMPCNT'+fitnr, 1, 'Number of parameters in component '+fitnr
+  fits_util->add, hdr, 'CMP_NP'+fitnr, 1, 'Number of parameters in component '+fitnr
+  parnr = string(byte(ipar+97))
+  fits_util->add, hdr, 'PNAME'+fitnr+parnr, 'Chi^2', 'Name of parameter '+parnr+' for component '+fitnr
 
   ; Add level 2 header to this header
   ind_start = where(strmatch(header_l2, '*Study parameters valid for all Obs-HDUs in this file*') eq 1, count_l2)
@@ -192,7 +199,9 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'BUNIT', ' '
 
   fits_util->add, hdr, 'NWIN', n_windows, 'Number of windows'
-  fits_util->add, hdr, 'NWIN_L2', fxpar(header_l2, 'NWIN', missing=0), 'Total number of windows (incl. db and int win)', after='NWIN'
+  fits_util->add, hdr, 'L2NWIN', fxpar(header_l2, 'NWIN', missing=0), 'Total number of windows (incl. db and int win) in level 2 file', after='NWIN'
+  fits_util->add, hdr, 'WINNO', winno, 'Window number (starting at 0) within this study in this level 3 file'
+  fits_util->add, hdr, 'L2WINNO', fxpar(header_l2, 'WINNO', missing=0), 'Window number (starting at 0) within this study in level 2 file', after='WINNO'
 
   fits_util->clean_header, hdr
 
