@@ -68,7 +68,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-21 12:59 CET $
+; $Id: 2022-06-24 11:10 CEST $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
@@ -130,9 +130,10 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
   filename_l3 = filename_l2.replace('_L2_', '_L3_')
   file_info_l2 = spice_file2info(filename_l2)
-  obs_def = strtrim(string(file_info_l2.spiobsid), 2) + $
+  extension_name_prefix = 'V' + fns('##', file_info_l2.version) + $
+    '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno) + $
-    fns('_##', fxpar(header_l2, 'WINNO', missing=99))
+    fns(' ext## ', fxpar(header_l2, 'WINNO', missing=99))
 
   all_headers = ptrarr(7)
 
@@ -142,7 +143,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; ------
 
   hdr = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-    filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, n_windows=n_windows, $
+    filename_l3=filename_l3, filename_l2=filename_l2, extension_name_prefix=extension_name_prefix, n_windows=n_windows, $
     EXTENSION=EXTENSION, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
@@ -162,7 +163,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; ------
 
   hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
-    obs_def=obs_def, $
+    extension_name_prefix=extension_name_prefix, $
     INPUT_DATA=INPUT_DATA)
 
   all_headers[1] = ptr_new(hdr)
@@ -180,7 +181,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; ------
 
   hdr = spice_ana2fitshdr_lambda(header_l2=header_l2, datetime=datetime, $
-    obs_def=obs_def, $
+    extension_name_prefix=extension_name_prefix, $
     LAMBDA=LAMBDA)
 
   all_headers[2] = ptr_new(hdr)
@@ -198,7 +199,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; ------
 
   hdr = spice_ana2fitshdr_residuals(header_l2=header_l2, datetime=datetime, $
-    obs_def=obs_def, $
+    extension_name_prefix=extension_name_prefix, $
     RESIDUAL=RESIDUAL)
 
   all_headers[3] = ptr_new(hdr)
@@ -216,7 +217,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; ------
 
   hdr = spice_ana2fitshdr_weights(header_l2=header_l2, datetime=datetime, $
-    obs_def=obs_def, $
+    extension_name_prefix=extension_name_prefix, $
     WEIGHTS=WEIGHTS)
 
   all_headers[4] = ptr_new(hdr)
@@ -234,7 +235,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; ------
 
   hdr = spice_ana2fitshdr_include(header_l2=header_l2, datetime=datetime, $
-    obs_def=obs_def, $
+    extension_name_prefix=extension_name_prefix, $
     INCLUDE=INCLUDE)
 
   all_headers[5] = ptr_new(hdr)
@@ -252,7 +253,7 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; ------
 
   hdr = spice_ana2fitshdr_const(header_l2=header_l2, datetime=datetime, $
-    obs_def=obs_def, $
+    extension_name_prefix=extension_name_prefix, $
     CONST=CONST)
 
   all_headers[6] = ptr_new(hdr)

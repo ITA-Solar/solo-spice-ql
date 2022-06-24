@@ -13,7 +13,7 @@
 ;
 ; CALLING SEQUENCE:
 ;      header = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-;        filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, n_windows=n_windows, $
+;        filename_l3=filename_l3, filename_l2=filename_l2, exension_names=exension_names, n_windows=n_windows, $
 ;        EXTENSION=EXTENSION, $
 ;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
 ;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
@@ -23,7 +23,7 @@
 ;      datetime: Date and time string.
 ;      filename_l3: The filename the level 3 will/should get
 ;      filename_l2: The filename of the level 2 file
-;      obs_def: A string defining the SPICE OBS (SPIOBS-rasno_winno)
+;      extension_name_prefix: A string defining the prefix to the names of the 7 extensions
 ;      n_windows: number of windows to be included in level 3 file.
 ;      HISTORY: A string array.
 ;      FIT: The component fit structure
@@ -52,11 +52,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-09 21:58 CET $
+; $Id: 2022-06-24 11:10 CEST $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
-  filename_l3=filename_l3, filename_l2=filename_l2, obs_def=obs_def, n_windows=n_windows, $
+  filename_l3=filename_l3, filename_l2=filename_l2, exension_names=exension_names, n_windows=n_windows, $
   EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
@@ -69,7 +69,7 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', 'Results of ANA for OBS ' + obs_def, 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', extension_name_prefix+'results', 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
 
   extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
@@ -90,13 +90,13 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   n_components = N_TAGS(fit)
   fits_util->add, hdr, 'COMPCNT', n_components, 'Number of fit components'
 
-  fits_util->add, hdr, 'RESEXT', 'Results of ANA for OBS '+obs_def, 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', 'Data input to ANA for OBS '+obs_def, 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', 'Lambda of ANA for OBS '+obs_def, 'Extension name of lambda'
-  fits_util->add, hdr, 'RESIDEXT', 'Residuals of ANA for OBS '+obs_def, 'Extension name of residuals'
-  fits_util->add, hdr, 'WGTEXT', 'Weights of ANA for OBS '+obs_def, 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', 'Includes of ANA for OBS '+obs_def, 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', 'Constants of ANA for OBS '+obs_def, 'Extension name of constants'
+  fits_util->add, hdr, 'RESEXT', extension_name_prefix+'results', 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', extension_name_prefix+'data', 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', extension_name_prefix+'lambda', 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', extension_name_prefix+'residuals', 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', extension_name_prefix+'weights', 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', extension_name_prefix+'includes', 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', extension_name_prefix+'constants', 'Extension name of constants'
 
 
   for itag=0,n_components-1 do begin

@@ -10,13 +10,13 @@
 ;
 ; CALLING SEQUENCE:
 ;      header = spice_ana2fitshdr_weights(header_l2=header_l2, datetime=datetime, $
-;      obs_def=obs_def, $
+;      extension_name_prefix=extension_name_prefix, $
 ;      WEIGHTS=WEIGHTS)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the level 2 file.
 ;      datetime: Date and time string.
-;      obs_def: A string defining the SPICE OBS (SPIOBS-rasno_winno)
+;      extension_name_prefix: A string defining the prefix to the names of the 7 extensions
 ;      WEIGHTS: Weights to use in the fitting process. No default!
 ; 
 ; KEYWORDS:
@@ -31,11 +31,11 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2021-12-02 14:48 CET $
+; $Id: 2022-06-24 11:10 CEST $
 
 
 FUNCTION spice_ana2fitshdr_weights, header_l2=header_l2, datetime=datetime, $
-  obs_def=obs_def, $
+  extension_name_prefix=extension_name_prefix, $
   WEIGHTS=WEIGHTS
   
 
@@ -45,15 +45,15 @@ FUNCTION spice_ana2fitshdr_weights, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', 'Weights of ANA for OBS ' + obs_def, 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', extension_name_prefix+'weights', 'Extension name'
 
-  fits_util->add, hdr, 'RESEXT', 'Results of ANA for OBS '+obs_def, 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', 'Data input to ANA for OBS '+obs_def, 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', 'Lambda of ANA for OBS '+obs_def, 'Extension name of lambda'
-  fits_util->add, hdr, 'RESIDEXT', 'Residuals of ANA for OBS '+obs_def, 'Extension name of residuals'
-  fits_util->add, hdr, 'WGTEXT', 'Weights of ANA for OBS '+obs_def, 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', 'Includes of ANA for OBS '+obs_def, 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', 'Constants of ANA for OBS '+obs_def, 'Extension name of constants'
+  fits_util->add, hdr, 'RESEXT', extension_name_prefix+'results', 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', extension_name_prefix+'data', 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', extension_name_prefix+'lambda', 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', extension_name_prefix+'residuals', 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', extension_name_prefix+'weights', 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', extension_name_prefix+'includes', 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', extension_name_prefix+'constants', 'Extension name of constants'
 
   ; Add WCS keywords
   fits_util->add_description, hdr, 'World Coordinate System (WCS) keywords'
