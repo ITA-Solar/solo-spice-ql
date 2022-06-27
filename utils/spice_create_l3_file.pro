@@ -58,7 +58,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-24 13:26 CEST $
+; $Id: 2022-06-27 14:08 CEST $
 
 
 FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -77,7 +77,7 @@ FUNCTION spice_create_l3_file, spice_object, window_index, no_masking=no_masking
     ana = spice_object->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
       position=position, velocity=velocity)
     if size(ana, /type) NE 8 then continue
-    original_data = spice_object->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit)
+    original_data = spice_object->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
     
     if ~keyword_set(no_fitting) then begin
       print, '====================='
