@@ -23,7 +23,7 @@
 ;      datetime: Date and time string.
 ;      filename_l3: The filename the level 3 will/should get
 ;      filename_l2: The filename of the level 2 file
-;      extension_name_prefix: A string defining the prefix to the names of the 7 extensions
+;      prefix_extension_name: A string defining the prefix to the names of the 7 extensions
 ;      n_windows: number of windows to be included in level 3 file.
 ;      HISTORY: A string array.
 ;      FIT: The component fit structure
@@ -53,16 +53,16 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-24 13:49 CEST $
+; $Id: 2022-06-27 13:25 CEST $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
-  filename_l3=filename_l3, filename_l2=filename_l2, exension_names=exension_names, n_windows=n_windows, $
+  filename_l3=filename_l3, filename_l2=filename_l2, prefix_extension_name=prefix_extension_name, n_windows=n_windows, $
   winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
 
-
+stop
   fits_util = obj_new('oslo_fits_util')
   if keyword_set(extension) then mkhdr, hdr, result, /image $
   else mkhdr, hdr, result, /extend
@@ -70,7 +70,7 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', extension_name_prefix+'results', 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', prefix_extension_name+'results', 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
 
   extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
@@ -91,18 +91,18 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   n_components = N_TAGS(fit)
   fits_util->add, hdr, 'ANA_NCOMP', n_components, 'Number of fit components'
 
-  fits_util->add, hdr, 'RESEXT', extension_name_prefix+'results', 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', extension_name_prefix+'data', 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', extension_name_prefix+'lambda', 'Extension name of lambda'
-  fits_util->add, hdr, 'RESIDEXT', extension_name_prefix+'residuals', 'Extension name of residuals'
-  fits_util->add, hdr, 'WGTEXT', extension_name_prefix+'weights', 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', extension_name_prefix+'includes', 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', extension_name_prefix+'constants', 'Extension name of constants'
+  fits_util->add, hdr, 'RESEXT', prefix_extension_name+'results', 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', prefix_extension_name+'data', 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', prefix_extension_name+'lambda', 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', prefix_extension_name+'residuals', 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', prefix_extension_name+'weights', 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', prefix_extension_name+'includes', 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', prefix_extension_name+'constants', 'Extension name of constants'
 
   fits_util->add, hdr, '', ' '
   fits_util->add, hdr, 'NXDIM', 1, 'Number of dimensions absorbed by analysis'
   fits_util->add, hdr, 'XDIMTY1', fxpar(header_l2, 'CTYPE1', missing=''), 'Type of 1st dimension absorbed by analysis'
-  fits_util->add, hdr, 'XDIMEX1', extension_name_prefix+'lambda', 'Extension name of 1st dimension absorbed by analysis'
+  fits_util->add, hdr, 'XDIMEX1', prefix_extension_name+'lambda', 'Extension name of 1st dimension absorbed by analysis'
 
   for itag=0,n_components-1 do begin
     ; Add keywords for each fit component

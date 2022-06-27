@@ -10,13 +10,13 @@
 ;
 ; CALLING SEQUENCE:
 ;      header = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
-;      extension_name_prefix=extension_name_prefix, $
+;      prefix_extension_name=prefix_extension_name, $
 ;      original_data=original_data)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the level 2 file.
 ;      datetime: Date and time string.
-;      extension_name_prefix: A string defining the prefix to the names of the 7 extensions
+;      prefix_extension_name: A string defining the prefix to the names of the 7 extensions
 ;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
 ;                     from the level 2 FITS file. Spectra is not in the first dimension.
 ;                     This data cube will saved into the FITS file. Thus it cannot be used
@@ -34,11 +34,11 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-24 11:30 CEST $
+; $Id: 2022-06-27 13:25 CEST $
 
 
 FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
-  extension_name_prefix=extension_name_prefix, $
+  prefix_extension_name=prefix_extension_name, $
   original_data=original_data
   
 
@@ -48,15 +48,15 @@ FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', extension_name_prefix+'data', 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', prefix_extension_name+'data', 'Extension name'
 
-  fits_util->add, hdr, 'RESEXT', extension_name_prefix+'results', 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', extension_name_prefix+'data', 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', extension_name_prefix+'lambda', 'Extension name of lambda'
-  fits_util->add, hdr, 'RESIDEXT', extension_name_prefix+'residuals', 'Extension name of residuals'
-  fits_util->add, hdr, 'WGTEXT', extension_name_prefix+'weights', 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', extension_name_prefix+'includes', 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', extension_name_prefix+'constants', 'Extension name of constants'
+  fits_util->add, hdr, 'RESEXT', prefix_extension_name+'results', 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', prefix_extension_name+'data', 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', prefix_extension_name+'lambda', 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', prefix_extension_name+'residuals', 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', prefix_extension_name+'weights', 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', prefix_extension_name+'includes', 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', prefix_extension_name+'constants', 'Extension name of constants'
 
   ; Add WCS keywords
   fits_util->add_description, hdr, 'World Coordinate System (WCS) keywords'
