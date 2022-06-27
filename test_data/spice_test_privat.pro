@@ -1,7 +1,7 @@
 PRO spice_test_privat, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=501
+  IF N_ELEMENTS(file_number) NE 1 then file_number=500
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
@@ -92,7 +92,7 @@ PRO spice_test_privat, file_number
 
 
   window_index = 5 ; for 500
-  window_index = 0
+  ;window_index = 0
 
 
   obj = spice_object(file)
@@ -103,13 +103,13 @@ PRO spice_test_privat, file_number
     debug_plot=debug_plot, $
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
   help,data,lambda,weights,missing
-  stop
+  ;stop
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
   ;xcfit_block,ana=ana
   ;help,ana
-  stop
+  ;stop
 
   ;ana = obj->xcfit_block(window_index)
   ;handle_value, ana.fit_h, fit
@@ -117,7 +117,7 @@ PRO spice_test_privat, file_number
   ;stop
   ;help,ana
 
-  l3_file = obj->create_l3_file(window_index, /no_widget)
+  l3_file = obj->create_l3_file([0,5], /no_widget);, /no_fitting)
   print,l3_file
   meta_data = { $
     file:'L2-file', $
