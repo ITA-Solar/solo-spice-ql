@@ -53,7 +53,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-27 13:35 CEST $
+; $Id: 2022-06-27 13:51 CEST $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -62,7 +62,6 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
 
-stop
   fits_util = obj_new('oslo_fits_util')
   if keyword_set(extension) then mkhdr, hdr, result, /image $
   else mkhdr, hdr, result, /extend
