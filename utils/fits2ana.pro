@@ -41,7 +41,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-27 13:40 CEST $
+; $Id: 2022-06-27 14:07 CEST $
 
 
 function fits2ana, fitsfile, headers_results=headers_results, headers_data=headers_data, $
@@ -153,6 +153,12 @@ function fits2ana, fitsfile, headers_results=headers_results, headers_data=heade
     fit = fit_components_hash.tostruct(/no_copy)
 
     data = readfits(fitsfile, hdr, ext=extension+1)
+    file_info = spice_file2info(fitsfile)
+    if file_info.is_spice_file && file_info.level eq 3 then begin
+      size_data = size(data)
+      if size_data[0] eq 4 then data = transpose(data, [2, 0, 1, 3]) $
+      else data = transpose(data, [2, 0, 1])
+    endif
     if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
     lambda = readfits(fitsfile, hdr, ext=extension+2)
     if get_headers[2] then headers_lambda[iwin] = ptr_new(hdr)
