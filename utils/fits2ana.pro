@@ -41,14 +41,12 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-27 13:35 CEST $
+; $Id: 2022-06-27 13:40 CEST $
 
 
 function fits2ana, fitsfile, headers_results=headers_results, headers_data=headers_data, $
   headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
   headers_include=headers_include, headers_contants=headers_contants
-
-  if N_ELEMENTS(fitsfile) eq 0 then fitsfile = '/Users/mawiesma/data/spice/level3/2020/11/19/solo_L3_spice-n-sit_20201119T102559_V03_33554593-000.fits'
 
   result = readfits(fitsfile, hdr)
   n_windows = fxpar(hdr, 'NWIN', missing=0)
