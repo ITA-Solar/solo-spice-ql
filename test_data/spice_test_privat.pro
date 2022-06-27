@@ -117,20 +117,25 @@ PRO spice_test_privat, file_number
   ;stop
   ;help,ana
 
-  l3_file = obj->create_l3_file([0,5], /no_widget);, /no_fitting)
-  print,l3_file
-  meta_data = { $
-    file:'L2-file', $
-    winno:0, $
-    extname:'TEST', $
-    category:0, $
-    l3_created:0b, $
-    l3_file:l3_file, $
-    image_small_created:0b, $
-    image_large_created:0b $
-  }
-  ana = fits2ana(l3_file)
-  help,ana
+  ;l3_file = obj->create_l3_file([0,5], /no_widget);, /no_fitting)
+  ;print,l3_file
+  ;meta_data = { $
+  ;  file:'L2-file', $
+  ;  winno:0, $
+  ;  extname:'TEST', $
+  ;  category:0, $
+  ;  l3_created:0b, $
+  ;  l3_file:l3_file, $
+  ;  image_small_created:0b, $
+  ;  image_large_created:0b $
+  ;}
+  ;ana = fits2ana(l3_file)
+  ;help,ana
+  
+  l3_file = '/Users/mawiesma/data/spice/level3/2022/04/04/solo_L3_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+  root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'
+  spice_create_l3_images, l3_file, root_dir+'test/'
+  
   handle_value,ana.result_h,res
   help,res
   stop
