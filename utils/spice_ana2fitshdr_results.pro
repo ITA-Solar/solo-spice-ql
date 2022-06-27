@@ -53,7 +53,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-27 13:25 CEST $
+; $Id: 2022-06-27 13:35 CEST $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -89,7 +89,7 @@ stop
   else history_string = ''
   fits_util->add, hdr, 'ANA_HIST', history_string, 'ANA history'
   n_components = N_TAGS(fit)
-  fits_util->add, hdr, 'ANA_NCOMP', n_components, 'Number of fit components'
+  fits_util->add, hdr, 'ANA_NCMP', n_components, 'Number of fit components'
 
   fits_util->add, hdr, 'RESEXT', prefix_extension_name+'results', 'Extension name of results'
   fits_util->add, hdr, 'DATAEXT', prefix_extension_name+'data', 'Extension name of data'

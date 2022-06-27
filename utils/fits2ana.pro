@@ -41,7 +41,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-06-24 14:33 CEST $
+; $Id: 2022-06-27 13:35 CEST $
 
 
 function fits2ana, fitsfile, headers_results=headers_results, headers_data=headers_data, $
@@ -99,7 +99,7 @@ function fits2ana, fitsfile, headers_results=headers_results, headers_data=heade
     ; extract fit components
     tag_names = hash()
     fit_components_hash = orderedhash()
-    n_components = fxpar(hdr, 'ANA_NCOMP', missing=0)
+    n_components = fxpar(hdr, 'ANA_NCMP', missing=0)
     for icomp=0,n_components-1 do begin
       ; Get keywords for each fit component
       fitnr = strtrim(string(icomp+1), 2)
