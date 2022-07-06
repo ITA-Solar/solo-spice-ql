@@ -30,7 +30,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-27 14:37 CEST $
+; $Id: 2022-07-06 20:59 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir
@@ -66,8 +66,8 @@ PRO spice_create_l3_images, l3_file, out_dir
   ana = fits2ana(l3_file, headers_results=headers_results)
   for iana=0,N_ELEMENTS(ana)-1 do begin
 
-    handle_value,ana[iana].result_h,result,/no_copy
-    handle_value,ana[iana].fit_h,fit,/no_copy
+    handle_value,ana[iana].result_h,result;,/no_copy
+    handle_value,ana[iana].fit_h,fit;,/no_copy
 
 
     hdr = fitshead2struct(*headers_results[iana])
