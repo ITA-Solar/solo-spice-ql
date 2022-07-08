@@ -50,14 +50,16 @@
 ;
 ; Version     : Version 4, SVHH, 31 May 2022
 ;
-; $Id: 2022-07-06 17:47 CEST $
+; $Id: 2022-07-08 20:54 CEST $
 ;-            
 
 FUNCTION spice_gen_cat::extract_basename,line
-  level_1_to_3 = line.extract("solo_L[1-3]_spice.*_[0-9]{8}T[0-9]{6}.*V[0-9]+[^.]*.fits")
-  IF level_1_to_3 NE "" THEN return, level_1_to_3
-  level_0 = line.extract("solo_L0_spice[^.]*V[0-9]+[^.]+.fits")
-  return, level_0
+  foreach level, [3, 2, 1, 0] DO BEGIN
+     pattern = "solo_L" + trim(level) + "_spice[^.]+" 
+     match = stregex(line, pattern, /extract)
+     IF match NE "" THEN return, match
+  END
+  message, "NO KEY!!"
 END
 
 
@@ -72,23 +74,41 @@ END
 ;;
 ;; WRITING:
 ;;
-PRO spice_gen_cat::write_keyword_info, filename
+PRO spice_gen_cat::write_keyword_info_file, filename
+  IF self.d.dry_run THEN BEGIN
+     print, "DRY RUN - not writing " + filename
+     return
+  END 
+  
+  print
+  print, "Converting keyword info to json"
+  json = json_serialize(self.d.keyword_info, /lowercase)
+  print
+  print, "Writing " + filename
   openw, lun, filename + '.tmp', /get_lun
-  printf, lun, json_serialize(self.d.keyword_info, /lowercase)
+  printf, lun, json
   free_lun, lun
   file_move, filename + '.tmp', filename, /overwrite
 END
 
 
 PRO spice_gen_cat::write_plaintext, filename
+  print
+  IF self.d.dry_run THEN BEGIN
+     print, "DRY RUN - not writing " + filename
+     return
+  END
+  
+  print, "Writing " + filename
   tmp_filename = filename + '.tmp'
   OPENW,lun, tmp_filename, /get_lun
   
   comma_separated_keywords = self.d.keyword_array.join(",")
   printf,lun,comma_separated_keywords
-  keys = self.d.file_hash.keys()
-  foreach key,keys DO BEGIN
+  keys = self.d.file_hash_keys
+  foreach key,keys, index DO BEGIN
      printf,lun,self.d.file_hash[key],format="(a)"
+     IF (index + 1) MOD 1000 EQ 0 THEN print, "Done " + trim(index + 1)
   END
   
   FREE_LUN,lun
@@ -97,12 +117,33 @@ END
 
 
 PRO spice_gen_cat::write_csv, filename
-  lines = []
-  keys = self.d.file_hash.keys()
-  foreach key, keys DO lines = [lines, self.d.file_hash[key]]
-  file_array = transpose((strsplit(lines, string(9b), /extract)).toarray())
-  header = (self.d.keyword_info.keys()).toarray()
-  write_csv, filename + '.tmp', file_array, header=header
+  lines = list()
+  keys = self.d.file_hash_keys
+  
+  print
+  print, "Splitting plaintext lines into arrays"
+  foreach key, keys, index DO BEGIN
+     line = self.d.file_hash[key]
+     ;; NOTE: strsplit can't be used!
+     ;; It treats two consecutive split patterns as a single one!
+     elements = line.split(string(9b))
+     lines.add, elements
+     IF (index + 1) MOD 100 EQ 0 THEN print, "Done " + trim(index + 1)
+  END
+  
+  print
+  print, "Converting list of arrays into 2d array"
+  lines = lines.toarray()
+  lines = transpose(lines)
+  
+  IF self.d.dry_run THEN BEGIN
+     print
+     print, "DRY RUN - not writing " + filename
+     return
+  END
+  print
+  print, "Writing " + filename
+  write_csv, filename + '.tmp', lines, header=self.d.keyword_array
   file_move, filename + '.tmp', filename, /overwrite
 END
 
@@ -125,35 +166,117 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
 END
 
 
-FUNCTION spice_gen_cat::add_file, fits_filename
-     key = self.extract_basename(fits_filename)
-     IF self.d.file_hash.haskey(key) THEN BEGIN
-        print,"Skipping "+key
-        return, !null
-     END
-     
-     header = self.get_header(fits_filename)
-     relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
-     relative_path = file_dirname(relative_filename)
-     self.d.file_hash[key] = self.line_from_header(header, relative_path)
-     return, key
-END
-
-
-FUNCTION spice_gen_cat::read_catalog, filename
-  tx = rd_ascii(filename)
-  hash = orderedhash()
-  foreach line, tx DO BEGIN
-     key = self.extract_basename(line)
-     hash[key] = line
+FUNCTION spice_gen_cat::add_file, fits_filename, message=message
+  key = self.extract_basename(fits_filename)
+  IF self.d.file_hash.haskey(key) THEN BEGIN
+     print
+     print, "Skipping DUPLICATE?? File: "+key
+     return, !null
   END
-  return, hash
+  
+  IF self.d.old_hash.haskey(key) THEN BEGIN
+     message = '(REUSE) '
+     self.d.file_hash[key] = self.d.old_hash[key]
+     self.d.file_hash_keys = [self.d.file_hash_keys, key]
+     return, key
+  END ELSE BEGIN
+     message = "(NEW  ) "
+  END
+  
+  header = self.get_header(fits_filename)
+  relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
+  relative_path = file_dirname(relative_filename)
+  self.d.file_hash[key] = self.line_from_header(header, relative_path)
+  self.d.file_hash_keys = [self.d.file_hash_keys, key]
+  return, key
 END
 
-FUNCTION spice_gen_cat::init, catalog_dir, quiet=quiet
+
+PRO spice_gen_cat::populate_hash
+  print
+  print, "Populating list"
+  FOREACH fits_filename, self.d.filelist, index DO BEGIN
+     key = self.add_file(fits_filename, message = message)
+     IF (index + 1) MOD 100 EQ 0 THEN BEGIN 
+        IF NOT self.d.quiet THEN PRINT, message + "Files done : " + (index+1).toString("(i6)") + " "+key
+     END
+  END
+END
+
+
+PRO spice_gen_cat::read_old_cat, filename
+  tx = rd_ascii(filename)
+;;  profiler, /system
+;;  profiler
+  FOR i=1, n_elements(tx)-1 DO BEGIN
+     key = self.extract_basename(tx[i])
+     self.d.old_hash[key] = tx[i]
+     self.d.old_hash_keys = [self.d.old_hash_keys, key]
+     IF i MOD 1000 EQ 0 THEN BEGIN
+        print, "Done " + trim(i) + "  " + key
+;;        profiler, /report, /code_coverage, data=data
+;;        sortix = reverse(sort(data.time))
+;;        sorted = data[sortix]
+;;        print, sorted[0:10].name + "    " + trim(sorted[0:10].time)
+     END
+  END
+;;  profiler, data=data, /code_coverage
+END
+
+
+PRO spice_gen_cat::compare_hashes
+  keys_old = self.d.old_hash_keys
+  keys_new = self.d.file_hash_keys
+  print, where(keys_new NE keys_old)
+  foreach key, keys_new DO BEGIN
+     IF self.d.file_hash[key] NE self.d.file_hash[key] THEN stop
+  END
+END
+
+PRO spice_gen_cat::execute
+  print
+  print, "Finding list of files... ", format='(A,$)'
+  self.d.filelist = file_search(self.d.spice_datadir,"*.fits")
+  
+  IF self.d.filelist[0] EQ '' THEN BEGIN
+     MESSAGE,"No fits files found, exiting"
+     RETURN
+  END ELSE BEGIN
+     PRINT, "Found " + (n_elements(self.d.filelist)).toString() + " files"
+  END
+  
+  print
+  
+  IF NOT self.d.reset THEN BEGIN
+     print, "Reading old catalog"
+     self.read_old_cat, self.d.catalog_basename + '.txt'
+  END
+  
+  IF NOT self.d.csv_test THEN BEGIN
+     print
+     print, "Generating new catalog"
+     self.populate_hash
+  END ELSE BEGIN
+     self.d.file_hash_keys = self.d.old_hash_keys
+     self.d.file_hash = self.d.old_hash
+  END
+  
+  ;self.compare_hashes
+  
+  self.write_keyword_info_file, self.d.keyword_info_filename
+  
+  self.write_plaintext, self.d.catalog_basename + '.txt'
+  self.write_csv, self.d.catalog_basename + '2.csv'
+END
+
+FUNCTION spice_gen_cat::init, catalog_dir, quiet=quiet, reset=reset, dry_run=dry_run, csv_test=csv_test
   self.d = dictionary()
   
   self.d.quiet = keyword_set(quiet)
+  self.d.reset = keyword_set(reset)
+  self.d.dry_run = keyword_set(dry_run)
+  self.d.csv_test = keyword_set(csv_test)
+    
   spice_default,spice_datadir,getenv("SPICE_DATA")
   spice_default,catalog_dir,spice_datadir
   
@@ -163,45 +286,30 @@ FUNCTION spice_gen_cat::init, catalog_dir, quiet=quiet
   self.d.keyword_info = spice_keyword_info(/all)
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
   
-  self.d.old_cat = self.read_catalog(self.d.catalog_basename + ".txt")
-  
-  self.d.filelist = file_search(spice_datadir,"*.fits")
-  IF self.d.filelist[0] EQ '' THEN BEGIN
-     MESSAGE,"No fits files found, exiting"
-     RETURN, 0
-  END ELSE BEGIN
-     PRINT, "Found " + (n_elements(self.d.filelist)).toString() + " files"
-  END
-  
-  PRINT,"About to create new " + self.d.catalog_basename + ".[txt|csv] with "+ $
-        (N_ELEMENTS(self.d.filelist)).tostring()+" elements"
-  
+  self.d.old_hash = orderedhash()
+  self.d.old_hash_keys = []
   self.d.file_hash = orderedhash()
-  
-  FOREACH fits_filename, self.d.filelist, index DO BEGIN
-     key = self.add_file(fits_filename)
-     IF NOT quiet THEN PRINT,"Files done :",(index+1).toString("(i6)")," "+key
-  END
-  
-  self.write_keyword_info, self.d.keyword_info_filename
-  
-  self.write_plaintext, self.d.catalog_basename + '.txt'
+  self.d.file_hash_keys = []
 
-  self.write_csv, self.d.catalog_basename + '.csv'
   return, 1
+END
+
+PRO spice_gen_cat::stop
+  stop
 END
 
 PRO spice_gen_cat__define
   spice_gen_cat = {spice_gen_cat, d:dictionary()}
 END
 
-PRO spice_gen_cat,spice_datadir,catalog_dir, quiet=quiet
+PRO spice_gen_cat,spice_datadir,catalog_dir, _extra=extra
   ON_ERROR,0
-  o = obj_new('spice_gen_cat', catalog_dir, quiet=keyword_set(quiet))
+  o = obj_new('spice_gen_cat', catalog_dir, _extra=extra)
+  o.execute
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-   spice_gen_cat
+   spice_gen_cat ;, /dry_run
 END
 
 END
