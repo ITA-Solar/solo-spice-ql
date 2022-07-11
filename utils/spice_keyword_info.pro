@@ -1,4 +1,4 @@
-; $Id: 2020-11-25 21:19 CET $
+; $Id: 2022-07-11 15:32 CEST $
 FUNCTION spice_keyword_info_header
   text = spice_inline_text()
 ;NAXIS1  =                    1 /
@@ -90,6 +90,7 @@ FUNCTION spice_keyword_info_header
 ;           ------------------                                                   
 ;           | Auxiliary data |                                                   
 ;           ------------------                                                   
+;VAR_KEYS= 'VARIABLE_KEYWORDS;TIMAQOBT,MIRRPOS,TN_FOCUS,TN_GRAT,TN_SW,TN_LW,T_F'
 ;MIRRPOS =              65535.0 / [adu] Scan mirror position                     
 ;TN_FOCUS=              2109.00 / [adu]     SFM focus   temperature              
 ;TN_GRAT =              2119.00 / [adu]     SFM grating temperature              
@@ -178,7 +179,77 @@ FUNCTION spice_keyword_info_header
 ;  
 ;MIRRDELT=              0.00000 / Slope of linear fit to MIRRPOS                 
 ;SMIRRDEL=              0.00000 / Sigma of slope of linear fit to MIRRPOS 
-;
+  
+;WIN_TYPE= 'Narrow-slit Spectral' / Description of window type                   
+;DATAPROD= 'Narrow-slit Spectral Raster' / WIN_TYPE+STUDYTYP                     
+;TELESCOP= 'SOLO/SPICE/SW'      / Telescope/Sensor name/Detector array name      
+;DETECTOR= 'SW      '           / Detector array name                            
+;WINNO   =                    0 / Window number (starting at 0) within this study
+;WINTABID=                   95 / Index in on-board window data table (0-255)    
+;MISOWIN =                 3228 / Ground window ID used in MISO planning tool    
+;WINSHIFT=                   -7 / [pixel] Win redshift rel to win 3228 base pos. 
+;DUMBBELL=                    0 / 0/1/2: not a dumbbell/lower dumbbel/upper dumbb
+;                                                                                
+;WAVEUNIT=                   -9 / Power of 10 by which the metre is multiplied   
+;WAVEREF = 'vacuum  '           / Wavelengths are given in vacuum                
+;WAVEMIN =        70.3519191000 / [nm] Left edge of first read detector pixel    
+;WAVEMAX =        70.8395041000 / [nm] Right edge of last read detector pixel    
+;WINWIDTH=       0.487585000000 / [nm] Window width                              
+;                                                                                
+;BTYPE   = 'Spectral Radiance'  / Type of data                                   
+;UCD     = 'phot.radiance;em.line' / Unified Content Descriptors v1.23           
+;BUNIT   = 'W/m2/sr/nm'         / Physical units of calibrated data              
+;RCALAVG =        1537.89114455 / [DN/(W/m2/sr/nm)] Avg detector calib factor    
+;NTOTPIX =              2270400 / Number of potentially usable pixels excl padded
+;NSATPIX =                    0 / Number of fully saturated pixels               
+;NDATAPIX=              2270400 / Number of usable pixels excl padded/NaN/NSATPIX
+;DATAMIN =             0.100467 / [W/m2/sr/nm] Minimum data value                
+;DATAMAX =              9.02325 / [W/m2/sr/nm] Maximum data value                
+;DATAMEAN=             0.299003 / [W/m2/sr/nm] Mean    data value                
+;DATAMEDN=             0.302962 / [W/m2/sr/nm] Median  data value                
+;DATAP01 =             0.220780 / [W/m2/sr/nm] 1st  percentile of data values    
+;DATAP10 =             0.251163 / [W/m2/sr/nm] 10th percentile of data values    
+;DATAP25 =             0.280052 / [W/m2/sr/nm] 25th percentile of data values    
+;DATAP75 =             0.317071 / [W/m2/sr/nm] 75th percentile of data values    
+;DATAP90 =             0.331278 / [W/m2/sr/nm] 90th percentile of data values    
+;DATAP95 =             0.344359 / [W/m2/sr/nm] 95th percentile of data values    
+;DATAP98 =             0.369050 / [W/m2/sr/nm] 98th percentile of data values    
+;DATAP99 =             0.399471 / [W/m2/sr/nm] 99th percentile of data values    
+;DATARMS =            0.0387133 / [W/m2/sr/nm] sqrt(sum((data-DATAMEAN)^2)/N)    
+;DATANRMS=             0.129474 / Normalised RMS dev: DATARMS/DATAMEAN           
+;DATAMAD =            0.0252133 / [W/m2/sr/nm] MeanAbsDev sum(abs(data-DATAMEAN))
+;DATASKEW=              19.2785 / Data skewness                                  
+;DATAKURT=              3206.85 / Data kurtosis                                  '
+;                                                                                
+;NPACKETS=                  288 / Number of packets with observational data      
+;                                                                                
+;LOSTPKTS=                    0 / Number of lost packets w/data, variable keyword
+;LOSTBINS=                    0 / Applies only to SHC-compressed data            
+;                                                                                
+;PCT_DATA=              100.000 / NDATAPIX/NTOTPIX*100                           
+;PCT_LOST=              0.00000 / NLOSTPIX/NTOTPIX*100                           
+;PCT_SATP=              0.00000 / NSATPIX/ NTOTPIX*100                           
+;                                                                                
+;NLOSTCHK=                    0 / Number of lost checksum packets                
+;NFAILCHK=                    0 / Number of checksums failed                     
+;NLOSTPIX=                    0 / Number of lost pixels                          
+;NAPRXPLN=                    0 / Number of approximated X-Y plane sections      
+;NLOSTPLN=                    0 / Number of lost X-Y plane sections              
+;                                                                                
+;PXBEG1  =                  192 / [pixel] First read-out pixel in X dimension    
+;PXEND1  =                    1 / [pixel] Last  read-out pixel in X dimension    
+;PXBEG2  =                  101 / [pixel] First read-out pixel in Y dimension    
+;PXEND2  =                  868 / [pixel] Last  read-out pixel in Y dimension    
+;PXBEG3  =                   82 / [pixel] First read-out pixel in dispersion dim.
+;PXEND3  =                  113 / [pixel] Last  read-out pixel in dispersion dim.
+;PXBEG4  =                    1 / [pixel] First read-out pixel in time dimension 
+;PXEND4  =                    1 / [pixel] Last  read-out pixel in time dimension 
+;                                                                                
+;NBIN1   =                    1 / Binning factor in X dimension                  
+;NBIN2   =                    1 / Binning factor in Y dimension                  
+;NBIN3   =                    2 / Binning factor in dispersion dimension         
+;NBIN4   =                    1 / Binning factor in time dimension               
+;NBIN    =                    2 / Total binning factor                           
 ;-
   text = text[0 : -2]
   text = strmid(text, 1, 1000)
@@ -249,6 +320,8 @@ FUNCTION spice_keyword_info_as_json, requested_keywords, all=all
   print, "}"
 END 
 
-a = spice_keyword_info()
-b = spice_keyword_info_as_json()
+IF getenv("USER") EQ "steinhh" THEN BEGIN 
+   a = spice_keyword_info()
+   b = spice_keyword_info_as_json()
+END 
 END
