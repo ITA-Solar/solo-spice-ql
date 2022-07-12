@@ -1,4 +1,4 @@
-; $Id: 2022-07-11 15:32 CEST $
+; $Id: 2022-07-12 13:51 CEST $
 FUNCTION spice_keyword_info_header
   text = spice_inline_text()
 ;NAXIS1  =                    1 /
@@ -244,6 +244,7 @@ FUNCTION spice_keyword_info_header
 ;PXEND3  =                  113 / [pixel] Last  read-out pixel in dispersion dim.
 ;PXBEG4  =                    1 / [pixel] First read-out pixel in time dimension 
 ;PXEND4  =                    1 / [pixel] Last  read-out pixel in time dimension 
+;PXOFFSET=                  200 / Pixel level offset                             
 ;                                                                                
 ;NBIN1   =                    1 / Binning factor in X dimension                  
 ;NBIN2   =                    1 / Binning factor in Y dimension                  
