@@ -50,7 +50,7 @@
 ;
 ; Version     : Version 4, SVHH, 31 May 2022
 ;
-; $Id: 2022-07-08 20:54 CEST $
+; $Id: 2022-07-14 19:31 CEST $
 ;-            
 
 FUNCTION spice_gen_cat::extract_basename,line
@@ -266,7 +266,7 @@ PRO spice_gen_cat::execute
   self.write_keyword_info_file, self.d.keyword_info_filename
   
   self.write_plaintext, self.d.catalog_basename + '.txt'
-  self.write_csv, self.d.catalog_basename + '2.csv'
+  self.write_csv, self.d.catalog_basename + '.csv'
 END
 
 FUNCTION spice_gen_cat::init, catalog_dir, quiet=quiet, reset=reset, dry_run=dry_run, csv_test=csv_test
