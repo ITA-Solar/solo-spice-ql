@@ -13,23 +13,19 @@
 ;               This file is used by SPICE_CAT in order to search/filter
 ;               the list of files for those files that the user wants.
 ;
-; Use         : SPICE_GEN_CAT [,FITSDIR [,CATALOG_DIR]]
+; Use         : SPICE_GEN_CAT [,SPICE_DATA_DIR]
 ;    
 ; Inputs      : None required.
 ;               
-; Opt. Inputs : FITSDIR : The top of the directory tree containing the fits
+; Opt. Inputs : SPICE_DATA_DIR : The top of the directory tree containing the fits
 ;                         files to be included in the list. Default is taken
 ;                         from $SPICE_DATA
 ;
-;               LISTDIR : The directory to place the list in. The default is
-;                         to put the file at the top level of the scanned
-;                         directory tree
-;               
 ; Outputs     : None.
 ;               
 ; Opt. Outputs: None.
 ;               
-; Keywords    : 
+; Keywords    : REGENERATE: Set to zero to reuse existing catalog
 ;
 ; Category    : SPICE_UTILITY
 ;               
@@ -47,10 +43,15 @@
 ;               Version 4, SVHH, 31 May 2022
 ;                          Populate FILE_PATH and ICON_PATH with file path
 ;                          relative to SPICE_DATA
+;               Version 5, SVHH, 15 July 2022
+;                          Major overhaul => objectified
+;                          Eliminated many super-slow hash operations
+;                          Reinstated reuse of old catalog for speed purposes
+;                          Made REGENERATE=1 by default, with warning about slowness
 ;
-; Version     : Version 4, SVHH, 31 May 2022
+; Version     : Version 5, SVHH, 15 July 2022
 ;
-; $Id: 2022-07-14 19:31 CEST $
+; $Id: 2022-07-15 13:19 CEST $
 ;-            
 
 FUNCTION spice_gen_cat::extract_basename,line
@@ -206,21 +207,14 @@ END
 
 PRO spice_gen_cat::read_old_cat, filename
   tx = rd_ascii(filename)
-;;  profiler, /system
-;;  profiler
   FOR i=1, n_elements(tx)-1 DO BEGIN
      key = self.extract_basename(tx[i])
      self.d.old_hash[key] = tx[i]
      self.d.old_hash_keys = [self.d.old_hash_keys, key]
      IF i MOD 1000 EQ 0 THEN BEGIN
         print, "Done " + trim(i) + "  " + key
-;;        profiler, /report, /code_coverage, data=data
-;;        sortix = reverse(sort(data.time))
-;;        sorted = data[sortix]
-;;        print, sorted[0:10].name + "    " + trim(sorted[0:10].time)
      END
   END
-;;  profiler, data=data, /code_coverage
 END
 
 
@@ -232,6 +226,7 @@ PRO spice_gen_cat::compare_hashes
      IF self.d.file_hash[key] NE self.d.file_hash[key] THEN stop
   END
 END
+
 
 PRO spice_gen_cat::execute
   print
@@ -247,7 +242,7 @@ PRO spice_gen_cat::execute
   
   print
   
-  IF NOT self.d.reset THEN BEGIN
+  IF NOT self.d.regenerate THEN BEGIN
      print, "Reading old catalog"
      self.read_old_cat, self.d.catalog_basename + '.txt'
   END
@@ -269,20 +264,21 @@ PRO spice_gen_cat::execute
   self.write_csv, self.d.catalog_basename + '.csv'
 END
 
-FUNCTION spice_gen_cat::init, catalog_dir, quiet=quiet, reset=reset, dry_run=dry_run, csv_test=csv_test
+
+FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, regenerate=regenerate, dry_run=dry_run, csv_test=csv_test
   self.d = dictionary()
   
+  spice_default,spice_data_dir,getenv("SPICE_DATA")
+  spice_default, regenerate, 1
+  
   self.d.quiet = keyword_set(quiet)
-  self.d.reset = keyword_set(reset)
+  self.d.regenerate = keyword_set(regenerate)
   self.d.dry_run = keyword_set(dry_run)
   self.d.csv_test = keyword_set(csv_test)
-    
-  spice_default,spice_datadir,getenv("SPICE_DATA")
-  spice_default,catalog_dir,spice_datadir
   
-  self.d.spice_datadir = expand_path(spice_datadir) ; Must have explicit path to find relative paths
-  self.d.catalog_basename = concat_dir(catalog_dir,'spice_catalog')
-  self.d.keyword_info_filename = concat_dir(catalog_dir, 'keyword_info.json')
+  self.d.spice_datadir = expand_path(spice_data_dir) ; Must have explicit path to find relative paths
+  self.d.catalog_basename = concat_dir(spice_data_dir,'spice_catalog')
+  self.d.keyword_info_filename = concat_dir(spice_data_dir, 'keyword_info.json')
   self.d.keyword_info = spice_keyword_info(/all)
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
   
@@ -291,6 +287,11 @@ FUNCTION spice_gen_cat::init, catalog_dir, quiet=quiet, reset=reset, dry_run=dry
   self.d.file_hash = orderedhash()
   self.d.file_hash_keys = []
 
+  IF self.d.regenerate THEN BEGIN 
+     print
+     message, "It may take some time to regenerate from scratch - consider setting REGENERATE=0", /info
+  END 
+  
   return, 1
 END
 
@@ -302,14 +303,14 @@ PRO spice_gen_cat__define
   spice_gen_cat = {spice_gen_cat, d:dictionary()}
 END
 
-PRO spice_gen_cat,spice_datadir,catalog_dir, _extra=extra
+PRO spice_gen_cat,spice_data_dir, _extra=extra
   ON_ERROR,0
-  o = obj_new('spice_gen_cat', catalog_dir, _extra=extra)
+  o = obj_new('spice_gen_cat', spice_data_dir, _extra=extra)
   o.execute
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-   spice_gen_cat ;, /dry_run
+   spice_gen_cat, regenerate=0 ; /dry_run
 END
 
 END
