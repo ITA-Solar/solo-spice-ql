@@ -51,7 +51,7 @@
 ;
 ; Version     : Version 5, SVHH, 15 July 2022
 ;
-; $Id: 2022-07-15 13:19 CEST $
+; $Id: 2022-07-15 14:21 CEST $
 ;-            
 
 FUNCTION spice_gen_cat::extract_basename,line
@@ -109,7 +109,7 @@ PRO spice_gen_cat::write_plaintext, filename
   keys = self.d.file_hash_keys
   foreach key,keys, index DO BEGIN
      printf,lun,self.d.file_hash[key],format="(a)"
-     IF (index + 1) MOD 1000 EQ 0 THEN print, "Done " + trim(index + 1)
+     IF NOT self.d.quiet THEN IF (index + 1) MOD 1000 EQ 0 THEN print, "Done " + trim(index + 1)
   END
   
   FREE_LUN,lun
@@ -129,7 +129,7 @@ PRO spice_gen_cat::write_csv, filename
      ;; It treats two consecutive split patterns as a single one!
      elements = line.split(string(9b))
      lines.add, elements
-     IF (index + 1) MOD 100 EQ 0 THEN print, "Done " + trim(index + 1)
+     IF NOT self.d.quiet THEN IF (index + 1) MOD 100 EQ 0 THEN print, "Done " + trim(index + 1)
   END
   
   print
@@ -212,7 +212,7 @@ PRO spice_gen_cat::read_old_cat, filename
      self.d.old_hash[key] = tx[i]
      self.d.old_hash_keys = [self.d.old_hash_keys, key]
      IF i MOD 1000 EQ 0 THEN BEGIN
-        print, "Done " + trim(i) + "  " + key
+        IF NOT self.d.quiet THEN print, "Done " + trim(i) + "  " + key
      END
   END
 END
