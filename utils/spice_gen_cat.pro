@@ -51,7 +51,7 @@
 ;
 ; Version     : Version 5, SVHH, 15 July 2022
 ;
-; $Id: 2022-07-15 14:21 CEST $
+; $Id: 2022-07-15 15:31 CEST $
 ;-            
 
 FUNCTION spice_gen_cat::extract_basename,line
@@ -248,7 +248,6 @@ PRO spice_gen_cat::execute
   END
   
   IF NOT self.d.csv_test THEN BEGIN
-     print
      print, "Generating new catalog"
      self.populate_hash
   END ELSE BEGIN
