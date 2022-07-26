@@ -31,8 +31,24 @@
 ;      directory and the corresponding local directory, so only files with
 ;      non-matching attributes need to be fetched.
 ;
-;      The term "RGET" stems from a concatenation of rsync and wget.
+;      The term "RGET" stems from a concatenation of rsync and wget. Never
+;      mind that the implementation now actually uses curl, not wget :).
 ;
+; KEYWORDS:
+;      VERBOSE: Make more noise
+;
+;      QUIET: Make less noise
+;
+;      WRITE: Unless WRITE is set, the RGET-LIST file will not be written
+;
+;      MAX_ALLOWED_DEPTH: Default 100, to prevent endless symlink recursion. 
+;   
+;      INCLUDE: One or more regular expressions. When present, only paths
+;               matching one or more of the expressions will be included.
+;
+;      EXCLUDE: One or more regular expressions. When present, paths matching
+;               one or more of the expressions will be excluded.
+;      
 ; CATEGORY:
 ;      GENERAL/UTILITY
 ;
@@ -52,19 +68,29 @@
 ;-
 
 FUNCTION rget_make_list::init, topdir, max_allowed_depth=max_allowed_depth, $
-                               debug=debug, verbose=verbose, quiet=quiet
+                               debug=debug, verbose=verbose, quiet=quiet, $
+                               include=include, exclude=exclude
+  
   dprint = self.rget_dprint::init(debug = debug, verbose=verbose, quiet=quiet)
   
   IF NOT file_test(topdir, /directory) THEN message, "TOPDIR is not a directory: " + topdir
+  
+  IF n_elements(max_allowed_depth) EQ 0 THEN max_allowed_depth = 100
+  IF n_elements(include) EQ 0 THEN include = !null
+  IF n_elements(exclude) EQ 0 THEN exclude = !null
+  
   self.d = dictionary()
   self.d.debug = keyword_set(debug)
   self.d.topdir = topdir
   self.d.full_topdir = file_search(topdir, /fully_qualify_path, /mark_directory)
   self.d.full_topdir = self.d.full_topdir.replace('\','/')
-  IF n_elements(max_allowed_depth) EQ 0 THEN max_allowed_depth = 100
   self.d.max_allowed_depth = max_allowed_depth
   IF self.detect_recursion() THEN return, 0
   self.d.places_visited = [self.d.full_topdir]
+  
+  self.d.include = include
+  self.d.exclude = exclude
+  
   self.make_list
   return, 1
 END
@@ -215,6 +241,34 @@ PRO rget_make_list::handle_regular_file, file_info, relative_path
   self.d.list.add, relative_path + " ` " + self.file_details(file_info)
 END
 
+PRO rget_make_list::prune_list
+  IF n_elements(self.d.include) GT 0 THEN BEGIN
+     includes = [self.d.include] 
+     foreach include, includes DO BEGIN
+        
+     END
+  END 
+END
+
+PRO rget_make_list::make_entry, file
+  file =  file.replace("$", "\$")
+  file =  file.replace("[", "\[")
+  IF file EQ '' THEN return
+  file_info = file_info(file)
+  relative_path = self.relative_path(file_info.name)
+  self.info, "Found: " + relative_path, /level
+  CASE 1 OF
+     file_info.dangling_symlink: self.info,"Ignoring dangling symlink: "+relative_path
+     file_info.symlink:          self.handle_valid_symlink, file_info, relative_path 
+     file_info.directory:        self.handle_directory, file_info, relative_path
+     file_info.regular:          self.handle_regular_file, file_info, relative_path
+     ELSE: BEGIN
+        message,"Ooops: Not sure what this is:", /continue
+        help, file_info
+        message, "Stopping"
+     END 
+  END
+END
 
 PRO rget_make_list::make_list
   _extra = {expand_tilde:1, expand_environment:1, match_initial_dot:1, mark_directory:1}
@@ -222,25 +276,10 @@ PRO rget_make_list::make_list
   files = files.replace('\','/')
   IF total(files.contains("`")) GT 0 THEN message, "Sorry, some file name(s) contain '`'"
   self.d.list = list()
-  foreach file, files DO BEGIN
-     file =  file.replace("$", "\$")
-     file =  file.replace("[", "\[")
-     IF file EQ '' THEN continue
-     file_info = file_info(file)
-     relative_path = self.relative_path(file_info.name)
-     self.info, "Found: " + relative_path, /level
-     CASE 1 OF
-        file_info.dangling_symlink: self.info,"Ignoring dangling symlink: "+relative_path
-        file_info.symlink:          self.handle_valid_symlink, file_info, relative_path 
-        file_info.directory:        self.handle_directory, file_info, relative_path
-        file_info.regular:          self.handle_regular_file, file_info, relative_path
-        ELSE: BEGIN
-           message,"Ooops: Not sure what this is:", /continue
-           help, file_info
-           message, "Stopping"
-        END 
-     END
-  END  
+  
+  foreach file, files DO self.make_entry, file
+  
+  self.prune_list
 END
 
 
@@ -283,7 +322,7 @@ END
 
 PRO rget_make_list_test
   path = getenv("HOME")+"/rget-test-deleteme
-  entries = rget_make_list(path)
+  entries = rget_make_list(path, include="subdir")
   
   print, "", "rget_make_list_test result:",": " + entries, "-", format='(a)'
   stop
