@@ -1,7 +1,7 @@
 PRO spice_test_privat, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=501
+  IF N_ELEMENTS(file_number) NE 1 then file_number=500
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
@@ -92,7 +92,7 @@ PRO spice_test_privat, file_number
 
 
   window_index = 5 ; for 500
-  window_index = 0
+  ;window_index = 0
 
 
   obj = spice_object(file)
@@ -103,13 +103,13 @@ PRO spice_test_privat, file_number
     debug_plot=debug_plot, $
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
   help,data,lambda,weights,missing
-  stop
+  ;stop
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
   ;xcfit_block,ana=ana
   ;help,ana
-  stop
+  ;stop
 
   ;ana = obj->xcfit_block(window_index)
   ;handle_value, ana.fit_h, fit
@@ -117,20 +117,25 @@ PRO spice_test_privat, file_number
   ;stop
   ;help,ana
 
-  l3_file = obj->create_l3_file(window_index, /no_widget)
-  print,l3_file
-  meta_data = { $
-    file:'L2-file', $
-    winno:0, $
-    extname:'TEST', $
-    category:0, $
-    l3_created:0b, $
-    l3_file:l3_file, $
-    image_small_created:0b, $
-    image_large_created:0b $
-  }
-  ana = fits2ana(l3_file)
-  help,ana
+  ;l3_file = obj->create_l3_file([0,5], /no_widget);, /no_fitting)
+  ;print,l3_file
+  ;meta_data = { $
+  ;  file:'L2-file', $
+  ;  winno:0, $
+  ;  extname:'TEST', $
+  ;  category:0, $
+  ;  l3_created:0b, $
+  ;  l3_file:l3_file, $
+  ;  image_small_created:0b, $
+  ;  image_large_created:0b $
+  ;}
+  ;ana = fits2ana(l3_file)
+  ;help,ana
+  
+  l3_file = '/Users/mawiesma/data/spice/level3/2022/04/04/solo_L3_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+  root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'
+  spice_create_l3_images, l3_file, root_dir+'test/'
+  
   handle_value,ana.result_h,res
   help,res
   stop

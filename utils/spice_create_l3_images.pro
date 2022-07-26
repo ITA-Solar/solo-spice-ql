@@ -30,7 +30,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-06-23 11:52 CEST $
+; $Id: 2022-07-06 20:59 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir
@@ -59,20 +59,18 @@ PRO spice_create_l3_images, l3_file, out_dir
   date_dirs = file_dirname(l3_file)
   date_dirs = strsplit(date_dirs, '/', /extract)
   date_dirs = strjoin(date_dirs[-3:-1], '/')
-  filename = root_dir + date_dirs + '/' + l3_filename + '_'
+  filename_base = out_dir + date_dirs + '/' + l3_filename + '_'
   if ~file_test(out_dir + date_dirs, /directory) then $
     file_mkdir, out_dir + date_dirs
 
-  ana = fits2ana(l3_file)
+  ana = fits2ana(l3_file, headers_results=headers_results)
   for iana=0,N_ELEMENTS(ana)-1 do begin
 
-    handle_value,ana[iana].result_h,result,/no_copy
-    handle_value,ana[iana].fit_h,fit,/no_copy
+    handle_value,ana[iana].result_h,result;,/no_copy
+    handle_value,ana[iana].fit_h,fit;,/no_copy
 
 
-    hdr0 = headfits(meta_data[ind[idata]].l3_file, exten=iana*7)
-    hdr = headfits(meta_data[ind[idata]].l3_file, exten=fxpar(hdr0,'dataext'))
-    hdr = fitshead2struct(hdr)
+    hdr = fitshead2struct(*headers_results[iana])
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
     size_result = size(result)
@@ -86,12 +84,14 @@ PRO spice_create_l3_images, l3_file, out_dir
     ycoord_transform2 = [yrange2[0], (yrange2[1]-yrange2[0])/size_result[3]]
 
     n_components = N_TAGS(fit)
+    ipartotal = 0
     ;for itag=0,n_components-1 do begin
     for itag=0,0 do begin
       fit_cur = fit.(itag)
       n_params = N_ELEMENTS(fit_cur.param)
       for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
+        filename = filename_base+fns('##',hdr.l2winno)+'_'+fns('##',itag+1)+'_'+param.name
 
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal,*,*])
@@ -172,12 +172,8 @@ PRO spice_create_l3_images, l3_file, out_dir
         a[3].hide=0
         a[3].showtext=1
 
-        ; TODO: in filename iana should be WINNO from level 2 FITS file
-        ; This will be the keyword L2WINNO (or so) in level 3
-        im.save,filename+fns('##',iana+1)+'_'+fns('##',itag+1)+'_'+param.name+'_512.jpg', height=512, border=5
-        im.save,filename+fns('##',iana+1)+'_'+fns('##',itag+1)+'_'+param.name+'_1024.jpg', height=1024, border=5
-        ;im.save,filename+param.name+'_512.jpg', height=512, border=5
-        ;im.save,filename+param.name+'_1024.jpg', height=1024, border=5
+        im.save,filename+'_512.jpg', height=512, border=5
+        im.save,filename+'_1024.jpg', height=1024, border=5
         im.close
 
         ; 64px png image
@@ -198,7 +194,9 @@ PRO spice_create_l3_images, l3_file, out_dir
         y1 = ceil(size_image[2]/2.0+32)-1
         image_small = image_small[x0:x1, y0:y1]
 
-        write_png, filename+fns('##',iana+1)+'_'+fns('##',itag+1)+'_'+param.name+'_64.png', image_small, ct_r, ct_g, ct_b
+        write_png, filename+'_64.png', image_small, ct_r, ct_g, ct_b
+        
+        ipartotal++
 
       endfor ; ipar0,n_params-1
     endfor ; itag=0,N_TAGS(fit)-1
