@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2021-10-26 14:28 CEST $
+; $Id: 2022-06-03 14:50 CEST $
 
 
 ; save as postscript file
@@ -170,7 +170,7 @@ pro spice_xdetector_expslider, event
   (*info).detector[*] = !Values.F_NAN
   ; read new data (for selected position) into detector variable
   for i=0,(*info).nwin-1 do begin
-    window_image = *(*info).data->get_one_image((*info).lindx[i], current_exp_ind, /debin)
+    window_image = *(*info).data->get_one_image((*info).lindx[i], current_exp_ind, /debin, /no_masking)
     if *(*info).data->has_dumbbells((*info).lindx[i]) then window_image = rotate(window_image, 5)
     size_image = size(window_image)
     (*info).detector[(*info).win_positions[i,0]:(*info).win_positions[i,1], $
@@ -958,7 +958,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
 
   ;build the initial image
   for i=0,nwin-1 do begin
-    window_image = data->get_one_image(lindx[i], current_exp_ind, /debin)
+    window_image = data->get_one_image(lindx[i], current_exp_ind, /debin, /no_masking)
     if data->has_dumbbells(lindx[i]) then window_image = rotate(window_image, 5)
     size_image = size(window_image)
     detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = $

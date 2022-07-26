@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2021-10-27 10:48 CEST $
+; $Id: 2022-06-02 11:47 CEST $
 ;-
 ;
 ; save as postscript file
@@ -883,7 +883,7 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; line/cont limits defined in xmoments
   ;endif else begin
   ;data->getwin,line,wd,pos,/load
-  wd = data->get_window_data(line, /load)
+  wd = data->get_window_data(line)
   ; line/cont limits reset
   ;data->setline_px,line,[0,(size(wd))[1]-1]
   ;data->setcont_px,line,[0,0]

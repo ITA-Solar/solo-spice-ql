@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-20 09:46 CEST $
+; $Id: 2022-06-21 11:05 CEST $
 
 
 ;+
@@ -132,80 +132,218 @@ END
 ; Description:
 ;     Calls xcfit_block with the data of the chosen window and returns an analysis structure
 ;     that contains estimated fit components and the fit.
-;     This function is also called by 'create_l3' method, to get the ANA structure, which is
-;     then saved into a level 3 FITS file.
 ;
-; KEYWORD PARAMETERS:
+; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
+;     VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
+; 
+; KEYWORD PARAMETERS:
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
-;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget: If set, xcfit_block will not be called
+;                 The keyword is ignored if NO_MASKING is set.
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
 ;
 ;-
-function spice_data::xcfit_block, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
-  no_widget=no_widget
+function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  position=position, velocity=velocity
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
+  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity)
+  if size(ana, /type) EQ 8 then begin
+    XCFIT_BLOCK, ana=ana    
+  endif else begin
+    print, 'Something went wrong when trying to produce an ANA structure.
+  endelse
 
-  if ~self->get_number_exposures(window_index) then begin
-    print, 'single exposure data, do not start xcfit_block'
-    return, -1
-  endif
+  return, ana
+END
 
-  data = self->get_window_data(window_index, /load, /slit_only, approximated_slit=approximated_slit)
+
+;+
+; Description:
+;     Creates a level 3 file from the level 2
+;
+; OPTIONAL INPUTS:
+;     window_index : The index of the desired window(s), default is all windows.
+;     VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
+;
+; KEYWORD PARAMETERS:
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
+;     no_widget:  If set, xcfit_block will not be called
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
+;
+; OUTPUT:
+;     The path and name of the Level 3 FITS file.
+;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
+;-
+FUNCTION spice_data::create_l3_file,  window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
+  ;Creates a level 3 SPICE file with the data of the chosen window(s)
+  COMPILE_OPT IDL2
+
+  return, spice_create_l3_file(self, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+    no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity)
+END
+
+
+;+
+; Description:
+;     This procedure transforms the data of a chosen window, so that it can be used
+;     in CFIT_BLOCK and XCFIT_BLOCK.
+;
+; OPTIONAL INPUTS:
+;     window_index : The index of the desired window, default is 0.
+;
+; KEYWORD PARAMETERS:
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
+;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
+;                 This keyword is ignored if NO_MASKING is set.
+;
+; OPTIONAL OUTPUTS:
+;      DATA: Data Array. Rearranged so that the spectra is on the first dimension.
+;      LAMBDA: An array of wavelength values. One value for every point in the data array.
+;      WEIGHTS: Weights to use in the fitting process. Same dimensions as DATA.
+;               All points are set to 1.0.
+;      MISSING: The MISSING value, used to flag missing data points,
+;               and parameter values at points where the fit has been
+;               declared as "FAILED". Set to -1000.0.
+;
+;-
+PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  debug_plot=debug_plot, $
+  DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
+  ;Transforms data so that it can be used with cfit_block and xcfit_block.
+  COMPILE_OPT IDL2
+
+  if N_ELEMENTS(window_index) eq 0 then window_index = 0
+
+  data = self->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot)
   ;; Only do fit on the spectral part of the window!
   lambda = self->get_wcs_coord(window_index, /lambda)
 
   size_data = size(data)
   if self->get_sit_and_stare() then begin
-    print, 'sit_and_stare'
     lambda = transpose(lambda, [2, 0, 1, 3])
     data = transpose(data, [2, 0, 1, 3])
     weights = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value=1.0)
   endif else begin
-    print, 'not sit_and_stare'
-    lambda = reform(lambda)
+    naxis1 = self.get_header_keyword('naxis1', window_index)
+    naxis2 = self.get_header_keyword('naxis2', window_index)
+    naxis3 = self.get_header_keyword('naxis3', window_index)
+    lambda = reform(lambda, [naxis1, naxis2, naxis3])
     lambda = transpose(lambda, [2, 0, 1])
     data = transpose(data, [2, 0, 1])
     weights = make_array(size_data[3], size_data[1], size_data[2], value=1.0)
   endelse
   type_data = size(data, /type)
   lambda = fix(lambda, type=type_data)
-  miss = self->get_missing_value()
-  miss = -1000.0d
+  missing = self->get_missing_value()
+  missing = -1000.0d
+END
+
+
+;+
+; Description:
+;     This procedure creates an ANA (analysis structure) with the data of a chosen window, so that it can be used
+;     in CFIT_BLOCK and XCFIT_BLOCK. Fit components are estimated and added to ANA.
+;     Calls TRANSFORM_DATA_FOR_ANA.
+;
+; OPTIONAL INPUTS:
+;     window_index : The index of the desired window, default is 0.
+;     VELOCITY : Set this equal to the initial velocity if you want
+;                 the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 This input is ignored if /POSITION is set.
+;                 Default is zero.
+;
+; KEYWORD PARAMETERS:
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
+;     init_all_cubes: If set, then all cubes within the ANA will be initialised,
+;                 otherwise, the cubes RESULT, RESIDUALS, INCLUDE and CONSTANT will
+;                 be undefined.
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
+;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
+;                 This keyword is ignored if NO_MASKING is set.
+;
+; OUTPUT:
+;
+;-
+FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  init_all_cubes=init_all_cubes, debug_plot=debug_plot, position=position, velocity=velocity
+  ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
+  COMPILE_OPT IDL2
+
+  if N_ELEMENTS(window_index) eq 0 then window_index = 0
+  
+  self->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+    debug_plot=debug_plot, $
+    DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
 
   detector = self->get_header_keyword('DETECTOR', window_index)
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
-  adef = generate_adef(data, LAMbda, widmin=widmin)
+  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity)
   badix = where(data ne data, n_bad)
-  IF n_bad GT 0 THEN data[badix] = miss
-  print,''
-  print,'adef'
-  help,adef
+  IF n_bad GT 0 THEN data[badix] = missing
 
-  ;ana = mk_analysis(LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST)
-  ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISS, RESULT, RESIDual, INCLUDE, CONST)
-
-  if ~keyword_set(no_fitting) then begin
-    print, ' ==========='
-    print,'fitting data'
-    print, 'this may take a while'
-    print, ' ==========='
-    cfit_block, analysis=ana, quiet=quiet, /double, /x_face, smart=1
-  endif
-
-
-  if ~keyword_set(no_widget) then begin
-    ;XCFIT_BLOCK, LAMbda, DAta, WeighTS, FIT, MISS, RESULT, RESIDual, INCLUDE, CONST, ana=ana
-    XCFIT_BLOCK, ana=ana
-  endif
-
-  if keyword_set(no_fitting) && keyword_set(no_widget) then begin
+  ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
+  
+  if keyword_set(init_all_cubes) then begin
     handle_value, ana.fit_h, fit
     n_components = N_TAGS(fit)
     n_params = 0
@@ -236,31 +374,9 @@ function spice_data::xcfit_block, window_index, approximated_slit=approximated_s
     handle_value, ana.include_h, include, /no_copy, /set
     handle_value, ana.const_h, const, /no_copy, /set
   endif
-
   return, ana
 END
 
-
-;+
-; Description:
-;     Creates a level 3 file from the level 2
-;
-; KEYWORD PARAMETERS:
-;     window_index : The index of the desired window(s), default is all windows.
-;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
-;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
-;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget: If set, xcfit_block will not be called
-;
-;-
-pro spice_data::create_l3, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
-  no_widget=no_widget
-  ;Creates level 3 SPICE files with the data of the chosen window(s)
-  COMPILE_OPT IDL2
-
-  spice_create_l3, self, window_index, approximated_slit=approximated_slit, no_fitting=no_fitting, $
-    no_widget=no_widget
-END
 
 
 ;---------------------------------------------------------
@@ -291,7 +407,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
   window,1, xp=4200
   loadct,3,/silent
 
-  data = self->get_window_data(window_index,/load)
+  data = self->get_window_data(window_index, /no_masking)
   !p.multi = [0,2,1]
 
   plot_image,transpose(sigrange(reform(data[0,*,*]),fraction=0.9)),title='Unmasked',ytitle='Y pixel index',xtitle='Lambda pixel index'
@@ -306,7 +422,7 @@ PRO spice_data::debug_put_unmasked_and_masked_data_both_detectors, window_index
 
   self->debug_plot_dumbbell_range, window_index, lower_dumbbell_range, upper_dumbbell_range
 
-  masked_data = self->get_window_data(window_index,/load,/slit_only)
+  masked_data = self->get_window_data(window_index)
   plot_image,transpose(sigrange(reform(masked_data[0,*,*]),fraction=0.9)),title='Masked',ytitle='Y pixel index',xtitle='Lambda pixel index'
 
   loadct,12,/silent
@@ -497,7 +613,7 @@ END
 FUNCTION spice_data::check_if_already_included, window_index, included_winnos
   already_included = 0
 
-  header = self->get_header(window_index,/string)
+  header = self->get_header(window_index)
   prsteps =  fxpar(header,'PRSTEP*')        ;; MARTIN: the get_header_keyword method doesn't support wildcards, so I have to use fxpar!
   IF prsteps[-1] NE 'WINDOW-CONCATENATION' THEN return,0
 
@@ -565,7 +681,7 @@ PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
   ;;-
   n_windows = self->get_number_windows()
   FOR window_index = 0,n_windows-1 DO BEGIN
-    data = self->get_window_data(window_index,/load)
+    data = self->get_window_data(window_index, /no_masking)
 
     dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
     intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
@@ -643,14 +759,14 @@ END
 FUNCTION spice_data::check_if_data_may_be_masked, window_index
   level = self->get_level()
   IF level NE 2 THEN BEGIN
-    message,'SLIT_ONLY applies to L2 files only, returning unmodified data array',/info
+    message,'MASK_REGIONS_OUTSIDE_SLIT applies to L2 files only, returning unmodified data array',/info
     return, 0
   ENDIF
 
   dumbbell  = self->get_header_keyword('DUMBBELL', window_index) NE 0
   wide_slit = self->get_header_keyword('SLIT_WID', window_index) EQ 30
   IF dumbbell OR wide_slit THEN BEGIN
-    message,'SLIT_ONLY applies to narrow slit observations only, returning unmodified data array',/info
+    message,'MASK_REGIONS_OUTSIDE_SLIT applies to narrow slit observations only, returning unmodified data array',/info
     return, 0
   ENDIF
 
@@ -663,7 +779,7 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;; Description:
   ;;     Returns the input data array with any pixels that are above or
   ;;     below the narrow slit region set to NaN. This method is called when
-  ;;     ::get_window_data is called with the slit_only keyword set.
+  ;;     ::get_window_data is called if the no_masking keyword is NOT set.
   ;;
   ;;     And now a little background story:
   ;;     The height of the 2",4" and 6" slits is 600 pixels. At both ends of the slits
@@ -733,7 +849,7 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;;     below or above the narrow slit set to NaN.
   ;;
   ;; SIDE EFFECTS:
-  ;;     If approximated_slit is not set, then ::get_window_data(/load) will be called
+  ;;     If approximated_slit is not set, then ::get_window_data() will be called
   ;;     for all windows in the file once. The structure tag self.slit_y_range
   ;;     will be set the first time this method is called. A later call of
   ;;     this method will use the value of self.slit_y_range.
@@ -754,38 +870,38 @@ END
 
 ;+
 ; Description:
-;     Returns the data of the specified window. If 'load' keyword is set,
-;     the function returns a copy of the array, otherwise a link to the
-;     array in the file. If 'load' and 'slit_only' keywords are set any
-;     pixels below and above the slit are set to NaN in the returned array
+;     Returns the data of the specified window. If 'noload' keyword is set,
+;     the function returns a link to the array in the file, otherise a copy of the array.
+;     Pixels below and above the slit are set to NaN in the returned array, except if
+;     either 'noload' or 'no_masking' is set.
 ;
 ; INPUTS:
 ;     window_index : the index of the desired window
 ;
 ; KEYWORD PARAMETERS:
-;     load : if set, the data is read from the file and returned as an array
+;     noload : if set, the data is NOT read from the file and returned as an array,
+;                 instead a link to the data is returned
 ;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
-;     slit_only: if set, call ::mask_regions_outside_slit in order to mask
-;                 any y regions in a narrow slit data cube that don't contain
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
-;                 detector that lies above/below the dumbbells,
+;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The keyword is ignored for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
-;     approximated_slit: to be used in cimbination with keyword slit_only. If both
-;                 keywords are set, use a fixed (conservative) value for the slit
-;                 range, i.e. do not estimate the slit length based on the
-;                 position of the dumbbells.
-;     debug_plot: to be used in combination with keywords slit_only (and
-;                 optionally approximated_slit). If set, make plots to
-;                 illustrate which part of the window is being masked.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
+;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
+;                 This keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
 ;     returns either a link to the data, or the array itself
 ;-
-FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodescale, slit_only=slit_only, approximated_slit=approximated_slit, debug_plot=debug_plot
-  ;Returns a link to the data of window, or the data itself if keyword load is set
+FUNCTION spice_data::get_window_data, window_index, noload=noload, nodescale=nodescale, $
+  no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot
+  ;Returns the data of a window, or the link to the data if keyword noload is set
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 1 THEN BEGIN
@@ -793,7 +909,7 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
 
-  IF keyword_set(load) THEN BEGIN
+  IF ~keyword_set(noload) THEN BEGIN
     IF keyword_set(nodescale) THEN descaled=2 ELSE descaled=1
     IF (*self.window_descaled)[window_index] EQ descaled THEN BEGIN
       data = *(*self.window_data)[window_index]
@@ -808,7 +924,7 @@ FUNCTION spice_data::get_window_data, window_index, load=load, nodescale=nodesca
 
 
     ENDELSE
-    IF keyword_set(slit_only) THEN $
+    IF ~keyword_set(no_masking) THEN $
       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
   ENDIF ELSE BEGIN
     data = *(*self.window_assoc)[window_index]
@@ -834,11 +950,23 @@ END
 ;     nodescale : if set, does not call descale_array
 ;     debin : if set, the image will be expanded if binning is GT 1, and data values
 ;             will be divided by the binning value
+;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;                 The keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
 ;     returns the desired 2-dimensional image, as an array
 ;-
-FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale
+FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale, $
+  no_masking=no_masking, approximated_slit=approximated_slit
   ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
   COMPILE_OPT IDL2
 
@@ -853,7 +981,7 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, n
     return, !NULL
   ENDIF
 
-  data = self.get_window_data(window_index, /load, nodescale=nodescale)
+  data = self.get_window_data(window_index, nodescale=nodescale, no_masking=no_masking, approximated_slit=approximated_slit)
   IF self.get_sit_and_stare() THEN BEGIN
     data = reform(data[0,*,*,exposure_index])
   ENDIF ELSE BEGIN
@@ -896,8 +1024,8 @@ END
 ;+
 ; Description:
 ;     Descales the array, using BSCALE and BZERO keywords in the header.
-;     If you get the data from this object via get_window_data() without
-;     setting the keyword 'load', you will have to call this method yourself.
+;     If you get the data from this object via get_window_data() while
+;     setting the keyword 'noload', you will have to call this method yourself.
 ;
 ; INPUTS:
 ;     array : a numeric array
@@ -1124,7 +1252,7 @@ END
 
 ;+
 ; Description:
-;     Returns the header of the given window, either as a structure or as a string array.
+;     Returns the header of the given window, either as a string array or as astructure.
 ;
 ; INPUTS:
 ;     window_index : The index of the window for which the header should be returned.
@@ -1133,21 +1261,21 @@ END
 ; KEYWORD PARAMETERS:
 ;     lower_dumbbell : If set, the header of the lower dumbbell will be returned.
 ;     upper_dumbbell : If set, the header of the upper dumbbell will be returned.
-;     string : If set, the header will be returned as a string array instead of a structure.
+;     structure : If set, the header will be returned as a structure instead of a string array.
 ;
 ; OUTPUT:
-;     Returns the header as a structure or a string array.
+;     Returns the header as a string array or a structure.
 ;-
 FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
-  string=string
-  ;Returns the header of the given window as a structure or a string array
+  structure=structure
+  ;Returns the header of the given window as a string array or a structure 
   COMPILE_OPT IDL2
 
   IF keyword_set(lower_dumbbell) THEN window_index=self.get_dumbbells_index(/lower)
   IF keyword_set(upper_dumbbell) THEN window_index=self.get_dumbbells_index(/upper)
   IF ~self.check_window_index(window_index) THEN return, !NULL
-  IF keyword_set(string) then return, *(*self.window_headers_string)[window_index] $
-  ELSE return, *(*self.window_headers)[window_index]
+  IF keyword_set(structure) then return, *(*self.window_headers)[window_index] $
+  ELSE return, *(*self.window_headers_string)[window_index]
 END
 
 
