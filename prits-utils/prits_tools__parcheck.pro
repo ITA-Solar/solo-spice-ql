@@ -6,7 +6,9 @@
 ; Explanation :	
 ;	Routine to check user parameters to a procedure
 ; Use         :	
-;	prits_toolbox.parcheck, parameter, parnum, name, types, dimens
+;       pt.parcheck, parameter, parnum, name,  types, valid_ndims, default=default, $
+;                             maxval=maxval,minval=minval, $
+;                             result=result
 ;
 ;	EXAMPLE:
 ;
@@ -74,7 +76,7 @@
 ;
 ;----------------------------------------------------------
 
-PRO prits_toolbox::check_type, parameter, types, error, error_message
+PRO prits_tools::check_type, parameter, types, error, error_message
   compile_opt static, idl2
   IF typename(types) NE 'STRING' THEN par_type = typename(parameter) $
   ELSE                                par_type = size(parameter, /type)
@@ -86,7 +88,7 @@ PRO prits_toolbox::check_type, parameter, types, error, error_message
 END
 
 
-PRO prits_toolbox::check_ndims, parameter, valid_ndims, error, error_message
+PRO prits_tools::check_ndims, parameter, valid_ndims, error, error_message
   par_ndim = size(parameter, /n_dimensions)
   error = ''
   IF (where(par_ndim EQ valid_ndims))[0] EQ -1 THEN BEGIN
@@ -95,9 +97,9 @@ PRO prits_toolbox::check_ndims, parameter, valid_ndims, error, error_message
 END 
 
 
-PRO prits_toolbox::check_range, parameter, min, max, error
-  IF n_elements(min) GT 1 THEN message, "MINVAL keyword of PRITS_TOOLBOX::PARCHECK must be scalar"
-  IF n_elements(max) GT 1 THEN message, "MAXVAL keyword of PRITS_TOOLBOX::PARCHECK must be scalar"
+PRO prits_tools::check_range, parameter, min, max, error
+  IF n_elements(min) GT 1 THEN message, "MINVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
+  IF n_elements(max) GT 1 THEN message, "MAXVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
   error = []
   IF n_elements(max) EQ 1 THEN BEGIN
      IF (where(parameter GT max))[0] NE -1 THEN error = 'is larger than maximum value ' + trim(max)
@@ -108,7 +110,7 @@ PRO prits_toolbox::check_range, parameter, min, max, error
 END
 
 
-FUNCTION prits_toolbox::tnames_from_tnames, typenames
+FUNCTION prits_tools::tnames_from_tnames, typenames
   unsigned = ['BYTE', 'UINT', 'ULONG', 'ULONG64']
   integers = [unsigned, 'INT', 'LONG', 'LONG64']
   real = ['FLOAT', 'DOUBLE']
@@ -130,7 +132,7 @@ FUNCTION prits_toolbox::tnames_from_tnames, typenames
 END
 
 
-FUNCTION prits_toolbox::typename_from_typecode, typecode
+FUNCTION prits_tools::typename_from_typecode, typecode
   IF size(typecode, /tname) EQ 'STRING' THEN return, typecode
   CASE typecode OF
      0: return, 'UNDEFINED'
@@ -154,13 +156,13 @@ FUNCTION prits_toolbox::typename_from_typecode, typecode
 END
 
 
-PRO prits_toolbox::parcheck, parameter, parnum, name,  types, valid_ndims, default=default, $
+PRO prits_tools::parcheck, parameter, parnum, name,  types, valid_ndims, default=default, $
                              maxval=maxval,minval=minval, $
                              result=result
   compile_opt idl2, static
   
-  IF n_elements(parameter) EQ 0 AND arg_present(default) THEN BEGIN
-     parameter = default
+  IF n_params() EQ 1 AND n_elements(default) NE 0 THEN BEGIN
+     IF n_elements(parameter) EQ 0 THEN parameter = default
      return
   END
   
@@ -177,7 +179,7 @@ PRO prits_toolbox::parcheck, parameter, parnum, name,  types, valid_ndims, defau
   noerror = arg_present(result)
   result = ''
   
-  pt = prits_toolbox()
+  pt = prits_tools()
   
   errors = []
   pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions"
@@ -221,15 +223,15 @@ ABORT:
    
 END
    
-PRO prits_toolbox::parcheck_test
+PRO prits_tools::parcheck_test
   compile_opt static
-  prits_toolbox.parcheck,[5],2,"test",['BYTE'],[0, 5], result = result
+  prits_tools.parcheck,[5],2,"test",['BYTE'],[0, 5], result = result
   print, result, format='(a)'
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
    add_path, "$HOME/idl/solo-spice-ql", /expand
-   prits_toolbox.parcheck_test
+   prits_tools.parcheck_test
 END
 
 
