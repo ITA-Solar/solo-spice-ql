@@ -30,11 +30,14 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-07-06 20:59 CEST $
+; $Id: 2022-07-27 15:51 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir
-
+  
+  prits_tools.parcheck, l3_file, 1, "l3_file", 'STR', 0
+  prits_tools.parcheck, out_dir, 2, "out_dir", 'STR', 0
+  
   ; Red Temperature (intensity/default)
   c = colortable(3)
   ct1_r=reform(c[*,0])
