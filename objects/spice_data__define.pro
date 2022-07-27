@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-06-21 11:05 CEST $
+; $Id: 2022-07-27 15:13 CEST $
 
 
 ;+
@@ -209,7 +209,7 @@ END
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;-
 FUNCTION spice_data::create_l3_file,  window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
+                                      no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
   ;Creates a level 3 SPICE file with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
