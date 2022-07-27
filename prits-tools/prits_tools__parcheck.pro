@@ -78,8 +78,11 @@
 
 PRO prits_tools::check_type, parameter, types, error, error_message
   compile_opt static, idl2
-  IF typename(types) NE 'STRING' THEN par_type = typename(parameter) $
-  ELSE                                par_type = size(parameter, /type)
+  IF typename(types) NE 'STRING' THEN BEGIN
+     new_types = []
+     foreach type, types DO new_types = [new_types, prits_tools.typename_from_typecode(type)]
+  END
+  par_type = size(parameter, /tname)
   valid = WHERE(par_type EQ types, Ngood)
   error = ''
   IF where(par_type EQ types) EQ -1 THEN BEGIN
