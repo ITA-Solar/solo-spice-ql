@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-03 14:23 CEST $
+; $Id: 2022-08-03 14:54 CEST $
 
 
 ;+
@@ -130,15 +130,18 @@ END
 
 ;+
 ; Description:
-;     Calls xcfit_block with the data of the chosen window and returns an analysis structure
-;     that contains estimated fit components and the fit.
+;     This routine calls xcfit_block with the data of the chosen window. The data is arranged 
+;     so that xcfit_block can read it. The routine also estimates the positions of the main peaks 
+;     and adds fit components to the analysis structure. After exiting xcfit_block 
+;     by using the 'Exit' button, the routine returns the analysis structure.
 ;
 ; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window, default is 0.
 ;     VELOCITY : Set this equal to the initial velocity if you want
 ;                 the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength
-;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1), which is
+;                 calculated/estimated within the procedure 'generate_adef'.
 ;                 This input is ignored if /POSITION is set.
 ;                 Default is zero.
 ; 
@@ -184,7 +187,8 @@ END
 ;     VELOCITY : Set this equal to the initial velocity if you want
 ;                 the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength
-;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1), which is
+;                 calculated/estimated within the procedure 'generate_adef'.
 ;                 This input is ignored if /POSITION is set.
 ;                 Default is zero.
 ;
@@ -337,7 +341,8 @@ END
 ;     VELOCITY : Set this equal to the initial velocity if you want
 ;                 the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength
-;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1).
+;                 is taken from the supplied POSITION, i.e., INT_POS_FWHM(1), which is
+;                 calculated/estimated within the procedure 'generate_adef'.
 ;                 This input is ignored if /POSITION is set.
 ;                 Default is zero.
 ;
