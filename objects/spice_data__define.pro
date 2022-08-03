@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-07-27 16:08 CEST $
+; $Id: 2022-08-03 14:23 CEST $
 
 
 ;+
@@ -143,12 +143,12 @@ END
 ;                 Default is zero.
 ; 
 ; KEYWORD PARAMETERS:
-;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
-;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
@@ -189,12 +189,12 @@ END
 ;                 Default is zero.
 ;
 ; KEYWORD PARAMETERS:
-;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
-;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
@@ -269,12 +269,12 @@ END
 ;     window_index : The index of the desired window, default is 0.
 ;
 ; KEYWORD PARAMETERS:
-;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
-;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
@@ -342,12 +342,12 @@ END
 ;                 Default is zero.
 ;
 ; KEYWORD PARAMETERS:
-;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
-;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
@@ -913,25 +913,25 @@ END
 ;+
 ; Description:
 ;     Returns the data of the specified window. If 'noload' keyword is set,
-;     the function returns a link to the array in the file, otherise a copy of the array.
+;     the function returns a link to the array in the file, otherwise a copy of the array.
 ;     Pixels below and above the slit are set to NaN in the returned array, except if
 ;     either 'noload' or 'no_masking' is set.
 ;
 ; INPUTS:
-;     window_index : the index of the desired window
+;     window_index : The index of the desired window
 ;
 ; KEYWORD PARAMETERS:
-;     noload : if set, the data is NOT read from the file and returned as an array,
-;                 instead a link to the data is returned
-;     nodescale : if set, does not call descale_array, ignored if 'load' is not set
-;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;     noload : If set, the data is NOT read from the file and returned as an array,
+;                 instead a link to the data is returned.
+;     nodescale : If set, does not call descale_array, ignored if 'load' is not set.
+;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
-;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension.
+;                 dumbbell extension or if NOLOAD has been set.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;                 The keyword is ignored if NO_MASKING is set.
@@ -939,7 +939,7 @@ END
 ;                 This keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
-;     returns either a link to the data, or the array itself
+;     Returns either the data of the window as an array or a link to the data.
 ;-
 FUNCTION spice_data::get_window_data, window_index, noload=noload, nodescale=nodescale, $
   no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot
@@ -992,12 +992,12 @@ END
 ;     nodescale : if set, does not call descale_array
 ;     debin : if set, the image will be expanded if binning is GT 1, and data values
 ;             will be divided by the binning value
-;     no_masking: If set, then ::mask_regions_outside_slit will NOT be called on the data.
+;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
-;                 dumbbell regions themselves. The keyword is ignored for wide-slit
+;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
 ;                 observations or if window_index corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
