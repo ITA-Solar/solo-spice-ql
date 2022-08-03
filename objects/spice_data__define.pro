@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-03 14:54 CEST $
+; $Id: 2022-08-03 21:36 CEST $
 
 
 ;+
@@ -180,7 +180,14 @@ END
 
 ;+
 ; Description:
-;     Creates a level 3 file from the level 2
+;     This routine creates a level 3 FITS file for the chosen window(s).
+;     The data is arranged so that cfit_block can read it. The routine estimates
+;     the positions of the main peaks and fits those to the data by calling cfit_block.
+;     This may take a while. After that, the xcfit_block routine is called with
+;     the data and the fit, where one can view the result and make adjustments to the fit.
+;     After exiting xcfit_block by using the 'Exit' button, the routine saves the fits
+;     into a level 3 FITS file and moves this file into the $SPICE_DATA directory.
+;     The data cube will be saved in its original untransformed configuration.
 ;
 ; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window(s), default is all windows.
@@ -215,6 +222,7 @@ END
 
 FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, approximated_slit=approximated_slit, $
                                      no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
+  ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
