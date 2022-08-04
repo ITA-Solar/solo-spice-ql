@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-03 21:36 CEST $
+; $Id: 2022-08-04 14:19 CEST $
 
 
 ;+
@@ -299,7 +299,7 @@ END
 ;      DATA: Data Array. Rearranged so that the spectra is on the first dimension.
 ;      LAMBDA: An array of wavelength values. One value for every point in the data array.
 ;      WEIGHTS: Weights to use in the fitting process. Same dimensions as DATA.
-;               All points are set to 1.0.
+;               All pixels are set to 1.0.
 ;      MISSING: The MISSING value, used to flag missing data points,
 ;               and parameter values at points where the fit has been
 ;               declared as "FAILED". Set to -1000.0.
@@ -375,6 +375,7 @@ END
 ;                 This keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
+;     Returns an ANA structure.
 ;
 ;-
 FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -897,7 +898,7 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   ;;                        added (upper dumbbell) or subtracted (lower
   ;;                        dumbbell) from the estimated midpoint to make sure
   ;;                        that no slit data is masked in the case of an
-  ;;                        unusaully low or high placement of the spectra.
+  ;;                        unusually low or high placement of the spectra.
   ;;
   ;; OUTPUT:
   ;;     Returns the data cube that was given as input, but with any pixels
@@ -995,16 +996,16 @@ END
 ;     The exposure index is in the first dimension of the 4D cube in case the study type is 'Raster',
 ;     and in the fourth dimension if study type is 'Sit-and-stare'.
 ;     The array is also transposed, so that it can be directly plotted, i.e.
-;     array = [lambda, instrument-Y]
+;     array = [lambda, instrument-Y].
 ;
 ; INPUTS:
-;     window_index : the index of the desired window
-;     exposure_index : the index of the desired exposure
+;     window_index : The index of the desired window.
+;     exposure_index : The index of the desired exposure.
 ;
 ; KEYWORD PARAMETERS:
-;     nodescale : if set, does not call descale_array
-;     debin : if set, the image will be expanded if binning is GT 1, and data values
-;             will be divided by the binning value
+;     nodescale : If set, does not call descale_array.
+;     debin : If set, the image will be expanded if binning is GT 1, and data values
+;             will be divided by the binning value.
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
@@ -1018,7 +1019,7 @@ END
 ;                 The keyword is ignored if NO_MASKING is set.
 ;
 ; OUTPUT:
-;     returns the desired 2-dimensional image, as an array
+;     Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y]).
 ;-
 FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale, $
   no_masking=no_masking, approximated_slit=approximated_slit
