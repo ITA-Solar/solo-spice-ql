@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-04 21:12 CEST $
+; $Id: 2022-08-04 22:10 CEST $
 
 
 ;+
@@ -1163,25 +1163,25 @@ END
 
 ;+
 ; Description:
-;     Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
-;     position is given as a 4-element vector, with [lambda0, lambda1, y0, y1].
-;     Note: y0 > y1, but lambda0 < lambda1
+;     This function returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise.
+;     The position is given as a 4-element vector, with [lambda0, lambda1, y0, y1].
+;     Note: y0 > y1, but lambda0 < lambda1.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window_index : The index of the window.
 ;
 ; KEYWORD PARAMETERS:
-;     idl_coord : if set, the coordinates start with zero, instead of with 1
-;     reverse_y : y-coordinates are given as (CCD-size +1 - (original y-coords))
-;     reverse_x : for dumbbells x-coordinates are flipped, if this keyword is set, the coordinates will
-;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped
-;     no_warning: if set, warnings about x-flipping will be suppressed
+;     idl_coord : If set, the coordinates start with zero, instead of with 1.
+;     reverse_y : Y-coordinates are given as (CCD-size +1 - (original y-coords)).
+;     reverse_x : For dumbbells x-coordinates are flipped. If this keyword is set, the coordinates will
+;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped.
+;     no_warning: If set, warnings about x-flipping will be suppressed.
 ;
 ; OUTPUT:
-;     int array
+;     Integer array with 4 elements [lambda0, lambda1, y0, y1].
 ;
 ; OPTIONAL OUTPUT:
-;     detector : int, 1 or 2 to indicate on which detector the winodow is
+;     detector : int, 1 or 2 to indicate on which detector the window is.
 ;-
 FUNCTION spice_data::get_window_position, window_index, detector=detector, $
   idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, no_warning=no_warning
