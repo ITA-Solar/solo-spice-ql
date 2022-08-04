@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-04 14:19 CEST $
+; $Id: 2022-08-04 21:12 CEST $
 
 
 ;+
@@ -1084,8 +1084,8 @@ END
 ;     setting the keyword 'noload', you will have to call this method yourself.
 ;
 ; INPUTS:
-;     array : a numeric array
-;     window_index : the index of the window this array belongs to
+;     array : A numeric array, which is returned by SPICE_DATA::get_window_data.
+;     window_index : The index of the window this array belongs to.
 ;
 ; OUTPUT:
 ;     returns the descaled array (=array * bscale + bzero)
@@ -1107,17 +1107,17 @@ END
 
 ;+
 ; Description:
-;     Returns window index of a given wavelength or window name
+;     Returns the window index/indices which contain a given wavelength or window name.
 ;
 ; INPUTS:
-;     input : scalar or array of numbers or string
-;             if input is one or more numbers, it is interpreted as wavelengths
-;             and indices of windows including those wavelengths are returned
-;             if input is one or more string, it is interpreted as the window ID
-;             and indices of the corresponding windows are returned
+;     input : Scalar or array of numbers or string.
+;             Ff input is one or more numbers, it is interpreted as wavelengths
+;             and indices of windows including those wavelengths are returned.
+;             If input is one or more strings, it is interpreted as the window ID
+;             and indices of the corresponding windows are returned.
 ;
 ; OUTPUT:
-;     int array, with as many elements as input
+;     Integer array, with as many elements as input.
 ;-
 FUNCTION spice_data::get_window_index, input
   ;Returns window index of a given wavelength or window name
