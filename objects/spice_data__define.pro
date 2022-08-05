@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-04 22:10 CEST $
+; $Id: 2022-08-05 14:36 CEST $
 
 
 ;+
@@ -109,12 +109,12 @@ END
 
 ;+
 ; Description:
-;     prints out information about the class, such as name, location of definition file
+;     This routine prints out information about the class, such as name, location of definition file
 ;     and version if there is a line in the header comment beginning with '$ID: ' (comes from CVS).
-;     then prints out each procedure and function that have a comment line right after the definition.
+;     Then it prints out each procedure and function that has a comment line right after the definition.
 ;
 ; KEYWORD PARAMETERS:
-;     description : if set, the header info of the class will also be printed.
+;     description : If set, the header info of the class will also be printed.
 ;
 ;-
 pro spice_data::help, description=description, _extra=_extra
@@ -302,7 +302,7 @@ END
 ;               All pixels are set to 1.0.
 ;      MISSING: The MISSING value, used to flag missing data points,
 ;               and parameter values at points where the fit has been
-;               declared as "FAILED". Set to -1000.0.
+;               declared as "FAILED". This is set to -1000.0 for now, because cfit_block does not handle NAN.
 ;
 ;-
 PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -1088,7 +1088,7 @@ END
 ;     window_index : The index of the window this array belongs to.
 ;
 ; OUTPUT:
-;     returns the descaled array (=array * bscale + bzero)
+;     Returns the descaled array (=array * bscale + bzero)
 ;-
 FUNCTION spice_data::descale_array, array, window_index
   ;Descales the array, using BSCALE and BZERO keywords in the header
@@ -1308,7 +1308,7 @@ END
 
 ;+
 ; Description:
-;     Returns the header of the given window, either as a string array or as astructure.
+;     Returns the header of the given window, either as a string array or as a structure.
 ;
 ; INPUTS:
 ;     window_index : The index of the window for which the header should be returned.
@@ -1337,13 +1337,13 @@ END
 
 ;+
 ; Description:
-;     returns the number of windows this file/object contains
+;     Returns the number of windows this file/object contains.
 ;
 ; OUTPUT:
 ;     int: number of windows
 ;-
 FUNCTION spice_data::get_number_windows
-  ;returns the number of windows this file contains
+  ;Returns the number of windows this file contains
   COMPILE_OPT IDL2
 
   return, self.nwin
@@ -1352,13 +1352,13 @@ END
 
 ;+
 ; Description:
-;     returns the title
+;     Returns the title.
 ;
 ; OUTPUT:
 ;     string
 ;-
 FUNCTION spice_data::get_title
-  ;returns the title, i.e. 'SPICE'
+  ;Returns the title, i.e. 'SPICE'
   COMPILE_OPT IDL2
 
   return, self.title
@@ -1367,13 +1367,13 @@ END
 
 ;+
 ; Description:
-;     returns SPICE OBS ID
+;     Returns SPICE OBS ID.
 ;
 ; OUTPUT:
 ;     string
 ;-
 FUNCTION spice_data::get_obs_id
-  ;returns SPICE OBS ID
+  ;Returns SPICE OBS ID
   COMPILE_OPT IDL2
 
   obs_id = self.get_header_keyword('SPIOBSID', 0, -1)
@@ -1384,13 +1384,13 @@ END
 
 ;+
 ; Description:
-;     returns start date and time of observation in UTC format
+;     Returns start date and time of observation in UTC format.
 ;
 ; OUTPUT:
 ;     int: number of windows
 ;-
 FUNCTION spice_data::get_start_time
-  ;returns start date and time of observation in UTC format
+  ;Returns start date and time of observation in UTC format
   COMPILE_OPT IDL2
 
   start_time = self.get_header_keyword('DATE-BEG', 0, '')
@@ -1400,13 +1400,13 @@ END
 
 ;+
 ; Description:
-;     returns end date and time of observation in UTC format
+;     Returns end date and time of observation in UTC format.
 ;
 ; OUTPUT:
 ;     string
 ;-
 FUNCTION spice_data::get_end_time
-  ;returns end date and time of observation in UTC format
+  ;Returns end date and time of observation in UTC format
   COMPILE_OPT IDL2
 
   end_time = self.get_header_keyword('DATE-END', 0, '')
@@ -1416,13 +1416,13 @@ END
 
 ;+
 ; Description:
-;     returns 1 if raster is a sit-and-stare, 0 otherwise
+;     Returns 1 if the raster is a sit-and-stare, 0 otherwise.
 ;
 ; OUTPUT:
 ;     boolean
 ;-
 FUNCTION spice_data::get_sit_and_stare
-  ;returns 1 if raster is a sit-and-stare, 0 otherwise
+  ;Returns 1 if raster is a sit-and-stare, 0 otherwise
   COMPILE_OPT IDL2
 
   sit_and_stare = self.get_header_keyword('STUDYTYP', 0) EQ 'Sit-and-stare'
@@ -1432,7 +1432,7 @@ END
 
 ;+
 ; Description:
-;     returns the level of the file
+;     Returns the level of the file.
 ;
 ; OUTPUT:
 ;     int: level number (0, 1 or 2)
@@ -1441,7 +1441,7 @@ END
 ;     low_latency: boolean, 1 if this file is a low latency file (i.e. LL0x)
 ;-
 FUNCTION spice_data::get_level, low_latency=low_latency
-  ;returns the level of the file
+  ;Returns the level of the file
   COMPILE_OPT IDL2
 
   level_string = self.get_header_keyword('LEVEL', 0)
@@ -1467,13 +1467,13 @@ END
 
 ;+
 ; Description:
-;     returns BUNIT, physical units of the data
+;     Returns BUNIT, physical units of the data.
 ;
 ; OUTPUT:
 ;     string
 ;-
 FUNCTION spice_data::get_variable_unit
-  ;returns BUNIT, physical units of the data
+  ;Returns BUNIT, physical units of the data
   COMPILE_OPT IDL2
 
   bunit = self.get_header_keyword('BUNIT', 0, '')
@@ -1483,13 +1483,13 @@ END
 
 ;+
 ; Description:
-;     returns BTYPE, type of data in images
+;     Returns BTYPE, type of data in images.
 ;
 ; OUTPUT:
 ;     string
 ;-
 FUNCTION spice_data::get_variable_type
-  ;returns BTYPE, type of data in images
+  ;Returns BTYPE, type of data in images
   COMPILE_OPT IDL2
 
   btype = self.get_header_keyword('BTYPE', 0, '')
@@ -1499,13 +1499,13 @@ END
 
 ;+
 ; Description:
-;     returns S/C CCW roll relative to Solar north in degrees
+;     Returns S/C CCW roll relative to Solar north in degrees.
 ;
 ; OUTPUT:
 ;     float
 ;-
 FUNCTION spice_data::get_satellite_rotation
-  ;returns S/C CCW roll relative to Solar north in degrees
+  ;Returns S/C CCW roll relative to Solar north in degrees
   COMPILE_OPT IDL2
 
   crota = self.get_header_keyword('CROTA', 0)
@@ -1515,13 +1515,13 @@ END
 
 ;+
 ; Description:
-;     returns the value for missing pixels
+;     Returns the value for missing pixels.
 ;
 ; OUTPUT:
 ;     float
 ;-
 FUNCTION spice_data::get_missing_value
-  ;returns the value for missing pixels
+  ;Returns the value for missing pixels
   COMPILE_OPT IDL2
 
   missing = self.get_header_keyword('BLANK', 0)
@@ -1532,13 +1532,13 @@ END
 
 ;+
 ; Description:
-;     returns the 2-element vector containing the CCD size
+;     Returns the 2-element vector containing the CCD size.
 ;
 ; OUTPUT:
 ;     int array
 ;-
 FUNCTION spice_data::get_ccd_size
-  ;returns the 2-element vector containing the CCD size
+  ;Returns the 2-element vector containing the CCD size
   COMPILE_OPT IDL2
 
   return, self.ccd_size
@@ -1547,20 +1547,20 @@ END
 
 ;+
 ; Description:
-;     returns the window ID of one or more windows. window_index is optional
+;     Returns the window ID of one or more windows. window_index is optional
 ;     if not provided, window IDs of all windows are returned, if it is
 ;     scalar, the result will be a scalar string, and if window_index is
 ;     an array, the result will be a string array of same size.
 ;
 ; INPUTS:
 ;     window_index : the index of the window the ID is asked for
-;                    scalar or 1D-int-array
+;                    scalar or 1D-int-array. Default is all windows.
 ;
 ; OUTPUT:
 ;     string or string array
 ;-
 FUNCTION spice_data::get_window_id, window_index
-  ;returns the window ID, as string or string array
+  ;Returns the window ID, as string or string array
   COMPILE_OPT IDL2
 
   IF n_params() EQ 0 THEN BEGIN
@@ -1585,16 +1585,10 @@ END
 
 ;+
 ; Description:
-;     returns the window ID
-;
-; INPUTS:
-;     window_index : the index of the window the ID is asked for
-;
-; OUTPUT:
-;     string
+;     Prints all window indices and their IDs to the command line.
 ;-
 PRO spice_data::show_lines
-  ;returns the window ID
+  ;Prints all window indices and their IDs to the command line.
   COMPILE_OPT IDL2
 
   window_id = self.get_window_id()
@@ -1606,18 +1600,18 @@ END
 
 ;+
 ; Description:
-;     returns the number of exposures in the window, or if window_index
+;     Returns the number of exposures in the window, or if window_index
 ;     is not provided, a vector containing the numbers of exposures
 ;     for each window
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window
+;     window_index : the index of the window(s). Default all windows.
 ;
 ; OUTPUT:
 ;     int or int-array
 ;-
 FUNCTION spice_data::get_number_exposures, window_index
-  ;returns the number of exposures in the window
+  ;Returns the number of exposures in the window
   COMPILE_OPT IDL2
 
   IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
@@ -1636,7 +1630,7 @@ END
 
 ;+
 ; Description:
-;     returns the number of pixels in y in the window, or if window_index
+;     Returns the number of pixels in y in the window, or if window_index
 ;     is not provided, a vector containing the numbers of pixels in y
 ;     for each window
 ;
@@ -1647,7 +1641,7 @@ END
 ;     int or int-array
 ;-
 FUNCTION spice_data::get_number_y_pixels, window_index
-  ;returns the number of pixels in y in the window
+  ;Returns the number of pixels in y in the window
   COMPILE_OPT IDL2
 
   IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
@@ -1664,16 +1658,16 @@ END
 
 ;+
 ; Description:
-;     returns the exposure time of the given window per exposure
+;     Returns the exposure time of the given window per exposure.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window_index : The index of the window.
 ;
 ; OUTPUT:
 ;     float
 ;-
 FUNCTION spice_data::get_exposure_time, window_index
-  ;returns the exposure time of the given window per exposure
+  ;Returns the exposure time of the given window per exposure
   COMPILE_OPT IDL2
 
   exptime = self.get_header_keyword('XPOSURE', window_index)
@@ -1683,7 +1677,7 @@ END
 
 ;+
 ; Description:
-;     returns name of axis, if axis is not provided a string vector
+;     Returns name of axis, if axis is not provided a string vector
 ;     will be returned that contains the names of all axes.
 ;     The name of the axis includes its unit in square brackets,
 ;     except if the pixels keyword is set, then it says pixels instead
@@ -1693,14 +1687,14 @@ END
 ;     axis : the index of the axis, may be a vector
 ;
 ; KEYWORD PARAMETERS:
-;     pixels : return 'pixels' as unit
-;     no_unit : do not include units in axis name
+;     pixels : Return 'pixels' as unit
+;     no_unit : Do not include units in axis name
 ;
 ; OUTPUT:
 ;     string or string array
 ;-
 FUNCTION spice_data::get_axis_title, axis, pixels=pixels, no_unit=no_unit
-  ;returns name of axis, if axis is not provided a string vector will be returned
+  ;Returns name of axis, if axis is not provided a string vector will be returned
   COMPILE_OPT IDL2
 
   axes = ['Solar X', 'Solar Y', 'Wavelength', 'Time']
@@ -1721,16 +1715,16 @@ END
 
 ;+
 ; Description:
-;     returns a vector containting the coordinate for each pixel in first dimension, instrument x-direction
+;     Returns a vector containing the coordinate (instrument x-direction) for each pixel in the first dimension.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window_index : The index of the window.
 ;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
 FUNCTION spice_data::get_instr_x_vector, window_index
-  ;returns a vector containing the coordinate for each pixel in instrument x-direction
+  ;Returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
 
   crval = self.get_header_keyword('crval1', window_index)
@@ -1749,21 +1743,21 @@ END
 
 ;+
 ; Description:
-;     returns a vector containting the coordinate for each pixel in second dimension, instrument y-direction
+;     Returns a vector containing the coordinate for each pixel in the second dimension, instrument y-direction
 ;     for the selected window, or the full CCD this window belongs to
 ;
 ; INPUTS:
 ;     window_index : the index of the window
 ;
 ; OPTIONAL KEYWORDS:
-;     full_ccd : if set, a vector of size CCD-size[1] is returned with coordinate values
+;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
 ;                for the whole detector
 ;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
 FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
-  ;returns a vector containing the coordinate for each pixel in instrument y-direction
+  ;Returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
   crval = self.get_header_keyword('crval2', window_index)
@@ -1784,7 +1778,7 @@ END
 
 ;+
 ; Description:
-;     returns a vector containting the wavelength for each pixel in third dimension for
+;     Returns a vector containing the wavelength for each pixel in third dimension for
 ;     the selected window, or the full CCD this window belongs to
 ;
 ; INPUTS:
@@ -1798,7 +1792,7 @@ END
 ;     float array, wavelength in nm
 ;-
 FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
-  ;returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
+  ;Returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
 
   crval = self.get_header_keyword('crval3', window_index)
@@ -1818,7 +1812,7 @@ END
 
 ;+
 ; Description:
-;     returns a vector containing the time for each pixel in fourth dimension
+;     Returns a vector containing the time for each pixel in fourth dimension
 ;
 ; INPUTS:
 ;     window_index : the index of the window
@@ -1827,7 +1821,7 @@ END
 ;     float array, time in seconds
 ;-
 FUNCTION spice_data::get_time_vector, window_index
-  ;returns a vector containing the time for each pixel in fourth dimension
+  ;Returns a vector containing the time for each pixel in fourth dimension
   COMPILE_OPT IDL2
 
   crval = self.get_header_keyword('crval4', window_index)
@@ -1848,7 +1842,7 @@ END
 
 ;+
 ; Description:
-;     returns XCEN in archsec
+;     Returns XCEN in archsec
 ;
 ; OPTONAL INPUTS:
 ;     window_index : the index of the window
@@ -1857,7 +1851,7 @@ END
 ;     float : xcen in arcseconds
 ;-
 FUNCTION spice_data::get_xcen, window_index
-  ;returns XCEN in archsec
+  ;Returns XCEN in archsec
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then begin
@@ -1872,7 +1866,7 @@ END
 
 ;+
 ; Description:
-;     returns YCEN in archsec
+;     Returns YCEN in archsec
 ;
 ; OPTONAL INPUTS:
 ;     window_index : the index of the window
@@ -1881,7 +1875,7 @@ END
 ;     float : ycen in arcseconds
 ;-
 FUNCTION spice_data::get_ycen, window_index
-  ;returns YCEN in archsec
+  ;Returns YCEN in archsec
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then begin
@@ -1896,7 +1890,7 @@ END
 
 ;+
 ; Description:
-;     returns FOV in solar x direction, in arcsec
+;     Returns FOV in solar x direction, in arcsec
 ;
 ; OPTONAL INPUTS:
 ;     window_index : the index of the window
@@ -1905,7 +1899,7 @@ END
 ;     float : fovx in arcseconds
 ;-
 FUNCTION spice_data::get_fovx, window_index
-  ;returns FOV in solar x direction, in arcsec
+  ;Returns FOV in solar x direction, in arcsec
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then begin
@@ -1921,7 +1915,7 @@ END
 
 ;+
 ; Description:
-;     returns FOV in solar y direction, in arcsec
+;     Returns FOV in solar y direction, in arcsec
 ;
 ; OPTONAL INPUTS:
 ;     window_index : the index of the window
@@ -1930,7 +1924,7 @@ END
 ;     float : fovy in arcseconds
 ;-
 FUNCTION spice_data::get_fovy, window_index
-  ;returns FOV in solar y direction, in arcsec
+  ;Returns FOV in solar y direction, in arcsec
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then begin
@@ -1946,7 +1940,7 @@ END
 
 ;+
 ; Description:
-;     returns the coordinate(s) of one or more specified pixels, or if
+;     Returns the coordinate(s) of one or more specified pixels, or if
 ;     pixels is not provided, for all pixels. returns coordinate(s) either
 ;     for all dimensions or just the one specified.
 ;
@@ -1975,7 +1969,7 @@ END
 ;         5D: no pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;-
 FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambda, time=time
-  ;returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
+  ;Returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
   COMPILE_OPT IDL2
 
   IF ~self.check_window_index(window_index) THEN return, !NULL
@@ -2014,7 +2008,7 @@ END
 
 ;+
 ; Description:
-;     returns a vector containing the resolution of each dimension, or a
+;     Returns a vector containing the resolution of each dimension, or a
 ;     scalar number representing the resolution of one dimension.
 ;
 ; INPUTS:
@@ -2032,7 +2026,7 @@ END
 ;     float array or float
 ;-
 FUNCTION spice_data::get_resolution, window_index, x=x, y=y, lambda=lambda, time=time
-  ;returns a vector containing the resolution of each dimension, or a scalar if a keyword is set
+  ;Returns a vector containing the resolution of each dimension, or a scalar if a keyword is set
   COMPILE_OPT IDL2
 
   cdelt1 = self.get_header_keyword('cdelt1', window_index)
@@ -2049,7 +2043,7 @@ END
 
 ;+
 ; Description:
-;     returns the binning factor in spatial y-direction.
+;     Returns the binning factor in spatial y-direction.
 ;     If window_index is not provided a vector with binning factors for all
 ;     windows is returned.
 ;
@@ -2060,7 +2054,7 @@ END
 ;     int array
 ;-
 FUNCTION spice_data::get_spatial_binning, window_index
-  ;returns the binning factor in spatial y-direction (vector if window_index not provided)
+  ;Returns the binning factor in spatial y-direction (vector if window_index not provided)
   COMPILE_OPT IDL2
 
   IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
@@ -2074,7 +2068,7 @@ END
 
 ;+
 ; Description:
-;     returns the binning factor in spectral direction.
+;     Returns the binning factor in spectral direction.
 ;     If window_index is not provided a vector with binning factors for all
 ;     windows is returned.
 ;
@@ -2085,7 +2079,7 @@ END
 ;     int array
 ;-
 FUNCTION spice_data::get_spectral_binning, window_index
-  ;returns the binning factor in the spectral direction (vector if window_index not provided)
+  ;Returns the binning factor in the spectral direction (vector if window_index not provided)
   COMPILE_OPT IDL2
 
   IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
@@ -2142,7 +2136,7 @@ END
 ;     boolean
 ;-
 FUNCTION spice_data::has_dumbbells, window_index
-  ;returns 1 if data object contains one or two dumbbells, or if window_index is dumbbell
+  ;Returns 1 if data object contains one or two dumbbells, or if window_index is dumbbell
   COMPILE_OPT IDL2
 
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
@@ -2167,7 +2161,7 @@ END
 ;     boolean, True if input is a valid window index
 ;-
 FUNCTION spice_data::get_dumbbells_index, lower=lower, upper=upper
-  ;returns the indices of the windows that contain the dumbbells
+  ;Returns the indices of the windows that contain the dumbbells
   COMPILE_OPT IDL2
 
   if keyword_set(lower) then return, self.dumbbells[0]
@@ -2372,7 +2366,7 @@ END
 ;     string
 ;-
 FUNCTION spice_data::get_filename
-  ;returns the input filename
+  ;Returns the input filename
   COMPILE_OPT IDL2
 
   return, self.file
