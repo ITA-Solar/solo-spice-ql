@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-05 14:36 CEST $
+; $Id: 2022-08-08 11:34 CEST $
 
 
 ;+
@@ -937,7 +937,9 @@ END
 ; KEYWORD PARAMETERS:
 ;     noload : If set, the data is NOT read from the file and returned as an array,
 ;                 instead a link to the data is returned.
-;     nodescale : If set, does not call descale_array, ignored if 'load' is not set.
+;     noscale : If present and non-zero, then the output data will not be
+;                 scaled using the optional BSCALE and BZERO keywords in the 
+;                 FITS header.   Default is to scale.
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
@@ -955,25 +957,25 @@ END
 ; OUTPUT:
 ;     Returns either the data of the window as an array or a link to the data.
 ;-
-FUNCTION spice_data::get_window_data, window_index, noload=noload, nodescale=nodescale, $
+FUNCTION spice_data::get_window_data, window_index, noload=noload, noscale=noscale, $
   no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot
   ;Returns the data of a window, or the link to the data if keyword noload is set
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 1 THEN BEGIN
-    message, 'missing input, usage: get_window_data, window_index [, load=load, nodescale=nodescale]', /info
+    message, 'missing input, usage: get_window_data, window_index [, load=load, noscale=noscale]', /info
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
 
   IF ~keyword_set(noload) THEN BEGIN
-    IF keyword_set(nodescale) THEN descaled=2 ELSE descaled=1
+    IF keyword_set(noscale) THEN descaled=2 ELSE descaled=1
     IF (*self.window_descaled)[window_index] EQ descaled THEN BEGIN
       data = *(*self.window_data)[window_index]
     ENDIF ELSE BEGIN
       data = (*(*self.window_assoc)[window_index])[0]
 
 
-      IF ~keyword_set(nodescale) THEN data = self.descale_array(data, window_index)
+      IF ~keyword_set(noscale) THEN data = self.descale_array(data, window_index)
       (*self.window_descaled)[window_index] = descaled
       IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
       (*self.window_data)[window_index] = ptr_new(data)
@@ -991,8 +993,9 @@ END
 
 ;+
 ; Description:
-;     Returns the data of the specified window and exposure index. If 'nodescale' keyword is set,
-;     the function returns the data without applying 'descale_array' function.
+;     Returns the data of the specified window and exposure index. If 'noscale' keyword is set,
+;     the output data will not be scaled using the optional BSCALE and BZERO keywords in the 
+;     FITS header.
 ;     The exposure index is in the first dimension of the 4D cube in case the study type is 'Raster',
 ;     and in the fourth dimension if study type is 'Sit-and-stare'.
 ;     The array is also transposed, so that it can be directly plotted, i.e.
@@ -1003,7 +1006,9 @@ END
 ;     exposure_index : The index of the desired exposure.
 ;
 ; KEYWORD PARAMETERS:
-;     nodescale : If set, does not call descale_array.
+;     noscale : If present and non-zero, then the output data will not be
+;                 scaled using the optional BSCALE and BZERO keywords in the 
+;                 FITS header.   Default is to scale.
 ;     debin : If set, the image will be expanded if binning is GT 1, and data values
 ;             will be divided by the binning value.
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -1021,13 +1026,13 @@ END
 ; OUTPUT:
 ;     Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y]).
 ;-
-FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, nodescale=nodescale, $
+FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, noscale=noscale, $
   no_masking=no_masking, approximated_slit=approximated_slit
   ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 2 THEN BEGIN
-    message, 'missing input, usage: get_one_image, window_index, exposure_index [, nodescale=nodescale]', /info
+    message, 'missing input, usage: get_one_image, window_index, exposure_index [, noscale=noscale]', /info
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
   IF self.get_sit_and_stare() THEN naxis = self.get_header_keyword('NAXIS4', window_index) $
@@ -1037,7 +1042,7 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, n
     return, !NULL
   ENDIF
 
-  data = self.get_window_data(window_index, nodescale=nodescale, no_masking=no_masking, approximated_slit=approximated_slit)
+  data = self.get_window_data(window_index, noscale=noscale, no_masking=no_masking, approximated_slit=approximated_slit)
   IF self.get_sit_and_stare() THEN BEGIN
     data = reform(data[0,*,*,exposure_index])
   ENDIF ELSE BEGIN
