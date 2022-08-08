@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-08 14:24 CEST $
+; $Id: 2022-08-08 15:01 CEST $
 
 
 ;+
@@ -1236,14 +1236,14 @@ END
 
 ;+
 ; Description:
-;     This method returns the specified keyword from the given window, if the keyword does not exist 
+;     This method returns the specified keyword from the given extension, if the keyword does not exist 
 ;     'missing_value' is returned if it is provided, !NULL otherwise. This method can also return 
 ;     the variable values of a keyword, if it is available in the binary table extension. 
 ;     See keyword VARIABLE_VALUES.
 ;
 ; INPUTS:
 ;     keyword : string, The header keyword for which the value should be returned.
-;     window_index : The index of the window this keyword belongs to.
+;     extension_index : The index of the extension this keyword belongs to.
 ;
 ; OPTIONAL INPUTS:
 ;     missing_value : the value that should be returned, if the keyword does not exist
@@ -1262,18 +1262,18 @@ END
 ; OUTPUT:
 ;     Returns either the keyword value, the MISSING_VALUE or !NULL.
 ;-
-FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, exists=exists, $
+FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value, exists=exists, $
   variable_values=variable_values, values_only=values_only
-  ;Returns the specified keyword from the window, or 'missing_value' if provided, !NULL otherwise
+  ;Returns the specified keyword from the extension, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 2 THEN BEGIN
-    message, 'missing input, usage: get_header_keyword, keyword, window_index [, missing_value, exists=exists, variable_values=variable_values, values_only=values_only]', /info
+    message, 'missing input, usage: get_header_keyword, keyword, extension_index [, missing_value, exists=exists, variable_values=variable_values, values_only=values_only]', /info
     return, !NULL
   ENDIF ELSE IF N_ELEMENTS(keyword) NE 1 || SIZE(keyword, /TYPE) NE 7 THEN BEGIN
     message, 'keyword needs to be a scalar string', /info
     return, !NULL
-  ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
+  ENDIF ELSE IF ~self.check_extension_index(extension_index) THEN return, !NULL
 
   ; keywords with a '-' in the name, will be renamed when they are transformed into structures (in fitshead2struct),
   ; '-' becomes '_D$'
@@ -1283,10 +1283,12 @@ FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, e
   IF ARG_PRESENT(variable_values) THEN BEGIN
     variable_values = self.get_bintable_data(keyword, values_only=values_only)
   ENDIF
+  
+  result = fxpar(*(*self.window_headers)[extension_index], keyword, missing=missing_value, count=count)
 
-  exists = TAG_EXIST(*(*self.window_headers)[window_index], keyword, index=index)
+  exists = count gt 0
   IF exists THEN BEGIN
-    return, (*(*self.window_headers)[window_index]).(index)
+    return, result
   ENDIF ELSE BEGIN
     IF N_ELEMENTS(missing_value) EQ 0 THEN return, !NULL $
     ELSE return, missing_value
@@ -1300,8 +1302,8 @@ END
 ;     This method is deprecated, but still available for compatibility reasons.
 ;     get_header_keyword instead replaces this method. See there for documentation
 ;-
-FUNCTION spice_data::get_header_info, keyword, window_index, missing_value, exists=exists
-  return, self.get_header_keyword(keyword, window_index, missing_value, exists=exists)
+FUNCTION spice_data::get_header_info, keyword, extension_index, missing_value, exists=exists
+  return, self.get_header_keyword(keyword, extension_index, missing_value, exists=exists)
 END
 
 
@@ -1329,7 +1331,7 @@ FUNCTION spice_data::get_header, extension_index, lower_dumbbell=lower_dumbbell,
   IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower)
   IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper)
   IF ~self.check_extension_index(extension_index) THEN return, !NULL
-  IF keyword_set(structure) then return, *(*self.window_headers)[extension_index] $
+  IF keyword_set(structure) then return, *(*self.extension_headers)[extension_index] $
   ELSE return, *(*self.window_headers_string)[extension_index]
 END
 
