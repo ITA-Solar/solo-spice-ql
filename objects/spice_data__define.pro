@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-08 14:04 CEST $
+; $Id: 2022-08-08 14:24 CEST $
 
 
 ;+
@@ -1307,10 +1307,10 @@ END
 
 ;+
 ; Description:
-;     Returns the header of the given window, either as a string array or as a structure.
+;     Returns the header of the given extension, either as a string array or as a structure.
 ;
 ; INPUTS:
-;     window_index : The index of the window for which the header should be returned.
+;     extension_index : The index of the extension for which the header should be returned.
 ;                    This index will be ignored if either LOWER_DUMBBELL or UPPER_DUMBBELL is set.
 ;
 ; KEYWORD PARAMETERS:
@@ -1321,16 +1321,16 @@ END
 ; OUTPUT:
 ;     Returns the header as a string array or a structure.
 ;-
-FUNCTION spice_data::get_header, window_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
+FUNCTION spice_data::get_header, extension_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
   structure=structure
-  ;Returns the header of the given window as a string array or a structure 
+  ;Returns the header of the given extension as a string array or a structure 
   COMPILE_OPT IDL2
 
-  IF keyword_set(lower_dumbbell) THEN window_index=self.get_dumbbells_index(/lower)
-  IF keyword_set(upper_dumbbell) THEN window_index=self.get_dumbbells_index(/upper)
-  IF ~self.check_window_index(window_index) THEN return, !NULL
-  IF keyword_set(structure) then return, *(*self.window_headers)[window_index] $
-  ELSE return, *(*self.window_headers_string)[window_index]
+  IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower)
+  IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper)
+  IF ~self.check_extension_index(extension_index) THEN return, !NULL
+  IF keyword_set(structure) then return, *(*self.window_headers)[extension_index] $
+  ELSE return, *(*self.window_headers_string)[extension_index]
 END
 
 
@@ -2123,6 +2123,30 @@ FUNCTION spice_data::check_window_index, window_index
   IF N_ELEMENTS(window_index) NE 1 || input_index EQ -1 || $
     window_index LT 0 || window_index GE self.nwin THEN BEGIN
     message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2), /info
+    return, 0
+  ENDIF ELSE return, 1
+
+END
+
+
+;+
+; Description:
+;     Checks whether a given extension index is valid
+;
+; INPUTS:
+;     extension_index : the index of the extension to be checked
+;
+; OUTPUT:
+;     boolean, True if input is a valid extension index
+;-
+FUNCTION spice_data::check_extension_index, extension_index
+  COMPILE_OPT IDL2
+
+  input_type = size(extension_index, /type)
+  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
+  IF N_ELEMENTS(extension_index) NE 1 || input_index EQ -1 || $
+    extension_index LT 0 || extension_index GE self.next THEN BEGIN
+    message, 'extension_index needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2), /info
     return, 0
   ENDIF ELSE return, 1
 
