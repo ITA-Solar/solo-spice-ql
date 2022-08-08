@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-08 11:34 CEST $
+; $Id: 2022-08-08 13:18 CEST $
 
 
 ;+
@@ -73,13 +73,11 @@ pro spice_data::close
   COMPILE_OPT IDL2
 
   FOR i=0,self.nwin-1 DO BEGIN
-    ptr_free, (*self.window_assoc)[i]
     ptr_free, (*self.window_headers)[i]
     ptr_free, (*self.window_headers_string)[i]
     ptr_free, (*self.window_wcs)[i]
     IF ptr_valid((*self.window_data)[i]) THEN ptr_free, (*self.window_data)[i]
   ENDFOR
-  ptr_free, self.window_assoc
   ptr_free, self.window_headers
   ptr_free, self.window_headers_string
   ptr_free, self.window_wcs
@@ -90,7 +88,6 @@ pro spice_data::close
     if ptr_valid((*self.bintable_columns)[i].values) then ptr_free, (*self.bintable_columns)[i].values
   endfor
   ptr_free, self.bintable_columns
-  IF self.file_lun GE 100 && self.file_lun LE 128 THEN free_lun, self.file_lun
   self.dumbbells = [-1, -1]
   self.nwin = 0
 END
@@ -926,17 +923,14 @@ END
 
 ;+
 ; Description:
-;     Returns the data of the specified window. If 'noload' keyword is set,
-;     the function returns a link to the array in the file, otherwise a copy of the array.
+;     Returns the data of the specified window. 
 ;     Pixels below and above the slit are set to NaN in the returned array, except if
-;     either 'noload' or 'no_masking' is set.
+;     'no_masking' is set.
 ;
 ; INPUTS:
 ;     window_index : The index of the desired window
 ;
 ; KEYWORD PARAMETERS:
-;     noload : If set, the data is NOT read from the file and returned as an array,
-;                 instead a link to the data is returned.
 ;     noscale : If present and non-zero, then the output data will not be
 ;                 scaled using the optional BSCALE and BZERO keywords in the 
 ;                 FITS header.   Default is to scale.
@@ -947,19 +941,21 @@ END
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
 ;                 observations or if window_index corresponds to a regular
-;                 dumbbell extension or if NOLOAD has been set.
+;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;                 The keyword is ignored if NO_MASKING is set.
 ;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
 ;                 This keyword is ignored if NO_MASKING is set.
+;     load : Obsoloete and ignored.
 ;
 ; OUTPUT:
 ;     Returns either the data of the window as an array or a link to the data.
 ;-
-FUNCTION spice_data::get_window_data, window_index, noload=noload, noscale=noscale, $
-  no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot
-  ;Returns the data of a window, or the link to the data if keyword noload is set
+FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
+  no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot, $
+  load=load
+  ;Returns the data of a window
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 1 THEN BEGIN
@@ -967,25 +963,20 @@ FUNCTION spice_data::get_window_data, window_index, noload=noload, noscale=nosca
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
 
-  IF ~keyword_set(noload) THEN BEGIN
-    IF keyword_set(noscale) THEN descaled=2 ELSE descaled=1
-    IF (*self.window_descaled)[window_index] EQ descaled THEN BEGIN
-      data = *(*self.window_data)[window_index]
-    ENDIF ELSE BEGIN
-      data = (*(*self.window_assoc)[window_index])[0]
-
-
-      IF ~keyword_set(noscale) THEN data = self.descale_array(data, window_index)
-      (*self.window_descaled)[window_index] = descaled
-      IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
-      (*self.window_data)[window_index] = ptr_new(data)
-
-
-    ENDELSE
+  IF keyword_set(noscale) THEN descaled=2 ELSE descaled=1
+  IF keyword_set(no_masking) THEN masked=0 ELSE $
+    IF keyword_set(approximated_slit) THEN masked=2 ELSE masked=1
+  IF (*self.window_descaled)[window_index] EQ descaled && $
+    (*self.window_masked)[window_index] EQ masked THEN BEGIN
+    data = *(*self.window_data)[window_index]
+  ENDIF ELSE BEGIN
+    data = readfits(self.get_filename(), hdr, noscale=noscale, ext=window_index)
+    (*self.window_descaled)[window_index] = descaled
     IF ~keyword_set(no_masking) THEN $
       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
-  ENDIF ELSE BEGIN
-    data = *(*self.window_assoc)[window_index]
+    (*self.window_masked)[window_index] = masked
+    IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
+    (*self.window_data)[window_index] = ptr_new(data)
   ENDELSE
   return, data
 END
@@ -1086,7 +1077,7 @@ END
 ; Description:
 ;     Descales the array, using BSCALE and BZERO keywords in the header.
 ;     If you get the data from this object via get_window_data() while
-;     setting the keyword 'noload', you will have to call this method yourself.
+;     setting the keyword 'noscale', you will have to call this method yourself.
 ;
 ; INPUTS:
 ;     array : A numeric array, which is returned by SPICE_DATA::get_window_data.
@@ -2323,16 +2314,11 @@ PRO spice_data::read_file, file
   self.file = file
   mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
   self.nwin = hdr.nwin
+  self.next = hdr.nwin
 
-  ; find location of line windows in fits file
-  openr, file_lun, file, /swap_if_little_endian, /get_lun
-  self.file_lun = file_lun
-  position = iris_find_winpos(file_lun, self.nwin-1)
-  assocs = ptrarr(self.nwin)
   headers = ptrarr(self.nwin)
   headers_string = ptrarr(self.nwin)
   wcs = ptrarr(self.nwin)
-  dumbbells = bytarr(self.nwin)
   FOR iwin = 0, self.nwin-1 DO BEGIN
     hdr = headfits(file, exten=iwin)
     headers_string[iwin] = ptr_new(hdr)
@@ -2341,19 +2327,22 @@ PRO spice_data::read_file, file
     wcs[iwin] = ptr_new(fitshead2wcs(hdr))
     IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
     ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
-
-    CASE hdr.BITPIX OF
-      16: assocs[iwin] = ptr_new(assoc(file_lun, intarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
-      -32: assocs[iwin] = ptr_new(assoc(file_lun, fltarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
-      -64: assocs[iwin] = ptr_new(assoc(file_lun, dblarr(hdr.NAXIS1, hdr.NAXIS2, hdr.NAXIS3, hdr.NAXIS4, /NOZERO), position[iwin]))
-      ELSE: message,'unsupported datatype ' + strtrim(string(hdr.BITPIX), 2)
-    ENDCASE
-
   ENDFOR ; iwin = 0, self.nwin-1
   
-  self.window_assoc = ptr_new(assocs)
-  self.window_data = ptr_new(ptrarr(self.nwin))
-  self.window_descaled = ptr_new(bytarr(self.nwin))
+  iwin = self.nwin
+  while 1 do begin
+    hdr = headfits(file, exten=iwin)
+    if size(hdr, /type) ne 7 then break
+    self.next = self.next + 1
+    iwin = iwin + 1
+    headers_string = [headers_string, ptr_new(hdr)]
+    hdr = fitshead2struct(hdr)
+    headers = [headers, ptr_new(hdr)]
+  endwhile
+  
+  self.window_data = ptr_new(ptrarr(self.next))
+  self.window_descaled = ptr_new(bytarr(self.next))
+  self.window_masked = ptr_new(bytarr(self.next))
   self.window_headers = ptr_new(headers)
   self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
@@ -2421,15 +2410,15 @@ PRO spice_data__define
     title: '', $                ; instrument name
     ccd_size: [0,0], $          ; size of the detector, set in init
     nwin: 0, $                  ; number of windows
-    window_assoc: ptr_new(), $  ; pointers to window data in the file using assoc (ptrarr)
+    next: 0, $                  ; number of extensions
     window_data: ptr_new(), $   ; loaded window data (ptrarr)
     window_descaled: ptr_new(), $; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
-    window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one window
-    window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one window
+    window_masked: ptr_new(), $; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
+    window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one extension
+    window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one extension
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    file_lun: 0, $              ; Logical Unit Number of the file
     bintable_columns: ptr_new(), $; Pointer to string array which contains all columns in the binary extension table
     n_bintable_columns: 0}     ; Number of columns in the binary extension table
 END

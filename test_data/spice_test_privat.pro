@@ -95,6 +95,12 @@ PRO spice_test_privat, file_number
   ;window_index = 0
 
 
+  for i=0,20 do begin
+    h = headfits(file, exten=i)
+    help,h
+  endfor
+
+
   obj = spice_object(file)
   obj->show_lines
   ;obj->help
@@ -131,6 +137,7 @@ PRO spice_test_privat, file_number
   ;}
   ;ana = fits2ana(l3_file)
   ;help,ana
+  
   
   l3_file = '/Users/mawiesma/data/spice/level3/2022/04/04/solo_L3_spice-n-ras_20220404T195533_V02_100664048-000.fits'
   root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'
