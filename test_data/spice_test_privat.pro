@@ -95,16 +95,11 @@ PRO spice_test_privat, file_number
   ;window_index = 0
 
 
-  for i=0,20 do begin
-    h = headfits(file, exten=i)
-    help,h
-  endfor
-
-
   obj = spice_object(file)
   obj->show_lines
+  d=obj->get_window_data(0)
   ;obj->help
-  
+  stop
   obj->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
     debug_plot=debug_plot, $
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
@@ -115,7 +110,7 @@ PRO spice_test_privat, file_number
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
   ;xcfit_block,ana=ana
   ;help,ana
-  ;stop
+  stop
 
   ;ana = obj->xcfit_block(window_index)
   ;handle_value, ana.fit_h, fit
@@ -141,7 +136,7 @@ PRO spice_test_privat, file_number
   
   l3_file = '/Users/mawiesma/data/spice/level3/2022/04/04/solo_L3_spice-n-ras_20220404T195533_V02_100664048-000.fits'
   root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'
-  spice_create_l3_images, l3_file, root_dir+'test/'
+  ;spice_create_l3_images, l3_file, root_dir+'test/'
   
   handle_value,ana.result_h,res
   help,res
