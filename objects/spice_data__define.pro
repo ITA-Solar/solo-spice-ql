@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-08 15:01 CEST $
+; $Id: 2022-08-08 15:19 CEST $
 
 
 ;+
@@ -183,7 +183,7 @@ END
 ;     This may take a while. After that, the xcfit_block routine is called with
 ;     the data and the fit, where one can view the result and make adjustments to the fit.
 ;     After exiting xcfit_block by using the 'Exit' button, the routine saves the fits
-;     into a level 3 FITS file and moves this file into the $SPICE_DATA directory.
+;     into a level 3 FITS file and moves this file into the $SPICE_DATA/user/ directory.
 ;     The data cube will be saved in its original untransformed configuration.
 ;
 ; OPTIONAL INPUTS:
@@ -211,6 +211,8 @@ END
 ;     no_widget:  If set, xcfit_block will not be called
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
+;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
+;                     for the official level 3 files.
 ;
 ; OUTPUT:
 ;     The path and name of the Level 3 FITS file.
@@ -218,7 +220,8 @@ END
 ;-
 
 FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, approximated_slit=approximated_slit, $
-                                     no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity
+                                     no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
+                                     official_l3dir=official_l3dir
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
@@ -263,7 +266,8 @@ FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, appr
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 
-  spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, /force
+  spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
+    user_dir=~keyword_set(official_l3dir), /force
   print, 'Level 3 file saved to: ', destination
   return, destination
 END

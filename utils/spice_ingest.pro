@@ -31,6 +31,7 @@
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
 ;      SEARCH_SUBDIR: If set and 'Filename' is a directory, then the program looks for
 ;                     spice files recurrently, i.e. in all subdirectories
+;      USER_DIR: If set, the file(s) will be moved into $SPICE_DATA/user/ instead of $SPICE_DATA/
 ;      HELP:    If set, then a help message is printed.
 ;
 ; OUTPUTS:
@@ -62,12 +63,13 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2021-12-03 11:59 CET $
+; $Id: 2022-08-08 15:19 CEST $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
   search_subdir=search_subdir, $
   destination=destination, file_moved=file_moved, files_found=files_found, $
+  user_dir=user_dir, $
   help=help, debug=debug
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
