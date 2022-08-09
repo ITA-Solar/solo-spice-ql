@@ -51,6 +51,8 @@
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
 ;     NO_TREE_STRUCT: If set, then the tree structure won't be appended to TOP_DIR
 ;               (e.g. TOP_DIR/level2/ instead of TOP_DIR/level2/2020/06/21/)
+;     USER_DIR: If set, the procedure searches in $SPICE_DATA/user/ instead of $SPICE_DATA/.
+;               This keyword is ignored if TOP_DIR is provided.
 ;     SEARCH_SUBDIR: If set then the program looks for spice files recurrently,
 ;               i.e. in all subdirectories
 ;     IGNORE_TIME: If set, TIME_START and TIME_END are ignored, and all files will be
@@ -90,12 +92,12 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-03-31 15:05 CEST $
+; $Id: 2022-08-09 14:34 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
   top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, $
+  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
   search_subdir=search_subdir, ignore_time=ignore_time
 
   count_file = 0
@@ -126,6 +128,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
       print,'               Or specify TOP_DIR. Returning...'
       return,''
     ENDIF
+    IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user') 
   ENDIF ELSE BEGIN
     topdir = top_dir
   ENDELSE
