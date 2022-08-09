@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-08 15:19 CEST $
+; $Id: 2022-08-09 21:30 CEST $
 
 
 ;+
@@ -1862,7 +1862,7 @@ END
 
 ;+
 ; Description:
-;     Returns XCEN in archsec
+;     Returns XCEN in arcsec.
 ;
 ; OPTONAL INPUTS:
 ;     window_index : the index of the window
@@ -1965,28 +1965,28 @@ END
 ;     for all dimensions or just the one specified.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window_index : The index of the window.
 ;
 ; OPTIONAL INPUTS:
-;     pixels : the pixel for which the coordinates should be returned. Values can be
+;     pixels : The pixel for which the coordinates should be returned. Values can be
 ;              outside of the actual data volume and can be floating point numbers.
 ;              Must be either a 4-element vector, or a 2D array of the form (4,n)
 ;              where n is the number of desired pixels.
 ;
 ; OPTIONAL KEYWORDS:
-;     x : if set, only coordinates of first dimension (x-direction) or returned
-;     y : if set, only coordinates of second dimension (y-direction) or returned
-;     lambda : if set, only coordinates of third dimension (wavelength) or returned
-;     time : if set, only coordinates of fourth dimension (time) or returned
+;     x : If set, only coordinates of the first dimension (x-direction) are returned.
+;     y : If set, only coordinates of the second dimension (y-direction) are returned.
+;     lambda : If set, only coordinates of the third dimension (wavelength) are returned.
+;     time : If set, only coordinates of the fourth dimension (time) are returned.
 ;
 ; OUTPUT:
 ;     float array,
-;         scalar: if one pixel is provided and one of the keywords is set
+;         scalar: If one pixel is provided and one of the keywords is set
 ;         1D: - 1 pixel provided, no keywords set (4-element vector)
-;             - several (n) pixels provided, one of the keywords set (n-element vector)
-;         2D: several (n) pixels provided, no keywords set (4 x n array)
-;         4D: no pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
-;         5D: no pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
+;             - Several (n) pixels provided, one of the keywords set (n-element vector)
+;         2D: Several (n) pixels provided, no keywords set (4 x n array)
+;         4D: No pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
+;         5D: No pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;-
 FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambda, time=time
   ;Returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
