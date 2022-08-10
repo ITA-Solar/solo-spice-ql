@@ -51,7 +51,7 @@
 ;
 ; Version     : Version 5, SVHH, 15 July 2022
 ;
-; $Id: 2022-07-15 15:31 CEST $
+; $Id: 2022-08-10 13:38 CEST $
 ;-            
 
 FUNCTION spice_gen_cat::extract_basename,line
@@ -65,9 +65,7 @@ END
 
 
 FUNCTION spice_gen_cat::get_header,filename
-  openr,lun,filename,/get_lun
-  fxhread,lun,header
-  free_lun,lun
+  header = headfits(filename) 
   return,header
 END
 
@@ -231,7 +229,7 @@ END
 PRO spice_gen_cat::execute
   print
   print, "Finding list of files... ", format='(A,$)'
-  self.d.filelist = file_search(self.d.spice_datadir,"*.fits")
+  self.d.filelist = file_search(self.d.spice_datadir,"*.{fits,fits.gz}")
   
   IF self.d.filelist[0] EQ '' THEN BEGIN
      MESSAGE,"No fits files found, exiting"
