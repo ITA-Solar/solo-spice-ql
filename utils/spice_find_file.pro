@@ -91,7 +91,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-08-10 11:17 CEST $
+; $Id: 2022-08-10 12:57 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -146,7 +146,6 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
 
   IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
   IF ~keyword_set(no_level) THEN topdir = concat_dir(topdir, 'level'+strtrim(string(level), 2))
-  file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits*'
 
   time0 = time_start
   IF N_ELEMENTS(time_end) EQ 0 THEN BEGIN
@@ -163,11 +162,23 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
   ENDIF
 
   IF ~keyword_set(no_tree_struct) && ~keyword_set(search_subdir) THEN BEGIN
-    files = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count0)
+    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
+    files1 = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count1)
+    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits.gz'
+    files2 = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count2)
+    count0 = count1 + count2
+    files = []
+    IF count1 GT 0 THEN BEGIN
+      files = [files, files1]
+    ENDIF
+    IF count2 GT 0 THEN BEGIN
+      files = [files, files2]
+    ENDIF
   ENDIF ELSE BEGIN
     IF ~keyword_set(no_tree_struct) THEN paths = ssw_time2paths(time0, time1, topdir) $
     ELSE paths = topdir
 
+    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.{fits,fits.gz}'
     IF keyword_set(search_subdir) THEN BEGIN
       files = file_search(paths, file_pattern, count=count0)
     ENDIF ELSE BEGIN

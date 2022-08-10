@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-09 21:30 CEST $
+; $Id: 2022-08-10 12:57 CEST $
 
 
 ;+
@@ -1288,7 +1288,8 @@ FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value
     variable_values = self.get_bintable_data(keyword, values_only=values_only)
   ENDIF
   
-  result = fxpar(*(*self.window_headers)[extension_index], keyword, missing=missing_value, count=count)
+  result = fxpar(*(*self.window_headers_string)[extension_index], keyword, missing=missing_value, count=count)
+  if size(result, /type) eq 7 then result = result.trim()
 
   exists = count gt 0
   IF exists THEN BEGIN

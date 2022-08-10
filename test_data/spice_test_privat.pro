@@ -1,7 +1,7 @@
 PRO spice_test_privat, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=500
+  IF N_ELEMENTS(file_number) NE 1 then file_number=510
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
@@ -87,6 +87,7 @@ PRO spice_test_privat, file_number
     402: file = '/Users/mawiesma/data/spice/level2/2021/09/14/solo_L2_spice-n-ras_20210914T043532_V04_67109161-000.fits'
     500: file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
     501: file = '/Users/mawiesma/data/spice/level2/2022/04/12/solo_L2_spice-n-exp_20220412T080039_V01_117440593-000.fits' ; single exposure
+    510: file = '/Users/mawiesma/data/spice/user/level2/2022/04/04/solo_L2_spice-n-exp_20220404T150410_V01_100664043-002.fits.gz' ; single exposure
     else: file = ''
   ENDCASE
 
