@@ -51,6 +51,9 @@
 ; RESTRICTIONS:
 ;      The environment variable SPICE_DATA must be defined.
 ;
+; EXAMPLES:
+;      spice_ingest, './'  ; This moves all files from the current directory
+;
 ; HISTORY:
 ;      Ver. 1, 30-Jun-2014, Peter Young
 ;      Ver. 2, 22-Aug-2014, Peter Young
@@ -63,7 +66,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2022-08-09 14:10 CEST $
+; $Id: 2022-08-10 11:07 CEST $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
