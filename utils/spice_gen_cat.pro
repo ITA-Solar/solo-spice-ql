@@ -48,10 +48,12 @@
 ;                          Eliminated many super-slow hash operations
 ;                          Reinstated reuse of old catalog for speed purposes
 ;                          Made REGENERATE=1 by default, with warning about slowness
+;               Version 6, Martin Wiesmann, 10 August 2022
+;                          Reads now also *fits.gz files
 ;
-; Version     : Version 5, SVHH, 15 July 2022
+; Version     : Version 6, SVHH+MW, 10 August 2022
 ;
-; $Id: 2022-08-10 13:38 CEST $
+; $Id: 2022-08-10 13:40 CEST $
 ;-            
 
 FUNCTION spice_gen_cat::extract_basename,line
