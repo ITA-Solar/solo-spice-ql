@@ -152,7 +152,7 @@
 ;       approximated_slit, if set (when slit_only is set) use a quicker way 
 ;       of estimating the pixels to be masked
 ;-
-; $Id: 2022-08-03 17:05 CEST $
+; $Id: 2022-08-10 11:17 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
@@ -189,7 +189,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
       print,'                   Returning...'
       return,-1
     ENDIF
-    d=spice_object(input_file[0])
+    d=spice_data(input_file[0])
     filename=input_file[0]
   ENDIF ELSE BEGIN
     swtch=1

@@ -85,7 +85,7 @@ In general, all functionalities in the heritage routines will be preserved as fa
     obj->help
     ```
 * Routine to read SPICE FITS file into an object (iris_obj)
-    * Done
+    * Done, obsolete, rather use the inbuilt creator `obj = spice_data(spice_file)`
     ```
     obj = spice_object(spice_file)
     obj->help
@@ -179,7 +179,7 @@ spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-04-19 13:09 CEST $
+; $Id: 2022-08-10 11:17 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 

@@ -91,7 +91,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-08-10 11:00 CEST $
+; $Id: 2022-08-10 11:17 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -146,7 +146,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
 
   IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
   IF ~keyword_set(no_level) THEN topdir = concat_dir(topdir, 'level'+strtrim(string(level), 2))
-  file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
+  file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits*'
 
   time0 = time_start
   IF N_ELEMENTS(time_end) EQ 0 THEN BEGIN

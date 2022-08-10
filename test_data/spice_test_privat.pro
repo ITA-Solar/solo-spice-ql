@@ -95,7 +95,7 @@ PRO spice_test_privat, file_number
   ;window_index = 0
 
 
-  obj = spice_object(file)
+  obj = spice_data(file)
   obj->show_lines
   d=obj->get_window_data(0)
   ;obj->help

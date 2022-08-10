@@ -111,7 +111,7 @@ pro spice_generate_l3
     if meta_data[idata].l3_created then continue
     
     print, '    ... Creating level 3 ...'
-    spice_object = spice_object(meta_data[idata].file)
+    spice_object = spice_data(meta_data[idata].file)
     l3_file = spice_object->create_l3_file(meta_data[idata].winno, /no_widget)
     print, '    ... Creating level 3 done ...'
     print, '  '
