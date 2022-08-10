@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-06-24 14:33 CEST $
+; $Id: 2022-08-10 11:00 CEST $
 ;-
 
 
@@ -163,9 +163,10 @@ pro spice_xfiles_searchdir, info
   no_level = ~use_path_prefix[0]
   no_tree_struct = ~use_path_prefix[1]
   search_subdir = use_path_prefix[2]
+  user_dir = use_path_prefix[3]
 
   files = spice_find_file(tstartval, time_end=tstopval, top_dir=top_dir, $
-    no_tree_struct=no_tree_struct, search_subdir=search_subdir, level=level, $
+    no_tree_struct=no_tree_struct, search_subdir=search_subdir, level=level, user_dir=user_dir, $
     no_level=no_level, ignore_time=(*info).ignoretime, /sequence)
   if size(files, /type) ne 7 then files = files.ToArray(dimension=1)
 
@@ -432,17 +433,12 @@ pro spice_xfiles_search_dir, info
   level = strtrim(string(level), 2)
   (*info).filter = 'solo_L' + level + '_spice-*.fits'
   widget_control, (*info).use_path_prefix_bg, get_value=use_path_prefix
-  if use_path_prefix[0] then begin
-    top_dir = top_dir + 'level' + level + dirsep
-  endif
+  if use_path_prefix[3] then top_dir = top_dir + 'user' + dirsep
+  if use_path_prefix[0] then top_dir = top_dir + 'level' + level + dirsep
   (*info).sdir = top_dir
-  if use_path_prefix[1] then begin
-    top_dir = top_dir + 'yyyy' + dirsep + 'mm' + dirsep + 'dd' + dirsep
-  endif
+  if use_path_prefix[1] then top_dir = top_dir + 'yyyy' + dirsep + 'mm' + dirsep + 'dd' + dirsep
   top_dir = top_dir + (*info).filter
-  if use_path_prefix[2] then begin
-    top_dir = top_dir + ' -r'
-  endif
+  if use_path_prefix[2] then top_dir = top_dir + ' -r'
   widget_control, (*info).searchdir, set_value=top_dir
 end
 
@@ -497,7 +493,7 @@ pro spice_xfiles
   if N_ELEMENTS(top_dir_env_var) eq 0 then top_dir_env_var='SPICE_DATA'
   if N_ELEMENTS(dir_manual) eq 0 then dir_manual='./'
   if N_ELEMENTS(level) eq 0 then level=2
-  if N_ELEMENTS(use_path_prefix) eq 0 then use_path_prefix=[1, 1, 0]
+  if N_ELEMENTS(use_path_prefix) ne 4 then use_path_prefix=[1, 1, 0, 0]
 
   sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits'
   dirsep = path_sep()
@@ -554,7 +550,8 @@ pro spice_xfiles
   level_base = widget_base(row4, /row)
   level_choice_droplist = widget_droplist(level_base, value=['Level 0', 'Level 1', 'Level 2', 'Level 3'], title='Data Level')
   widget_control, level_choice_droplist, set_droplist_select=level
-  use_path_prefix_bg = cw_bgroup(level_base, ['Use levelx in path', 'Use Date-tree-structure in path', 'Search subdirectories'], set_value=use_path_prefix, /row, /nonexclusive)
+  use_path_prefix_bg = cw_bgroup(level_base, ['Use levelx in path', 'Use Date-tree-structure in path', 'Search subdirectories', 'Search "user dir"'], $
+    set_value=use_path_prefix, /row, /nonexclusive)
   search_path_base = widget_base(row4, /row)
   searchdir = cw_field(search_path_base, title='Search Directory  ', value = 'blablabladkjfa/adflkja/dlkfja/', /string, xsize = 100, /noedit)
   label = widget_label(search_path_base, value='     ')

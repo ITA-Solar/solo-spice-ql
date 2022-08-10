@@ -4,7 +4,7 @@
 ;
 ; PURPOSE:
 ;     This routine returns the path(s) and name(s) of SPICE raster files that correspond 
-;     to the specified time or lie within a given time window. The logic for what filename(s) is returned is as follows.
+;     to the specified time or lie within a given time window. The logic for what filename(s) is returned is as follows:
 ;
 ;     If only the start time is given, then the file closest to that time is returned or, if SEQUENCE keyword is set, 
 ;     all files with the same SPIOBSID as the file closest to that time are returned.
@@ -51,8 +51,7 @@
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
 ;     NO_TREE_STRUCT: If set, then the tree structure won't be appended to TOP_DIR
 ;               (e.g. TOP_DIR/level2/ instead of TOP_DIR/level2/2020/06/21/)
-;     USER_DIR: If set, the procedure searches in $SPICE_DATA/user/ instead of $SPICE_DATA/.
-;               This keyword is ignored if TOP_DIR is provided.
+;     USER_DIR: If set, the procedure searches in TOP_DIR/user/ instead of TOP_DIR/.
 ;     SEARCH_SUBDIR: If set then the program looks for spice files recurrently,
 ;               i.e. in all subdirectories
 ;     IGNORE_TIME: If set, TIME_START and TIME_END are ignored, and all files will be
@@ -92,7 +91,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-08-09 14:34 CEST $
+; $Id: 2022-08-10 11:00 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -128,7 +127,6 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
       print,'               Or specify TOP_DIR. Returning...'
       return,''
     ENDIF
-    IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user') 
   ENDIF ELSE BEGIN
     topdir = top_dir
   ENDELSE
@@ -146,6 +144,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     ENDELSE
   ENDELSE
 
+  IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
   IF ~keyword_set(no_level) THEN topdir = concat_dir(topdir, 'level'+strtrim(string(level), 2))
   file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
 
