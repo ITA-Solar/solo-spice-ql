@@ -1,4 +1,4 @@
-; $Id: 2020-11-25 21:19 CET $
+; $Id: 2022-08-11 11:17 CEST $
 FUNCTION spice_read_cat, catalog_file
   start_time = systime(1)
   openr, lun, catalog_file, /get_lun
@@ -10,7 +10,7 @@ FUNCTION spice_read_cat, catalog_file
   current_spiobsid = 0
   WHILE NOT eof(lun) DO BEGIN
      readf, lun, t
-     keyword_values = strsplit(/extract, t, string(9b))
+     keyword_values = t.split(string(9b))
      entry = {}
      foreach tag, tags, ix DO entry = create_struct(entry, tag, keyword_values[ix])
      entry.first_raster = ""
