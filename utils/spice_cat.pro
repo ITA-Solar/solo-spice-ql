@@ -3,10 +3,10 @@
 ;                   
 ; Name        : SPICE_CAT
 ;               
-; Purpose     : Interactively search list of files from spice_catalog.txt
+; Purpose     : Interactively search list of files from spice_catalog.csv
 ;               
 ; Explanation : This program allows filtering/sorting/selection of the
-;               contents in spice_catalog.txt in the $SPICE_DATA/ directory
+;               contents in spice_catalog.csv in the $SPICE_DATA/ directory
 ;               (but other paths can be specified, see CATALOG below),
 ;               generated with SPICE_GEN_CAT.
 ;
@@ -16,7 +16,7 @@
 ;    
 ; Inputs      : None required.
 ;               
-; Opt. Inputs : CATALOG: Path to the spice_catalog.txt file to be used
+; Opt. Inputs : CATALOG: Path to the spice_catalog.csv file to be used
 ;               
 ; Outputs     : When used as a function, returns list of selected files if any
 ;               
@@ -25,7 +25,7 @@
 ; Keywords    : KEYWORDS: Comma-separated list of keywords to be displayed in
 ;                         the table. If not supplied, the list is taken from
 ;                         $SPICE_CAT_KEYWORDS. If that is not defined, all
-;                         keywords present in spice_catalog.txt are
+;                         keywords present in spice_catalog.csv are
 ;                         shown. Note that the application can be quite
 ;                         sluggish if many keywords are shown for a long list
 ;                         of files (>1000 files).
@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2020-11-09 14:03 CET $
+; $Id: 2022-08-11 14:50 CEST $
 ;-            
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
@@ -1090,11 +1090,11 @@ FUNCTION spice_cat::parameters, modal=modal, catalog=catalog
   IF NOT keyword_set(catalog) THEN BEGIN
      spice_datadir = getenv("SPICE_DATA")
      IF spice_datadir EQ "" THEN message,"Environment variable SPICE_DATA is blank or not set"
-     catalog = concat_dir(spice_datadir, 'spice_catalog.txt')
+     catalog = concat_dir(spice_datadir, 'spice_catalog.csv')
   END
   
   IF NOT file_test(catalog, /regular) THEN BEGIN
-    message, "No spice_catalog.txt file: " + catalog, /informational
+    message, "No spice_catalog.csv file: " + catalog, /informational
     message, 'Please run spice_gen_cat first to generate the catalog.', /informational
     return, 0
   ENDIF

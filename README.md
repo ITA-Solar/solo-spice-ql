@@ -66,8 +66,8 @@ There are several useful tools to manage SPICE files:
 * SPICE_INGEST: This tool will move your downloaded SPICE FITS files to the appropriate location in your $SPICE_DATA path.
 * SPICE_INGEST_REORDER: This routine can be used to reorder your SPICE files.
 * SPICE_FIND_FILE: This program is also used by SPICE_XFILES. It is a very flexible tool to search for files on your local hard drive.
-* SPICE_CAT: This program allows filtering/sorting/selection of the contents in spice_catalog.txt which contains information about all available (not necessarily locally) SPICE FITS files.
-* SPICE_GEN_CAT: This program creates a file called spice_catalog.txt in the $SPICE_DATA/ directory (but other paths can be specified), with various information on the content of the files found in the directory hierarchy below that path.
+* SPICE_CAT: This program allows filtering/sorting/selection of the contents in spice_catalog.csv which contains information about all available (not necessarily locally) SPICE FITS files.
+* SPICE_GEN_CAT: This program creates files called spice_catalog.txt, spice_catalog.csv and keyword_info.json in the $SPICE_DATA/ directory (but other paths can be specified), with various information on the content of the files found in the directory hierarchy below that path.
 * SPICE_FILE2INFO: This routine takes as input a SPICE filename (or list of files) and extracts information from the filename.
 * SPICE_REMOVE_OLD_FILES: Remove earlier versions of SPICE fits files.
 
@@ -179,7 +179,7 @@ spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-08-10 11:17 CEST $
+; $Id: 2022-08-11 14:50 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
