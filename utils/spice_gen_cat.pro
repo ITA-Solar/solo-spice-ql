@@ -3,9 +3,9 @@
 ;                   
 ; Name        : SPICE_GEN_CAT
 ;               
-; Purpose     : Create/update the spice_catalog.txt file.
+; Purpose     : Create/update the spice_catalog.csv file.
 ;               
-; Explanation : This program creates a file called spice_catalog.txt in the
+; Explanation : This program creates a file called spice_catalog.csv in the
 ;               $SPICE_DATA/ directory (but other paths can be specified),
 ;               with various information on the content of the files found in
 ;               the directory hierarchy below that path.
@@ -51,8 +51,8 @@
 ;
 ; Version     : Version 5, SVHH, 15 July 2022
 ;
-; $Id: 2022-07-15 13:19 CEST $
-;-            
+; $Id: 2022-08-11 15:08 CEST $
+;-           
 
 FUNCTION spice_gen_cat::extract_basename,line
   foreach level, [3, 2, 1, 0] DO BEGIN
