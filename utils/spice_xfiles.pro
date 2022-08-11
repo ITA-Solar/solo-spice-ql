@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-10 14:22 CEST $
+; $Id: 2022-08-11 12:08 CEST $
 ;-
 
 
@@ -431,7 +431,6 @@ pro spice_xfiles_search_dir, info
   if strmid(top_dir, 0,1, /reverse_offset) ne dirsep then top_dir = top_dir+dirsep
   level = widget_info((*info).level_choice_droplist, /droplist_select)
   level = strtrim(string(level), 2)
-  (*info).filter = 'solo_L' + level + '_spice-*.fits'
   widget_control, (*info).use_path_prefix_bg, get_value=use_path_prefix
   if use_path_prefix[3] then top_dir = top_dir + 'user' + dirsep
   if use_path_prefix[0] then top_dir = top_dir + 'level' + level + dirsep
@@ -495,7 +494,7 @@ pro spice_xfiles
   if N_ELEMENTS(level) eq 0 then level=2
   if N_ELEMENTS(use_path_prefix) ne 4 then use_path_prefix=[1, 1, 0, 0]
 
-  sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits'
+  sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits(.gz)'
   dirsep = path_sep()
 
 
