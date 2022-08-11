@@ -10,7 +10,7 @@
 ;               $SPICE_DATA directory.  Below each directory, the files are
 ;               organized by date, e.g. "level2/2021/10/20".  Files no longer
 ;               on the server are removed from the local copy.  The
-;               spice_catalog.txt files are also mirrored.
+;               spice_catalog.txt and spice_catalog.csv files are also mirrored.
 ;
 ; Examples    :	spice_wget_files, '2021/10/20', level=2
 ;
@@ -54,11 +54,17 @@ command0 = 'wget -nH -L -m -erobots=off --user=spice --password=' + pwd + $
 command = command0 + remote_dir + 'spice_catalog.txt'
 print, command
 spawn, command
+command = command0 + remote_dir + 'spice_catalog.csv'
+print, command
+spawn, command
 ;
 ;  Next get the catalog file for the current level.
 ;
 remote_dir = remote_dir + 'level' + level + '/'
 command = command0 + remote_dir + 'spice_catalog.txt'
+print, command
+spawn, command
+command = command0 + remote_dir + 'spice_catalog.csv'
 print, command
 spawn, command
 ;
