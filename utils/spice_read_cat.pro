@@ -1,4 +1,4 @@
-; $Id: 2022-08-11 11:17 CEST $
+; $Id: 2022-08-11 11:18 CEST $
 FUNCTION spice_read_cat, catalog_file
   start_time = systime(1)
   openr, lun, catalog_file, /get_lun
@@ -10,6 +10,7 @@ FUNCTION spice_read_cat, catalog_file
   current_spiobsid = 0
   WHILE NOT eof(lun) DO BEGIN
      readf, lun, t
+     ; strsplit can't be used here, becaues it does not return empty strings.
      keyword_values = t.split(string(9b))
      entry = {}
      foreach tag, tags, ix DO entry = create_struct(entry, tag, keyword_values[ix])
