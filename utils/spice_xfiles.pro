@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-11 12:08 CEST $
+; $Id: 2022-08-17 10:04 CEST $
 ;-
 
 
@@ -170,15 +170,18 @@ pro spice_xfiles_searchdir, info
     no_level=no_level, ignore_time=(*info).ignoretime, /sequence)
   if size(files, /type) ne 7 then files = files.ToArray(dimension=1)
 
-  spice_xfiles_display_results, files, info
+  ptr_free, (*info).filelistall
+  (*info).filelistall = ptr_new(files)
+  spice_xfiles_display_results, info
 end
 
 
 ; displays the found files and sequences
-pro spice_xfiles_display_results, files, info
+pro spice_xfiles_display_results, info
   ;now we search the headers for different runs of OBS to display
   OBSdesc=''
   file2obsmap=0
+  files = (*info).filelistall
   if N_ELEMENTS(files) gt 0 && files[0] ne '' then begin
     file_info = spice_file2info(files)
     file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
@@ -198,8 +201,6 @@ pro spice_xfiles_display_results, files, info
       format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
     OBSdesc = [header, OBSdesc]
   endif else files=''
-  ptr_free, (*info).filelistall
-  (*info).filelistall = ptr_new(files)
   ptr_free, (*info).file2obsmap
   (*info).file2obsmap = ptr_new(file2obsmap)
   widget_control, (*info).foundOBS, set_value = OBSdesc
