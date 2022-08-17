@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-17 11:35 CEST $
+; $Id: 2022-08-17 11:38 CEST $
 ;-
 
 
@@ -183,6 +183,7 @@ end
 ; displays the found files and sequences
 pro spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
   ;now we search the headers for different runs of OBS to display
+  widget_control, /hourglass
   OBSdesc=''
   file2obsmap=0
   purpose = ['All']
