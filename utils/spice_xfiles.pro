@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-17 11:03 CEST $
+; $Id: 2022-08-17 11:35 CEST $
 ;-
 
 
@@ -197,21 +197,49 @@ pro spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit
     for fit=0,N_ELEMENTS(uniqin)-1 do begin
       ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
       if count gt 0 then begin
-        file2obsmap[ind]=fit+1
         mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
         if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
         else hdr=[hdr,hdrtemp]
       endif
     endfor
 
+    ; set all possible filter values (only used when this method is called from spice_xfiles_searchdir
     purpose = [purpose, hdr[uniq(hdr.purpose, sort(hdr.purpose))].purpose]
     studytyp = [studytyp, hdr[uniq(hdr.studytyp, sort(hdr.studytyp))].studytyp]
-    min_slit_wid = min(hdr.slit_wid, max=max_slit_wid)
-    slit_wid = [min_slit_wid, max_slit_wid]
+    slit_wid_min = min(hdr.slit_wid, max=slit_wid_max)
+    slit_wid = [slit_wid_min, slit_wid_max]
 
-    OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, SLIT_WID, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
-      format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
-    OBSdesc = [header, OBSdesc]
+    ; apply display filter
+    widget_control, (*info).display_filter_purpose, get_value=purpose_values
+    purpose_select = widget_info((*info).display_filter_purpose, /droplist_select)
+    purpose_select = purpose_values[purpose_select]
+    widget_control, (*info).display_filter_studytyp, get_value=studytyp_values
+    studytyp_select = widget_info((*info).display_filter_studytyp, /droplist_select)
+    studytyp_select = studytyp_values[studytyp_select]
+    widget_control, (*info).display_filter_slitwid_min, get_value=slit_wid_min
+    widget_control, (*info).display_filter_slitwid_max, get_value=slit_wid_max
+    IF purpose_select NE 'All' then begin
+      ind = where(hdr.purpose eq purpose_select, count)
+      hdr = hdr[ind]
+    ENDIF
+    IF studytyp_select NE 'All' then begin
+      ind = where(hdr.studytyp eq studytyp_select, count)
+      hdr = hdr[ind]
+    ENDIF
+    if count gt 0 then begin
+      ind = where(hdr.slit_wid GE slit_wid_min AND hdr.slit_wid LE slit_wid_max, count)
+      if count gt 0 then begin
+        hdr = hdr[ind]
+        for ihdr=0,count-1 do begin
+          ind = where(file_info.spiobsid eq hdr[ihdr].spiobsid, count)
+          if count gt 0 then file2obsmap[ind]=ihdr+1
+        endfor
+  
+        OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, SLIT_WID, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
+          format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
+        OBSdesc = [header, OBSdesc]
+      endif
+    endif
   endif else files=''
   ptr_free, (*info).file2obsmap
   (*info).file2obsmap = ptr_new(file2obsmap)
@@ -426,6 +454,7 @@ end
 ; event handler for display filter input fields
 pro spice_xfiles_change_display_filter, event
   widget_control, event.top, get_uvalue = info
+  spice_xfiles_display_results, info
 end
 
 
