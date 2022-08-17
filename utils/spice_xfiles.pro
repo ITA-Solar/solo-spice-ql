@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-17 10:04 CEST $
+; $Id: 2022-08-17 11:03 CEST $
 ;-
 
 
@@ -172,16 +172,23 @@ pro spice_xfiles_searchdir, info
 
   ptr_free, (*info).filelistall
   (*info).filelistall = ptr_new(files)
-  spice_xfiles_display_results, info
+  spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
+  widget_control, (*info).display_filter_purpose, set_value=purpose
+  widget_control, (*info).display_filter_studytyp, set_value=studytyp
+  widget_control, (*info).display_filter_slitwid_min, set_value=slit_wid[0]
+  widget_control, (*info).display_filter_slitwid_max, set_value=slit_wid[1]
 end
 
 
 ; displays the found files and sequences
-pro spice_xfiles_display_results, info
+pro spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
   ;now we search the headers for different runs of OBS to display
   OBSdesc=''
   file2obsmap=0
-  files = (*info).filelistall
+  purpose = ['All']
+  studytyp = ['All']
+  slit_wid = [0, 10000]
+  files = *(*info).filelistall
   if N_ELEMENTS(files) gt 0 && files[0] ne '' then begin
     file_info = spice_file2info(files)
     file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
@@ -196,6 +203,11 @@ pro spice_xfiles_display_results, info
         else hdr=[hdr,hdrtemp]
       endif
     endfor
+
+    purpose = [purpose, hdr[uniq(hdr.purpose, sort(hdr.purpose))].purpose]
+    studytyp = [studytyp, hdr[uniq(hdr.studytyp, sort(hdr.studytyp))].studytyp]
+    min_slit_wid = min(hdr.slit_wid, max=max_slit_wid)
+    slit_wid = [min_slit_wid, max_slit_wid]
 
     OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, SLIT_WID, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
       format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
@@ -411,6 +423,12 @@ pro spice_xfiles_change_search, event
 end
 
 
+; event handler for display filter input fields
+pro spice_xfiles_change_display_filter, event
+  widget_control, event.top, get_uvalue = info
+end
+
+
 ; calculate current search direcrory
 pro spice_xfiles_search_dir, info
   widget_control, (*info).top_dir_choice_bg, get_value=top_dir_choice
@@ -473,6 +491,8 @@ pro spice_xfiles
     ;    save, tstartval, tstopval, ignoretime, starttimes, endtimes, $
     ;      top_dir_choice, top_dir_env_var, dir_manual, level, use_path_prefix, $
     ;      filename=SPICE_xfiles_appReadme()+'/spice_xfiles_searches.sav'
+    ; TO BE ADDED
+    ; filter_purpose, filter_studytyp, filter_slitwid = [min,max]
   endif
 
   ; initialize variables, if they don't exist yet
@@ -494,6 +514,9 @@ pro spice_xfiles
   if N_ELEMENTS(dir_manual) eq 0 then dir_manual='./'
   if N_ELEMENTS(level) eq 0 then level=2
   if N_ELEMENTS(use_path_prefix) ne 4 then use_path_prefix=[1, 1, 0, 0]
+  if N_ELEMENTS(filter_purpose) eq 0 then filter_purpose='All'
+  if N_ELEMENTS(filter_studytyp) eq 0 then filter_studytyp='All'
+  if N_ELEMENTS(filter_slitwid) eq 0 then filter_slitwid=[0,10000]
 
   sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits(.gz)'
   dirsep = path_sep()
@@ -559,8 +582,17 @@ pro spice_xfiles
   label = widget_label(search_path_base, value='     ')
   ;searchstopbutton = widget_button(search_path_base, value='Stop Search', event_func='spice_xfiles_stopsearch')
   use_catalog_button = widget_button(search_path_base, value='Use catalog', event_pro='spice_xfiles_use_catalog')
+  
+  ; display filter
+  display_filter_base = widget_base(row4, /row, event_pro='spice_xfiles_change_display_filter')
+  display_filter_label = widget_label(display_filter_base, value='Filter displayed OBS: ')
+  display_filter_purpose = widget_droplist(display_filter_base, value=['All'], title='Purpose')  
+  display_filter_studytyp = widget_droplist(display_filter_base, value=['All'], title='Study Type')
+  display_filter_slitwid_label = widget_label(display_filter_base, value='Slit width:')
+  display_filter_slitwid_min = cw_field(display_filter_base, title='min', value = 0, /integer, /return_events, xsize = 6)
+  display_filter_slitwid_max = cw_field(display_filter_base, title='max', value = 10000, /integer, /return_events, xsize = 6)
 
-
+  ; display results
   foundOBS=widget_list(row4, value='', /frame, xsize = 150 $
     , scr_ysize = 0, units = 2, $
     event_pro = 'spice_xfiles_selectOBS')
@@ -604,6 +636,10 @@ pro spice_xfiles
     level_choice_droplist:level_choice_droplist, $
     use_path_prefix_bg:use_path_prefix_bg, $
     searchdir:searchdir, $
+    display_filter_purpose:display_filter_purpose, $
+    display_filter_studytyp:display_filter_studytyp, $
+    display_filter_slitwid_min:display_filter_slitwid_min, $
+    display_filter_slitwid_max:display_filter_slitwid_max, $
     sdir:'', $
     filelist:ptr_new(), $
     filelistall:ptr_new(), $
