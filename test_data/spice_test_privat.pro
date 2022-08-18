@@ -100,17 +100,20 @@ PRO spice_test_privat, file_number
   obj->show_lines
   d=obj->get_window_data(0)
   ;obj->help
-  stop
-  obj->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-    debug_plot=debug_plot, $
-    DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
-  help,data,lambda,weights,missing
   ;stop
-  badix = where(data ne data, n_bad)
-  IF n_bad GT 0 THEN data[badix] = missing
-  ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
+  ;obj->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+  ;  debug_plot=debug_plot, $
+  ;  DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
+  ;help,data,lambda,weights,missing
+  ;stop
+  ;badix = where(data ne data, n_bad)
+  ;IF n_bad GT 0 THEN data[badix] = missing
+  ;ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
   ;xcfit_block,ana=ana
   ;help,ana
+  
+  ana = obj->mk_analysis(0, /init_all_cubes)
+  
   stop
 
   ;ana = obj->xcfit_block(window_index)

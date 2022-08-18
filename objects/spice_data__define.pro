@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-10 12:57 CEST $
+; $Id: 2022-08-18 13:15 CEST $
 
 
 ;+
@@ -404,20 +404,29 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
     handle_value, ana.fit_h, fit
     n_components = N_TAGS(fit)
     n_params = 0
+    init_values = dblarr(1)
     for itag=0,n_components-1 do begin
       fit_cur = fit.(itag)
       n_params = n_params + N_ELEMENTS(fit_cur.param)
+      for iparam=0,N_ELEMENTS(fit_cur.param)-1 do begin
+        init_values = [init_values, fit_cur.param[iparam].initial]
+      endfor
     endfor
+    init_values = [init_values, missing]
+    init_values = init_values[1:*]
+    
     handle_value, ana.data_h, data
     sdata = size(data)
     if sdata[0] eq 3 then begin
       result = dblarr(n_params+1, sdata[2], sdata[3])
+      for i=0,n_params do result[i,*,*] = init_values[i]
       residual = fltarr(sdata[1], sdata[2], sdata[3])
       include = bytarr(n_components, sdata[2], sdata[3])
       include[*] = 1
       const = bytarr(n_params, sdata[2], sdata[3])
     endif else if sdata[0] eq 4 then begin
       result = dblarr(n_params+1, sdata[2], sdata[3], sdata[4])
+      for i=0,n_params do result[i,*,*,*] = init_values[i]
       residual = fltarr(sdata[1], sdata[2], sdata[3], sdata[4])
       include = bytarr(n_components, sdata[2], sdata[3], sdata[4])
       include[*] = 1
@@ -2396,7 +2405,7 @@ PRO spice_data::read_file, file
   self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
   self.slit_y_range = ptr_new(/allocate)
-  
+
   self.get_bintable_info
 END
 
