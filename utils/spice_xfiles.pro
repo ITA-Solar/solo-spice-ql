@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-18 10:22 CEST $
+; $Id: 2022-08-18 14:25 CEST $
 ;-
 
 
@@ -554,7 +554,7 @@ pro spice_xfiles
   if N_ELEMENTS(top_dir_env_var) eq 0 then top_dir_env_var='SPICE_DATA'
   if N_ELEMENTS(dir_manual) eq 0 then dir_manual='./'
   if N_ELEMENTS(level) eq 0 then level=2
-  if N_ELEMENTS(use_path_prefix) ne 4 then use_path_prefix=[1, 1, 0, 0]
+  if N_ELEMENTS(use_path_prefix) ne 4 then use_path_prefix=[1, 1, 1, 0]
   if N_ELEMENTS(filter_purpose) eq 0 then filter_purpose='All'
   if N_ELEMENTS(filter_studytyp) eq 0 then filter_studytyp='All'
   if N_ELEMENTS(filter_slitwid) eq 0 then filter_slitwid=[0,10000]
@@ -627,8 +627,8 @@ pro spice_xfiles
   ; display filter
   display_filter_base = widget_base(row4, /row, event_pro='spice_xfiles_change_display_filter')
   display_filter_label = widget_label(display_filter_base, value='Filter displayed OBS: ')
-  display_filter_purpose = widget_droplist(display_filter_base, value=['All'], title='Purpose')  
-  display_filter_studytyp = widget_droplist(display_filter_base, value=['All'], title='Study Type')
+  display_filter_purpose = widget_droplist(display_filter_base, value=['All'], title='Purpose', xsize=230)  
+  display_filter_studytyp = widget_droplist(display_filter_base, value=['All'], title='Study Type', xsize=200)
   display_filter_slitwid_label = widget_label(display_filter_base, value='Slit width:')
   display_filter_slitwid_min = cw_field(display_filter_base, title='min', value = 0, /integer, /return_events, xsize = 6)
   display_filter_slitwid_max = cw_field(display_filter_base, title='max', value = 10000, /integer, /return_events, xsize = 6)
