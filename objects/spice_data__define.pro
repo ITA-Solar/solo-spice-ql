@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-18 13:15 CEST $
+; $Id: 2022-08-18 14:25 CEST $
 
 
 ;+
@@ -2212,7 +2212,7 @@ END
 ;     upper : If set, only returns the index of the upper dumbbell
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid window index
+;     2-element vector, or scalar if /lower or /upper is set.
 ;-
 FUNCTION spice_data::get_dumbbells_index, lower=lower, upper=upper
   ;Returns the indices of the windows that contain the dumbbells
