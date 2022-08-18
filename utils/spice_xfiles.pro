@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-17 11:38 CEST $
+; $Id: 2022-08-18 10:22 CEST $
 ;-
 
 
@@ -172,7 +172,7 @@ pro spice_xfiles_searchdir, info
 
   ptr_free, (*info).filelistall
   (*info).filelistall = ptr_new(files)
-  spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
+  spice_xfiles_display_results, info, /newfiles, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
   widget_control, (*info).display_filter_purpose, set_value=purpose
   widget_control, (*info).display_filter_studytyp, set_value=studytyp
   widget_control, (*info).display_filter_slitwid_min, set_value=slit_wid[0]
@@ -181,7 +181,7 @@ end
 
 
 ; displays the found files and sequences
-pro spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
+pro spice_xfiles_display_results, info, newfiles=newfiles, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
   ;now we search the headers for different runs of OBS to display
   widget_control, /hourglass
   OBSdesc=''
@@ -191,24 +191,31 @@ pro spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit
   slit_wid = [0, 10000]
   files = *(*info).filelistall
   if N_ELEMENTS(files) gt 0 && files[0] ne '' then begin
-    file_info = spice_file2info(files)
+    if keyword_set(newfiles) then begin
+      file_info = spice_file2info(files)
+      uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
+      template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', SLIT_WID:0, DSUN_AU:0.0, CROTA:0.0, CRVAL1:0.0, CRVAL2:0.0}
+      for fit=0,N_ELEMENTS(uniqin)-1 do begin
+        ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
+        if count gt 0 then begin
+          mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
+          if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
+          else hdr=[hdr,hdrtemp]
+        endif
+      endfor ; fit=0,N_ELEMENTS(uniqin)-1
+      ptr_free, (*info).filehdr
+      (*info).filehdr = ptr_new(hdr)
+  
+      ; set all possible filter values (only used when this method is called from spice_xfiles_searchdir
+      purpose = [purpose, hdr[uniq(hdr.purpose, sort(hdr.purpose))].purpose]
+      studytyp = [studytyp, hdr[uniq(hdr.studytyp, sort(hdr.studytyp))].studytyp]
+      slit_wid_min = min(hdr.slit_wid, max=slit_wid_max)
+      slit_wid = [slit_wid_min, slit_wid_max]
+    endif else begin ; keyword_set(newfiles)
+      hdr = *(*info).filehdr
+    endelse ; keyword_set(newfiles)
+    hdrall = hdr
     file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
-    uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
-    template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', SLIT_WID:0, DSUN_AU:0.0, CROTA:0.0, CRVAL1:0.0, CRVAL2:0.0}
-    for fit=0,N_ELEMENTS(uniqin)-1 do begin
-      ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
-      if count gt 0 then begin
-        mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
-        if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
-        else hdr=[hdr,hdrtemp]
-      endif
-    endfor
-
-    ; set all possible filter values (only used when this method is called from spice_xfiles_searchdir
-    purpose = [purpose, hdr[uniq(hdr.purpose, sort(hdr.purpose))].purpose]
-    studytyp = [studytyp, hdr[uniq(hdr.studytyp, sort(hdr.studytyp))].studytyp]
-    slit_wid_min = min(hdr.slit_wid, max=slit_wid_max)
-    slit_wid = [slit_wid_min, slit_wid_max]
 
     ; apply display filter
     widget_control, (*info).display_filter_purpose, get_value=purpose_values
@@ -219,29 +226,33 @@ pro spice_xfiles_display_results, info, purpose=purpose, studytyp=studytyp, slit
     studytyp_select = studytyp_values[studytyp_select]
     widget_control, (*info).display_filter_slitwid_min, get_value=slit_wid_min
     widget_control, (*info).display_filter_slitwid_max, get_value=slit_wid_max
+    countp = N_ELEMENTS(hdr)
     IF purpose_select NE 'All' then begin
-      ind = where(hdr.purpose eq purpose_select, count)
+      ind = where(hdr.purpose eq purpose_select, countp)
       hdr = hdr[ind]
     ENDIF
-    IF studytyp_select NE 'All' then begin
-      ind = where(hdr.studytyp eq studytyp_select, count)
-      hdr = hdr[ind]
-    ENDIF
-    if count gt 0 then begin
-      ind = where(hdr.slit_wid GE slit_wid_min AND hdr.slit_wid LE slit_wid_max, count)
-      if count gt 0 then begin
+    IF countp gt 0 THEN BEGIN
+      counts = N_ELEMENTS(hdr)
+      IF studytyp_select NE 'All' then begin
+        ind = where(hdr.studytyp eq studytyp_select, counts)
         hdr = hdr[ind]
-        for ihdr=0,count-1 do begin
-          ind = where(file_info.spiobsid eq hdr[ihdr].spiobsid, count)
-          if count gt 0 then file2obsmap[ind]=ihdr+1
-        endfor
-  
-        OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, SLIT_WID, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
-          format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
-        OBSdesc = [header, OBSdesc]
-      endif
-    endif
-  endif else files=''
+      ENDIF
+      if counts gt 0 then begin
+        ind = where(hdr.slit_wid GE slit_wid_min AND hdr.slit_wid LE slit_wid_max, countsw)
+        if countsw gt 0 then begin
+          hdr = hdr[ind]
+          for ihdr=0,countsw-1 do begin
+            ind = where(hdrall.spiobsid eq hdr[ihdr].spiobsid, countobs)
+            if countobs gt 0 then file2obsmap[ind]=ihdr+1
+          endfor ; ihdr=0,countsw-1
+    
+          OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, SLIT_WID, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
+            format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
+          OBSdesc = [header, OBSdesc]
+        endif ; countsw gt 0
+      endif ; counts gt 0
+    ENDIF ; countp gt 0
+  endif else files='' ; N_ELEMENTS(files) gt 0 && files[0] ne ''
   ptr_free, (*info).file2obsmap
   (*info).file2obsmap = ptr_new(file2obsmap)
   widget_control, (*info).foundOBS, set_value = OBSdesc
@@ -674,6 +685,7 @@ pro spice_xfiles
     filelist:ptr_new(), $
     filelistall:ptr_new(), $
     file2obsmap:ptr_new(), $
+    filehdr:ptr_new(), $
     fileselect:'', $
     foundOBS:foundOBS, $
     foundfiles:foundfiles, $
