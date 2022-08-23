@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-19 15:11 CEST $
+; $Id: 2022-08-23 15:13 CEST $
 ;-
 ;
 ;
@@ -44,7 +44,8 @@ pro spice_xcontrol_l23_destroy, event
 end
 
 pro spice_xcontrol_l23_cleanup, tlb
-  widget_control, tlb, get_uvalue = info
+  widget_control, tlb, get_uvalue=info
+  ; FREE....
   ptr_free,info
 end
 
@@ -55,12 +56,32 @@ pro spice_xcontrol_l23_event, event
 end
 
 
+pro spice_xcontrol_l23_open_l2, event
+  widget_control, event.top, get_uvalue=info
+  spice_xcontrol, (*info).l2_object
+end
 
-pro spice_xcontrol_l23, file, group_leader = group_leader
+
+pro spice_xcontrol_l23_open_l3, event
+  widget_control, event.top, get_uvalue=info
+  widget_control, event.id, get_uvalue=file_info
+  case file_info.l3_type of
+    1: BEGIN
+      ana = ana_l3_official[file_info.winno]
+    END
+    2: print,2
+    3: print,3
+    else: print,'else'
+  endcase
+  xcfit_block, ana=ana[iana], title=strtrim(fxpar(*headers_results[iana], 'EXTNAML2', missing=''), 2)
+end
+
+
+pro spice_xcontrol_l23, file, group_leader=group_leader
 
   file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
   if n_params() lt 1 then begin
-    message,'spice_xcontrol_l23, file [, group_leader = group_leader]',/cont
+    message,'spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
     ;  return
   endif
 
@@ -102,51 +123,50 @@ pro spice_xcontrol_l23, file, group_leader = group_leader
   IF l2_exist THEN BEGIN
     l2_object = spice_data(file_l2)
     nwin = l2_object->get_number_windows()
-  ENDIF
+  ENDIF ELSE l2_object=0
   IF l3_official_exist THEN BEGIN
-    hdr = headfits(file_l3_official, exten=0)
-    nwin_l3_official = fxpar(hdr, 'NWIN', 0)
+    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official)
+    nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', 0)
+    if nwin eq 0 then nwin = fxpar(*hdr_l3_official[0], 'L2NWIN', 0)
     if nwin eq 0 then nwin = nwin_l3_official
-    hdr_l3_official = ptrarr(nwin_l3_official)
-    hdr_l3_official[0] = ptr_new(hdr)
-    FOR iwin=1,nwin_l3_official-1 DO BEGIN
-      hdr = headfits(file_l3_official, exten=iwin*7)
-      hdr_l3_official[iwin] = ptr_new(hdr)
-    ENDFOR
-  ENDIF
+  ENDIF ELSE BEGIN
+    nwin_l3_official = 0
+    ana_l3_official = 0
+    hdr_l3_official = 0
+  ENDELSE
   IF l3_user_exist THEN BEGIN
-    hdr = headfits(file_l3_user, exten=0)
-    nwin_l3_user = fxpar(hdr, 'NWIN', 0)
-    if nwin lt nwin_l3_user then nwin = nwin_l3_user
-    hdr_l3_user = ptrarr(nwin_l3_user)
-    hdr_l3_user[0] = ptr_new(hdr)
-    FOR iwin=1,nwin_l3_user-1 DO BEGIN
-      hdr = headfits(file_l3_user, exten=iwin*7)
-      hdr_l3_user[iwin] = ptr_new(hdr)
-    ENDFOR
-  ENDIF
+    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user)
+    nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', 0)
+    if nwin eq 0 then nwin = fxpar(*hdr_l3_user[0], 'L2NWIN', 0)
+    if nwin eq 0 then nwin = nwin_l3_user
+  ENDIF ELSE BEGIN
+    nwin_l3_user = 0
+    ana_l3_user = 0
+    hdr_l3_user = 0
+  ENDELSE
   IF l3_other_exist THEN BEGIN
-    hdr = headfits(file_l3_other, exten=0)
-    nwin_l3_other = fxpar(hdr, 'NWIN', 0)
-    if nwin lt nwin_l3_other then nwin = nwin_l3_other
-    hdr_l3_other = ptrarr(nwin_l3_other)
-    hdr_l3_other[0] = ptr_new(hdr)
-    FOR iwin=1,nwin_l3_other-1 DO BEGIN
-      hdr = headfits(file_l3_other, exten=iwin*7)
-      hdr_l3_other[iwin] = ptr_new(hdr)
-    ENDFOR
-  ENDIF
+    ana_l3_other = fits2ana(file_l3_other, headers_results=hdr_l3_other)
+    nwin_l3_other = fxpar(*hdr_l3_other[0], 'NWIN', 0)
+    if nwin eq 0 then nwin = fxpar(*hdr_l3_other[0], 'L2NWIN', 0)
+    if nwin eq 0 then nwin = nwin_l3_other
+  ENDIF ELSE BEGIN
+    nwin_l3_other = 0
+    ana_l3_other = 0
+    hdr_l3_other = 0
+  ENDELSE
 
   tlb = widget_base(/column, mbar=menubar, $
     title='SPICE_Xcontrol_L23 - '+file, $
     xoffset=50, yoffset=50, group_leader=group_leader, /tlb_kill_request_events)
 
   win_base = widget_base(tlb, /grid_layout, row=nwin+1, /frame)
-  
+
   base_l2 = widget_base(win_base, /column, /frame)
   label = widget_label(base_l2, value='LEVEL 2')
   label = widget_label(base_l2, value=(file_dirname(file_l2))[0])
   label = widget_label(base_l2, value=(file_basename(file_l2))[0])
+  button = widget_button(base_l2, value='Open file', event_pro='spice_xcontrol_l23_open_l2', $
+    sensitive=l2_exist)
 
   base_l3_official = widget_base(win_base, /column, /frame)
   label = widget_label(base_l3_official, value='LEVEL 3 - official')
@@ -175,23 +195,49 @@ pro spice_xcontrol_l23, file, group_leader = group_leader
     win_base_l3_official = widget_base(win_base, /column, /frame)
     IF l3_official_exist THEN BEGIN
       label = widget_label(win_base_l3_official, value='win_base_l3_official')
+      button = widget_button(win_base_l3_official, value='Open window', event_pro='spice_xcontrol_l23_open_l3', $
+        uvalue={l3_type:1, winno:iwin})
     ENDIF
 
     win_base_l3_user = widget_base(win_base, /column, /frame)
     IF l3_user_exist THEN BEGIN
       label = widget_label(win_base_l3_user, value='win_base_l3_user')
+      button = widget_button(win_base_l3_official, value='Open window', event_pro='spice_xcontrol_l23_open_l3', $
+        uvalue={l3_type:2, winno:iwin})
     ENDIF
 
     IF l3_other_exist THEN BEGIN
       win_base_l3_other = widget_base(win_base, /column, /frame)
       label = widget_label(win_base_l3_other, value='win_base_l3_other')
+      button = widget_button(win_base_l3_official, value='Open window', event_pro='spice_xcontrol_l23_open_l3', $
+        uvalue={l3_type:3, winno:iwin})
     ENDIF
   ENDFOR
 
 
   ; Define the info structure, used to send information around
   info= { $
-    tlb:tlb $
+    tlb:tlb, $
+    file_in:file_in, $
+    l2_exist:l2_exist, $
+    l3_official_exist:l3_official_exist, $
+    l3_user_exist:l3_user_exist, $
+    l3_other_exist:l3_other_exist, $
+    file_l2:file_l2, $
+    file_l3_official:file_l3_official, $
+    file_l3_user:file_l3_user, $
+    file_l3_other:file_l3_other, $
+    l2_object:l2_object, $
+    ana_l3_official:ana_l3_official, $
+    ana_l3_user:ana_l3_user, $
+    ana_l3_other:ana_l3_other, $
+    nwin:nwin, $
+    nwin_l3_official:nwin_l3_official, $
+    nwin_l3_user:nwin_l3_user, $
+    nwin_l3_other:nwin_l3_other, $
+    hdr_l3_official:hdr_l3_official, $
+    hdr_l3_user:hdr_l3_user, $
+    hdr_l3_other:hdr_l3_other $
   }
   info=ptr_new(info,/no_copy)
 
@@ -202,6 +248,6 @@ pro spice_xcontrol_l23, file, group_leader = group_leader
   widget_control, tlb, /realize
 
   xmanager, 'spice_xcontrol_l23', tlb, /no_block, $
-    group_leader = group_leader, cleanup = 'spice_xcontrol_l23_cleanup'
+    group_leader=group_leader, cleanup='spice_xcontrol_l23_cleanup'
 
 end
