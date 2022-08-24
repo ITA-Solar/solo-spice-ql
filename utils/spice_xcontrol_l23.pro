@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-24 10:59 CEST $
+; $Id: 2022-08-24 11:50 CEST $
 ;-
 ;
 ;
@@ -75,6 +75,18 @@ pro spice_xcontrol_l23_open_l3, event
   endcase
   xcfit_block, ana=ana[iana], title=strtrim(fxpar(*headers_results[iana], 'EXTNAML2', missing=''), 2)
 end
+
+
+pro spice_xcontrol_l23_create_l3, event
+  widget_control, event.top, get_uvalue=info
+end
+
+
+pro spice_xcontrol_l23_create_l3_window, event
+  widget_control, event.top, get_uvalue=info
+end
+
+
 
 
 pro spice_xcontrol_l23, file, group_leader=group_leader
@@ -134,6 +146,10 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', 0)
     if nwin eq 0 then nwin = fxpar(*hdr_l3_official[0], 'L2NWIN', 0)
     if nwin eq 0 then nwin = nwin_l3_official
+    winno_l3_official = intarr(nwin_l3_official)
+    FOR iwin=0,nwin_l3_official-1 DO BEGIN
+      winno_l3_official[iwin] = fxpar(*hdr_l3_official[iwin], 'L2WINNO', -1)
+    ENDFOR
   ENDIF ELSE BEGIN
     IF l2_exist THEN BEGIN
       file_l3_official = file_l3_calc
@@ -217,14 +233,30 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   button = widget_button(base_l3_official, value='(Re)create file', event_pro='spice_xcontrol_l23_create_l3', $
     sensitive=l2_exist, uvalue={l3_type:1})
 
+  l3_official_state = make_array(nwin, value={l3_winno:-1, edited:0b, title_label:0L, status_label:0L, edit_button:0L})
   FOR iwin=0,nwin-1 DO BEGIN
 
     win_base_l3_official = widget_base(win_base, /column, /frame)
     IF l3_official_exist THEN BEGIN
+      ind = where(winno_l3_official eq iwin, count)
+      IF count GT 0 THEN BEGIN
+        win_created = 1
+        l3_official_state[iwin].l3_winno=ind[0]
+        title = fxpar(*hdr_l3_official[ind[0]], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+        status = 'CREATED'
+      ENDIF ELSE BEGIN
+        win_created = 0
+        title = ''
+        status = 'NOT CREATED'
+      ENDELSE
     ENDIF
-    label = widget_label(win_base_l3_official, value='win_base_l3_official')
-    button = widget_button(win_base_l3_official, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
-      uvalue={l3_type:1, winno:iwin})
+    l3_official_state[iwin].title_label = widget_label(win_base_l3_official, value=title)
+    l3_official_state[iwin].status_label = widget_label(win_base_l3_official, value=status, /align_left)
+    button_base = widget_base(win_base_l3_official, /row)
+    l3_official_state[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
+      sensitive=win_created, uvalue={l3_type:1, winno:iwin})
+    create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3_window', $
+      sensitive=l2_exist, uvalue={l3_type:1, winno:iwin})
 
   ENDFOR
 
@@ -292,7 +324,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_other:nwin_l3_other, $
     hdr_l3_official:hdr_l3_official, $
     hdr_l3_user:hdr_l3_user, $
-    hdr_l3_other:hdr_l3_other $
+    hdr_l3_other:hdr_l3_other, $
+    l3_official_state:l3_official_state $
   }
   info=ptr_new(info,/no_copy)
 
