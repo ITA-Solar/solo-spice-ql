@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-24 11:50 CEST $
+; $Id: 2022-08-25 09:30 CEST $
 ;-
 ;
 ;
@@ -79,6 +79,8 @@ end
 
 pro spice_xcontrol_l23_create_l3, event
   widget_control, event.top, get_uvalue=info
+  widget_control, (*info).l3_official_state[0].title_label, set_value='adsfasdfasdfadf'
+  print,'adsfasdf'
 end
 
 
@@ -92,6 +94,8 @@ end
 pro spice_xcontrol_l23, file, group_leader=group_leader
 
   file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+  file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
+
   if n_params() lt 1 then begin
     message,'spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
     ;  return
@@ -208,9 +212,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ; Column Level 2 file
 
   base_l2 = widget_base(win_base, /column, /frame)
-  label = widget_label(base_l2, value='LEVEL 2')
-  label = widget_label(base_l2, value=(file_dirname(file_l2))[0])
-  label = widget_label(base_l2, value=(file_basename(file_l2))[0])
+  label = widget_label(base_l2, value='LEVEL 2', /align_center)
+  label = widget_label(base_l2, value=(file_dirname(file_l2))[0], /align_center)
+  label = widget_label(base_l2, value=(file_basename(file_l2))[0], /align_center)
   button = widget_button(base_l2, value='Open file', event_pro='spice_xcontrol_l23_open_l2', $
     sensitive=l2_exist)
 
@@ -218,7 +222,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
     win_base_l2 = widget_base(win_base, /column, /frame)
     IF l2_exist THEN BEGIN
-      label = widget_label(win_base_l2, value=l2_object->get_window_id(iwin))
+      label = widget_label(win_base_l2, value=l2_object->get_window_id(iwin), /align_left)
     ENDIF
 
   ENDFOR
@@ -227,9 +231,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ; Column Level 3 - official file
 
   base_l3_official = widget_base(win_base, /column, /frame)
-  label = widget_label(base_l3_official, value='LEVEL 3 - official')
-  label = widget_label(base_l3_official, value=(file_dirname(file_l3_official))[0])
-  label = widget_label(base_l3_official, value=(file_basename(file_l3_official))[0])
+  label = widget_label(base_l3_official, value='LEVEL 3 - official', /align_center)
+  label = widget_label(base_l3_official, value=(file_dirname(file_l3_official))[0], /align_center)
+  label = widget_label(base_l3_official, value=(file_basename(file_l3_official))[0], /align_center)
   button = widget_button(base_l3_official, value='(Re)create file', event_pro='spice_xcontrol_l23_create_l3', $
     sensitive=l2_exist, uvalue={l3_type:1})
 
@@ -237,6 +241,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   FOR iwin=0,nwin-1 DO BEGIN
 
     win_base_l3_official = widget_base(win_base, /column, /frame)
+    win_created = 0
+    title = ''
+    status = 'NOT CREATED'
     IF l3_official_exist THEN BEGIN
       ind = where(winno_l3_official eq iwin, count)
       IF count GT 0 THEN BEGIN
@@ -244,14 +251,10 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
         l3_official_state[iwin].l3_winno=ind[0]
         title = fxpar(*hdr_l3_official[ind[0]], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
         status = 'CREATED'
-      ENDIF ELSE BEGIN
-        win_created = 0
-        title = ''
-        status = 'NOT CREATED'
-      ENDELSE
+      ENDIF
     ENDIF
-    l3_official_state[iwin].title_label = widget_label(win_base_l3_official, value=title)
-    l3_official_state[iwin].status_label = widget_label(win_base_l3_official, value=status, /align_left)
+    l3_official_state[iwin].title_label = widget_label(win_base_l3_official, value=title, /DYNAMIC_RESIZE, /align_left)
+    l3_official_state[iwin].status_label = widget_label(win_base_l3_official, value=status, /DYNAMIC_RESIZE, /align_left)
     button_base = widget_base(win_base_l3_official, /row)
     l3_official_state[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
       sensitive=win_created, uvalue={l3_type:1, winno:iwin})
