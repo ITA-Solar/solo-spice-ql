@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-18 14:25 CEST $
+; $Id: 2022-08-25 13:48 CEST $
 
 
 ;+
@@ -195,6 +195,8 @@ END
 ;                 calculated/estimated within the procedure 'generate_adef'.
 ;                 This input is ignored if /POSITION is set.
 ;                 Default is zero.
+;     TOP_DIR : A path to a directory in which the file should be saved. The necessary subdirectories
+;                 will be created (e.g. level2/2020/06/21).
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -221,7 +223,7 @@ END
 
 FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, approximated_slit=approximated_slit, $
                                      no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
-                                     official_l3dir=official_l3dir
+                                     official_l3dir=official_l3dir, top_dir=top_dir
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
@@ -267,7 +269,7 @@ FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, appr
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 
   spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
-    user_dir=~keyword_set(official_l3dir), /force
+    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, /force
   print, 'Level 3 file saved to: ', destination
   return, destination
 END

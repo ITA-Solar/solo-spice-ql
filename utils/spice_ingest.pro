@@ -22,6 +22,8 @@
 ;      Index:   If $SPICE_DATA contains multiple paths, then this
 ;               keyword allows you to specify to which path you send
 ;               the file. Default is 0.
+;      TOP_DIR: A path to a directory in which the file should be saved. The necessary subdirectories
+;               will be created (e.g. level2/2020/06/21).
 ;
 ; KEYWORDS:
 ;      FORCE:   By default the routine will not overwrite a file that
@@ -66,13 +68,13 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2022-08-10 11:07 CEST $
+; $Id: 2022-08-25 13:48 CEST $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
   search_subdir=search_subdir, $
   destination=destination, file_moved=file_moved, files_found=files_found, $
-  user_dir=user_dir, $
+  user_dir=user_dir, top_dir=top_dir, $
   help=help, debug=debug
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
@@ -83,13 +85,22 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     print,''
     return
   ENDIF
-  
-  topdir=getenv('SPICE_DATA')
-  IF topdir EQ '' THEN BEGIN
-    print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
-      print,'               top level of your directory structure. Returning...'
-    return
-  ENDIF
+
+  IF keyword_set(top_dir) THEN BEGIN
+    IF N_ELEMENTS(top_dir) NE 1 || size(top_dir, /type) NE 7 THEN BEGIN
+      print, 'top_dir must be a scalar string.'
+      print, 'No files moved.'
+      return
+    ENDIF
+    topdir = top_dir
+  ENDIF ELSE BEGIN ; keyword_set(top_dir)
+    topdir=getenv('SPICE_DATA')
+    IF topdir EQ '' THEN BEGIN
+      print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
+        print,'               top level of your directory structure. Returning...'
+      return
+    ENDIF
+  ENDELSE ; keyword_set(top_dir)
 
   spice_paths=BREAK_path(topdir,/nocurrent)
   np=n_elements(spice_paths)
@@ -114,7 +125,7 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     IF n_params() LT 1 THEN return
   ENDIF
 
-  IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user') 
+  IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
 
   nfiles=n_elements(filename)
   IF nfiles GT 1 THEN BEGIN
@@ -132,7 +143,7 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
       ENDIF ; nfiles EQ 0
       IF nfiles GT 1 THEN files = files[sort(files)]
     ENDIF ELSE BEGIN ; file_test(filename, /directory)
-      files = filename      
+      files = filename
     ENDELSE ; file_test(filename, /directory)
   ENDELSE ; nfiles GT 1
 
