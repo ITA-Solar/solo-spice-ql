@@ -35,6 +35,8 @@
 ;                     spice files recurrently, i.e. in all subdirectories
 ;      USER_DIR: If set, the file(s) will be moved into $SPICE_DATA/user/ instead of $SPICE_DATA/
 ;      HELP:    If set, then a help message is printed.
+;      DRY_RUN: If set, the file won't be moved, no directories will be created. The optional outputs
+;               will be the same as if this keyword was not set.
 ;
 ; OUTPUTS:
 ;      Moves the SPICE file(s) into the correct location in the local
@@ -68,7 +70,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2022-08-26 13:22 CEST $
+; $Id: 2022-08-26 13:26 CEST $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
@@ -172,13 +174,10 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
       IF ~file_test(outdir, /directory) && ~keyword_set(dry_run) THEN BEGIN
         file_mkdir, outdir
       ENDIF
-      if ~keyword_set(dry_run) then begin
-        file_move,files[ifiles], outdir, /overwrite
-        file_moved[ifiles] = 1
-      endif
+      if ~keyword_set(dry_run) then file_move,files[ifiles], outdir, /overwrite
+      file_moved[ifiles] = 1
       destination[ifiles] = concat_dir(outdir, file_info.filename)
     ENDIF ELSE BEGIN
-      if keyword_set(dry_run) then destination[ifiles] = concat_dir(outdir, file_info.filename)
       print,'% SPICE_INGEST: file '+file_info.filename+' was not moved '
       print,'               as it already exists in the data directory.'
       print,'               Use the keyword /FORCE to overwrite the existing file.'
