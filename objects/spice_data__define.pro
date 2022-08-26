@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-25 13:48 CEST $
+; $Id: 2022-08-26 14:28 CEST $
 
 
 ;+
@@ -127,9 +127,9 @@ END
 
 ;+
 ; Description:
-;     This routine calls xcfit_block with the data of the chosen window. The data is arranged 
-;     so that xcfit_block can read it. The routine also estimates the positions of the main peaks 
-;     and adds fit components to the analysis structure. After exiting xcfit_block 
+;     This routine calls xcfit_block with the data of the chosen window. The data is arranged
+;     so that xcfit_block can read it. The routine also estimates the positions of the main peaks
+;     and adds fit components to the analysis structure. After exiting xcfit_block
 ;     by using the 'Exit' button, the routine returns the analysis structure.
 ;
 ; OPTIONAL INPUTS:
@@ -141,7 +141,7 @@ END
 ;                 calculated/estimated within the procedure 'generate_adef'.
 ;                 This input is ignored if /POSITION is set.
 ;                 Default is zero.
-; 
+;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
@@ -166,7 +166,7 @@ function spice_data::xcfit_block, window_index, no_masking=no_masking, approxima
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
   ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity)
   if size(ana, /type) EQ 8 then begin
-    XCFIT_BLOCK, ana=ana    
+    XCFIT_BLOCK, ana=ana
   endif else begin
     print, 'Something went wrong when trying to produce an ANA structure.
   endelse
@@ -215,6 +215,12 @@ END
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
 ;                     for the official level 3 files.
+;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
+;                 level 3 FITS file, if it would have been saved.
+;
+; OPTIONAL OUTPUTS:
+;     all_ana:    Array of ana structure, number of elements is the same as number of windows in the FITS file.
+;     all_result_headers: A pointer array, containing the headers of the results extensions as string arrays.
 ;
 ; OUTPUT:
 ;     The path and name of the Level 3 FITS file.
@@ -222,12 +228,18 @@ END
 ;-
 
 FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, approximated_slit=approximated_slit, $
-                                     no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
-                                     official_l3dir=official_l3dir, top_dir=top_dir
+  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
+  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
+  all_ana=all_ana, all_result_headers=all_result_headers
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
+  IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
+  IF ARG_PRESENT(all_result_headers) THEN BEGIN
+    all_result_headers = ptrarr(N_ELEMENTS(window_index))
+    collect_hdr=1
+  ENDIF ELSE collect_hdr=0
 
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
@@ -258,19 +270,27 @@ FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, appr
       original_data=original_data)
 
     if iwindow eq 0 then file = filepath(filename_l3, /tmp)
-    writefits, file, RESULT, *headers[0], append=extension
-    writefits, file, original_data, *headers[1], /append
-    writefits, file, LAMBDA, *headers[2], /append
-    writefits, file, RESIDUAL, *headers[3], /append
-    writefits, file, WEIGHTS, *headers[4], /append
-    writefits, file, INCLUDE, *headers[5], /append
-    writefits, file, CONST, *headers[6], /append
+    IF ~keyword_set(save_not) THEN BEGIN
+      writefits, file, RESULT, *headers[0], append=extension
+      writefits, file, original_data, *headers[1], /append
+      writefits, file, LAMBDA, *headers[2], /append
+      writefits, file, RESIDUAL, *headers[3], /append
+      writefits, file, WEIGHTS, *headers[4], /append
+      writefits, file, INCLUDE, *headers[5], /append
+      writefits, file, CONST, *headers[6], /append
+    ENDIF
+
+    IF collect_ana THEN BEGIN
+      if iwindow eq 0 then all_ana = ana $
+      else all_ana = [all_ana, ana]
+    ENDIF
+    IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 
   spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
-    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, /force
-  print, 'Level 3 file saved to: ', destination
+    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, /force, dry_run=keyword_set(save_not)
+  IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
   return, destination
 END
 
@@ -387,7 +407,7 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-  
+
   self->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
     debug_plot=debug_plot, $
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
@@ -401,7 +421,7 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   IF n_bad GT 0 THEN data[badix] = missing
 
   ana = mk_analysis(LAMbda, DAta, WeighTS, adef, MISSing)
-  
+
   if keyword_set(init_all_cubes) then begin
     handle_value, ana.fit_h, fit
     n_components = N_TAGS(fit)
@@ -416,7 +436,7 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
     endfor
     init_values = [init_values, missing]
     init_values = init_values[1:*]
-    
+
     handle_value, ana.data_h, data
     sdata = size(data)
     if sdata[0] eq 3 then begin
@@ -938,7 +958,7 @@ END
 
 ;+
 ; Description:
-;     Returns the data of the specified window. 
+;     Returns the data of the specified window.
 ;     Pixels below and above the slit are set to NaN in the returned array, except if
 ;     'no_masking' is set.
 ;
@@ -947,7 +967,7 @@ END
 ;
 ; KEYWORD PARAMETERS:
 ;     noscale : If present and non-zero, then the output data will not be
-;                 scaled using the optional BSCALE and BZERO keywords in the 
+;                 scaled using the optional BSCALE and BZERO keywords in the
 ;                 FITS header.   Default is to scale.
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
@@ -1003,7 +1023,7 @@ END
 ;+
 ; Description:
 ;     Returns the data of the specified window and exposure index. If 'noscale' keyword is set,
-;     the output data will not be scaled using the optional BSCALE and BZERO keywords in the 
+;     the output data will not be scaled using the optional BSCALE and BZERO keywords in the
 ;     FITS header.
 ;     The exposure index is in the first dimension of the 4D cube in case the study type is 'Raster',
 ;     and in the fourth dimension if study type is 'Sit-and-stare'.
@@ -1016,7 +1036,7 @@ END
 ;
 ; KEYWORD PARAMETERS:
 ;     noscale : If present and non-zero, then the output data will not be
-;                 scaled using the optional BSCALE and BZERO keywords in the 
+;                 scaled using the optional BSCALE and BZERO keywords in the
 ;                 FITS header.   Default is to scale.
 ;     debin : If set, the image will be expanded if binning is GT 1, and data values
 ;             will be divided by the binning value.
@@ -1251,9 +1271,9 @@ END
 
 ;+
 ; Description:
-;     This method returns the specified keyword from the given extension, if the keyword does not exist 
-;     'missing_value' is returned if it is provided, !NULL otherwise. This method can also return 
-;     the variable values of a keyword, if it is available in the binary table extension. 
+;     This method returns the specified keyword from the given extension, if the keyword does not exist
+;     'missing_value' is returned if it is provided, !NULL otherwise. This method can also return
+;     the variable values of a keyword, if it is available in the binary table extension.
 ;     See keyword VARIABLE_VALUES.
 ;
 ; INPUTS:
@@ -1298,7 +1318,7 @@ FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value
   IF ARG_PRESENT(variable_values) THEN BEGIN
     variable_values = self.get_bintable_data(keyword, values_only=values_only)
   ENDIF
-  
+
   result = fxpar(*(*self.window_headers_string)[extension_index], keyword, missing=missing_value, count=count)
   if size(result, /type) eq 7 then result = result.trim()
 
@@ -1341,7 +1361,7 @@ END
 ;-
 FUNCTION spice_data::get_header, extension_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
   structure=structure
-  ;Returns the header of the given extension as a string array or a structure 
+  ;Returns the header of the given extension as a string array or a structure
   COMPILE_OPT IDL2
 
   IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower)
@@ -2288,7 +2308,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
     ind = where((*self.bintable_columns).ttype eq ttypes_up[i], count)
     IF count GT 0 && self.n_bintable_columns GT 0 THEN BEGIN
       ind=ind[0]
-      
+
       IF ~ptr_valid((*self.bintable_columns)[ind].values) THEN BEGIN
         ;load column values
         IF ~file_open THEN BEGIN
@@ -2298,7 +2318,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
         data = !NULL
         FXBREAD, unit, data, ttypes_up[i]
         (*self.bintable_columns)[ind].values = ptr_new(data)
-      
+
         hdr = fxbheader(unit)
         col_num = strtrim(string(fxbcolnum(unit, ttypes_up[i])), 2)
         (*self.bintable_columns)[ind].wcsn = strtrim(fxpar(hdr, 'WCSN'+col_num, missing=''), 2)
@@ -2323,18 +2343,18 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
         ENDIF
         (*self.bintable_columns)[ind].tunit = tunit
         (*self.bintable_columns)[ind].tunit_desc = tunit_desc
-        
+
       ENDIF ; ~ptr_valid((*self.bintable_columns)[ind].values)
       result[i] = (*self.bintable_columns)[ind]
-      
+
     ENDIF ELSE BEGIN ; count GT 0 && self.n_bintable_columns GT 0
       result[i].ttype = ttypes[i]
-      
+
     ENDELSE ; count GT 0 && self.n_bintable_columns GT 0
   ENDFOR ; i=0,N_ELEMENTS(ttypes_up)-1
-  
+
   IF file_open THEN FXBCLOSE, unit
-  
+
   IF keyword_set(values_only) && N_ELEMENTS(ttypes) EQ 1 THEN BEGIN
     IF ptr_valid(result.values) THEN BEGIN
       result = *result.values
@@ -2342,7 +2362,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
       result = !NULL
     ENDELSE
   ENDIF
-  
+
   return, result
 END
 
@@ -2388,7 +2408,7 @@ PRO spice_data::read_file, file
     IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
     ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
   ENDFOR ; iwin = 0, self.nwin-1
-  
+
   iwin = self.nwin
   while 1 do begin
     hdr = headfits(file, exten=iwin)
@@ -2399,7 +2419,7 @@ PRO spice_data::read_file, file
     hdr = fitshead2struct(hdr)
     headers = [headers, ptr_new(hdr)]
   endwhile
-  
+
   self.window_data = ptr_new(ptrarr(self.next))
   self.window_descaled = ptr_new(bytarr(self.next))
   self.window_masked = ptr_new(bytarr(self.next))
@@ -2435,7 +2455,7 @@ END
 ;-
 PRO spice_data::get_bintable_info
   COMPILE_OPT IDL2
-  
+
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
     extension:'', values:ptr_new()}
 
