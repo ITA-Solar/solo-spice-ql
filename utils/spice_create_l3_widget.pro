@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-26 14:44 CEST $
+; $Id: 2022-08-26 17:11 CEST $
 ;-
 ;
 ;
@@ -52,8 +52,8 @@ pro spice_create_l3_widget_event, event
       widget_control, info.lineselect, get_value = lineselect
       help,lineselect
       print,lineselect
-      window_indices = where(lineselect eq 1, count)
-      print,window_indices
+      window_index = where(lineselect eq 1, count)
+      print,window_index
       if count eq 0 then begin
         box_message,'You need to select at least one window/line'
         return
@@ -71,14 +71,17 @@ pro spice_create_l3_widget_event, event
       official_l3dir = user_dir[0] EQ 0
       widget_control, info.save_bg, get_value=save
       save_not = save[0] EQ 0
-      ;l3_file = info.l2_object->create_l3_file(window_indices, no_masking=no_masking, approximated_slit=approximated_slit, $
-      ;  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
-      ;  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
-      ;  all_ana=all_ana, all_result_headers=all_result_headers)
+      l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+        no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
+        official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
+        all_ana=all_ana, all_result_headers=all_result_headers)
       (*info.result).l3_file = info.file_l3
-      (*info.result).ana = ptr_new({a:0,b:'asdf'})
+      (*info.result).ana = ptr_new(all_ana)
+      (*info.result).result_headers = ptr_new(all_result_headers)
+      (*info.result).file_saved = save[0]
       widget_control, event.top, /destroy
     end
+
     else:
   endcase
 end
@@ -150,10 +153,12 @@ end
 
 ; MAIN program
 
-function spice_create_l3_widget, l2_object, group_leader
+function spice_create_l3_widget, l2_object, group_leader, no_masking=no_masking, approximated_slit=approximated_slit, $
+  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
+  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not
 
   file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
-  ;file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
+  file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
   l2_object = spice_data(file)
   
   ;IF N_PARAM() NE 2 THEN BEGIN
@@ -165,12 +170,13 @@ function spice_create_l3_widget, l2_object, group_leader
     return, -1
   ENDIF
 
-  top_dir_choice = 0
-  dir_user_choice = [0]
-  option_choice = [0, 0, 0, 0, 0]
-  velocity = 0.0
-  save_choice = [0]
-  if N_ELEMENTS(dir_manual) eq 0 then cd, current=dir_manual
+  top_dir_choice = keyword_set(top_dir)
+  dir_user_choice = [~keyword_set(official_dir)]
+  option_choice = [keyword_set(no_fitting), keyword_set(no_widget), keyword_set(no_masking), $
+    keyword_set(apporximated_slit), keyword_set(position)]
+  if N_ELEMENTS(velocity) eq 0 then velocity = 0.0
+  save_choice = [~keyword_set(save_not)]
+  if N_ELEMENTS(top_dir) eq 0 then cd, current=dir_manual else dir_manual=top_dir
 
   file_l2 = l2_object->get_filename()
   line_id = l2_object->get_window_id()
