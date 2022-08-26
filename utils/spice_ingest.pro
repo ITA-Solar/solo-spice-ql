@@ -68,13 +68,13 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2022-08-25 13:48 CEST $
+; $Id: 2022-08-26 13:22 CEST $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
   search_subdir=search_subdir, $
   destination=destination, file_moved=file_moved, files_found=files_found, $
-  user_dir=user_dir, top_dir=top_dir, $
+  user_dir=user_dir, top_dir=top_dir, dry_run=dry_run, $
   help=help, debug=debug
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
@@ -169,13 +169,16 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     old_files = file_search(concat_dir(outdir,'solo*.fits'))
     filechck=where(file_basename(old_files) EQ file_info.filename,nf)
     IF nf EQ 0 OR keyword_set(force) THEN BEGIN
-      IF ~file_test(outdir, /directory) THEN BEGIN
+      IF ~file_test(outdir, /directory) && ~keyword_set(dry_run) THEN BEGIN
         file_mkdir, outdir
       ENDIF
-      file_move,files[ifiles], outdir, /overwrite
+      if ~keyword_set(dry_run) then begin
+        file_move,files[ifiles], outdir, /overwrite
+        file_moved[ifiles] = 1
+      endif
       destination[ifiles] = concat_dir(outdir, file_info.filename)
-      file_moved[ifiles] = 1
     ENDIF ELSE BEGIN
+      if keyword_set(dry_run) then destination[ifiles] = concat_dir(outdir, file_info.filename)
       print,'% SPICE_INGEST: file '+file_info.filename+' was not moved '
       print,'               as it already exists in the data directory.'
       print,'               Use the keyword /FORCE to overwrite the existing file.'
