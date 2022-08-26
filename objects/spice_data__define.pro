@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-26 14:28 CEST $
+; $Id: 2022-08-26 17:10 CEST $
 
 
 ;+
@@ -227,7 +227,7 @@ END
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;-
 
-FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, approximated_slit=approximated_slit, $
+FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers
@@ -244,7 +244,7 @@ FUNCTION spice_data::create_l3_file, window_indices, no_masking=no_masking, appr
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      position=position, velocity=velocity)
+      position=position, velocity=velocity, /init_all_cubes)
     if size(ana, /type) NE 8 then continue
     original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
 
