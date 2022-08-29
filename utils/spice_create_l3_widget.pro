@@ -3,21 +3,61 @@
 ;       SPICE_CREATE_L3_WIDGET
 ;
 ; PURPOSE:
-; SPICE_CREATE_L3_WIDGET bla bla blaaa
+; SPICE_CREATE_L3_WIDGET is the widget to the method SPICE_DATA::create_l3_file.
+; It lets the user select all the possible options before creating the level 3 data and/or file.
+; This widget is used by SPICE_XCONTROL and SPICE_XCONTROL_L23.
+; The widget is modal if a parent widget is provided.
 ;
 ; CATEGORY:
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_xcontrol_l23, file [, group_leader = group]
+;       spice_create_l3_widget, l2_object [, group_leader] [, window_index=window_index] $
+;         [, /no_masking] [, /approximated_slit] $
+;         [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $
+;         [, /official_l3dir] [, top_dir=top_dir] [, /save_not]
 ;
 ; INPUTS:
-; file: A SPICE file either level 2 or level 3
+;   l2_object: Either a SPICE_DATA object or a path to a level 2 SPICE FITS file.
+;
+; OPTIONAL INPUTS:
+;     group_leader: Widget ID of parent widget. If provided, this widget will be a modal widget.
+;     window_index: One or more window indices that should be checked for processing.
+;     top_dir: A path in which the level 3 file should be saved. If not provided the file will be saved
+;                 into the $SPICE_DATA directory.
+;     velocity: Set this equal to the initial velocity if you want the line position represented by the velocity
+;                 relative to a lab wavelength - the lab wavelength is taken from the supplied POSITION, i.e.,
+;                 INT_POS_FWHM(1), which is calculated/estimated within the procedure 'generate_adef'.
+;                 This input is ignored if /POSITION is set. Default is zero.
 ;
 ; KEYWORD PARAMETERS:
-; group_leader: Widget ID of parent widget
+;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
+;                 This procedure masks any y regions in a narrow slit data cube that don't contain
+;                 slit data, i.e. pixels with contributions from parts of the
+;                 detector that lie above/below the dumbbells,
+;                 in the gap between the slit ends and the dumbbells, and the
+;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
+;                 observations or if window_index corresponds to a regular
+;                 dumbbell extension.
+;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
+;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
+;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
+;     no_widget: If set, xcfit_block will not be called
+;     position: If set, then the line position is NOT represented by the velocity
+;                 relative to a lab wavelength, but as the wavelength.
+;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
+;                 for the official level 3 files.
+;     save_not: If set, then the FITS file will not be saved. The output is otherwise the same as if
+;                 this keyword has not been set.
 ;
 ; OUTPUTS:
+;     A structure with tags:
+;       l3_file: The path and name of the produced level 3 file. This tag will be set to 'Cancel' if
+;                 the user clicks 'Cancel' instead of 'OK'.
+;       ana: This is a pointer to a CFIT_ANALYSIS structure array. One ANA per processed window.
+;       result_headers: This is a pointer to a pointer array, of which each element contains
+;                 a string array, the level 3 header of the result extension of one window.
+;       file_saved: A boolean, indicating whether the level 3 file has been saved.
 ;
 ; CALLS:
 ;
@@ -30,7 +70,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-29 10:21 CEST $
+; $Id: 2022-08-29 11:17 CEST $
 ;-
 ;
 ;
@@ -150,8 +190,9 @@ end
 
 
 
-
+; -----------------------------------------------------------------------
 ; MAIN program
+; -----------------------------------------------------------------------
 
 function spice_create_l3_widget, l2_object, group_leader, window_index=window_index, $
   no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -164,15 +205,13 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
 
   IF N_PARAMS() EQ 0 THEN BEGIN
     print, 'Usage: res = spice_create_l3_widget(l2_object [, group_leader] [, window_index=window_index] $'
-    print, '  [, /no_masking] [, /approximated_slit] $'
-    print, '  [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $'
-    print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
+      print, '  [, /no_masking] [, /approximated_slit] $'
+      print, '  [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $'
+      print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
     return, -1
   ENDIF
-  IF typename(l2_object) NE 'SPICE_DATA' THEN BEGIN
-    print, 'l2_object needs to be a SPICE_DATA object'
-    return, -1
-  ENDIF
+  l2_object = spice_get_object(l2_object, is_spice=is_spice, object_created=object_created)
+  if ~is_spice then return
 
   top_dir_choice = keyword_set(top_dir)
   dir_user_choice = [~keyword_set(official_l3dir)]
@@ -203,7 +242,6 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   top_dir_label1 = widget_label(top_dir_base, value='Top directory', /align_left)
   top_dir_choice_bg = cw_bgroup(top_dir_base, ['Environment variable', 'Path'], set_value=top_dir_choice, /column, /exclusive)
   top_dir_path_base = widget_base(top_dir_base, /column)
-  ;top_dir_env_var_base = widget_base(top_dir_path_base, /row)
   top_dir_env_var_field = cw_field(top_dir_path_base, title='', value = 'SPICE_DATA', /string, /return_events, xsize = 15, $
     /NOEDIT, ysize=0.7)
   dir_manual_base = widget_base(top_dir_path_base, /row)
@@ -230,7 +268,6 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
 
 
   result = ptr_new({l3_file:'Cancel', ana:ptr_new(), result_headers:ptr_new(), file_saved:0b})
-
   info = { $
     l2_object:l2_object, $
     file_l3:'', $
@@ -248,7 +285,6 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
     ok:button_ok, $
     cancel:button_cancel $
   }
-
   spice_create_l3_widget_calc_l3_dir, info
 
   widget_control, base, set_Uvalue=info, /No_Copy
