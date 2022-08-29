@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2021-10-27 21:20 CEST $
+; $Id: 2022-08-29 14:18 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -92,6 +92,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ; rast_direct=0.
   ;
   midtime=meta.midtime
+  midtime_earth=meta.midtime_earth
   tmid_min=meta.tmid_min
   utc=meta.utc
 
@@ -275,6 +276,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     line_ids: line_ids, $      ; 0 or 1 if line IDs available
     idstr: idstr, $            ; structure of line IDs
     midtime: midtime, $
+    midtime_earth: midtime_earth, $
     utc: utc, $
     velocity: 0, $
     linlog: 0, $
@@ -421,8 +423,10 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   xtext=widget_label(textbase,value=xt,font=font,xsiz=100)
   yt='Y-pixel: '+trim(0)
   ytext=widget_label(textbase,value=yt,font=font,xsiz=100)
-  tt='Time: '
+  tt='S/C Time: '
   ttext=widget_label(textbase,value=tt,font=font,xsiz=150)
+  ett='Earth Time: '
+  ettext=widget_label(textbase,value=ett,font=font,xsiz=150)
 
 
   ;
@@ -872,6 +876,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     xtext: xtext, $
     ytext: ytext, $
     ttext: ttext, $
+    ettext: ettext, $
     nexp_prp_butts: nexp_prp_butts, $
     wpix_sum: wpix_sum, $
     im_plot: im_plot, $
@@ -986,8 +991,10 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     spice_browser_plot_sji, state
   ENDIF
 
-  tt='Time: '+trim(midtime[state.wid_data.xpix-1])
+  tt='S/C Time: '+trim(midtime[state.wid_data.xpix-1])
   widget_control,state.ttext,set_value=tt
+  ett='Earth Time: '+trim(midtime_earth[state.wid_data.xpix-1])
+  widget_control,state.ettext,set_value=ett
 
 
   XMANAGER, 'spice_browser_base', spice_browser_base, group=group
