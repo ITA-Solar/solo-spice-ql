@@ -70,7 +70,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-29 11:17 CEST $
+; $Id: 2022-08-29 14:20 CEST $
 ;-
 ;
 ;
@@ -211,7 +211,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
     return, -1
   ENDIF
   l2_object = spice_get_object(l2_object, is_spice=is_spice, object_created=object_created)
-  if ~is_spice then return
+  if ~is_spice then return, -1
 
   top_dir_choice = keyword_set(top_dir)
   dir_user_choice = [~keyword_set(official_l3dir)]
@@ -287,6 +287,14 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   }
   spice_create_l3_widget_calc_l3_dir, info
 
+  ; Center the widgets on display.
+  Device, Get_Screen_Size=screenSize
+  xCenter = screenSize(0) / 2
+  yCenter = screenSize(1) / 2
+  geom = Widget_Info(base, /Geometry)
+  xHalfSize = geom.Scr_XSize / 2
+  yHalfSize = geom.Scr_YSize / 2
+  Widget_Control, base, XOffset = xCenter-xHalfSize, YOffset = yCenter-yHalfSize
   widget_control, base, set_Uvalue=info, /No_Copy
   widget_control, base, /realize
   xmanager, 'spice_create_l3_widget', base, event_handler='spice_create_l3_widget_event'
