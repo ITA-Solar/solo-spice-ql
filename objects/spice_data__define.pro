@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-05-20 09:46 CEST $
+; $Id: 2022-08-29 14:25 CEST $
 
 
 ;+
@@ -1094,8 +1094,8 @@ FUNCTION spice_data::get_header_keyword, keyword, window_index, missing_value, e
 
   ; keywords with a '-' in the name, will be renamed when they are transformed into structures (in fitshead2struct),
   ; '-' becomes '_D$'
-  temp = strsplit(keyword, '-', count=count, /extract)
-  IF count GT 1 THEN keyword = strjoin(temp, '_D$')
+  ;temp = strsplit(keyword, '-', count=count, /extract)
+  ;IF count GT 1 THEN keyword = strjoin(temp, '_D$')
 
   IF ARG_PRESENT(variable_values) THEN BEGIN
     variable_values = self.get_bintable_data(keyword, values_only=values_only)
