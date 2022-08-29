@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-29 09:58 CEST $
+; $Id: 2022-08-29 10:21 CEST $
 ;-
 ;
 ;
@@ -45,7 +45,7 @@ pro spice_create_l3_widget_event, event
       widget_control, event.top, /destroy
     end
 
-    ;ok, use the current settings to create l3 data/file 
+    ;ok, use the current settings to create l3 data/file
     ;and destroy the widget
     info.ok: begin
       widget_control, /hourglass
@@ -153,18 +153,22 @@ end
 
 ; MAIN program
 
-function spice_create_l3_widget, l2_object, group_leader, no_masking=no_masking, approximated_slit=approximated_slit, $
+function spice_create_l3_widget, l2_object, group_leader, window_index=window_index, $
+  no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not
 
   file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
   file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
   l2_object = spice_data(file)
-  
-  ;IF N_PARAM() NE 2 THEN BEGIN
-  ;  print, 'Usage: res = spice_create_l3_widget(l2_object, group_leader)'
-  ;  return, -1
-  ;ENDIF
+
+  IF N_PARAMS() EQ 0 THEN BEGIN
+    print, 'Usage: res = spice_create_l3_widget(l2_object [, group_leader] [, window_index=window_index] $'
+    print, '  [, /no_masking] [, /approximated_slit] $'
+    print, '  [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $'
+    print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
+    return, -1
+  ENDIF
   IF typename(l2_object) NE 'SPICE_DATA' THEN BEGIN
     print, 'l2_object needs to be a SPICE_DATA object'
     return, -1
@@ -180,14 +184,19 @@ function spice_create_l3_widget, l2_object, group_leader, no_masking=no_masking,
 
   file_l2 = l2_object->get_filename()
   line_id = l2_object->get_window_id()
+  n_windows = N_ELEMENTS(line_id)
+  window_select = intarr(n_windows)
+  FOR i=0,N_ELEMENTS(window_index)-1 DO $
+    IF window_index[i] GE 0 && window_index[i] LT n_windows THEN window_select[window_index[i]]=1
 
-  base = widget_base(title='SPICE create level 3 data/file', group_leader=group_leader, /column);, /modal)
+  base = widget_base(title='SPICE create level 3 data/file', group_leader=group_leader, /column, modal=keyword_set(group_leader))
 
   label = widget_label(base, value=(file_dirname(file_l2))[0], /align_center)
   label = widget_label(base, value=(file_basename(file_l2))[0], /align_center)
-  column = fix(N_ELEMENTS(line_id)/3.0)+1
+  column = fix(n_windows/3.0)+1
   if column gt 5 then column=5
-  lineselect = cw_bgroup(base, /nonexclusive, line_id, column=column, event_func = 'spice_create_l3_widget_lineselect')
+  lineselect = cw_bgroup(base, /nonexclusive, line_id, column=column, set_value=window_select, $
+    event_func = 'spice_create_l3_widget_lineselect')
   lineall_clear = cw_bgroup(base, /nonexclusive, ['all','clear'], column=2, event_func = 'spice_create_l3_widget_lineselect')
 
   top_dir_base = widget_base(base, /row, event_func='spice_create_l3_widget_change_topdir')
@@ -214,7 +223,7 @@ function spice_create_l3_widget, l2_object, group_leader, no_masking=no_masking,
   file_l3_base = widget_base(save_base, /column)
   file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
   file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  
+
   button_base = widget_base(base, /row)
   button_ok = widget_button(button_base, value='OK')
   button_cancel = widget_button(button_base, value='Cancel')
@@ -238,10 +247,10 @@ function spice_create_l3_widget, l2_object, group_leader, no_masking=no_masking,
     file_l3_name_label:file_l3_name_label, $
     ok:button_ok, $
     cancel:button_cancel $
-    }
-    
+  }
+
   spice_create_l3_widget_calc_l3_dir, info
-  
+
   widget_control, base, set_Uvalue=info, /No_Copy
   widget_control, base, /realize
   xmanager, 'spice_create_l3_widget', base, event_handler='spice_create_l3_widget_event'
