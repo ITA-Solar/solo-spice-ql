@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-26 17:11 CEST $
+; $Id: 2022-08-29 09:58 CEST $
 ;-
 ;
 ;
@@ -171,7 +171,7 @@ function spice_create_l3_widget, l2_object, group_leader, no_masking=no_masking,
   ENDIF
 
   top_dir_choice = keyword_set(top_dir)
-  dir_user_choice = [~keyword_set(official_dir)]
+  dir_user_choice = [~keyword_set(official_l3dir)]
   option_choice = [keyword_set(no_fitting), keyword_set(no_widget), keyword_set(no_masking), $
     keyword_set(apporximated_slit), keyword_set(position)]
   if N_ELEMENTS(velocity) eq 0 then velocity = 0.0
