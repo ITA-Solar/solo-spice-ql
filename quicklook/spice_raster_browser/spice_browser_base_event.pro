@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 2022-08-29 14:18 CEST $
 
 
 PRO spice_browser_base_event, event
@@ -105,8 +105,11 @@ PRO spice_browser_base_event, event
           yt='Y-pixel: '+trim(state.wid_data.ypix)
           widget_control,state.ytext,set_value=yt
           ;
-          tt='Time: '+state.wid_data.midtime[xpix]
+          tt='S/C Time: '+state.wid_data.midtime[xpix]
           widget_control,state.ttext,set_value=tt
+          ;
+          ett='Earth Time: '+state.wid_data.midtime_earth[xpix]
+          widget_control,state.ettext,set_value=ett
           ;
           widget_control,state.spice_browser_base,set_uvalue=state
           ;

@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 18.05.2020 11:33 CEST $
+; $Id: 2022-08-29 14:18 CEST $
 
 
 PRO spice_browser_update_info, state
@@ -45,10 +45,13 @@ PRO spice_browser_update_info, state
 
   xpix=state.wid_data.xpix
   tmid=state.wid_data.midtime
+  tmid_earth=state.wid_data.midtime_earth
   widget_control,state.xtext,set_val='X-pixel: '+trim(xpix)
   n=state.wid_data.nx
-  IF xpix GE n THEN tstr='Time: N/A' ELSE tstr='Time: '+tmid[xpix]
+  IF xpix GE n THEN tstr='S/C Time: N/A' ELSE tstr='S/C Time: '+tmid[xpix]
   widget_control,state.ttext,set_val=tstr
+  IF xpix GE n THEN etstr='Earth Time: N/A' ELSE etstr='Earth Time: '+tmid_earth[xpix]
+  widget_control,state.ettext,set_val=etstr
 
   date_obs=state.data->get_header_info('DATE-BEG', 0)
   if N_ELEMENTS(date_obs) eq 0 then begin

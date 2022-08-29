@@ -35,7 +35,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 25.04.2020 21:57 CEST $
+; $Id: 2022-08-29 14:18 CEST $
 
 
 FUNCTION spice_browser_get_metadata, data
@@ -65,8 +65,10 @@ FUNCTION spice_browser_get_metadata, data
   mid_ti = data->get_time_vector(0)
   t_tai = anytim2tai(data->get_start_time()) + mid_ti
   utc = anytim2utc(t_tai)
-  midtime=anytim2utc(t_tai,/ccsds,/time_only,/trunc)
-  tmid_min=(t_tai-t_tai[0])/60.
+  midtime = anytim2utc(t_tai,/ccsds,/time_only,/trunc)
+  tmid_min = (t_tai-t_tai[0])/60.
+  t_tai_earth = t_tai + data->get_header_keyword('EAR_TDEL',0)
+  midtime_earth = anytim2utc(t_tai_earth,/ccsds,/time_only,/trunc)
 
   ;
   ; Modify things if it's a sit-and-stare observation
@@ -115,6 +117,7 @@ FUNCTION spice_browser_get_metadata, data
   outstr={ origin: origin, $
     scale: scale, $
     midtime: midtime, $
+    midtime_earth:midtime_earth, $
     sit_stare: sit_stare, $
     xpos: xpos, $
     ypos: ypos, $
