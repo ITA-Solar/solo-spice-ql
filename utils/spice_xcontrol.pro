@@ -15,7 +15,7 @@
 ;       spice_xcontrol, data, group_leader = group
 ;
 ; INPUTS:
-;	data: data object of type 'spice_data'
+;	data: data object of type 'spice_data', or path of a level 2 SPICE FITS file.
 ;
 ; KEYWORD PARAMETERS:
 ;	group_leader: Widget ID of parent widget
@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2022-06-21 12:28 CEST $
+; $Id: 2022-08-29 10:44 CEST $
 ;-
 ;
 ;
