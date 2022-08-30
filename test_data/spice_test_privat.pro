@@ -1,7 +1,7 @@
 PRO spice_test_privat, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=510
+  IF N_ELEMENTS(file_number) NE 1 then file_number=500
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
