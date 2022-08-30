@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-30 15:17 CEST $
+; $Id: 2022-08-30 15:39 CEST $
 ;-
 ;
 ;
@@ -82,27 +82,34 @@ pro spice_xcontrol_l23_create_l3, event
   widget_control, event.id, get_uvalue=win_info
   case win_info.l3_type of
     1: begin
-      file_l3 = info.file_l3_official
-      nwin_l3 = info.nwin_l3_official
-      ana_l3 = info.ana_l3_official
-      hdr_l3 = info.hdr_l3_official
-      state_l3 = info.state_l3_official
+      ;file_l3 = info.file_l3_official
+      ;nwin_l3 = info.nwin_l3_official
+      ;ana_l3 = info.ana_l3_official
+      ;hdr_l3 = info.hdr_l3_official
+      ;state_l3 = info.state_l3_official
+      official_l3dir = 1
     end
     2: begin
-      file_l3 = info.file_l3_user
-      nwin_l3 = info.nwin_l3_user
-      ana_l3 = info.ana_l3_user
-      hdr_l3 = info.hdr_l3_user
-      state_l3 = info.state_l3_user
+      ;file_l3 = info.file_l3_user
+      ;nwin_l3 = info.nwin_l3_user
+      ;ana_l3 = info.ana_l3_user
+      ;hdr_l3 = info.hdr_l3_user
+      ;state_l3 = info.state_l3_user
     end
     3: begin
-      file_l3 = info.file_l3_other
-      nwin_l3 = info.nwin_l3_other
-      ana_l3 = info.ana_l3_other
-      hdr_l3 = info.hdr_l3_other
-      state_l3 = info.state_l3_other
+      ;file_l3 = info.file_l3_other
+      ;nwin_l3 = info.nwin_l3_other
+      ;ana_l3 = info.ana_l3_other
+      ;hdr_l3 = info.hdr_l3_other
+      ;state_l3 = info.state_l3_other
+      top_dir = (file_dirname((*info).file_l3_other))[0]
     end    
   endcase
+
+  IF N_ELEMENTS(win_info.winno) GT 1 THEN all_windows=1 ELSE all_windows=0
+  spice_create_l3_widget, (*info).object_L2, event.top, window_index=win_info.winno, $
+    no_widget=all_windows, $
+    official_l3dir=official_l3dir, top_dir=top_dir, save_not=~all_windows
 end
 
 
