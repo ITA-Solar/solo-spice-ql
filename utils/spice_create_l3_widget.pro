@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-31 10:22 CEST $
+; $Id: 2022-08-31 10:38 CEST $
 ;-
 ;
 ;
@@ -205,9 +205,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, block_save=block_save
 
-  file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
-  file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
-  l2_object = spice_data(file)
+  ;l2_object = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+  ;l2_object = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
 
   IF N_PARAMS() EQ 0 THEN BEGIN
     print, 'Usage: res = spice_create_l3_widget(l2_object [, group_leader] [, window_index=window_index] $'
