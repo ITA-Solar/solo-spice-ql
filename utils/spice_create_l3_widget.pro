@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-31 10:38 CEST $
+; $Id: 2022-08-31 11:34 CEST $
 ;-
 ;
 ;
@@ -94,10 +94,7 @@ pro spice_create_l3_widget_event, event
     info.ok: begin
       widget_control, /hourglass
       widget_control, info.lineselect, get_value = lineselect
-      help,lineselect
-      print,lineselect
       window_index = where(lineselect eq 1, count)
-      print,window_index
       if count eq 0 then begin
         box_message,'You need to select at least one window/line'
         return
