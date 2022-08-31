@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-30 15:39 CEST $
+; $Id: 2022-08-31 11:48 CEST $
 ;-
 ;
 ;
@@ -82,34 +82,54 @@ pro spice_xcontrol_l23_create_l3, event
   widget_control, event.id, get_uvalue=win_info
   case win_info.l3_type of
     1: begin
-      ;file_l3 = info.file_l3_official
-      ;nwin_l3 = info.nwin_l3_official
-      ;ana_l3 = info.ana_l3_official
-      ;hdr_l3 = info.hdr_l3_official
-      ;state_l3 = info.state_l3_official
       official_l3dir = 1
     end
     2: begin
-      ;file_l3 = info.file_l3_user
-      ;nwin_l3 = info.nwin_l3_user
-      ;ana_l3 = info.ana_l3_user
-      ;hdr_l3 = info.hdr_l3_user
-      ;state_l3 = info.state_l3_user
     end
     3: begin
-      ;file_l3 = info.file_l3_other
-      ;nwin_l3 = info.nwin_l3_other
-      ;ana_l3 = info.ana_l3_other
-      ;hdr_l3 = info.hdr_l3_other
-      ;state_l3 = info.state_l3_other
       top_dir = (file_dirname((*info).file_l3_other))[0]
-    end    
+    end
   endcase
 
   IF N_ELEMENTS(win_info.winno) GT 1 THEN all_windows=1 ELSE all_windows=0
-  spice_create_l3_widget, (*info).object_L2, event.top, window_index=win_info.winno, $
-    no_widget=all_windows, $
-    official_l3dir=official_l3dir, top_dir=top_dir, save_not=~all_windows
+  result = spice_create_l3_widget( (*info).object_L2, event.top, window_index=win_info.winno, $
+    no_widget=all_windows, official_l3dir=official_l3dir, top_dir=top_dir, save_not=~all_windows, block_save=~all_windows)
+
+  IF all_windows THEN BEGIN
+    IF result.top_dir EQ '' THEN BEGIN
+      IF result.user_dir THEN BEGIN
+        (*info).file_l3_user = result.l3_file
+        (*info).nwin_l3_user = N_ELEMENTS(*result.ana)
+        ptr_free, (*info).ana_l3_user
+        ptr_free, (*info).hdr_l3_user
+        (*info).ana_l3_user = ptr_new(*result.ana)
+        (*info).hdr_l3_user = ptr_new(*result.result_headers)
+      ENDIF ELSE BEGIN
+        (*info).file_l3_official = result.l3_file
+        (*info).nwin_l3_official = N_ELEMENTS(*result.ana)
+        ptr_free, (*info).ana_l3_official
+        ptr_free, (*info).hdr_l3_official
+        (*info).ana_l3_official = ptr_new(*result.ana)
+        (*info).hdr_l3_official = ptr_new(*result.result_headers)
+      ENDELSE
+    ENDIF ELSE BEGIN
+      (*info).file_l3_other = result.l3_file
+      (*info).nwin_l3_other = N_ELEMENTS(*result.ana)
+      ptr_free, (*info).ana_l3_other
+      ptr_free, (*info).hdr_l3_other
+      (*info).ana_l3_other = ptr_new(*result.ana)
+      (*info).hdr_l3_other = ptr_new(*result.result_headers)
+    ENDELSE
+  ENDIF ELSE BEGIN ;all_windows
+    
+  ENDELSE ; all_windows
+
+  ; update state
+  ;(*info).state_l3_official
+  
+
+  help,result
+  stop
 end
 
 
@@ -120,11 +140,10 @@ end
 
 pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
 
-  file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
-  ;file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
-
   if n_params() lt 1 then begin
     message,'spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
+    file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+    ;file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
     ;  return
   endif
 
@@ -158,6 +177,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
       return
     END
   ENDCASE
+  print,'file_l3_other      ',file_l3_other
 
   exist_l2 = file_l2 NE ''
   exist_l3_official = file_l3_official NE ''
@@ -255,14 +275,14 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
     sensitive=exist_l2)
 
   FOR iwin=0,nwin-1 DO BEGIN
-
     win_base_l2 = widget_base(win_base, /column, /frame)
     IF exist_l2 THEN BEGIN
       label = widget_label(win_base_l2, value=object_l2->get_window_id(iwin), /align_left)
     ENDIF
-
   ENDFOR ; iwin=0,nwin-1
 
+  label = widget_label(win_base, value='')
+  
 
   ; Column Level 3 - official file
 
@@ -275,10 +295,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
 
   state_l3_official = make_array(nwin, value={l3_winno:-1, edited:0b, title_label:0L, status_label:0L, edit_button:0L})
   FOR iwin=0,nwin-1 DO BEGIN
-
     win_base_l3_official = widget_base(win_base, /column, /frame)
     win_created = 0
-    title = ''
+    title = ' - '
     status = 'NOT CREATED'
     IF exist_l3_official THEN BEGIN
       ind = where(winno_l3_official eq iwin, count)
@@ -296,8 +315,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
       sensitive=win_created, uvalue={l3_type:1, winno:iwin})
     create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3', $
       sensitive=exist_l2, uvalue={l3_type:1, winno:iwin})
-
   ENDFOR ; iwin=0,nwin-1
+  
+  save_button_official = widget_button(win_base, value='Save File', sensitive=0)
 
 
   ; Column Level 3 - user file
@@ -311,10 +331,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
 
   state_l3_user = make_array(nwin, value={l3_winno:-1, edited:0b, title_label:0L, status_label:0L, edit_button:0L})
   FOR iwin=0,nwin-1 DO BEGIN
-
     win_base_l3_user = widget_base(win_base, /column, /frame)
     win_created = 0
-    title = ''
+    title = ' - '
     status = 'NOT CREATED'
     IF exist_l3_user THEN BEGIN
       ind = where(winno_l3_user eq iwin, count)
@@ -332,8 +351,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
       sensitive=win_created, uvalue={l3_type:2, winno:iwin})
     create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3', $
       sensitive=exist_l2, uvalue={l3_type:2, winno:iwin})
-
   ENDFOR ; iwin=0,nwin-1
+
+  save_button_user = widget_button(win_base, value='Save File', sensitive=0)
 
 
   ; Column Level 3 - other file
@@ -349,10 +369,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
       sensitive=exist_l2, uvalue={l3_type:3, winno:indgen(nwin)})
 
     FOR iwin=0,nwin-1 DO BEGIN
-
       win_base_l3_other = widget_base(win_base, /column, /frame)
       win_created = 0
-      title = ''
+      title = ' - '
       status = 'NOT CREATED'
       IF exist_l3_other THEN BEGIN
         ind = where(winno_l3_other eq iwin, count)
@@ -370,10 +389,13 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
         sensitive=win_created, uvalue={l3_type:2, winno:iwin})
       create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3', $
         sensitive=exist_l2, uvalue={l3_type:2, winno:iwin})
-
     ENDFOR ; iwin=0,nwin-1
 
-  ENDIF ; keyword_set(show_other) || exist_l3_other
+    save_button_other = widget_button(win_base, value='Save File', sensitive=0)
+
+  ENDIF ELSE BEGIN ; keyword_set(show_other) || exist_l3_other
+    save_button_other = 0
+  ENDELSE
 
 
   ; Define the info structure, used to send information around
@@ -389,19 +411,22 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
     file_l3_user:file_l3_user, $
     file_l3_other:file_l3_other, $
     object_l2:object_l2, $
-    ana_l3_official:ana_l3_official, $
-    ana_l3_user:ana_l3_user, $
-    ana_l3_other:ana_l3_other, $
+    ana_l3_official:ptr_new(ana_l3_official), $
+    ana_l3_user:ptr_new(ana_l3_user), $
+    ana_l3_other:ptr_new(ana_l3_other), $
     nwin:nwin, $
     nwin_l3_official:nwin_l3_official, $
     nwin_l3_user:nwin_l3_user, $
     nwin_l3_other:nwin_l3_other, $
-    hdr_l3_official:hdr_l3_official, $
-    hdr_l3_user:hdr_l3_user, $
-    hdr_l3_other:hdr_l3_other, $
+    hdr_l3_official:ptr_new(hdr_l3_official), $
+    hdr_l3_user:ptr_new(hdr_l3_user), $
+    hdr_l3_other:ptr_new(hdr_l3_other), $
     state_l3_official:state_l3_official, $
     state_l3_user:state_l3_user, $
-    state_l3_other:state_l3_other $
+    state_l3_other:state_l3_other, $
+    save_button_official:save_button_official, $
+    save_button_user:save_button_user, $
+    save_button_other:save_button_other $
   }
   info=ptr_new(info,/no_copy)
 
