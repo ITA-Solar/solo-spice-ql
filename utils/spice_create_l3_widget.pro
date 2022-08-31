@@ -49,7 +49,7 @@
 ;                 for the official level 3 files.
 ;     save_not: If set, then the FITS file will not be saved. The output is otherwise the same as if
 ;                 this keyword has not been set.
-;     block_save: If set, then the option to save the FITS file is not shown.
+;     block_save: If set, then the options concerning where and whether to save the FITS file are not sensitive.
 ;
 ; OUTPUTS:
 ;     A structure with tags:
@@ -59,6 +59,9 @@
 ;       result_headers: This is a pointer to a pointer array, of which each element contains
 ;                 a string array, the level 3 header of the result extension of one window.
 ;       file_saved: A boolean, indicating whether the level 3 file has been saved.
+;       user_dir: A boolean, indicating whether the output path points to 'user' subdirectory.
+;       top_dir: A string, which points to the top directory in which the file has been saved.
+;                 This is an empty string, if the file has been saved under $SPICE_DATA.
 ;
 ; CALLS:
 ;
@@ -71,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-31 09:52 CEST $
+; $Id: 2022-08-31 10:22 CEST $
 ;-
 ;
 ;
@@ -120,6 +123,8 @@ pro spice_create_l3_widget_event, event
       (*info.result).ana = ptr_new(all_ana)
       (*info.result).result_headers = ptr_new(all_result_headers)
       (*info.result).file_saved = save[0]
+      (*info.result).user_dir = user_dir[0]
+      IF top_dir_choice EQ 1 THEN (*info.result).top_dir = top_dir
       widget_control, event.top, /destroy
     end
 
@@ -175,7 +180,6 @@ end
 
 
 pro spice_create_l3_widget_calc_l3_dir, info
-  IF info.save_bg EQ 0 THEN return
   widget_control, info.top_dir_choice_bg, get_value=top_dir_choice
   IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value=top_dir
   widget_control, info.dir_user_bg, get_value=user_dir
@@ -240,7 +244,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
     event_func = 'spice_create_l3_widget_lineselect')
   lineall_clear = cw_bgroup(base, /nonexclusive, ['all','clear'], column=2, event_func = 'spice_create_l3_widget_lineselect')
 
-  top_dir_base = widget_base(base, /row, event_func='spice_create_l3_widget_change_topdir')
+  output_path_base = widget_base(base, /column, sensitive=~keyword_set(block_save))
+  top_dir_base = widget_base(output_path_base, /row, event_func='spice_create_l3_widget_change_topdir')
   top_dir_label1 = widget_label(top_dir_base, value='Top directory', /align_left)
   top_dir_choice_bg = cw_bgroup(top_dir_base, ['Environment variable', 'Path'], set_value=top_dir_choice, /column, /exclusive)
   top_dir_path_base = widget_base(top_dir_base, /column)
@@ -249,7 +254,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   dir_manual_base = widget_base(top_dir_path_base, /row)
   dir_manual_field = cw_field(dir_manual_base, title='', value = dir_manual, /string, /return_events, xsize = 80)
   dir_manual_button = widget_button(dir_manual_base, value='Change', event_pro='spice_create_l3_widget_changesdir')
-  dir_user_bg = cw_bgroup(base, ['Save in "user" subdirectory'], set_value=dir_user_choice, /nonexclusive, $
+  dir_user_bg = cw_bgroup(output_path_base, ['Save in "user" subdirectory'], set_value=dir_user_choice, /nonexclusive, $
     event_func='spice_create_l3_widget_change_topdir')
 
   options_base = widget_base(base, /row)
@@ -258,24 +263,18 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   options_bg = cw_bgroup(options_base, options_values, set_value=option_choice, /nonexclusive, column=3)
   fit_velocity_field = cw_field(options_base, title='velocity', value = velocity, /float, xsize = 10)
 
-  IF keyword_set(block_save) THEN BEGIN
-    save_bg = 0
-    file_l3_dir_label = 0
-    file_l3_name_label = 0
-  ENDIF ELSE BEGIN
-    save_base = widget_base(base, /row)
-    save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
-    file_l3_base = widget_base(save_base, /column)
-    file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-    file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  ENDELSE
+  save_base = widget_base(base, /row, sensitive=~keyword_set(block_save))
+  save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
+  file_l3_base = widget_base(save_base, /column)
+  file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
 
   button_base = widget_base(base, /row)
   button_ok = widget_button(button_base, value='OK')
   button_cancel = widget_button(button_base, value='Cancel')
 
 
-  result = ptr_new({l3_file:'Cancel', ana:ptr_new(), result_headers:ptr_new(), file_saved:0b})
+  result = ptr_new({l3_file:'Cancel', ana:ptr_new(), result_headers:ptr_new(), file_saved:0b, user_dir:0b, top_dir:''})
   info = { $
     l2_object:l2_object, $
     file_l3:'', $
