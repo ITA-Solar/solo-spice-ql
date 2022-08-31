@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-18 14:25 CEST $
+; $Id: 2022-08-31 10:47 CEST $
 ;-
 
 
@@ -511,12 +511,7 @@ pro spice_xfiles_read, event
   endif else begin
     file_info = spice_file2info(file)
     if file_info.level eq 3 then begin
-      ana = fits2ana(file, headers_results=headers_results)
-      n_ana = N_ELEMENTS(ana)
-      box_message,['found '+strtrim(string(n_ana),2)+' windows, loaded all of them', $
-        'xcfit_block will be opened for each, one after the other', $
-        'close xcfit_block with the button "File/Exit->Exit"']
-      for iana=0,n_ana-1 do xcfit_block,ana=ana[iana], title=strtrim(fxpar(*headers_results[iana], 'EXTNAML2', missing=''), 2)
+      spice_xcontrol_l23, file, group_leader=event.top, show_other=show_other
     endif else begin
       spice_xcontrol, file, group_leader=(*info).tlb
     endelse
