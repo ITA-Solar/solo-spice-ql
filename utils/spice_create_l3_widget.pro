@@ -15,7 +15,7 @@
 ;       spice_create_l3_widget, l2_object [, group_leader] [, window_index=window_index] $
 ;         [, /no_masking] [, /approximated_slit] $
 ;         [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $
-;         [, /official_l3dir] [, top_dir=top_dir] [, /save_not]
+;         [, /official_l3dir] [, top_dir=top_dir] [, /save_not] [, /block_save]
 ;
 ; INPUTS:
 ;   l2_object: Either a SPICE_DATA object or a path to a level 2 SPICE FITS file.
@@ -49,11 +49,12 @@
 ;                 for the official level 3 files.
 ;     save_not: If set, then the FITS file will not be saved. The output is otherwise the same as if
 ;                 this keyword has not been set.
+;     block_save: If set, then the option to save the FITS file is not shown.
 ;
 ; OUTPUTS:
 ;     A structure with tags:
 ;       l3_file: The path and name of the produced level 3 file. This tag will be set to 'Cancel' if
-;                 the user clicks 'Cancel' instead of 'OK'.
+;                 the user clicks 'Cancel'.
 ;       ana: This is a pointer to a CFIT_ANALYSIS structure array. One ANA per processed window.
 ;       result_headers: This is a pointer to a pointer array, of which each element contains
 ;                 a string array, the level 3 header of the result extension of one window.
@@ -70,7 +71,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-29 14:20 CEST $
+; $Id: 2022-08-31 09:52 CEST $
 ;-
 ;
 ;
@@ -174,6 +175,7 @@ end
 
 
 pro spice_create_l3_widget_calc_l3_dir, info
+  IF info.save_bg EQ 0 THEN return
   widget_control, info.top_dir_choice_bg, get_value=top_dir_choice
   IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value=top_dir
   widget_control, info.dir_user_bg, get_value=user_dir
@@ -197,7 +199,7 @@ end
 function spice_create_l3_widget, l2_object, group_leader, window_index=window_index, $
   no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
-  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not
+  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, block_save=block_save
 
   file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
   file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
@@ -256,11 +258,17 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   options_bg = cw_bgroup(options_base, options_values, set_value=option_choice, /nonexclusive, column=3)
   fit_velocity_field = cw_field(options_base, title='velocity', value = velocity, /float, xsize = 10)
 
-  save_base = widget_base(base, /row)
-  save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
-  file_l3_base = widget_base(save_base, /column)
-  file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  IF keyword_set(block_save) THEN BEGIN
+    save_bg = 0
+    file_l3_dir_label = 0
+    file_l3_name_label = 0
+  ENDIF ELSE BEGIN
+    save_base = widget_base(base, /row)
+    save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
+    file_l3_base = widget_base(save_base, /column)
+    file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+    file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  ENDELSE
 
   button_base = widget_base(base, /row)
   button_ok = widget_button(button_base, value='OK')
