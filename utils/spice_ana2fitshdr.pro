@@ -73,7 +73,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-27 13:25 CEST $
+; $Id: 2022-09-01 15:25 CEST $
 
 
 FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
@@ -92,19 +92,19 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
     end
 
     8: begin
-      handle_value,ana.history_h,history,/no_copy
-      handle_value,ana.lambda_h,lambda,/no_copy
-      handle_value,ana.data_h,input_data,/no_copy
-      handle_value,ana.weights_h,weights,/no_copy
-      handle_value,ana.fit_h,fit,/no_copy
-      handle_value,ana.result_h,result,/no_copy
-      handle_value,ana.residual_h,residual,/no_copy
-      handle_value,ana.include_h,include,/no_copy
-      handle_value,ana.const_h,const,/no_copy
-      handle_value,ana.origin_h,origin,/no_copy
-      handle_value,ana.scale_h,scale,/no_copy
-      handle_value,ana.phys_scale_h,phys_scale,/no_copy
-      handle_value,ana.dimnames_h,dimnames,/no_copy
+      handle_value,ana.history_h,history
+      handle_value,ana.lambda_h,lambda
+      handle_value,ana.data_h,input_data
+      handle_value,ana.weights_h,weights
+      handle_value,ana.fit_h,fit
+      handle_value,ana.result_h,result
+      handle_value,ana.residual_h,residual
+      handle_value,ana.include_h,include
+      handle_value,ana.const_h,const
+      handle_value,ana.origin_h,origin
+      handle_value,ana.scale_h,scale
+      handle_value,ana.phys_scale_h,phys_scale
+      handle_value,ana.dimnames_h,dimnames
       filename_ana = ana.filename
       datasource = ana.datasource
       definition = ana.definition
