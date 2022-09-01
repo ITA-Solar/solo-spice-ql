@@ -30,12 +30,12 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-01 13:47 CEST $
+; $Id: 2022-09-01 15:26 CEST $
 ;-
 ;
 ;
 pro spice_xcontrol_l23_destroy, event
-  print,'spice_xcontrol_l23_destroy'
+  print, 'spice_xcontrol_l23_destroy'
   pseudoevent = {WIDGET_KILL_REQUEST, $
     ID:event.id, $
     TOP:event.top, $
@@ -44,15 +44,29 @@ pro spice_xcontrol_l23_destroy, event
 end
 
 pro spice_xcontrol_l23_cleanup, tlb
+  print, 'spice_xcontrol_l23_cleanup'
   widget_control, tlb, get_uvalue=info
   ; FREE....
+  ; TODO
   ptr_free,info
 end
 
 pro spice_xcontrol_l23_event, event
   if tag_names(event, /structure_name) eq 'WIDGET_KILL_REQUEST' then begin
+    widget_control, event.top, get_uvalue=info
+    IF total((*info).state_l3_official.edited) GT 0 || $
+      total((*info).state_l3_user.edited) GT 0 || $
+      total((*info).state_l3_other.edited) GT 0 THEN BEGIN
+      print, 'WARNING: unsaved changes. A message box will appear eventually and ask you if you want to save.'
+      ; TODO
+    ENDIF
     widget_control, event.top, /destroy
   endif
+end
+
+
+pro spice_xcontrol_l23_save_file, event
+; TODO
 end
 
 
@@ -81,7 +95,7 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
     winno_l3 = *(*info).winno_l3_other
   ENDELSE
 
-  nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', 0)
+  nwin_l3_result = N_ELEMENTS(*result.ana)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
     winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', -1)
@@ -93,7 +107,7 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
     IF count_result GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = ind_result[0]
       state_l3[iwin].edited = ~result.file_saved
-      spice_xcontrol_l23_add_window, ana_l3_new, *result.ana[ind_result[0]], $
+      spice_xcontrol_l23_add_window, ana_l3_new, (*result.ana)[ind_result[0]], $
         hdr_l3_new, *(*result.result_headers)[ind_result[0]], winno_l3_new, iwin
     ENDIF ELSE IF count_old GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = ind_old[0]
@@ -280,19 +294,58 @@ pro spice_xcontrol_l23_open_l2, event
   spice_xcontrol, (*info).object_l2
 end
 
-; TODO
+
 pro spice_xcontrol_l23_open_l3, event
   widget_control, event.top, get_uvalue=info
   widget_control, event.id, get_uvalue=file_info
   case file_info.l3_type of
     1: BEGIN
-      ana = ana_l3_official[file_info.winno]
+      ana_l3 = *(*info).ana_l3_official
+      hdr_l3 = *(*info).hdr_l3_official
+      title = 'L3 - official - ' + fxpar(*hdr_l3[file_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+      state_l3 = (*info).state_l3_official
     END
-    2: print,2
-    3: print,3
-    else: print,'else'
+    2: BEGIN
+      ana_l3 = *(*info).ana_l3_user
+      hdr_l3 = *(*info).hdr_l3_user
+      title = 'L3 - user - ' + fxpar(*hdr_l3[file_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+    END
+    3: BEGIN
+      ana_l3 = *(*info).ana_l3_other
+      hdr_l3 = *(*info).hdr_l3_other
+      title = 'L3 - other - ' + fxpar(*hdr_l3[file_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+    END
   endcase
-  xcfit_block, ana=ana[iana], title=strtrim(fxpar(*headers_results[iana], 'EXTNAML2', missing=''), 2)
+  ana = ana_l3[file_info.winno]
+  xcfit_block, ana=ana, title=title
+  ana_l3[file_info.winno] = ana
+
+  ind = where(state_l3.l3_winno eq file_info.winno, count)
+  if count NE 1 then begin
+    print, 'This should not happen. Contact martin.wiesmann@astro.uio.no'
+    stop
+    return
+  endif
+  state_l3[ind[0]].edited = 1
+
+  CASE file_info.l3_type OF
+    1: BEGIN
+      ptr_free, (*info).ana_l3_official
+      (*info).ana_l3_official = ptr_new(ana_l3)
+      (*info).state_l3_official = state_l3
+    END
+    2: BEGIN
+      ptr_free, (*info).ana_l3_user
+      (*info).ana_l3_user = ptr_new(ana_l3)
+      (*info).state_l3_user = state_l3
+    END
+    3: BEGIN
+      ptr_free, (*info).ana_l3_other
+      (*info).ana_l3_other = ptr_new(ana_l3a)
+      (*info).state_l3_other = state_l3
+    END
+  ENDCASE
+  spice_xcontrol_l23_update_state_display, info
 end
 
 
@@ -312,7 +365,6 @@ pro spice_xcontrol_l23_create_l3, event
   IF result.l3_file EQ 'Cancel' THEN return
   IF all_windows THEN spice_xcontrol_l23_update_state_replace, info, result $
   ELSE spice_xcontrol_l23_update_state_add, info, result
-
 end
 
 
@@ -445,7 +497,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
 
   dir_labels = lonarr(4)
   file_labels = lonarr(4)
-  
+
   tlb = widget_base(/column, mbar=menubar, $
     title='SPICE_Xcontrol_L23 - '+file, $
     xoffset=50, yoffset=50, group_leader=group_leader, /tlb_kill_request_events)
@@ -454,7 +506,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
   win_base = widget_base(tlb, /grid_layout, column=column, /frame)
 
 
-  ; Column Level 2 file
+  ; Column 0 - Level 2 file
 
   base_l2 = widget_base(win_base, /column, /frame)
   label = widget_label(base_l2, value='LEVEL 2', /align_center)
@@ -473,7 +525,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
   label = widget_label(win_base, value='')
 
 
-  ; Column Level 3 - official file
+  ; Column 1 - Level 3 - official file
 
   base_l3_official = widget_base(win_base, /column, /frame)
   label = widget_label(base_l3_official, value='LEVEL 3 - official', /align_center)
@@ -501,15 +553,16 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
     state_l3_official[iwin].status_label = widget_label(win_base_l3_official, value=status, /DYNAMIC_RESIZE, /align_left)
     button_base = widget_base(win_base_l3_official, /row)
     state_l3_official[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
-      sensitive=win_created, uvalue={l3_type:1, winno:iwin})
+      sensitive=win_created, uvalue={l3_type:1, winno:state_l3_official[iwin].l3_winno})
     create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3', $
       sensitive=exist_l2, uvalue={l3_type:1, winno:iwin})
   ENDFOR ; iwin=0,nwin-1
 
-  save_button_official = widget_button(win_base, value='Save File', sensitive=0)
+  save_button_official = widget_button(win_base, value='Save File', sensitive=0, event_pro='spice_xcontrol_l23_save_file', $
+    uvalue={l3_type:1})
 
 
-  ; Column Level 3 - user file
+  ; Column 2 - Level 3 - user file
 
   base_l3_user = widget_base(win_base, /column, /frame)
   label = widget_label(base_l3_user, value='LEVEL 3 - user')
@@ -537,15 +590,16 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
     state_l3_user[iwin].status_label = widget_label(win_base_l3_user, value=status, /DYNAMIC_RESIZE, /align_left)
     button_base = widget_base(win_base_l3_user, /row)
     state_l3_user[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
-      sensitive=win_created, uvalue={l3_type:2, winno:iwin})
+      sensitive=win_created, uvalue={l3_type:2, winno:state_l3_user[iwin].l3_winno})
     create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3', $
       sensitive=exist_l2, uvalue={l3_type:2, winno:iwin})
   ENDFOR ; iwin=0,nwin-1
 
-  save_button_user = widget_button(win_base, value='Save File', sensitive=0)
+  save_button_user = widget_button(win_base, value='Save File', sensitive=0, event_pro='spice_xcontrol_l23_save_file', $
+    uvalue={l3_type:2})
 
 
-  ; Column Level 3 - other file
+  ; Column 3 - Level 3 - other file
 
   state_l3_other = make_array(nwin, value={l3_winno:-1, edited:0b, title_label:0L, status_label:0L, edit_button:0L})
   IF keyword_set(show_other) || exist_l3_other THEN BEGIN
@@ -575,12 +629,13 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
       state_l3_other[iwin].status_label = widget_label(win_base_l3_other, value=status, /DYNAMIC_RESIZE, /align_left)
       button_base = widget_base(win_base_l3_other, /row)
       state_l3_other[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
-        sensitive=win_created, uvalue={l3_type:2, winno:iwin})
+        sensitive=win_created, uvalue={l3_type:3, winno:state_l3_other[iwin].l3_winno})
       create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3', $
-        sensitive=exist_l2, uvalue={l3_type:2, winno:iwin})
+        sensitive=exist_l2, uvalue={l3_type:3, winno:iwin})
     ENDFOR ; iwin=0,nwin-1
 
-    save_button_other = widget_button(win_base, value='Save File', sensitive=0)
+    save_button_other = widget_button(win_base, value='Save File', sensitive=0, event_pro='spice_xcontrol_l23_save_file', $
+      uvalue={l3_type:3})
 
   ENDIF ELSE BEGIN ; keyword_set(show_other) || exist_l3_other
     save_button_other = 0
