@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-01 15:26 CEST $
+; $Id: 2022-09-02 14:37 CEST $
 ;-
 ;
 ;
@@ -57,8 +57,11 @@ pro spice_xcontrol_l23_event, event
     IF total((*info).state_l3_official.edited) GT 0 || $
       total((*info).state_l3_user.edited) GT 0 || $
       total((*info).state_l3_other.edited) GT 0 THEN BEGIN
-      print, 'WARNING: unsaved changes. A message box will appear eventually and ask you if you want to save.'
-      ; TODO
+      result = dialog_message(['WARNING: Possibly UNSAVED changes.', $
+        'This warning also shows up, even if you only looked at level 3 data',$
+        'without changing anything.', $
+        'Do you really want to exit?'], /question, /default_no, title='WARNING: Possibly UNSAVED changes.', /center)
+      IF result EQ 'No' THEN return
     ENDIF
     widget_control, event.top, /destroy
   endif
@@ -66,7 +69,92 @@ end
 
 
 pro spice_xcontrol_l23_save_file, event
-; TODO
+  widget_control, event.top, get_uvalue=info
+  widget_control, event.id, get_uvalue=file_info
+  IF size((*info).object_l2, /type) NE 11 THEN BEGIN
+    result = dialog_message(['Saving of level 3 SPICE FITS files is not (yet) supported', $
+      'when the corresponding level 2 file is not available.', $
+      'Contact martin.wiesmann@astro.uio.no if you need this feature'])
+    ; TODO
+    return
+  ENDIF
+  case file_info.l3_type of
+    1: BEGIN
+      nwin_l3 = (*info).nwin_l3_official
+      winno_l3 = *(*info).winno_l3_official
+      ana_l3 = *(*info).ana_l3_official
+      ;hdr_l3 = *(*info).hdr_l3_official
+      file_l3 = (*info).file_l3_official
+    END
+    2: BEGIN
+      nwin_l3 = (*info).nwin_l3_user
+      winno_l3 = *(*info).winno_l3_user
+      ana_l3 = *(*info).ana_l3_user
+      ;hdr_l3 = *(*info).hdr_l3_user
+      file_l3 = (*info).file_l3_user
+    END
+    3: BEGIN
+      nwin_l3 = (*info).nwin_l3_other
+      winno_l3 = *(*info).winno_l3_other
+      ana_l3 = *(*info).ana_l3_other
+      ;hdr_l3 = *(*info).hdr_l3_other
+      file_l3 = (*info).file_l3_other
+    END
+  endcase
+  IF file_exist(file_l3) THEN BEGIN
+    result = dialog_message(['This file already exists.',file_l3,'Do you want to overwrite it?'], $
+      /question, /default_no, title='File exists. Overwrite?',/center)
+    IF result EQ 'No' THEN return
+    file_old = 1
+    file_move, file_l3, file_l3+'.old'
+  ENDIF ELSE file_old = 0
+
+  all_result_headers = ptrarr(nwin_l3)
+  FOR iwindow=0,nwin_l3-1 DO BEGIN
+
+    original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+
+    if iwindow gt 0 then extension=1 else extension=0
+    headers = spice_ana2fitshdr(ana_l3[iwindow], header_l2=(*info).object_l2->get_header(winno_l3[iwindow]), $
+      extension=extension, filename_l3=filename_l3, n_windows=nwin_l3, winno=iwindow, $
+      HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
+      FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
+      CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+      original_data=original_data)
+
+    writefits, file_l3, RESULT, *headers[0], append=extension
+    writefits, file_l3, original_data, *headers[1], /append
+    writefits, file_l3, LAMBDA, *headers[2], /append
+    writefits, file_l3, RESIDUAL, *headers[3], /append
+    writefits, file_l3, WEIGHTS, *headers[4], /append
+    writefits, file_l3, INCLUDE, *headers[5], /append
+    writefits, file_l3, CONST, *headers[6], /append
+
+    all_result_headers[iwindow] = ptr_new(*headers[0])
+
+  ENDFOR ; iwin=0,nwin_l3-1
+
+  IF file_old THEN file_delete, file_l3+'.old'
+
+  CASE file_info.l3_type OF
+    1: BEGIN
+      ptr_free, (*info).hdr_l3_official
+      (*info).hdr_l3_official = ptr_new(all_result_headers)
+      (*info).state_l3_official.edited = 0
+    END
+    2: BEGIN
+      ptr_free, (*info).hdr_l3_user
+      (*info).hdr_l3_user = ptr_new(all_result_headers)
+      (*info).state_l3_user.edited = 0
+    END
+    3: BEGIN
+      ptr_free, (*info).hdr_l3_other
+      (*info).hdr_l3_other = ptr_new(all_result_headers)
+      (*info).state_l3_other.edited = 0
+    END
+  ENDCASE
+  spice_xcontrol_l23_update_state_display, info
 end
 
 
@@ -101,6 +189,7 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
     winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', -1)
   ENDFOR
 
+  nwin_l3 = 0
   FOR iwin=0,(*info).nwin-1 DO BEGIN
     ind_result = where(winno_l3_result eq iwin, count_result)
     ind_old = where(winno_l3 eq iwin, count_old)
@@ -109,10 +198,12 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
       state_l3[iwin].edited = ~result.file_saved
       spice_xcontrol_l23_add_window, ana_l3_new, (*result.ana)[ind_result[0]], $
         hdr_l3_new, *(*result.result_headers)[ind_result[0]], winno_l3_new, iwin
+      nwin_l3++
     ENDIF ELSE IF count_old GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = ind_old[0]
       spice_xcontrol_l23_add_window, ana_l3_new, ana_l3[ind_old[0]], $
         hdr_l3_new, *hdr_l3[ind_old[0]], winno_l3_new, iwin
+      nwin_l3++
     ENDIF ELSE BEGIN
       state_l3[iwin].l3_winno = -1
       state_l3[iwin].edited = 0
@@ -121,6 +212,7 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
 
   CASE win_type OF
     1: BEGIN
+      (*info).nwin_l3_official = nwin_l3
       ptr_free, (*info).ana_l3_official
       (*info).ana_l3_official = ptr_new(ana_l3_new)
       ptr_free, (*info).hdr_l3_official
@@ -130,6 +222,7 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
       (*info).state_l3_official = state_l3
     END
     2: BEGIN
+      (*info).nwin_l3_user = nwin_l3
       ptr_free, (*info).ana_l3_user
       (*info).ana_l3_user = ptr_new(ana_l3_new)
       ptr_free, (*info).hdr_l3_user
@@ -139,6 +232,7 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
       (*info).state_l3_user = state_l3
     END
     3: BEGIN
+      (*info).nwin_l3_other = nwin_l3
       ptr_free, (*info).ana_l3_other
       (*info).ana_l3_other = ptr_new(ana_l3_new)
       ptr_free, (*info).hdr_l3_other
@@ -392,10 +486,28 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
 
   help, file_info
   file_l2 = spice_find_file(file_info.datetime)
+  IF file_l2 NE '' THEN BEGIN
+    file_l2_info = spice_file2info(file_l2)
+    IF file_l2_info.version NE file_info.version || $
+      file_l2_info.spiobsid NE file_info.spiobsid || $
+      file_l2_info.rasterno NE file_info.rasterno THEN file_l2 = ''
+  ENDIF
   print,'file_l2           ',file_l2
   file_l3_official = spice_find_file(file_info.datetime, level=3)
+  IF file_l3_official NE '' THEN BEGIN
+    file_l3_official_info = spice_file2info(file_l3_official)
+    IF file_l3_official_info.version NE file_info.version || $
+      file_l3_official_info.spiobsid NE file_info.spiobsid || $
+      file_l3_official_info.rasterno NE file_info.rasterno THEN file_l3_official = ''
+  ENDIF
   print,'file_l3_official  ',file_l3_official
   file_l3_user = spice_find_file(file_info.datetime, /user, level=3)
+  IF file_l3_user NE '' THEN BEGIN
+    file_l3_user_info = spice_file2info(file_l3_user)
+    IF file_l3_user_info.version NE file_info.version || $
+      file_l3_user_info.spiobsid NE file_info.spiobsid || $
+      file_l3_user_info.rasterno NE file_info.rasterno THEN file_l3_user = ''
+  ENDIF
   print,'file_l3_user      ',file_l3_user
   file_l3_other = ''
   CASE file_info.level OF
