@@ -45,7 +45,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-05 12:06 CEST $
+; $Id: 2022-09-05 14:15 CEST $
 ;-
 ;
 ;
@@ -426,11 +426,13 @@ pro spice_xcontrol_l23_open_l3, event
       ana_l3 = *(*info).ana_l3_user
       hdr_l3 = *(*info).hdr_l3_user
       title = 'L3 - user - ' + fxpar(*hdr_l3[file_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+      state_l3 = (*info).state_l3_user
     END
     3: BEGIN
       ana_l3 = *(*info).ana_l3_other
       hdr_l3 = *(*info).hdr_l3_other
       title = 'L3 - other - ' + fxpar(*hdr_l3[file_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+      state_l3 = (*info).state_l3_other
     END
   endcase
   ana = ana_l3[file_info.winno]
