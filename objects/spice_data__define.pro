@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-08-29 14:17 CEST $
+; $Id: 2022-09-05 14:15 CEST $
 
 
 ;+
@@ -982,7 +982,7 @@ END
 ;                 The keyword is ignored if NO_MASKING is set.
 ;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
 ;                 This keyword is ignored if NO_MASKING is set.
-;     load : Obsoloete and ignored.
+;     load : Obsolete and ignored. This is here for backwards-compatibility.
 ;
 ; OUTPUT:
 ;     Returns either the data of the window as an array or a link to the data.
