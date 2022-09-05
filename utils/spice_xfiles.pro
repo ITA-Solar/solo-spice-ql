@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-09-05 10:27 CEST $
+; $Id: 2022-09-05 10:43 CEST $
 ;-
 
 
@@ -201,6 +201,9 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
       endfor ; fit=0,N_ELEMENTS(uniqin)-1
       ptr_free, (*info).filehdr
       (*info).filehdr = ptr_new(hdr)
+      spiobsids = file_info.spiobsid
+      ptr_free, (*info).file_spiobsids
+      (*info).file_spiobsids = ptr_new(spiobsids)
   
       ; set all possible filter values (only used when this method is called from spice_xfiles_searchdir
       purpose = [purpose, hdr[uniq(hdr.purpose, sort(hdr.purpose))].purpose]
@@ -213,6 +216,7 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
       widget_control, (*info).display_filter_slitwid_max, set_value=slit_wid[1]
     endif else begin ; keyword_set(newfiles)
       hdr = *(*info).filehdr
+      spiobsids = *(*info).file_spiobsids
     endelse ; keyword_set(newfiles)
     hdrall = hdr
     file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
@@ -242,7 +246,7 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
         if countsw gt 0 then begin
           hdr = hdr[ind]
           for ihdr=0,countsw-1 do begin
-            ind = where(hdrall.spiobsid eq hdr[ihdr].spiobsid, countobs)
+            ind = where(spiobsids eq hdr[ihdr].spiobsid, countobs)
             if countobs gt 0 then file2obsmap[ind]=ihdr+1
           endfor ; ihdr=0,countsw-1
     
@@ -683,6 +687,7 @@ pro spice_xfiles
     filelistall:ptr_new(), $
     file2obsmap:ptr_new(), $
     filehdr:ptr_new(), $
+    file_spiobsids:ptr_new(), $
     fileselect:'', $
     foundOBS:foundOBS, $
     foundfiles:foundfiles, $
