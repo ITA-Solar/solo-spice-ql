@@ -3,23 +3,38 @@
 ;       SPICE_XCONTROL_L23
 ;
 ; PURPOSE:
-; SPICE_XCONTROL_L23 bla bla blaaa
+; SPICE_XCONTROL_L23 is a GUI utility to view, edit or create level 3 SPICE FITS files, along with the corresponding
+; level 2 file. The tool takes as input a level 2 or a level 3 file, and then displays 3 or 4 columns (see show_other).
+; Each column stands for one file, first the level 2 file, then the official level 3 file, i.e. the level 3 that is found
+; in the official location, i.e. $SPICE_DATA/level3. The third column shows the level 3 file that the user can create
+; with his/her own options and fitting components. There is also the possibility to have a level 3 file in a fully
+; user-defined location, this would be shown in the 4th column. Each window can be viewed/edited or created separately
+; and the FITS file can then be saved. Alternatively, with the upper most button, all or some windows can be (re)created 
+; in one go. This will overwrite all previous data, i.e. windows that had level 3 data, and that were not selected in this
+; round, will get deleted.
+; When viewing a level 3 window (in xcfit_block) the tool assumes that the window was edited, and will mark it as such, even
+; though no changes were made. This is because the tool can not know whether the user actually made changes or not.
 ;
 ; CATEGORY:
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_xcontrol_l23, file [, group_leader = group]
+;       spice_xcontrol_l23, file [, group_leader = group] [, /show_other]
 ;
 ; INPUTS:
 ; file: A SPICE file either level 2 or level 3
 ;
 ; KEYWORD PARAMETERS:
 ; group_leader: Widget ID of parent widget
+; show_other: If set, a fourth column will be displayed, in which level 3 files are shown
+;             that are saved in a user-defined location, i.e. not in $SPICE_DATA/level3/ nor in
+;             $SPICE_DATA/user/level3/. This column is shown automatically, if the input
+;             file is of level 3 and in a user-defined location.
 ;
 ; OUTPUTS:
 ;
 ; CALLS:
+; SPICE_DATA, SPICE_CREATE_L3_WIDGET
 ;
 ; COMMON BLOCKS:
 ;
@@ -30,12 +45,11 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-02 14:37 CEST $
+; $Id: 2022-09-05 12:06 CEST $
 ;-
 ;
 ;
 pro spice_xcontrol_l23_destroy, event
-  print, 'spice_xcontrol_l23_destroy'
   pseudoevent = {WIDGET_KILL_REQUEST, $
     ID:event.id, $
     TOP:event.top, $
@@ -44,10 +58,19 @@ pro spice_xcontrol_l23_destroy, event
 end
 
 pro spice_xcontrol_l23_cleanup, tlb
-  print, 'spice_xcontrol_l23_cleanup'
   widget_control, tlb, get_uvalue=info
-  ; FREE....
-  ; TODO
+  ptr_free,(*info).winno_l3_official
+  ptr_free,(*info).winno_l3_user
+  ptr_free,(*info).winno_l3_other
+  ptr_free,(*info).ana_l3_official
+  ptr_free,(*info).ana_l3_user
+  ptr_free,(*info).ana_l3_other
+  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official)-1 DO ptr_free, (*(*info).hdr_l3_official)[i]
+  ptr_free,(*info).hdr_l3_official
+  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user)-1 DO ptr_free, (*(*info).hdr_l3_user)[i]
+  ptr_free,(*info).hdr_l3_user
+  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_other)-1 DO ptr_free, (*(*info).hdr_l3_other)[i]
+  ptr_free,(*info).hdr_l3_other
   ptr_free,info
 end
 
@@ -556,7 +579,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
     ENDIF
     nwin_l3_official = 0
     ana_l3_official = 0
-    hdr_l3_official = 0
+    hdr_l3_official = ptr_new(0)
     winno_l3_official = -1
   ENDELSE
 
@@ -579,7 +602,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
     ENDIF
     nwin_l3_user = 0
     ana_l3_user = 0
-    hdr_l3_user = 0
+    hdr_l3_user = ptr_new(0)
     winno_l3_user = -1
   ENDELSE
 
@@ -599,7 +622,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader, show_other=show_other
     ELSE IF exist_l3_user THEN file_l3_other = concat_dir(new_path, (file_basename(file_l3_user))[0])
     nwin_l3_other = 0
     ana_l3_other = 0
-    hdr_l3_other = 0
+    hdr_l3_other = ptr_new(0)
     winno_l3_other = -1
   ENDELSE
 
