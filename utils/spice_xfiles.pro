@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-08-31 10:47 CEST $
+; $Id: 2022-09-05 10:27 CEST $
 ;-
 
 
@@ -172,16 +172,12 @@ pro spice_xfiles_searchdir, info
 
   ptr_free, (*info).filelistall
   (*info).filelistall = ptr_new(files)
-  spice_xfiles_display_results, info, /newfiles, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
-  widget_control, (*info).display_filter_purpose, set_value=purpose
-  widget_control, (*info).display_filter_studytyp, set_value=studytyp
-  widget_control, (*info).display_filter_slitwid_min, set_value=slit_wid[0]
-  widget_control, (*info).display_filter_slitwid_max, set_value=slit_wid[1]
+  spice_xfiles_display_results, info, /newfiles
 end
 
 
 ; displays the found files and sequences
-pro spice_xfiles_display_results, info, newfiles=newfiles, purpose=purpose, studytyp=studytyp, slit_wid=slit_wid
+pro spice_xfiles_display_results, info, newfiles=newfiles
   ;now we search the headers for different runs of OBS to display
   widget_control, /hourglass
   OBSdesc=''
@@ -211,6 +207,10 @@ pro spice_xfiles_display_results, info, newfiles=newfiles, purpose=purpose, stud
       studytyp = [studytyp, hdr[uniq(hdr.studytyp, sort(hdr.studytyp))].studytyp]
       slit_wid_min = min(hdr.slit_wid, max=slit_wid_max)
       slit_wid = [slit_wid_min, slit_wid_max]
+      widget_control, (*info).display_filter_purpose, set_value=purpose
+      widget_control, (*info).display_filter_studytyp, set_value=studytyp
+      widget_control, (*info).display_filter_slitwid_min, set_value=slit_wid[0]
+      widget_control, (*info).display_filter_slitwid_max, set_value=slit_wid[1]
     endif else begin ; keyword_set(newfiles)
       hdr = *(*info).filehdr
     endelse ; keyword_set(newfiles)
@@ -293,7 +293,9 @@ pro spice_xfiles_use_catalog, event
     if N_ELEMENTS(files_path) eq 0 then files_path=''
     files=files_path
   endelse
-  spice_xfiles_display_results, files, info
+  ptr_free, (*info).filelistall
+  (*info).filelistall = ptr_new(files)
+  spice_xfiles_display_results, info, /newfiles
 end
 
 
