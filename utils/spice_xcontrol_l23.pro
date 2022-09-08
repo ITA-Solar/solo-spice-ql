@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-07 11:45 CEST $
+; $Id: 2022-09-08 15:24 CEST $
 ;-
 ;
 ;
@@ -142,25 +142,17 @@ end
 pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
   IF result.top_dir EQ '' THEN BEGIN
     IF result.user_dir THEN BEGIN
-      win_type = 2
-      ana_l3 = *(*info).ana_l3_user
-      hdr_l3 = *(*info).hdr_l3_user
-      state_l3 = (*info).state_l3_user
-      winno_l3 = *(*info).winno_l3_user
+      file_in_user_dir = 1
     ENDIF ELSE BEGIN
-      win_type = 1
-      ana_l3 = *(*info).ana_l3_official
-      hdr_l3 = *(*info).hdr_l3_official
-      state_l3 = (*info).state_l3_official
-      winno_l3 = *(*info).winno_l3_official
+      file_in_user_dir = 0
     ENDELSE
   ENDIF ELSE BEGIN
-    win_type = 3
-    ana_l3 = *(*info).ana_l3_other
-    hdr_l3 = *(*info).hdr_l3_other
-    state_l3 = (*info).state_l3_other
-    winno_l3 = *(*info).winno_l3_other
+    file_in_user_dir = 0
   ENDELSE
+  ana_l3 = *(*info).ana_l3_user
+  hdr_l3 = *(*info).hdr_l3_user
+  state_l3 = (*info).state_l3_user
+  winno_l3 = *(*info).winno_l3_user
 
   nwin_l3_result = N_ELEMENTS(*result.ana)
   winno_l3_result = intarr(nwin_l3_result)
@@ -189,38 +181,16 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
     ENDELSE
   ENDFOR ; iwin=0,(*info).nwin-1
 
-  CASE win_type OF
-    1: BEGIN
-      (*info).nwin_l3_official = nwin_l3
-      ptr_free, (*info).ana_l3_official
-      (*info).ana_l3_official = ptr_new(ana_l3_new)
-      ptr_free, (*info).hdr_l3_official
-      (*info).hdr_l3_official = ptr_new(hdr_l3_new)
-      ptr_free, (*info).winno_l3_official
-      (*info).winno_l3_official = ptr_new(winno_l3_new)
-      (*info).state_l3_official = state_l3
-    END
-    2: BEGIN
-      (*info).nwin_l3_user = nwin_l3
-      ptr_free, (*info).ana_l3_user
-      (*info).ana_l3_user = ptr_new(ana_l3_new)
-      ptr_free, (*info).hdr_l3_user
-      (*info).hdr_l3_user = ptr_new(hdr_l3_new)
-      ptr_free, (*info).winno_l3_user
-      (*info).winno_l3_user = ptr_new(winno_l3_new)
-      (*info).state_l3_user = state_l3
-    END
-    3: BEGIN
-      (*info).nwin_l3_other = nwin_l3
-      ptr_free, (*info).ana_l3_other
-      (*info).ana_l3_other = ptr_new(ana_l3_new)
-      ptr_free, (*info).hdr_l3_other
-      (*info).hdr_l3_other = ptr_new(hdr_l3_new)
-      ptr_free, (*info).winno_l3_other
-      (*info).winno_l3_other = ptr_new(winno_l3_new)
-      (*info).state_l3_other = state_l3
-    END
-  ENDCASE
+  (*info).nwin_l3_user = nwin_l3
+  ptr_free, (*info).ana_l3_user
+  (*info).ana_l3_user = ptr_new(ana_l3_new)
+  ptr_free, (*info).hdr_l3_user
+  (*info).hdr_l3_user = ptr_new(hdr_l3_new)
+  ptr_free, (*info).winno_l3_user
+  (*info).winno_l3_user = ptr_new(winno_l3_new)
+  (*info).state_l3_user = state_l3
+  (*info).file_in_user_dir = file_in_user_dir
+  (*info).file_top_dir = result.top_dir
 
   spice_xcontrol_l23_update_state_display, info
 end
@@ -245,16 +215,14 @@ pro spice_xcontrol_l23_update_state_replace, info, result
 
   IF result.top_dir EQ '' THEN BEGIN
     IF result.user_dir THEN BEGIN
-      win_type = 2
-      state_l3 = (*info).state_l3_user
+      file_in_user_dir = 1
     ENDIF ELSE BEGIN
-      win_type = 1
-      state_l3 = (*info).state_l3_official
+      file_in_user_dir = 0
     ENDELSE
   ENDIF ELSE BEGIN
-    win_type = 3
-    state_l3 = (*info).state_l3_other
+    file_in_user_dir = 0
   ENDELSE
+  state_l3 = (*info).state_l3_user
 
   nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', 0)
   winno_l3_result = intarr(nwin_l3_result)
@@ -273,41 +241,17 @@ pro spice_xcontrol_l23_update_state_replace, info, result
     ENDELSE
   ENDFOR
 
-  CASE win_type OF
-    1: BEGIN
-      (*info).file_l3_official = result.l3_file
-      (*info).nwin_l3_official = nwin_l3_result
-      ptr_free, (*info).ana_l3_official
-      (*info).ana_l3_official = ptr_new(*result.ana)
-      ptr_free, (*info).hdr_l3_official
-      (*info).hdr_l3_official = ptr_new(*result.result_headers)
-      ptr_free, (*info).winno_l3_official
-      (*info).winno_l3_official = ptr_new(winno_l3_result)
-      (*info).state_l3_official = state_l3
-    END
-    2: BEGIN
-      (*info).file_l3_user = result.l3_file
-      (*info).nwin_l3_user = nwin_l3_result
-      ptr_free, (*info).ana_l3_user
-      (*info).ana_l3_user = ptr_new(*result.ana)
-      ptr_free, (*info).hdr_l3_user
-      (*info).hdr_l3_user = ptr_new(*result.result_headers)
-      ptr_free, (*info).winno_l3_user
-      (*info).winno_l3_user = ptr_new(winno_l3_result)
-      (*info).state_l3_user = state_l3
-    END
-    3: BEGIN
-      (*info).file_l3_other = result.l3_file
-      (*info).nwin_l3_other = nwin_l3_result
-      ptr_free, (*info).ana_l3_other
-      (*info).ana_l3_other = ptr_new(*result.ana)
-      ptr_free, (*info).hdr_l3_other
-      (*info).hdr_l3_other = ptr_new(*result.result_headers)
-      ptr_free, (*info).winno_l3_other
-      (*info).winno_l3_other = ptr_new(winno_l3_result)
-      (*info).state_l3_other = state_l3
-    END
-  ENDCASE
+  (*info).file_l3_user = result.l3_file
+  (*info).nwin_l3_user = nwin_l3_result
+  ptr_free, (*info).ana_l3_user
+  (*info).ana_l3_user = ptr_new(*result.ana)
+  ptr_free, (*info).hdr_l3_user
+  (*info).hdr_l3_user = ptr_new(*result.result_headers)
+  ptr_free, (*info).winno_l3_user
+  (*info).winno_l3_user = ptr_new(winno_l3_result)
+  (*info).state_l3_user = state_l3
+  (*info).file_in_user_dir = file_in_user_dir
+  (*info).file_top_dir = result.top_dir
 
   spice_xcontrol_l23_update_state_display, info
 end
@@ -322,14 +266,12 @@ pro spice_xcontrol_l23_update_state_display, info
         hdr_l3 = *(*info).hdr_l3_official
         state_l3 = (*info).state_l3_official
         winno_l3 = *(*info).winno_l3_official
-        save_button = (*info).save_button_official
       END
       2: BEGIN
         file_l3 = (*info).file_l3_user
         hdr_l3 = *(*info).hdr_l3_user
         state_l3 = (*info).state_l3_user
         winno_l3 = *(*info).winno_l3_user
-        save_button = (*info).save_button_user
       END
     ENDCASE
 
@@ -347,7 +289,7 @@ pro spice_xcontrol_l23_update_state_display, info
       widget_control, state_l3[iwin].status_label, set_value=status
       widget_control, state_l3[iwin].edit_button, sensitive=editable
     ENDFOR ; iwin=0,(*info).nwin-1
-    widget_control, save_button, sensitive=total(state_l3.edited) GT 0
+    IF icol eq 2 THEN widget_control, (*info).save_button_user, sensitive=total(state_l3.edited) GT 0
     widget_control, (*info).dir_labels[icol], set_value=(file_dirname(file_l3))[0]
     widget_control, (*info).file_labels[icol], set_value=(file_basename(file_l3))[0]
 
@@ -410,7 +352,7 @@ end
 pro spice_xcontrol_l23_create_l3, event
   widget_control, event.top, get_uvalue=info
   widget_control, event.id, get_uvalue=win_info
-  IF ~file_in_user_dir THEN top_dir = (file_dirname((*info).file_l3_user))[0]
+  IF ~(*info).file_in_user_dir THEN top_dir = (file_dirname((*info).file_l3_user))[0]
 
   IF N_ELEMENTS(win_info) GT 1 THEN all_windows=1 ELSE all_windows=0
   result = spice_create_l3_widget( (*info).object_L2, event.top, window_index=win_info, $
@@ -468,13 +410,20 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       file_l3_user_info.spiobsid NE file_info.spiobsid || $
       file_l3_user_info.rasterno NE file_info.rasterno THEN file_l3_user = ''
   ENDIF
-  IF file_l3_user NE '' THEN file_in_user_dir=1 ELSE file_in_user_dir=0 
+  IF file_l3_user NE '' THEN file_in_user_dir=1 ELSE file_in_user_dir=0
+  file_top_dir=''
   CASE file_info.level OF
     2: file_l2 = file_in
     3: IF file_l3_officical NE file_in THEN BEGIN
       file_l3_user = file_in
       spice_ingest, file_l3_user, /user, /dry_run, destination=destination
-      IF file_l3_user EQ destination THEN file_in_user_dir=1 ELSE file_in_user_dir=0
+      IF file_l3_user EQ destination THEN BEGIN
+        file_in_user_dir=1
+        file_top_dir=''
+      ENDIF ELSE BEGIN
+        file_in_user_dir=0
+        file_top_dir='xxx'
+      ENDELSE
     ENDIF
     ELSE: BEGIN
       print, 'SPICE FITS file needs to be either level 2 or level 3.'
@@ -653,6 +602,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     file_l3_official:file_l3_official, $
     file_l3_user:file_l3_user, $
     file_in_user_dir:file_in_user_dir, $
+    file_top_dir:file_top_dir, $
     object_l2:object_l2, $
     winno_l3_official:ptr_new(winno_l3_official), $
     winno_l3_user:ptr_new(winno_l3_user), $
