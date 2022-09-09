@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-09 10:52 CEST $
+; $Id: 2022-09-09 11:02 CEST $
 ;-
 ;
 ;
@@ -92,6 +92,7 @@ pro spice_create_l3_widget_event, event
     ;ok, use the current settings to create l3 data/file
     ;and destroy the widget
     info.ok: begin
+      widget_control, /hourglass
       widget_control, info.lineselect, get_value = lineselect
       window_index = where(lineselect eq 1, count)
       if count eq 0 then begin
@@ -111,7 +112,6 @@ pro spice_create_l3_widget_event, event
       official_l3dir = user_dir[0] EQ 0
       widget_control, info.save_bg, get_value=save
       save_not = save[0] EQ 0
-      IF no_fitting THEN widget_control, /hourglass
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
         no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
         official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
@@ -236,7 +236,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   FOR i=0,N_ELEMENTS(window_index)-1 DO $
     IF window_index[i] GE 0 && window_index[i] LT n_windows THEN window_select[window_index[i]]=1
 
-  base = widget_base(title='SPICE create level 3 data/file', group_leader=group_leader, /column, modal=keyword_set(group_leader))
+  base = widget_base(title='SPICE create level 3 data/file', group_leader=group_leader, /column);, modal=keyword_set(group_leader))
+  ; If this widget is modal, the user can't stop the fitting calculations
 
   label = widget_label(base, value=(file_dirname(file_l2))[0], /align_center)
   label = widget_label(base, value=(file_basename(file_l2))[0], /align_center)
