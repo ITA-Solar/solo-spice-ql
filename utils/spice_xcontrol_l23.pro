@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-09 11:24 CEST $
+; $Id: 2022-09-09 14:26 CEST $
 ;-
 ;
 ;
@@ -139,16 +139,7 @@ end
 
 ; Add or replace new results
 ; This happens if the user clicks on one of the '(Re)create window' buttons
-pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
-  IF result.top_dir EQ '' THEN BEGIN
-    IF result.user_dir THEN BEGIN
-      file_in_user_dir = 1
-    ENDIF ELSE BEGIN
-      file_in_user_dir = 0
-    ENDELSE
-  ENDIF ELSE BEGIN
-    file_in_user_dir = 0
-  ENDELSE
+pro spice_xcontrol_l23_update_state_add, info, result
   ana_l3 = *(*info).ana_l3_user
   hdr_l3 = *(*info).hdr_l3_user
   state_l3 = (*info).state_l3_user
@@ -165,13 +156,13 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
     ind_result = where(winno_l3_result eq iwin, count_result)
     ind_old = where(winno_l3 eq iwin, count_old)
     IF count_result GT 0 THEN BEGIN
-      state_l3[iwin].l3_winno = ind_result[0]
+      state_l3[iwin].l3_winno = nwin_l3
       state_l3[iwin].edited = ~result.file_saved
       spice_xcontrol_l23_add_window, ana_l3_new, (*result.ana)[ind_result[0]], $
         hdr_l3_new, *(*result.result_headers)[ind_result[0]], winno_l3_new, iwin
       nwin_l3++
     ENDIF ELSE IF count_old GT 0 THEN BEGIN
-      state_l3[iwin].l3_winno = ind_old[0]
+      state_l3[iwin].l3_winno = nwin_l3
       spice_xcontrol_l23_add_window, ana_l3_new, ana_l3[ind_old[0]], $
         hdr_l3_new, *hdr_l3[ind_old[0]], winno_l3_new, iwin
       nwin_l3++
@@ -189,8 +180,6 @@ pro spice_xcontrol_l23_update_state_add, info, result, all_windows=all_windows
   ptr_free, (*info).winno_l3_user
   (*info).winno_l3_user = ptr_new(winno_l3_new)
   (*info).state_l3_user = state_l3
-  (*info).file_in_user_dir = file_in_user_dir
-  (*info).file_top_dir = result.top_dir
 
   spice_xcontrol_l23_update_state_display, info
 end
@@ -213,17 +202,7 @@ end
 ; This happens if the user clicks on upper most '(Re)create file' button
 pro spice_xcontrol_l23_update_state_replace, info, result
 
-  IF result.top_dir EQ '' THEN BEGIN
-    IF result.user_dir THEN BEGIN
-      file_in_user_dir = 1
-    ENDIF ELSE BEGIN
-      file_in_user_dir = 0
-    ENDELSE
-  ENDIF ELSE BEGIN
-    file_in_user_dir = 0
-  ENDELSE
   state_l3 = (*info).state_l3_user
-
   nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', 0)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
@@ -291,6 +270,7 @@ pro spice_xcontrol_l23_update_state_display, info
       IF status_old NE status THEN widget_control, state_l3[iwin].status_label, set_value=status
       IF widget_info(state_l3[iwin].edit_button, /sensitive) NE editable THEN $
         widget_control, state_l3[iwin].edit_button, sensitive=editable
+      IF icol EQ 2 THEN widget_control, state_l3[iwin].edit_button, set_uvalue={l3_type:2, winno:state_l3[iwin].l3_winno}
     ENDFOR ; iwin=0,(*info).nwin-1
     savable = total(state_l3.edited) GT 0
     IF icol eq 2 && widget_info((*info).save_button_user, /sensitive) NE savable THEN $
@@ -315,26 +295,26 @@ end
 
 pro spice_xcontrol_l23_open_l3, event
   widget_control, event.top, get_uvalue=info
-  widget_control, event.id, get_uvalue=file_info
-  case file_info.l3_type of
+  widget_control, event.id, get_uvalue=win_info
+  case win_info.l3_type of
     1: BEGIN
       ana_l3 = *(*info).ana_l3_official
       hdr_l3 = *(*info).hdr_l3_official
-      title = 'L3 - official - ' + fxpar(*hdr_l3[file_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+      title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_official
     END
     2: BEGIN
       ana_l3 = *(*info).ana_l3_user
       hdr_l3 = *(*info).hdr_l3_user
-      title = 'L3 - user - ' + fxpar(*hdr_l3[file_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+      title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_user
     END
   endcase
-  ana = ana_l3[file_info.winno]
+  ana = ana_l3[win_info.winno]
   xcfit_block, ana=ana, title=title
-  ana_l3[file_info.winno] = ana
+  ana_l3[win_info.winno] = ana
 
-  ind = where(state_l3.l3_winno eq file_info.winno, count)
+  ind = where(state_l3.l3_winno eq win_info.winno, count)
   if count NE 1 then begin
     print, 'This should not happen. Contact martin.wiesmann@astro.uio.no'
     stop
@@ -342,7 +322,7 @@ pro spice_xcontrol_l23_open_l3, event
   endif
   state_l3[ind[0]].edited = 1
 
-  CASE file_info.l3_type OF
+  CASE win_info.l3_type OF
     1: BEGIN
       ptr_free, (*info).ana_l3_official
       (*info).ana_l3_official = ptr_new(ana_l3)
@@ -373,6 +353,25 @@ pro spice_xcontrol_l23_create_l3, event
 end
 
 
+pro spice_xcontrol_l23_copy_window, event
+  widget_control, event.top, get_uvalue=info
+  widget_control, event.id, get_uvalue=win_info
+  ana_l3 = *(*info).ana_l3_official
+  hdr_l3 = *(*info).hdr_l3_official
+  print,fxpar(*hdr_l3[win_info], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+  hdr_new = ptrarr(1)
+  hdr_new[0] = ptr_new(*hdr_l3[win_info])
+  print,fxpar(*hdr_new[0], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+  help,win_info
+  result = {l3_file:'', $
+    ana:ptr_new(ana_l3[win_info]), $
+    result_headers:ptr_new(hdr_new), $
+    file_saved:0b, user_dir:0b, top_dir:''}
+
+  spice_xcontrol_l23_update_state_add, info, result
+end
+
+
 
 ; -----------------------------------------------------------------------
 ; MAIN PROGRAM
@@ -380,11 +379,12 @@ end
 
 pro spice_xcontrol_l23, file, group_leader=group_leader
 
+  ;file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+  ;file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
+ 
   if n_params() lt 1 then begin
-    message,'spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
-    file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
-    ;file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
-    ;  return
+    message,'Usage: spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
+    return
   endif
 
   file_in = (file_search(file, /fully_qualify_path))[0]
@@ -557,7 +557,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     state_l3_official[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
       sensitive=win_created, uvalue={l3_type:1, winno:state_l3_official[iwin].l3_winno})
     copy_button = widget_button(button_base, value='Copy window to user file', event_pro='spice_xcontrol_l23_copy_window', $
-      sensitive=win_created, uvalue=iwin)
+      sensitive=win_created, uvalue=state_l3_official[iwin].l3_winno)
   ENDFOR ; iwin=0,nwin-1
   dummy_label = widget_label(win_base, value='')
 
