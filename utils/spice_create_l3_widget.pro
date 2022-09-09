@@ -24,7 +24,7 @@
 ;     group_leader: Widget ID of parent widget. If provided, this widget will be a modal widget.
 ;     window_index: One or more window indices that should be checked for processing.
 ;     top_dir: A path in which the level 3 file should be saved. If not provided the file will be saved
-;                 into the $SPICE_DATA directory.
+;                 into the $SPICE_DATA/user/ directory.
 ;     velocity: Set this equal to the initial velocity if you want the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength is taken from the supplied POSITION, i.e.,
 ;                 INT_POS_FWHM(1), which is calculated/estimated within the procedure 'generate_adef'.
@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-09 10:11 CEST $
+; $Id: 2022-09-09 10:52 CEST $
 ;-
 ;
 ;
@@ -92,7 +92,6 @@ pro spice_create_l3_widget_event, event
     ;ok, use the current settings to create l3 data/file
     ;and destroy the widget
     info.ok: begin
-      widget_control, /hourglass
       widget_control, info.lineselect, get_value = lineselect
       window_index = where(lineselect eq 1, count)
       if count eq 0 then begin
@@ -112,6 +111,7 @@ pro spice_create_l3_widget_event, event
       official_l3dir = user_dir[0] EQ 0
       widget_control, info.save_bg, get_value=save
       save_not = save[0] EQ 0
+      IF no_fitting THEN widget_control, /hourglass
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
         no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
         official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
@@ -160,6 +160,11 @@ end
 ; User changed top-dir of l3
 function spice_create_l3_widget_change_topdir, event
   widget_control, event.top, get_uvalue = info
+  IF event.id EQ info.top_dir_choice_bg THEN BEGIN
+    user_dir=0
+    IF event.value EQ 0 && info.official_l3dir EQ 0 THEN user_dir=1
+    widget_control, info.dir_user_bg, set_value=user_dir
+  ENDIF
   spice_create_l3_widget_calc_l3_dir, info
   return,0
 end
@@ -215,8 +220,9 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   l2_object = spice_get_object(l2_object, is_spice=is_spice, object_created=object_created)
   if ~is_spice then return, -1
 
+  official_l3dir = keyword_set(official_l3dir)
   top_dir_choice = keyword_set(top_dir)
-  dir_user_choice = [~keyword_set(official_l3dir)]
+  dir_user_choice = [~official_l3dir && ~top_dir_choice]
   option_choice = [keyword_set(no_fitting), keyword_set(no_widget), keyword_set(no_masking), $
     keyword_set(apporximated_slit), keyword_set(position)]
   if N_ELEMENTS(velocity) eq 0 then velocity = 0.0
@@ -252,6 +258,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   dir_manual_button = widget_button(dir_manual_base, value='Change', event_pro='spice_create_l3_widget_changesdir')
   dir_user_bg = cw_bgroup(output_path_base, ['Save in "user" subdirectory'], set_value=dir_user_choice, /nonexclusive, $
     event_func='spice_create_l3_widget_change_topdir')
+  widget_control, dir_user_bg, sensitive=official_l3dir
 
   options_base = widget_base(base, /row)
   options_values = ['Do not run the fit routine', 'Do not open xcfit_block', $
@@ -274,6 +281,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   info = { $
     l2_object:l2_object, $
     file_l3:'', $
+    official_l3dir:official_l3dir, $
     result:result, $
     lineselect:lineselect, $
     lineall_clear:lineall_clear, $
