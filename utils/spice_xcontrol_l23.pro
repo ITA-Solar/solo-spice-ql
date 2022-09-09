@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-08 15:24 CEST $
+; $Id: 2022-09-09 10:25 CEST $
 ;-
 ;
 ;
@@ -242,6 +242,8 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   ENDFOR
 
   (*info).file_l3_user = result.l3_file
+  (*info).file_in_user_dir = result.user_dir
+  IF ~result.user_dir THEN (*info).file_top_dir = result.top_dir
   (*info).nwin_l3_user = nwin_l3_result
   ptr_free, (*info).ana_l3_user
   (*info).ana_l3_user = ptr_new(*result.ana)
@@ -250,8 +252,6 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   ptr_free, (*info).winno_l3_user
   (*info).winno_l3_user = ptr_new(winno_l3_result)
   (*info).state_l3_user = state_l3
-  (*info).file_in_user_dir = file_in_user_dir
-  (*info).file_top_dir = result.top_dir
 
   spice_xcontrol_l23_update_state_display, info
 end
@@ -352,7 +352,7 @@ end
 pro spice_xcontrol_l23_create_l3, event
   widget_control, event.top, get_uvalue=info
   widget_control, event.id, get_uvalue=win_info
-  IF ~(*info).file_in_user_dir THEN top_dir = (file_dirname((*info).file_l3_user))[0]
+  IF ~(*info).file_in_user_dir THEN top_dir = (*info).file_top_dir
 
   IF N_ELEMENTS(win_info) GT 1 THEN all_windows=1 ELSE all_windows=0
   result = spice_create_l3_widget( (*info).object_L2, event.top, window_index=win_info, $
