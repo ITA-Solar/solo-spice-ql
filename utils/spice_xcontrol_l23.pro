@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-09 10:25 CEST $
+; $Id: 2022-09-09 11:24 CEST $
 ;-
 ;
 ;
@@ -285,13 +285,22 @@ pro spice_xcontrol_l23_update_state_display, info
         IF state_l3[iwin].edited THEN status = status + ' and EDITED'
         editable = 1
       ENDIF
-      widget_control, state_l3[iwin].title_label, set_value=title
-      widget_control, state_l3[iwin].status_label, set_value=status
-      widget_control, state_l3[iwin].edit_button, sensitive=editable
+      widget_control, state_l3[iwin].title_label, get_value=title_old
+      IF title_old NE title THEN widget_control, state_l3[iwin].title_label, set_value=title
+      widget_control, state_l3[iwin].status_label, get_value=status_old
+      IF status_old NE status THEN widget_control, state_l3[iwin].status_label, set_value=status
+      IF widget_info(state_l3[iwin].edit_button, /sensitive) NE editable THEN $
+        widget_control, state_l3[iwin].edit_button, sensitive=editable
     ENDFOR ; iwin=0,(*info).nwin-1
-    IF icol eq 2 THEN widget_control, (*info).save_button_user, sensitive=total(state_l3.edited) GT 0
-    widget_control, (*info).dir_labels[icol], set_value=(file_dirname(file_l3))[0]
-    widget_control, (*info).file_labels[icol], set_value=(file_basename(file_l3))[0]
+    savable = total(state_l3.edited) GT 0
+    IF icol eq 2 && widget_info((*info).save_button_user, /sensitive) NE savable THEN $
+      widget_control, (*info).save_button_user, sensitive=savable
+    widget_control, (*info).dir_labels[icol], get_value=dir_name_old
+    dir_name = (file_dirname(file_l3))[0]
+    IF dir_name_old NE dir_name THEN widget_control, (*info).dir_labels[icol], set_value=dir_name
+    base_name = (file_basename(file_l3))[0]
+    widget_control, (*info).file_labels[icol], get_value=base_name_old
+    IF base_name_old NE base_name THEN widget_control, (*info).file_labels[icol], set_value=base_name
 
   ENDFOR ; icol=1,ncolumn
 
