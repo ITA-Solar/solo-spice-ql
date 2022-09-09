@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2020: First version by Martin Wiesmann
 ;
-; $Id: 2022-08-31 11:34 CEST $
+; $Id: 2022-09-09 10:11 CEST $
 ;-
 ;
 ;
@@ -116,7 +116,7 @@ pro spice_create_l3_widget_event, event
         no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
         official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
         all_ana=all_ana, all_result_headers=all_result_headers)
-      (*info.result).l3_file = info.file_l3
+      (*info.result).l3_file = l3_file
       (*info.result).ana = ptr_new(all_ana)
       (*info.result).result_headers = ptr_new(all_result_headers)
       (*info.result).file_saved = save[0]
