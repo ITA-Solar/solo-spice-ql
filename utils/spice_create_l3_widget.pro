@@ -6,22 +6,21 @@
 ; SPICE_CREATE_L3_WIDGET is the widget to the method SPICE_DATA::create_l3_file.
 ; It lets the user select all the possible options before creating the level 3 data and/or file.
 ; This widget is used by SPICE_XCONTROL and SPICE_XCONTROL_L23.
-; The widget is modal if a parent widget is provided.
 ;
 ; CATEGORY:
 ;       Solar Orbiter - SPICE; QuickLook.
 ;
 ; CALLING SEQUENCE:
-;       spice_create_l3_widget, l2_object [, group_leader] [, window_index=window_index] $
+;       result = spice_create_l3_widget( l2_object [, group_leader] [, window_index=window_index] $
 ;         [, /no_masking] [, /approximated_slit] $
 ;         [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $
-;         [, /official_l3dir] [, top_dir=top_dir] [, /save_not] [, /block_save]
+;         [, /official_l3dir] [, top_dir=top_dir] [, /save_not] [, /block_save] )
 ;
 ; INPUTS:
 ;   l2_object: Either a SPICE_DATA object or a path to a level 2 SPICE FITS file.
 ;
 ; OPTIONAL INPUTS:
-;     group_leader: Widget ID of parent widget. If provided, this widget will be a modal widget.
+;     group_leader: Widget ID of parent widget.
 ;     window_index: One or more window indices that should be checked for processing.
 ;     top_dir: A path in which the level 3 file should be saved. If not provided the file will be saved
 ;                 into the $SPICE_DATA/user/ directory.
@@ -72,9 +71,9 @@
 ; RESTRICTIONS:
 ;
 ; MODIFICATION HISTORY:
-;     18-Aug-2020: First version by Martin Wiesmann
+;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-09 11:02 CEST $
+; $Id: 2022-09-12 12:12 CEST $
 ;-
 ;
 ;
