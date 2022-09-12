@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2022-08-31 10:44 CEST $
+; $Id: 2022-09-12 13:38 CEST $
 ;-
 ;
 ;
@@ -447,12 +447,10 @@ end
 pro spice_xcontrol_create_l3, event
   widget_control, event.top, get_uvalue = info
   widget_control, (*info).lineselect, get_value = lineselect
-  IF total(lineselect) EQ 0 THEN BEGIN
-    answer = dialog_message('You need to select at least one window.')
-  ENDIF ELSE BEGIN
+  IF total(lineselect) NE 0 THEN BEGIN
     window_index = where(lineselect)
-    result = spice_create_l3_widget(*(*info).d, event.top, window_index=window_index)
-  ENDELSE
+  ENDIF
+  result = spice_create_l3_widget(*(*info).d, event.top, window_index=window_index, /allow_xcontrol_l23)
 end
 
 ;-----------------------------------------------------------------------------
