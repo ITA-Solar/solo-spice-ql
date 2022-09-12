@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-09-05 10:43 CEST $
+; $Id: 2022-09-12 13:45 CEST $
 ;-
 
 
@@ -511,13 +511,14 @@ end
 ; call spice_xcontrol with the selected file
 pro spice_xfiles_read, event
   widget_control, event.top, get_uvalue = info
+  widget_control, event.id, get_uvalue = xcontrol_l23
   file = ((*info).fileselect)
   if file eq '' then begin
     box_message,'You need to select a file first'
   endif else begin
     file_info = spice_file2info(file)
-    if file_info.level eq 3 then begin
-      spice_xcontrol_l23, file, group_leader=event.top, show_other=show_other
+    if file_info.level eq 3 || xcontrol_l23 then begin
+      spice_xcontrol_l23, file, group_leader=event.top
     endif else begin
       spice_xcontrol, file, group_leader=(*info).tlb
     endelse
@@ -643,7 +644,10 @@ pro spice_xfiles
     , event_pro = 'spice_xfiles_select')
   confbase = widget_base(row4, /row, /align_left)
   confb = widget_button(confbase, value = 'Confirm selection' $
-    , event_pro = 'spice_xfiles_read')
+    , event_pro = 'spice_xfiles_read', uvalue=0)
+  label = widget_label(confbase, value='                 ')
+  confb = widget_button(confbase, value = 'Open file in XControl_L23' $
+    , event_pro = 'spice_xfiles_read', uvalue=1)
   label = widget_label(confbase, value='                 ')
   printfile = widget_button(confbase, value = 'Print filename to console' $
     , event_pro = 'spice_xfiles_printfilename')
