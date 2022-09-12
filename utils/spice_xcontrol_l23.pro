@@ -39,9 +39,9 @@
 ; RESTRICTIONS:
 ;
 ; MODIFICATION HISTORY:
-;     18-Aug-2020: First version by Martin Wiesmann
+;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-09 14:26 CEST $
+; $Id: 2022-09-12 12:13 CEST $
 ;-
 ;
 ;
@@ -379,12 +379,12 @@ end
 
 pro spice_xcontrol_l23, file, group_leader=group_leader
 
-  ;file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
+  file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
   ;file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
  
   if n_params() lt 1 then begin
     message,'Usage: spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
-    return
+    ;return
   endif
 
   file_in = (file_search(file, /fully_qualify_path))[0]
