@@ -85,7 +85,7 @@ In general, all functionalities in the heritage routines will be preserved as fa
     obj->help
     ```
 * Routine to read SPICE FITS file into an object (iris_obj)
-    * Done
+    * Done, obsolete, rather use the inbuilt creator `obj = spice_data(spice_file)`
     ```
     obj = spice_object(spice_file)
     obj->help

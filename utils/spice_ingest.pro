@@ -22,6 +22,8 @@
 ;      Index:   If $SPICE_DATA contains multiple paths, then this
 ;               keyword allows you to specify to which path you send
 ;               the file. Default is 0.
+;      TOP_DIR: A path to a directory in which the file should be saved. The necessary subdirectories
+;               will be created (e.g. level2/2020/06/21).
 ;
 ; KEYWORDS:
 ;      FORCE:   By default the routine will not overwrite a file that
@@ -31,7 +33,10 @@
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
 ;      SEARCH_SUBDIR: If set and 'Filename' is a directory, then the program looks for
 ;                     spice files recurrently, i.e. in all subdirectories
+;      USER_DIR: If set, the file(s) will be moved into $SPICE_DATA/user/ instead of $SPICE_DATA/
 ;      HELP:    If set, then a help message is printed.
+;      DRY_RUN: If set, the file won't be moved, no directories will be created. The optional outputs
+;               will be the same as if this keyword was not set.
 ;
 ; OUTPUTS:
 ;      Moves the SPICE file(s) into the correct location in the local
@@ -50,6 +55,9 @@
 ; RESTRICTIONS:
 ;      The environment variable SPICE_DATA must be defined.
 ;
+; EXAMPLES:
+;      spice_ingest, './'  ; This moves all files from the current directory
+;
 ; HISTORY:
 ;      Ver. 1, 30-Jun-2014, Peter Young
 ;      Ver. 2, 22-Aug-2014, Peter Young
@@ -62,12 +70,13 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2021-12-03 11:59 CET $
+; $Id: 2022-08-26 13:26 CEST $
 
 
 PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
   search_subdir=search_subdir, $
   destination=destination, file_moved=file_moved, files_found=files_found, $
+  user_dir=user_dir, top_dir=top_dir, dry_run=dry_run, $
   help=help, debug=debug
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
@@ -78,13 +87,22 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     print,''
     return
   ENDIF
-  
-  topdir=getenv('SPICE_DATA')
-  IF topdir EQ '' THEN BEGIN
-    print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
-      print,'               top level of your directory structure. Returning...'
-    return
-  ENDIF
+
+  IF keyword_set(top_dir) THEN BEGIN
+    IF N_ELEMENTS(top_dir) NE 1 || size(top_dir, /type) NE 7 THEN BEGIN
+      print, 'top_dir must be a scalar string.'
+      print, 'No files moved.'
+      return
+    ENDIF
+    topdir = top_dir
+  ENDIF ELSE BEGIN ; keyword_set(top_dir)
+    topdir=getenv('SPICE_DATA')
+    IF topdir EQ '' THEN BEGIN
+      print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
+        print,'               top level of your directory structure. Returning...'
+      return
+    ENDIF
+  ENDELSE ; keyword_set(top_dir)
 
   spice_paths=BREAK_path(topdir,/nocurrent)
   np=n_elements(spice_paths)
@@ -109,6 +127,7 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     IF n_params() LT 1 THEN return
   ENDIF
 
+  IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
 
   nfiles=n_elements(filename)
   IF nfiles GT 1 THEN BEGIN
@@ -126,7 +145,7 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
       ENDIF ; nfiles EQ 0
       IF nfiles GT 1 THEN files = files[sort(files)]
     ENDIF ELSE BEGIN ; file_test(filename, /directory)
-      files = filename      
+      files = filename
     ENDELSE ; file_test(filename, /directory)
   ENDELSE ; nfiles GT 1
 
@@ -152,12 +171,12 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
     old_files = file_search(concat_dir(outdir,'solo*.fits'))
     filechck=where(file_basename(old_files) EQ file_info.filename,nf)
     IF nf EQ 0 OR keyword_set(force) THEN BEGIN
-      IF ~file_test(outdir, /directory) THEN BEGIN
+      IF ~file_test(outdir, /directory) && ~keyword_set(dry_run) THEN BEGIN
         file_mkdir, outdir
       ENDIF
-      file_move,files[ifiles], outdir, /overwrite
-      destination[ifiles] = concat_dir(outdir, file_info.filename)
+      if ~keyword_set(dry_run) then file_move,files[ifiles], outdir, /overwrite
       file_moved[ifiles] = 1
+      destination[ifiles] = concat_dir(outdir, file_info.filename)
     ENDIF ELSE BEGIN
       print,'% SPICE_INGEST: file '+file_info.filename+' was not moved '
       print,'               as it already exists in the data directory.'

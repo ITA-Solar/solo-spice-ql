@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2021-10-27 11:20 CEST $
+; $Id: 2022-06-02 11:47 CEST $
 
 
 ; save as postscript file
@@ -624,7 +624,7 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
   message = ['Loading data into memory...','...this may take some time']
   xmessage,message,wbase=wbase,font='helvetica'
   widget_control,/hourglass
-  wd = data->get_window_data(line,/load)
+  wd = data->get_window_data(line)
   xkill,wbase
   if nexpprp le 1 then begin
     image = reform(wd[*,slitpos,*,*])

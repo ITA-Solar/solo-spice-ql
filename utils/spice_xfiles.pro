@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-03-28 13:25 CEST $
+; $Id: 2022-09-12 13:45 CEST $
 ;-
 
 
@@ -163,42 +163,100 @@ pro spice_xfiles_searchdir, info
   no_level = ~use_path_prefix[0]
   no_tree_struct = ~use_path_prefix[1]
   search_subdir = use_path_prefix[2]
+  user_dir = use_path_prefix[3]
 
   files = spice_find_file(tstartval, time_end=tstopval, top_dir=top_dir, $
-    no_tree_struct=no_tree_struct, search_subdir=search_subdir, level=level, $
+    no_tree_struct=no_tree_struct, search_subdir=search_subdir, level=level, user_dir=user_dir, $
     no_level=no_level, ignore_time=(*info).ignoretime, /sequence)
   if size(files, /type) ne 7 then files = files.ToArray(dimension=1)
 
-  spice_xfiles_display_results, files, info
+  ptr_free, (*info).filelistall
+  (*info).filelistall = ptr_new(files)
+  spice_xfiles_display_results, info, /newfiles
 end
 
 
 ; displays the found files and sequences
-pro spice_xfiles_display_results, files, info
+pro spice_xfiles_display_results, info, newfiles=newfiles
   ;now we search the headers for different runs of OBS to display
+  widget_control, /hourglass
   OBSdesc=''
   file2obsmap=0
+  purpose = ['All']
+  studytyp = ['All']
+  slit_wid = [0, 10000]
+  files = *(*info).filelistall
   if N_ELEMENTS(files) gt 0 && files[0] ne '' then begin
-    file_info = spice_file2info(files)
+    if keyword_set(newfiles) then begin
+      file_info = spice_file2info(files)
+      uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
+      template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', SLIT_WID:0, DSUN_AU:0.0, CROTA:0.0, CRVAL1:0.0, CRVAL2:0.0}
+      for fit=0,N_ELEMENTS(uniqin)-1 do begin
+        ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
+        if count gt 0 then begin
+          mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
+          if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
+          else hdr=[hdr,hdrtemp]
+        endif
+      endfor ; fit=0,N_ELEMENTS(uniqin)-1
+      ptr_free, (*info).filehdr
+      (*info).filehdr = ptr_new(hdr)
+      spiobsids = file_info.spiobsid
+      ptr_free, (*info).file_spiobsids
+      (*info).file_spiobsids = ptr_new(spiobsids)
+  
+      ; set all possible filter values (only used when this method is called from spice_xfiles_searchdir
+      purpose = [purpose, hdr[uniq(hdr.purpose, sort(hdr.purpose))].purpose]
+      studytyp = [studytyp, hdr[uniq(hdr.studytyp, sort(hdr.studytyp))].studytyp]
+      slit_wid_min = min(hdr.slit_wid, max=slit_wid_max)
+      slit_wid = [slit_wid_min, slit_wid_max]
+      widget_control, (*info).display_filter_purpose, set_value=purpose
+      widget_control, (*info).display_filter_studytyp, set_value=studytyp
+      widget_control, (*info).display_filter_slitwid_min, set_value=slit_wid[0]
+      widget_control, (*info).display_filter_slitwid_max, set_value=slit_wid[1]
+    endif else begin ; keyword_set(newfiles)
+      hdr = *(*info).filehdr
+      spiobsids = *(*info).file_spiobsids
+    endelse ; keyword_set(newfiles)
+    hdrall = hdr
     file2obsmap = make_array(N_ELEMENTS(files), value=-1L)
-    uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
-    template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', DSUN_AU:0.0, CROTA:0.0, CRVAL1:0.0, CRVAL2:0.0}
-    for fit=0,N_ELEMENTS(uniqin)-1 do begin
-      ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
-      if count gt 0 then begin
-        file2obsmap[ind]=fit+1
-        mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
-        if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
-        else hdr=[hdr,hdrtemp]
-      endif
-    endfor
 
-    OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
-      format='a,(I12),a,a,(f7.3),(f7.1),(f7.1),(f7.1),a')
-    OBSdesc = [header, OBSdesc]
-  endif else files=''
-  ptr_free, (*info).filelistall
-  (*info).filelistall = ptr_new(files)
+    ; apply display filter
+    widget_control, (*info).display_filter_purpose, get_value=purpose_values
+    purpose_select = widget_info((*info).display_filter_purpose, /droplist_select)
+    purpose_select = purpose_values[purpose_select]
+    widget_control, (*info).display_filter_studytyp, get_value=studytyp_values
+    studytyp_select = widget_info((*info).display_filter_studytyp, /droplist_select)
+    studytyp_select = studytyp_values[studytyp_select]
+    widget_control, (*info).display_filter_slitwid_min, get_value=slit_wid_min
+    widget_control, (*info).display_filter_slitwid_max, get_value=slit_wid_max
+    countp = N_ELEMENTS(hdr)
+    IF purpose_select NE 'All' then begin
+      ind = where(hdr.purpose eq purpose_select, countp)
+      hdr = hdr[ind]
+    ENDIF
+    IF countp gt 0 THEN BEGIN
+      counts = N_ELEMENTS(hdr)
+      IF studytyp_select NE 'All' then begin
+        ind = where(hdr.studytyp eq studytyp_select, counts)
+        hdr = hdr[ind]
+      ENDIF
+      if counts gt 0 then begin
+        ind = where(hdr.slit_wid GE slit_wid_min AND hdr.slit_wid LE slit_wid_max, countsw)
+        if countsw gt 0 then begin
+          hdr = hdr[ind]
+          for ihdr=0,countsw-1 do begin
+            ind = where(spiobsids eq hdr[ihdr].spiobsid, countobs)
+            if countobs gt 0 then file2obsmap[ind]=ihdr+1
+          endfor ; ihdr=0,countsw-1
+    
+          OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, SLIT_WID, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
+            format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
+          OBSdesc = [header, OBSdesc]
+        endif ; countsw gt 0
+      endif ; counts gt 0
+    ENDIF ; countp gt 0
+  endif else files='' ; N_ELEMENTS(files) gt 0 && files[0] ne ''
   ptr_free, (*info).file2obsmap
   (*info).file2obsmap = ptr_new(file2obsmap)
   widget_control, (*info).foundOBS, set_value = OBSdesc
@@ -239,7 +297,9 @@ pro spice_xfiles_use_catalog, event
     if N_ELEMENTS(files_path) eq 0 then files_path=''
     files=files_path
   endelse
-  spice_xfiles_display_results, files, info
+  ptr_free, (*info).filelistall
+  (*info).filelistall = ptr_new(files)
+  spice_xfiles_display_results, info, /newfiles
 end
 
 
@@ -409,6 +469,13 @@ pro spice_xfiles_change_search, event
 end
 
 
+; event handler for display filter input fields
+pro spice_xfiles_change_display_filter, event
+  widget_control, event.top, get_uvalue = info
+  spice_xfiles_display_results, info
+end
+
+
 ; calculate current search direcrory
 pro spice_xfiles_search_dir, info
   widget_control, (*info).top_dir_choice_bg, get_value=top_dir_choice
@@ -430,19 +497,13 @@ pro spice_xfiles_search_dir, info
   if strmid(top_dir, 0,1, /reverse_offset) ne dirsep then top_dir = top_dir+dirsep
   level = widget_info((*info).level_choice_droplist, /droplist_select)
   level = strtrim(string(level), 2)
-  (*info).filter = 'solo_L' + level + '_spice-*.fits'
   widget_control, (*info).use_path_prefix_bg, get_value=use_path_prefix
-  if use_path_prefix[0] then begin
-    top_dir = top_dir + 'level' + level + dirsep
-  endif
+  if use_path_prefix[3] then top_dir = top_dir + 'user' + dirsep
+  if use_path_prefix[0] then top_dir = top_dir + 'level' + level + dirsep
   (*info).sdir = top_dir
-  if use_path_prefix[1] then begin
-    top_dir = top_dir + 'yyyy' + dirsep + 'mm' + dirsep + 'dd' + dirsep
-  endif
+  if use_path_prefix[1] then top_dir = top_dir + 'yyyy' + dirsep + 'mm' + dirsep + 'dd' + dirsep
   top_dir = top_dir + (*info).filter
-  if use_path_prefix[2] then begin
-    top_dir = top_dir + ' -r'
-  endif
+  if use_path_prefix[2] then top_dir = top_dir + ' -r'
   widget_control, (*info).searchdir, set_value=top_dir
 end
 
@@ -450,18 +511,14 @@ end
 ; call spice_xcontrol with the selected file
 pro spice_xfiles_read, event
   widget_control, event.top, get_uvalue = info
+  widget_control, event.id, get_uvalue = xcontrol_l23
   file = ((*info).fileselect)
   if file eq '' then begin
     box_message,'You need to select a file first'
   endif else begin
     file_info = spice_file2info(file)
-    if file_info.level eq 3 then begin
-      ana = fits2ana(file, titles=titles)
-      n_ana = N_ELEMENTS(ana)
-      box_message,['found '+strtrim(string(n_ana),2)+' windows, loaded all of them', $
-        'xcfit_block will be opened for each, one after the other', $
-        'close xcfit_block with the button "File/Exit->Exit"']
-      for iana=0,n_ana-1 do xcfit_block,ana=ana[iana], title=titles[iana]
+    if file_info.level eq 3 || xcontrol_l23 then begin
+      spice_xcontrol_l23, file, group_leader=event.top
     endif else begin
       spice_xcontrol, file, group_leader=(*info).tlb
     endelse
@@ -477,6 +534,8 @@ pro spice_xfiles
     ;    save, tstartval, tstopval, ignoretime, starttimes, endtimes, $
     ;      top_dir_choice, top_dir_env_var, dir_manual, level, use_path_prefix, $
     ;      filename=SPICE_xfiles_appReadme()+'/spice_xfiles_searches.sav'
+    ; TO BE ADDED
+    ; filter_purpose, filter_studytyp, filter_slitwid = [min,max]
   endif
 
   ; initialize variables, if they don't exist yet
@@ -497,9 +556,12 @@ pro spice_xfiles
   if N_ELEMENTS(top_dir_env_var) eq 0 then top_dir_env_var='SPICE_DATA'
   if N_ELEMENTS(dir_manual) eq 0 then dir_manual='./'
   if N_ELEMENTS(level) eq 0 then level=2
-  if N_ELEMENTS(use_path_prefix) eq 0 then use_path_prefix=[1, 1, 0]
+  if N_ELEMENTS(use_path_prefix) ne 4 then use_path_prefix=[1, 1, 1, 0]
+  if N_ELEMENTS(filter_purpose) eq 0 then filter_purpose='All'
+  if N_ELEMENTS(filter_studytyp) eq 0 then filter_studytyp='All'
+  if N_ELEMENTS(filter_slitwid) eq 0 then filter_slitwid=[0,10000]
 
-  sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits'
+  sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits(.gz)'
   dirsep = path_sep()
 
 
@@ -554,7 +616,8 @@ pro spice_xfiles
   level_base = widget_base(row4, /row)
   level_choice_droplist = widget_droplist(level_base, value=['Level 0', 'Level 1', 'Level 2', 'Level 3'], title='Data Level')
   widget_control, level_choice_droplist, set_droplist_select=level
-  use_path_prefix_bg = cw_bgroup(level_base, ['Use levelx in path', 'Use Date-tree-structure in path', 'Search subdirectories'], set_value=use_path_prefix, /row, /nonexclusive)
+  use_path_prefix_bg = cw_bgroup(level_base, ['Use levelx in path', 'Use Date-tree-structure in path', 'Search subdirectories', 'Search "user dir"'], $
+    set_value=use_path_prefix, /row, /nonexclusive)
   search_path_base = widget_base(row4, /row)
   searchdir = cw_field(search_path_base, title='Search Directory  ', value = 'blablabladkjfa/adflkja/dlkfja/', /string, xsize = 100, /noedit)
   label = widget_label(search_path_base, value='     ')
@@ -562,8 +625,17 @@ pro spice_xfiles
   label = widget_label(search_path_base, value='     ')
   ;searchstopbutton = widget_button(search_path_base, value='Stop Search', event_func='spice_xfiles_stopsearch')
   use_catalog_button = widget_button(search_path_base, value='Use catalog', event_pro='spice_xfiles_use_catalog')
+  
+  ; display filter
+  display_filter_base = widget_base(row4, /row, event_pro='spice_xfiles_change_display_filter')
+  display_filter_label = widget_label(display_filter_base, value='Filter displayed OBS: ')
+  display_filter_purpose = widget_droplist(display_filter_base, value=['All'], title='Purpose', xsize=230)  
+  display_filter_studytyp = widget_droplist(display_filter_base, value=['All'], title='Study Type', xsize=200)
+  display_filter_slitwid_label = widget_label(display_filter_base, value='Slit width:')
+  display_filter_slitwid_min = cw_field(display_filter_base, title='min', value = 0, /integer, /return_events, xsize = 6)
+  display_filter_slitwid_max = cw_field(display_filter_base, title='max', value = 10000, /integer, /return_events, xsize = 6)
 
-
+  ; display results
   foundOBS=widget_list(row4, value='', /frame, xsize = 150 $
     , scr_ysize = 0, units = 2, $
     event_pro = 'spice_xfiles_selectOBS')
@@ -572,7 +644,10 @@ pro spice_xfiles
     , event_pro = 'spice_xfiles_select')
   confbase = widget_base(row4, /row, /align_left)
   confb = widget_button(confbase, value = 'Confirm selection' $
-    , event_pro = 'spice_xfiles_read')
+    , event_pro = 'spice_xfiles_read', uvalue=0)
+  label = widget_label(confbase, value='                 ')
+  confb = widget_button(confbase, value = 'Open file in XControl_L23' $
+    , event_pro = 'spice_xfiles_read', uvalue=1)
   label = widget_label(confbase, value='                 ')
   printfile = widget_button(confbase, value = 'Print filename to console' $
     , event_pro = 'spice_xfiles_printfilename')
@@ -607,10 +682,16 @@ pro spice_xfiles
     level_choice_droplist:level_choice_droplist, $
     use_path_prefix_bg:use_path_prefix_bg, $
     searchdir:searchdir, $
+    display_filter_purpose:display_filter_purpose, $
+    display_filter_studytyp:display_filter_studytyp, $
+    display_filter_slitwid_min:display_filter_slitwid_min, $
+    display_filter_slitwid_max:display_filter_slitwid_max, $
     sdir:'', $
     filelist:ptr_new(), $
     filelistall:ptr_new(), $
     file2obsmap:ptr_new(), $
+    filehdr:ptr_new(), $
+    file_spiobsids:ptr_new(), $
     fileselect:'', $
     foundOBS:foundOBS, $
     foundfiles:foundfiles, $

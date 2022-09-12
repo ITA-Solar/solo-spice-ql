@@ -10,15 +10,17 @@
 ;
 ; CALLING SEQUENCE:
 ;      header = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
-;      obs_def=obs_def, $
-;      INPUT_DATA=INPUT_DATA)
+;      prefix_extension_name=prefix_extension_name, $
+;      original_data=original_data)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the level 2 file.
 ;      datetime: Date and time string.
-;      obs_def: A string defining the SPICE OBS (SPIOBS-rasno_winno)
-;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with spectra
-;            along the first dimension.
+;      prefix_extension_name: A string defining the prefix to the names of the 7 extensions
+;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
+;                     from the level 2 FITS file. Spectra is not in the first dimension.
+;                     This data cube will saved into the FITS file. Thus it cannot be used
+;                     directly in the ANA structure when read back in.
 ; 
 ; KEYWORDS:
 ; 
@@ -32,59 +34,59 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-01-21 12:59 CET $
+; $Id: 2022-06-27 13:25 CEST $
 
 
 FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
-  obs_def=obs_def, $
-  INPUT_DATA=INPUT_DATA
+  prefix_extension_name=prefix_extension_name, $
+  original_data=original_data
   
 
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, INPUT_DATA, /image
+  mkhdr, hdr, original_data, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', 'Data input to ANA for OBS ' + obs_def, 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', prefix_extension_name+'data', 'Extension name'
 
-  fits_util->add, hdr, 'RESEXT', 'Results of ANA for OBS '+obs_def, 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', 'Data input to ANA for OBS '+obs_def, 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', 'Lambda of ANA for OBS '+obs_def, 'Extension name of lambda'
-  fits_util->add, hdr, 'RESIDEXT', 'Residuals of ANA for OBS '+obs_def, 'Extension name of residuals'
-  fits_util->add, hdr, 'WGTEXT', 'Weights of ANA for OBS '+obs_def, 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', 'Includes of ANA for OBS '+obs_def, 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', 'Constants of ANA for OBS '+obs_def, 'Extension name of constants'
+  fits_util->add, hdr, 'RESEXT', prefix_extension_name+'results', 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', prefix_extension_name+'data', 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', prefix_extension_name+'lambda', 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', prefix_extension_name+'residuals', 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', prefix_extension_name+'weights', 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', prefix_extension_name+'includes', 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', prefix_extension_name+'constants', 'Extension name of constants'
 
   ; Add WCS keywords
   fits_util->add_description, hdr, 'World Coordinate System (WCS) keywords'
-  fits_util->add, hdr, 'CTYPE1', fxpar(header_l2, 'CTYPE3', missing=''), 'Type of 1st coordinate'
-  fits_util->add, hdr, 'CNAME1', fxpar(header_l2, 'CNAME3', missing=''), 'Name of 1st coordinate'
-  fits_util->add, hdr, 'CUNIT1', fxpar(header_l2, 'CUNIT3', missing=''), 'Units for 1st coordinate (for CRVAL1, CDELT1)'
-  fits_util->add, hdr, 'CRVAL1', fxpar(header_l2, 'CRVAL3', missing=0), '[nm] 1st coordinate of reference point'
-  fits_util->add, hdr, 'CDELT1', fxpar(header_l2, 'CDELT3', missing=0), '[nm] Increment of 1st coord at ref point'
-  fits_util->add, hdr, 'CRPIX1', fxpar(header_l2, 'CRPIX3', missing=0), '[pixel] 1st pixel index of reference point '
-  fits_util->add, hdr, 'PC1_1', fxpar(header_l2, 'PC3_3', missing=0), 'Default value, no rotation'
+  fits_util->add, hdr, 'CTYPE1', fxpar(header_l2, 'CTYPE1', missing=''), 'Type of 1st coordinate'
+  fits_util->add, hdr, 'CNAME1', fxpar(header_l2, 'CNAME1', missing=''), 'Name of 1st coordinate'
+  fits_util->add, hdr, 'CUNIT1', fxpar(header_l2, 'CUNIT1', missing=''), 'Units for 1st coordinate (for CRVAL1, CDELT1)'
+  fits_util->add, hdr, 'CRVAL1', fxpar(header_l2, 'CRVAL1', missing=0), '[arcsec] 1st coordinate of reference point'
+  fits_util->add, hdr, 'CDELT1', fxpar(header_l2, 'CDELT1', missing=0), '[arcsec] Increment of 1st coord at ref point'
+  fits_util->add, hdr, 'CRPIX1', fxpar(header_l2, 'CRPIX1', missing=0), '[pixel] 1st pixel index of reference point '
+  fits_util->add, hdr, 'PC1_1', fxpar(header_l2, 'PC1_1', missing=0), 'Non-default value due to CROTA degrees S/C roll'
+  fits_util->add, hdr, 'PC1_2', fxpar(header_l2, 'PC1_2', missing=0), 'Contribution of dim 2 to coord 1 due to roll'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'CTYPE2', fxpar(header_l2, 'CTYPE1', missing=''), 'Type of 2nd coordinate'
-  fits_util->add, hdr, 'CNAME2', fxpar(header_l2, 'CNAME1', missing=''), 'Name of 2nd coordinate'
-  fits_util->add, hdr, 'CUNIT2', fxpar(header_l2, 'CUNIT1', missing=''), 'Units for 2nd coordinate (for CRVAL2, CDELT2)'
-  fits_util->add, hdr, 'CRVAL2', fxpar(header_l2, 'CRVAL1', missing=0), '[arcsec] 2nd coordinate of reference point'
-  fits_util->add, hdr, 'CDELT2', fxpar(header_l2, 'CDELT1', missing=0), '[arcsec] Increment of 2nd coord at ref point'
-  fits_util->add, hdr, 'CRPIX2', fxpar(header_l2, 'CRPIX1', missing=0), '[pixel] 2nd pixel index of reference point '
-  fits_util->add, hdr, 'PC2_2', fxpar(header_l2, 'PC1_1', missing=0), 'Non-default value due to CROTA degrees S/C roll'
-  fits_util->add, hdr, 'PC2_3', fxpar(header_l2, 'PC1_2', missing=0), 'Contribution of dim 3 to coord 2 due to roll'
+  fits_util->add, hdr, 'CTYPE2', fxpar(header_l2, 'CTYPE2', missing=''), 'Type of 2nd coordinate'
+  fits_util->add, hdr, 'CNAME2', fxpar(header_l2, 'CNAME2', missing=''), 'Name of 2nd coordinate'
+  fits_util->add, hdr, 'CUNIT2', fxpar(header_l2, 'CUNIT2', missing=''), 'Units for 2nd coordinate (for CRVAL2, CDELT2)'
+  fits_util->add, hdr, 'CRVAL2', fxpar(header_l2, 'CRVAL2', missing=0), '[arcsec] 2nd coordinate of reference point'
+  fits_util->add, hdr, 'CDELT2', fxpar(header_l2, 'CDELT2', missing=0), '[arcsec] Increment of 2nd coord at ref point'
+  fits_util->add, hdr, 'CRPIX2', fxpar(header_l2, 'CRPIX2', missing=0), '[pixel] 2nd pixel index of reference point '
+  fits_util->add, hdr, 'PC2_1', fxpar(header_l2, 'PC2_1', missing=0), 'Contribution of dim 1 to coord 2 due to roll'
+  fits_util->add, hdr, 'PC2_2', fxpar(header_l2, 'PC2_2', missing=0), 'Non-default value due to CROTA degrees S/C roll'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'CTYPE3', fxpar(header_l2, 'CTYPE2', missing=''), 'Type of 3rd coordinate'
-  fits_util->add, hdr, 'CNAME3', fxpar(header_l2, 'CNAME2', missing=''), 'Name of 3rd coordinate'
-  fits_util->add, hdr, 'CUNIT3', fxpar(header_l2, 'CUNIT2', missing=''), 'Units for 3rd coordinate (for CRVAL3, CDELT3)'
-  fits_util->add, hdr, 'CRVAL3', fxpar(header_l2, 'CRVAL2', missing=0), '[arcsec] 3rd coordinate of reference point'
-  fits_util->add, hdr, 'CDELT3', fxpar(header_l2, 'CDELT2', missing=0), '[arcsec] Increment of 3rd coord at ref point'
-  fits_util->add, hdr, 'CRPIX3', fxpar(header_l2, 'CRPIX2', missing=0), '[pixel] 3rd pixel index of reference point '
-  fits_util->add, hdr, 'PC3_2', fxpar(header_l2, 'PC2_1', missing=0), 'Contribution of dim 2 to coord 3 due to roll'
-  fits_util->add, hdr, 'PC3_3', fxpar(header_l2, 'PC2_2', missing=0), 'Non-default value due to CROTA degrees S/C roll'
+  fits_util->add, hdr, 'CTYPE3', fxpar(header_l2, 'CTYPE3', missing=''), 'Type of 3rd coordinate'
+  fits_util->add, hdr, 'CNAME3', fxpar(header_l2, 'CNAME3', missing=''), 'Name of 3rd coordinate'
+  fits_util->add, hdr, 'CUNIT3', fxpar(header_l2, 'CUNIT3', missing=''), 'Units for 3rd coordinate (for CRVAL3, CDELT3)'
+  fits_util->add, hdr, 'CRVAL3', fxpar(header_l2, 'CRVAL3', missing=0), '[nm] 3rd coordinate of reference point'
+  fits_util->add, hdr, 'CDELT3', fxpar(header_l2, 'CDELT3', missing=0), '[nm] Increment of 3rd coord at ref point'
+  fits_util->add, hdr, 'CRPIX3', fxpar(header_l2, 'CRPIX3', missing=0), '[pixel] 3rd pixel index of reference point '
+  fits_util->add, hdr, 'PC3_3', fxpar(header_l2, 'PC3_3', missing=0), 'Default value, no rotation'
   fits_util->add, hdr, '', ' '
 
   fits_util->add, hdr, 'CTYPE4', fxpar(header_l2, 'CTYPE4', missing=''), 'Type of 4th coordinate'
@@ -96,7 +98,7 @@ FUNCTION spice_ana2fitshdr_data, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'PC4_4', fxpar(header_l2, 'PC4_4', missing=0), 'Default value, no rotation'
   pc4_1 = fxpar(header_l2, 'PC4_1', missing=-9999)
   if pc4_1 gt -9998 then begin
-    fits_util->add, hdr, 'PC4_2', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 2 to coord 4 due to roll'
+    fits_util->add, hdr, 'PC4_1', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 1 to coord 4 due to roll'
   endif
   fits_util->add, hdr, '', ' '
 

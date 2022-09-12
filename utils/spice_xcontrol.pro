@@ -15,7 +15,7 @@
 ;       spice_xcontrol, data, group_leader = group
 ;
 ; INPUTS:
-;	data: data object of type 'spice_data'
+;	data: data object of type 'spice_data', or path of a level 2 SPICE FITS file.
 ;
 ; KEYWORD PARAMETERS:
 ;	group_leader: Widget ID of parent widget
@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2022-09-12 13:38 CEST $
 ;-
 ;
 ;
@@ -141,7 +141,7 @@ pro spice_xcontrol_hdrdisp,event
       xs=100, ysize = 50)
 
     textall=''
-    hdr=*(*info).d->get_header(itab, /string)
+    hdr=*(*info).d->get_header(itab)
     for i=0, n_elements(hdr)-1 do begin
       textall=textall+hdr[i]+cr
     endfor
@@ -443,6 +443,16 @@ pro spice_xcontrol_moments, fit, event
   return
 end
 
+;create level 3 files
+pro spice_xcontrol_create_l3, event
+  widget_control, event.top, get_uvalue = info
+  widget_control, (*info).lineselect, get_value = lineselect
+  IF total(lineselect) NE 0 THEN BEGIN
+    window_index = where(lineselect)
+  ENDIF
+  result = spice_create_l3_widget(*(*info).d, event.top, window_index=window_index, /allow_xcontrol_l23)
+end
+
 ;-----------------------------------------------------------------------------
 ; start main program
 ;-----------------------------------------------------------------------------
@@ -488,6 +498,9 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   lineselect_label = widget_base(lineselect_nuvase, /row)
   title = 'Select Line window(s)'    ; line select label string
   lslabel = widget_label(lineselect_label, value=title)
+  lslabel = widget_label(lineselect_label, value='      ')
+  create_l3_button = widget_button(lineselect_label, value='Create level 3 files', $
+    event_pro='spice_xcontrol_create_l3')
 
   if N_ELEMENTS(line_id) gt 3 then column=2 else column=1
   lineselect = cw_bgroup(lineselect_row, /nonexclusive, line_id, column=column, event_func = 'spice_xcontrol_lineselect')

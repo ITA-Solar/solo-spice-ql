@@ -13,7 +13,7 @@ PRO spice_test, file_number
     else: file = ''
   ENDCASE
 
-  obj = spice_object(file, /verbose)
+  obj = spice_data(file, /verbose)
   obj->show_lines
   ;stop
 

@@ -4,7 +4,7 @@
 ;
 ; PURPOSE:
 ;     This routine returns the path(s) and name(s) of SPICE raster files that correspond 
-;     to the specified time or lie within a given time window. The logic for what filename(s) is returned is as follows.
+;     to the specified time or lie within a given time window. The logic for what filename(s) is returned is as follows:
 ;
 ;     If only the start time is given, then the file closest to that time is returned or, if SEQUENCE keyword is set, 
 ;     all files with the same SPIOBSID as the file closest to that time are returned.
@@ -51,6 +51,7 @@
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
 ;     NO_TREE_STRUCT: If set, then the tree structure won't be appended to TOP_DIR
 ;               (e.g. TOP_DIR/level2/ instead of TOP_DIR/level2/2020/06/21/)
+;     USER_DIR: If set, the procedure searches in TOP_DIR/user/ instead of TOP_DIR/.
 ;     SEARCH_SUBDIR: If set then the program looks for spice files recurrently,
 ;               i.e. in all subdirectories
 ;     IGNORE_TIME: If set, TIME_START and TIME_END are ignored, and all files will be
@@ -90,12 +91,12 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-03-31 15:05 CEST $
+; $Id: 2022-08-10 12:57 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
   top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, $
+  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
   search_subdir=search_subdir, ignore_time=ignore_time
 
   count_file = 0
@@ -143,8 +144,8 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     ENDELSE
   ENDELSE
 
+  IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
   IF ~keyword_set(no_level) THEN topdir = concat_dir(topdir, 'level'+strtrim(string(level), 2))
-  file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
 
   time0 = time_start
   IF N_ELEMENTS(time_end) EQ 0 THEN BEGIN
@@ -161,11 +162,23 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
   ENDIF
 
   IF ~keyword_set(no_tree_struct) && ~keyword_set(search_subdir) THEN BEGIN
-    files = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count0)
+    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
+    files1 = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count1)
+    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits.gz'
+    files2 = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count2)
+    count0 = count1 + count2
+    files = []
+    IF count1 GT 0 THEN BEGIN
+      files = [files, files1]
+    ENDIF
+    IF count2 GT 0 THEN BEGIN
+      files = [files, files2]
+    ENDIF
   ENDIF ELSE BEGIN
     IF ~keyword_set(no_tree_struct) THEN paths = ssw_time2paths(time0, time1, topdir) $
     ELSE paths = topdir
 
+    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.{fits,fits.gz}'
     IF keyword_set(search_subdir) THEN BEGIN
       files = file_search(paths, file_pattern, count=count0)
     ENDIF ELSE BEGIN
