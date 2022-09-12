@@ -1,4 +1,4 @@
-; $Id: 2022-08-11 14:50 CEST $
+; $Id: 2022-08-11 15:08 CEST $
 ; SPICE_CAT User Manual
 ;
 ; SPICE_CAT reads a SPICE fits file catalog with metadata about each fits

@@ -179,7 +179,7 @@ spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-08-11 14:50 CEST $
+; $Id: 2022-08-11 15:08 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 

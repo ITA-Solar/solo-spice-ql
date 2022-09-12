@@ -1,4 +1,4 @@
-; $Id: 2022-08-11 14:46 CEST $
+; $Id: 2022-08-11 15:06 CEST $
 FUNCTION spice_read_cat_txt, catalog_file
   openr, lun, catalog_file, /get_lun
   t = ''

@@ -53,8 +53,8 @@
 ;
 ; Version     : Version 6, SVHH+MW, 10 August 2022
 ;
-; $Id: 2022-08-11 14:50 CEST $
-;-            
+; $Id: 2022-08-11 15:08 CEST $
+;-           
 
 FUNCTION spice_gen_cat::extract_basename,line
   foreach level, [3, 2, 1, 0] DO BEGIN
