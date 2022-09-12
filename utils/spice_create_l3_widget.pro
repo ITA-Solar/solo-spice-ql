@@ -49,6 +49,7 @@
 ;     save_not: If set, then the FITS file will not be saved. The output is otherwise the same as if
 ;                 this keyword has not been set.
 ;     block_save: If set, then the options concerning where and whether to save the FITS file are not sensitive.
+;     allow_xcontrol_l23: Gives user option to open spice_xcontrol_l23, when trying to overwrite an existing file.
 ;
 ; OUTPUTS:
 ;     A structure with tags:
@@ -73,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-12 12:12 CEST $
+; $Id: 2022-09-12 13:37 CEST $
 ;-
 ;
 ;
@@ -111,6 +112,15 @@ pro spice_create_l3_widget_event, event
       official_l3dir = user_dir[0] EQ 0
       widget_control, info.save_bg, get_value=save
       save_not = save[0] EQ 0
+      IF ~save_not && file_exist(info.file_l3) THEN BEGIN
+        overwrite = spice_overwrite_l3_file(info.file_l3, event.top, allow_xcontrol_l23=info.allow_xcontrol_l23)
+        IF overwrite EQ 'No' THEN return
+        IF overwrite EQ 'Open' THEN BEGIN
+          spice_xcontrol_l23, info.file_l3
+          widget_control, event.top, /destroy
+          return
+        ENDIF
+      ENDIF
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
         no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
         official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
@@ -204,7 +214,8 @@ end
 function spice_create_l3_widget, l2_object, group_leader, window_index=window_index, $
   no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
-  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, block_save=block_save
+  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, block_save=block_save, $
+  allow_xcontrol_l23=allow_xcontrol_l23
 
   ;l2_object = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
   ;l2_object = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
@@ -294,7 +305,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
     file_l3_dir_label:file_l3_dir_label, $
     file_l3_name_label:file_l3_name_label, $
     ok:button_ok, $
-    cancel:button_cancel $
+    cancel:button_cancel, $
+    allow_xcontrol_l23:keyword_set(allow_xcontrol_l23) $
   }
   spice_create_l3_widget_calc_l3_dir, info
 
