@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-09-05 14:15 CEST $
+; $Id: 2022-09-12 14:17 CEST $
 
 
 ;+
@@ -983,13 +983,15 @@ END
 ;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
 ;                 This keyword is ignored if NO_MASKING is set.
 ;     load : Obsolete and ignored. This is here for backwards-compatibility.
+;     slit_only : Obsolete and ignored. This is here for backwards-compatibility.
+;     nodescale : Obsolete. If set, then NOSCALE is set. This is here for backwards-compatibility.
 ;
 ; OUTPUT:
 ;     Returns either the data of the window as an array or a link to the data.
 ;-
 FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
   no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot, $
-  load=load
+  load=load, slit_only=slit_only, nodescale=nodescale
   ;Returns the data of a window
   COMPILE_OPT IDL2
 
@@ -998,7 +1000,7 @@ FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
     return, !NULL
   ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
 
-  IF keyword_set(noscale) THEN descaled=2 ELSE descaled=1
+  IF keyword_set(noscale) || keyword_set(nodescale) THEN descaled=2 ELSE descaled=1
   IF keyword_set(no_masking) THEN masked=0 ELSE $
     IF keyword_set(approximated_slit) THEN masked=2 ELSE masked=1
   IF (*self.window_descaled)[window_index] EQ descaled && $
@@ -1051,12 +1053,14 @@ END
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;                 The keyword is ignored if NO_MASKING is set.
+;     nodescale : Obsolete. If set, then NOSCALE is set. This is here for backwards-compatibility.
 ;
 ; OUTPUT:
 ;     Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y]).
 ;-
 FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, noscale=noscale, $
-  no_masking=no_masking, approximated_slit=approximated_slit
+  no_masking=no_masking, approximated_slit=approximated_slit, $
+  nodescale=nodescale
   ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
   COMPILE_OPT IDL2
 
@@ -1070,6 +1074,7 @@ FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, n
     print, 'exposure_index needs to be a scalar number between 0 and '+strtrim(string(naxis-1),2)
     return, !NULL
   ENDIF
+  IF keyword_set(nodescale) then noscale=1
 
   data = self.get_window_data(window_index, noscale=noscale, no_masking=no_masking, approximated_slit=approximated_slit)
   IF self.get_sit_and_stare() THEN BEGIN
@@ -1339,6 +1344,7 @@ END
 ;     get_header_keyword instead replaces this method. See there for documentation
 ;-
 FUNCTION spice_data::get_header_info, keyword, extension_index, missing_value, exists=exists
+  message, 'This function is deprecated. Use SPICE_DATA::get_header_keyword instead', /informational
   return, self.get_header_keyword(keyword, extension_index, missing_value, exists=exists)
 END
 
