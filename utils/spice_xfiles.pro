@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2022-09-12 13:45 CEST $
+; $Id: 2022-09-20 15:05 CEST $
 ;-
 
 
@@ -204,7 +204,7 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
       spiobsids = file_info.spiobsid
       ptr_free, (*info).file_spiobsids
       (*info).file_spiobsids = ptr_new(spiobsids)
-  
+
       ; set all possible filter values (only used when this method is called from spice_xfiles_searchdir
       purpose = [purpose, hdr[uniq(hdr.purpose, sort(hdr.purpose))].purpose]
       studytyp = [studytyp, hdr[uniq(hdr.studytyp, sort(hdr.studytyp))].studytyp]
@@ -249,7 +249,7 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
             ind = where(spiobsids eq hdr[ihdr].spiobsid, countobs)
             if countobs gt 0 then file2obsmap[ind]=ihdr+1
           endfor ; ihdr=0,countsw-1
-    
+
           OBSdesc = get_infox(hdr, 'SEQ_BEG, SPIOBSID, PURPOSE, STUDYTYP, DSUN_AU, SLIT_WID, CROTA, CRVAL1, CRVAL2, STUDYDES', header=header, $
             format='a,(I12),a,a,(f7.3),(I8),(f7.1),(f7.1),(f7.1),a')
           OBSdesc = [header, OBSdesc]
@@ -511,7 +511,8 @@ end
 ; call spice_xcontrol with the selected file
 pro spice_xfiles_read, event
   widget_control, event.top, get_uvalue = info
-  widget_control, event.id, get_uvalue = xcontrol_l23
+  IF event.id NE 0 THEN widget_control, event.id, get_uvalue = xcontrol_l23 $
+  ELSE xcontrol_l23 = 0
   file = ((*info).fileselect)
   if file eq '' then begin
     box_message,'You need to select a file first'
@@ -625,11 +626,11 @@ pro spice_xfiles
   label = widget_label(search_path_base, value='     ')
   ;searchstopbutton = widget_button(search_path_base, value='Stop Search', event_func='spice_xfiles_stopsearch')
   use_catalog_button = widget_button(search_path_base, value='Use catalog', event_pro='spice_xfiles_use_catalog')
-  
+
   ; display filter
   display_filter_base = widget_base(row4, /row, event_pro='spice_xfiles_change_display_filter')
   display_filter_label = widget_label(display_filter_base, value='Filter displayed OBS: ')
-  display_filter_purpose = widget_droplist(display_filter_base, value=['All'], title='Purpose', xsize=230)  
+  display_filter_purpose = widget_droplist(display_filter_base, value=['All'], title='Purpose', xsize=230)
   display_filter_studytyp = widget_droplist(display_filter_base, value=['All'], title='Study Type', xsize=200)
   display_filter_slitwid_label = widget_label(display_filter_base, value='Slit width:')
   display_filter_slitwid_min = cw_field(display_filter_base, title='min', value = 0, /integer, /return_events, xsize = 6)
