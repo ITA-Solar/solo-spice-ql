@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2022-09-20 15:06 CEST $
 
 
 PRO spice_browser_plot_sji, state
@@ -147,7 +147,9 @@ PRO spice_browser_plot_sji, state
     ;data = state.data->get_window_data(window_index)
     ;help, data
     ;stop
-    image = state.data->get_one_image(window_index, 0)
+    widget_control, state.mask_butt, get_value=masking
+    no_masking=masking[0] eq 0
+    image = state.data->get_one_image(window_index, 0, no_masking=no_masking)
 
     ;
     ; Get SJI image coordinate information.

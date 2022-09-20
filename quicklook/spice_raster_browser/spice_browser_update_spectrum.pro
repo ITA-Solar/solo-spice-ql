@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2022-09-20 15:06 CEST $
 
 
 PRO spice_browser_update_spectrum, state, pwin
@@ -85,7 +85,9 @@ PRO spice_browser_update_spectrum, state, pwin
   ; to be consistent with the raster image.
   ;
   IF xpix LT nx THEN BEGIN
-    expimg=state.data->get_one_image(iwin,xpix)
+    widget_control, state.mask_butt, get_value=masking
+    no_masking=masking[0] eq 0
+    expimg=state.data->get_one_image(iwin,xpix, no_masking=no_masking)
     IF exptime[xpix] NE 0. THEN expimg=expimg/exptime[xpix]
     state.expimages[0:nl-1,yoff:yoff+ny-1,pwin]=expimg
     state.spectra[0:nl-1,pwin]=expimg[*,ypix-yoff]

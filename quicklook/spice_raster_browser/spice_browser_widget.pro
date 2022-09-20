@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2022-09-20 15:06 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -532,6 +532,13 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   endelse
 
   ;
+  ; MASKING option, mask regions outside of slit?
+  ; ---------------------------------
+  mask_base=widget_base(opt_base,/col,frame=1)
+  mask_butt=cw_bgroup(mask_base,['Mask regions outside slit'], $
+    set_value=[1],/nonexclusive,font=font,/row)
+
+  ;
   ; NEXP_PRP > 1 BUTTONS
   ; --------------------
   ;  IF nexp_prp GT 1 THEN BEGIN
@@ -902,6 +909,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     exp_slider: exp_slider, $
     exp_butt1: exp_butt1, $
     exp_butt2: exp_butt2, $
+    mask_butt:mask_butt, $
     text3: text3, $
     min_text_sji: min_text_sji, $
     max_text_sji: max_text_sji, $
