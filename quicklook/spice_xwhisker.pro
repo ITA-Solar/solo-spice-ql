@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2022-06-02 11:47 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 
 ; save as postscript file
@@ -612,7 +612,7 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
   d_ysz = sz[0]/1.4
   ;
   sit_and_stare = data->get_sit_and_stare()
-  nslit=data->get_header_info('NAXIS2', line)
+  nslit=data->get_header_keyword('NAXIS2', line)
   nraster = data->get_number_exposures(line)
   nexpprp = 1 ;data->getnexp_prp(line)  ; number of exp pr. raster pos.
   slitpos = nslit/2
@@ -726,8 +726,8 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
 
   xycenbase = widget_base(exposurebase,/col)
   xycentext = widget_label(xycenbase, $
-    value = 'Xcen: '+ string((data->get_header_info('crval1', line)),format='(f8.3)')+ $
-    ' Ycen: '+ string((data->get_header_info('crval2', line)),format='(f8.3)'), $
+    value = 'Xcen: '+ string((data->get_header_keyword('crval1', line)),format='(f8.3)')+ $
+    ' Ycen: '+ string((data->get_header_keyword('crval2', line)),format='(f8.3)'), $
     /align_left)
 
   rot=data->get_satellite_rotation()

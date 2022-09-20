@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 28.07.2020 21:20 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 
 PRO spice_browser_plot_spectrum, state, pwin
@@ -45,7 +45,7 @@ PRO spice_browser_plot_spectrum, state, pwin
 
   spec=state.spectra[*,pwin]
 
-  nl=state.data->get_header_info('NAXIS3', iwin)
+  nl=state.data->get_header_keyword('NAXIS3', iwin)
   spec=spec[0:nl-1]
 
 
@@ -85,7 +85,7 @@ PRO spice_browser_plot_spectrum, state, pwin
     usersym,[-1,1,0,-1,1,0],[-1,1,0,1,-1,0],th=2
     plots,v[lpix],spec[lpix],psym=8,symsiz=2
   ENDIF ELSE BEGIN
-    xtitle='Wavelength / '+state.data->get_header_info('CUNIT3', iwin, '')
+    xtitle='Wavelength / '+state.data->get_header_keyword('CUNIT3', iwin, '')
     plot,wvl,spec,psym=10,/xsty,xrange=wrange, $
       tit=title,ysty=1,yrange=yrange, $
       xtitle=xtitle,ytitle=ytitle

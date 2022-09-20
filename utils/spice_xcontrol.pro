@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2022-09-12 13:38 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 ;-
 ;
 ;
@@ -64,12 +64,12 @@ pro spice_xcontrol_get_data_info, info
   ;nraster=*(*info).d->getnraster()
   line=strarr(99)
   line[0] = 'SPIOBSID: '+*(*info).d->get_obs_id()
-  line[1] = 'SEQ_BEG : '+*(*info).d->get_header_info('SEQ_BEG', 0, '')
+  line[1] = 'SEQ_BEG : '+*(*info).d->get_header_keyword('SEQ_BEG', 0, '')
   line[2] = 'DATE-BEG: '+*(*info).d->get_start_time()
-  line[3] = 'STUDYTYP: '+*(*info).d->get_header_info('STUDYTYP', 0, '')
-  line[4] = 'STUDYDES: '+*(*info).d->get_header_info('STUDYDES', 0, '')
-  line[5] = 'AUTHOR  : '+*(*info).d->get_header_info('AUTHOR', 0, '')
-  line[6] = 'PURPOSE : '+*(*info).d->get_header_info('PURPOSE', 0, '')
+  line[3] = 'STUDYTYP: '+*(*info).d->get_header_keyword('STUDYTYP', 0, '')
+  line[4] = 'STUDYDES: '+*(*info).d->get_header_keyword('STUDYDES', 0, '')
+  line[5] = 'AUTHOR  : '+*(*info).d->get_header_keyword('AUTHOR', 0, '')
+  line[6] = 'PURPOSE : '+*(*info).d->get_header_keyword('PURPOSE', 0, '')
   line[7] = '========================================================'
   line[8] = 'CROTA   : '+string(*(*info).d->get_satellite_rotation(), format='(F9.2)')
   line[9] = 'XCEN    : '+string(*(*info).d->get_xcen(0), format='(F8.1)') + '   ' + $

@@ -228,17 +228,17 @@ PRO spice_test_privat, file_number
   ;help, obj->get_missing_value()
   ;stop
 
-  ;print, 'NAXIS1 : ' + strtrim(string(obj->get_header_info('NAXIS1', window_index)),2)
-  ;print, 'NAXIS2 : ' + strtrim(string(obj->get_header_info('NAXIS2', window_index)),2)
-  ;print, 'NAXIS3 : ' + strtrim(string(obj->get_header_info('NAXIS3', window_index)),2)
-  ;print, 'NAXIS4 : ' + strtrim(string(obj->get_header_info('NAXIS4', window_index)),2)
+  ;print, 'NAXIS1 : ' + strtrim(string(obj->get_header_keyword('NAXIS1', window_index)),2)
+  ;print, 'NAXIS2 : ' + strtrim(string(obj->get_header_keyword('NAXIS2', window_index)),2)
+  ;print, 'NAXIS3 : ' + strtrim(string(obj->get_header_keyword('NAXIS3', window_index)),2)
+  ;print, 'NAXIS4 : ' + strtrim(string(obj->get_header_keyword('NAXIS4', window_index)),2)
 
   for i=0,obj->get_number_windows()-1 do begin
     ;print,obj->get_window_position(i)
-    print, strcompress(string(i)) + '  : ' + strtrim(string(obj->get_header_info('NAXIS1', window_index)),2) + $
-      '  : ' + strtrim(string(obj->get_header_info('NAXIS2', window_index)),2) + $
-      '  : ' + strtrim(string(obj->get_header_info('NAXIS3', window_index)),2) + $
-      '  : ' + strtrim(string(obj->get_header_info('NAXIS4', window_index)),2)
+    print, strcompress(string(i)) + '  : ' + strtrim(string(obj->get_header_keyword('NAXIS1', window_index)),2) + $
+      '  : ' + strtrim(string(obj->get_header_keyword('NAXIS2', window_index)),2) + $
+      '  : ' + strtrim(string(obj->get_header_keyword('NAXIS3', window_index)),2) + $
+      '  : ' + strtrim(string(obj->get_header_keyword('NAXIS4', window_index)),2)
   endfor
   ;print,obj->get_spatial_binning()
   ;print,obj->get_spectral_binning()

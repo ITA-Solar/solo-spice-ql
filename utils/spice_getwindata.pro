@@ -152,7 +152,7 @@
 ;       approximated_slit, if set (when slit_only is set) use a quicker way 
 ;       of estimating the pixels to be masked
 ;-
-; $Id: 2022-08-10 11:17 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
@@ -498,8 +498,8 @@ dark_unc=0
     scale=[xscale,yscale]
     xpos=xpos[ix0:ix1]
   ENDIF ELSE BEGIN
-    dx=d->get_header_info('CDELT1',iwin)   ; perpendicular to slit
-    dy=d->get_header_info('CDELT2',iwin)   ; along slit
+    dx=d->get_header_keyword('CDELT1',iwin)   ; perpendicular to slit
+    dy=d->get_header_keyword('CDELT2',iwin)   ; along slit
     IF d->get_sit_AND_stare() EQ 1 THEN xpos=fltarr(nx)+0 ELSE xpos=findgen(nx)*dx
     ypos=findgen(ny)*dy
     scale=[dx,dy]
@@ -547,8 +547,8 @@ dark_unc=0
     scale: scale, $
     solar_x: xpos, $
     solar_y: ypos, $
-    xcen: d->get_header_info('CRVAL1',0), $
-    ycen: d->get_header_info('CRVAL2',0), $
+    xcen: d->get_header_keyword('CRVAL1',0), $
+    ycen: d->get_header_keyword('CRVAL2',0), $
     units: units, $
     missing: missing_val, $
     iwin: iwin, $

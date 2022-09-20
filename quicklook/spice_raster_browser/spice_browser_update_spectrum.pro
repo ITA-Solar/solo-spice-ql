@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2021-10-26 14:18 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 
 PRO spice_browser_update_spectrum, state, pwin
@@ -48,7 +48,7 @@ PRO spice_browser_update_spectrum, state, pwin
   iwin=state.wid_data.iwin[pwin]
   xpix=state.wid_data.xpix
   ypix=state.wid_data.ypix
-  nl=state.data->get_header_info('NAXIS3', iwin)
+  nl=state.data->get_header_keyword('NAXIS3', iwin)
 
   exptime=replicate(state.data->get_exposure_time(iwin), state.data->get_number_exposures(iwin))
 
@@ -58,7 +58,7 @@ PRO spice_browser_update_spectrum, state, pwin
   xoff=state.wid_data.ichunk*state.wid_data.nxpos
 
   nx=state.wid_data.nx
-  ny=state.data->get_header_info('NAXIS2', iwin)
+  ny=state.data->get_header_keyword('NAXIS2', iwin)
   scale=state.wid_data.scale
 
   state.spectra[*,pwin]=0.

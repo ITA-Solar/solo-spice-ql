@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2021-10-26 14:49 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 ;-
 ;
 ; save as postscript file
@@ -120,8 +120,8 @@ pro spice_xraster_draw, event
     j=(*info).windows[i]
     ;pos=*(*info).data->getpos(j)
     ;sz = size(wd)
-    xsz = xsz > *(*info).data->get_header_info('naxis3', j)
-    ysz = ysz > *(*info).data->get_header_info('naxis2', j)
+    xsz = xsz > *(*info).data->get_header_keyword('naxis3', j)
+    ysz = ysz > *(*info).data->get_header_keyword('naxis2', j)
   endfor
   ; determine size of each window. The scale factors
   ; (xpixels*2)x(ypixels/2), with a minimum of
