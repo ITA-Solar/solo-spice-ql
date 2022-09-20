@@ -15,7 +15,7 @@
 ;       spice_xdetector, data, lindx [, group_leader = groupleader, ncolors=ncolors]
 ;
 ; INPUTS:
-;       data: Can be either the name and path of a SPICE data file, 
+;       data: Can be either the name and path of a SPICE data file,
 ;             or a SPICE data object.
 ;       lindx: Line index array
 ;
@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2022-09-20 15:34 CEST $
 
 
 ; save as postscript file
@@ -170,7 +170,7 @@ pro spice_xdetector_expslider, event
   (*info).detector[*] = !Values.F_NAN
   ; read new data (for selected position) into detector variable
   for i=0,(*info).nwin-1 do begin
-    window_image = *(*info).data->get_one_image((*info).lindx[i], current_exp_ind, /debin, /no_masking)
+    window_image = *(*info).data->get_one_image((*info).lindx[i], current_exp_ind, /debin, no_masking=(*info).no_masking)
     if *(*info).data->has_dumbbells((*info).lindx[i]) then window_image = rotate(window_image, 5)
     size_image = size(window_image)
     (*info).detector[(*info).win_positions[i,0]:(*info).win_positions[i,1], $
@@ -764,6 +764,27 @@ pro spice_xdetector_log,event
   spice_xdetector_draw, pseudoevent
 end
 
+; turn on/off masking of pixels outside slit
+pro spice_xdetector_mask,event
+  widget_control, event.top, get_uvalue = info
+  (*info).no_masking = event.select eq 0
+  ; read new data (for selected position) into detector variable
+  for i=0,(*info).nwin-1 do begin
+    window_image = *(*info).data->get_one_image((*info).lindx[i], (*info).expnr, /debin, no_masking=(*info).no_masking)
+    if *(*info).data->has_dumbbells((*info).lindx[i]) then window_image = rotate(window_image, 5)
+    size_image = size(window_image)
+    (*info).detector[(*info).win_positions[i,0]:(*info).win_positions[i,1], $
+      (*info).win_positions[i,2]:(*info).win_positions[i,3]] $
+      = window_image[(*info).clip_image[i,0]:size_image[1]-1-(*info).clip_image[i,2], $
+      (*info).clip_image[i,2]:size_image[2]-1-(*info).clip_image[i,3]]
+  endfor
+  ; display new raster position
+  pseudoevent={widget_base,id:0L, $
+    top:event.top, handler:0l, x:(*info).tlb_xsz,  y:(*info).tlb_ysz}
+  widget_control, event.top, set_uvalue=info
+  spice_xdetector_resize, pseudoevent
+end
+
 ; overplot average line spectrum
 pro spice_xdetector_line,event
   widget_control, event.top, get_uvalue = info
@@ -806,7 +827,7 @@ end
 
 pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ncolors = ncolors
-  
+
   if n_params() lt 2 then begin
     message, $
       'spice_xdetector: A data object and line index array must be given', $
@@ -1109,6 +1130,11 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     value = 'log(image)', $
     event_pro = 'spice_xdetector_log')
 
+  maskfield = widget_base(lcol, /column, /nonexclusive)
+  maskbutton = widget_button(maskfield, $
+    value = 'Mask regions outside slit', $
+    event_pro = 'spice_xdetector_mask')
+
   realsizefield = widget_base(lcol, /column, /nonexclusive)
   realsizebutton = widget_button(realsizefield, $
     value = 'Real size CCD display', $
@@ -1189,6 +1215,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
 
     ; Options
     log:0, $
+    no_masking:1, $
     lineplot:0, $
     realsize:0, $
     ;x_axis_physical_unit:0, $
