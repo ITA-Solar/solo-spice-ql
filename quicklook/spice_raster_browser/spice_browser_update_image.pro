@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2021-10-26 14:18 CEST $
+; $Id: 2022-09-20 15:06 CEST $
 
 
 PRO spice_browser_update_image, state, pwin
@@ -52,8 +52,8 @@ PRO spice_browser_update_image, state, pwin
   iwin=state.wid_data.iwin[pwin]
   nx=state.wid_data.nx
   nxpos=state.wid_data.nxpos
-  ny=state.data->get_header_info('NAXIS2', iwin)
-  nl=state.data->get_header_info('NAXIS3', iwin)
+  ny=state.data->get_header_keyword('NAXIS2', iwin)
+  nl=state.data->get_header_keyword('NAXIS3', iwin)
 
   exptime=replicate(state.data->get_exposure_time(iwin), state.data->get_number_exposures(iwin))
 
@@ -108,7 +108,9 @@ PRO spice_browser_update_image, state, pwin
   exptime=exptime[i0:i1]
   ;
   FOR i=i0,i1,dx DO BEGIN
-    expimg=state.data->get_one_image(iwin,i)
+    widget_control, state.mask_butt, get_value=masking
+    no_masking=masking[0] eq 0
+    expimg=state.data->get_one_image(iwin,i, no_masking=no_masking)
     expt=exptime[i-i0]
     IF expt NE 0. THEN wd[*,i-i0,*]=expimg[j0:j1,*]/expt ELSE wd[*,i-i0,*]=expimg[j0:j1,*]
   ENDFOR

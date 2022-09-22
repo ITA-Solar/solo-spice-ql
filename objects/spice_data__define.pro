@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-09-12 14:17 CEST $
+; $Id: 2022-09-22 11:55 CEST $
 
 
 ;+
@@ -1008,15 +1008,13 @@ FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
     data = *(*self.window_data)[window_index]
   ENDIF ELSE BEGIN
     data = readfits(self.get_filename(), hdr, noscale=noscale, ext=window_index)
-    (*self.window_descaled)[window_index] = descaled
-    (*self.window_masked)[window_index] = masked
-    IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
-    (*self.window_data)[window_index] = ptr_new(data)
     IF ~keyword_set(no_masking) THEN BEGIN
       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
-      IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
-      (*self.window_data)[window_index] = ptr_new(data)
     ENDIF
+    IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
+    (*self.window_data)[window_index] = ptr_new(data)
+    (*self.window_descaled)[window_index] = descaled
+    (*self.window_masked)[window_index] = masked
   ENDELSE
   return, data
 END

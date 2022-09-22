@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-08-29 14:18 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 
 PRO spice_browser_update_info, state
@@ -53,7 +53,7 @@ PRO spice_browser_update_info, state
   IF xpix GE n THEN etstr='Earth Time: N/A' ELSE etstr='Earth Time: '+tmid_earth[xpix]
   widget_control,state.ettext,set_val=etstr
 
-  date_obs=state.data->get_header_info('DATE-BEG', 0)
+  date_obs=state.data->get_header_keyword('DATE-BEG', 0)
   if N_ELEMENTS(date_obs) eq 0 then begin
     val='TIME: N/A'
   endif else begin

@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-06-02 11:47 CEST $
+; $Id: 2022-09-20 15:06 CEST $
 
 
 PRO spice_browser_plot_sji, state
@@ -147,7 +147,9 @@ PRO spice_browser_plot_sji, state
     ;data = state.data->get_window_data(window_index)
     ;help, data
     ;stop
-    image = state.data->get_one_image(window_index, 0)
+    widget_control, state.mask_butt, get_value=masking
+    no_masking=masking[0] eq 0
+    image = state.data->get_one_image(window_index, 0, no_masking=no_masking)
 
     ;
     ; Get SJI image coordinate information.
@@ -158,14 +160,14 @@ PRO spice_browser_plot_sji, state
     ;
     ; For roll=90, I need to reverse cdelt1.
     ;
-    xcen=state.data->get_header_info('CRVAL1', window_index)
-    ycen=state.data->get_header_info('CRVAL2', window_index)
+    xcen=state.data->get_header_keyword('CRVAL1', window_index)
+    ycen=state.data->get_header_keyword('CRVAL2', window_index)
     cdelt1=state.data->get_resolution(window_index, /x)
     cdelt2=state.data->get_resolution(window_index, /y)
-    crpix1=state.data->get_header_info('CRPIX1', window_index)
-    crpix2=state.data->get_header_info('CRPIX2', window_index)
-    fovx=cdelt1 * state.data->get_header_info('NAXIS1', window_index)
-    fovy=cdelt2 * state.data->get_header_info('NAXIS2', window_index)
+    crpix1=state.data->get_header_keyword('CRPIX1', window_index)
+    crpix2=state.data->get_header_keyword('CRPIX2', window_index)
+    fovx=cdelt1 * state.data->get_header_keyword('NAXIS1', window_index)
+    fovy=cdelt2 * state.data->get_header_keyword('NAXIS2', window_index)
     ;
     IF abs(state.wid_data.roll) GE 85 THEN BEGIN
       xc_temp=xcen

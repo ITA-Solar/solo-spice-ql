@@ -35,7 +35,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-08-29 14:18 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 
 FUNCTION spice_browser_get_metadata, data
@@ -104,8 +104,8 @@ FUNCTION spice_browser_get_metadata, data
   ;
   ; Get xcen and ycen
   ;
-  xcen = data->get_header_info('CRVAL1', 0)
-  ycen = data->get_header_info('CRVAL2', 0)
+  xcen = data->get_header_keyword('CRVAL1', 0)
+  ycen = data->get_header_keyword('CRVAL2', 0)
 
   ;
   ; Exposure times can vary between NUV and FUV, and also over time. The
@@ -123,8 +123,8 @@ FUNCTION spice_browser_get_metadata, data
     ypos: ypos, $
     tmid_min: tmid_min, $
     utc: utc, $
-    stud_acr: data->get_header_info('SPIOBSID', 0), $
-    date_obs: data->get_header_info('DATE-OBS', 0, ''), $
+    stud_acr: data->get_header_keyword('SPIOBSID', 0), $
+    date_obs: data->get_header_keyword('DATE-OBS', 0, ''), $
     l1p5_ver: 'NA', $
     obs_type: obs_type, $
     cadence: cadence, $
