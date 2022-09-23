@@ -24,12 +24,25 @@
 ; Inputs      :	
 ;	parameter - parameter passed to the routine
 ;	parnum    - integer parameter number
-;	types     - integer scalar or vector of valid types
-;		 1 - byte        2 - integer  3 - int*4
-;		 4 - real*4      5 - real*8   6 - complex
-;		 7 - string      8 - structure
-;	dimens   - integer scalar or vector giving number
-;		      of allowed dimensions.
+;	types     - integer or string, scalar or vector of valid types
+;	   0 - undefined
+;		 1 - byte        2 - int      3 - long
+;		 4 - float       5 - double   6 - complex
+;		 7 - string      8 - struct   9 - dcomplex
+;		 12 - uint       13 - ulong   14 - long64
+;		 15 - ulong64
+;    10 - pointer
+;    11 - objref (any object, including 'list', 'hash', 'dictionary' and 'orderedhash')
+;    Additional valid string types, which signify a collection of valid types
+;    (in paranthesis are the valid type numbers that are included)
+;    - unsigned (1, 12, 13, 15)
+;    - signed (2, 3, 14)
+;    - integers (unsigned + signed = 1, 2, 3, 12, 13, 14, 15)
+;    - floats (4, 5)
+;    - numeric (integers + floats = 1, 2, 3, 4, 5, 12, 13, 14, 15)
+;    - multiplicative (numeric + 6, 9 = 1, 2, 3, 4, 5, 6, 9, 12, 13, 14, 15)
+;	dimens   - integer scalar or vector giving number of allowed dimensions.
+;	           for scalar values, this parameter must be set to zero.
 ;
 ; Opt. Inputs :	
 ;
@@ -70,8 +83,13 @@
 ; Modified    :	Version 1 (ZPARCHECK), William Thompson, GSFC, 29 March 1994
 ;			Incorporated into CDS library
 ;               Version 2, Stein Vidar Haugan, UiO, October 1995
+;               Version 3, Martin Wiesmann, UiO, September 2022
+;                 Generell overhaul, bugfixing and introduced check for
+;                 object name
 ;
-; Version     :	Version 2, 11-October-1995
+; Version     :	Version 3, September 2022
+; 
+; $Id: 2022-09-23 14:23 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -81,7 +99,7 @@ PRO prits_tools::check_type, parameter, types, error, error_message
   IF typename(types) NE 'STRING' THEN BEGIN
      new_types = []
      foreach type, types DO new_types = [new_types, prits_tools.typename_from_typecode(type)]
-  END
+  END ELSE types = prits_tools.tnames_from_tnames(STRUPCASE(types))
   par_type = size(parameter, /tname)
   valid = WHERE(par_type EQ types, Ngood)
   error = ''
@@ -115,19 +133,21 @@ END
 
 FUNCTION prits_tools::tnames_from_tnames, typenames
   unsigned = ['BYTE', 'UINT', 'ULONG', 'ULONG64']
-  integers = [unsigned, 'INT', 'LONG', 'LONG64']
-  real = ['FLOAT', 'DOUBLE']
-  numeric = [unsigned, integers, real]
-  multiplicative = [integers, floats, 'COMPLEX']
+  signed = ['INT', 'LONG', 'LONG64']
+  integers = [unsigned, signed]
+  floats = ['FLOAT', 'DOUBLE']
+  numeric = [integers, floats]
+  multiplicative = [numeric, 'COMPLEX', 'DCOMPLEX']
   new_typenames = []
   foreach typename, typenames DO BEGIN
-     add = typename
      CASE typename OF 
         'UNSIGNED': add = unsigned
+        'SIGNED': add = signed
         'INTEGERS': add = integers
-        'DECIMAL': add = floats
+        'FLOATS': add = floats
         'NUMERIC': add = numeric
         'MULTIPLICATIVE': add = multiplicative
+        ELSE: add = typename
      END
      new_typenames = [new_typenames, add]
   END
@@ -136,7 +156,7 @@ END
 
 
 FUNCTION prits_tools::typename_from_typecode, typecode
-  IF size(typecode, /tname) EQ 'STRING' THEN return, typecode
+  IF size(typecode, /tname) EQ 'STRING' THEN return, STRUPCASE(typecode)
   CASE typecode OF
      0: return, 'UNDEFINED'
      1: return, 'BYTE'
@@ -211,7 +231,8 @@ ABORT:
    
    stype = ''
    FOR i = 0, N_elements( types )-1 DO BEGIN
-      stype += pt.typename_from_typecode(types)
+      stype += pt.typename_from_typecode(types[i])
+      IF i LT N_elements( types )-1 THEN stype += ', '
    END
    
    result = [result,'Valid types are: ' + stype]
