@@ -6,8 +6,8 @@
 ; Explanation :
 ;	Routine to check user parameters to a procedure
 ; Use         :
-;       pt.parcheck, parameter, parnum, name,  types, valid_ndims, default=default, $
-;                             maxval=maxval,minval=minval, $
+;       prits_tools.parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
+;                             minval=minval,maxval=maxval, object_name=object_name, $
 ;                             result=result
 ;
 ;	EXAMPLE:
@@ -41,8 +41,8 @@
 ;    - floats (4, 5)
 ;    - numeric (integers + floats = 1, 2, 3, 4, 5, 12, 13, 14, 15)
 ;    - multiplicative (numeric + 6, 9 = 1, 2, 3, 4, 5, 6, 9, 12, 13, 14, 15)
-;	dimens   - integer scalar or vector giving number of allowed dimensions.
-;	           for scalar values, this parameter must be set to zero.
+;	dimens   - integer, scalar or vector, giving number of allowed dimensions.
+;	           for scalar values, the number of dimensions is zero.
 ;
 ; Opt. Inputs :
 ;
@@ -50,15 +50,21 @@
 ;
 ; Opt. Outputs:	None.
 ;
-; Keywords    :	RESULT: Receives the error messages (string array)
-;                       if the keyword /NOERROR is set.
-;
-;               NOERROR: Set to avoid error message (stopping)
+; Keywords    :	RESULT: Receives the error messages (string array).
+;                       If present, no error message is printed out
+;                       and procedure returns to caller without stopping
 ;
 ;               MINVAL: Minimum value for the parameter. Checked
 ;                       agains MIN([parameter]).
 ;
 ;               MAXVAL: Maximum value for the parameter.
+;               
+;               OBJ_NAME: string, scalar or vector. If the input parameter
+;                         is of type 11 (OBJREF), the name of the object is
+;                         checked against OBJ-NAME. 
+;                         
+;                         
+;                         DEFAULT:
 ;
 ; Calls       :	None.
 ;
@@ -89,32 +95,28 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-23 14:26 CEST $
+; $Id: 2022-09-23 15:02 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
-PRO prits_tools::check_type, parameter, types, error, error_message
-  compile_opt static, idl2
+PRO prits_tools::check_type, parameter, types, error, error_message, pt
   IF typename(types) NE 'STRING' THEN BEGIN
     new_types = []
-    foreach type, types DO new_types = [new_types, prits_tools.typename_from_typecode(type)]
-  END ELSE types = prits_tools.tnames_from_tnames(STRUPCASE(types))
+    foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type)]
+  END ELSE types = pt.tnames_from_tnames(STRUPCASE(types))
   par_type = size(parameter, /tname)
-  valid = WHERE(par_type EQ types, Ngood)
-  error = ''
-  IF where(par_type EQ types) EQ -1 THEN BEGIN
+  IF (where(par_type EQ types))[0] EQ -1 THEN BEGIN
     error = error_message
-  ENDIF
+  ENDIF ELSE error = ''
 END
 
 
 PRO prits_tools::check_ndims, parameter, valid_ndims, error, error_message
   par_ndim = size(parameter, /n_dimensions)
-  error = ''
   IF (where(par_ndim EQ valid_ndims))[0] EQ -1 THEN BEGIN
     error = error_message
-  END
+  ENDIF ELSE error = ''
 END
 
 
@@ -174,13 +176,12 @@ FUNCTION prits_tools::typename_from_typecode, typecode
     13: return, 'ULONG'
     14: return, 'LONG64'
     15: return, 'ULONG64'
-
   END
 END
 
 
 PRO prits_tools::parcheck, parameter, parnum, name,  types, valid_ndims, default=default, $
-  maxval=maxval,minval=minval, $
+  maxval=maxval,minval=minval, object_name=object_name, $
   result=result
   compile_opt idl2, static
 
@@ -208,7 +209,7 @@ PRO prits_tools::parcheck, parameter, parnum, name,  types, valid_ndims, default
   pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions"
   IF err NE '' THEN errors = [errors, err]
 
-  pt.check_type, parameter, types, err, "is an invalid data type"
+  pt.check_type, parameter, types, err, "is an invalid data type", pt
   IF err NE '' THEN errors = [errors, err]
 
   pt.check_range, parameter, minval, maxval, err
