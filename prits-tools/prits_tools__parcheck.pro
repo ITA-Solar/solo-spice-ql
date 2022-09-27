@@ -1,18 +1,26 @@
 ;+
 ; Name        :
 ;	PARCHECK
+;
 ; Purpose     :
-;	Routine to check user parameters to a procedure
+;	Routine to check user parameters to a procedure.
+;
 ; Explanation :
-;	Routine to check user parameters to a procedure
+;	This routine checks whether a parameter fulfills some criteria. It checks the data type
+;	and the number of dimensions. Optionally, it can also check for minimum and/or maximum
+;	allowed values, or for object and structure names.
+;	If the parameter is undefined, then the DEFAULT value is returned if provided.
+;	If one of the tests fails a message is printed and a RETALL issued.
+;	These consequences can be suppressed by supplying the RESULT keyword.
+;
 ; Use         :
 ;       prits_tools.parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-;                             minval=minval,maxval=maxval, object_name=object_name, $
+;                             maxval=maxval,minval=minval, object_name=object_name, $
 ;                             result=result
 ;
 ;	EXAMPLE:
 ;
-;	IDL> parcheck, hdr, 2, 7, 1, 'FITS Image Header'
+;	IDL> parcheck, hdr, 2, 'FITS Image Header', 7, 1
 ;
 ;	This example checks whether the parameter 'hdr' is of type string (=7)
 ;	and is a vector (1 dimension).   If either of these tests fail, a
@@ -22,9 +30,13 @@
 ;		"Valid types are string"
 ;
 ; Inputs      :
-;	parameter - parameter passed to the routine
-;	parnum    - integer parameter number
-;	types     - integer or string, scalar or vector of valid types
+;	PARAMETER - Parameter passed to the routine.
+;	PARNUM    - Integer parameter number.This information will be used
+;             in a possible error message. If set to zero the parameter
+;             is assumed to be a keyword.
+;	NAME      - The name of the parameter. This information will be used
+;	            in a possible error message.
+;	TYPES     - Integer or string, scalar or vector of valid types:
 ;	   0 - undefined
 ;		 1 - byte        2 - int      3 - long
 ;		 4 - float       5 - double   6 - complex
@@ -33,7 +45,7 @@
 ;		 15 - ulong64
 ;    10 - pointer
 ;    11 - objref (any object, including 'list', 'hash', 'dictionary' and 'orderedhash')
-;    Additional valid string types, which signify a collection of valid types
+;    Additional valid string types, which signify a collection of valid types:
 ;    (in paranthesis are the valid type numbers that are included)
 ;    - unsigned (1, 12, 13, 15)
 ;    - signed (2, 3, 14)
@@ -41,8 +53,8 @@
 ;    - floats (4, 5)
 ;    - numeric (integers + floats = 1, 2, 3, 4, 5, 12, 13, 14, 15)
 ;    - multiplicative (numeric + 6, 9 = 1, 2, 3, 4, 5, 6, 9, 12, 13, 14, 15)
-;	dimens   - integer, scalar or vector, giving number of allowed dimensions.
-;	           for scalar values, the number of dimensions is zero.
+;	VALID_NDIMS - Integer, scalar or vector, giving number of allowed dimensions.
+;	              For scalar values, the number of dimensions is zero.
 ;
 ; Opt. Inputs :
 ;
@@ -52,19 +64,19 @@
 ;
 ; Keywords    :	RESULT: Receives the error messages (string array).
 ;                       If present, no error message is printed out
-;                       and procedure returns to caller without stopping
+;                       and procedure returns to caller without stopping.
 ;
 ;               MINVAL: Minimum value for the parameter. Checked
 ;                       agains MIN([parameter]).
 ;
-;               MAXVAL: Maximum value for the parameter.
-;               
-;               OBJ_NAME: string, scalar or vector. If the input parameter
-;                         is of type 11 (OBJREF), the name of the object is
-;                         checked against OBJ-NAME. 
-;                         
-;                         
-;                         DEFAULT:
+;               MAXVAL: Maximum value for the parameter. Checked
+;                       agains MAX([parameter]).
+;
+;               OBJECT_NAME: string, scalar or vector. If the input parameter
+;                         is of type 8 (STRUCT) or 11 (OBJREF), the name of the object/structure
+;                         is checked against OBJECT_NAME-NAME.
+;
+;               DEFAULT: If parameter is undefined, then DEFAULT will be returned.
 ;
 ; Calls       :	None.
 ;
@@ -73,7 +85,7 @@
 ; Restrictions:	None.
 ;
 ; Side effects:
-;	If an error in the parameter is a message is printed
+;	If an error in the parameter is found, a message is printed and
 ;	a RETALL issued
 ;
 ; Category    :	Utilities, Miscellaneous
@@ -95,12 +107,12 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-23 15:02 CEST $
+; $Id: 2022-09-27 15:22 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
-PRO prits_tools::check_type, parameter, types, error, error_message, pt
+PRO prits_tools::check_type, parameter, types, error, error_message, pt, object_name=object_name
   IF typename(types) NE 'STRING' THEN BEGIN
     new_types = []
     foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type)]
@@ -108,7 +120,14 @@ PRO prits_tools::check_type, parameter, types, error, error_message, pt
   par_type = size(parameter, /tname)
   IF (where(par_type EQ types))[0] EQ -1 THEN BEGIN
     error = error_message
-  ENDIF ELSE error = ''
+  ENDIF ELSE BEGIN
+    error = ''
+    IF (par_type EQ 'OBJREF' || par_type EQ 'STRUCT') && N_ELEMENTS(object_name) GT 0 THEN BEGIN
+      IF (where(typename(parameter) EQ object_name))[0] EQ -1 THEN BEGIN
+        error = 'is an invalid object/structure type'
+      ENDIF
+    ENDIF
+  ENDELSE
 END
 
 
@@ -123,7 +142,7 @@ END
 PRO prits_tools::check_range, parameter, min, max, error
   IF n_elements(min) GT 1 THEN message, "MINVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
   IF n_elements(max) GT 1 THEN message, "MAXVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
-  error = []
+  error = ''
   IF n_elements(max) EQ 1 THEN BEGIN
     IF (where(parameter GT max))[0] NE -1 THEN error = 'is larger than maximum value ' + trim(max)
   END
@@ -176,14 +195,20 @@ FUNCTION prits_tools::typename_from_typecode, typecode
     13: return, 'ULONG'
     14: return, 'LONG64'
     15: return, 'ULONG64'
+    else: message, 'TYPE CODE must be GE 0 and LE 15'
   END
 END
 
 
-PRO prits_tools::parcheck, parameter, parnum, name,  types, valid_ndims, default=default, $
+PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
   maxval=maxval,minval=minval, object_name=object_name, $
   result=result
   compile_opt idl2, static
+
+  pt = prits_tools()
+  noerror = arg_present(result)
+  result = ''
+  errors = []
 
   IF n_params() EQ 1 AND n_elements(default) NE 0 THEN BEGIN
     IF n_elements(parameter) EQ 0 THEN parameter = default
@@ -191,8 +216,13 @@ PRO prits_tools::parcheck, parameter, parnum, name,  types, valid_ndims, default
   END
 
   IF n_elements(parameter) EQ 0 THEN BEGIN
-    err = 'is undefined and no default has been specified'
-    GOTO, ABORT
+    IF n_elements(default) NE 0 THEN BEGIN
+      parameter = default
+      return
+    ENDIF ELSE BEGIN
+      errors = 'is undefined and no default has been specified'
+      GOTO, ABORT
+    ENDELSE
   ENDIF
 
   IF N_params() LT 5 THEN BEGIN
@@ -200,16 +230,10 @@ PRO prits_tools::parcheck, parameter, parnum, name,  types, valid_ndims, default
     message, 'Use: PARCHECK, parameter, parnum, name, types, dimensions'
   END
 
-  noerror = arg_present(result)
-  result = ''
-
-  pt = prits_tools()
-
-  errors = []
   pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions"
   IF err NE '' THEN errors = [errors, err]
 
-  pt.check_type, parameter, types, err, "is an invalid data type", pt
+  pt.check_type, parameter, types, err, "is an invalid data type", pt, object_name=object_name
   IF err NE '' THEN errors = [errors, err]
 
   pt.check_range, parameter, minval, maxval, err
@@ -250,11 +274,23 @@ END
 
 PRO prits_tools::parcheck_test
   compile_opt static
-  prits_tools.parcheck,[5],2,"test",['BYTE'],[0, 5], result = result
+  prits_tools.parcheck, [5], 2, "test_01", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
+  print,''
+  prits_tools.parcheck, a, 2, "test_02", ['BYTE'], [0, 5], result=result
+  print, result, format='(a)'
+  print,''
+  prits_tools.parcheck, a, 2, "test_03", ['BYTE'], [0, 5], result=result, default=77
+  print, result, format='(a)'
+  print,'3 should be ok'
+  print,''
+  prits_tools.parcheck, 4US, 2, "test_04", ['unSIgned'], 0, result=result, default=77
+  print, result, format='(a)'
+  print,'4 should be ok'
+  print,''
 END
 
-IF getenv("USER") EQ "steinhh" THEN BEGIN
+IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
   add_path, "$HOME/idl/solo-spice-ql", /expand
   prits_tools.parcheck_test
 END
