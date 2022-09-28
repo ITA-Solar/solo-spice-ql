@@ -103,11 +103,11 @@
 ;               Version 2, Stein Vidar Haugan, UiO, October 1995
 ;               Version 3, Martin Wiesmann, UiO, September 2022
 ;                 Generell overhaul, bugfixing and introduced check for
-;                 object name
+;                 object name, improved documentation
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-27 15:22 CEST $
+; $Id: 2022-09-28 11:24 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -115,16 +115,18 @@
 PRO prits_tools::check_type, parameter, types, error, error_message, pt, object_name=object_name
   IF typename(types) NE 'STRING' THEN BEGIN
     new_types = []
-    foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type)]
+    foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type, pt)]
+    types = new_types
   END ELSE types = pt.tnames_from_tnames(STRUPCASE(types))
   par_type = size(parameter, /tname)
   IF (where(par_type EQ types))[0] EQ -1 THEN BEGIN
-    error = error_message
+    error = error_message+par_type
   ENDIF ELSE BEGIN
     error = ''
     IF (par_type EQ 'OBJREF' || par_type EQ 'STRUCT') && N_ELEMENTS(object_name) GT 0 THEN BEGIN
-      IF (where(typename(parameter) EQ object_name))[0] EQ -1 THEN BEGIN
-        error = 'is an invalid object/structure type'
+      object_name =STRUPCASE(object_name)
+      IF (where(typename(parameter[0]) EQ object_name))[0] EQ -1 THEN BEGIN
+        error = 'is an invalid object/structure type: '+typename(parameter[0])
       ENDIF
     ENDIF
   ENDELSE
@@ -133,8 +135,9 @@ END
 
 PRO prits_tools::check_ndims, parameter, valid_ndims, error, error_message
   par_ndim = size(parameter, /n_dimensions)
+  IF size(parameter, /type) EQ 8 && N_ELEMENTS(parameter) EQ 1 THEN par_ndim=0
   IF (where(par_ndim EQ valid_ndims))[0] EQ -1 THEN BEGIN
-    error = error_message
+    error = error_message+trim(par_ndim)
   ENDIF ELSE error = ''
 END
 
@@ -143,11 +146,15 @@ PRO prits_tools::check_range, parameter, min, max, error
   IF n_elements(min) GT 1 THEN message, "MINVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
   IF n_elements(max) GT 1 THEN message, "MAXVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
   error = ''
-  IF n_elements(max) EQ 1 THEN BEGIN
-    IF (where(parameter GT max))[0] NE -1 THEN error = 'is larger than maximum value ' + trim(max)
-  END
   IF n_elements(min) EQ 1 THEN BEGIN
     IF (where(parameter LT min))[0] NE -1 THEN error = 'is smaller than minimum value ' + trim(min)
+  END
+  IF n_elements(max) EQ 1 THEN BEGIN
+    IF (where(parameter GT max))[0] NE -1 THEN BEGIN
+      error_temp = 'is larger than maximum value ' + trim(max)
+      IF error NE '' THEN error = [error, error_temp] $
+      ELSE error = error_temp
+    ENDIF
   END
 END
 
@@ -176,8 +183,8 @@ FUNCTION prits_tools::tnames_from_tnames, typenames
 END
 
 
-FUNCTION prits_tools::typename_from_typecode, typecode
-  IF size(typecode, /tname) EQ 'STRING' THEN return, STRUPCASE(typecode)
+FUNCTION prits_tools::typename_from_typecode, typecode, pt
+  IF size(typecode, /tname) EQ 'STRING' THEN return, pt.tnames_from_tnames(STRUPCASE(typecode))
   CASE typecode OF
     0: return, 'UNDEFINED'
     1: return, 'BYTE'
@@ -230,14 +237,14 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     message, 'Use: PARCHECK, parameter, parnum, name, types, dimensions'
   END
 
-  pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions"
+  pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions: "
   IF err NE '' THEN errors = [errors, err]
 
-  pt.check_type, parameter, types, err, "is an invalid data type", pt, object_name=object_name
+  pt.check_type, parameter, types, err, "is an invalid data type: ", pt, object_name=object_name
   IF err NE '' THEN errors = [errors, err]
 
   pt.check_range, parameter, minval, maxval, err
-  IF err NE '' THEN errors = [errors, err]
+  IF err[0] NE '' THEN errors = [errors, err]
 
   IF n_elements(errors) EQ 0 THEN return
 
@@ -247,7 +254,6 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
 
   IF parnum NE 0 THEN result = 'Parameter ' + trim(parnum) + ' ('+name+')' $
   else                result = 'Keyword ' + name + ' '
-
   result = [result + ' of routine ' + STRUPCASE(caller) + ' ' + errors]
 
   dimension_strings = trim(valid_ndims)
@@ -256,11 +262,19 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
 
   stype = ''
   FOR i = 0, N_elements( types )-1 DO BEGIN
-    stype += pt.typename_from_typecode(types[i])
+    stype += pt.typename_from_typecode(types[i], pt)
     IF i LT N_elements( types )-1 THEN stype += ', '
   END
-
   result = [result,'Valid types are: ' + stype]
+
+  IF N_ELEMENTS(object_name) GT 0 THEN BEGIN
+    otype = ''
+    FOR i = 0, N_elements( object_name )-1 DO BEGIN
+      otype += object_name[i]
+      IF i LT N_elements( types )-1 THEN stype += ', '
+    END
+    result = [result,'Valid object/structure names are: ' + otype]
+  ENDIF
 
   IF Keyword_SET(noerror) THEN RETURN
   PRINT,''                     ; Blank line
@@ -274,26 +288,62 @@ END
 
 PRO prits_tools::parcheck_test
   compile_opt static
-  prits_tools.parcheck, [5], 2, "test_01", ['BYTE'], [0, 5], result=result
+  print,''
+  print,'Test 1 should fail'
+  prits_tools.parcheck, [5], 1, "test_01", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
   print,''
+  print,'Test 2 should fail'
   prits_tools.parcheck, a, 2, "test_02", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  prits_tools.parcheck, a, 2, "test_03", ['BYTE'], [0, 5], result=result, default=77
+  print,'Test 3 should be ok'
+  prits_tools.parcheck, a, 3, "test_03", ['BYTE'], [0, 5], result=result, default=77
   print, result, format='(a)'
-  print,'3 should be ok'
   print,''
-  prits_tools.parcheck, 4US, 2, "test_04", ['unSIgned'], 0, result=result, default=77
+  print,'Test 4 should be ok'
+  prits_tools.parcheck, 4US, 4, "test_04", ['unSIgned'], 0, result=result, default=77
   print, result, format='(a)'
-  print,'4 should be ok'
   print,''
+  print,'Test 5 should be ok'
+  st = {mystruct, a:0, b:'adf'}
+  prits_tools.parcheck, st, 0, "test_05", 8, 0, result=result, object_name='mystruct'
+  print, result, format='(a)'
+  print,''
+  print,'Test 6 should fail'
+  prits_tools.parcheck, st, 0, "test_06", 8, 0, result=result, object_name='anotherstruct'
+  print, result, format='(a)'
+  print,''
+  print,'Test 5b should be ok'
+  stb = [st, st]
+  prits_tools.parcheck, stb, 0, "test_05b", 8, 1, result=result, object_name='mystruct'
+  print, result, format='(a)'
+  print,''
+  print,'Test 7 should be ok'
+  obj = obj_new('IDL_Container')
+  prits_tools.parcheck, obj, 0, "test_07", 11, 0, result=result, object_name='IDL_Container'
+  print, result, format='(a)'
+  print,''
+  print,'Test 8 should fail'
+  prits_tools.parcheck, obj, 0, "test_08", 11, 0, result=result, object_name='MyObject'
+  print, result, format='(a)'
+  print,''
+  print,'Test 9 should fail'
+  prits_tools.parcheck, [5], 1, "test_09", ['numeric'], [0, 1], result=result, minval=10, maxval=20
+  print, result, format='(a)'
+  print,''
+  print,'Test 10 should fail'
+  prits_tools.parcheck, indgen(20,20), 1, "test_10", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
+  print, result, format='(a)'
+  print,''
+  print,'Test 11 should be ok'
+  prits_tools.parcheck, [11,15,19], 1, "test_10", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
+  print, result, format='(a)'
 END
 
 IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
-  add_path, "$HOME/idl/solo-spice-ql", /expand
+  IF getenv("USER") EQ "steinhh" THEN add_path, "$HOME/idl/solo-spice-ql", /expand
   prits_tools.parcheck_test
 END
-
 
 END
