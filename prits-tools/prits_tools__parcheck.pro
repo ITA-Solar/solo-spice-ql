@@ -119,7 +119,9 @@ PRO prits_tools::check_type, parameter, types, error, error_message, pt, object_
     new_types = []
     foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type, pt)]
     types = new_types
-  END ELSE types = pt.tnames_from_tnames(STRUPCASE(types))
+  ENDIF ELSE BEGIN
+    types = pt.tnames_from_tnames(STRUPCASE(types))
+  ENDELSE
   par_type = size(parameter, /tname)
   IF (where(par_type EQ types))[0] EQ -1 THEN BEGIN
     error = error_message+par_type
@@ -140,7 +142,9 @@ PRO prits_tools::check_ndims, parameter, valid_ndims, error, error_message
   IF size(parameter, /type) EQ 8 && N_ELEMENTS(parameter) EQ 1 THEN par_ndim=0
   IF (where(par_ndim EQ valid_ndims))[0] EQ -1 THEN BEGIN
     error = error_message+trim(par_ndim)
-  ENDIF ELSE error = ''
+  ENDIF ELSE BEGIN
+    error = ''
+  ENDELSE
 END
 
 
@@ -150,14 +154,14 @@ PRO prits_tools::check_range, parameter, min, max, error
   error = ''
   IF n_elements(min) EQ 1 THEN BEGIN
     IF (where(parameter LT min))[0] NE -1 THEN error = 'is smaller than minimum value ' + trim(min)
-  END
+  ENDIF
   IF n_elements(max) EQ 1 THEN BEGIN
     IF (where(parameter GT max))[0] NE -1 THEN BEGIN
       error_temp = 'is larger than maximum value ' + trim(max)
       IF error NE '' THEN error = [error, error_temp] $
       ELSE error = error_temp
     ENDIF
-  END
+  ENDIF
 END
 
 
@@ -178,9 +182,9 @@ FUNCTION prits_tools::tnames_from_tnames, typenames
       'NUMERIC': add = numeric
       'MULTIPLICATIVE': add = multiplicative
       ELSE: add = typename
-    END
+    ENDCASE
     new_typenames = [new_typenames, add]
-  END
+  ENDFOREACH
   return, new_typenames
 END
 
@@ -204,8 +208,8 @@ FUNCTION prits_tools::typename_from_typecode, typecode, pt
     13: return, 'ULONG'
     14: return, 'LONG64'
     15: return, 'ULONG64'
-    else: message, 'TYPE CODE must be GE 0 and LE 15'
-  END
+    ELSE: message, 'TYPE CODE must be GE 0 and LE 15'
+  ENDCASE
 END
 
 
@@ -222,7 +226,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   IF n_params() EQ 1 AND n_elements(default) NE 0 THEN BEGIN
     IF n_elements(parameter) EQ 0 THEN parameter = default
     return
-  END
+  ENDIF
 
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
@@ -237,7 +241,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   IF N_params() LT 5 THEN BEGIN
     on_error, 2
     message, 'Use: PARCHECK, parameter, parnum, name, types, dimensions'
-  END
+  ENDIF
 
   pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions: "
   IF err NE '' THEN errors = [errors, err]
@@ -255,7 +259,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   caller=strupcase((str_sep(callers[1],' '))[0])
 
   IF parnum NE 0 THEN result = 'Parameter ' + trim(parnum) + ' ('+name+')' $
-  else                result = 'Keyword ' + name + ' '
+  ELSE                result = 'Keyword ' + name + ' '
   result = [result + ' of routine ' + STRUPCASE(caller) + ' ' + errors]
 
   dimension_strings = trim(valid_ndims)
@@ -266,7 +270,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   FOR i = 0, N_elements( types )-1 DO BEGIN
     stype += pt.typename_from_typecode(types[i], pt)
     IF i LT N_elements( types )-1 THEN stype += ', '
-  END
+  ENDFOR
   result = [result,'Valid types are: ' + stype]
 
   IF N_ELEMENTS(object_name) GT 0 THEN BEGIN
@@ -274,7 +278,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     FOR i = 0, N_elements( object_name )-1 DO BEGIN
       otype += object_name[i]
       IF i LT N_elements( types )-1 THEN stype += ', '
-    END
+    ENDFOR
     result = [result,'Valid object/structure names are: ' + otype]
   ENDIF
 
@@ -346,6 +350,6 @@ END
 IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
   IF getenv("USER") EQ "steinhh" THEN add_path, "$HOME/idl/solo-spice-ql", /expand
   prits_tools.parcheck_test
-END
+ENDIF
 
 END
