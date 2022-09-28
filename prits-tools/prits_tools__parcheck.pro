@@ -289,18 +289,18 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     otype = ''
     FOR i = 0, N_elements( structure_name )-1 DO BEGIN
       otype += structure_name[i]
-      IF i LT N_elements( types )-1 THEN stype += ', '
+      IF i LT N_elements( structure_name )-1 THEN otype += ', '
     ENDFOR
     result = [result,'Valid structure names are: ' + otype]
   ENDIF
 
   IF N_ELEMENTS(class_name) GT 0 THEN BEGIN
-    otype = ''
+    ctype = ''
     FOR i = 0, N_elements( class_name )-1 DO BEGIN
-      otype += class_name[i]
-      IF i LT N_elements( types )-1 THEN stype += ', '
+      ctype += class_name[i]
+      IF i LT N_elements( class_name )-1 THEN ctype += ', '
     ENDFOR
-    result = [result,'Valid object (class) names are: ' + otype]
+    result = [result,'Valid object (class) names are: ' + ctype]
   ENDIF
 
   IF Keyword_SET(noerror) THEN RETURN
@@ -338,33 +338,51 @@ PRO prits_tools::parcheck_test
   print, result, format='(a)'
   print,''
   print,'Test 6 should fail'
-  prits_tools.parcheck, st, 0, "test_06", 8, 0, result=result, structure_name='anotherstruct'
-  print, result, format='(a)'
-  print,''
-  print,'Test 5b should be ok'
-  stb = [st, st]
-  prits_tools.parcheck, stb, 0, "test_05b", 8, 1, result=result, structure_name='mystruct'
+  prits_tools.parcheck, st, 0, "test_06", 8, 0, result=result, structure_name=['anotherstruct','struc']
   print, result, format='(a)'
   print,''
   print,'Test 7 should be ok'
-  obj = obj_new('IDL_Container')
-  prits_tools.parcheck, obj, 0, "test_07", 11, 0, result=result, class_name='IDL_Container'
+  stb = [st, st]
+  prits_tools.parcheck, stb, 0, "test_07", 8, 1, result=result, structure_name='mystruct'
   print, result, format='(a)'
   print,''
-  print,'Test 8 should fail'
-  prits_tools.parcheck, obj, 0, "test_08", 11, 0, result=result, class_name='MyObject'
+  print,'Test 8 should be ok'
+  obj = obj_new('IDL_Container')
+  prits_tools.parcheck, obj, 0, "test_08", 11, 0, result=result, class_name=['IDL_Container','MyObject']
   print, result, format='(a)'
   print,''
   print,'Test 9 should fail'
-  prits_tools.parcheck, [5], 1, "test_09", ['numeric'], [0, 1], result=result, minval=10, maxval=20
+  prits_tools.parcheck, obj, 0, "test_09", 11, 0, result=result, class_name=['MyObject','AnotherObject']
+  print, result, format='(a)'
+;  print,''
+;  print,'Test 10 should be ok'
+  hash = HASH("one", 1.0, "blue", [255,0,0], "Pi", !DPI)
+;  prits_tools.parcheck, hash, 0, "test_10", 11, 1, result=result, class_name='hash'
+;  print, result, format='(a)'
+;  print,''
+;  print,'Test 11 should fail'
+;  prits_tools.parcheck, hash, 0, "test_11", 11, 0, result=result, class_name='list'
+;  print, result, format='(a)'
+  print,''
+  print,'Test 12 should be ok'
+  prits_tools.parcheck, hash, 0, "test_12", 11, 1, result=result
   print, result, format='(a)'
   print,''
-  print,'Test 10 should fail'
-  prits_tools.parcheck, indgen(20,20), 1, "test_10", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
+  print,'Test 13 should be ok'
+  list=LIST('one', 2.0, 3, 4l, PTR_NEW(5), {n:6}, COMPLEX(7,0))
+  prits_tools.parcheck, list, 0, "test_13", 11, 1, result=result, class_name='list'
   print, result, format='(a)'
   print,''
-  print,'Test 11 should be ok'
-  prits_tools.parcheck, [11,15,19], 1, "test_10", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
+  print,'Test 14 should fail'
+  prits_tools.parcheck, [5], 1, "test_14", ['numeric'], [0, 1], result=result, minval=10, maxval=20
+  print, result, format='(a)'
+  print,''
+  print,'Test 15 should fail'
+  prits_tools.parcheck, indgen(20,20), 2, "test_15", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
+  print, result, format='(a)'
+  print,''
+  print,'Test 16 should be ok'
+  prits_tools.parcheck, [11,15,19], 3, "test_16", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
   print, result, format='(a)'
 END
 
