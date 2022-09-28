@@ -18,7 +18,7 @@
 ;                             maxval=maxval,minval=minval, object_name=object_name, $
 ;                             result=result
 ;
-;	EXAMPLE:
+;	EXAMPLE     :
 ;
 ;	IDL> parcheck, hdr, 2, 'FITS Image Header', 7, 1
 ;
@@ -28,8 +28,10 @@
 ;		"Parameter 2 (FITS Image Header) is undefined"
 ;		"Valid dimensions are 1"
 ;		"Valid types are string"
+;		
+; See prits_tools::parcheck_test for more examples.
 ;
-; Inputs      :
+; INPUTS      :
 ;	PARAMETER - Parameter passed to the routine.
 ;	PARNUM    - Integer parameter number.This information will be used
 ;             in a possible error message. If set to zero the parameter
@@ -107,7 +109,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-28 11:24 CEST $
+; $Id: 2022-09-28 11:36 CEST $
 ;-
 ;
 ;----------------------------------------------------------
