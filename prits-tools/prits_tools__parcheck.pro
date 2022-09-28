@@ -15,8 +15,8 @@
 ;
 ; Use         :
 ;       prits_tools.parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-;                             maxval=maxval,minval=minval, object_name=object_name, $
-;                             result=result
+;                             maxval=maxval,minval=minval, structure_name=structure_name, $
+;                             class_name=class_name, result=result
 ;
 ;	EXAMPLE     :
 ;
@@ -74,9 +74,13 @@
 ;               MAXVAL: Maximum value for the parameter. Checked
 ;                       agains MAX([parameter]).
 ;
-;               OBJECT_NAME: string, scalar or vector. If the input parameter
-;                         is of type 8 (STRUCT) or 11 (OBJREF), the name of the object/structure
-;                         is checked against OBJECT_NAME-NAME.
+;               STRUCTURE_NAME: string, scalar or vector. If the input parameter
+;                         is of type 8 (STRUCT), the name of the structure
+;                         is checked against STRUCTURE_NAME.
+;
+;               CLASS_NAME: string, scalar or vector. If the input parameter
+;                         is of type 11 (OBJREF), the name of the object (class)
+;                         is checked against STRUCTURE_NAME.
 ;
 ;               DEFAULT: If parameter is undefined, then DEFAULT will be returned.
 ;
@@ -114,7 +118,8 @@
 ;
 ;----------------------------------------------------------
 
-PRO prits_tools::check_type, parameter, types, error, error_message, pt, object_name=object_name
+PRO prits_tools::check_type, parameter, types, error, error_message, pt, $
+  structure_name=structure_name, class_name=class_name
   IF typename(types) NE 'STRING' THEN BEGIN
     new_types = []
     foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type, pt)]
@@ -127,10 +132,16 @@ PRO prits_tools::check_type, parameter, types, error, error_message, pt, object_
     error = error_message+par_type
   ENDIF ELSE BEGIN
     error = ''
-    IF (par_type EQ 'OBJREF' || par_type EQ 'STRUCT') && N_ELEMENTS(object_name) GT 0 THEN BEGIN
-      object_name =STRUPCASE(object_name)
-      IF (where(typename(parameter[0]) EQ object_name))[0] EQ -1 THEN BEGIN
-        error = 'is an invalid object/structure type: '+typename(parameter[0])
+    IF par_type EQ 'STRUCT' && N_ELEMENTS(structure_name) GT 0 THEN BEGIN
+      structure_name = STRUPCASE(structure_name)
+      IF (where(typename(parameter[0]) EQ structure_name))[0] EQ -1 THEN BEGIN
+        error = 'is an invalid structure type: '+typename(parameter[0])
+      ENDIF
+    ENDIF
+    IF par_type EQ 'OBJREF' && N_ELEMENTS(class_name) GT 0 THEN BEGIN
+      class_name = STRUPCASE(class_name)
+      IF (where(typename(parameter[0]) EQ class_name))[0] EQ -1 THEN BEGIN
+        error = 'is an invalid object (class) type: '+typename(parameter[0])
       ENDIF
     ENDIF
   ENDELSE
@@ -214,7 +225,7 @@ END
 
 
 PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-  maxval=maxval,minval=minval, object_name=object_name, $
+  maxval=maxval,minval=minval, structure_name=structure_name, class_name=class_name, $
   result=result
   compile_opt idl2, static
 
@@ -246,7 +257,8 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions: "
   IF err NE '' THEN errors = [errors, err]
 
-  pt.check_type, parameter, types, err, "is an invalid data type: ", pt, object_name=object_name
+  pt.check_type, parameter, types, err, "is an invalid data type: ", pt, $
+    structure_name=structure_name, class_name=class_name
   IF err NE '' THEN errors = [errors, err]
 
   pt.check_range, parameter, minval, maxval, err
@@ -273,13 +285,22 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   ENDFOR
   result = [result,'Valid types are: ' + stype]
 
-  IF N_ELEMENTS(object_name) GT 0 THEN BEGIN
+  IF N_ELEMENTS(structure_name) GT 0 THEN BEGIN
     otype = ''
-    FOR i = 0, N_elements( object_name )-1 DO BEGIN
-      otype += object_name[i]
+    FOR i = 0, N_elements( structure_name )-1 DO BEGIN
+      otype += structure_name[i]
       IF i LT N_elements( types )-1 THEN stype += ', '
     ENDFOR
-    result = [result,'Valid object/structure names are: ' + otype]
+    result = [result,'Valid structure names are: ' + otype]
+  ENDIF
+
+  IF N_ELEMENTS(class_name) GT 0 THEN BEGIN
+    otype = ''
+    FOR i = 0, N_elements( class_name )-1 DO BEGIN
+      otype += class_name[i]
+      IF i LT N_elements( types )-1 THEN stype += ', '
+    ENDFOR
+    result = [result,'Valid object (class) names are: ' + otype]
   ENDIF
 
   IF Keyword_SET(noerror) THEN RETURN
@@ -313,25 +334,25 @@ PRO prits_tools::parcheck_test
   print,''
   print,'Test 5 should be ok'
   st = {mystruct, a:0, b:'adf'}
-  prits_tools.parcheck, st, 0, "test_05", 8, 0, result=result, object_name='mystruct'
+  prits_tools.parcheck, st, 0, "test_05", 8, 0, result=result, structure_name='mystruct'
   print, result, format='(a)'
   print,''
   print,'Test 6 should fail'
-  prits_tools.parcheck, st, 0, "test_06", 8, 0, result=result, object_name='anotherstruct'
+  prits_tools.parcheck, st, 0, "test_06", 8, 0, result=result, structure_name='anotherstruct'
   print, result, format='(a)'
   print,''
   print,'Test 5b should be ok'
   stb = [st, st]
-  prits_tools.parcheck, stb, 0, "test_05b", 8, 1, result=result, object_name='mystruct'
+  prits_tools.parcheck, stb, 0, "test_05b", 8, 1, result=result, structure_name='mystruct'
   print, result, format='(a)'
   print,''
   print,'Test 7 should be ok'
   obj = obj_new('IDL_Container')
-  prits_tools.parcheck, obj, 0, "test_07", 11, 0, result=result, object_name='IDL_Container'
+  prits_tools.parcheck, obj, 0, "test_07", 11, 0, result=result, class_name='IDL_Container'
   print, result, format='(a)'
   print,''
   print,'Test 8 should fail'
-  prits_tools.parcheck, obj, 0, "test_08", 11, 0, result=result, object_name='MyObject'
+  prits_tools.parcheck, obj, 0, "test_08", 11, 0, result=result, class_name='MyObject'
   print, result, format='(a)'
   print,''
   print,'Test 9 should fail'
