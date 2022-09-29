@@ -116,11 +116,12 @@
 ;               Version 2, Stein Vidar Haugan, UiO, October 1995
 ;               Version 3, Martin Wiesmann, UiO, September 2022
 ;                 Generell overhaul, bugfixing and introduced check for
-;                 object name, improved documentation
+;                 object name, i.e. new keywords STRUCTURE_NAME, CLASS_NAME and DISALLOW_SUBCLASS,
+;                 improved documentation
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-29 15:03 CEST $
+; $Id: 2022-09-29 15:08 CEST $
 ;-
 ;
 ;----------------------------------------------------------
