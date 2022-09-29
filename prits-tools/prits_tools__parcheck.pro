@@ -69,10 +69,10 @@
 ;                       and procedure returns to caller without stopping.
 ;
 ;               MINVAL: Minimum value for the parameter. Checked
-;                       agains MIN([parameter]).
+;                       against MIN([parameter]).
 ;
 ;               MAXVAL: Maximum value for the parameter. Checked
-;                       agains MAX([parameter]).
+;                       against MAX([parameter]).
 ;
 ;               STRUCTURE_NAME: string, scalar or vector. If the input parameter
 ;                         is of type 8 (STRUCT), the name of the structure
@@ -121,7 +121,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-29 15:08 CEST $
+; $Id: 2022-09-29 15:15 CEST $
 ;-
 ;
 ;----------------------------------------------------------
