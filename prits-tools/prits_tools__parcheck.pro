@@ -88,7 +88,7 @@
 ;
 ; Common      :	None.
 ;
-; Restrictions:	
+; Restrictions:
 ; LIST, HASH, DICTIONARY and ORDEREDHASH alway have dimension 1, except if they are empty.
 ; A 1-dimensional array of those will also have dimension 1.
 ;
@@ -115,12 +115,12 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-29 10:38 CEST $
+; $Id: 2022-09-29 14:19 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
-PRO prits_tools::check_type, parameter, types, error, error_message, pt, $
+PRO prits_tools::check_type, parameter, types, error, pt, $
   structure_name=structure_name, class_name=class_name
   IF typename(types) NE 'STRING' THEN BEGIN
     new_types = []
@@ -131,38 +131,43 @@ PRO prits_tools::check_type, parameter, types, error, error_message, pt, $
   ENDELSE
   par_type = size(parameter, /tname)
   IF (where(par_type EQ types))[0] EQ -1 THEN BEGIN
-    error = error_message+par_type
+    error = "is an invalid data type: " + par_type
   ENDIF ELSE BEGIN
     error = ''
     IF par_type EQ 'STRUCT' && N_ELEMENTS(structure_name) GT 0 THEN BEGIN
       structure_name = STRUPCASE(structure_name)
       IF (where(typename(parameter[0]) EQ structure_name))[0] EQ -1 THEN BEGIN
-        error = 'is an invalid structure type: '+typename(parameter[0])
+        error = 'is an invalid structure type: ' + typename(parameter[0])
       ENDIF
     ENDIF
     IF par_type EQ 'OBJREF' && N_ELEMENTS(class_name) GT 0 THEN BEGIN
-      class_name = STRUPCASE(class_name)
-      par_typename = typename(parameter)
-      IF (where(par_typename EQ class_name))[0] EQ -1 THEN BEGIN
-        IF par_typename NE 'LIST' && par_typename NE 'HASH' && $
-          par_typename NE 'DICTIONARY' && par_typename NE 'ORDEREDHASH' THEN BEGIN
-          IF (where(typename(parameter[0]) EQ class_name))[0] EQ -1 THEN BEGIN
-            error = 'is an invalid object/class type: '+typename(parameter)
-          ENDIF
-        ENDIF ELSE BEGIN
-          error = 'is an invalid object/class type: '+typename(parameter)
-        ENDELSE
-      ENDIF
+      pt.check_class_name, parameter, error, class_name
     ENDIF
   ENDELSE
 END
 
 
-PRO prits_tools::check_ndims, parameter, valid_ndims, error, error_message
+PRO prits_tools::check_class_name, parameter, error, class_name
+  class_name = STRUPCASE(class_name)
+  par_typename = typename(parameter)
+  IF (where(par_typename EQ class_name))[0] EQ -1 THEN BEGIN
+    IF par_typename NE 'LIST' && par_typename NE 'HASH' && $
+      par_typename NE 'DICTIONARY' && par_typename NE 'ORDEREDHASH' THEN BEGIN
+      IF (where(typename(parameter[0]) EQ class_name))[0] EQ -1 THEN BEGIN
+        error = 'is an invalid object/class type: ' + typename(parameter)
+      ENDIF
+    ENDIF ELSE BEGIN
+      error = 'is an invalid object/class type: ' + typename(parameter)
+    ENDELSE
+  ENDIF
+END
+
+
+PRO prits_tools::check_ndims, parameter, valid_ndims, error
   par_ndim = size(parameter, /n_dimensions)
   IF size(parameter, /type) EQ 8 && N_ELEMENTS(parameter) EQ 1 THEN par_ndim=0
   IF (where(par_ndim EQ valid_ndims))[0] EQ -1 THEN BEGIN
-    error = error_message+trim(par_ndim)
+    error = "has wrong number of dimensions: " + trim(par_ndim)
   ENDIF ELSE BEGIN
     error = ''
   ENDELSE
@@ -264,10 +269,10 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     message, 'Use: PARCHECK, parameter, parnum, name, types, dimensions'
   ENDIF
 
-  pt.check_ndims, parameter, valid_ndims, err, "has wrong number of dimensions: "
+  pt.check_ndims, parameter, valid_ndims, err
   IF err NE '' THEN errors = [errors, err]
 
-  pt.check_type, parameter, types, err, "is an invalid data type: ", pt, $
+  pt.check_type, parameter, types, err, pt, $
     structure_name=structure_name, class_name=class_name
   IF err NE '' THEN errors = [errors, err]
 
