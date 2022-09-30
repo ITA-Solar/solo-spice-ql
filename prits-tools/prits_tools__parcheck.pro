@@ -121,35 +121,41 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-29 15:15 CEST $
+; $Id: 2022-09-30 10:57 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
 PRO prits_tools::check_type, parameter, types, error, pt, $
   structure_name=structure_name, class_name=class_name, disallow_subclasses=disallow_subclasses
+  error = ''
+  error_temp = ''
   IF typename(types) NE 'STRING' THEN BEGIN
     new_types = []
-    foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type, pt)]
+    foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type, pt, error)]
     types = new_types
   ENDIF ELSE BEGIN
     types = pt.tnames_from_tnames(STRUPCASE(types))
   ENDELSE
   par_type = size(parameter, /tname)
   IF (where(par_type EQ types))[0] EQ -1 THEN BEGIN
-    error = "is an invalid data type: " + par_type
+    error_temp = "is an invalid data type: " + par_type
   ENDIF ELSE BEGIN
-    error = ''
     IF par_type EQ 'STRUCT' && N_ELEMENTS(structure_name) GT 0 THEN BEGIN
       structure_name = STRUPCASE(structure_name)
       IF (where(typename(parameter[0]) EQ structure_name))[0] EQ -1 THEN BEGIN
-        error = 'is an invalid structure type: ' + typename(parameter[0])
+        error_temp = 'is an invalid structure type: ' + typename(parameter[0])
       ENDIF
     ENDIF
     IF par_type EQ 'OBJREF' && N_ELEMENTS(class_name) GT 0 THEN BEGIN
-      pt.check_class_name, parameter, error, class_name, disallow_subclasses=disallow_subclasses
+      error_temp = ''
+      pt.check_class_name, parameter, error_temp, class_name, disallow_subclasses=disallow_subclasses
     ENDIF
   ENDELSE
+  IF error_temp NE '' THEN BEGIN
+    IF error NE '' THEN error = [error, error_temp] $
+    ELSE error = error_temp
+  ENDIF
 END
 
 
@@ -157,12 +163,6 @@ PRO prits_tools::check_class_name, parameter, error, class_name, disallow_subcla
   class_name = STRUPCASE(class_name)
   IF keyword_set(disallow_subclasses) THEN BEGIN
     par_typename = typename(parameter)
-;    print,'=============='
-;    help,parameter
-;    print,par_typename
-;    print,class_name
-;    print,obj_isa(parameter,class_name[0])
-;    stop
     IF (where(par_typename EQ class_name))[0] EQ -1 THEN BEGIN
       IF par_typename NE 'LIST' && par_typename NE 'HASH' && $
         par_typename NE 'DICTIONARY' && par_typename NE 'ORDEREDHASH' THEN BEGIN
@@ -198,9 +198,14 @@ END
 
 
 PRO prits_tools::check_range, parameter, min, max, error
-  IF n_elements(min) GT 1 THEN message, "MINVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
-  IF n_elements(max) GT 1 THEN message, "MAXVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
   error = ''
+  IF n_elements(min) GT 1 THEN error = "MINVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
+  IF n_elements(max) GT 1 THEN BEGIN
+    error_temp = "MAXVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
+    IF error NE '' THEN error = [error, error_temp] $
+    ELSE error = error_temp
+  ENDIF
+  IF error[0] NE '' THEN return
   IF n_elements(min) EQ 1 THEN BEGIN
     IF (where(parameter LT min))[0] NE -1 THEN error = 'is smaller than minimum value ' + trim(min)
   ENDIF
@@ -238,7 +243,7 @@ FUNCTION prits_tools::tnames_from_tnames, typenames
 END
 
 
-FUNCTION prits_tools::typename_from_typecode, typecode, pt
+FUNCTION prits_tools::typename_from_typecode, typecode, pt, error
   IF size(typecode, /tname) EQ 'STRING' THEN return, pt.tnames_from_tnames(STRUPCASE(typecode))
   CASE typecode OF
     0: return, 'UNDEFINED'
@@ -257,7 +262,10 @@ FUNCTION prits_tools::typename_from_typecode, typecode, pt
     13: return, 'ULONG'
     14: return, 'LONG64'
     15: return, 'ULONG64'
-    ELSE: message, 'TYPE CODE must be GE 0 and LE 15'
+    ELSE: BEGIN
+      error = 'TYPE CODE for PRITS_TOOLS::PARCHECK must be GE 0 and LE 15: ' + trim(typecode)
+      return, 'UNKNOWN'
+    END
   ENDCASE
 END
 
@@ -272,11 +280,6 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   result = ''
   errors = []
 
-  IF n_params() EQ 1 AND n_elements(default) NE 0 THEN BEGIN
-    IF n_elements(parameter) EQ 0 THEN parameter = default
-    return
-  ENDIF
-
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
@@ -289,7 +292,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
 
   IF N_params() LT 5 THEN BEGIN
     on_error, 2
-    message, 'Use: PARCHECK, parameter, parnum, name, types, dimensions'
+    message, 'Use: PARCHECK, parameter, parnum, name, types, n_dimensions'
   ENDIF
 
   pt.check_ndims, parameter, valid_ndims, err
@@ -297,7 +300,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
 
   pt.check_type, parameter, types, err, pt, $
     structure_name=structure_name, class_name=class_name, disallow_subclasses=disallow_subclasses
-  IF err NE '' THEN errors = [errors, err]
+  IF err[0] NE '' THEN errors = [errors, err]
 
   pt.check_range, parameter, minval, maxval, err
   IF err[0] NE '' THEN errors = [errors, err]
@@ -380,6 +383,22 @@ PRO prits_tools::parcheck_test
   print,''
   print,'Test 5.3 should be ok'
   prits_tools.parcheck, [11,15,19], 3, "test_05.3", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
+  print, result, format='(a)'
+  print,''
+  print,'Test 5.4 should fail'
+  prits_tools.parcheck, [11,15,19], 3, "test_05.4", ['integers'], [0, 1, 2], result=result, minval=[10,11], maxval=20
+  print, result, format='(a)'
+  print,''
+  print,'Test 5.5 should fail'
+  prits_tools.parcheck, [11,15,19], 3, "test_05.5", ['integers'], [0, 1, 2], result=result, minval=10, maxval=[20,22]
+  print, result, format='(a)'
+  print,''
+  print,'Test 5.6 should fail'
+  prits_tools.parcheck, [11,15,19], 3, "test_05.6", ['integers'], [0, 1, 2], result=result, minval=[10,11], maxval=[20,22]
+  print, result, format='(a)'
+  print,''
+  print,'Test 5.7 should fail'
+  prits_tools.parcheck, [11,15,19], 3, "test_05.7", 22, [0, 1, 2], result=result
   print, result, format='(a)'
 
   print,''
