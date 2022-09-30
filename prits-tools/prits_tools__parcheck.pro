@@ -8,7 +8,7 @@
 ; Explanation :
 ;	This routine checks whether a parameter fulfills some criteria. It checks the data type
 ;	and the number of dimensions. Optionally, it can also check for minimum and/or maximum
-;	allowed values, or for object/class and structure names.
+;	allowed values, or for object and structure names.
 ;	If the parameter is undefined, then the DEFAULT value is returned if provided.
 ;	If one of the tests fails a message is printed and a RETALL issued.
 ;	These consequences can be suppressed by supplying the RESULT keyword.
@@ -16,7 +16,7 @@
 ; Use         :
 ;       prits_tools.parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
 ;                             maxval=maxval,minval=minval, structure_name=structure_name, $
-;                             class_name=class_name, disallow_subclasses=disallow_subclasses, result=result
+;                             object_name=object_name, disallow_subclasses=disallow_subclasses, result=result
 ;
 ;	EXAMPLE     :
 ;
@@ -78,13 +78,13 @@
 ;                         is of type 8 (STRUCT), the name of the structure
 ;                         is checked against STRUCTURE_NAME.
 ;
-;               CLASS_NAME: string, scalar or vector. If the input parameter
-;                         is of type 11 (OBJREF), the name of the object/class
-;                         is checked against CLASS_NAME, subclasses of the given CLASS_NAME
+;               OBJECT_NAME: string, scalar or vector. If the input parameter
+;                         is of type 11 (OBJREF), the name of the object
+;                         is checked against OBJECT_NAME, objects inheriting from the given OBJECT_NAME
 ;                         are also allowed by default, except if DISALLOW_SUBCLASS keyword
 ;                         is set.
 ;
-;               DISALLOW_SUBCLASS: If set, then subclasses of given CLASS_NAME are not
+;               DISALLOW_SUBCLASS: If set, then objects inheriting from given OBJECT_NAME are not
 ;                         allowed.
 ;
 ;               DEFAULT: If parameter is undefined, then DEFAULT will be returned.
@@ -116,18 +116,18 @@
 ;               Version 2, Stein Vidar Haugan, UiO, October 1995
 ;               Version 3, Martin Wiesmann, UiO, September 2022
 ;                 Generell overhaul, bugfixing and introduced check for
-;                 object name, i.e. new keywords STRUCTURE_NAME, CLASS_NAME and DISALLOW_SUBCLASS,
+;                 object name, i.e. new keywords STRUCTURE_NAME, OBJECT_NAME and DISALLOW_SUBCLASS,
 ;                 improved documentation
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-30 11:44 CEST $
+; $Id: 2022-09-30 13:34 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
 PRO prits_tools::check_type, parameter, types, error, pt, $
-  structure_name=structure_name, class_name=class_name, disallow_subclasses=disallow_subclasses
+  structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses
   error = ''
   error_temp = ''
   IF typename(types) NE 'STRING' THEN BEGIN
@@ -147,9 +147,9 @@ PRO prits_tools::check_type, parameter, types, error, pt, $
         error_temp = 'is an invalid structure type: ' + typename(parameter[0])
       ENDIF
     ENDIF
-    IF par_type EQ 'OBJREF' && N_ELEMENTS(class_name) GT 0 THEN BEGIN
+    IF par_type EQ 'OBJREF' && N_ELEMENTS(object_name) GT 0 THEN BEGIN
       error_temp = ''
-      pt.check_class_name, parameter, error_temp, class_name, disallow_subclasses=disallow_subclasses
+      pt.check_object_name, parameter, error_temp, object_name, disallow_subclasses=disallow_subclasses
     ENDIF
   ENDELSE
   IF error_temp NE '' THEN BEGIN
@@ -159,29 +159,29 @@ PRO prits_tools::check_type, parameter, types, error, pt, $
 END
 
 
-PRO prits_tools::check_class_name, parameter, error, class_name, disallow_subclasses=disallow_subclasses
-  class_name = STRUPCASE(class_name)
+PRO prits_tools::check_object_name, parameter, error, object_name, disallow_subclasses=disallow_subclasses
+  object_name = STRUPCASE(object_name)
   IF keyword_set(disallow_subclasses) THEN BEGIN
     par_typename = typename(parameter)
-    IF (where(par_typename EQ class_name))[0] EQ -1 THEN BEGIN
+    IF (where(par_typename EQ object_name))[0] EQ -1 THEN BEGIN
       IF par_typename NE 'LIST' && par_typename NE 'HASH' && $
         par_typename NE 'DICTIONARY' && par_typename NE 'ORDEREDHASH' THEN BEGIN
-        IF (where(typename(parameter[0]) EQ class_name))[0] EQ -1 THEN BEGIN
-          error = 'is an invalid object/class type: ' + typename(parameter)
+        IF (where(typename(parameter[0]) EQ object_name))[0] EQ -1 THEN BEGIN
+          error = 'is an invalid object type: ' + typename(parameter)
         ENDIF
       ENDIF ELSE BEGIN
-        error = 'is an invalid object/class type: ' + typename(parameter)
+        error = 'is an invalid object type: ' + typename(parameter)
       ENDELSE
     ENDIF
   ENDIF ELSE BEGIN
     nomatch=1
-    FOR i=0,N_ELEMENTS(class_name)-1 DO BEGIN
-      IF (obj_isa(parameter, class_name[i]))[0] THEN BEGIN
+    FOR i=0,N_ELEMENTS(object_name)-1 DO BEGIN
+      IF (obj_isa(parameter, object_name[i]))[0] THEN BEGIN
         nomatch=0
         BREAK
       ENDIF
     ENDFOR
-    IF nomatch THEN error = 'is an invalid object/class type: ' + typename(parameter)
+    IF nomatch THEN error = 'is an invalid object type: ' + typename(parameter)
   ENDELSE
 END
 
@@ -271,7 +271,7 @@ END
 
 
 PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-  maxval=maxval,minval=minval, structure_name=structure_name, class_name=class_name, $
+  maxval=maxval,minval=minval, structure_name=structure_name, object_name=object_name, $
   disallow_subclasses=disallow_subclasses, result=result
   compile_opt idl2, static
 
@@ -299,7 +299,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   IF err NE '' THEN errors = [errors, err]
 
   pt.check_type, parameter, types, err, pt, $
-    structure_name=structure_name, class_name=class_name, disallow_subclasses=disallow_subclasses
+    structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses
   IF err[0] NE '' THEN errors = [errors, err]
 
   pt.check_range, parameter, minval, maxval, err
@@ -335,13 +335,13 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     result = [result,'Valid structure names are: ' + otype]
   ENDIF
 
-  IF N_ELEMENTS(class_name) GT 0 THEN BEGIN
+  IF N_ELEMENTS(object_name) GT 0 THEN BEGIN
     ctype = ''
-    FOR i = 0, N_elements( class_name )-1 DO BEGIN
-      ctype += class_name[i]
-      IF i LT N_elements( class_name )-1 THEN ctype += ', '
+    FOR i = 0, N_elements( object_name )-1 DO BEGIN
+      ctype += object_name[i]
+      IF i LT N_elements( object_name )-1 THEN ctype += ', '
     ENDFOR
-    result_temp = 'Valid object/class names are: ' + ctype + ' (subclasses '
+    result_temp = 'Valid object names are: ' + ctype + ' (subclasses '
     IF keyword_set(disallow_subclasses) THEN result_temp += 'NOT '
     result_temp += 'allowed)'
     result = [result, result_temp]
@@ -423,33 +423,33 @@ PRO prits_tools::parcheck_test
   print,''
   print,'Test 9.1 should be ok'
   obj = obj_new('IDL_Container')
-  prits_tools.parcheck, obj, 0, "test_09.1", 11, 0, result=result, class_name=['IDL_Container','MyObject']
+  prits_tools.parcheck, obj, 0, "test_09.1", 11, 0, result=result, object_name=['IDL_Container','MyObject']
   print, result, format='(a)'
   print,''
   print,'Test 9.2 should fail'
-  prits_tools.parcheck, obj, 0, "test_09.2", 11, 1, result=result, class_name=['IDL_Container','MyObject']
+  prits_tools.parcheck, obj, 0, "test_09.2", 11, 1, result=result, object_name=['IDL_Container','MyObject']
   print, result, format='(a)'
   print,''
   print,'Test 9.3 should be ok'
-  prits_tools.parcheck, [obj, obj], 0, "test_09.3", 11, 1, result=result, class_name='IDL_Container'
+  prits_tools.parcheck, [obj, obj], 0, "test_09.3", 11, 1, result=result, object_name='IDL_Container'
   print, result, format='(a)'
   print,''
   print,'Test 9.4 should fail'
-  prits_tools.parcheck, [obj, obj], 0, "test_09.4", 11, 0, result=result, class_name='IDL_Container'
+  prits_tools.parcheck, [obj, obj], 0, "test_09.4", 11, 0, result=result, object_name='IDL_Container'
   print, result, format='(a)'
   print,''
   print,'Test 9.5 should fail'
-  prits_tools.parcheck, obj, 0, "test_09.5", 11, 0, result=result, class_name=['MyObject','AnotherObject']
+  prits_tools.parcheck, obj, 0, "test_09.5", 11, 0, result=result, object_name=['MyObject','AnotherObject']
   print, result, format='(a)'
   
   print,''
   print,'Test 10 should be ok'
   hash = HASH("one", 1.0, "blue", [255,0,0], "Pi", !DPI)
-  prits_tools.parcheck, hash, 0, "test_10", 11, 1, result=result, class_name='hash'
+  prits_tools.parcheck, hash, 0, "test_10", 11, 1, result=result, object_name='hash'
   print, result, format='(a)'
   print,''
   print,'Test 11 should fail'
-  prits_tools.parcheck, hash, 0, "test_11", 11, 0, result=result, class_name='list'
+  prits_tools.parcheck, hash, 0, "test_11", 11, 0, result=result, object_name='list'
   print, result, format='(a)'
   print,''
   print,'Test 12.1 should be ok'
@@ -457,35 +457,35 @@ PRO prits_tools::parcheck_test
   print, result, format='(a)'
   print,''
   print,'Test 12.2 should be ok'
-  prits_tools.parcheck, [hash, hash], 0, "test_12.2", 11, 1, result=result, class_name='hash'
+  prits_tools.parcheck, [hash, hash], 0, "test_12.2", 11, 1, result=result, object_name='hash'
   print, result, format='(a)'
   
   print,''
   print,'Test 13.1 should be ok'
   list = LIST('one', 2.0, 3, 4l, PTR_NEW(5), {n:6}, COMPLEX(7,0))
-  prits_tools.parcheck, list, 0, "test_13.1", 11, 1, result=result, class_name='list'
+  prits_tools.parcheck, list, 0, "test_13.1", 11, 1, result=result, object_name='list'
   print, result, format='(a)'
   print,''
   print,'Test 13.2 should be ok'
-  prits_tools.parcheck, [list, list], 0, "test_13.2", 11, 1, result=result, class_name='list'
+  prits_tools.parcheck, [list, list], 0, "test_13.2", 11, 1, result=result, object_name='list'
   print, result, format='(a)'
   
   print,''
   a = obj_new('idlitvisaxis')
   print,'Test 14.1 should be ok'
-  prits_tools.parcheck, a, 0, "test_14.1", 11, 0, result=result, class_name='idlitvisaxis'
+  prits_tools.parcheck, a, 0, "test_14.1", 11, 0, result=result, object_name='idlitvisaxis'
   print, result, format='(a)'
   print,''
   print,'Test 14.2 should be ok'
-  prits_tools.parcheck, a, 0, "test_14.2", 11, 0, result=result, class_name='idlitvisualization'
+  prits_tools.parcheck, a, 0, "test_14.2", 11, 0, result=result, object_name='idlitvisualization'
   print, result, format='(a)'
   print,''
   print,'Test 14.3 should fail'
-  prits_tools.parcheck, a, 0, "test_14.3", 11, 0, result=result, class_name='idlitvisualization', /disallow_subclasses
+  prits_tools.parcheck, a, 0, "test_14.3", 11, 0, result=result, object_name='idlitvisualization', /disallow_subclasses
   print, result, format='(a)'
   print,''
   print,'Test 14.4 should be ok'
-  prits_tools.parcheck, [a, a], 0, "test_14.4", 11, [0, 1], result=result, class_name='idlitvisualization'
+  prits_tools.parcheck, [a, a], 0, "test_14.4", 11, [0, 1], result=result, object_name='idlitvisualization'
   print, result, format='(a)'
 END
 
