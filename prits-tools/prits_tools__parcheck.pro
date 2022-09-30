@@ -121,7 +121,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-30 13:34 CEST $
+; $Id: 2022-09-30 14:14 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -284,10 +284,10 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
       return
-    ENDIF ELSE BEGIN
+    ENDIF ELSE IF (where(types EQ 0))[0] EQ -1 THEN BEGIN
       errors = 'is undefined and no default has been specified'
       GOTO, ABORT
-    ENDELSE
+    ENDIF
   ENDIF
 
   IF N_params() LT 5 THEN BEGIN
@@ -388,7 +388,7 @@ PRO prits_tools::parcheck_test
   print,'Test 5.3 should be ok'
   prits_tools.parcheck, [11,15,19], 3, "test_05.3", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
   print, result, format='(a)'
-  
+
   print,''
   print,'Test 5.4 should fail'
   prits_tools.parcheck, [11,15,19], 3, "test_05.4", ['integers'], [0, 1, 2], result=result, minval=[10,11], maxval=20
@@ -419,7 +419,7 @@ PRO prits_tools::parcheck_test
   print,'Test 8 should be ok'
   prits_tools.parcheck, [st, st], 0, "test_08", 8, 1, result=result, structure_name='mystruct'
   print, result, format='(a)'
-  
+
   print,''
   print,'Test 9.1 should be ok'
   obj = obj_new('IDL_Container')
@@ -441,7 +441,7 @@ PRO prits_tools::parcheck_test
   print,'Test 9.5 should fail'
   prits_tools.parcheck, obj, 0, "test_09.5", 11, 0, result=result, object_name=['MyObject','AnotherObject']
   print, result, format='(a)'
-  
+
   print,''
   print,'Test 10 should be ok'
   hash = HASH("one", 1.0, "blue", [255,0,0], "Pi", !DPI)
@@ -459,7 +459,7 @@ PRO prits_tools::parcheck_test
   print,'Test 12.2 should be ok'
   prits_tools.parcheck, [hash, hash], 0, "test_12.2", 11, 1, result=result, object_name='hash'
   print, result, format='(a)'
-  
+
   print,''
   print,'Test 13.1 should be ok'
   list = LIST('one', 2.0, 3, 4l, PTR_NEW(5), {n:6}, COMPLEX(7,0))
@@ -469,7 +469,7 @@ PRO prits_tools::parcheck_test
   print,'Test 13.2 should be ok'
   prits_tools.parcheck, [list, list], 0, "test_13.2", 11, 1, result=result, object_name='list'
   print, result, format='(a)'
-  
+
   print,''
   a = obj_new('idlitvisaxis')
   print,'Test 14.1 should be ok'
