@@ -121,41 +121,29 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-30 14:14 CEST $
+; $Id: 2022-09-30 14:31 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
-PRO prits_tools::check_type, parameter, types, error, pt, $
+PRO prits_tools::check_type, parameter, types_string, error, pt, $
   structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses
   error = ''
-  error_temp = ''
-  IF typename(types) NE 'STRING' THEN BEGIN
-    new_types = []
-    foreach type, types DO new_types = [new_types, pt.typename_from_typecode(type, pt, error)]
-    types = new_types
-  ENDIF ELSE BEGIN
-    types = pt.tnames_from_tnames(STRUPCASE(types))
-  ENDELSE
   par_type = size(parameter, /tname)
-  IF (where(par_type EQ types))[0] EQ -1 THEN BEGIN
-    error_temp = "is an invalid data type: " + par_type
+  IF (where(par_type EQ types_string))[0] EQ -1 THEN BEGIN
+    error = "is an invalid data type: " + par_type
   ENDIF ELSE BEGIN
     IF par_type EQ 'STRUCT' && N_ELEMENTS(structure_name) GT 0 THEN BEGIN
       structure_name = STRUPCASE(structure_name)
       IF (where(typename(parameter[0]) EQ structure_name))[0] EQ -1 THEN BEGIN
-        error_temp = 'is an invalid structure type: ' + typename(parameter[0])
+        error = 'is an invalid structure type: ' + typename(parameter[0])
       ENDIF
     ENDIF
     IF par_type EQ 'OBJREF' && N_ELEMENTS(object_name) GT 0 THEN BEGIN
-      error_temp = ''
-      pt.check_object_name, parameter, error_temp, object_name, disallow_subclasses=disallow_subclasses
+      error = ''
+      pt.check_object_name, parameter, error, object_name, disallow_subclasses=disallow_subclasses
     ENDIF
   ENDELSE
-  IF error_temp NE '' THEN BEGIN
-    IF error NE '' THEN error = [error, error_temp] $
-    ELSE error = error_temp
-  ENDIF
 END
 
 
@@ -279,31 +267,35 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   noerror = arg_present(result)
   result = ''
   errors = []
+  error = ''
+  types_string = []
+  foreach type, types DO types_string = [types_string, pt.typename_from_typecode(type, pt, error)]
 
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
       return
-    ENDIF ELSE IF (where(types EQ 0))[0] EQ -1 THEN BEGIN
+    ENDIF ELSE IF (where(types_string EQ 'UNDEFINED'))[0] EQ -1 THEN BEGIN
       errors = 'is undefined and no default has been specified'
       GOTO, ABORT
     ENDIF
   ENDIF
+  IF error NE '' THEN errors = [errors, error]
 
   IF N_params() LT 5 THEN BEGIN
     on_error, 2
     message, 'Use: PARCHECK, parameter, parnum, name, types, n_dimensions'
   ENDIF
 
-  pt.check_ndims, parameter, valid_ndims, err
-  IF err NE '' THEN errors = [errors, err]
+  pt.check_ndims, parameter, valid_ndims, error
+  IF error NE '' THEN errors = [errors, error]
 
-  pt.check_type, parameter, types, err, pt, $
+  pt.check_type, parameter, types_string, error, pt, $
     structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses
-  IF err[0] NE '' THEN errors = [errors, err]
+  IF error[0] NE '' THEN errors = [errors, error]
 
-  pt.check_range, parameter, minval, maxval, err
-  IF err[0] NE '' THEN errors = [errors, err]
+  pt.check_range, parameter, minval, maxval, error
+  IF error[0] NE '' THEN errors = [errors, error]
 
   IF n_elements(errors) EQ 0 THEN return
 
@@ -320,9 +312,9 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   result = [result,'Valid number of dimensions are: '+dimension_string]
 
   stype = ''
-  FOR i = 0, N_elements( types )-1 DO BEGIN
-    stype += pt.typename_from_typecode(types[i], pt)
-    IF i LT N_elements( types )-1 THEN stype += ', '
+  FOR i = 0, N_elements( types_string )-1 DO BEGIN
+    stype += types_string[i]
+    IF i LT N_elements( types_string )-1 THEN stype += ', '
   ENDFOR
   result = [result,'Valid types are: ' + stype]
 
@@ -365,8 +357,12 @@ PRO prits_tools::parcheck_test
   prits_tools.parcheck, [5], 1, "test_01", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 2 should fail'
-  prits_tools.parcheck, a, 2, "test_02", ['BYTE'], [0, 5], result=result
+  print,'Test 2.1 should fail'
+  prits_tools.parcheck, a, 2, "test_02.1", ['BYTE'], [0, 5], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 2.2 should be ok'
+  prits_tools.parcheck, a, 2, "test_02.2", ['BYTE', 'undefined'], [0, 5], result=result
   print, result, format='(a)'
   print,''
   print,'Test 3 should be ok'
