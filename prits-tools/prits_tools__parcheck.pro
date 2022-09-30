@@ -98,8 +98,8 @@
 ; A 1-dimensional array of those will also have dimension 1.
 ;
 ; Side effects:
-;	If an error in the parameter is found, a message is printed and
-;	a RETALL issued
+;	If an error in the parameter is found, a message is printed and a RETALL issued,
+;	except if the keyword RESULT is present.
 ;
 ; Category    :	Utilities, Miscellaneous
 ;
@@ -121,7 +121,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-30 10:57 CEST $
+; $Id: 2022-09-30 10:58 CEST $
 ;-
 ;
 ;----------------------------------------------------------
