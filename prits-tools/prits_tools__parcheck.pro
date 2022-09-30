@@ -121,7 +121,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-30 11:37 CEST $
+; $Id: 2022-09-30 11:44 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -341,7 +341,10 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
       ctype += class_name[i]
       IF i LT N_elements( class_name )-1 THEN ctype += ', '
     ENDFOR
-    result = [result,'Valid object/class names are: ' + ctype]
+    result_temp = 'Valid object/class names are: ' + ctype + ' (subclasses '
+    IF keyword_set(disallow_subclasses) THEN result_temp += 'NOT '
+    result_temp += 'allowed)'
+    result = [result, result_temp]
   ENDIF
 
   IF Keyword_SET(noerror) THEN RETURN
@@ -353,6 +356,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   MESSAGE,"STOPPING, returning to checkpoint in " + caller + string([13b, 10b])
 
 END
+
 
 PRO prits_tools::parcheck_test
   compile_opt static
@@ -484,6 +488,7 @@ PRO prits_tools::parcheck_test
   prits_tools.parcheck, [a, a], 0, "test_14.4", 11, [0, 1], result=result, class_name='idlitvisualization'
   print, result, format='(a)'
 END
+
 
 IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
   IF getenv("USER") EQ "steinhh" THEN add_path, "$HOME/idl/solo-spice-ql", /expand
