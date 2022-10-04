@@ -271,6 +271,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   types_string = []
   foreach type, types DO types_string = [types_string, pt.typename_from_typecode(type, pt, error)]
 
+  valid_ndims_use = valid_ndims
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
@@ -278,7 +279,9 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     ENDIF ELSE IF (where(types_string EQ 'UNDEFINED'))[0] EQ -1 THEN BEGIN
       errors = 'is undefined and no default has been specified'
       GOTO, ABORT
-    ENDIF
+    ENDIF ELSE BEGIN
+      valid_ndims_use = [0, valid_ndims] 
+    ENDELSE
   ENDIF
   IF error NE '' THEN errors = [errors, error]
 
@@ -287,7 +290,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     message, 'Use: PARCHECK, parameter, parnum, name, types, n_dimensions'
   ENDIF
 
-  pt.check_ndims, parameter, valid_ndims, error
+  pt.check_ndims, parameter, valid_ndims_use, error
   IF error NE '' THEN errors = [errors, error]
 
   pt.check_type, parameter, types_string, error, pt, $
