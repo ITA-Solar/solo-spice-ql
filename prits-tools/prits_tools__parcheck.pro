@@ -23,7 +23,7 @@
 ;	IDL> parcheck, hdr, 2, 'FITS Image Header', 7, 1
 ;
 ;	This example checks whether the parameter 'hdr' is of type string (=7)
-;	and is a vector (1 dimension).   If either of these tests fail, a
+;	and is a vector (1 dimension).   If either of these tests fails, a
 ;	message will be printed
 ;		"Parameter 2 (FITS Image Header) is undefined"
 ;		"Valid dimensions are 1"
@@ -121,7 +121,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-09-30 14:31 CEST $
+; $Id: 2022-10-11 13:14 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -185,13 +185,22 @@ PRO prits_tools::check_ndims, parameter, valid_ndims, error
 END
 
 
-PRO prits_tools::check_range, parameter, min, max, error
+PRO prits_tools::check_range, parameter, min, max, error, pt
   error = ''
   IF n_elements(min) GT 1 THEN error = "MINVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
   IF n_elements(max) GT 1 THEN BEGIN
     error_temp = "MAXVAL keyword of PRITS_TOOLS::PARCHECK must be scalar"
     IF error NE '' THEN error = [error, error_temp] $
     ELSE error = error_temp
+  ENDIF
+  IF n_elements(min) EQ 1 || n_elements(max) EQ 1 THEN BEGIN
+    multiplicative = pt.tnames_from_tnames('MULTIPLICATIVE')
+    par_type = size(parameter, /tname)
+    IF (where(par_type EQ multiplicative))[0] EQ -1 THEN BEGIN
+      error_temp = "must be numeric if MIN/MAX keywords are provided: " + par_type
+      IF error NE '' THEN error = [error, error_temp] $
+      ELSE error = error_temp
+    ENDIF
   ENDIF
   IF error[0] NE '' THEN return
   IF n_elements(min) EQ 1 THEN BEGIN
@@ -271,6 +280,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   types_string = []
   foreach type, types DO types_string = [types_string, pt.typename_from_typecode(type, pt, error)]
 
+  valid_ndims_use = valid_ndims
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
@@ -278,7 +288,9 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     ENDIF ELSE IF (where(types_string EQ 'UNDEFINED'))[0] EQ -1 THEN BEGIN
       errors = 'is undefined and no default has been specified'
       GOTO, ABORT
-    ENDIF
+    ENDIF ELSE BEGIN
+      valid_ndims_use = [0, valid_ndims]
+    ENDELSE
   ENDIF
   IF error NE '' THEN errors = [errors, error]
 
@@ -287,14 +299,14 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
     message, 'Use: PARCHECK, parameter, parnum, name, types, n_dimensions'
   ENDIF
 
-  pt.check_ndims, parameter, valid_ndims, error
+  pt.check_ndims, parameter, valid_ndims_use, error
   IF error NE '' THEN errors = [errors, error]
 
   pt.check_type, parameter, types_string, error, pt, $
     structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses
   IF error[0] NE '' THEN errors = [errors, error]
 
-  pt.check_range, parameter, minval, maxval, error
+  pt.check_range, parameter, minval, maxval, error, pt
   IF error[0] NE '' THEN errors = [errors, error]
 
   IF n_elements(errors) EQ 0 THEN return
@@ -353,134 +365,146 @@ END
 PRO prits_tools::parcheck_test
   compile_opt static
   print,''
-  print,'Test 1 should fail'
+  print,'Test 1 should FAIL, wrong type and number of dimensions'
   prits_tools.parcheck, [5], 1, "test_01", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 2.1 should fail'
+  print,'Test 2.1 should FAIL, undefined, no default'
   prits_tools.parcheck, a, 2, "test_02.1", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 2.2 should be ok'
+  print,'Test 2.2 should be OK, undefined, but allowed'
   prits_tools.parcheck, a, 2, "test_02.2", ['BYTE', 'undefined'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 3 should be ok'
+  print,'Test 2.3 should be OK, undefined, but allowed, tests implification of n_dim=0 if parameter=undefined'
+  prits_tools.parcheck, a, 2, "test_02.3", ['BYTE', 'undefined'], [4, 5], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 3 should be OK, undefined, but default provided'
   prits_tools.parcheck, a, 3, "test_03", ['BYTE'], [0, 5], result=result, default=77
   print, result, format='(a)'
   print,''
-  print,'Test 4 should be ok'
+  print,'Test 4 should be OK. tests simple value'
   prits_tools.parcheck, 4US, 4, "test_04", ['unSIgned'], 0, result=result, default=77
   print, result, format='(a)'
   print,''
-  print,'Test 5.1 should fail'
+  print,'Test 5.1 should FAIL, MIN fails'
   prits_tools.parcheck, [5], 1, "test_05.1", ['numeric'], [0, 1], result=result, minval=10, maxval=20
   print, result, format='(a)'
   print,''
-  print,'Test 5.2 should fail'
+  print,'Test 5.2 should FAIL, MIN and MAX fails'
   prits_tools.parcheck, indgen(20,20), 2, "test_05.2", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
   print, result, format='(a)'
   print,''
-  print,'Test 5.3 should be ok'
+  print,'Test 5.3 should be OK, values are in correct range'
   prits_tools.parcheck, [11,15,19], 3, "test_05.3", ['integers'], [0, 1, 2], result=result, minval=10, maxval=20
   print, result, format='(a)'
 
   print,''
-  print,'Test 5.4 should fail'
+  print,'Test 5.4 should FAIL, MIN is a vector'
   prits_tools.parcheck, [11,15,19], 3, "test_05.4", ['integers'], [0, 1, 2], result=result, minval=[10,11], maxval=20
   print, result, format='(a)'
   print,''
-  print,'Test 5.5 should fail'
+  print,'Test 5.5 should FAIL, MAX is a vector'
   prits_tools.parcheck, [11,15,19], 3, "test_05.5", ['integers'], [0, 1, 2], result=result, minval=10, maxval=[20,22]
   print, result, format='(a)'
   print,''
-  print,'Test 5.6 should fail'
+  print,'Test 5.6 should FAIL, both, MIN and MAX are vectors'
   prits_tools.parcheck, [11,15,19], 3, "test_05.6", ['integers'], [0, 1, 2], result=result, minval=[10,11], maxval=[20,22]
   print, result, format='(a)'
   print,''
-  print,'Test 5.7 should fail'
-  prits_tools.parcheck, [11,15,19], 3, "test_05.7", 22, [0, 1, 2], result=result
+  print,'Test 5.7 should FAIL, MIN/MAX can not be tested against a non-numeric value'
+  prits_tools.parcheck, 'text', 3, "test_05.7", ['integers', 'string'], [0, 1, 2], result=result, minval=10, maxval=20
+  print, result, format='(a)'
+  print,''
+  print,'Test 5.8 should FAIL, wrong type code provided'
+  prits_tools.parcheck, [11,15,19], 3, "test_05.8", 22, [0, 1, 2], result=result
   print, result, format='(a)'
 
   print,''
-  print,'Test 6 should be ok'
+  print,'Test 6 should be OK, tests structure'
   st = {mystruct, a:0, b:'adf'}
-  prits_tools.parcheck, st, 0, "test_06", 8, 0, result=result, structure_name='mystruct'
+  prits_tools.parcheck, st, 0, "test_06", 8, 0, result=result
   print, result, format='(a)'
   print,''
-  print,'Test 7 should fail'
+  print,'Test 7 should FAIL, wrong type of structure'
   prits_tools.parcheck, st, 0, "test_07", 8, 0, result=result, structure_name=['anotherstruct','struc']
   print, result, format='(a)'
   print,''
-  print,'Test 8 should be ok'
+  print,'Test 8 should be OK, tests structure with name'
   prits_tools.parcheck, [st, st], 0, "test_08", 8, 1, result=result, structure_name='mystruct'
   print, result, format='(a)'
 
   print,''
-  print,'Test 9.1 should be ok'
+  print,'Test 9.1 should be OK, tests object'
   obj = obj_new('IDL_Container')
-  prits_tools.parcheck, obj, 0, "test_09.1", 11, 0, result=result, object_name=['IDL_Container','MyObject']
+  prits_tools.parcheck, obj, 0, "test_09.1", 11, 0, result=result
   print, result, format='(a)'
   print,''
-  print,'Test 9.2 should fail'
-  prits_tools.parcheck, obj, 0, "test_09.2", 11, 1, result=result, object_name=['IDL_Container','MyObject']
+  print,'Test 9.2 should FAIL, object, but with wrong number of dimensions'
+  prits_tools.parcheck, obj, 0, "test_09.2", 11, 1, result=result
   print, result, format='(a)'
   print,''
-  print,'Test 9.3 should be ok'
-  prits_tools.parcheck, [obj, obj], 0, "test_09.3", 11, 1, result=result, object_name='IDL_Container'
+  print,'Test 9.3 should be OK, tests array of objects'
+  prits_tools.parcheck, [obj, obj], 0, "test_09.3", 11, 1, result=result
   print, result, format='(a)'
   print,''
-  print,'Test 9.4 should fail'
-  prits_tools.parcheck, [obj, obj], 0, "test_09.4", 11, 0, result=result, object_name='IDL_Container'
+  print,'Test 9.4 should be OK, tests for correct type of object'
+  prits_tools.parcheck, obj, 0, "test_09.4", 11, 0, result=result, object_name='IDL_Container'
   print, result, format='(a)'
   print,''
-  print,'Test 9.5 should fail'
-  prits_tools.parcheck, obj, 0, "test_09.5", 11, 0, result=result, object_name=['MyObject','AnotherObject']
+  print,'Test 9.5 should FAIL, wrong number of dimensions'
+  prits_tools.parcheck, [obj, obj], 0, "test_09.5", 11, 0, result=result, object_name='IDL_Container'
+  print, result, format='(a)'
+  print,''
+  print,'Test 9.6 should FAIL, wrong type of object'
+  prits_tools.parcheck, obj, 0, "test_09.6", 11, 0, result=result, object_name=['MyObject','AnotherObject']
   print, result, format='(a)'
 
   print,''
-  print,'Test 10 should be ok'
+  print,'Test 10 should be OK, tests hash'
   hash = HASH("one", 1.0, "blue", [255,0,0], "Pi", !DPI)
   prits_tools.parcheck, hash, 0, "test_10", 11, 1, result=result, object_name='hash'
   print, result, format='(a)'
   print,''
-  print,'Test 11 should fail'
+  print,'Test 11 should FAIL, test hash with wrong object name'
   prits_tools.parcheck, hash, 0, "test_11", 11, 0, result=result, object_name='list'
   print, result, format='(a)'
   print,''
-  print,'Test 12.1 should be ok'
+  print,'Test 12.1 should be OK, test hash without object name'
   prits_tools.parcheck, hash, 0, "test_12.1", 11, 1, result=result
   print, result, format='(a)'
   print,''
-  print,'Test 12.2 should be ok'
+  print,'Test 12.2 should be OK, test array of hashes'
   prits_tools.parcheck, [hash, hash], 0, "test_12.2", 11, 1, result=result, object_name='hash'
   print, result, format='(a)'
 
   print,''
-  print,'Test 13.1 should be ok'
+  print,'Test 13.1 should be OK, test list'
   list = LIST('one', 2.0, 3, 4l, PTR_NEW(5), {n:6}, COMPLEX(7,0))
   prits_tools.parcheck, list, 0, "test_13.1", 11, 1, result=result, object_name='list'
   print, result, format='(a)'
   print,''
-  print,'Test 13.2 should be ok'
+  print,'Test 13.2 should be OK, test array of list'
   prits_tools.parcheck, [list, list], 0, "test_13.2", 11, 1, result=result, object_name='list'
   print, result, format='(a)'
 
   print,''
   a = obj_new('idlitvisaxis')
-  print,'Test 14.1 should be ok'
+  print,'Test 14.1 should be OK, test object'
   prits_tools.parcheck, a, 0, "test_14.1", 11, 0, result=result, object_name='idlitvisaxis'
   print, result, format='(a)'
   print,''
-  print,'Test 14.2 should be ok'
+  print,'Test 14.2 should be OK, test object with name of superclass'
   prits_tools.parcheck, a, 0, "test_14.2", 11, 0, result=result, object_name='idlitvisualization'
   print, result, format='(a)'
   print,''
-  print,'Test 14.3 should fail'
+  print,'Test 14.3 should FAIL, test object with name of superclass but with disallow_subclass set'
   prits_tools.parcheck, a, 0, "test_14.3", 11, 0, result=result, object_name='idlitvisualization', /disallow_subclasses
   print, result, format='(a)'
   print,''
-  print,'Test 14.4 should be ok'
+  print,'Test 14.4 should be OK, test array of objects with name of superclass'
   prits_tools.parcheck, [a, a], 0, "test_14.4", 11, [0, 1], result=result, object_name='idlitvisualization'
   print, result, format='(a)'
 END
