@@ -55,6 +55,9 @@
 ;    - floats (4, 5)
 ;    - numeric (integers + floats = 1, 2, 3, 4, 5, 12, 13, 14, 15)
 ;    - multiplicative (numeric + 6, 9 = 1, 2, 3, 4, 5, 6, 9, 12, 13, 14, 15)
+;    Even more valid string types:
+;    - time (checks if input has a valid time format, calls 'valid_time')
+;    - time0 (same as 'time' but zero is a valid time)
 ;	VALID_NDIMS - Integer, scalar or vector, giving number of allowed dimensions.
 ;	              For scalar values, the number of dimensions is zero.
 ;
@@ -121,7 +124,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-10-11 13:14 CEST $
+; $Id: 2022-10-12 11:06 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -131,7 +134,15 @@ PRO prits_tools::check_type, parameter, types_string, error, pt, $
   error = ''
   par_type = size(parameter, /tname)
   IF (where(par_type EQ types_string))[0] EQ -1 THEN BEGIN
-    error = "is an invalid data type: " + par_type
+    IF (where('TIME' EQ types_string OR 'TIME0' EQ types_string))[0] GE 0 THEN BEGIN
+      result = valid_time(parameter, err=err, zero=(where('TIME0' EQ types_string))[0] GE 0)
+      ind = where(result eq 0, count)
+      IF count GT 0 THEN BEGIN
+        error = "has wrong time format: " + err
+      ENDIF
+    ENDIF ELSE BEGIN
+      error = "is an invalid data type: " + par_type
+    ENDELSE
   ENDIF ELSE BEGIN
     IF par_type EQ 'STRUCT' && N_ELEMENTS(structure_name) GT 0 THEN BEGIN
       structure_name = STRUPCASE(structure_name)
@@ -506,6 +517,37 @@ PRO prits_tools::parcheck_test
   print,''
   print,'Test 14.4 should be OK, test array of objects with name of superclass'
   prits_tools.parcheck, [a, a], 0, "test_14.4", 11, [0, 1], result=result, object_name='idlitvisualization'
+  print, result, format='(a)'
+
+  print,''
+  t = '1-jan-2010'
+  print,'Test 15.1 should be OK, test time'
+  prits_tools.parcheck, t, 0, "test_15.1", 'TIME', 0, result=result
+  print, result, format='(a)'
+  print,''
+  t = anytim2utc('1-jan-2010', /external)
+  print,'Test 15.2 should be OK, test time, external structure'
+  prits_tools.parcheck, t, 0, "test_15.2", 'TIME', 0, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.3 should be FAIL, test time, external structure against string'
+  prits_tools.parcheck, t, 0, "test_15.3", 'string', 0, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.4 should be OK, test time array'
+  prits_tools.parcheck, [t, t], 0, "test_15.4", 'TIME', 1, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.5 should be FAIL, test time array, with value zero'
+  prits_tools.parcheck, [134, 0], 0, "test_15.5", 'TIME', 1, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.6 should be OK, test time array, with value zero against TIME0'
+  prits_tools.parcheck, [134, 0], 0, "test_15.6", 'TIME0', 1, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.7 should be FAIL, test time, spelling mistake'
+  prits_tools.parcheck, '1-jap-2010', 0, "test_15.7", 'TIME0', 0, result=result
   print, result, format='(a)'
 END
 
