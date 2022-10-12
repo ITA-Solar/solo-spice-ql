@@ -3,13 +3,15 @@
 ;      SPICE_CREATE_L3_IMAGES
 ;
 ; PURPOSE:
-;      This function creates images out of level 3 data.
+;      This function creates images from level 3 data.
+;      It will create 3 images per fit parameter of each fit component for each
+;      window. 2 JPG images with height 512 and 1024 and 1 PNG image with height 64 pixels.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      spice_create_l3_images
+;      spice_create_l3_images, l3_file, out_dir
 ;
 ; INPUTS:
 ;      l3_file: The full path to the level 3 SPICE FITS file.
@@ -30,13 +32,13 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-07-27 15:51 CEST $
+; $Id: 2022-10-12 10:13 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir
   
-  prits_tools.parcheck, l3_file, 1, "l3_file", 'STR', 0
-  prits_tools.parcheck, out_dir, 2, "out_dir", 'STR', 0
+  prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
+  prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
   
   ; Red Temperature (intensity/default)
   c = colortable(3)
