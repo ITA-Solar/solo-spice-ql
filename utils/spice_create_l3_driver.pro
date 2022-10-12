@@ -46,7 +46,7 @@
 ;               Ignored if TIME_END is provided or if NO_TREE_STRUCT or SEQUENCE is set.
 ;     NO_LEVEL: If set, then the level part of the default path is omitted
 ;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/).
-;               This keyword is ignored for the calculation of the resulting level 3 file.
+;               This keyword is ignored for the calculation of the resulting level 3 filepath.
 ;     NO_TREE_STRUCT: If set, then the tree structure won't be appended to TOP_DIR
 ;               (e.g. TOP_DIR/level2/ instead of TOP_DIR/level2/2020/06/21/)
 ;     USER_DIR: If set, the procedure searches and saves in TOP_DIR/user/ instead of TOP_DIR/.
@@ -73,7 +73,7 @@
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
-;                     for the official level 3 files.
+;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;
 ; OUTPUTS:
 ;     ;;;  A string or string array containing the full path to a SPICE file or files.
@@ -121,8 +121,8 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
   FOR ifile=0,count_file-1 DO BEGIN
     l2_object = spice_get_object(files_l2[ifile], is_spice=is_spice, object_created=object_created)
     IF ~is_spice THEN continue
-    
-    l3_file = l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+
+    l3_file = l2_object->create_l3_file(no_masking=no_masking, approximated_slit=approximated_slit, $
       no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
       official_l3dir=official_l3dir, top_dir=top_dir)
   ENDFOR

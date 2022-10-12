@@ -197,6 +197,9 @@ END
 ;                 Default is zero.
 ;     TOP_DIR : A path to a directory in which the file should be saved. The necessary subdirectories
 ;                 will be created (e.g. level2/2020/06/21).
+;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
+;                 keyword allows you to specify to which path you send
+;                 the file. Default is 0.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -216,7 +219,7 @@ END
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
-;                     for the official level 3 files.
+;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
 ;                 level 3 FITS file, if it would have been saved.
 ;
@@ -231,7 +234,7 @@ END
 
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
-  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
+  official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
@@ -291,7 +294,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 
   spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
-    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, /force, dry_run=keyword_set(save_not)
+    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /force, $
+    dry_run=keyword_set(save_not)
   IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
   return, destination
 END
