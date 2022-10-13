@@ -81,7 +81,7 @@ In general, all functionalities in the heritage routines will be preserved as fa
 * SPICE object (iris_data)
     * Implemented, continuous improvement
     ```
-    obj = obj_new('spice_data', spice_file)
+    obj = spice_data(spice_file)
     obj->help
     ```
 * Routine to read SPICE FITS file into an object (iris_obj)
@@ -142,7 +142,7 @@ In general, all functionalities in the heritage routines will be preserved as fa
 * S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file)
     * Implemented
     ```
-    spice_ingest, Filename [, force=force, index=index, help=help]
+    spice_ingest, Filename [, force=force, path_index=path_index, help=help]
     Result = spice_find_file(Time [, LEVEL=LEVEL, TOP_DIR=TOP_DIR, COUNT=COUNT, /SEQUENCE, /ALL, /QUIET ] )
     ```
 * GUI for selection of files and quicklook tools (iris_xfiles, iris_xcontrol)
@@ -179,7 +179,7 @@ spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-08-11 15:08 CEST $
+; $Id: 2022-10-13 11:26 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
