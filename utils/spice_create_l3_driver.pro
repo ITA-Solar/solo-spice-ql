@@ -72,8 +72,7 @@
 ;               range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
 ;     no_widget:  If set, xcfit_block and small window to stopp fitting will not be called.
-;     no_xcfit_block: If set, xcfit_block will not be called, but small window to stopp fitting will
-;               appear.
+;     show_xcfit_block: If set, xcfit_block will be called, for each data window before saving.
 ;     position: If set, then the line position is NOT represented by the velocity
 ;               relative to a lab wavelength, but as the wavelength.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
@@ -97,7 +96,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-13 11:24 CEST $
+; $Id: 2022-10-13 12:04 CEST $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, $
@@ -105,7 +104,7 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
   all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
   search_subdir=search_subdir, ignore_time=ignore_time, $
   no_masking=no_masking, approximated_slit=approximated_slit, $
-  no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
+  no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, create_images=create_images, images_top_dir=images_top_dir, $
   files_l3=files_l3
 
@@ -131,18 +130,17 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
     IF ~is_spice THEN continue
 
     l3_file = l2_object->create_l3_file(no_masking=no_masking, approximated_slit=approximated_slit, $
-      no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
+      no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=~keyword_set(show_xcfit_block), position=position, velocity=velocity, $
       official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index)
 
     files_l3 = [files_l3, l3_file]
 
-    IF keyword_set(create_images) THEN BEGIN
+    IF keyword_set(create_images) && l2_object->get_number_exposures(0) GT 1 THEN BEGIN
       spice_ingest, l3_file, destination=destination, $
         user_dir=~keyword_set(official_l3dir), top_dir=images_top_dir, path_index=path_index, /dry_run
       out_dir = file_dirname(destination[0], /mark_directory)
       out_dir = out_dir.replace('level3', 'images')
-
-      spice_create_l3_images, l3_file, out_dir
+      spice_create_l3_images, l3_file, out_dir, /NO_TREE_STRUCT
     ENDIF
 
   ENDFOR

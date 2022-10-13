@@ -20,6 +20,8 @@
 ; OPTIONAL INPUTS:
 ;
 ; KEYWORDS:
+;     NO_TREE_STRUCT: If set, then the tree structure won't be appended to TOP_DIR
+;               (e.g. TOP_DIR/level2/ instead of TOP_DIR/level2/2020/06/21/)
 ;
 ; OUTPUTS:
 ;      Writes jpeg and png files with images into out_dir.
@@ -32,14 +34,14 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-12 10:13 CEST $
+; $Id: 2022-10-13 12:04 CEST $
 
 
-PRO spice_create_l3_images, l3_file, out_dir
-  
+PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
+
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
-  
+
   ; Red Temperature (intensity/default)
   c = colortable(3)
   ct1_r=reform(c[*,0])
@@ -61,19 +63,21 @@ PRO spice_create_l3_images, l3_file, out_dir
   l3_filename = file_basename(l3_file)
   l3_filename = strsplit(l3_filename, '.', /extract)
   l3_filename = l3_filename[0]
-  date_dirs = file_dirname(l3_file)
-  date_dirs = strsplit(date_dirs, '/', /extract)
-  date_dirs = strjoin(date_dirs[-3:-1], '/')
-  filename_base = out_dir + date_dirs + '/' + l3_filename + '_'
-  if ~file_test(out_dir + date_dirs, /directory) then $
-    file_mkdir, out_dir + date_dirs
+  base_dir = out_dir
+  if ~keyword_set(NO_TREE_STRUCT) THEN BEGIN
+    date_dirs = file_dirname(l3_file)
+    date_dirs = strsplit(date_dirs, path_sep(), /extract)
+    date_dirs = strjoin(date_dirs[-3:-1], path_sep())
+    base_dir += date_dirs
+  endif
+  filename_base = base_dir + path_sep() + l3_filename + '_'
+  if ~file_test(base_dir, /directory) then file_mkdir, base_dir
 
   ana = fits2ana(l3_file, headers_results=headers_results)
   for iana=0,N_ELEMENTS(ana)-1 do begin
 
     handle_value,ana[iana].result_h,result;,/no_copy
     handle_value,ana[iana].fit_h,fit;,/no_copy
-
 
     hdr = fitshead2struct(*headers_results[iana])
     wcs = fitshead2wcs(hdr)
@@ -200,7 +204,7 @@ PRO spice_create_l3_images, l3_file, out_dir
         image_small = image_small[x0:x1, y0:y1]
 
         write_png, filename+'_64.png', image_small, ct_r, ct_g, ct_b
-        
+
         ipartotal++
 
       endfor ; ipar0,n_params-1
