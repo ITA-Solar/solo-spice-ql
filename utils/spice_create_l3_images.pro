@@ -20,8 +20,8 @@
 ; OPTIONAL INPUTS:
 ;
 ; KEYWORDS:
-;     NO_TREE_STRUCT: If set, then the tree structure won't be appended to TOP_DIR
-;               (e.g. TOP_DIR/level2/ instead of TOP_DIR/level2/2020/06/21/)
+;     NO_TREE_STRUCT: If set, then the date tree structure won't be appended to OUT_DIR
+;               (e.g. OUT_DIR/ instead of OUT_DIR/2020/06/21/)
 ;
 ; OUTPUTS:
 ;      Writes jpeg and png files with images into out_dir.
@@ -34,7 +34,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-13 12:04 CEST $
+; $Id: 2022-10-13 14:44 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
