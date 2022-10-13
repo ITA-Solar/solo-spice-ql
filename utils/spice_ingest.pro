@@ -70,7 +70,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2022-08-26 13:26 CEST $
+; $Id: 2022-10-13 11:24 CEST $
 
 
 PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel, $
@@ -127,7 +127,7 @@ PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel,
     IF n_params() LT 1 THEN return
   ENDIF
 
-  IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
+  IF keyword_set(user_dir) && ~keyword_set(top_dir) THEN topdir = concat_dir(topdir, 'user')
 
   nfiles=n_elements(filename)
   IF nfiles GT 1 THEN BEGIN
