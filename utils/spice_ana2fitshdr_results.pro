@@ -53,7 +53,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-06-27 13:51 CEST $
+; $Id: 2022-10-13 14:43 CEST $
 
 
 FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
@@ -159,6 +159,8 @@ FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
     endif
     hdr = [hdr[0:ind_end-1], header_l2[ind_start-3:*]]
   endif
+
+  fits_util->add, hdr, 'LEVEL', 'L3', 'Data processing level'
 
   ; Add WCS keywords
   fits_util->add, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
