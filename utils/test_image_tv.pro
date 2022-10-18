@@ -68,7 +68,7 @@ pro test_image_tv
 
   pih, image_data, 0.01, position=Win_position, $
     xstyle=5, ystyle=5, top=253, $
-    background=255, color=254
+    background=255, color=254, title='adsfas'
 
   if saveplot then charsize=1 else charsize=1.15
   axis, xaxis=0, xrange=xrange1, xtit='Solar X [arcsec]', xstyle=1, color=254, charsize=charsize, xticks=2
