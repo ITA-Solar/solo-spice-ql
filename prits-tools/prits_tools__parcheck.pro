@@ -15,8 +15,9 @@
 ;
 ; Use         :
 ;       prits_tools.parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-;                             maxval=maxval,minval=minval, structure_name=structure_name, $
-;                             object_name=object_name, disallow_subclasses=disallow_subclasses, result=result
+;                             maxval=maxval, minval=minval, valid_nelements=valid_nelements, $
+;                             structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses, $
+;                             result=result
 ;
 ;	EXAMPLE     :
 ;
@@ -76,6 +77,10 @@
 ;
 ;               MAXVAL: Maximum value for the parameter. Checked
 ;                       against MAX([parameter]).
+;                       
+;               VALID_NELEMENTS: number, scalar or 2-element vector. Checks whether the input
+;                       parameter has the exact number of elements, or, if VALID_NELEMENT is a
+;                       2-element vector, is within a range of number of elements.
 ;
 ;               STRUCTURE_NAME: string, scalar or vector. If the input parameter
 ;                         is of type 8 (STRUCT), the name of the structure
@@ -120,11 +125,13 @@
 ;               Version 3, Martin Wiesmann, UiO, September 2022
 ;                 Generell overhaul, bugfixing and introduced check for
 ;                 object name, i.e. new keywords STRUCTURE_NAME, OBJECT_NAME and DISALLOW_SUBCLASS,
+;                 allows checking if input is a valid time format or
+;                 has correct number of elements (new keyword VALID_NELEMENTS),
 ;                 improved documentation
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-10-12 11:06 CEST $
+; $Id: 2022-10-18 15:10 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -192,6 +199,23 @@ PRO prits_tools::check_ndims, parameter, valid_ndims, error
     error = "has wrong number of dimensions: " + trim(par_ndim)
   ENDIF ELSE BEGIN
     error = ''
+  ENDELSE
+END
+
+
+PRO prits_tools::check_nelements, parameter, valid_nelements, error
+  error = ''
+  IF N_ELEMENTS(valid_nelements) EQ 0 THEN return
+  IF N_ELEMENTS(valid_nelements) GT 2 THEN BEGIN
+    error = 'VALID_NELEMENTS must be scalar or 2-element vector'
+    return
+  ENDIF
+  par_nelements = size(parameter, /n_elements)
+  IF N_ELEMENTS(valid_nelements) EQ 1 THEN BEGIN
+    IF par_nelements NE valid_nelements THEN error='has wrong number of elements: '+trim(par_nelements)
+  ENDIF ELSE BEGIN
+    IF par_nelements LT valid_nelements[0] || par_nelements GT valid_nelements[1] THEN $
+      error='has wrong number of elements: '+trim(par_nelements)
   ENDELSE
 END
 
@@ -279,8 +303,9 @@ END
 
 
 PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-  maxval=maxval,minval=minval, structure_name=structure_name, object_name=object_name, $
-  disallow_subclasses=disallow_subclasses, result=result
+  maxval=maxval, minval=minval, valid_nelements=valid_nelements, $
+  structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses, $
+  result=result
   compile_opt idl2, static
 
   pt = prits_tools()
@@ -292,6 +317,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   foreach type, types DO types_string = [types_string, pt.typename_from_typecode(type, pt, error)]
 
   valid_ndims_use = valid_ndims
+  IF N_ELEMENTS(valid_nelements) GT 0 THEN valid_nelements_use = valid_nelements
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
@@ -301,6 +327,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
       GOTO, ABORT
     ENDIF ELSE BEGIN
       valid_ndims_use = [0, valid_ndims]
+      IF N_ELEMENTS(valid_nelements) GT 0 THEN valid_nelements_use = 0
     ENDELSE
   ENDIF
   IF error NE '' THEN errors = [errors, error]
@@ -311,6 +338,9 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   ENDIF
 
   pt.check_ndims, parameter, valid_ndims_use, error
+  IF error NE '' THEN errors = [errors, error]
+
+  pt.check_nelements, parameter, valid_nelements_use, error
   IF error NE '' THEN errors = [errors, error]
 
   pt.check_type, parameter, types_string, error, pt, $
@@ -333,6 +363,13 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   dimension_strings = trim(valid_ndims)
   dimension_string = strjoin(dimension_strings, ', ')
   result = [result,'Valid number of dimensions are: '+dimension_string]
+
+  IF N_ELEMENTS(valid_nelements) GT 0 THEN BEGIN
+    elem_text = 'Valid number of elements are: '+trim(valid_nelements[0])
+    IF N_ELEMENTS(valid_nelements) GT 1 THEN $
+      elem_text += ' - '+trim(valid_nelements[1])
+    result = [result,elem_text]
+  ENDIF
 
   stype = ''
   FOR i = 0, N_elements( types_string )-1 DO BEGIN
@@ -548,6 +585,27 @@ PRO prits_tools::parcheck_test
   print,''
   print,'Test 15.7 should be FAIL, test time, spelling mistake'
   prits_tools.parcheck, '1-jap-2010', 0, "test_15.7", 'TIME0', 0, result=result
+  print, result, format='(a)'
+
+  print,''
+  print,'Test 16.1 should be OK, test number of elements'
+  prits_tools.parcheck, [1,2,3], 0, "test_16.1", 'numeric', 1, valid_nelement=3, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.2 should FAIL, test number of elements'
+  prits_tools.parcheck, [1,2,3,4], 0, "test_16.2", 'numeric', 1, valid_nelement=3, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.3 should be OK, test number of elements array'
+  prits_tools.parcheck, [1,2,3], 0, "test_16.3", 'numeric', 1, valid_nelement=[2,4], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.4 should FAIL, test number of elements array'
+  prits_tools.parcheck, [1,2,3,4], 0, "test_16.4", 'numeric', 1, valid_nelement=[1,3], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.5 should FAIL, test number of elements array'
+  prits_tools.parcheck, [1,2,3,4], 0, "test_16.5", 'numeric', 1, valid_nelement=[1,3,4], result=result
   print, result, format='(a)'
 END
 
