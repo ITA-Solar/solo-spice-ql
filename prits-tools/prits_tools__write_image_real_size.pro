@@ -66,7 +66,7 @@
 ; EXAMPLE:
 ;
 ; CALLS:
-; 
+;
 ; RESTRICTIONS:
 ; Setting TITLE plus upper axis XTITLE2 and/or XRANGE2 results in a messy output!
 ;
@@ -74,7 +74,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-19 11:56 CEST $
+; $Id: 2022-10-19 11:58 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -105,6 +105,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     minval=0, maxval=255, default=[255, 255, 255]
   prits_tools.parcheck, rgb_text, 0, "rgb_text", 'INTEGERS', 1, valid_nelements=3, $
     minval=0, maxval=255, default=[0, 0, 0]
+
+  DEVICE, DECOMPOSED = 0
 
   ; Get the current colortable to restore it at the end
   TVLCT, Red_old, Green_old, Blue_old, /GET
@@ -267,7 +269,7 @@ PRO prits_tools::write_image_real_size_test
   image_data=fltarr(xs,ys)
   for i=0,xs-1 do begin
     for j=0,ys-1 do begin
-      image_data[i,j] = ((i+j) mod 2) * (randomn(seed)*30 + i +j) 
+      image_data[i,j] = ((i+j) mod 2) * (randomn(seed)*30 + i +j)
     endfor
   endfor
 
