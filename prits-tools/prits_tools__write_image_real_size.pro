@@ -66,33 +66,25 @@
 ; EXAMPLE:
 ;
 ; CALLS:
+; 
+; RESTRICTIONS:
+; Setting TITLE plus upper axis XTITLE2 and/or XRANGE2 results in a messy output!
 ;
 ; MODIFICATION HISTORY:
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-18 15:39 CEST $
+; $Id: 2022-10-19 11:13 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
   title=title, $
-  background=background, color=color, rgb_background=rgb_background, rgb_color=rgb_color, $
+  background=background, text=text, rgb_background=rgb_background, rgb_text=rgb_text, $
   show_plot=show_plot
 
   compile_opt idl2, static
-  
-  xs = 100
-  ys = 700
-  image_data=fltarr(xs,ys)
-  for i=0,xs-1 do begin
-    for j=0,ys-1 do begin
-      image_data[i,j] = ((i+j) mod 2) * randomn(seed)*3
-    endfor
-  endfor
-  filename = '~/temp/test_pt.png'
-
 
   prits_tools.parcheck, image_data, 1, "image_data", 'NUMERIC', 2
   prits_tools.parcheck, filename, 2, "filename", 'STRING', 0
@@ -108,10 +100,10 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   prits_tools.parcheck, ytitle2, 0, "ytitle2", ['STRING', 'undefined'], 0
   prits_tools.parcheck, title, 0, "title", ['STRING', 'undefined'], 0
   prits_tools.parcheck, background, 0, "background", 'INTEGERS', 0, minval=0, maxval=255, default=0
-  prits_tools.parcheck, color, 0, "color", 'INTEGERS', 0, minval=0, maxval=255, default=255
+  prits_tools.parcheck, text, 0, "text", 'INTEGERS', 0, minval=0, maxval=255, default=255
   prits_tools.parcheck, rgb_background, 0, "rgb_background", 'INTEGERS', 1, valid_nelements=3, $
     minval=0, maxval=255, default=[255, 255, 255]
-  prits_tools.parcheck, rgb_color, 0, "rgb_color", 'INTEGERS', 1, valid_nelements=3, $
+  prits_tools.parcheck, rgb_text, 0, "rgb_text", 'INTEGERS', 1, valid_nelements=3, $
     minval=0, maxval=255, default=[0, 0, 0]
 
   ; Get the current colortable to restore it at the end
@@ -125,105 +117,171 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   g[0]=rgb_background[1]
   b[0]=rgb_background[2]
   ;text color
-  r[255]=rgb_color[0]
-  g[255]=rgb_color[1]
-  b[255]=rgb_color[2]
+  r[255]=rgb_text[0]
+  g[255]=rgb_text[1]
+  b[255]=rgb_text[2]
   tvlct,r,g,b
-  
-  saveplot = ~keyword_set(show_plot)
+
+  show_plot = keyword_set(show_plot)
 
   margin_left = 5
-  IF keyword_set(xtitle1) THEN margin_left += 10
+  IF keyword_set(ytitle1) THEN margin_left += 30
   IF keyword_set(yrange1) THEN BEGIN
     n_digits_y1 = max(strlen(trim(string(yrange1))))
-    if saveplot then begin
-      margin_left += 7 * n_digits_y1
-    endif else begin
-      margin_left += 5 * n_digits_y1
-    endelse
+    margin_left += 7
+    margin_left += 8 * n_digits_y1
   ENDIF
 
   margin_right = 5
-  IF keyword_set(xtitle2) THEN margin_right += 10
+  IF keyword_set(ytitle2) THEN margin_right += 30
   IF keyword_set(yrange2) THEN BEGIN
     n_digits_y2 = max(strlen(trim(string(yrange2))))
-    if saveplot then begin
-      margin_right += 6 * n_digits_y2
-    endif else begin
-      margin_right += 5 * n_digits_y2
-    endelse
+    margin_right += 7
+    margin_right += 8 * n_digits_y2
+  ENDIF
+
+  margin_bottom = 5
+  IF keyword_set(xtitle1) && keyword_set(xrange1) THEN BEGIN
+    margin_bottom += 40
+  ENDIF ELSE IF keyword_set(xtitle1) THEN BEGIN
+    margin_bottom += 35
+  ENDIF ELSE IF keyword_set(xrange1) THEN BEGIN
+    margin_bottom += 20
   ENDIF
 
   margin_top = 5
-  IF keyword_set(ytitle2) THEN margin_top += 10
-  IF keyword_set(xrange2) THEN margin_top += 10
+  IF keyword_set(title) THEN BEGIN
+    margin_top += 20
+    IF keyword_set(xtitle2) || keyword_set(xrange2) THEN BEGIN
+      message, 'Setting TITLE plus upper axis XTITLE2 and/or XRANGE2 results in a messy output!', /info
+    ENDIF
+  ENDIF
+  IF keyword_set(xtitle2) && keyword_set(xrange2) THEN BEGIN
+    margin_top += 30
+  ENDIF ELSE IF keyword_set(xtitle2) THEN BEGIN
+    margin_top += 30
+  ENDIF ELSE IF keyword_set(xrange2) THEN BEGIN
+    margin_top += 18
+  ENDIF
 
-  margin_bottom = 5
-  IF keyword_set(ytitle1) THEN margin_bottom += 10
-  IF keyword_set(xrange1) THEN margin_bottom += 10
-
-
+  size_image = size(image_data)
+  xs = size_image[1]
+  ys = size_image[2]
   WINsize = [xs+margin_left+margin_right, ys+margin_top+margin_bottom]
-  print,WINSize
   Win_position = [double(margin_left)/WINsize[0], double(margin_bottom)/WINsize[1], $
     (double(xs+margin_left))/WINsize[0], (double(ys+margin_bottom))/WINsize[1]]
 
-  if saveplot then set_plot,'z' else set_plot,'x'
-  ;!p.background=253
-  ;!p.color=0
-  ;!p.ticklen=-.02
-  ;!p.charsize=1  ;those 2 are defined above
-  ;!p.charthick=1
-  if saveplot then device,set_res=WINsize $
-  else window, 16, xs=WINsize[0], ys=WINsize[1]
+  if show_plot then begin
+    set_plot, 'x'
+    window, 16, xs=WINsize[0], ys=WINsize[1]
+  endif else begin
+    set_plot, 'z'
+    device, set_res=WINsize
+  endelse
 
 
   pih, image_data, 0.01, position=Win_position, $
-    xstyle=5, ystyle=5, top=253, $
-    background=255, color=254, title='adsfas'
+    xstyle=5, ystyle=5, top=254, bottom=1, $
+    background=0, color=255, title=title
 
-  if saveplot then charsize=1 else charsize=1.15
-  axis, xaxis=0, xrange=xrange1, xtit='Solar X [arcsec]', xstyle=1, color=254, charsize=charsize, xticks=2
-  axis, xaxis=1, xrange=xrange2, xstyle=1, color=254, charsize=charsize, xticks=2
-  axis, yaxis=0, yrange=yrange1, ytit='Solar Y [arcsec]', ystyle=1, color=254, charsize=charsize
-  axis, yaxis=1, yrange=yrange2, ystyle=1, color=254, charsize=charsize
+  if show_plot then charsize=1.15 else charsize=1
+
+  IF keyword_set(xrange1) THEN BEGIN
+    xticks=0
+    xtickname=''
+  ENDIF ELSE BEGIN
+    xticks=1
+    xtickname=REPLICATE(' ', 2)
+  ENDELSE
+  axis, xaxis=0, xrange=xrange1, xtitle=xtitle1, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
+
+  IF keyword_set(xrange2) THEN BEGIN
+    xticks=0
+    xtickname=''
+  ENDIF ELSE BEGIN
+    xticks=1
+    xtickname=REPLICATE(' ', 2)
+  ENDELSE
+  axis, xaxis=1, xrange=xrange2, xtitle=xtitle2, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
+
+  IF keyword_set(yrange1) THEN BEGIN
+    yticks=0
+    ytickname=''
+  ENDIF ELSE BEGIN
+    yticks=1
+    ytickname=REPLICATE(' ', 2)
+  ENDELSE
+  axis, yaxis=0, yrange=yrange1, ytitle=ytitle1, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
+
+  IF keyword_set(yrange2) THEN BEGIN
+    yticks=0
+    ytickname=''
+  ENDIF ELSE BEGIN
+    yticks=1
+    ytickname=REPLICATE(' ', 2)
+  ENDELSE
+  axis, yaxis=1, yrange=yrange2, ytitle=ytitle2, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
+
+  write_image, filename, format, tvrd(), r, g, b
+
+  ; Set previous colortable again
+  TVLCT, Red_old, Green_old, Blue_old
+END
 
 
-  write_image,filename,'JPEG',tvrd(),r,g,b
 
 
-;
-;
-;  ; save image
-;  if saveplot then begin
-;    file=filename+'_'+trim(string(ys))+'_tv.png'
-;    write_png,file,tvrd(),r,g,b
-;
-;    file=filename+'_'+trim(string(ys))+'_tv_2.png'
-;    write_image,file,'PNG',tvrd(),r,g,b
-;
-;    help,tvrd()
-;    help,tvrd(/true)
-;    image_raw = tvrd()
-;    size_raw = size(image_raw)
-;    image_true = bytarr(3, size_raw[1], size_raw[2])
-;    for i=0,size_raw[1]-1 do begin
-;      for j=0,size_raw[2]-1 do begin
-;        image_true[0,i,j] = r[image_raw[i,j]]
-;        image_true[1,i,j] = g[image_raw[i,j]]
-;        image_true[2,i,j] = b[image_raw[i,j]]
-;      endfor
-;    endfor
-;    file=filename+'_'+trim(string(ys))+'_tv.jpg'
-;    write_jpeg,file,image_true,/true
-;
-;    file=filename+'_'+trim(string(ys))+'_tv_2.jpg'
-;    write_image,file,'JPEG',tvrd(),r,g,b
-;
-;
-;
 
-    TVLCT, Red_old, Green_old, Blue_old
+PRO prits_tools::write_image_real_size_test
+  compile_opt static
+  print,''
+  print,'write_image_real_size_test'
+  print,''
+
+  format='PNG'
+  filename = '~/temp/test_pt.png'
+
+  show_plot = 0
+  colortable = 3
+
+  ;title='My Sun'
+
+  xtitle1='Solar X'
+  xrange1=[1,9]
+
+  xtitle2='Solar Z'
+  xrange2=[1,9]
+
+  ytitle1='Solar Y'
+  yrange1=[-1111,111]
+
+  ytitle2='Solarplex'
+  yrange2=[-1111,111]
+
+  xs = 100
+  ys = 700
+  image_data=fltarr(xs,ys)
+  for i=0,xs-1 do begin
+    for j=0,ys-1 do begin
+      image_data[i,j] = ((i+j) mod 2) * randomn(seed)*3
+    endfor
+  endfor
 
 
-  END
+  prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
+    xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
+    xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
+    title=title, $
+    background=background, text=text, rgb_background=rgb_background, rgb_text=rgb_text, $
+    show_plot=show_plot
+
+END
+
+
+
+IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
+  IF getenv("USER") EQ "steinhh" THEN add_path, "$HOME/idl/solo-spice-ql", /expand
+  prits_tools.write_image_real_size_test
+ENDIF
+
+END
