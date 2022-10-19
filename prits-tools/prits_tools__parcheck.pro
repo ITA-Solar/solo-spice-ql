@@ -77,7 +77,7 @@
 ;
 ;               MAXVAL: Maximum value for the parameter. Checked
 ;                       against MAX([parameter]).
-;                       
+;
 ;               VALID_NELEMENTS: number, scalar or 2-element vector. Checks whether the input
 ;                       parameter has the exact number of elements, or, if VALID_NELEMENT is a
 ;                       2-element vector, is within a range of number of elements.
@@ -315,32 +315,31 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   error = ''
   types_string = []
   foreach type, types DO types_string = [types_string, pt.typename_from_typecode(type, pt, error)]
+  IF error NE '' THEN errors = [errors, error]
 
-  valid_ndims_use = valid_ndims
-  IF N_ELEMENTS(valid_nelements) GT 0 THEN valid_nelements_use = valid_nelements
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
       return
-    ENDIF ELSE IF (where(types_string EQ 'UNDEFINED'))[0] EQ -1 THEN BEGIN
-      errors = 'is undefined and no default has been specified'
+    ENDIF
+    IF (where(types_string EQ 'UNDEFINED'))[0] EQ -1 THEN BEGIN
+      error = 'is undefined and no default has been specified'
+      errors = [errors, error]
       GOTO, ABORT
     ENDIF ELSE BEGIN
-      valid_ndims_use = [0, valid_ndims]
-      IF N_ELEMENTS(valid_nelements) GT 0 THEN valid_nelements_use = 0
+      return
     ENDELSE
   ENDIF
-  IF error NE '' THEN errors = [errors, error]
 
   IF N_params() LT 5 THEN BEGIN
     on_error, 2
     message, 'Use: PARCHECK, parameter, parnum, name, types, n_dimensions'
   ENDIF
 
-  pt.check_ndims, parameter, valid_ndims_use, error
+  pt.check_ndims, parameter, valid_ndims, error
   IF error NE '' THEN errors = [errors, error]
 
-  pt.check_nelements, parameter, valid_nelements_use, error
+  pt.check_nelements, parameter, valid_nelements, error
   IF error NE '' THEN errors = [errors, error]
 
   pt.check_type, parameter, types_string, error, pt, $
