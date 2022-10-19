@@ -74,7 +74,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-19 11:32 CEST $
+; $Id: 2022-10-19 11:56 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -243,23 +243,23 @@ PRO prits_tools::write_image_real_size_test
   print,''
 
   format='PNG'
-  ;filename = '~/temp/test_pt.png'
+  filename = '~/temp/test_pt.png'
 
   ;show_plot = 1
-  colortable = 3
+  colortable = 72
 
   ;title='My Sun'
 
   xtitle1='Solar X'
   xrange1=[1,9]
 
-  xtitle2='Solar Z'
+  ;xtitle2='Solar Z'
   xrange2=[1,9]
 
   ytitle1='Solar Y'
   yrange1=[-1111,111]
 
-  ytitle2='Solarplex'
+  ;ytitle2='Solarplex'
   yrange2=[-1111,111]
 
   xs = 100
@@ -267,7 +267,7 @@ PRO prits_tools::write_image_real_size_test
   image_data=fltarr(xs,ys)
   for i=0,xs-1 do begin
     for j=0,ys-1 do begin
-      image_data[i,j] = ((i+j) mod 2) * randomn(seed)*3
+      image_data[i,j] = ((i+j) mod 2) * (randomn(seed)*30 + i +j) 
     endfor
   endfor
 
