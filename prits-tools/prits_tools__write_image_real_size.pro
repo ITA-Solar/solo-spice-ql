@@ -74,7 +74,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-19 11:13 CEST $
+; $Id: 2022-10-19 11:32 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -87,7 +87,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   compile_opt idl2, static
 
   prits_tools.parcheck, image_data, 1, "image_data", 'NUMERIC', 2
-  prits_tools.parcheck, filename, 2, "filename", 'STRING', 0
+  prits_tools.parcheck, filename, 2, "filename", 'STRING', 0, default=''
   prits_tools.parcheck, colortable, 0, "colortable", 'INTEGERS', 0, minval=0, default=0
   prits_tools.parcheck, format, 0, "format", 'STRING', 0, default='JPEG'
   prits_tools.parcheck, xrange1, 0, "xrange1", ['NUMERIC', 'undefined'], 1, valid_nelements=2
@@ -123,6 +123,10 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   tvlct,r,g,b
 
   show_plot = keyword_set(show_plot)
+  IF ~show_plot && filename EQ '' THEN BEGIN
+    filename = 'image.'+format
+    message, 'No filename provided. Saving image in '+filename+' in current directory', /info
+  ENDIF
 
   margin_left = 5
   IF keyword_set(ytitle1) THEN margin_left += 30
@@ -222,7 +226,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   ENDELSE
   axis, yaxis=1, yrange=yrange2, ytitle=ytitle2, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
 
-  write_image, filename, format, tvrd(), r, g, b
+  IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b
 
   ; Set previous colortable again
   TVLCT, Red_old, Green_old, Blue_old
@@ -239,9 +243,9 @@ PRO prits_tools::write_image_real_size_test
   print,''
 
   format='PNG'
-  filename = '~/temp/test_pt.png'
+  ;filename = '~/temp/test_pt.png'
 
-  show_plot = 0
+  ;show_plot = 1
   colortable = 3
 
   ;title='My Sun'
