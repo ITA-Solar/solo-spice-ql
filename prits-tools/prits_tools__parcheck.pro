@@ -15,7 +15,7 @@
 ;
 ; Use         :
 ;       prits_tools.parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-;                             maxval=maxval, minval=minval, valid_nelements=valid_nelements, $
+;                             maxval=maxval, minval=minval, valid_nelements=valid_nelements, optional=optional, $
 ;                             structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses, $
 ;                             result=result
 ;
@@ -81,6 +81,12 @@
 ;               VALID_NELEMENTS: number, scalar or 2-element vector. Checks whether the input
 ;                       parameter has the exact number of elements, or, if VALID_NELEMENT is a
 ;                       2-element vector, is within a range of number of elements.
+;                       If the first element of VALID_NELEMENTS is zero, then this implies that
+;                       UNDEFINED parameters are allowed.
+;               
+;               OPTIONAL: If set, then parameter is optional, i.e. it can also be UNDEFINED, 
+;                       same as adding UNDEFINED to TYPES,
+;                       or setting first element of VALID_NELEMENTS to zero.
 ;
 ;               STRUCTURE_NAME: string, scalar or vector. If the input parameter
 ;                         is of type 8 (STRUCT), the name of the structure
@@ -131,7 +137,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-10-18 15:10 CEST $
+; $Id: 2022-10-20 10:35 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -303,7 +309,7 @@ END
 
 
 PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-  maxval=maxval, minval=minval, valid_nelements=valid_nelements, $
+  maxval=maxval, minval=minval, valid_nelements=valid_nelements, optional=optional, $
   structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses, $
   result=result
   compile_opt idl2, static
@@ -322,12 +328,14 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
       parameter = default
       return
     ENDIF
-    IF (where(types_string EQ 'UNDEFINED'))[0] EQ -1 THEN BEGIN
+    IF (where(types_string EQ 'UNDEFINED'))[0] GE 0 || $
+      (n_elements(valid_nelements) GT 0 && valid_nelements[0] EQ 0) || $
+      keyword_set(optional) THEN BEGIN
+      return
+    ENDIF ELSE BEGIN
       error = 'is undefined and no default has been specified'
       errors = [errors, error]
       GOTO, ABORT
-    ENDIF ELSE BEGIN
-      return
     ENDELSE
   ENDIF
 
@@ -420,12 +428,16 @@ PRO prits_tools::parcheck_test
   prits_tools.parcheck, a, 2, "test_02.1", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 2.2 should be OK, undefined, but allowed'
+  print,'Test 2.2 should be OK, undefined, but allowed due to setting TYPE'
   prits_tools.parcheck, a, 2, "test_02.2", ['BYTE', 'undefined'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 2.3 should be OK, undefined, but allowed, tests implification of n_dim=0 if parameter=undefined'
-  prits_tools.parcheck, a, 2, "test_02.3", ['BYTE', 'undefined'], [4, 5], result=result
+  print,'Test 2.3 should be OK, undefined, but allowed due to setting VALID_NELEMENTS=[0,1]'
+  prits_tools.parcheck, a, 2, "test_02.3", 'BYTE', [4, 5], valid_nelement=[0,1], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 2.4 should be OK, undefined, but allowed due to setting OPTIONAL keyword'
+  prits_tools.parcheck, a, 2, "test_02.4", 'BYTE', [4, 5], /optional, result=result
   print, result, format='(a)'
   print,''
   print,'Test 3 should be OK, undefined, but default provided'
