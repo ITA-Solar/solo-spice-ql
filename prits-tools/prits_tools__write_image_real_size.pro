@@ -3,69 +3,77 @@
 ;     WRITE_IMAGE_REAL_SIZE
 ;
 ; PURPOSE:
-;     This routine returns the path(s) and name(s) of SPICE raster files that correspond
-;     to the specified time or lie within a given time window. The logic for what filename(s) is returned is as follows:
-;
-;     If only the start time is given, then the file closest to that time is returned or, if SEQUENCE keyword is set,
-;     all files with the same SPIOBSID as the file closest to that time are returned.
-;
-;     If both, the end and start time are given, all files within the time window are returned or,
-;     if SEQUENCE keyword is set, all SPICE observations that have at least one file within the time window are returned.
+;     This routine creates an image of the data including optional axis titles and ranges. The focus of this
+;     procedure is the size of the data image. The size of the image is calculated so that the data image
+;     itself has the exact same size as the input data array, so that each pixel can be seen.
 ;
 ; CATEGORY:
 ;      IMAGES -- writing image files.
 ;
 ; CALLING SEQUENCE:
-;     Result = SPICE_FIND_FILE(time_start [, time_end=time_end, level=level, $
-;       top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-;       /SEQUENCE, /ALL, /NO_LEVEL, /NO_TREE_STRUCT, /USER_DIR, /SEARCH_SUBDIR, /IGNORE_TIME ] )
+;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
+;       [, XRANGE1=XRANGE1] [, XRANGE2=XRANGE2] [, YRANGE1=YRANGE1] [, YRANGE2=YRANGE2] $
+;       [, XTITLE1=XTITLE1] [, XTITLE2=XTITLE2] [, YTITLE1=YTITLE1] [, YTITLE2=YTITLE2] $
+;       [, TITLE=TITLE] $
+;       [, BACKGROUND_COLOR=BACKGROUND_COLOR] [, TEXT_COLOR=TEXT_COLOR] $
+;       [, BORDER=BORDER] [, SCALE_FACTOR=SCALE_FACTOR] [, HEIGHT=HEIGHT] [, WIDTH=WIDTH] $
+;       [, JPEG_QUALITY=JPEG_QUALITY] $
+;       [, /SHOW_PLOT]
+;
 ;
 ; INPUTS:
-;     TIME_START: This can be in any format accepted by the ANYTIM suite of
-;                 routines. For example, '1-jan-2010', '2010-01-01 05:00'. This is
-;                 either the time for which the file closest to it is returned,
-;                 or the start of the time window to be searched, in case 'time_end'
-;                 is also provided.
+;     IMAGE_DATA: A 2-dimensional numeric array. This is the data/image to be plotted.
+;     FILENAME: A string. The filename (and path) for the output file, in which the image should be saved.
+;               Default is 'image.xxx' (where xxx is the chosen file format) in the current directory.
 ;
 ; OPTIONAL INPUT:
-;     TIME_END: This can be in any format accepted by the ANYTIM suite of
-;               routines. For example, '1-jan-2010', '2010-01-01 05:00'. This is
-;               the end of the time window to be searched.
-;     LEVEL:    Desired level of the data (0, 1, 2 (default) or 3)
-;     TOP_DIR:  Top directory in which the SPICE data lies. If not provided
-;               the path given in $SPICE_DATA is searched.
-;     PATH_INDEX: If $SPICE_DATA or TOP_DIR contains multiple paths, then this
-;               keyword allows you to specify which path should be searched. Default is 0.
+;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
+;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html
+;     FORMAT:   A string, indicating the file format in which the image should be saved to.
+;               Possible values: BMP, GIF, JPEG, PNG, PPM, SRF, TIFF. Default is JPEG.
+;     XRANGE1:  A 2-element numeric vector, indicating the data range displayed on the lower axis.
+;               If not provided, no tick marks will be shown on the lower axis.
+;     XRANGE2:  A 2-element numeric vector, indicating the data range displayed on the upper axis.
+;               If not provided, no tick marks will be shown on the upper axis.
+;     YRANGE1:  A 2-element numeric vector, indicating the data range displayed on the left axis.
+;               If not provided, no tick marks will be shown on the left axis.
+;     YRANGE2:  A 2-element numeric vector, indicating the data range displayed on the right axis.
+;               If not provided, no tick marks will be shown on the right axis.
+;     XTITLE1:  A string, that will be used as the title for the lower axis.
+;     XTITLE2:  A string, that will be used as the title for the upper axis.
+;     YTITLE1:  A string, that will be used as the title for the left axis.
+;     YTITLE2:  A string, that will be used as the title for the right axis.
+;     TITLE:    A string, that will be used as the title of the image. Note that providing both TITLE
+;               and XTITLE2 and/or XRANGE2 will result in a messy output.
+;     BACKGROUND_COLOR: A 3-element byte vector, giving the color for the background of the image.
+;               Default is [255,255,255] (white).
+;     TEXT_COLOR: A 3-element byte vector, giving the color of the axis and text in the image.
+;               Default is [0,0,0] (black).
+;     BORDER:   An integer giving the number of pixels that should be added around the image.
+;               Default is 5. If this is set to zero and none of the TITLE and RANGE inputs are provided,
+;               then the image is plotted with suppressed axis.
+;     SCALE_FACTOR: A number. The data size is expanded by this factor. Default is 1.0.
+;     HEIGHT:   An integer giving the desired height of the data image. WIDTH is calculated if not provided.
+;               This is ignored if SCALE_FACTOR is provided.
+;     WIDTH:    An integer giving the desired width of the data image. HEIGHT is calculated if not provided.
+;               This is ignored if SCALE_FACTOR is provided.
+;     JPEG_QUALITY: This keyword specifies the quality index, in the range of 0 (terrible) to 100 (excellent)
+;               for the JPEG file. The default value is 75, which corresponds to very good quality. Lower values
+;               of QUALITY produce higher compression ratios and smaller files.
 ;
 ; KEYWORD PARAMETERS:
-;     SEQUENCE: If set, then all files of the sequence that the found files belong to will
-;               be returned, i.e. the time window to be searched is expanded to include files
-;               outside of the given time window, but only sequences (= Spice observations)
-;               that have at least one file in the given time window are returned.
-;               If set and 'time_end' is provided, the returned value will be a LIST
-;               in which each element is a string or string array with paths to SPICE FITS files
-;               that belong to the same sequence.
-;     ALL:      If set, then all filenames for the specified day will be returned.
-;               Ignored if TIME_END is provided or if NO_TREE_STRUCT or SEQUENCE is set.
-;     NO_LEVEL: If set, then the level part of the default path is omitted
-;               (e.g. $SPICE_DATA/2020/06/21/ instead of $SPICE_DATA/level2/2020/06/21/)
-;     NO_TREE_STRUCT: If set, then the tree structure won't be appended to TOP_DIR
-;               (e.g. TOP_DIR/level2/ instead of TOP_DIR/level2/2020/06/21/)
-;     USER_DIR: If set, the procedure searches in TOP_DIR/user/ instead of TOP_DIR/.
-;     SEARCH_SUBDIR: If set then the program looks for spice files recurrently,
-;               i.e. in all subdirectories
-;     IGNORE_TIME: If set, TIME_START and TIME_END are ignored, and all files will be
-;               returned. Ignored if NO_TREE_STRUCT is not set.
-;               This keyword is used by spice_xfiles, it makes it possible to return
-;               all files that are stored locally
+;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
 ;
 ; OUTPUTS:
+; Saves the image into a file.
 ;
 ; OPTIONAL OUTPUTS:
 ;
 ; EXAMPLE:
+; See prits_tools::write_image_real_size_test
 ;
 ; CALLS:
+; PIH
 ;
 ; RESTRICTIONS:
 ; Setting TITLE plus upper axis XTITLE2 and/or XRANGE2 results in a messy output!
@@ -74,14 +82,16 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-19 11:58 CEST $
+; $Id: 2022-10-20 15:33 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
   title=title, $
-  background=background, text=text, rgb_background=rgb_background, rgb_text=rgb_text, $
+  background_color=background_color, text_color=text_color, $
+  border=border, scale_factor=scale_factor, height=height, width=width, $
+  jpeg_quality=jpeg_quality, $
   show_plot=show_plot
 
   compile_opt idl2, static
@@ -99,12 +109,15 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   prits_tools.parcheck, ytitle1, 0, "ytitle1", ['STRING', 'undefined'], 0
   prits_tools.parcheck, ytitle2, 0, "ytitle2", ['STRING', 'undefined'], 0
   prits_tools.parcheck, title, 0, "title", ['STRING', 'undefined'], 0
-  prits_tools.parcheck, background, 0, "background", 'INTEGERS', 0, minval=0, maxval=255, default=0
-  prits_tools.parcheck, text, 0, "text", 'INTEGERS', 0, minval=0, maxval=255, default=255
-  prits_tools.parcheck, rgb_background, 0, "rgb_background", 'INTEGERS', 1, valid_nelements=3, $
+  prits_tools.parcheck, background_color, 0, "background_color", 'INTEGERS', 1, valid_nelements=3, $
     minval=0, maxval=255, default=[255, 255, 255]
-  prits_tools.parcheck, rgb_text, 0, "rgb_text", 'INTEGERS', 1, valid_nelements=3, $
+  prits_tools.parcheck, text_color, 0, "text_color", 'INTEGERS', 1, valid_nelements=3, $
     minval=0, maxval=255, default=[0, 0, 0]
+  prits_tools.parcheck, border, 0, "border", 'INTEGERS', 0, minval=0, default=5
+  prits_tools.parcheck, scale_factor, 0, "scale_factor", 'numeric', 0, minval=1e-6, /optional
+  prits_tools.parcheck, height, 0, "height", 'INTEGERS', 0, minval=2, /optional
+  prits_tools.parcheck, width, 0, "width", 'INTEGERS', 0, minval=2, /optional
+  prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval=0, maxval=100, default=75
 
   DEVICE, DECOMPOSED = 0
 
@@ -115,13 +128,13 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   loadct, colortable
   tvlct,r,g,b,/get
   ;background color
-  r[0]=rgb_background[0]
-  g[0]=rgb_background[1]
-  b[0]=rgb_background[2]
+  r[0]=background_color[0]
+  g[0]=background_color[1]
+  b[0]=background_color[2]
   ;text color
-  r[255]=rgb_text[0]
-  g[255]=rgb_text[1]
-  b[255]=rgb_text[2]
+  r[255]=text_color[0]
+  g[255]=text_color[1]
+  b[255]=text_color[2]
   tvlct,r,g,b
 
   show_plot = keyword_set(show_plot)
@@ -130,7 +143,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     message, 'No filename provided. Saving image in '+filename+' in current directory', /info
   ENDIF
 
-  margin_left = 5
+  margin_left = border
   IF keyword_set(ytitle1) THEN margin_left += 30
   IF keyword_set(yrange1) THEN BEGIN
     n_digits_y1 = max(strlen(trim(string(yrange1))))
@@ -138,7 +151,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     margin_left += 8 * n_digits_y1
   ENDIF
 
-  margin_right = 5
+  margin_right = border
   IF keyword_set(ytitle2) THEN margin_right += 30
   IF keyword_set(yrange2) THEN BEGIN
     n_digits_y2 = max(strlen(trim(string(yrange2))))
@@ -146,7 +159,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     margin_right += 8 * n_digits_y2
   ENDIF
 
-  margin_bottom = 5
+  margin_bottom = border
   IF keyword_set(xtitle1) && keyword_set(xrange1) THEN BEGIN
     margin_bottom += 40
   ENDIF ELSE IF keyword_set(xtitle1) THEN BEGIN
@@ -155,7 +168,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     margin_bottom += 20
   ENDIF
 
-  margin_top = 5
+  margin_top = border
   IF keyword_set(title) THEN BEGIN
     margin_top += 20
     IF keyword_set(xtitle2) || keyword_set(xrange2) THEN BEGIN
@@ -173,6 +186,21 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   size_image = size(image_data)
   xs = size_image[1]
   ys = size_image[2]
+  IF keyword_set(scale_factor) THEN BEGIN
+    xs = round(double(xs)*scale_factor)
+    ys = round(double(ys)*scale_factor)
+  ENDIF ELSE BEGIN
+    IF keyword_set(height) && keyword_set(width) THEN BEGIN
+      xs = width
+      ys = height
+    ENDIF ELSE IF keyword_set(height) THEN BEGIN
+      scale_factor = double(height) / double(ys)
+      xs = round(double(xs)*scale_factor)
+    ENDIF ELSE IF keyword_set(width) THEN BEGIN
+      scale_factor = double(width) / double(xs)
+      ys = round(double(ys)*scale_factor)
+    ENDIF
+  ENDELSE
   WINsize = [xs+margin_left+margin_right, ys+margin_top+margin_bottom]
   Win_position = [double(margin_left)/WINsize[0], double(margin_bottom)/WINsize[1], $
     (double(xs+margin_left))/WINsize[0], (double(ys+margin_bottom))/WINsize[1]]
@@ -192,43 +220,51 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
 
   if show_plot then charsize=1.15 else charsize=1
 
-  IF keyword_set(xrange1) THEN BEGIN
-    xticks=0
-    xtickname=''
-  ENDIF ELSE BEGIN
-    xticks=1
-    xtickname=REPLICATE(' ', 2)
-  ENDELSE
-  axis, xaxis=0, xrange=xrange1, xtitle=xtitle1, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
+  IF border GT 0 || keyword_set(title) || $
+    keyword_set(xtitle1) || keyword_set(xrange1) || $
+    keyword_set(xtitle2) || keyword_set(xrange2) || $
+    keyword_set(ytitle1) || keyword_set(yrange1) || $
+    keyword_set(ytitle2) || keyword_set(yrange2) THEN BEGIN
 
-  IF keyword_set(xrange2) THEN BEGIN
-    xticks=0
-    xtickname=''
-  ENDIF ELSE BEGIN
-    xticks=1
-    xtickname=REPLICATE(' ', 2)
-  ENDELSE
-  axis, xaxis=1, xrange=xrange2, xtitle=xtitle2, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
+    IF keyword_set(xrange1) THEN BEGIN
+      xticks=0
+      xtickname=''
+    ENDIF ELSE BEGIN
+      xticks=1
+      xtickname=REPLICATE(' ', 2)
+    ENDELSE
+    axis, xaxis=0, xrange=xrange1, xtitle=xtitle1, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
 
-  IF keyword_set(yrange1) THEN BEGIN
-    yticks=0
-    ytickname=''
-  ENDIF ELSE BEGIN
-    yticks=1
-    ytickname=REPLICATE(' ', 2)
-  ENDELSE
-  axis, yaxis=0, yrange=yrange1, ytitle=ytitle1, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
+    IF keyword_set(xrange2) THEN BEGIN
+      xticks=0
+      xtickname=''
+    ENDIF ELSE BEGIN
+      xticks=1
+      xtickname=REPLICATE(' ', 2)
+    ENDELSE
+    axis, xaxis=1, xrange=xrange2, xtitle=xtitle2, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
 
-  IF keyword_set(yrange2) THEN BEGIN
-    yticks=0
-    ytickname=''
-  ENDIF ELSE BEGIN
-    yticks=1
-    ytickname=REPLICATE(' ', 2)
-  ENDELSE
-  axis, yaxis=1, yrange=yrange2, ytitle=ytitle2, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
+    IF keyword_set(yrange1) THEN BEGIN
+      yticks=0
+      ytickname=''
+    ENDIF ELSE BEGIN
+      yticks=1
+      ytickname=REPLICATE(' ', 2)
+    ENDELSE
+    axis, yaxis=0, yrange=yrange1, ytitle=ytitle1, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
 
-  IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b
+    IF keyword_set(yrange2) THEN BEGIN
+      yticks=0
+      ytickname=''
+    ENDIF ELSE BEGIN
+      yticks=1
+      ytickname=REPLICATE(' ', 2)
+    ENDELSE
+    axis, yaxis=1, yrange=yrange2, ytitle=ytitle2, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
+
+  ENDIF
+
+  IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b, quality=jpeg_quality
 
   ; Set previous colortable again
   TVLCT, Red_old, Green_old, Blue_old
@@ -247,8 +283,16 @@ PRO prits_tools::write_image_real_size_test
   format='PNG'
   filename = '~/temp/test_pt.png'
 
+  ;format='JPEG'
+  ;filename = '~/temp/test_pt.jpg'
+  ;jpeg_quality = 30
+
   ;show_plot = 1
   colortable = 72
+  border = 3
+  ;scale_factor = 2
+  ;height = 400
+  ;width = 400
 
   ;title='My Sun'
 
@@ -263,6 +307,9 @@ PRO prits_tools::write_image_real_size_test
 
   ;ytitle2='Solarplex'
   yrange2=[-1111,111]
+  
+  ;background_color = [255,0,0]
+  ;text_color = [88,233,23]
 
   xs = 100
   ys = 700
@@ -278,7 +325,9 @@ PRO prits_tools::write_image_real_size_test
     xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
     xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
     title=title, $
-    background=background, text=text, rgb_background=rgb_background, rgb_text=rgb_text, $
+    background_color=background_color, text_color=text_color, $
+    border=border, scale_factor=scale_factor, height=height, width=width, $
+    jpeg_quality=jpeg_quality, $
     show_plot=show_plot
 
 END
