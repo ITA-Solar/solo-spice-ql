@@ -20,7 +20,6 @@
 ;       [, JPEG_QUALITY=JPEG_QUALITY] $
 ;       [, /SHOW_PLOT]
 ;
-;
 ; INPUTS:
 ;     IMAGE_DATA: A 2-dimensional numeric array. This is the data/image to be plotted.
 ;     FILENAME: A string. The filename (and path) for the output file, in which the image should be saved.
@@ -60,6 +59,7 @@
 ;     JPEG_QUALITY: This keyword specifies the quality index, in the range of 0 (terrible) to 100 (excellent)
 ;               for the JPEG file. The default value is 75, which corresponds to very good quality. Lower values
 ;               of QUALITY produce higher compression ratios and smaller files.
+;               This input is ignored if the file format is not JPEG.
 ;
 ; KEYWORD PARAMETERS:
 ;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
@@ -82,7 +82,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-20 15:33 CEST $
+; $Id: 2022-10-20 15:36 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
