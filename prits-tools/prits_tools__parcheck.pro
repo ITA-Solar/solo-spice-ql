@@ -86,7 +86,8 @@
 ;               
 ;               OPTIONAL: If set, then parameter is optional, i.e. it can also be UNDEFINED, 
 ;                       same as adding UNDEFINED to TYPES,
-;                       or setting first element of VALID_NELEMENTS to zero.
+;                       or setting first element of VALID_NELEMENTS to zero,
+;                       or providing a default.
 ;
 ;               STRUCTURE_NAME: string, scalar or vector. If the input parameter
 ;                         is of type 8 (STRUCT), the name of the structure
@@ -137,7 +138,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-10-20 10:35 CEST $
+; $Id: 2022-10-20 14:43 CEST $
 ;-
 ;
 ;----------------------------------------------------------
