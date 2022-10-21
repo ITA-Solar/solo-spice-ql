@@ -34,7 +34,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 14:46 CEST $
+; $Id: 2022-10-21 15:01 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
@@ -87,9 +87,9 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing=1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing=1)
     IF naxis2+naxis4 LE 2 THEN BEGIN
-      message, 'This is a single exposure window, cannot create images from it', $
+      message, ['This is a single exposure window, cannot create images from it', $
         l3_file, $
-        'window: ' + trim(fxpar(*headers_results[iana], 'WINNO', missing=-1))
+        'window: ' + trim(fxpar(*headers_results[iana], 'WINNO', missing=-1))], /info
       continue
     ENDIF
     wcs = fitshead2wcs(hdr)
