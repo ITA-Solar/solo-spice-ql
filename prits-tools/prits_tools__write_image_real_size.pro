@@ -5,7 +5,10 @@
 ; PURPOSE:
 ;     This routine creates an image of the data including optional axis titles and ranges. The focus of this
 ;     procedure is the size of the data image. The size of the image is calculated so that the data image
-;     itself has the exact same size as the input data array, so that each pixel can be seen.
+;     itself has the exact desired size, by default the same size as the input data array, so that each pixel 
+;     in the data array is represented by one pixel in the output file.
+;     The size of the image can be manipulated with the keywords SCALE_FACTOR, HEIGHT and WIDTH.
+;     The image can be saved in different file formats.
 ;
 ; CATEGORY:
 ;      IMAGES -- writing image files.
@@ -84,7 +87,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 10:30 CEST $
+; $Id: 2022-10-21 12:19 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -304,7 +307,7 @@ PRO prits_tools::write_image_real_size_test
   ;jpeg_quality = 30
 
   ;show_plot = 1
-  colortable = 72
+  colortable = 70
   ;border = 3
   ;scale_factor = 0.2
   ;height = 400
