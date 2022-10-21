@@ -29,7 +29,7 @@
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
 ;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html
 ;     FORMAT:   A string, indicating the file format in which the image should be saved to.
-;               Possible values: BMP, GIF, JPEG, PNG, PPM, SRF, TIFF. Default is JPEG.
+;               Possible values: BMP, GIF, JPEG, PNG, PPM, SRF, TIFF, JPEG2000 (=JP2). Default is JPEG.
 ;     XRANGE1:  A 2-element numeric vector, indicating the data range displayed on the lower axis.
 ;               If not provided, no tick marks will be shown on the lower axis.
 ;     XRANGE2:  A 2-element numeric vector, indicating the data range displayed on the upper axis.
@@ -60,6 +60,8 @@
 ;               for the JPEG file. The default value is 75, which corresponds to very good quality. Lower values
 ;               of QUALITY produce higher compression ratios and smaller files.
 ;               This input is ignored if the file format is not JPEG.
+;     _EXTRA:   Extra keywords sent to PIH and through it to PLOT and to WRITE_IMAGE and through it to
+;               WRITE_BMP, WRITE_GIF, WRITE_JPEG, WRITE_PNG, WRITE_PPM, WRITE_SRF, WRITE_TIFF and WRITE_JPEG2000.
 ;
 ; KEYWORD PARAMETERS:
 ;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
@@ -82,7 +84,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-20 15:36 CEST $
+; $Id: 2022-10-21 10:30 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -92,7 +94,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   background_color=background_color, text_color=text_color, $
   border=border, scale_factor=scale_factor, height=height, width=width, $
   jpeg_quality=jpeg_quality, $
-  show_plot=show_plot
+  show_plot=show_plot, $
+  _extra=_extra
 
   compile_opt idl2, static
 
@@ -196,9 +199,11 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     ENDIF ELSE IF keyword_set(height) THEN BEGIN
       scale_factor = double(height) / double(ys)
       xs = round(double(xs)*scale_factor)
+      ys = height
     ENDIF ELSE IF keyword_set(width) THEN BEGIN
       scale_factor = double(width) / double(xs)
       ys = round(double(ys)*scale_factor)
+      xs = width
     ENDIF
   ENDELSE
   WINsize = [xs+margin_left+margin_right, ys+margin_top+margin_bottom]
@@ -216,7 +221,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
 
   pih, image_data, 0.01, position=Win_position, $
     xstyle=5, ystyle=5, top=254, bottom=1, $
-    background=0, color=255, title=title
+    background=0, color=255, title=title, $
+    _extra=_extra
 
   if show_plot then charsize=1.15 else charsize=1
 
@@ -227,22 +233,30 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     keyword_set(ytitle2) || keyword_set(yrange2) THEN BEGIN
 
     IF keyword_set(xrange1) THEN BEGIN
-      xticks=0
+      n_digits_x1 = max(strlen(trim(string(xrange1))))
+      xticks = floor(double(xs) / 15.0d / n_digits_x1)
+      IF xticks EQ 0 THEN xticks=1
+      IF xticks GT 3 THEN xticks=0
       xtickname=''
     ENDIF ELSE BEGIN
       xticks=1
       xtickname=REPLICATE(' ', 2)
     ENDELSE
-    axis, xaxis=0, xrange=xrange1, xtitle=xtitle1, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
+    axis, xaxis=0, xrange=xrange1, xtitle=xtitle1, xstyle=1, color=255, charsize=charsize, $
+      xticks=xticks, xtickname=xtickname, xtickformat='(I)'
 
     IF keyword_set(xrange2) THEN BEGIN
-      xticks=0
+      n_digits_x2 = max(strlen(trim(string(xrange2))))
+      xticks = floor(double(xs) / 15.0d / n_digits_x2)
+      IF xticks EQ 0 THEN xticks=1
+      IF xticks GT 3 THEN xticks=0
       xtickname=''
     ENDIF ELSE BEGIN
       xticks=1
       xtickname=REPLICATE(' ', 2)
     ENDELSE
-    axis, xaxis=1, xrange=xrange2, xtitle=xtitle2, xstyle=1, color=255, charsize=charsize, xticks=xticks, xtickname=xtickname
+    axis, xaxis=1, xrange=xrange2, xtitle=xtitle2, xstyle=1, color=255, charsize=charsize, $
+      xticks=xticks, xtickname=xtickname, xtickformat='(I)'
 
     IF keyword_set(yrange1) THEN BEGIN
       yticks=0
@@ -251,7 +265,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
       yticks=1
       ytickname=REPLICATE(' ', 2)
     ENDELSE
-    axis, yaxis=0, yrange=yrange1, ytitle=ytitle1, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
+    axis, yaxis=0, yrange=yrange1, ytitle=ytitle1, ystyle=1, color=255, charsize=charsize, $
+      yticks=yticks, ytickname=ytickname, ytickformat='(I)'
 
     IF keyword_set(yrange2) THEN BEGIN
       yticks=0
@@ -260,11 +275,12 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
       yticks=1
       ytickname=REPLICATE(' ', 2)
     ENDELSE
-    axis, yaxis=1, yrange=yrange2, ytitle=ytitle2, ystyle=1, color=255, charsize=charsize, yticks=yticks, ytickname=ytickname
+    axis, yaxis=1, yrange=yrange2, ytitle=ytitle2, ystyle=1, color=255, charsize=charsize, $
+      yticks=yticks, ytickname=ytickname, ytickformat='(I)'
 
   ENDIF
 
-  IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b, quality=jpeg_quality
+  IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b, quality=jpeg_quality, _extra=_extra
 
   ; Set previous colortable again
   TVLCT, Red_old, Green_old, Blue_old
@@ -289,15 +305,15 @@ PRO prits_tools::write_image_real_size_test
 
   ;show_plot = 1
   colortable = 72
-  border = 3
-  ;scale_factor = 2
+  ;border = 3
+  ;scale_factor = 0.2
   ;height = 400
-  ;width = 400
+  ;width = 40
 
   ;title='My Sun'
 
   xtitle1='Solar X'
-  xrange1=[1,9]
+  xrange1=[100,900]
 
   ;xtitle2='Solar Z'
   xrange2=[1,9]
@@ -316,7 +332,7 @@ PRO prits_tools::write_image_real_size_test
   image_data=fltarr(xs,ys)
   for i=0,xs-1 do begin
     for j=0,ys-1 do begin
-      image_data[i,j] = ((i+j) mod 2) * (randomn(seed)*30 + i +j)
+      image_data[i,j] = ((i+j) mod 2) * (randomn(seed)*5 + i +j)
     endfor
   endfor
 
