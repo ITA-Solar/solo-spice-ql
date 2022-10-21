@@ -73,12 +73,16 @@
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
 ;     no_widget:  If set, xcfit_block and small window to stopp fitting will not be called.
 ;     show_xcfit_block: If set, xcfit_block will be called, for each data window before saving.
+;               This is ignored if NO_WIDGET has been set.
 ;     position: If set, then the line position is NOT represented by the velocity
 ;               relative to a lab wavelength, but as the wavelength.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
 ;               for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     CREATE_IMAGES: If set, then images from the level 3 data will be created.
 ;               This will call spice_create_l3_images.
+;     SEARCH_LEVEL3: If set, the procedure will search level 3 SPICE FITS files, instead of level 2,
+;               and not create level 3 file, but only the images, if CREATE_IMAGES has been set.
+;     NO_OVERWRITE: If set, then level 3 files won't be regenerated if they already exist.
 ;
 ; OUTPUTS:
 ;     This procedure will create SPICE FITS level 3 files and move them to the correct directory.
@@ -96,7 +100,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-13 12:04 CEST $
+; $Id: 2022-10-21 12:18 CEST $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, $
@@ -106,7 +110,7 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
   no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, create_images=create_images, images_top_dir=images_top_dir, $
-  files_l3=files_l3
+  files_l3=files_l3, search_level3=search_level3, no_overwrite=no_overwrite
 
   prits_tools.parcheck, time_start, 1, "time_start", 'time', 0
   prits_tools.parcheck, time_end, 0, "time_end", ['time', 'undefined'], 0
@@ -115,25 +119,52 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
   prits_tools.parcheck, velocity, 0, "velocity", ['NUMERIC', 'undefined'], 0
   prits_tools.parcheck, images_top_dir, 0, "images_top_dir", ['string', 'undefined'], 0
 
-  files_l2 = SPICE_FIND_FILE(time_start, time_end=time_end, level=2, $
+  IF keyword_set(search_level3) THEN level=3 ELSE level=2
+  files = SPICE_FIND_FILE(time_start, time_end=time_end, level=level, $
     top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
     SEQUENCE=SEQUENCE, ALL=ALL, NO_LEVEL=NO_LEVEL, NO_TREE_STRUCT=NO_TREE_STRUCT, USER_DIR=USER_DIR, $
     SEARCH_SUBDIR=SEARCH_SUBDIR, IGNORE_TIME=IGNORE_TIME)
 
   IF keyword_set(sequence) THEN BEGIN
-    files_l2 = files_l2.toArray(dimension=1)
+    files = files.toArray(dimension=1)
   ENDIF
 
   files_l3 = []
   FOR ifile=0,count_file-1 DO BEGIN
-    l2_object = spice_get_object(files_l2[ifile], is_spice=is_spice, object_created=object_created)
-    IF ~is_spice THEN continue
 
-    l3_file = l2_object->create_l3_file(no_masking=no_masking, approximated_slit=approximated_slit, $
-      no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=~keyword_set(show_xcfit_block), position=position, velocity=velocity, $
-      official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index)
+    IF ~keyword_set(search_level3) THEN BEGIN
 
-    files_l3 = [files_l3, l3_file]
+      l2_file = files[ifile]
+      print, 'LEVEL 2: '+l2_file
+
+      do_create_l3 = 1
+      IF keyword_set(no_overwrite) THEN BEGIN
+        filename_l3 = l2_file.replace('_L2_', '_L3_')
+        filename_l3 = file_basename(filename_l3)
+        spice_ingest, filename_l3, destination=destination, $
+          user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /dry_run
+        IF file_exist(destination[0]) THEN BEGIN
+          print, 'level 3 file already exists, not doing it again.'
+          l3_file = destination[0]
+          do_create_l3 = 0
+        ENDIF
+      ENDIF
+
+      IF do_create_l3 THEN BEGIN
+        l2_object = spice_get_object(l2_file, is_spice=is_spice, object_created=object_created)
+        IF ~is_spice THEN continue
+
+        l3_file = l2_object->create_l3_file(no_masking=no_masking, approximated_slit=approximated_slit, $
+          no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=~keyword_set(show_xcfit_block), position=position, velocity=velocity, $
+          official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index)
+      ENDIF
+
+      files_l3 = [files_l3, l3_file]
+    ENDIF ELSE BEGIN
+      l3_file = files[ifile]
+    ENDELSE
+
+    print, 'LEVEL 3: '+l3_file
 
     IF keyword_set(create_images) && l2_object->get_number_exposures(0) GT 1 THEN BEGIN
       spice_ingest, l3_file, destination=destination, $
