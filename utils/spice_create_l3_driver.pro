@@ -100,7 +100,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 12:18 CEST $
+; $Id: 2022-10-21 14:46 CEST $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, $
@@ -141,10 +141,12 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
       IF keyword_set(no_overwrite) THEN BEGIN
         filename_l3 = l2_file.replace('_L2_', '_L3_')
         filename_l3 = file_basename(filename_l3)
-        spice_ingest, filename_l3, destination=destination, $
+        spice_ingest, filename_l3, destination=destination, file_moved=file_moved, $
           user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /dry_run
-        IF file_exist(destination[0]) THEN BEGIN
+        IF ~file_moved[0] THEN BEGIN
           print, 'level 3 file already exists, not doing it again.'
+          spice_ingest, filename_l3, destination=destination, /force, $
+            user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /dry_run
           l3_file = destination[0]
           do_create_l3 = 0
         ENDIF
@@ -166,8 +168,8 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
 
     print, 'LEVEL 3: '+l3_file
 
-    IF keyword_set(create_images) && l2_object->get_number_exposures(0) GT 1 THEN BEGIN
-      spice_ingest, l3_file, destination=destination, $
+    IF keyword_set(create_images) THEN BEGIN
+      spice_ingest, l3_file, destination=destination, /force, $
         user_dir=~keyword_set(official_l3dir), top_dir=images_top_dir, path_index=path_index, /dry_run
       out_dir = file_dirname(destination[0], /mark_directory)
       out_dir = out_dir.replace('level3', 'images')

@@ -87,7 +87,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 12:19 CEST $
+; $Id: 2022-10-21 14:46 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -152,7 +152,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   margin_left = border
   IF keyword_set(ytitle1) THEN margin_left += 30
   IF keyword_set(yrange1) THEN BEGIN
-    n_digits_y1 = max(strlen(trim(string(yrange1))))
+    n_digits_y1 = max(strlen(trim(string(ceil(yrange1)))))
     margin_left += 7
     margin_left += 8 * n_digits_y1
   ENDIF
@@ -160,7 +160,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   margin_right = border
   IF keyword_set(ytitle2) THEN margin_right += 30
   IF keyword_set(yrange2) THEN BEGIN
-    n_digits_y2 = max(strlen(trim(string(yrange2))))
+    n_digits_y2 = max(strlen(trim(string(ceil(yrange2)))))
     margin_right += 7
     margin_right += 8 * n_digits_y2
   ENDIF
@@ -236,7 +236,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     keyword_set(ytitle2) || keyword_set(yrange2) THEN BEGIN
 
     IF keyword_set(xrange1) THEN BEGIN
-      n_digits_x1 = max(strlen(trim(string(xrange1))))
+      n_digits_x1 = max(strlen(trim(string(ceil(xrange1)))))
       xticks = floor(double(xs) / 15.0d / n_digits_x1)
       IF xticks EQ 0 THEN xticks=1
       IF xticks GT 3 THEN xticks=0
@@ -249,7 +249,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
       xticks=xticks, xtickname=xtickname, xtickformat='(I)'
 
     IF keyword_set(xrange2) THEN BEGIN
-      n_digits_x2 = max(strlen(trim(string(xrange2))))
+      n_digits_x2 = max(strlen(trim(string(ceil(xrange2)))))
       xticks = floor(double(xs) / 15.0d / n_digits_x2)
       IF xticks EQ 0 THEN xticks=1
       IF xticks GT 3 THEN xticks=0

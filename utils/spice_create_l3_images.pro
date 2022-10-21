@@ -34,7 +34,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 12:19 CEST $
+; $Id: 2022-10-21 14:46 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
@@ -82,6 +82,16 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
     handle_value,ana[iana].fit_h,fit;,/no_copy
 
     hdr = fitshead2struct(*headers_results[iana])
+
+    ; check that there there are more than one exposures
+    naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing=1)
+    naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing=1)
+    IF naxis2+naxis4 LE 2 THEN BEGIN
+      message, 'This is a single exposure window, cannot create images from it', $
+        l3_file, $
+        'window: ' + trim(fxpar(*headers_results[iana], 'WINNO', missing=-1))
+      continue
+    ENDIF
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
     ;    size_result = size(result)
@@ -105,7 +115,11 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
         filename_base2 = filename_base+fns('##',hdr.l2winno)+'_'+fns('##',itag+1)+'_'+param.name
 
         ; crop image so that lines with invalid data is not shown
-        image_data = reform(result[ipartotal,*,*])
+        IF naxis4 GT 1 THEN BEGIN
+          image_data = reform(result[ipartotal,*,*, *])
+        ENDIF ELSE BEGIN
+          image_data = reform(result[ipartotal,*,*])
+        ENDELSE
         size_image = size(image_data)
         startrow = 0
         for i=0,size_image[2]/2-1 do begin
