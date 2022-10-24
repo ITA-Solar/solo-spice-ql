@@ -34,7 +34,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 15:01 CEST $
+; $Id: 2022-10-24 15:02 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
@@ -150,15 +150,22 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
 
         case param.name of
           'velocity': begin
-            ;colortable = 70
-            colortable = 33
+            ;colortable = 33
+            colortable = 72
+            reverse_colortable = 1
+            color_center_value = 0
           end
           'width' : begin
             colortable = 4
+            reverse_colortable = 0
+            color_center_value = !NULL
           end
           else: begin
-            ;colortable = 62
             colortable = 3
+            reverse_colortable = 0
+            ;colortable = 56
+            ;reverse_colortable = 1
+            color_center_value = !NULL
           end
         endcase
 
@@ -167,8 +174,9 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
-          border=0
-
+          cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
+          reverse_colortable=reverse_colortable
+          
         ;        filename = filename_base2 + '_512.jpg'
         ;        format = 'JPEG'
         ;        prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -179,8 +187,8 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
         filename = filename_base2 + '_64.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
-          height=64, border=0
-
+          height=64, border=0, reverse_colortable=reverse_colortable, $
+        cutoff_threshold=cutoff_threshold, color_center_value=color_center_value
 
 
         ;
