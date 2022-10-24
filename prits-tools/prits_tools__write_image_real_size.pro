@@ -5,7 +5,7 @@
 ; PURPOSE:
 ;     This routine creates an image of the data including optional axis titles and ranges. The focus of this
 ;     procedure is the size of the data image. The size of the image is calculated so that the data image
-;     itself has the exact desired size, by default the same size as the input data array, so that each pixel 
+;     itself has the exact desired size, by default the same size as the input data array, so that each pixel
 ;     in the data array is represented by one pixel in the output file.
 ;     The size of the image can be manipulated with the keywords SCALE_FACTOR, HEIGHT and WIDTH.
 ;     The image can be saved in different file formats.
@@ -59,6 +59,10 @@
 ;               This is ignored if SCALE_FACTOR is provided.
 ;     WIDTH:    An integer giving the desired width of the data image. HEIGHT is calculated if not provided.
 ;               This is ignored if SCALE_FACTOR is provided.
+;     CUTOFF_THRESHOLD: A fraction to be used in histo_opt to scale the image. Default is 0.02.
+;               Set to zero to suppress calling histo_opt.
+;     COLOR_CENTER_VALUE: If provided, then this value will be set as the center of the colortable. Useful
+;               for e.g. displaying velocity with a blue/red colortable.
 ;     JPEG_QUALITY: This keyword specifies the quality index, in the range of 0 (terrible) to 100 (excellent)
 ;               for the JPEG file. The default value is 75, which corresponds to very good quality. Lower values
 ;               of QUALITY produce higher compression ratios and smaller files.
@@ -68,6 +72,8 @@
 ;
 ; KEYWORD PARAMETERS:
 ;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
+;     REVERSE_COLORTABLE: If set, then the colors of the given colortable are reversed. Useful for e.g.
+;               ColorBrewer Schemes.
 ;
 ; OUTPUTS:
 ; Saves the image into a file.
@@ -87,7 +93,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 14:46 CEST $
+; $Id: 2022-10-24 15:01 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -96,8 +102,9 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   title=title, $
   background_color=background_color, text_color=text_color, $
   border=border, scale_factor=scale_factor, height=height, width=width, $
+  cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
   jpeg_quality=jpeg_quality, $
-  show_plot=show_plot, $
+  show_plot=show_plot, reverse_colortable=reverse_colortable, $
   _extra=_extra
 
   compile_opt idl2, static
@@ -123,6 +130,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   prits_tools.parcheck, scale_factor, 0, "scale_factor", 'numeric', 0, minval=1e-6, /optional
   prits_tools.parcheck, height, 0, "height", 'INTEGERS', 0, minval=2, /optional
   prits_tools.parcheck, width, 0, "width", 'INTEGERS', 0, minval=2, /optional
+  prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval=0, maxval=1, default=0.02
+  prits_tools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
   prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval=0, maxval=100, default=75
 
   DEVICE, DECOMPOSED = 0
@@ -133,6 +142,11 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   ; Install the new colortable and set the background and text color
   loadct, colortable
   tvlct,r,g,b,/get
+  IF keyword_set(reverse_colortable) THEN BEGIN
+    r = reverse(r)
+    g = reverse(g)
+    b = reverse(b)
+  ENDIF
   ;background color
   r[0]=background_color[0]
   g[0]=background_color[1]
@@ -221,10 +235,21 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     device, set_res=WINsize
   endelse
 
+  IF cutoff_threshold GT 0 THEN BEGIN
+    image_data_use = HISTO_OPT(image_data, cutoff_threshold)
+  ENDIF ELSE BEGIN
+    image_data_use = image_data
+  ENDELSE
+  IF N_ELEMENTS(color_center_value) EQ 1 THEN BEGIN
+    max_image = max(abs(image_data_use-color_center_value))
+    min_image = -1 * max_image + color_center_value
+    max_image += color_center_value
+  ENDIF
 
-  pih, image_data, 0.01, position=Win_position, $
+  pih, image_data_use, position=Win_position, $
     xstyle=5, ystyle=5, top=254, bottom=1, $
     background=0, color=255, title=title, $
+    min=min_image, max=max_image, $
     _extra=_extra
 
   if show_plot then charsize=1.15 else charsize=1
@@ -326,7 +351,7 @@ PRO prits_tools::write_image_real_size_test
 
   ;ytitle2='Solarplex'
   yrange2=[-1111,111]
-  
+
   ;background_color = [255,0,0]
   ;text_color = [88,233,23]
 
