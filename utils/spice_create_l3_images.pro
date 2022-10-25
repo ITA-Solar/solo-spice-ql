@@ -3,11 +3,13 @@
 ;      SPICE_CREATE_L3_IMAGES
 ;
 ; PURPOSE:
-;      This function creates images from level 3 data.
-;      It will create these images per fit parameter of each fit component for each
-;      window:
-;        - 1 JPG image where data area has the original size (i.e. 1 pixel of data is 1 pixel in the image).
-;        - 1 PNG image without any axis of height 64 pixels.
+;      This function creates images from level 3 data. The filename is constructed with this formula:
+;      filename = l3_filename + '_' + fns('##',hdr.l2winno) + '_' + fns('##',icomp+1) + '_' + param.name + $
+;        '_' + image_type(see list below) + file-suffix
+;
+;      It will create these images per fit parameter of each fit component for each window:
+;        - 1 JPG image where data area has the original size (i.e. 1 pixel of data is 1 pixel in the image). (image_type='original')
+;        - 1 PNG image without any axis of height 64 pixels. (image_type='64')
 ;
 ; CATEGORY:
 ;      SPICE -- utility
@@ -31,14 +33,14 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      fits2ana, fitshead2struct, fxpar, fitshead2wcs, wcs_get_coord, 
+;      fits2ana, fitshead2struct, fxpar, fitshead2wcs, wcs_get_coord,
 ;      prits_tools.write_image_real_size
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-25 12:54 CEST $
+; $Id: 2022-10-25 13:05 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
@@ -82,7 +84,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
     n_components = N_TAGS(fit)
     ipartotal = 0
     for icomp=0,n_components-1 do begin
-    ;for icomp=0,0 do begin
+      ;for icomp=0,0 do begin
       fit_cur = fit.(icomp)
       n_params = N_ELEMENTS(fit_cur.param)
       for ipar=0,n_params-1 do begin
@@ -130,7 +132,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
             ; Option A
             ;colortable = 33
             ;reverse_colortable = 0
-            
+
             ; Option B
             colortable = 72
             reverse_colortable = 1
@@ -142,11 +144,11 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
           end
           else: begin
             color_center_value = !NULL
-            
+
             ; Option A
             colortable = 3
             reverse_colortable = 0
-            
+
             ; Option B
             ;colortable = 56
             ;reverse_colortable = 1
@@ -160,12 +162,12 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
           reverse_colortable=reverse_colortable
-          
+
         filename = filename_base2 + '_64.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
           height=64, border=0, reverse_colortable=reverse_colortable, $
-        cutoff_threshold=cutoff_threshold, color_center_value=color_center_value
+          cutoff_threshold=cutoff_threshold, color_center_value=color_center_value
 
         ipartotal++
 
