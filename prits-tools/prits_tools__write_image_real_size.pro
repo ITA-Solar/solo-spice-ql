@@ -20,8 +20,10 @@
 ;       [, TITLE=TITLE] $
 ;       [, BACKGROUND_COLOR=BACKGROUND_COLOR] [, TEXT_COLOR=TEXT_COLOR] $
 ;       [, BORDER=BORDER] [, SCALE_FACTOR=SCALE_FACTOR] [, HEIGHT=HEIGHT] [, WIDTH=WIDTH] $
+;       [, CUTOFF_THRESHOLD=CUTOFF_THRESHOLD] [, COLOR_CENTER_VALUE=COLOR_CENTER_VALUE] $
 ;       [, JPEG_QUALITY=JPEG_QUALITY] $
-;       [, /SHOW_PLOT]
+;       [, /SHOW_PLOT] [, /REVERSE_COLORTABLE] $
+;       [, _EXTRA=_EXTRA]
 ;
 ; INPUTS:
 ;     IMAGE_DATA: A 2-dimensional numeric array. This is the data/image to be plotted.
@@ -76,7 +78,7 @@
 ;               ColorBrewer Schemes.
 ;
 ; OUTPUTS:
-; Saves the image into a file.
+; This routine saves the image into a file.
 ;
 ; OPTIONAL OUTPUTS:
 ;
@@ -93,7 +95,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-24 15:01 CEST $
+; $Id: 2022-10-27 15:20 CEST $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
