@@ -1,6 +1,8 @@
 # SPICE Quicklook and Data Analysis Software
 
-For more detailed information, see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/). If you find any bugs, please (preferably) [raise a new issue](https://github.com/ITA-Solar/solo-spice-ql/issues/new/choose) or send an email to prits-group@astro.uio.no
+For more detailed information, see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/).
+If you find any bugs, please (preferably) [raise a new issue](https://github.com/ITA-Solar/solo-spice-ql/issues/new/choose)
+or send an email to prits-group@astro.uio.no
 
 ## Table of Content
 
@@ -13,6 +15,24 @@ For more detailed information, see [our wiki page](https://github.com/ITA-Solar/
 - [Level 3 Data Products](#level-3-data-products)
 - [SPICE unspecific tools](#spice-unspecific-tools)
 - [For Developers](#for-developers)
+
+
+
+## Setup
+In your shell startup configuration file or in IDL_STARTUP, include SPICE in the `SSW_INSTR` environment variable
+and define the `SPICE_DATA` environment variable:
+```
+setenv SSW_INSTR "gen so spice"
+setenv SPICE_DATA "~/spice_data"
+```
+Update SolarSoft to include the SPICE tools:
+```
+ssw_upgrade, /so, /spice, /iris, /spawn
+```
+Some of the software from the IRIS branch is used in the SPICE software and is therefore required.
+It is not necessary to set it as an instrument, since it will be included implicitly when SPICE is
+included in SSW_INSTR.
+
 
 
 ## Quicklook Software
@@ -179,7 +199,7 @@ spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2022-10-13 11:26 CEST $
+; $Id: 2022-10-28 13:32 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
