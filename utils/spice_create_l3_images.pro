@@ -3,7 +3,7 @@
 ;      SPICE_CREATE_L3_IMAGES
 ;
 ; PURPOSE:
-;      This function creates images from level 3 data. The filename is constructed with this formula:
+;      This procedure creates images from level 3 data. The filename is constructed with this formula:
 ;      filename = l3_filename + '_' + fns('##',hdr.l2winno) + '_' + fns('##',icomp+1) + '_' + param.name + $
 ;        '_' + image_type(see list below) + file-suffix
 ;
@@ -40,7 +40,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-25 13:05 CEST $
+; $Id: 2022-10-28 10:07 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
@@ -69,7 +69,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
 
     hdr = fitshead2struct(*headers_results[iana])
 
-    ; check that there there are more than one exposures
+    ; check that there is more than one exposures
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing=1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing=1)
     IF naxis2+naxis4 LE 2 THEN BEGIN
