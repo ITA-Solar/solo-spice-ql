@@ -3,7 +3,7 @@
 ;	PARCHECK
 ;
 ; Purpose     :
-;	Routine to check user parameters to a procedure.
+;	Routine to check user parameters to a procedure or function.
 ;
 ; Explanation :
 ;	This routine checks whether a parameter fulfills some criteria. It checks the data type
@@ -96,10 +96,10 @@
 ;               OBJECT_NAME: string, scalar or vector. If the input parameter
 ;                         is of type 11 (OBJREF), the name of the object
 ;                         is checked against OBJECT_NAME, objects inheriting from the given OBJECT_NAME
-;                         are also allowed by default, except if DISALLOW_SUBCLASS keyword
+;                         are also allowed by default, except if DISALLOW_SUBCLASSES keyword
 ;                         is set.
 ;
-;               DISALLOW_SUBCLASS: If set, then objects inheriting from given OBJECT_NAME are not
+;               DISALLOW_SUBCLASSES: If set, then objects inheriting from given OBJECT_NAME are not
 ;                         allowed.
 ;
 ;               DEFAULT: If parameter is undefined, then DEFAULT will be returned.
@@ -138,7 +138,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-10-20 14:43 CEST $
+; $Id: 2022-10-28 10:07 CEST $
 ;-
 ;
 ;----------------------------------------------------------
