@@ -3,7 +3,7 @@
 ;      SPICE_CREATE_L3_DRIVER
 ;
 ; PURPOSE:
-;      This function creates level 3 files and optionally images.
+;      This function creates multiple level 3 files and optionally images.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
@@ -100,7 +100,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-21 14:46 CEST $
+; $Id: 2022-10-28 10:08 CEST $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, $
