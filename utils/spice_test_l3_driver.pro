@@ -28,7 +28,7 @@ pro spice_test_l3_driver
   create_images=1
   ;images_top_dir=images_top_dir
   ;search_level3=1
-  ;no_overwrite=1
+  no_overwrite=1
 
 
   spice_create_l3_driver, time_start, time_end=time_end, $
