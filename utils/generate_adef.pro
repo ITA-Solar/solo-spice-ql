@@ -35,7 +35,7 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
+;      spice_gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
 ;
 ; HISTORY:
 ;      Ver. 1, 18-Oct-2021, Martin Wiesmann
@@ -45,7 +45,7 @@
 ;      Ver. 1.2, 13-Jun-2022, Martin Wiesmann: position is now by default represented as
 ;                                            velocity, added keywords velocity and position.
 ;-
-; $Id: 2022-06-17 12:16 CEST $
+; $Id: 2022-10-31 10:45 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity
@@ -60,7 +60,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
   meanprofile = rebin(data,sz[1],1,1)
 
   IF n_bad GT 0 THEN data[badix] = (typename(data) EQ 'FLOAT') ? !values.f_nan : !values.d_nan
-  peakinds = gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5,/sort,/plot)
+  peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5,/sort,/plot)
   npeaks = n_elements(peakinds)
 
   gaussians = replicate(mk_comp_gauss([0,0,0]), npeaks)
