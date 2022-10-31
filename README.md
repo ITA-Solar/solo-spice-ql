@@ -6,24 +6,31 @@ or send an email to prits-group@astro.uio.no
 
 ## Table of Content
 
-- [Quicklook Software](#quicklook-software)
-- [Data Analysis Software](#data-analysis-software)
-- [General Utilities](#general-utilities)
-- [SPICE Data Object](#spice-data-object)
-- [File Management Utilities](#file-management-utilities)
-- [Currently Planned Software](#currently-planned-software)
-- [Level 3 Data Products](#level-3-data-products)
-- [SPICE unspecific tools](#spice-unspecific-tools)
-- [For Developers](#for-developers)
-
+- [SPICE Quicklook and Data Analysis Software](#spice-quicklook-and-data-analysis-software)
+  * [Table of Content](#table-of-content)
+  * [Setup](#setup)
+  * [Download SPICE FITS files](#download-spice-fits-files)
+  * [Quicklook Software](#quicklook-software)
+  * [SPICE Data Object](#spice-data-object)
+  * [Level 3 Data Products](#level-3-data-products)
+    + [Creating level 3 FITS files](#creating-level-3-fits-files)
+      - [Using a GUI](#using-a-gui)
+      - [Programmatically](#programmatically)
+    + [Reading a level 3 FITS file](#reading-a-level-3-fits-file)
+      - [Using a GUI](#using-a-gui-1)
+      - [Programmatically](#programmatically-1)
+  * [File Management Utilities](#file-management-utilities)
+  * [For Developers](#for-developers)
 
 
 ## Setup
 In your shell startup configuration file or in IDL_STARTUP, include SPICE in the `SSW_INSTR` environment variable
-and define the `SPICE_DATA` environment variable:
+and define the `SPICE_DATA` environment variable, and to be able to download SPICE FITS files you need to define
+`SPICE_PWD` environment variable:
 ```
 setenv SSW_INSTR "gen so spice"
 setenv SPICE_DATA "~/spice_data"
+setenv SPICE_PWD "*******"
 ```
 Update SolarSoft to include the SPICE tools:
 ```
@@ -34,57 +41,144 @@ It is not necessary to set it as an instrument, since it will be included implic
 included in SSW_INSTR.
 
 
+## Download SPICE FITS files
+
+There are two tools in the repository that download data for you:
+```
+spice_wget_files [, sub_path=sub_path] [, level=level]
+```
+SUBPATH = Subdirectory path to mirror.  If not passed, the entire directory tree is mirrored.  Possible formats are:
+- '2021/10/20'    Day
+- '2021/10'       Month
+- '2021'          Year
+
+This first tool is very user-friendly, but it requires the environment variables SPICE_DATA and SPICE_PWD
+to be set. It also requires that 'wget' is installed on the computer.
+
+The second tool is more general:
+```
+RGET_FETCH_FILES, url_to_remote_top_dir, path_to_local_top_dir [, username=username] [, password=password]
+[, /debug] [, /verbose]
+```
+It doesn't require 'wget', but you will still need the username and password, as well as the correct url.
+See 'rget_fetch_files.pro' for more details.
+
+Third, the files can also be downloaded manually from this website:
+http://astro-sdc-db.uio.no/vol/spice/fits/
+
 
 ## Quicklook Software
 
 All quicklook software can be accessed through the GUI SPICE_XFILES. You can call it using this command:
 ```
-IDL> spice_xfiles
+spice_xfiles
 ```
-This will open a window, which lets you search your local hard disk for spice files. Selecting a file will call SPICE_XCONTROL, which in turn opens a new window. In this window you'll get an overview of the content of the selected FITS file, and you can access the different quicklook software, which are:
+This will open a window, which lets you search your local hard disk for spice files. Selecting a level 2 file
+will call SPICE_XCONTROL, which in turn opens a new window. In this window you'll get an overview of the content
+of the selected FITS file, and you can access the different quicklook software, which are:
 
 * SPICE_XDETECTOR: This tool displays the windows superimposed on the whole SPICE detector.
 * SPICE_RASTER_BROWSER: This routine is used to browse 3D SPICE data-cubes.
 * SPICE_XRASTER: This tool displays all exposures of the selected windows in a row.
-* SPICE_XWHISKER: This tool is used to display 2-D spectroscopic data as whisker plots (images), i.e. Intensity[wavelength, y]. FITS file must contain more than one exposure.
+* SPICE_XWHISKER: This tool is used to display 2-D spectroscopic data as whisker plots (images), i.e. 
+Intensity[wavelength, y]. FITS file must contain more than one exposure.
 * SPICE_XMAP: This tool is used to display 2-D (or higher) data. FITS file must contain more than one exposure.
 
-
-## Data Analysis Software
-
-* SPICE wrapper for xcfit (Interactive line fitting)
-    * Initial working version
-    ```
-    ana = spice_object->xcfit_block(window_index)
-    ```
-Coming soon:
-* “Masking” - averaging spectra over spatial regions (à la eis_mask_spectrum/pixel_mask_gui)
-
-
-## General Utilities
-
-* SPICE_GETWINDATA: This routine returns the SPICE data structure for one spectral window. The format is chosen to copy the Hinode/EIS routine EIS_GETWINDATA.
+Selecting a level 3 file will call SPICE_XCONTROL_L23, which in turn opens a new window. This gives you an overview
+of existing level 2 and level 3 data of the selected file.
 
 
 ## SPICE Data Object
 
-We defined a SPICE data object, called SPICE_DATA, which can be initiated with a SPICE FITS file. This object contains many methods to handle the data and the header contained in the given FITS file. It can be created using one of these commands:
+We defined a SPICE data object, called SPICE_DATA, which can be initiated with a SPICE FITS file. This object 
+contains many methods to handle the data and the header contained in the given FITS file. It can be created 
+using one of these commands:
 ```
-IDL> obj = spice_data(spice_file)            ; short form
-
-IDL> obj = obj_new('spice_data', spice_file) ; long form
+spice_object = spice_data(spice_file)            ; short form
+spice_object = obj_new('spice_data', spice_file) ; long form
 ```
 Then, to print out all available methods of the object:
 ```
-IDL> obj->help
+spice_object->help
 ```
+
+Getting data from the object:
+```
+data_one_window = spice_object->get_one_image(0, 0)  ; returns the data for window 0, exposure 0
+data_all = spice_object->get_window_data(0)          ; returns the data for window 0, all exposures
+```
+
+Opening quicklook software with the object:
+```
+spice_raster_browser, spice_object   ; opens spice_raster with the data from the object
+spice_xwhisker, spice_object, 0      ; opens spice_xwhisker with the data of window 0
+ana = spice_object->xcfit_block(0)   ; opens xcfit_block with the data of window 0
+```
+
+## Level 3 Data Products
+
+Level 3 data products will be physical quantities derived from integrated emission line intensities. For example, 
+temperature, density and FIP bias maps. The first step in generating such maps will be automatic Gaussian fitting of 
+the observed emission lines. This will be done with the CFIT software in Solarsoft.
+
+### Creating level 3 FITS files
+
+#### Using a GUI
+
+Level 3 SPICE FITS files can be generated using a GUI, either through SPICE_XFILES or SPICE_XCONTROL.
+
+In SPICE_XFILES you can click on the button 'Open file in XControl_L23', which will open SPICE_XCONTROL_L23. 
+This GUI lets you create level 3 data for single windows at a time or for several or all windows of a level 2 
+file in one go.
+
+In SPICE_XCONTROL, there's the button 'Create level 3 files', which opens the GUI SPICE_CREATE_L3_WIDGET.
+This GUI let's you set the different options before creating the level 3 file.
+
+#### Programmatically
+
+- Single file
+
+A level 3 SPICE FITS file can be generated automatically using the following SPICE_DATA method:
+```
+spice_object->create_l3_file(window_index)
+```
+The procedure opens XCFIT_BLOCK with the result. The FIT components and its parameters can be edited/adjusted by 
+the user in XCFIT_BLOCK. The level 3 file is then saved into the directory $SPICE_DATA/user/level3/.
+
+- Multiple files
+
+Multiple level 3 files can be created by using the procedure SPICE_CREATE_L3_DRIVER. This tool allows to select
+all level 2 files within a certain time window, and create level 3 files for all of them. Additionally, one can
+also create overview images from the level 3 data.
+
+- Level 3 images
+
+The level 3 data can be saved as images. These images are created from level 3 FITS files with the tool
+SPICE_CREATE_L3_IMAGES. These images can also be created with the above-mentioned SPICE_CREATE_L3_DRIVER.
+
+### Reading a level 3 FITS file
+
+#### Using a GUI
+
+The easiest way to read and view a level 3 SPICE FITS file is by using SPICE_XFILES. You can search for level 3
+files and by selecting one, SPICE_XCONTROL_L23 is opened.
+
+#### Programmatically
+
+Alternatively, you can read a file also with the function FITS2ANA which returns an array of analysis structures,
+one per window.
+```
+anas = fits2ana(spice_l3_file, headers_results=headers_results)
+XCFIT_BLOCK, ana=anas[0]
+```
+'Headers_results' will be a pointer array, containing the headers of the results extensions as string arrays.
+
 
 ## File Management Utilities
 
 There are several useful tools to manage SPICE files:
 * SPICE_WGET_FILES: This tool mirrors SPICE FITS files from Oslo and cleans up any old files no longer on the server.
 * SPICE_INGEST: This tool will move your downloaded SPICE FITS files to the appropriate location in your $SPICE_DATA path.
-* SPICE_INGEST_REORDER: This routine can be used to reorder your SPICE files.
 * SPICE_FIND_FILE: This program is also used by SPICE_XFILES. It is a very flexible tool to search for files on your local hard drive.
 * SPICE_CAT: This program allows filtering/sorting/selection of the contents in spice_catalog.csv which contains information about all available (not necessarily locally) SPICE FITS files.
 * SPICE_GEN_CAT: This program creates files called spice_catalog.txt, spice_catalog.csv and keyword_info.json in the $SPICE_DATA/ directory (but other paths can be specified), with various information on the content of the files found in the directory hierarchy below that path.
@@ -92,116 +186,15 @@ There are several useful tools to manage SPICE files:
 * SPICE_REMOVE_OLD_FILES: Remove earlier versions of SPICE fits files.
 
 
-## Currently Planned Software
-
-The plan is to provide approximately the same functionality for SPICE data as what is already available for IRIS/EIS data. Much of this is achieved by ensuring that SPICE data are stored and handled in IDL in a similar way to data from IRIS/EIS. Nevertheless, significant changes to the existing software may be necessary to account for differences in instrument data.  
-Below is a top-level listing of functionalities, in a rough and preliminary prioritised order, with reference to corresponding heritage routines in parentheses (where appropriate). Note that not all software will necessarily be available for the first remote sensing window, hence the prioritisation is important.  
-In general, all functionalities in the heritage routines will be preserved as far as technically possible.
-
-* SPICE object (iris_data)
-    * Implemented, continuous improvement
-    ```
-    obj = spice_data(spice_file)
-    obj->help
-    ```
-* Routine to read SPICE FITS file into an object (iris_obj)
-    * Done, obsolete, rather use the inbuilt creator `obj = spice_data(spice_file)`
-    ```
-    obj = spice_object(spice_file)
-    obj->help
-    ```
-* A 3D data-cube viewer (iris_raster_browser)
-    * Initial working version
-    * Dumbbells are shown
-    ```
-    spice_raster_browser, spice_file/spice_object [, quiet=quiet, yoffsets=yoffsets, $
-        chunk_size=chunk_size, retina=retina, no_goes=no_goes]
-    ```
-* Whisker plot viewer (iris_xwhisker)
-    * Initial working version
-    * Animation with ximovie doesn’t work yet, might be a bigger change
-    ```
-    spice_xwhisker, spice_file/spice_object, line [, group_leader=group_leader, ncolors = ncolors]
-    ```
-* Detector data extraction (iris_getwindata)
-    * Initial working version
-    * Keywords _keep_sat_, _calib_ and _perang_ are ignored for now
-    ```
-    data = spice_getwindata, spice_file/spice_object, window_index [, keep_sat=keep_sat, $
-        clean=clean, wrange=wrange, ixrange=ixrange, normalize=normalize, $
-        calib=calib, perang=perang, verbose=verbose, quiet=quiet]
-    ```
-* Detector viewer (iris_xdetector)
-    * Initial working version
-    * binned images including intensity (1D) images expanded correctly
-    * Dumbbells shown correctly
-    * Animation with ximovie doesn’t work yet, might be a bigger change
-    ```
-    spice_xdetector, spice_file/spice_object, window_indices [, group_leader=group_leader, $
-        ncolors = ncolors]
-    ```
-* Spectroheliogram viewer (iris_xraster)
-    * Initial working version
-    * Animation with ximovie doesn’t work yet, might be a bigger change
-    ```
-    spice_xraster, spice_file/spice_object, window_indices [, group_leader=group_leader, $
-        ncolors = ncolors]
-    ```
-* Intensity map viewer (iris_xmap)
-    * Initial working version
-    ```
-    spice_xmap, spice_file/spice_object [, linelist = window_index, group_leader=group_leader, $
-        ncolors = ncolors]
-    ```
-* Interactive line fitting (xcfit)
-    * Initial working version
-    ```
-    ana = spice_object->xcfit_block(window_index)
-    ```
-* “Masking” - averaging spectra over spatial regions (eis_mask_spectrum/pixel_mask_gui)
-* S/W assisting in organization of SPICE files on user’s computer (iris_ingest, iris_find_file)
-    * Implemented
-    ```
-    spice_ingest, Filename [, force=force, path_index=path_index, help=help]
-    Result = spice_find_file(Time [, LEVEL=LEVEL, TOP_DIR=TOP_DIR, COUNT=COUNT, /SEQUENCE, /ALL, /QUIET ] )
-    ```
-* GUI for selection of files and quicklook tools (iris_xfiles, iris_xcontrol)
-    * Implemented
-    * spice_xcontrol will be called by spice_xfiles when user selects a file
-    ```
-    spice_xfiles
-    ```
-* Display EUI/PHI images similar to IRIS SJI images (iris_raster_browser)
-* Display STIX data similar to GOES data (iris_raster_browser)
-
-
-## Level 3 Data Products
-
-Level 2 data for SPICE will be fully-calibrated data-sets, with instrumental effects removed. Level 3 data products will be physical quantities derived from integrated emission line intensities. For example, temperature, density and FIP bias maps. The first step in generating such maps will be automatic Gaussian fitting of the observed emission lines. This will be done with the CFIT software in Solarsoft.
-Level 3 data products will be produced in the standard data pipeline, and the set of products will be determined by the SPICE consortium. It will be possible for users to run the pipeline, starting at level 1, with modified parameters, flatfields, etc. when desired.
-The output format for Level 3 data will be fits files, with individual data products stored in separate extensions that may be read using standard fits software. Direct products from line fits (intensity/velocity/widths) will be viewable and modifiable using XCFIT.
-Specialised routines for displaying secondary derived products such as temperature maps, etc., are not planned at this point.
-
-```
-spice_object->create_l3([window_index] [, approximated_slit=approximated_slit] [, no_fitting=no_fitting] [, no_widget=no_widget] )
-```
-
-
-## SPICE unspecific tools
-
-* ANA2FITS
-    * This procedures saves all information of one or more ANA structures into a FITS file. ANA structures are used in CFIT, CFit_BLOCK, XCFIT, XCFIT_BLOCK.
-* FITS2ANA
-    * This function reads a FITS file that was written by ANA2FITS and returns one or more ANA structures.
-
-
 ## For Developers
 
-This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
+This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
+date and time. The line with this format will be edited:
 ```
-; $Id: 2022-10-28 13:32 CEST $
+; $Id: 2022-10-31 14:41 CET $
 ```
-If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
+If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
+description at the beginning of the file. 
 
 To make git aware of this hook, run this command after cloning the repository:
 ```
@@ -209,4 +202,6 @@ cd path_of_repository
 git config --local core.hooksPath .githooks/
 chmod +x .githooks/*
 ```
-Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check each modified and staged file whether there is a line with the above format, and if yes, updates date and time and adds these changes to the commit.
+Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check 
+each modified and staged file whether there is a line with the above format, and if yes, updates date and time 
+and adds these changes to the commit.
