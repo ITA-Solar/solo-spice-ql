@@ -104,6 +104,7 @@
 ; Contact     :	WTHOMPSON
 ;-
 ;
+; $Id: 2022-11-03 13:50 CET $
 ;------------------------------------------------------------------------------
 ;
 pro check_spice_pointing_extract, name, variable, wgood, errmsg=errmsg
@@ -139,6 +140,8 @@ function check_spice_pointing, date, solarx, solary, count=count, $
 ;
 common check_spice_pointing, header, catalog
 ;
+COMPILE_OPT STRICTARR
+
 carrington_set = keyword_set(carrington)
 stony_or_earth = keyword_set(stonyhurst) or keyword_set(earth)
 ;
