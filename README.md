@@ -180,6 +180,7 @@ There are several useful tools to manage SPICE files:
 * SPICE_WGET_FILES: This tool mirrors SPICE FITS files from Oslo and cleans up any old files no longer on the server.
 * SPICE_INGEST: This tool will move your downloaded SPICE FITS files to the appropriate location in your $SPICE_DATA path.
 * SPICE_FIND_FILE: This program is also used by SPICE_XFILES. It is a very flexible tool to search for files on your local hard drive.
+* SPICE_FIND_OBSERVATIONS: This routine searches the SPICE catalog to find observations where the specified pointing falls within the SPICE field-of-view at the specified date/time or range.
 * SPICE_CAT: This program allows filtering/sorting/selection of the contents in spice_catalog.csv which contains information about all available (not necessarily locally) SPICE FITS files.
 * SPICE_GEN_CAT: This program creates files called spice_catalog.txt, spice_catalog.csv and keyword_info.json in the $SPICE_DATA/ directory (but other paths can be specified), with various information on the content of the files found in the directory hierarchy below that path.
 * SPICE_FILE2INFO: This routine takes as input a SPICE filename (or list of files) and extracts information from the filename.
@@ -191,7 +192,7 @@ There are several useful tools to manage SPICE files:
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
 date and time. The line with this format will be edited:
 ```
-; $Id: 2022-10-31 14:41 CET $
+; $Id: 2022-11-07 14:02 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
 description at the beginning of the file. 
