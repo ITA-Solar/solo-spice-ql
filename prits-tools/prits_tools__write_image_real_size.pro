@@ -95,7 +95,7 @@
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-27 15:20 CEST $
+; $Id: 2022-11-11 13:32 CET $
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
@@ -314,6 +314,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
 
   ; Set previous colortable again
   TVLCT, Red_old, Green_old, Blue_old
+  set_plot, 'x'
 END
 
 
