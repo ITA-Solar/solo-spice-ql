@@ -14,7 +14,7 @@ pro spice_test_l3_driver
   ;sequence=1
   ;no_level=1
   ;no_tree_struct=1
-  user_dir=1
+  ;user_dir=1
   ;search_subdir=1
   ;ignore_time=1
   ;no_masking=1
@@ -28,7 +28,7 @@ pro spice_test_l3_driver
   create_images=1
   ;images_top_dir=images_top_dir
   ;search_level3=1
-  no_overwrite=1
+  ;no_overwrite=1
   
   files=[]
   ; sci_limb-west
