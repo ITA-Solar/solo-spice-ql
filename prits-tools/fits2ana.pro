@@ -6,7 +6,7 @@
 ;     fits2ana reads a FITS file and returns ana structure(s). The input FITS file must contain all the necessary
 ;     extensions and keywords. ANA2FITS creates the correct FITS files. An ana structure is used by e.g. xcfit_block,
 ;     it is created by e.g. mk_analysis.
-;     If the FITS file is a SPICE level 3 file, the data will be rearranged, so that XCFIT_BLOCK can use it.
+;     If the FITS file is a SPICE level 3 file, the data array will be rearranged, so that XCFIT_BLOCK can use it.
 ;     Since the data block is stored as the original data block from level 2.
 ;
 ; CATEGORY:
@@ -44,7 +44,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-10-13 14:44 CEST $
+; $Id: 2022-11-14 14:16 CET $
 
 
 function fits2ana, fitsfile, headers_results=headers_results, headers_data=headers_data, $
