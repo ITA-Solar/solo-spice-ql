@@ -22,6 +22,7 @@
 ;     TIME_END: This can be in any format accepted by the ANYTIM suite of
 ;               routines. For example, '1-jan-2010', '2010-01-01 05:00'. This is
 ;               the end of the time window to be searched.
+;     L2_FILES: Instead of providing a time (range), a list of level 2 files can be provided here.
 ;     TOP_DIR:  Top directory in which the SPICE data lies. If not provided
 ;               the path given in $SPICE_DATA is searched.
 ;     PATH_INDEX: If $SPICE_DATA or TOP_DIR contains multiple paths, then this
@@ -100,10 +101,10 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-28 10:08 CEST $
+; $Id: 2022-11-14 15:01 CET $
 
 
-PRO spice_create_l3_driver, time_start, time_end=time_end, $
+PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
   top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
   all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
   search_subdir=search_subdir, ignore_time=ignore_time, $
@@ -114,20 +115,28 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, $
 
   prits_tools.parcheck, time_start, 1, "time_start", 'time', 0
   prits_tools.parcheck, time_end, 0, "time_end", ['time', 'undefined'], 0
+  prits_tools.parcheck, l2_files, 0, "l2_files", ['string', 'undefined'], [0, 1]
   prits_tools.parcheck, top_dir, 0, "top_dir", ['string', 'undefined'], [0, 1]
   prits_tools.parcheck, path_index, 0, "path_index", ['integers', 'undefined'], 0
   prits_tools.parcheck, velocity, 0, "velocity", ['NUMERIC', 'undefined'], 0
   prits_tools.parcheck, images_top_dir, 0, "images_top_dir", ['string', 'undefined'], 0
 
-  IF keyword_set(search_level3) THEN level=3 ELSE level=2
-  files = SPICE_FIND_FILE(time_start, time_end=time_end, level=level, $
-    top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-    SEQUENCE=SEQUENCE, ALL=ALL, NO_LEVEL=NO_LEVEL, NO_TREE_STRUCT=NO_TREE_STRUCT, USER_DIR=USER_DIR, $
-    SEARCH_SUBDIR=SEARCH_SUBDIR, IGNORE_TIME=IGNORE_TIME)
+  IF ~keyword_set(l2_files) THEN BEGIN
 
-  IF keyword_set(sequence) THEN BEGIN
-    files = files.toArray(dimension=1)
-  ENDIF
+    IF keyword_set(search_level3) THEN level=3 ELSE level=2
+    files = SPICE_FIND_FILE(time_start, time_end=time_end, level=level, $
+      top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
+      SEQUENCE=SEQUENCE, ALL=ALL, NO_LEVEL=NO_LEVEL, NO_TREE_STRUCT=NO_TREE_STRUCT, USER_DIR=USER_DIR, $
+      SEARCH_SUBDIR=SEARCH_SUBDIR, IGNORE_TIME=IGNORE_TIME)
+
+    IF keyword_set(sequence) THEN BEGIN
+      files = files.toArray(dimension=1)
+    ENDIF
+
+  ENDIF ELSE BEGIN
+    count_file = N_ELEMENTS(l2_files)
+    files = l2_files
+  ENDELSE
 
   files_l3 = []
   FOR ifile=0,count_file-1 DO BEGIN
