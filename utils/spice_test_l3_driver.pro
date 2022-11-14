@@ -29,9 +29,29 @@ pro spice_test_l3_driver
   ;images_top_dir=images_top_dir
   ;search_level3=1
   no_overwrite=1
+  
+  files=[]
+  ; sci_limb-west
+  files = [files,"$SPICE_DATA/level2/2021/08/17/solo_L2_spice-n-ras_20210817T062031_V01_67108947-000.fits"]
+  files = [files,"$SPICE_DATA/level2/2022/02/22/solo_L2_spice-n-ras_20220222T180749_V01_100663616-000.fits"]
+
+  ; sci_limb-east
+  files = [files,"$SPICE_DATA/level2/2022/06/13/solo_L2_spice-n-ras_20220613T185952_V01_117441074-000.fits"]
+
+  ; sci_compo-limb
+  files = [files,"$SPICE_DATA/level2/2022/10/16/solo_L2_spice-n-ras_20221016T031034_V02_150995326-000.fits"]
+
+  ; sci_ploar_sc
+  files = [files,"$SPICE_DATA/level2/2022/04/05/solo_L2_spice-n-ras_20220405T140033_V02_100664069-000.fits"]
+  files = [files,"$SPICE_DATA/level2/2022/04/05/solo_L2_spice-n-ras_20220405T163532_V02_100664072-000.fits"]
+
+  ; sci_synoptic_sc
+  files = [files,"$SPICE_DATA/level2/2022/04/08/solo_L2_spice-n-ras_20220408T112031_V02_100664107-000.fits"]
+  files = [files,"$SPICE_DATA/level2/2022/04/09/solo_L2_spice-n-ras_20220409T112031_V01_100664112-000.fits"]
 
 
-  spice_create_l3_driver, time_start, time_end=time_end, $
+
+  spice_create_l3_driver, time_start, time_end=time_end, l2_files=files, $
     top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
     all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
     search_subdir=search_subdir, ignore_time=ignore_time, $
