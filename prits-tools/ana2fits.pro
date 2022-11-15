@@ -71,7 +71,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-11-15 15:17 CET $
+; $Id: 2022-11-15 15:27 CET $
 
 
 PRO ana2fits, ana, filename_out=filename_out, $
@@ -102,7 +102,8 @@ PRO ana2fits, ana, filename_out=filename_out, $
   prits_tools.parcheck, filename_out, 0, 'filename_out', 'STRING', 0
   prits_tools.parcheck, header_l2, 0, 'header_l2', 'STRING', 1, /optional
   prits_tools.parcheck, original_data, 0, 'original_data', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
-  prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', [0, 1], default=strtrim(indgen(max([1, ana_given])), 2)
+  prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', [0, 1], VALID_NELEMENTS=max([1, ana_given]), $
+    default=strtrim(indgen(max([1, ana_given])), 2)
 
   n_windows = N_ELEMENTS(ana)
   if n_windows eq 0 then n_windows=1
