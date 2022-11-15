@@ -67,7 +67,7 @@
 ; $Id: 2022-06-27 13:35 CEST $
 
 
-FUNCTION ana2fitshdr, ana, n_windows=n_windows, filename_out=filename_out, winno=winno, $
+FUNCTION ana2fitshdr_old, ana, n_windows=n_windows, filename_out=filename_out, winno=winno, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
