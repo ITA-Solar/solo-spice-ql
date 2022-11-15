@@ -24,6 +24,17 @@
 ;           must be provided. If more than one ANA should be saved into one FITS file,
 ;           then 'ana' must be provided as an array of either file paths or objects.
 ;      filename_out: Full path and filename of the resulting FITS file.
+;      header_l2: The header (string array) of the level 2 file. XXX
+;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
+;                     from the level 2 FITS file. Spectra is not in the first dimension.
+;                     This data cube will saved into the FITS file. Thus it cannot be used
+;                     directly in the ANA structure when read back in. XXX
+;      data_id: A string vector of same length as 'ana', or if 'ana' is not provided
+;               scalar string. These strings are used to identify the data, i.e. they will
+;               be used in the extension names of the FITS file. Each dataset will get
+;               7 extensions, which all have the same ID, but the extension name will be
+;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'residuals', 'weights', 'includes', 'constants').
+;               Default is the dataset numbers.
 ;
 ; KEYWORDS:
 ;
@@ -60,15 +71,38 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-06-24 13:49 CEST $
+; $Id: 2022-11-15 15:17 CET $
 
 
-PRO ana2fits, ana, n_windows=n_windows, filename_out=filename_out, $
+PRO ana2fits, ana, filename_out=filename_out, $
+  header_l2=header_l2, original_data=original_data, data_id=data_id, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
   EXTENSION=EXTENSION
+
+  prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
+  ana_given = N_ELEMENTS(ana)
+  prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', 1, optional=ana_given
+  prits_tools.parcheck, LAMBDA, 0, 'LAMBDA', 'NUMERIC', [1, 2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
+  prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=ana_given
+  prits_tools.parcheck, DATASOURCE, 0, 'DATASOURCE', 'STRING', 0, optional=ana_given
+  prits_tools.parcheck, DEFINITION, 0, 'DEFINITION', 'STRING', 0, optional=ana_given
+  prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=ana_given
+  prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=ana_given
+
+  prits_tools.parcheck, filename_out, 0, 'filename_out', 'STRING', 0
+  prits_tools.parcheck, header_l2, 0, 'header_l2', 'STRING', 1, /optional
+  prits_tools.parcheck, original_data, 0, 'original_data', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', [0, 1], default=strtrim(indgen(max([1, ana_given])), 2)
 
   n_windows = N_ELEMENTS(ana)
   if n_windows eq 0 then n_windows=1
