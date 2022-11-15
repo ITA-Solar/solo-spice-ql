@@ -76,7 +76,7 @@
 ; $Id: 2022-09-01 15:25 CEST $
 
 
-FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
+FUNCTION ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   filename_l3=filename_l3, winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
