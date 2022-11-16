@@ -12,7 +12,7 @@
 ;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      ana2fits, ana, filename_out=filename_out, $
+;      ana2fits, ana, filepath_out=filepath_out, $
 ;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
 ;         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
@@ -23,7 +23,7 @@
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided. If more than one ANA should be saved into one FITS file,
 ;           then 'ana' must be provided as an array of either file paths or objects.
-;      filename_out: Full path and filename of the resulting FITS file.
+;      filepath_out: Full path and filename of the resulting FITS file.
 ;      header_l2: The header (string array) of the level 2 file. XXX
 ;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
 ;                     from the level 2 FITS file. Spectra is not in the first dimension.
@@ -37,6 +37,8 @@
 ;               Default is the dataset numbers.
 ;
 ; KEYWORDS:
+;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
+;                 level 3 FITS file, if it would have been saved.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ana' is not
@@ -71,16 +73,17 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-11-15 15:27 CET $
+; $Id: 2022-11-16 12:05 CET $
 
 
-PRO ana2fits, ana, filename_out=filename_out, $
+PRO ana2fits, ana, filepath_out=filepath_out, $
   header_l2=header_l2, original_data=original_data, data_id=data_id, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  EXTENSION=EXTENSION
+  EXTENSION=EXTENSION, $
+  save_not=save_not
 
   prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ana)
@@ -105,6 +108,8 @@ PRO ana2fits, ana, filename_out=filename_out, $
   prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', [0, 1], VALID_NELEMENTS=max([1, ana_given]), $
     default=strtrim(indgen(max([1, ana_given])), 2)
 
+  filename_out = file_basename(filepath_out)
+
   n_windows = N_ELEMENTS(ana)
   if n_windows eq 0 then n_windows=1
   for iwindow=0,n_windows-1 do begin
@@ -114,27 +119,29 @@ PRO ana2fits, ana, filename_out=filename_out, $
 
     if input_type then begin
       headers = ana2fitshdr(ana[iwindow], filename_out=filename_out, n_windows=n_windows, $
-        winno=iwindow, extension=extension, $
+        winno=iwindow, data_id=data_id, extension=extension, $
         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
     endif else begin
       headers = ana2fitshdr(filename_out=filename_out, n_windows=n_windows, $
-        winno=iwindow, extension=extension, $
+        winno=iwindow, data_id=data_id, extension=extension, $
         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
     endelse
 
-    writefits, filename_out, RESULT, *headers[0], append=extension
-    writefits, filename_out, INPUT_DATA, *headers[1], /append
-    writefits, filename_out, LAMBDA, *headers[2], /append
-    writefits, filename_out, RESIDUAL, *headers[3], /append
-    writefits, filename_out, WEIGHTS, *headers[4], /append
-    writefits, filename_out, INCLUDE, *headers[5], /append
-    writefits, filename_out, CONST, *headers[6], /append
+    IF ~keyword_set(save_not) THEN BEGIN
+      writefits, filepath_out, RESULT, *headers[0], append=extension
+      writefits, filepath_out, INPUT_DATA, *headers[1], /append
+      writefits, filepath_out, LAMBDA, *headers[2], /append
+      writefits, filepath_out, RESIDUAL, *headers[3], /append
+      writefits, filepath_out, WEIGHTS, *headers[4], /append
+      writefits, filepath_out, INCLUDE, *headers[5], /append
+      writefits, filepath_out, CONST, *headers[6], /append
+    ENDIF
 
   endfor ; iwindow=0,n_windows-1
 

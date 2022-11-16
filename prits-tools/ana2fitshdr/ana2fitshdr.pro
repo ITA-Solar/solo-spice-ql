@@ -5,7 +5,7 @@
 ; PURPOSE:
 ;      This function returns an array of FITS headers made from an ANA object or file.
 ;      The fits headers contains all fit components as keywords and the original
-;      level 2 header keywords in the first (zeroth) extension. 
+;      level 2 header keywords in the first (zeroth) extension.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
@@ -20,20 +20,27 @@
 ;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL] )
 ;
 ; INPUTS:
-;      ana: The name and path of an ANA file or an ANA object.
+;      ana: An ANA object or the name and path of an ANA file.
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided
-;      header_l2: The header (string array) of the level 2 file.
-;      n_windows: total number of windows to be included in level 3 file.
+;      header_l2: The header (string array) of the level 2 file (SPICE).
+;      n_windows: Total number of windows to be included in FITS file.
 ;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
 ;                     from the level 2 FITS file. Spectra is not in the first dimension.
 ;                     This data cube will saved into the FITS file. Thus it cannot be used
 ;                     directly in the ANA structure when read back in.
-;      winno: Window number (starting at 0) within this study in this level 3 file
+;      winno: Window number (starting at 0) within this study in this FITS file.
+;      filename_out: Full path and filename of the resulting FITS file.
+;      data_id: A string vector of same length as 'ana', or if 'ana' is not provided
+;               scalar string. These strings are used to identify the data, i.e. they will
+;               be used in the extension names of the FITS file. Each dataset will get
+;               7 extensions, which all have the same ID, but the extension name will be
+;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'residuals', 'weights', 'includes', 'constants').
+;               Default is the dataset numbers.
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
-;                 i.e. if this is not the first window in the level 3 file.
+;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
@@ -68,27 +75,47 @@
 ;      a pointer array, containing 7 FITS keyword headers
 ;
 ; OPTIONAL OUTPUTS:
-;      filename_l3: The filename the level 3 will/should get
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-09-01 15:25 CEST $
+; $Id: 2022-11-16 12:05 CET $
 
 
-FUNCTION ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
-  filename_l3=filename_l3, winno=winno, EXTENSION=EXTENSION, $
+FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
+  filename_out=filename_out, $
+  EXTENSION=EXTENSION, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  original_data=original_data
+  spice=spice, $
+  original_data=original_data, header_l2=header_l2
 
   print_headers = 0
+  
   input_type = size(ana, /type)
   case input_type of
     7: begin
       restore, ana, /verbose
+      handle_value,ana.history_h,history
+      handle_value,ana.lambda_h,lambda
+      handle_value,ana.data_h,input_data
+      handle_value,ana.weights_h,weights
+      handle_value,ana.fit_h,fit
+      handle_value,ana.result_h,result
+      handle_value,ana.residual_h,residual
+      handle_value,ana.include_h,include
+      handle_value,ana.const_h,const
+      handle_value,ana.origin_h,origin
+      handle_value,ana.scale_h,scale
+      handle_value,ana.phys_scale_h,phys_scale
+      handle_value,ana.dimnames_h,dimnames
+      filename_ana = ana.filename
+      datasource = ana.datasource
+      definition = ana.definition
+      missing = ana.missing
+      label = ana.label
     end
 
     8: begin
@@ -133,14 +160,6 @@ FUNCTION ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
     millisecond:0}
   datetime = anytim(datetime, /ccsds)
 
-  filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
-  filename_l3 = filename_l2.replace('_L2_', '_L3_')
-  file_info_l2 = spice_file2info(filename_l2)
-  prefix_extension_name = 'V' + fns('##', file_info_l2.version) + $
-    '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
-    fns('-###', file_info_l2.rasterno) + $
-    fns(' ext## ', fxpar(header_l2, 'WINNO', missing=99))
-
   all_headers = ptrarr(7)
 
 
@@ -148,8 +167,8 @@ FUNCTION ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create result header
   ; ------
 
-  hdr = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-    filename_l3=filename_l3, filename_l2=filename_l2, prefix_extension_name=prefix_extension_name, n_windows=n_windows, $
+  hdr = ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
+    filename_out=filename_out, filename_l2=filename_l2, prefix_extension_name=prefix_extension_name, n_windows=n_windows, $
     winno=winno, EXTENSION=EXTENSION, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)

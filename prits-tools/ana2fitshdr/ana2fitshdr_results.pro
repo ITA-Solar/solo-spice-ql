@@ -23,7 +23,7 @@
 ;      datetime: Date and time string.
 ;      filename_l3: The filename the level 3 will/should get
 ;      filename_l2: The filename of the level 2 file
-;      prefix_extension_name: A string defining the prefix to the names of the 7 extensions
+;      data_id: A string defining the prefix to the names of the 7 extensions
 ;      n_windows: number of windows to be included in level 3 file.
 ;      HISTORY: A string array.
 ;      FIT: The component fit structure
@@ -53,11 +53,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-10-13 14:43 CEST $
+; $Id: 2022-11-16 12:05 CET $
 
 
 FUNCTION ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
-  filename_l3=filename_l3, filename_l2=filename_l2, prefix_extension_name=prefix_extension_name, n_windows=n_windows, $
+  filename_l3=filename_l3, filename_l2=filename_l2, data_id=data_id, n_windows=n_windows, $
   winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
@@ -69,11 +69,10 @@ FUNCTION ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', prefix_extension_name+'results', 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', data_id+' results', 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_l3, 'Filename of this FITS file'
 
-  extname_l2 = fxpar(header_l2, 'EXTNAME', missing='')
-  fits_util->add, hdr, 'L2EXTNAM', extname_l2, 'Extension name in level 2 file'
+  fits_util->add, hdr, 'L2EXTNAM', fxpar(header_l2, 'EXTNAME', missing=''), 'Extension name in level 2 file'
   fits_util->add, hdr, 'L2FILENA', filename_l2, 'Level 2 filename'
 
   ; Add keywords valid for whole ANA
@@ -90,13 +89,13 @@ FUNCTION ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   n_components = N_TAGS(fit)
   fits_util->add, hdr, 'ANA_NCMP', n_components, 'Number of fit components'
 
-  fits_util->add, hdr, 'RESEXT', prefix_extension_name+'results', 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', prefix_extension_name+'data', 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', prefix_extension_name+'lambda', 'Extension name of lambda'
-  fits_util->add, hdr, 'RESIDEXT', prefix_extension_name+'residuals', 'Extension name of residuals'
-  fits_util->add, hdr, 'WGTEXT', prefix_extension_name+'weights', 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', prefix_extension_name+'includes', 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', prefix_extension_name+'constants', 'Extension name of constants'
+  fits_util->add, hdr, 'RESEXT', data_id+' results', 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', data_id+' data', 'Extension name of data'
+  fits_util->add, hdr, 'LAMBDEXT', data_id+' lambda', 'Extension name of lambda'
+  fits_util->add, hdr, 'RESIDEXT', data_id+' residuals', 'Extension name of residuals'
+  fits_util->add, hdr, 'WGTEXT', data_id+' weights', 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', data_id+' includes', 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', data_id+' constants', 'Extension name of constants'
 
   fits_util->add, hdr, '', ' '
   fits_util->add, hdr, 'NXDIM', 1, 'Number of dimensions absorbed by analysis'
