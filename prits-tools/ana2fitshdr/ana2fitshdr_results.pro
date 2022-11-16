@@ -1,6 +1,6 @@
 ;+
 ; NAME:
-;      SPICE_ANA2FITSHDR_RESULTS
+;      ANA2FITSHDR_RESULTS
 ;
 ; PURPOSE:
 ;      This function returns a fits header made from the Results of an ANA object or file.
@@ -12,7 +12,7 @@
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      header = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
+;      header = ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
 ;        filename_l3=filename_l3, filename_l2=filename_l2, exension_names=exension_names, n_windows=n_windows, $
 ;        winno=winno, EXTENSION=EXTENSION, $
 ;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
@@ -56,7 +56,7 @@
 ; $Id: 2022-10-13 14:43 CEST $
 
 
-FUNCTION spice_ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
+FUNCTION ana2fitshdr_results, header_l2=header_l2, datetime=datetime, $
   filename_l3=filename_l3, filename_l2=filename_l2, prefix_extension_name=prefix_extension_name, n_windows=n_windows, $
   winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
