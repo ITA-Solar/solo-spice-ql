@@ -12,11 +12,12 @@
 ;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      ana2fits, ana, filepath_out=filepath_out, $
+;      ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
 ;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
 ;         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL]
+;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+;         EXTENSION=EXTENSION]
 ;
 ; INPUTS:
 ;      ana: The name and path of an ANA file or an ANA object.
@@ -30,11 +31,6 @@
 ;               7 extensions, which all have the same ID, but the extension name will be
 ;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'residuals', 'weights', 'includes', 'constants').
 ;               Default is the dataset numbers.
-;      header_l2: The header (string array) of the SPICE level 2 file. XXX
-;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
-;                     from the level 2 FITS file. Spectra is not in the first dimension.
-;                     This data cube will saved into the FITS file. Thus it cannot be used
-;                     directly in the ANA structure when read back in. XXX
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then the first ANA's result array will be an extension,
@@ -74,7 +70,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 14:28 CET $
+; $Id: 2022-11-17 14:31 CET $
 
 
 PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
@@ -82,8 +78,7 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  EXTENSION=EXTENSION, $
-  header_l2=header_l2, original_data=original_data
+  EXTENSION=EXTENSION
 
   prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ana)
