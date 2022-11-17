@@ -112,9 +112,8 @@ PRO spice_test_privat, file_number
   ;xcfit_block,ana=ana
   ;help,ana
   
-  ana = obj->mk_analysis(0, /init_all_cubes)
-  
-  stop
+  ;ana = obj->mk_analysis(0, /init_all_cubes)
+  ;stop
 
   ;ana = obj->xcfit_block(window_index)
   ;handle_value, ana.fit_h, fit
@@ -122,8 +121,10 @@ PRO spice_test_privat, file_number
   ;stop
   ;help,ana
 
-  ;l3_file = obj->create_l3_file([0,5], /no_widget);, /no_fitting)
-  ;print,l3_file
+  l3_file = obj->create_l3_file(0, /no_widget, /no_fitting)
+  print,l3_file
+  stop
+  
   ;meta_data = { $
   ;  file:'L2-file', $
   ;  winno:0, $
