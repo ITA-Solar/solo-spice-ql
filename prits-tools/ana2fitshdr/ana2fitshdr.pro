@@ -1,6 +1,6 @@
 ;+
 ; NAME:
-;      SPICE_ANA2FITSHDR
+;      ANA2FITSHDR
 ;
 ; PURPOSE:
 ;      This function returns an array of FITS headers made from an ANA object or file.
@@ -8,16 +8,18 @@
 ;      level 2 header keywords in the first (zeroth) extension.
 ;
 ; CATEGORY:
-;      SPICE -- utility
+;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      headers = spice_ana2fitshdr(ana, header_l2=header_l2, $
-;         n_windows=n_windows, original_data=original_data [, filename_l3=filename_l3, $
-;         /EXTENSION, $
-;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-;         CONST=CONST, FILENAME=FILENAME, DATASOURCE=DATASOURCE, $
-;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL] )
+;      headers = ana2fitshdr(ana, n_windows=n_windows, winno=winno, data_id=data_id, $
+;        filename_out=filename_out, $
+;        EXTENSION=EXTENSION, $
+;        HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
+;        FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
+;        CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+;        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+;        spice=spice, $
+;        original_data=original_data, header_l2=header_l2] )
 ;
 ; INPUTS:
 ;      ana: An ANA object or the name and path of an ANA file.
@@ -76,7 +78,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 14:15 CET $
+; $Id: 2022-11-17 14:36 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $

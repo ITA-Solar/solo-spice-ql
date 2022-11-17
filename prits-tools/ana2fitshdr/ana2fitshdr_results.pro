@@ -9,14 +9,15 @@
 ;      level 2 header keywords. 
 ;
 ; CATEGORY:
-;      SPICE -- utility
+;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-;        filename_l3=filename_l3, filename_l2=filename_l2, exension_names=exension_names, n_windows=n_windows, $
+;      header = ana2fitshdr_results(datetime=datetime, $
+;        filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
 ;        winno=winno, EXTENSION=EXTENSION, $
-;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
-;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
+;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+;        spice=spice, header_l2=header_l2)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the SPICE level 2 file.
@@ -54,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 14:15 CET $
+; $Id: 2022-11-17 14:36 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
