@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-11-16 12:04 CET $
+; $Id: 2022-11-17 14:15 CET $
 
 
 ;+
@@ -276,17 +276,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       XCFIT_BLOCK, ana=ana
     endif
 
-    data_id[iwindow] = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
+    data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
     original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
     if iwindow gt 0 then extension=1 else extension=0
 
-    headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), $
-      extension=extension, filename_l3=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
+    headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
+      extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data)
+      original_data=original_data, /spice)
 
     if iwindow eq 0 then file = filepath(filename_l3, /tmp)
     IF ~keyword_set(save_not) THEN BEGIN

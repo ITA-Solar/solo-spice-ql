@@ -31,17 +31,14 @@
 ;                     directly in the ANA structure when read back in.
 ;      winno: Window number (starting at 0) within this study in this FITS file.
 ;      filename_out: Full path and filename of the resulting FITS file.
-;      data_id: A string vector of same length as 'ana', or if 'ana' is not provided
-;               scalar string. These strings are used to identify the data, i.e. they will
-;               be used in the extension names of the FITS file. Each dataset will get
-;               7 extensions, which all have the same ID, but the extension name will be
-;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'residuals', 'weights', 'includes', 'constants').
-;               Default is the dataset numbers.
+;      data_id: A string defining the prefix to the names of the 7 extensions
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
+;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
+;                 and incorporated into this level 3 FITS file.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ana' is not
@@ -79,7 +76,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-16 12:05 CET $
+; $Id: 2022-11-17 14:15 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
@@ -168,8 +165,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; ------
 
   hdr = ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-    filename_out=filename_out, filename_l2=filename_l2, prefix_extension_name=prefix_extension_name, n_windows=n_windows, $
-    winno=winno, EXTENSION=EXTENSION, $
+    filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
+    winno=winno, EXTENSION=EXTENSION, spice=spice, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 
@@ -188,7 +185,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; ------
 
   hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
+    prefix_extension_name=data_id, $
     original_data=original_data)
 
   all_headers[1] = ptr_new(hdr)
@@ -206,7 +203,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; ------
 
   hdr = spice_ana2fitshdr_lambda(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
+    prefix_extension_name=data_id, $
     LAMBDA=LAMBDA)
 
   all_headers[2] = ptr_new(hdr)
@@ -224,7 +221,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; ------
 
   hdr = spice_ana2fitshdr_residuals(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
+    prefix_extension_name=data_id, $
     RESIDUAL=RESIDUAL)
 
   all_headers[3] = ptr_new(hdr)
@@ -242,7 +239,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; ------
 
   hdr = spice_ana2fitshdr_weights(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
+    prefix_extension_name=data_id, $
     WEIGHTS=WEIGHTS)
 
   all_headers[4] = ptr_new(hdr)
@@ -260,7 +257,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; ------
 
   hdr = spice_ana2fitshdr_include(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
+    prefix_extension_name=data_id, $
     INCLUDE=INCLUDE)
 
   all_headers[5] = ptr_new(hdr)
@@ -278,7 +275,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; ------
 
   hdr = spice_ana2fitshdr_const(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
+    prefix_extension_name=data_id, $
     CONST=CONST)
 
   all_headers[6] = ptr_new(hdr)
