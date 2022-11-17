@@ -16,7 +16,7 @@
 ;      header_l2: The header (string array) of the level 2 file.
 ;      datetime: Date and time string.
 ;      data_id: A string defining the prefix to the names of the 7 extensions
-;      data: Data Array. Up to 7-dimensional data array.
+;      data_cube: Data Array. Up to 7-dimensional data array.
 ;            For SPICE this should be original data array from the level 2 FITS file.
 ;            Spectra is not in the first dimension.
 ;            This data cube will be saved into the FITS file. Thus it cannot be used
@@ -35,16 +35,16 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 15:01 CET $
+; $Id: 2022-11-17 15:07 CET $
 
 
-FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data=data, $
+FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_cube=data_cube, $
   header_l2=header_l2
 
-  n_dims = size(data, /n_dimensions)
+  n_dims = size(data_cube, /n_dimensions)
 
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, original_data, /image
+  mkhdr, hdr, data_cube, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '

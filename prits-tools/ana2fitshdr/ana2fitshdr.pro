@@ -78,7 +78,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 15:04 CET $
+; $Id: 2022-11-17 15:07 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
@@ -186,9 +186,9 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; Create data header
   ; ------
 
-  IF keyword_set(spice) && keyword_set(original_data) THEN data=original_data $
-  ELSE data=input_data
-  hdr = ana2fitshdr_data(datetime=datetime, data_id=data_id, data=data, $
+  IF keyword_set(spice) && keyword_set(original_data) THEN data_cube=original_data $
+  ELSE data_cube=input_data
+  hdr = ana2fitshdr_data(datetime=datetime, data_id=data_id, data_cube=data_cube, $
     header_l2=header_l2)
 
   all_headers[1] = ptr_new(hdr)
