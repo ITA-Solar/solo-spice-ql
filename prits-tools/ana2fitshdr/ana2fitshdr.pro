@@ -40,7 +40,9 @@
 ;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
 ;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
-;                 and incorporated into this level 3 FITS file.
+;                 and incorporated into this level 3 FITS file. And the 'data' extension
+;                 will get 'original_data' as its data array, instead of the data array
+;                 saved in the ana or 'input_data'.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ana' is not
@@ -78,7 +80,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 13:40 CET $
+; $Id: 2022-11-18 14:40 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
