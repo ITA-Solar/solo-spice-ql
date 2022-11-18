@@ -35,7 +35,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 10:46 CET $
+; $Id: 2022-11-18 12:05 CET $
 
 
 FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_array, $
@@ -104,6 +104,14 @@ FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_a
       fits_util->add, hdr, 'PC4_1', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 1 to coord 4 due to roll'
     endif
 
+    fits_util->add, hdr, '', ' '
+    btype = fxpar(header_l2, 'BTYPE', missing='', comment=comment)
+    fits_util->add, hdr, 'BTYPE', btype, comment
+    ucd = fxpar(header_l2, 'UCD', missing='', comment=comment)
+    fits_util->add, hdr, 'UCD', ucd, comment
+    bunit = fxpar(header_l2, 'BUNIT', missing='', comment=comment)
+    fits_util->add, hdr, 'BUNIT', bunit, comment
+
   ENDIF ELSE BEGIN
 
     for idim=0,n_dims-1 do begin
@@ -119,14 +127,6 @@ FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_a
     endfor ; idim=1,n_dims-1
 
   ENDELSE
-
-  fits_util->add, hdr, '', ' '
-  btype = fxpar(header_l2, 'BTYPE', missing='', comment=comment)
-  fits_util->add, hdr, 'BTYPE', btype, comment
-  ucd = fxpar(header_l2, 'UCD', missing='', comment=comment)
-  fits_util->add, hdr, 'UCD', ucd, comment
-  bunit = fxpar(header_l2, 'BUNIT', missing='', comment=comment)
-  fits_util->add, hdr, 'BUNIT', bunit, comment
 
   fits_util->clean_header, hdr
 
