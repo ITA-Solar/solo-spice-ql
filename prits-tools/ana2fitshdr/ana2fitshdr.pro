@@ -25,15 +25,15 @@
 ;      ana: An ANA object or the name and path of an ANA file.
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided
-;      header_l2: The header (string array) of the level 2 file (SPICE).
-;      n_windows: Total number of windows to be included in FITS file.
-;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
-;                     from the level 2 FITS file. Spectra is not in the first dimension.
-;                     This data cube will saved into the FITS file. Thus it cannot be used
-;                     directly in the ANA structure when read back in.
-;      winno: Window number (starting at 0) within this study in this FITS file.
 ;      filename_out: Full path and filename of the resulting FITS file.
 ;      data_id: A string defining the prefix to the names of the 7 extensions
+;      n_windows: Total number of windows to be included in FITS file.
+;      winno: Window number (starting at 0) within this study in this FITS file.
+;      header_l2: The header (string array) of the SPICE level 2 file.
+;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
+;                     from the level 2 FITS file. Spectra is not in the first dimension.
+;                     This data arra will be saved into the FITS file. Thus it cannot be used
+;                     directly in the ANA structure when read back in.
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
@@ -78,7 +78,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 15:07 CET $
+; $Id: 2022-11-18 13:40 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
@@ -186,9 +186,9 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; Create data header
   ; ------
 
-  IF keyword_set(spice) && keyword_set(original_data) THEN data_cube=original_data $
-  ELSE data_cube=input_data
-  hdr = ana2fitshdr_data(datetime=datetime, data_id=data_id, data_cube=data_cube, $
+  IF keyword_set(spice) && keyword_set(original_data) THEN data_array=original_data $
+  ELSE data_array=input_data
+  hdr = ana2fitshdr_data(datetime=datetime, data_id=data_id, data_array=data_array, $
     header_l2=header_l2)
 
   all_headers[1] = ptr_new(hdr)
@@ -205,9 +205,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; Create lambda header
   ; ------
 
-  hdr = spice_ana2fitshdr_lambda(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=data_id, $
-    LAMBDA=LAMBDA)
+  hdr = ana2fitshdr_lambda(datetime=datetime, data_id=data_id, LAMBDA=LAMBDA, $
+  header_l2=header_l2)
 
   all_headers[2] = ptr_new(hdr)
 
@@ -223,9 +222,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; Create residuals header
   ; ------
 
-  hdr = spice_ana2fitshdr_residuals(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=data_id, $
-    RESIDUAL=RESIDUAL)
+  hdr = ana2fitshdr_residuals(datetime=datetime, data_id=data_id, RESIDUAL=RESIDUAL, $
+  header_l2=header_l2)
 
   all_headers[3] = ptr_new(hdr)
 
@@ -241,9 +239,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; Create weights header
   ; ------
 
-  hdr = spice_ana2fitshdr_weights(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=data_id, $
-    WEIGHTS=WEIGHTS)
+  hdr = ana2fitshdr_weights(datetime=datetime, data_id=data_id, WEIGHTS=WEIGHTS, $
+  header_l2=header_l2)
 
   all_headers[4] = ptr_new(hdr)
 
@@ -259,9 +256,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; Create include header
   ; ------
 
-  hdr = spice_ana2fitshdr_include(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=data_id, $
-    INCLUDE=INCLUDE)
+  hdr = ana2fitshdr_include(datetime=datetime, data_id=data_id, INCLUDE=INCLUDE, $
+  header_l2=header_l2)
 
   all_headers[5] = ptr_new(hdr)
 
@@ -277,9 +273,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   ; Create const header
   ; ------
 
-  hdr = spice_ana2fitshdr_const(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=data_id, $
-    CONST=CONST)
+  hdr = ana2fitshdr_const(datetime=datetime, data_id=data_id, CONST=CONST, $
+  header_l2=header_l2)
 
   all_headers[6] = ptr_new(hdr)
 

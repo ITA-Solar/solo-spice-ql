@@ -3,7 +3,7 @@
 ;      ANA2FITSHDR_DATA
 ;
 ; PURPOSE:
-;      This function returns a fits header made from the data of an ANA object or file.
+;      This function returns a fits header made from the data array of an ANA object or file.
 ;
 ; CATEGORY:
 ;      FITS -- utility
@@ -13,7 +13,6 @@
 ;        header_l2=header_l2)
 ;
 ; INPUTS:
-;      header_l2: The header (string array) of the level 2 file.
 ;      datetime: Date and time string.
 ;      data_id: A string defining the prefix to the names of the 7 extensions
 ;      data_array: Data Array. Up to 7-dimensional data array.
@@ -26,6 +25,7 @@
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
+;      header_l2: The header (string array) of the SPICE level 2 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -35,7 +35,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 12:05 CET $
+; $Id: 2022-11-18 13:40 CET $
 
 
 FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_array, $
@@ -112,7 +112,7 @@ FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_a
     bunit = fxpar(header_l2, 'BUNIT', missing='', comment=comment)
     fits_util->add, hdr, 'BUNIT', bunit, comment
 
-  ENDIF ELSE BEGIN
+  ENDIF ELSE BEGIN ; header_l2
 
     for idim=0,n_dims-1 do begin
       idim_str = strtrim(string(idim+1), 2)
@@ -126,7 +126,7 @@ FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_a
       fits_util->add, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
     endfor ; idim=1,n_dims-1
 
-  ENDELSE
+  ENDELSE ; header_l2
 
   fits_util->clean_header, hdr
 

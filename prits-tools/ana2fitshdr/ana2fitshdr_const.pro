@@ -31,11 +31,11 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 13:25 CET $
+; $Id: 2022-11-18 13:40 CET $
 
 
 FUNCTION ana2fitshdr_const, datetime=datetime, data_id=data_id, CONST=CONST, $
-  header_l2=header_l2)
+  header_l2=header_l2
 
   n_dims = size(CONST, /n_dimensions)
 

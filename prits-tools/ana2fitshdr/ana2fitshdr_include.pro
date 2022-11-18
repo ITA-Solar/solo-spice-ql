@@ -21,7 +21,7 @@
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
-;      header_l2: The header (string array) of the level 2 file.
+;      header_l2: The header (string array) of the SPICE level 2 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -31,11 +31,13 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 13:00 CET $
+; $Id: 2022-11-18 13:40 CET $
 
 
 FUNCTION ana2fitshdr_include, datetime=datetime, data_id=data_id, INCLUDE=INCLUDE, $
   header_l2=header_l2
+
+  n_dims = size(INCLUDE, /n_dimensions)
 
   fits_util = obj_new('oslo_fits_util')
   mkhdr, hdr, INCLUDE, /image
@@ -101,10 +103,11 @@ FUNCTION ana2fitshdr_include, datetime=datetime, data_id=data_id, INCLUDE=INCLUD
 
   ENDIF ELSE BEGIN ; header_l2
 
-    for idim=0,n_dims-1 do begin
+    fits_util->add, hdr, 'CTYPE1', 'FIT COMPONENT', 'Type of 1st coordinate'
+    fits_util->add, hdr, 'CNAME1', 'Component', 'Name of 1st coordinate'
+    for idim=1,n_dims-1 do begin
       idim_str = strtrim(string(idim+1), 2)
       case idim of
-        0: dim_name = '1st'
         1: dim_name = '2nd'
         2: dim_name = '3rd'
         else: dim_name = idim_str+'th'
@@ -114,6 +117,10 @@ FUNCTION ana2fitshdr_include, datetime=datetime, data_id=data_id, INCLUDE=INCLUD
     endfor ; idim=1,n_dims-1
 
   ENDELSE ; header_l2
+
+  fits_util->add, hdr, '', ' '
+  fits_util->add, hdr, 'BTYPE', ' ', 'Type of data'
+  fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
 
   fits_util->clean_header, hdr
 

@@ -3,7 +3,7 @@
 ;      ANA2FITSHDR_RESULTS
 ;
 ; PURPOSE:
-;      This function returns a fits header made from the Results of an ANA object or file.
+;      This function returns a fits header made from the results of an ANA object or file.
 ;      The fits header contains all fit components as keywords. 
 ;      In case the SPICE keyword has been set, the the header will also contain original
 ;      level 2 header keywords. 
@@ -20,11 +20,11 @@
 ;        spice=spice, header_l2=header_l2)
 ;
 ; INPUTS:
-;      header_l2: The header (string array) of the SPICE level 2 file.
 ;      datetime: Date and time string.
 ;      filename_out: The filename the FITS file will/should get
 ;      data_id: A string defining the prefix to the names of the 7 extensions
 ;      n_windows: Number of windows to be included in the FITS file.
+;      winno: Window number (starting at 0) within this study in this FITS file
 ;      HISTORY: A string array.
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
@@ -36,7 +36,6 @@
 ;               and parameter values at points where the fit has been
 ;               declared as "FAILED".
 ;      LABEL: A string.
-;      winno: Window number (starting at 0) within this study in this FITS file
 ; 
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
@@ -46,6 +45,7 @@
 ;                 and incorporated into this level 3 FITS file.
 ; 
 ; OPTIONAL INPUTS:
+;      header_l2: The header (string array) of the SPICE level 2 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -55,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 14:36 CET $
+; $Id: 2022-11-18 13:40 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -213,19 +213,21 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   
   ENDIF ELSE BEGIN ; spice_header
 
-  ; Add WCS keywords
-  fits_util->add, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
-  fits_util->add, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
-  for idim=1,n_dims-1 do begin
-    idim_str = strtrim(string(idim+1), 2)
-    case idim of
-      1: dim_name = '2nd'
-      2: dim_name = '3rd'
-      else: dim_name = idim_str+'th'
-    end
-    fits_util->add, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
-    fits_util->add, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
-  endfor ; idim=1,n_dims-1
+    ; Add WCS keywords
+    fits_util->add, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
+    fits_util->add, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
+    for idim=1,n_dims-1 do begin
+      idim_str = strtrim(string(idim+1), 2)
+      case idim of
+        1: dim_name = '2nd'
+        2: dim_name = '3rd'
+        else: dim_name = idim_str+'th'
+      end
+      fits_util->add, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
+      fits_util->add, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
+    endfor ; idim=1,n_dims-1
+  
+    fits_util->add_description, hdr, 'Keywords valid for this HDU'
   
   ENDELSE ; spice_header
 

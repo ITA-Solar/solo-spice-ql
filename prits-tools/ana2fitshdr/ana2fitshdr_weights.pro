@@ -13,7 +13,6 @@
 ;        header_l2=header_l2)
 ;
 ; INPUTS:
-;      header_l2: The header (string array) of the level 2 file.
 ;      datetime: Date and time string.
 ;      data_id: A string defining the prefix to the names of the 7 extensions
 ;      WEIGHTS: Weights to use in the fitting process. No default!
@@ -21,6 +20,7 @@
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
+;      header_l2: The header (string array) of the SPICE level 2 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -30,13 +30,13 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 12:54 CET $
+; $Id: 2022-11-18 13:40 CET $
 
 
-FUNCTION spice_ana2fitshdr_weights, datetime=datetime, data_id=data_id, WEIGHTS=WEIGHTS, $
+FUNCTION ana2fitshdr_weights, datetime=datetime, data_id=data_id, WEIGHTS=WEIGHTS, $
   header_l2=header_l2
 
-  n_dims = size(RESIDUAL, /n_dimensions)
+  n_dims = size(WEIGHTS, /n_dimensions)
 
   fits_util = obj_new('oslo_fits_util')
   mkhdr, hdr, WEIGHTS, /image
