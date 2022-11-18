@@ -9,9 +9,8 @@
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_lambda(header_l2=header_l2, datetime=datetime, $
-;      prefix_extension_name=prefix_extension_name, $
-;      LAMBDA=LAMBDA)
+;      header = ana2fitshdr_lambda(, datetime=datetime, data_id=data_id, LAMBDA=LAMBDA, $
+;        header_l2=header_l2)
 ;
 ; INPUTS:
 ;      header_l2: The header (string array) of the level 2 file.
@@ -33,14 +32,16 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 11:44 CET $
+; $Id: 2022-11-18 12:05 CET $
 
 
 FUNCTION ana2fitshdr_lambda, datetime=datetime, data_id=data_id, LAMBDA=LAMBDA, $
   header_l2=header_l2
 
+  n_dims = size(LAMBDA, /n_dimensions)
+
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, lambda, /image
+  mkhdr, hdr, LAMBDA, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
