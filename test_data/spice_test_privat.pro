@@ -123,6 +123,18 @@ PRO spice_test_privat, file_number
 
   l3_file = obj->create_l3_file(0, /no_widget, /no_fitting)
   print,l3_file
+  
+    ana = obj->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+      position=position, velocity=velocity, /init_all_cubes)
+
+    headers = ana2fitshdr(ana, data_id='test', $
+      extension=extension, filename_out='filename_l3', n_windows=3, winno=0, $
+      HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
+      FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
+      CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+
+
   stop
   
   ;meta_data = { $
