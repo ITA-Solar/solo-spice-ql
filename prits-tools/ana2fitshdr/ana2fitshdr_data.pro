@@ -9,7 +9,7 @@
 ;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_data(datetime=datetime, data_id=data_id, data=data, $
+;      header = ana2fitshdr_data(datetime=datetime, data_id=data_id, data_array=data_array, $
 ;        header_l2=header_l2)
 ;
 ; INPUTS:
@@ -35,7 +35,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 10:44 CET $
+; $Id: 2022-11-18 10:46 CET $
 
 
 FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_array, $
