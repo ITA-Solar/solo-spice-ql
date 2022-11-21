@@ -44,35 +44,65 @@
 ;                                            should be the same for all lines.
 ;      Ver. 1.2, 13-Jun-2022, Martin Wiesmann: position is now by default represented as
 ;                                            velocity, added keywords velocity and position.
+;      Ver. 1.3, Nov-2022, Martin Wiesmann: Uses now spice_line_list() to get a list of possible
+;                                            peaks to be included.
 ;-
-; $Id: 2022-10-31 10:45 CET $
+; $Id: 2022-11-21 15:01 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity
   ;; Automatically generate cfit analysis definitions based on input intensity and
   ;; wavelength arrays
+
+  prits_tools.parcheck, data, 1, "data", 'NUMERIC', [2,3,4]
+  prits_tools.parcheck, lam, 2, "lam", 'NUMERIC', [2,3,4]
+  prits_tools.parcheck, widmin, 0, "widmin", 'NUMERIC', 0, minval=0, /optional
+  prits_tools.parcheck, velocity, 0, "velocity", 'NUMERIC', 0, /optional
+
+
   blue_means_negative_velocity = 1
-  sz = size(data)
 
-  badix = where(data ne data, n_bad, complement=goodix)
-  IF n_bad GT 0 THEN data[badix] = min(data[goodix]) > 0
+  line_list=spice_line_list()
+  lines = line_list.keys()
+  lines = lines.toArray()
+  min_lambda = min(lam, max=max_lambda)
+  ind_lines = where(lines GT min_lambda AND lines LT max_lambda, npeaks)
+  print,'npeaks',npeaks
 
-  meanprofile = rebin(data,sz[1],1,1)
+  meanprofile = data
+  sz = size(meanprofile)
+  while sz[0] gt 1 do begin
+    meanprofile = mean(meanprofile, dimension=2, /nan)
+    sz = size(meanprofile)
+  endwhile
 
-  IF n_bad GT 0 THEN data[badix] = (typename(data) EQ 'FLOAT') ? !values.f_nan : !values.d_nan
-  peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5,/sort,/plot)
-  npeaks = n_elements(peakinds)
+  meanlambda = lam
+  sz = size(meanlambda)
+  while sz[0] gt 1 do begin
+    meanlambda = mean(meanlambda, dimension=2, /nan)
+    sz = size(meanlambda)
+  endwhile
+
+  peakinds = intarr(npeaks)
+  for iline=0,npeaks-1 do begin
+    lambda_diff = abs(meanlambda-lines[ind_lines[iline]])
+    min_diff = min(lambda_diff, lambda_ind)
+    peakinds[iline] = lambda_ind
+  endfor
+
+  fwhm = intarr(npeaks) ; TODO: Estimate FWHM in pixels for each peak
+  fwhm[*] = 3 ; for now
 
   gaussians = replicate(mk_comp_gauss([0,0,0]), npeaks)
 
   int0 = meanprofile[peakinds]
-  lampeak = lam[peakinds,*,*]
+  ;lampeak = lam[peakinds,*,*]
   lamfwhm = lam[peakinds-fwhm,*,*]
 
-  lam0 = fltarr(npeaks)
+  ;lam0 = fltarr(npeaks)
+  lam0 = lines[ind_lines]
   wid0 = fltarr(npeaks)
-
-  FOR i=0,npeaks-1 DO lam0[i] = median(lampeak[i,*,*])
+  ;FOR i=0,npeaks-1 DO lam0[i] = median(lampeak[i,*,*])
   FOR i=0,npeaks-1 DO wid0[i] = lam0[i] - median(lamfwhm[i,*,*])
 
   v = 150.                       ; Max shift in km/s
@@ -111,7 +141,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
       gauss.param(1).trans_a = -gauss.param(1).trans_a
     ENDIF
     lam0txt = trim(lam0[i],'(F6.2)')
-    gauss.name = 'AutoGauss'+lam0txt
+    gauss.name = 'AutoGauss ' + lam0txt + 'nm, ' + line_list[lam0[i]]
     gaussians[i] = gauss
   ENDFOR
 
