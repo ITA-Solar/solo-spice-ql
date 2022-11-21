@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-10-12 09:57 CEST $
+; $Id: 2022-11-17 14:15 CET $
 
 
 ;+
@@ -246,12 +246,23 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     collect_hdr=1
   ENDIF ELSE collect_hdr=0
 
+  filename_l2 = self.get_header_keyword('FILENAME', 0, '')
+  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  filename_out = filepath(filename_l3, /tmp)
+  file_info_l2 = spice_file2info(filename_l2)
+  file_id = 'V' + fns('##', file_info_l2.version) + $
+    '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
+    fns('-###', file_info_l2.rasterno)
+
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
       position=position, velocity=velocity, /init_all_cubes)
     if size(ana, /type) NE 8 then continue
-    original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+    IF collect_ana THEN BEGIN
+      if iwindow eq 0 then all_ana = ana $
+      else all_ana = [all_ana, ana]
+    ENDIF
 
     if ~keyword_set(no_fitting) then begin
       print, '====================='
@@ -265,14 +276,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       XCFIT_BLOCK, ana=ana
     endif
 
+    data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
+    original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
     if iwindow gt 0 then extension=1 else extension=0
-    headers = spice_ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), $
-      extension=extension, filename_l3=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
+
+    headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
+      extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data)
+      original_data=original_data, /spice)
 
     if iwindow eq 0 then file = filepath(filename_l3, /tmp)
     IF ~keyword_set(save_not) THEN BEGIN
@@ -285,10 +299,6 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       writefits, file, CONST, *headers[6], /append
     ENDIF
 
-    IF collect_ana THEN BEGIN
-      if iwindow eq 0 then all_ana = ana $
-      else all_ana = [all_ana, ana]
-    ENDIF
     IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1

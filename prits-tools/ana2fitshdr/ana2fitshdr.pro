@@ -1,40 +1,48 @@
 ;+
 ; NAME:
-;      SPICE_ANA2FITSHDR
+;      ANA2FITSHDR
 ;
 ; PURPOSE:
 ;      This function returns an array of FITS headers made from an ANA object or file.
 ;      The fits headers contains all fit components as keywords and the original
-;      level 2 header keywords in the first (zeroth) extension. 
+;      level 2 header keywords in the first (zeroth) extension.
 ;
 ; CATEGORY:
-;      SPICE -- utility
+;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      headers = spice_ana2fitshdr(ana, header_l2=header_l2, $
-;         n_windows=n_windows, original_data=original_data [, filename_l3=filename_l3, $
-;         /EXTENSION, $
-;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-;         CONST=CONST, FILENAME=FILENAME, DATASOURCE=DATASOURCE, $
-;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL] )
+;      headers = ana2fitshdr(ana, n_windows=n_windows, winno=winno, data_id=data_id, $
+;        filename_out=filename_out, $
+;        EXTENSION=EXTENSION, $
+;        HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
+;        FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
+;        CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+;        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+;        spice=spice, $
+;        original_data=original_data, header_l2=header_l2] )
 ;
 ; INPUTS:
-;      ana: The name and path of an ANA file or an ANA object.
+;      ana: An ANA object or the name and path of an ANA file.
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided
-;      header_l2: The header (string array) of the level 2 file.
-;      n_windows: total number of windows to be included in level 3 file.
+;      filename_out: Full path and filename of the resulting FITS file.
+;      data_id: A string defining the prefix to the names of the 7 extensions
+;      n_windows: Total number of windows to be included in FITS file.
+;      winno: Window number (starting at 0) within this study in this FITS file.
+;      header_l2: The header (string array) of the SPICE level 2 file.
 ;      original_data: Data Array. Up to 7-dimensional data array, the original SPICE data
 ;                     from the level 2 FITS file. Spectra is not in the first dimension.
-;                     This data cube will saved into the FITS file. Thus it cannot be used
+;                     This data arra will be saved into the FITS file. Thus it cannot be used
 ;                     directly in the ANA structure when read back in.
-;      winno: Window number (starting at 0) within this study in this level 3 file
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then this header will be marked to be an extension,
-;                 i.e. if this is not the first window in the level 3 file.
+;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
+;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
+;                 and incorporated into this level 3 FITS file. And the 'data' extension
+;                 will get 'original_data' as its data array, instead of the data array
+;                 saved in the ana or 'input_data'.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ana' is not
@@ -68,27 +76,71 @@
 ;      a pointer array, containing 7 FITS keyword headers
 ;
 ; OPTIONAL OUTPUTS:
-;      filename_l3: The filename the level 3 will/should get
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-09-01 15:25 CEST $
+; $Id: 2022-11-21 12:02 CET $
 
 
-FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
-  filename_l3=filename_l3, winno=winno, EXTENSION=EXTENSION, $
+FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
+  filename_out=filename_out, $
+  EXTENSION=EXTENSION, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  original_data=original_data
+  spice=spice, $
+  original_data=original_data, header_l2=header_l2
+
+  prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', 0, structure_name='CFIT_ANALYSIS', /optional
+  ana_given = N_ELEMENTS(ana)
+  prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', 1, optional=ana_given
+  prits_tools.parcheck, LAMBDA, 0, 'LAMBDA', 'NUMERIC', [1, 2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
+  prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=ana_given
+  prits_tools.parcheck, DATASOURCE, 0, 'DATASOURCE', 'STRING', 0, optional=ana_given
+  prits_tools.parcheck, DEFINITION, 0, 'DEFINITION', 'STRING', 0, optional=ana_given
+  prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=ana_given
+  prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=ana_given
+
+  prits_tools.parcheck, filename_out, 0, 'filename_out', 'STRING', 0
+  prits_tools.parcheck, header_l2, 0, 'header_l2', 'STRING', 1, /optional
+  prits_tools.parcheck, original_data, 0, 'original_data', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', 0, default='XXX'
+  prits_tools.parcheck, n_windows, 0, 'n_windows', 'INTEGERS', 0
+  prits_tools.parcheck, winno, 0, 'winno', 'INTEGERS', 0
 
   print_headers = 0
+
   input_type = size(ana, /type)
   case input_type of
     7: begin
       restore, ana, /verbose
+      handle_value,ana.history_h,history
+      handle_value,ana.lambda_h,lambda
+      handle_value,ana.data_h,input_data
+      handle_value,ana.weights_h,weights
+      handle_value,ana.fit_h,fit
+      handle_value,ana.result_h,result
+      handle_value,ana.residual_h,residual
+      handle_value,ana.include_h,include
+      handle_value,ana.const_h,const
+      handle_value,ana.origin_h,origin
+      handle_value,ana.scale_h,scale
+      handle_value,ana.phys_scale_h,phys_scale
+      handle_value,ana.dimnames_h,dimnames
+      filename_ana = ana.filename
+      datasource = ana.datasource
+      definition = ana.definition
+      missing = ana.missing
+      label = ana.label
     end
 
     8: begin
@@ -133,14 +185,6 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
     millisecond:0}
   datetime = anytim(datetime, /ccsds)
 
-  filename_l2 = fxpar(header_l2, 'FILENAME', missing='')
-  filename_l3 = filename_l2.replace('_L2_', '_L3_')
-  file_info_l2 = spice_file2info(filename_l2)
-  prefix_extension_name = 'V' + fns('##', file_info_l2.version) + $
-    '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
-    fns('-###', file_info_l2.rasterno) + $
-    fns(' ext## ', fxpar(header_l2, 'WINNO', missing=99))
-
   all_headers = ptrarr(7)
 
 
@@ -148,9 +192,9 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create result header
   ; ------
 
-  hdr = spice_ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
-    filename_l3=filename_l3, filename_l2=filename_l2, prefix_extension_name=prefix_extension_name, n_windows=n_windows, $
-    winno=winno, EXTENSION=EXTENSION, $
+  hdr = ana2fitshdr_results(header_l2=header_l2, datetime=datetime, $
+    filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
+    winno=winno, EXTENSION=EXTENSION, spice=spice, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 
@@ -168,9 +212,10 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create data header
   ; ------
 
-  hdr = spice_ana2fitshdr_data(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
-    original_data=original_data)
+  IF keyword_set(spice) && keyword_set(original_data) THEN data_array=original_data $
+  ELSE data_array=input_data
+  hdr = ana2fitshdr_data(datetime=datetime, data_id=data_id, data_array=data_array, $
+    header_l2=header_l2)
 
   all_headers[1] = ptr_new(hdr)
 
@@ -186,9 +231,8 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create lambda header
   ; ------
 
-  hdr = spice_ana2fitshdr_lambda(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
-    LAMBDA=LAMBDA)
+  hdr = ana2fitshdr_lambda(datetime=datetime, data_id=data_id, LAMBDA=LAMBDA, $
+  header_l2=header_l2)
 
   all_headers[2] = ptr_new(hdr)
 
@@ -204,9 +248,8 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create residuals header
   ; ------
 
-  hdr = spice_ana2fitshdr_residuals(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
-    RESIDUAL=RESIDUAL)
+  hdr = ana2fitshdr_residuals(datetime=datetime, data_id=data_id, RESIDUAL=RESIDUAL, $
+  header_l2=header_l2)
 
   all_headers[3] = ptr_new(hdr)
 
@@ -222,9 +265,8 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create weights header
   ; ------
 
-  hdr = spice_ana2fitshdr_weights(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
-    WEIGHTS=WEIGHTS)
+  hdr = ana2fitshdr_weights(datetime=datetime, data_id=data_id, WEIGHTS=WEIGHTS, $
+  header_l2=header_l2)
 
   all_headers[4] = ptr_new(hdr)
 
@@ -240,9 +282,8 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create include header
   ; ------
 
-  hdr = spice_ana2fitshdr_include(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
-    INCLUDE=INCLUDE)
+  hdr = ana2fitshdr_include(datetime=datetime, data_id=data_id, INCLUDE=INCLUDE, $
+  header_l2=header_l2)
 
   all_headers[5] = ptr_new(hdr)
 
@@ -258,9 +299,8 @@ FUNCTION spice_ana2fitshdr, ana, header_l2=header_l2, n_windows=n_windows, $
   ; Create const header
   ; ------
 
-  hdr = spice_ana2fitshdr_const(header_l2=header_l2, datetime=datetime, $
-    prefix_extension_name=prefix_extension_name, $
-    CONST=CONST)
+  hdr = ana2fitshdr_const(datetime=datetime, data_id=data_id, CONST=CONST, $
+  header_l2=header_l2)
 
   all_headers[6] = ptr_new(hdr)
 
