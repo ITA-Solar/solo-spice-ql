@@ -3,7 +3,7 @@
 ;	PARCHECK
 ;
 ; Purpose     :
-;	Routine to check user parameters to a procedure.
+;	Routine to check user parameters to a procedure or function.
 ;
 ; Explanation :
 ;	This routine checks whether a parameter fulfills some criteria. It checks the data type
@@ -15,8 +15,9 @@
 ;
 ; Use         :
 ;       prits_tools.parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-;                             maxval=maxval,minval=minval, structure_name=structure_name, $
-;                             object_name=object_name, disallow_subclasses=disallow_subclasses, result=result
+;                             maxval=maxval, minval=minval, valid_nelements=valid_nelements, optional=optional, $
+;                             structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses, $
+;                             result=result
 ;
 ;	EXAMPLE     :
 ;
@@ -55,6 +56,9 @@
 ;    - floats (4, 5)
 ;    - numeric (integers + floats = 1, 2, 3, 4, 5, 12, 13, 14, 15)
 ;    - multiplicative (numeric + 6, 9 = 1, 2, 3, 4, 5, 6, 9, 12, 13, 14, 15)
+;    Even more valid string types:
+;    - time (checks if input has a valid time format, calls 'valid_time')
+;    - time0 (same as 'time' but zero is a valid time)
 ;	VALID_NDIMS - Integer, scalar or vector, giving number of allowed dimensions.
 ;	              For scalar values, the number of dimensions is zero.
 ;
@@ -74,6 +78,17 @@
 ;               MAXVAL: Maximum value for the parameter. Checked
 ;                       against MAX([parameter]).
 ;
+;               VALID_NELEMENTS: number, scalar or 2-element vector. Checks whether the input
+;                       parameter has the exact number of elements, or, if VALID_NELEMENT is a
+;                       2-element vector, is within a range of number of elements.
+;                       If the first element of VALID_NELEMENTS is zero, then this implies that
+;                       UNDEFINED parameters are allowed.
+;               
+;               OPTIONAL: If set, then parameter is optional, i.e. it can also be UNDEFINED, 
+;                       same as adding UNDEFINED to TYPES,
+;                       or setting first element of VALID_NELEMENTS to zero,
+;                       or providing a default.
+;
 ;               STRUCTURE_NAME: string, scalar or vector. If the input parameter
 ;                         is of type 8 (STRUCT), the name of the structure
 ;                         is checked against STRUCTURE_NAME.
@@ -81,10 +96,10 @@
 ;               OBJECT_NAME: string, scalar or vector. If the input parameter
 ;                         is of type 11 (OBJREF), the name of the object
 ;                         is checked against OBJECT_NAME, objects inheriting from the given OBJECT_NAME
-;                         are also allowed by default, except if DISALLOW_SUBCLASS keyword
+;                         are also allowed by default, except if DISALLOW_SUBCLASSES keyword
 ;                         is set.
 ;
-;               DISALLOW_SUBCLASS: If set, then objects inheriting from given OBJECT_NAME are not
+;               DISALLOW_SUBCLASSES: If set, then objects inheriting from given OBJECT_NAME are not
 ;                         allowed.
 ;
 ;               DEFAULT: If parameter is undefined, then DEFAULT will be returned.
@@ -117,11 +132,13 @@
 ;               Version 3, Martin Wiesmann, UiO, September 2022
 ;                 Generell overhaul, bugfixing and introduced check for
 ;                 object name, i.e. new keywords STRUCTURE_NAME, OBJECT_NAME and DISALLOW_SUBCLASS,
+;                 allows checking if input is a valid time format or
+;                 has correct number of elements (new keyword VALID_NELEMENTS),
 ;                 improved documentation
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-10-11 13:14 CEST $
+; $Id: 2022-10-28 10:07 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -131,7 +148,15 @@ PRO prits_tools::check_type, parameter, types_string, error, pt, $
   error = ''
   par_type = size(parameter, /tname)
   IF (where(par_type EQ types_string))[0] EQ -1 THEN BEGIN
-    error = "is an invalid data type: " + par_type
+    IF (where('TIME' EQ types_string OR 'TIME0' EQ types_string))[0] GE 0 THEN BEGIN
+      result = valid_time(parameter, err=err, zero=(where('TIME0' EQ types_string))[0] GE 0)
+      ind = where(result eq 0, count)
+      IF count GT 0 THEN BEGIN
+        error = "has wrong time format: " + err
+      ENDIF
+    ENDIF ELSE BEGIN
+      error = "is an invalid data type: " + par_type
+    ENDELSE
   ENDIF ELSE BEGIN
     IF par_type EQ 'STRUCT' && N_ELEMENTS(structure_name) GT 0 THEN BEGIN
       structure_name = STRUPCASE(structure_name)
@@ -181,6 +206,23 @@ PRO prits_tools::check_ndims, parameter, valid_ndims, error
     error = "has wrong number of dimensions: " + trim(par_ndim)
   ENDIF ELSE BEGIN
     error = ''
+  ENDELSE
+END
+
+
+PRO prits_tools::check_nelements, parameter, valid_nelements, error
+  error = ''
+  IF N_ELEMENTS(valid_nelements) EQ 0 THEN return
+  IF N_ELEMENTS(valid_nelements) GT 2 THEN BEGIN
+    error = 'VALID_NELEMENTS must be scalar or 2-element vector'
+    return
+  ENDIF
+  par_nelements = size(parameter, /n_elements)
+  IF N_ELEMENTS(valid_nelements) EQ 1 THEN BEGIN
+    IF par_nelements NE valid_nelements THEN error='has wrong number of elements: '+trim(par_nelements)
+  ENDIF ELSE BEGIN
+    IF par_nelements LT valid_nelements[0] || par_nelements GT valid_nelements[1] THEN $
+      error='has wrong number of elements: '+trim(par_nelements)
   ENDELSE
 END
 
@@ -268,8 +310,9 @@ END
 
 
 PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=default, $
-  maxval=maxval,minval=minval, structure_name=structure_name, object_name=object_name, $
-  disallow_subclasses=disallow_subclasses, result=result
+  maxval=maxval, minval=minval, valid_nelements=valid_nelements, optional=optional, $
+  structure_name=structure_name, object_name=object_name, disallow_subclasses=disallow_subclasses, $
+  result=result
   compile_opt idl2, static
 
   pt = prits_tools()
@@ -279,27 +322,33 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   error = ''
   types_string = []
   foreach type, types DO types_string = [types_string, pt.typename_from_typecode(type, pt, error)]
+  IF error NE '' THEN errors = [errors, error]
 
-  valid_ndims_use = valid_ndims
   IF n_elements(parameter) EQ 0 THEN BEGIN
     IF n_elements(default) NE 0 THEN BEGIN
       parameter = default
       return
-    ENDIF ELSE IF (where(types_string EQ 'UNDEFINED'))[0] EQ -1 THEN BEGIN
-      errors = 'is undefined and no default has been specified'
-      GOTO, ABORT
+    ENDIF
+    IF (where(types_string EQ 'UNDEFINED'))[0] GE 0 || $
+      (n_elements(valid_nelements) GT 0 && valid_nelements[0] EQ 0) || $
+      keyword_set(optional) THEN BEGIN
+      return
     ENDIF ELSE BEGIN
-      valid_ndims_use = [0, valid_ndims]
+      error = 'is undefined and no default has been specified'
+      errors = [errors, error]
+      GOTO, ABORT
     ENDELSE
   ENDIF
-  IF error NE '' THEN errors = [errors, error]
 
   IF N_params() LT 5 THEN BEGIN
     on_error, 2
     message, 'Use: PARCHECK, parameter, parnum, name, types, n_dimensions'
   ENDIF
 
-  pt.check_ndims, parameter, valid_ndims_use, error
+  pt.check_ndims, parameter, valid_ndims, error
+  IF error NE '' THEN errors = [errors, error]
+
+  pt.check_nelements, parameter, valid_nelements, error
   IF error NE '' THEN errors = [errors, error]
 
   pt.check_type, parameter, types_string, error, pt, $
@@ -322,6 +371,13 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   dimension_strings = trim(valid_ndims)
   dimension_string = strjoin(dimension_strings, ', ')
   result = [result,'Valid number of dimensions are: '+dimension_string]
+
+  IF N_ELEMENTS(valid_nelements) GT 0 THEN BEGIN
+    elem_text = 'Valid number of elements are: '+trim(valid_nelements[0])
+    IF N_ELEMENTS(valid_nelements) GT 1 THEN $
+      elem_text += ' - '+trim(valid_nelements[1])
+    result = [result,elem_text]
+  ENDIF
 
   stype = ''
   FOR i = 0, N_elements( types_string )-1 DO BEGIN
@@ -373,12 +429,16 @@ PRO prits_tools::parcheck_test
   prits_tools.parcheck, a, 2, "test_02.1", ['BYTE'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 2.2 should be OK, undefined, but allowed'
+  print,'Test 2.2 should be OK, undefined, but allowed due to setting TYPE'
   prits_tools.parcheck, a, 2, "test_02.2", ['BYTE', 'undefined'], [0, 5], result=result
   print, result, format='(a)'
   print,''
-  print,'Test 2.3 should be OK, undefined, but allowed, tests implification of n_dim=0 if parameter=undefined'
-  prits_tools.parcheck, a, 2, "test_02.3", ['BYTE', 'undefined'], [4, 5], result=result
+  print,'Test 2.3 should be OK, undefined, but allowed due to setting VALID_NELEMENTS=[0,1]'
+  prits_tools.parcheck, a, 2, "test_02.3", 'BYTE', [4, 5], valid_nelement=[0,1], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 2.4 should be OK, undefined, but allowed due to setting OPTIONAL keyword'
+  prits_tools.parcheck, a, 2, "test_02.4", 'BYTE', [4, 5], /optional, result=result
   print, result, format='(a)'
   print,''
   print,'Test 3 should be OK, undefined, but default provided'
@@ -506,6 +566,58 @@ PRO prits_tools::parcheck_test
   print,''
   print,'Test 14.4 should be OK, test array of objects with name of superclass'
   prits_tools.parcheck, [a, a], 0, "test_14.4", 11, [0, 1], result=result, object_name='idlitvisualization'
+  print, result, format='(a)'
+
+  print,''
+  t = '1-jan-2010'
+  print,'Test 15.1 should be OK, test time'
+  prits_tools.parcheck, t, 0, "test_15.1", 'TIME', 0, result=result
+  print, result, format='(a)'
+  print,''
+  t = anytim2utc('1-jan-2010', /external)
+  print,'Test 15.2 should be OK, test time, external structure'
+  prits_tools.parcheck, t, 0, "test_15.2", 'TIME', 0, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.3 should be FAIL, test time, external structure against string'
+  prits_tools.parcheck, t, 0, "test_15.3", 'string', 0, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.4 should be OK, test time array'
+  prits_tools.parcheck, [t, t], 0, "test_15.4", 'TIME', 1, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.5 should be FAIL, test time array, with value zero'
+  prits_tools.parcheck, [134, 0], 0, "test_15.5", 'TIME', 1, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.6 should be OK, test time array, with value zero against TIME0'
+  prits_tools.parcheck, [134, 0], 0, "test_15.6", 'TIME0', 1, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 15.7 should be FAIL, test time, spelling mistake'
+  prits_tools.parcheck, '1-jap-2010', 0, "test_15.7", 'TIME0', 0, result=result
+  print, result, format='(a)'
+
+  print,''
+  print,'Test 16.1 should be OK, test number of elements'
+  prits_tools.parcheck, [1,2,3], 0, "test_16.1", 'numeric', 1, valid_nelement=3, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.2 should FAIL, test number of elements'
+  prits_tools.parcheck, [1,2,3,4], 0, "test_16.2", 'numeric', 1, valid_nelement=3, result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.3 should be OK, test number of elements array'
+  prits_tools.parcheck, [1,2,3], 0, "test_16.3", 'numeric', 1, valid_nelement=[2,4], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.4 should FAIL, test number of elements array'
+  prits_tools.parcheck, [1,2,3,4], 0, "test_16.4", 'numeric', 1, valid_nelement=[1,3], result=result
+  print, result, format='(a)'
+  print,''
+  print,'Test 16.5 should FAIL, test number of elements array'
+  prits_tools.parcheck, [1,2,3,4], 0, "test_16.5", 'numeric', 1, valid_nelement=[1,3,4], result=result
   print, result, format='(a)'
 END
 

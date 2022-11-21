@@ -1,6 +1,6 @@
-; $Id: 2022-07-14 19:31 CEST $
+; $Id: 2022-10-31 13:11 CET $
 FUNCTION spice_keyword_info_header
-  text = spice_inline_text()
+  text = inline_text()
 ;NAXIS1  =                    1 /
 ;NAXIS2  =                    1 /
 ;NAXIS3  =                    1 /

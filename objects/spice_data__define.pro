@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-09-22 11:55 CEST $
+; $Id: 2022-11-17 14:15 CET $
 
 
 ;+
@@ -197,6 +197,9 @@ END
 ;                 Default is zero.
 ;     TOP_DIR : A path to a directory in which the file should be saved. The necessary subdirectories
 ;                 will be created (e.g. level2/2020/06/21).
+;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
+;                 keyword allows you to specify to which path you send
+;                 the file. Default is 0.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -210,11 +213,13 @@ END
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;     no_fitting: If set, fitting won't be computed. This can still be done manually in xcfit_block.
-;     no_widget:  If set, xcfit_block will not be called
+;     no_widget:  If set, xcfit_block and small window to stopp fitting will not be called.
+;     no_xcfit_block: If set, xcfit_block will not be called, but small window to stopp fitting will
+;                 appear.
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
-;                     for the official level 3 files.
+;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
 ;                 level 3 FITS file, if it would have been saved.
 ;
@@ -228,8 +233,8 @@ END
 ;-
 
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
-  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
+  no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
+  official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
@@ -241,33 +246,47 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     collect_hdr=1
   ENDIF ELSE collect_hdr=0
 
+  filename_l2 = self.get_header_keyword('FILENAME', 0, '')
+  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  filename_out = filepath(filename_l3, /tmp)
+  file_info_l2 = spice_file2info(filename_l2)
+  file_id = 'V' + fns('##', file_info_l2.version) + $
+    '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
+    fns('-###', file_info_l2.rasterno)
+
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
       position=position, velocity=velocity, /init_all_cubes)
     if size(ana, /type) NE 8 then continue
-    original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+    IF collect_ana THEN BEGIN
+      if iwindow eq 0 then all_ana = ana $
+      else all_ana = [all_ana, ana]
+    ENDIF
 
     if ~keyword_set(no_fitting) then begin
       print, '====================='
       print, 'fitting data'
       print, 'this may take a while'
       print, '====================='
-      cfit_block, analysis=ana, /quiet, /double, /x_face, smart=1
+      cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
     endif
 
-    if ~keyword_set(no_widget) then begin
+    if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
       XCFIT_BLOCK, ana=ana
     endif
 
+    data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
+    original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
     if iwindow gt 0 then extension=1 else extension=0
-    headers = spice_ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), $
-      extension=extension, filename_l3=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
+
+    headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
+      extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data)
+      original_data=original_data, /spice)
 
     if iwindow eq 0 then file = filepath(filename_l3, /tmp)
     IF ~keyword_set(save_not) THEN BEGIN
@@ -280,16 +299,13 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       writefits, file, CONST, *headers[6], /append
     ENDIF
 
-    IF collect_ana THEN BEGIN
-      if iwindow eq 0 then all_ana = ana $
-      else all_ana = [all_ana, ana]
-    ENDIF
     IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
 
   spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
-    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, /force, dry_run=keyword_set(save_not)
+    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /force, $
+    dry_run=keyword_set(save_not)
   IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
   return, destination
 END

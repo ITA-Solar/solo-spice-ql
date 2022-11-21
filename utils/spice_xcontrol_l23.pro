@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-12 12:13 CEST $
+; $Id: 2022-11-04 14:11 CET $
 ;-
 ;
 ;
@@ -379,8 +379,8 @@ end
 
 pro spice_xcontrol_l23, file, group_leader=group_leader
 
-  file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
-  ;file = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
+  prits_tools.parcheck, file, 1, "file", 'string', 0
+  prits_tools.parcheck, group_leader, 0, "group_leader", 'integers', 0, /optional
  
   if n_params() lt 1 then begin
     message,'Usage: spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
@@ -423,7 +423,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   file_top_dir=''
   CASE file_info.level OF
     2: file_l2 = file_in
-    3: IF file_l3_officical NE file_in THEN BEGIN
+    3: IF file_l3_official NE file_in THEN BEGIN
       file_l3_user = file_in
       spice_ingest, file_l3_user, /user, /dry_run, destination=destination
       IF file_l3_user EQ destination THEN BEGIN

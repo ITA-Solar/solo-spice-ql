@@ -11,7 +11,7 @@
 ;      SPICE -- file management.
 ;
 ; CALLING SEQUENCE:
-;	     SPICE_INGEST, Filename [, index=index, /force, /nolevel, /search_subdir, /help, $
+;	     SPICE_INGEST, Filename [, path_index=path_index, /force, /nolevel, /search_subdir, /help, $
 ;	                   destination=destination, file_moved=file_moved, files_found=files_found]
 ;
 ; INPUTS:
@@ -19,7 +19,7 @@
 ;                Or a directory (scalar), then all spice files in this directory will be moved.
 ;
 ; OPTIONAL INPUTS:
-;      Index:   If $SPICE_DATA contains multiple paths, then this
+;      PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
 ;               keyword allows you to specify to which path you send
 ;               the file. Default is 0.
 ;      TOP_DIR: A path to a directory in which the file should be saved. The necessary subdirectories
@@ -70,10 +70,10 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2022-08-26 13:26 CEST $
+; $Id: 2022-10-13 11:24 CEST $
 
 
-PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
+PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel, $
   search_subdir=search_subdir, $
   destination=destination, file_moved=file_moved, files_found=files_found, $
   user_dir=user_dir, top_dir=top_dir, dry_run=dry_run, $
@@ -106,13 +106,13 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
 
   spice_paths=BREAK_path(topdir,/nocurrent)
   np=n_elements(spice_paths)
-  IF np EQ 1 || N_ELEMENTS(index) eq 0 THEN BEGIN
+  IF np EQ 1 || N_ELEMENTS(path_index) eq 0 THEN BEGIN
     topdir=spice_paths[0]
   ENDIF ELSE BEGIN
-    IF index LT np THEN BEGIN
-      topdir=spice_paths[index]
+    IF path_index LT np THEN BEGIN
+      topdir=spice_paths[path_index]
     ENDIF ELSE BEGIN
-      print, 'index is out of bounds: ' + strtrim(string(index),2) + ' >= ' + strtrim(string(np),2)
+      print, 'path_index is out of bounds: ' + strtrim(string(path_index),2) + ' >= ' + strtrim(string(np),2)
       return
     ENDELSE
   ENDELSE
@@ -123,11 +123,11 @@ PRO spice_ingest, filename, index=index, force=force, nolevel=nolevel, $
       istr=strpad(trim(i),4,fill=' ')+'. '
       print,istr+trim(spice_paths[i])
     ENDFOR
-    print,'Use INDEX=  to put a file in the appropriate path.'
+    print,'Use path_index=  to put a file in the appropriate path.'
     IF n_params() LT 1 THEN return
   ENDIF
 
-  IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
+  IF keyword_set(user_dir) && ~keyword_set(top_dir) THEN topdir = concat_dir(topdir, 'user')
 
   nfiles=n_elements(filename)
   IF nfiles GT 1 THEN BEGIN
