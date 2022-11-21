@@ -70,7 +70,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-11-17 14:31 CET $
+; $Id: 2022-11-21 12:03 CET $
 
 
 PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
@@ -97,7 +97,7 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
   prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=ana_given
   prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=ana_given
 
-  prits_tools.parcheck, filename_out, 0, 'filename_out', 'STRING', 0
+  prits_tools.parcheck, filepath_out, 0, 'filepath_out', 'STRING', 0
   prits_tools.parcheck, header_l2, 0, 'header_l2', 'STRING', 1, /optional
   prits_tools.parcheck, original_data, 0, 'original_data', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
   prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', [0, 1], VALID_NELEMENTS=max([1, ana_given]), $
@@ -114,14 +114,14 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
 
     if input_type then begin
       headers = ana2fitshdr(ana[iwindow], filename_out=filename_out, n_windows=n_windows, $
-        winno=iwindow, data_id=data_id, extension=extension, $
+        winno=iwindow, data_id=data_id[iwindow], extension=extension, $
         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
     endif else begin
       headers = ana2fitshdr(filename_out=filename_out, n_windows=n_windows, $
-        winno=iwindow, data_id=data_id, extension=extension, $
+        winno=iwindow, data_id=data_id[iwindow], extension=extension, $
         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
@@ -137,6 +137,5 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
     writefits, filepath_out, CONST, *headers[6], /append
 
   endfor ; iwindow=0,n_windows-1
-
 
 END
