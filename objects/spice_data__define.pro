@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-11-17 14:15 CET $
+; $Id: 2022-11-22 15:07 CET $
 
 
 ;+
@@ -432,7 +432,7 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
-  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity)
+  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity, line_list=spice_line_list())
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
 
