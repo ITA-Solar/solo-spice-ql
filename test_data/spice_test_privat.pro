@@ -121,10 +121,10 @@ PRO spice_test_privat, file_number
   ;stop
   ;help,ana
 
-  l3_file = obj->create_l3_file(0, /no_widget, /no_fitting)
+  l3_file = obj->create_l3_file(window_index, /no_widget, /no_fitting)
   print,l3_file
 
-  l3_file = obj->create_l3_file(0, /no_widget, /no_fitting, /no_line_list)
+  l3_file = obj->create_l3_file(window_index, /no_widget, /no_fitting, /no_line_list)
   print,l3_file
   
     ana = obj->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
