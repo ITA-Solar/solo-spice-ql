@@ -49,7 +49,7 @@
 ;      Ver. 1.3, Nov-2022, Martin Wiesmann: Uses now spice_line_list() to get a list of possible
 ;                                            peaks to be included.
 ;-
-; $Id: 2022-11-22 15:06 CET $
+; $Id: 2022-11-23 11:29 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -61,7 +61,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
   prits_tools.parcheck, lam, 2, "lam", 'NUMERIC', [2,3,4]
   prits_tools.parcheck, widmin, 0, "widmin", 'NUMERIC', 0, minval=0, /optional
   prits_tools.parcheck, velocity, 0, "velocity", 'NUMERIC', 0, /optional
-  prits_tools.parcheck, line_list, 0, "line_list", 'OBJREF', 0, object_name='hash', /optional
+  prits_tools.parcheck, line_list, 0, "line_list", 'OBJREF', 1, object_name='hash', /optional
 
   use_list = keyword_set(line_list)
   blue_means_negative_velocity = 1
@@ -97,9 +97,9 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
         ENDIF ELSE BEGIN
           peakinds[iline] = lambda_ind
         ENDELSE
-        ind = where(peakinds gt 0, npeaks)
-        if npeaks gt 0 then peakinds = peakinds[ind]
       endfor
+      ind = where(peakinds gt 0, npeaks)
+      if npeaks gt 0 then peakinds = peakinds[ind]
 
       fwhm = intarr(npeaks) ; TODO: Estimate FWHM in pixels for each peak
       fwhm[*] = 3 ; for now
@@ -146,7 +146,8 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
         gauss.param(1).trans_a = -gauss.param(1).trans_a
       ENDIF
       lam0txt = trim(lam0[i],'(F6.2)')
-      gauss.name = 'AutoGauss ' + lam0txt + 'nm, ' + line_list[lam0[i]]
+      gauss.name = 'AutoGauss ' + lam0txt
+      IF use_list THEN gauss.name = gauss.name + 'nm, ' + line_list[lam0[i]]
       gaussians[i] = gauss
     ENDFOR
 
