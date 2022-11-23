@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-11-22 15:07 CET $
+; $Id: 2022-11-23 11:29 CET $
 
 
 ;+
@@ -218,6 +218,8 @@ END
 ;                 appear.
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
+;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
+;                 By default, the list from the function spice_line_list() will be used.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
 ;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
@@ -235,7 +237,7 @@ END
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
-  all_ana=all_ana, all_result_headers=all_result_headers
+  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
@@ -257,7 +259,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      position=position, velocity=velocity, /init_all_cubes)
+      position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list)
     if size(ana, /type) NE 8 then continue
     IF collect_ana THEN BEGIN
       if iwindow eq 0 then all_ana = ana $
@@ -410,6 +412,8 @@ END
 ;                 be undefined.
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
+;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
+;                 By default, the list from the function spice_line_list() will be used.
 ;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
 ;                 This keyword is ignored if NO_MASKING is set.
 ;
@@ -418,7 +422,8 @@ END
 ;
 ;-
 FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  init_all_cubes=init_all_cubes, debug_plot=debug_plot, position=position, velocity=velocity
+  init_all_cubes=init_all_cubes, debug_plot=debug_plot, position=position, velocity=velocity, $
+  no_line_list=no_line_list
   ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
@@ -432,7 +437,8 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
-  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity, line_list=spice_line_list())
+  IF ~keyword_set(no_line_list) THEN line_list=spice_line_list()
+  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity, line_list=line_list)
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
 
