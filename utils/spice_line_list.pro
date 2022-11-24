@@ -1,11 +1,36 @@
-; Test line list
-; $Id: 2022-11-21 14:57 CET $
+;+
+; Name        :
+; SPICE_LINE_LIST
+;
+; Purpose     :
+; This function return a list of predefined lines that should be
+; fitted in the spectrum data. The line list has been taken from
+; 
+; A. Fludra et al., A&A 656, A38 (2021)
+; https://doi.org/10.1051/0004-6361/202141221
+; Table 1, except where stated differently
+;
+; Use         :
+;       line_list = spice_line_list()
+;
+; Outputs     :
+; A HASH table, with the wavelength in nm as keys, and the
+; corresponding names as values.
+;
+; Category    : SPICE, Fitting
+;
+; Written     : Martin Wiesmann, UIO, November 2022
+;
+; $Id: 2022-11-24 14:52 CET $
+;-
+;
+;----------------------------------------------------------
+
 
 function spice_line_list
-  ; from A. Fludra et al., A&A 656, A38 (2021)
-  ; https://doi.org/10.1051/0004-6361/202141221
-  ; Table 1, except where stated differently
+
   line_list = HASH( $
+
     ; Short Wavelength Channel
     70.03, 'Ar VII + S III', $ ; from Fig. 1
     70.23, 'O III', $

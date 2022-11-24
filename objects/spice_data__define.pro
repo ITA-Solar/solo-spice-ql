@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-11-23 11:29 CET $
+; $Id: 2022-11-24 14:52 CET $
 
 
 ;+
@@ -219,7 +219,7 @@ END
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
-;                 By default, the list from the function spice_line_list() will be used.
+;                 By default, the list returned by the function spice_line_list() will be used.
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
 ;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
@@ -413,7 +413,7 @@ END
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
-;                 By default, the list from the function spice_line_list() will be used.
+;                 By default, the list returned by the function spice_line_list() will be used.
 ;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
 ;                 This keyword is ignored if NO_MASKING is set.
 ;
