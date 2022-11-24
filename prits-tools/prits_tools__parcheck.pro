@@ -109,12 +109,13 @@
 ; Common      :	None.
 ;
 ; Restrictions:
-; LIST, HASH, DICTIONARY and ORDEREDHASH alway have dimension 1, except if they are empty.
+; LIST, HASH, DICTIONARY and ORDEREDHASH always have dimension 1, except if they are empty.
 ; A 1-dimensional array of those will also have dimension 1.
 ;
 ; Side effects:
-;	If an error in the parameter is found, a message is printed and a RETALL issued,
-;	except if the keyword RESULT is present.
+;	If an error in the parameter is found, an error message is printed and an exception issued,
+;	except if the keyword RESULT is present. In that case RESULT will contain the error message,
+;	and no exception is thrown.
 ;
 ; Category    :	Utilities, Miscellaneous
 ;
@@ -138,7 +139,7 @@
 ;
 ; Version     :	Version 3, September 2022
 ;
-; $Id: 2022-10-28 10:07 CEST $
+; $Id: 2022-11-24 14:52 CET $
 ;-
 ;
 ;----------------------------------------------------------
