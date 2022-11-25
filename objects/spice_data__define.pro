@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-11-24 14:52 CET $
+; $Id: 2022-11-25 13:49 CET $
 
 
 ;+
@@ -2246,6 +2246,7 @@ FUNCTION spice_data::has_dumbbells, window_index
       return, 1
     ENDIF
   ENDFOR
+  IF N_ELEMENTS(window_index) GT 0 THEN return, 0
   return, self.dumbbells[0] GE 0 || self.dumbbells[1] GE 0
 END
 
