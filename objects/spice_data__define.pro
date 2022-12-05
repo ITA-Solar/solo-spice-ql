@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-12-02 20:33 CET $
+; $Id: 2022-12-05 14:20 CET $
 
 
 ;+
@@ -1393,7 +1393,7 @@ FUNCTION spice_data::get_header, extension_index, lower_dumbbell=lower_dumbbell,
   IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower)
   IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper)
   IF ~self.check_extension_index(extension_index) THEN return, !NULL
-  IF keyword_set(structure) then return, fitshead2struct(*(*self.window_headers_string)[extension_index]) $
+  IF keyword_set(structure) then return, *(*self.window_headers)[extension_index] $
   ELSE return, *(*self.window_headers_string)[extension_index]
 END
 
