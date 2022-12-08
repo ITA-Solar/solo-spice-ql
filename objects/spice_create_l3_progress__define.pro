@@ -15,6 +15,9 @@
 ;                 spice_create_l3_progress = spice_create_l3_progress(input...)
 ;
 ; INPUTS:
+;     n_files: The number of files to be processed. This number is ignored if 'FILES' is provided, but
+;             required if 'FILES' is not provided.
+;     files: An array of the names of the files to be processed. Preferably with the full path. 
 ;
 ; OUTPUT:
 ;     Object of type SPICE_CREATE_L3_PROGRESS which ...
@@ -30,7 +33,7 @@
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2022-12-07 12:14 CET $
+; $Id: 2022-12-08 13:51 CET $
 
 
 ;+
@@ -38,9 +41,12 @@
 ;     Class initialisation function
 ;
 ; INPUTS:
+;     n_files: (Possibly optional) The number of files to be processed. This number is ignored if 'FILES' is provided, but
+;             required if 'FILES' is not provided.
+;     files: Optional. An array of the names of the files to be processed. Preferably with the full path.
 ;
 ; OUTPUT:
-;     1 (True) if initialization succeeded, 0 (False) otherwise
+;     1 (True) if initialization succeeded, 0 (False) otherwise.
 ;-
 FUNCTION spice_create_l3_progress::init, n_files, files=files
   COMPILE_OPT IDL2
@@ -56,7 +62,7 @@ FUNCTION spice_create_l3_progress::init, n_files, files=files
     self.n_files = n_files
     self.files_given = 0
     files = strarr(n_files)
-    for i=0,n_files-1 do files[i]=string(i, format='(I9)')
+    for i=0,n_files-1 do files[i]=fns('File ######', i)
   ENDELSE
   self.files = ptr_new(files)
   temp = strlen(strtrim(self.n_files, 2))
@@ -90,16 +96,32 @@ END
 
 ;+
 ; Description:
-;     called by obj_destroy, frees all pointers and closes all associated files
+;     This procedure is called if the object is destroyed, it frees all pointers and kills all widgets.
 ;-
 pro spice_create_l3_progress::cleanup
   COMPILE_OPT IDL2
 
-  print, 'cleanup'
+  ptr_free, self.files
   xkill, self.base
 END
 
 
+;+
+; Description:
+;     This procedure sets the sliders and labels to the next file to be processed. The process first
+;     checks whether the user clicked on the STOP button, and if yes, returns immediately without doing 
+;     anything and setting 'halt' to 1.
+;     If the last file has already been processed, the procedure issues a warning, but does otherwise nothing.
+;
+; INPUTS:
+;     n_windows: The number of windows in the next file to be processed.
+;     filename: Optional. The name and full path of the next file to be processed.
+;               This input is ignored if a list of filenames has been provided when initialising the object.
+;     window_name: Optional. The name of the first window of the next file.
+;
+; OUTPUT:
+;     halt: Will be set to 1 if user clicked on 'STOP' button.
+;-
 pro spice_create_l3_progress::next_file, n_windows, filename=filename, window_name=window_name, halt=halt
   COMPILE_OPT IDL2
 
@@ -129,18 +151,67 @@ pro spice_create_l3_progress::next_file, n_windows, filename=filename, window_na
 
   self.i_window = 0
   IF ~keyword_set(window_name) THEN BEGIN
-    self.window_name = string(self.i_window, format=self.n_windows_format)
+    self.window_name = fns('Window ##', self.i_window)
   ENDIF ELSE BEGIN
     self.window_name = window_name
   ENDELSE
   self.n_windows = n_windows
 
-  widget_control, self.slider_total, set_value=float(self.i_file)/float(self.n_files)*100.0;, /show
-  widget_control, self.slider_file, set_value=0;, /show
+  widget_control, self.slider_total, set_value=float(self.i_file)/float(self.n_files)*100.0
+  widget_control, self.slider_file, set_value=0
   widget_control, self.label_current_file_num, set_value='File '+string(self.i_file+1, format=self.n_files_format)+ $
     ' of '+string(self.n_files, format=self.n_files_format)
   widget_control, self.label_current_path, set_value=file_dirname(self.filename)
   widget_control, self.label_current_file, set_value=file_basename(self.filename)
+  widget_control, self.label_current_window_num, set_value='Window '+string(self.i_window+1, format=self.n_windows_format)+ $
+    ' of '+string(self.n_windows, format=self.n_windows_format)
+  widget_control, self.label_current_window, set_value=self.window_name
+end
+
+
+;+
+; Description:
+;     This procedure sets the sliders and labels to the next window of the current file to be processed. The process first
+;     checks whether the user clicked on the STOP button, and if yes, returns immediately without doing
+;     anything and setting 'halt' to 1.
+;     If the last window of the current file has already been processed, the procedure issues a warning, but does otherwise nothing.
+;
+; INPUTS:
+;     window_name: Optional. The name of the first window of the next file.
+;
+; OUTPUT:
+;     halt: Will be set to 1 if user clicked on 'STOP' button.
+;-
+pro spice_create_l3_progress::next_window, window_name=window_name, halt=halt
+  COMPILE_OPT IDL2
+
+  prits_tools.parcheck, window_name, 0, "window_name", 'string', 0, /optional
+
+  event = widget_event(self.stop_button, /nowait)
+  IF event.id NE 0L THEN BEGIN
+    halt = 1
+    return
+  END
+  halt = 0
+
+  self.i_window = self.i_window + 1
+  IF self.i_window EQ self.n_windows THEN BEGIN
+    message, 'All windows of this file processed already', /informational
+    self.i_window = self.i_window - 1
+    return
+  ENDIF
+
+  IF ~keyword_set(window_name) THEN BEGIN
+    self.window_name = fns('Window ##', self.i_window)
+  ENDIF ELSE BEGIN
+    self.window_name = window_name
+  ENDELSE
+
+  percent_file = float(self.i_file) / float(self.n_files) * 100.0
+  percent_window = float(self.i_window) / float(self.n_windows)
+  percent_total = percent_file + 1.0 / float(self.n_files) * percent_window * 100.0
+  widget_control, self.slider_total, set_value=percent_total
+  widget_control, self.slider_file, set_value=percent_window*100.0
   widget_control, self.label_current_window_num, set_value='Window '+string(self.i_window+1, format=self.n_windows_format)+ $
     ' of '+string(self.n_windows, format=self.n_windows_format)
   widget_control, self.label_current_window, set_value=self.window_name
