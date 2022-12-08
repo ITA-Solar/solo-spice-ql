@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-12-05 14:20 CET $
+; $Id: 2022-12-08 14:13 CET $
 
 
 ;+
@@ -237,9 +237,13 @@ END
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
-  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list
+  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
+  progress_widget=progress_widget
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
+
+  prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', $
+    default=spice_create_l3_progress(1)
 
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
@@ -255,8 +259,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   file_id = 'V' + fns('##', file_info_l2.version) + $
     '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno)
+    
+  progress_widget->next_file, N_ELEMENTS(window_index), filename=filename_l2, $
+    window_name=self.get_header_keyword('EXTNAME', 0, fns('Window ##', 0)), halt=halt
 
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
+
+    IF iwindow GT 0 THEN progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', 0, fns('Window ##', iwindow)), halt=halt
+    if halt then begin
+      print,'Calculation stopped'
+      return, ''
+    endif
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
       position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list)
