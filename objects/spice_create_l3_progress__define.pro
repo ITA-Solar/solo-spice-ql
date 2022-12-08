@@ -4,6 +4,14 @@
 ;
 ; PURPOSE:
 ;     SPICE_CREATE_L3_PROGRESS__DEFINE defines the class structure 'spice_create_l3_progress'.
+;     This class is used to show the progress of the creation of SPICE level 3 files. This is done
+;     in a widget, which is controlled by this class.
+;     It is used in SPICE_CREATE_L3_DRIVER and SPICE_DATA::create_l3_file.
+;     
+;     The class is first initialised with the number of files to processed.
+;     Before starting with the next (or first) file, the method 'next_file' is called.
+;     Before starting processing the next window (not the first one), the method
+;     'next_window' is called.
 ;
 ; CATEGORY:
 ;     Solar Orbiter - SPICE.
@@ -33,7 +41,7 @@
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2022-12-08 13:51 CET $
+; $Id: 2022-12-08 13:56 CET $
 
 
 ;+
