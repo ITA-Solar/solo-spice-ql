@@ -8,7 +8,7 @@
 ; This widget is used by SPICE_XCONTROL and SPICE_XCONTROL_L23.
 ;
 ; CATEGORY:
-;       Solar Orbiter - SPICE; QuickLook.
+;       Solar Orbiter - SPICE; Utility.
 ;
 ; CALLING SEQUENCE:
 ;       result = spice_create_l3_widget( l2_object [, group_leader] [, window_index=window_index] $
@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-12 13:37 CEST $
+; $Id: 2022-12-09 10:41 CET $
 ;-
 ;
 ;
