@@ -12,7 +12,7 @@
 ;        - 1 PNG image without any axis of height 64 pixels. (image_type='64')
 ;
 ; CATEGORY:
-;      SPICE -- utility
+;      Solar Orbiter - SPICE; Utility.
 ;
 ; CALLING SEQUENCE:
 ;      spice_create_l3_images, l3_file, out_dir
@@ -40,7 +40,7 @@
 ;      Ver. 1, 23-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-10-28 10:07 CEST $
+; $Id: 2022-12-09 10:41 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT

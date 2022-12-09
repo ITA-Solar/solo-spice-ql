@@ -6,7 +6,7 @@
 ;      This function creates multiple level 3 files and optionally images.
 ;
 ; CATEGORY:
-;      SPICE -- utility
+;      Solar Orbiter - SPICE; Utility.
 ;
 ; CALLING SEQUENCE:
 ;      spice_create_l3_driver
@@ -101,7 +101,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-11-14 15:01 CET $
+; $Id: 2022-12-09 10:41 CET $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $

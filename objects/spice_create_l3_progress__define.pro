@@ -14,7 +14,7 @@
 ;     'next_window' is called.
 ;
 ; CATEGORY:
-;     Solar Orbiter - SPICE.
+;     Solar Orbiter - SPICE; Utility.
 ;
 ; CALLING SEQUENCE:
 ;     The SPICE_CREATE_L3_PROGRESS__DEFINE procedure is not called directly. An
@@ -23,7 +23,7 @@
 ;                 spice_create_l3_progress = spice_create_l3_progress(input...)
 ;
 ; INPUTS:
-;     n_files: The number of files to be processed. This number is ignored if 'FILES' is provided, but
+;     n_files: (Possibly optional) The number of files to be processed. This number is ignored if 'FILES' is provided, but
 ;             required if 'FILES' is not provided.
 ;     files: An array of the names of the files to be processed. Preferably with the full path.
 ;
@@ -37,11 +37,31 @@
 ; PROCEDURE:
 ;
 ; RESTRICTIONS:
+; 
+; EXAMPLE:
+; pro create_l3_file, file, progress_widget
+;   progress_widget->next_file, n_windows, halt=halt
+;   IF halt THEN return
+;   FOR iwin=0,n_windows-1 DO BEGIN
+;     progress_widget->next_window, window_name=window_name, halt=halt
+;     IF halt THEN return
+;     ; calculate l3 data
+;   ENDFOR
+;   ; write l3 file
+; end
+; 
+; pro create_many_l3_files
+;   progress_widget = spice_create_l3_progress(files=spice_l2_files)
+;   FOR ifile=0,N_ELEMENTS(spice_l2_files)-1 DO BEGIN
+;     create_l3_file, spice_l2_files[ifile], progress_widget
+;     IF progress_widget->halted() THEN return
+;   ENDFOR
+; end
 ;
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2022-12-09 10:21 CET $
+; $Id: 2022-12-09 10:41 CET $
 
 
 ;+
