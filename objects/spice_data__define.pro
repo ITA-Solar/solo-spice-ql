@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-12-08 14:13 CET $
+; $Id: 2022-12-09 10:21 CET $
 
 
 ;+
@@ -242,8 +242,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', $
-    default=spice_create_l3_progress(1)
+  prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
+  IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1)
 
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
@@ -259,17 +259,19 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   file_id = 'V' + fns('##', file_info_l2.version) + $
     '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno)
-    
-  progress_widget->next_file, N_ELEMENTS(window_index), filename=filename_l2, $
-    window_name=self.get_header_keyword('EXTNAME', 0, fns('Window ##', 0)), halt=halt
+
+  IF ~keyword_set(no_widget) THEN $
+    progress_widget->next_file, N_ELEMENTS(window_index), filename=filename_l2, halt=halt
 
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
 
-    IF iwindow GT 0 THEN progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', 0, fns('Window ##', iwindow)), halt=halt
-    if halt then begin
-      print,'Calculation stopped'
-      return, ''
-    endif
+    IF ~keyword_set(no_widget) THEN BEGIN
+      progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index[iwindow], fns('Window ##', iwindow)), halt=halt
+      if halt then begin
+        print,'Calculation stopped'
+        return, 'Cancelled'
+      endif
+    ENDIF
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
       position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list)
