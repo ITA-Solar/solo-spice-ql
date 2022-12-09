@@ -200,6 +200,7 @@ END
 ;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
 ;                 keyword allows you to specify to which path you send
 ;                 the file. Default is 0.
+;     progress_widget: An object of type SPICE_CREATE_L3_PROGRESS, to display the progress of the creation.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -237,9 +238,13 @@ END
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
-  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list
+  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
+  progress_widget=progress_widget
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
+
+  prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
+  IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1)
 
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
@@ -256,7 +261,18 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno)
 
+  IF ~keyword_set(no_widget) THEN $
+    progress_widget->next_file, N_ELEMENTS(window_index), filename=filename_l2, halt=halt
+
   for iwindow=0,N_ELEMENTS(window_index)-1 do begin
+
+    IF ~keyword_set(no_widget) THEN BEGIN
+      progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index[iwindow], fns('Window ##', iwindow)), halt=halt
+      if halt then begin
+        print,'Calculation stopped'
+        return, 'Cancelled'
+      endif
+    ENDIF
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
       position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list)
@@ -1393,7 +1409,7 @@ FUNCTION spice_data::get_header, extension_index, lower_dumbbell=lower_dumbbell,
   IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower)
   IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper)
   IF ~self.check_extension_index(extension_index) THEN return, !NULL
-  IF keyword_set(structure) then return, fitshead2struct(*(*self.window_headers_string)[extension_index]) $
+  IF keyword_set(structure) then return, *(*self.window_headers)[extension_index] $
   ELSE return, *(*self.window_headers_string)[extension_index]
 END
 

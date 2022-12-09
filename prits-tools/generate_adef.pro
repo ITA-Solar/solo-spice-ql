@@ -49,7 +49,7 @@
 ;      Ver. 1.3, Nov-2022, Martin Wiesmann: Uses now spice_line_list() to get a list of possible
 ;                                            peaks to be included.
 ;-
-; $Id: 2022-11-23 11:29 CET $
+; $Id: 2022-12-05 14:34 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -139,7 +139,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     FOR i=0,n_elements(peakinds)-1 DO BEGIN
       gauss = spice_mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
         max_lam=lammax[i], min_lam=lammin[i],$
-        min_fwhm = widmin[i], max_fwhm = widmax[i],$
+        min_fwhm = widmin, max_fwhm = widmax[i],$
         min_intens=intmin[i], $
         velocity=vel)
       IF ~keyword_set(position) AND keyword_set(blue_means_negative_velocity) THEN BEGIN
