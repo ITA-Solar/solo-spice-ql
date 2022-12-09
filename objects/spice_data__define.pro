@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-12-09 10:47 CET $
+; $Id: 2022-12-02 20:33 CET $
 
 
 ;+
