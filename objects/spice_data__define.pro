@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-12-09 10:21 CET $
+; $Id: 2022-12-09 10:47 CET $
 
 
 ;+
@@ -200,6 +200,7 @@ END
 ;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
 ;                 keyword allows you to specify to which path you send
 ;                 the file. Default is 0.
+;     progress_widget: An object of type SPICE_CREATE_L3_PROGRESS, to display the progress of the creation.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
