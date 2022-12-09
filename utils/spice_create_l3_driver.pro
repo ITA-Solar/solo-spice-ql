@@ -101,7 +101,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2022-12-09 10:48 CET $
+; $Id: 2022-12-09 11:01 CET $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
@@ -137,7 +137,7 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
     count_file = N_ELEMENTS(l2_files)
     files = l2_files
   ENDELSE
-  
+
   IF ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(files=files)
 
   files_l3 = []
@@ -170,7 +170,11 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
         l3_file = l2_object->create_l3_file(no_masking=no_masking, approximated_slit=approximated_slit, $
           no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=~keyword_set(show_xcfit_block), position=position, velocity=velocity, $
           official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, progress_widget=progress_widget)
-      ENDIF
+      ENDIF ELSE BEGIN
+        IF ~keyword_set(no_widget) THEN progress_widget->next_file, 1
+      ENDELSE
+
+      IF progress_widget->halted() THEN return
 
       files_l3 = [files_l3, l3_file]
     ENDIF ELSE BEGIN
