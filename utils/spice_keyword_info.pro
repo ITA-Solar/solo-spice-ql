@@ -1,4 +1,4 @@
-; $Id: 2022-10-31 13:11 CET $
+; $Id: 2022-12-16 10:25 CET $
 FUNCTION spice_keyword_info_header
   text = inline_text()
 ;NAXIS1  =                    1 /
@@ -30,7 +30,26 @@ FUNCTION spice_keyword_info_header
 ;CDELT2  =              4.00000 /
 ;CUNIT2  = '            '       / 
 ;CTYPE2  = '            '       /
-;                               /
+;  
+;          ADD NEW KEYWORDS SENT FROM TERJE 15. DECEMBER 2022 -------------
+;
+;CRDER1  =       0.163271873730 / [arcsec] Mean stddev of Solar X
+;CRDER2  =       0.182844822694 / [arcsec] Mean stddev of Solar Y
+;CWERR1  =        6.99129430802 / [arcsec] Max absolute distortion, Solar X
+;CWERR2  =       0.467100419833 / [arcsec] Max absolute distortion, Solar Y
+;NAPRXPIX=                    0 / Number of approx. pix. b.f. geo. corr., now NaN
+;NWIN_ORG=                   12 / Number of windows before merging adjacent win.
+;PCT_APRX=              0.00000 / NAPRXPIX/NTOTPIX*100  ### MERK PCT_APRX, IKKE PCT_APR!
+;PCT_CMPL=              50.0000 / Completeness of data set, all windows combined
+;
+;PXCOV3  = '46-109, 209-240, 626-689, 695-726, 752-783, 914-977, 1137-1168, 171’
+;
+;RADCAL  =        3926.48650374 / [DN/(W/m2/sr/nm)] Average calibration factor
+;
+;WAVECOV = '70.01061-70.790746, 71.580633-72.068218, 75.57883-76.358966, 76.232’
+;
+;          END NEW KEYWORDS SENT FROM TERJE 15. DECEMBER 2022 --------------
+;
 ;AUTHOR  = 'Tim Grundy'         / Author of study  
 ;STP     =                  122 / SoLO Short-Term Plan number   
 ;DSUN_AU =       0.521442615073 / [AU] S/C distance from Sun    
