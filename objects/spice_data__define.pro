@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-12-02 20:33 CET $
+; $Id: 2023-01-04 11:40 CET $
 
 
 ;+
@@ -2366,7 +2366,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
         col_num = strtrim(string(fxbcolnum(unit, ttypes_up[i])), 2)
         (*self.bintable_columns)[ind].wcsn = strtrim(fxpar(hdr, 'WCSN'+col_num, missing=''), 2)
         (*self.bintable_columns)[ind].tform = strtrim(fxpar(hdr, 'TFORM'+col_num, missing=''), 2)
-        (*self.bintable_columns)[ind].ttype = strtrim(fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment), 2)
+        (*self.bintable_columns)[ind].ttype = strup(strtrim(fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment), 2))
         comment = strtrim(strcompress(comment), 2)
         (*self.bintable_columns)[ind].tdim = strtrim(fxpar(hdr, 'TDIM'+col_num, missing=''), 2)
         (*self.bintable_columns)[ind].tdmin = strtrim(fxpar(hdr, 'TDMIN'+col_num, missing=''), 2)
