@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 2022-09-20 15:06 CEST $
 
 
 PRO spice_browser_base_event, event
@@ -105,8 +105,11 @@ PRO spice_browser_base_event, event
           yt='Y-pixel: '+trim(state.wid_data.ypix)
           widget_control,state.ytext,set_value=yt
           ;
-          tt='Time: '+state.wid_data.midtime[xpix]
+          tt='S/C Time: '+state.wid_data.midtime[xpix]
           widget_control,state.ttext,set_value=tt
+          ;
+          ett='Earth Time: '+state.wid_data.midtime_earth[xpix]
+          widget_control,state.ettext,set_value=ett
           ;
           widget_control,state.spice_browser_base,set_uvalue=state
           ;
@@ -414,22 +417,22 @@ PRO spice_browser_base_event, event
     ;
     ; the following replaces the sji_d tag with the new sji object
     ;
-    
-;    sji_file=state.wid_data.sji_file[event.index]
-;    state_temp=rem_tag(state,'sji_d')
-;    state=0
-;    state=add_tag(state_temp,iris_sji(sji_file),'sji_d')
-;    state_temp=0
-;    ;
-;    ; For the droplist with the number of frames options, I need to re-do
-;    ; the options since different channels may have different numbers of frames.
-;    sji_droplist_options=spice_browser_sji_frame_options(state, $
-;      default_option=default_option)
-;    state.wid_data.sji_mov_frames=fix(sji_droplist_options[default_option])
-;
-;    ;; sji_nexp=state.sji_d->getnexp(0)
-;    ;; sji_droplist_value=[trim(1),trim(sji_nexp)]
-;    widget_control,state.sji_frames_droplist,set_value=sji_droplist_options
+
+    ;    sji_file=state.wid_data.sji_file[event.index]
+    ;    state_temp=rem_tag(state,'sji_d')
+    ;    state=0
+    ;    state=add_tag(state_temp,iris_sji(sji_file),'sji_d')
+    ;    state_temp=0
+    ;    ;
+    ;    ; For the droplist with the number of frames options, I need to re-do
+    ;    ; the options since different channels may have different numbers of frames.
+    ;    sji_droplist_options=spice_browser_sji_frame_options(state, $
+    ;      default_option=default_option)
+    ;    state.wid_data.sji_mov_frames=fix(sji_droplist_options[default_option])
+    ;
+    ;    ;; sji_nexp=state.sji_d->getnexp(0)
+    ;    ;; sji_droplist_value=[trim(1),trim(sji_nexp)]
+    ;    widget_control,state.sji_frames_droplist,set_value=sji_droplist_options
     ;
     ;
     widget_control,state.spice_browser_base,set_uval=state
@@ -783,6 +786,23 @@ PRO spice_browser_base_event, event
       ENDIF
     END
 
+    state.mask_butt: BEGIN
+      meta=spice_browser_get_metadata(state.data)
+      spice_browser_update_widdata,state,meta
+      spice_browser_update_info,state
+      widget_control,state.spice_browser_base,set_uvalue=state
+      widget_control,state.exp_slider,set_value=xpix_chunk
+      n=state.wid_data.n_plot_window
+      FOR i=0,n-1 DO BEGIN
+        spice_browser_update_image,state,i
+        spice_browser_update_spectrum,state,i
+        spice_browser_plot_image,state,i
+        spice_browser_plot_spectrum,state,i
+      ENDFOR
+      IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
+      spice_browser_goes_plot,state
+    END
+
     ;
     ; Where nexp_prp>1, allows specific exp. time to be selected.
     ;
@@ -808,55 +828,55 @@ PRO spice_browser_base_event, event
     END
 
 
-;    state.sji_movie_butt: BEGIN
-;      ;
-;      ; This is the 'Show Movie' button and it sends the movie parameters to
-;      ; ximovie
-;      ;
-;
-;      ; A quirk of ximovie is that it will crash if pos is set to the
-;      ; full size of the SJI images. I thus check the status of im_zoom:
-;      ; if no zoom (i.e., full image) then pos is not defined.
-;      ;
-;      im_zoom=state.wid_data.im_zoom
-;      IF im_zoom NE 0 THEN pos=[state.wid_data.sji_xrange,state.wid_data.sji_yrange]
-;
-;      widget_control,state.min_text_sji,get_value=sji_min
-;      widget_control,state.max_text_sji,get_value=sji_max
-;
-;      i=state.wid_data.sji_frame
-;      n=state.wid_data.sji_nframe
-;      d=state.wid_data.sji_mov_frames
-;
-;      IF d EQ n THEN BEGIN
-;        first_im=0
-;        last_im=n-1
-;      ENDIF ELSE BEGIN
-;        d2=fix((fix(d)-1)/2.)
-;        first_im=max([0,i-d2])
-;        last_im=min([i+d2,n-1])
-;      ENDELSE
-;
-;      state.sji_d->ximovie,pos=pos, log=state.wid_data.linlog, $
-;        first_im=first_im,last_im=last_im,start_im=i
-;    END
-;
-;    state.sji_frames_droplist: BEGIN
-;      widget_control,state.sji_frames_droplist,get_value=value
-;      result=value[event.index]
-;      IF trim(result) EQ 'all' THEN sji_mov_frames=state.wid_data.sji_nframe $
-;      ELSE sji_mov_frames=fix(result)
-;      state.wid_data.sji_mov_frames=sji_mov_frames
-;      ;
-;      ; Update the movie duration widget
-;      ;
-;      sji_mov_dur=(sji_mov_frames*state.wid_data.sji_cadence)/60.
-;      sji_mov_dur_txt=trim(string(sji_mov_dur,format='(f7.1)'))
-;      sji_dur_txt='Movie duration: '+sji_mov_dur_txt+' mins (approx)'
-;      widget_control,state.sji_dur_text,set_val=sji_dur_txt
-;      ;
-;      widget_control,state.spice_browser_base,set_uval=state
-;    END
+    ;    state.sji_movie_butt: BEGIN
+    ;      ;
+    ;      ; This is the 'Show Movie' button and it sends the movie parameters to
+    ;      ; ximovie
+    ;      ;
+    ;
+    ;      ; A quirk of ximovie is that it will crash if pos is set to the
+    ;      ; full size of the SJI images. I thus check the status of im_zoom:
+    ;      ; if no zoom (i.e., full image) then pos is not defined.
+    ;      ;
+    ;      im_zoom=state.wid_data.im_zoom
+    ;      IF im_zoom NE 0 THEN pos=[state.wid_data.sji_xrange,state.wid_data.sji_yrange]
+    ;
+    ;      widget_control,state.min_text_sji,get_value=sji_min
+    ;      widget_control,state.max_text_sji,get_value=sji_max
+    ;
+    ;      i=state.wid_data.sji_frame
+    ;      n=state.wid_data.sji_nframe
+    ;      d=state.wid_data.sji_mov_frames
+    ;
+    ;      IF d EQ n THEN BEGIN
+    ;        first_im=0
+    ;        last_im=n-1
+    ;      ENDIF ELSE BEGIN
+    ;        d2=fix((fix(d)-1)/2.)
+    ;        first_im=max([0,i-d2])
+    ;        last_im=min([i+d2,n-1])
+    ;      ENDELSE
+    ;
+    ;      state.sji_d->ximovie,pos=pos, log=state.wid_data.linlog, $
+    ;        first_im=first_im,last_im=last_im,start_im=i
+    ;    END
+    ;
+    ;    state.sji_frames_droplist: BEGIN
+    ;      widget_control,state.sji_frames_droplist,get_value=value
+    ;      result=value[event.index]
+    ;      IF trim(result) EQ 'all' THEN sji_mov_frames=state.wid_data.sji_nframe $
+    ;      ELSE sji_mov_frames=fix(result)
+    ;      state.wid_data.sji_mov_frames=sji_mov_frames
+    ;      ;
+    ;      ; Update the movie duration widget
+    ;      ;
+    ;      sji_mov_dur=(sji_mov_frames*state.wid_data.sji_cadence)/60.
+    ;      sji_mov_dur_txt=trim(string(sji_mov_dur,format='(f7.1)'))
+    ;      sji_dur_txt='Movie duration: '+sji_mov_dur_txt+' mins (approx)'
+    ;      widget_control,state.sji_dur_text,set_val=sji_dur_txt
+    ;      ;
+    ;      widget_control,state.spice_browser_base,set_uval=state
+    ;    END
 
     state.eis_butt: BEGIN
       t0=state.data->get_start_time()

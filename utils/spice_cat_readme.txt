@@ -1,4 +1,4 @@
-; $Id: 2020-11-25 21:19 CET $
+; $Id: 2022-08-11 15:08 CEST $
 ; SPICE_CAT User Manual
 ;
 ; SPICE_CAT reads a SPICE fits file catalog with metadata about each fits
@@ -11,7 +11,7 @@
 ;
 ;    IDL> files = spice_cat()     OR      IDL> spice_cat
 ;
-; If your data directory does not already contain a spice_catalog.txt file,
+; If your data directory does not already contain a spice_catalog.csv file,
 ; generate one by using SPICE_GEN_CAT.
 ;
 ; TIP 1: If you have multiple data levels in your SPICE_DATA directory and
@@ -108,7 +108,7 @@
 ; ******* ENVIRONMENT VARIABLES *******
 ;
 ;  SPICE_DATA points to the top of the data directory hierarchy (where the
-;  spice_catalog.txt catalog should reside)
+;  spice_catalog.csv catalog should reside)
 ;
 ;  SPICE_CAT_KEYWORDS is a comma-separated list of the keywords to be shown in
 ;  the table. The environment variable is updated according to 

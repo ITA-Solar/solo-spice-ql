@@ -16,7 +16,7 @@
 ;       spice_xmap, data [, linelist = linelist, group_leader = groupleader, ncolors=ncolors]
 ;
 ; INPUTS:
-;       data: Can be either the name and path of a SPICE data file, 
+;       data: Can be either the name and path of a SPICE data file,
 ;             or a SPICE data object.
 ;
 ; KEYWORD PARAMETERS:
@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2021-10-27 10:48 CEST $
+; $Id: 2022-09-21 11:47 CEST $
 ;-
 ;
 ; save as postscript file
@@ -711,6 +711,18 @@ pro spice_xmap_pixplot, event
   endcase
 end
 
+; Toggle masking on/off
+pro spice_xmap_mask, event
+  widget_control, event.top, get_uvalue = info
+  widget_control, (*info).maskbutton, get_value=masking
+  wd = *(*info).data->get_window_data((*info).line, no_masking=masking eq 0)
+  *(*info).wd = wd
+  ; draw image
+  pseudoevent={widget_base,id:0l, $
+    top:(*info).tlb, handler:0l, x:(*info).tlb_xsz, y:(*info).tlb_ysz}
+  spice_xmap_resize, pseudoevent
+end
+
 ; save data
 pro spice_xmap_save_moments, event
   widget_control, event.top, get_uvalue = info
@@ -768,7 +780,7 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
   if ~is_spice then return
 
-; drawing window size in relation to screen
+  ; drawing window size in relation to screen
   if n_elements(scfac) eq 0 then scfac=0.8
   if n_elements(standard_size) eq 0 then standard_size=700
   if n_elements(ncolors) eq 0 then ncolors = (!d.n_colors < 256)
@@ -883,7 +895,7 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; line/cont limits defined in xmoments
   ;endif else begin
   ;data->getwin,line,wd,pos,/load
-  wd = data->get_window_data(line, /load)
+  wd = data->get_window_data(line)
   ; line/cont limits reset
   ;data->setline_px,line,[0,(size(wd))[1]-1]
   ;data->setcont_px,line,[0,0]
@@ -972,6 +984,12 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   pixelplot = widget_droplist(pixplotfield, value = pixnames, $
     title = 'Plot pixel values', $
     event_pro = 'spice_xmap_pixplot')
+
+  maskfield = widget_base(lcol, /column, /frame, event_pro = 'spice_xmap_mask')
+  maskbutton = cw_bgroup(maskfield, ['Mask regions outside slit'], $
+    set_value=[1],/nonexclusive)
+
+
   ; menu for preset widget sizes
   drawsizeoption = widget_base(lcol, /column, /frame)
   drawsizeoption_title = widget_label(drawsizeoption, value = 'Resize widget')
@@ -1147,6 +1165,7 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     line:line, $
     linelist:linelist, $
     dpnr:0, $
+    maskbutton:maskbutton, $
     ;comment:comment, $
     screensize:screensize, $
     keep_aspect:0, $

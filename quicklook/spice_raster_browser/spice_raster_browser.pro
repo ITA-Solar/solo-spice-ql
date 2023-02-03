@@ -103,7 +103,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2021-04-22 10:01 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 
 ;---------------------
@@ -146,16 +146,16 @@ PRO spice_raster_browser, input_data, quiet=quiet, yoffsets=yoffsets, $
   ;  ENDIF
 
   IF NOT keyword_set(quiet) THEN BEGIN
-    box_message, ['FILENAME = ' + data->get_header_info('FILENAME', 0), $
-      'EXTNAME  = ' + data->get_header_info('EXTNAME', 0), $
-      'STUDYTYP = ' + data->get_header_info('STUDYTYP', 0), $
-      'STUDYDES = ' + data->get_header_info('STUDYDES', 0, ''), $
-      'STUDY    = ' + data->get_header_info('STUDY', 0, ''), $
-      'OBS_TYPE = ' + data->get_header_info('OBS_TYPE', 0, ''), $
-      'OBS_ID   = ' + data->get_header_info('OBS_ID', 0, ''), $
-      'SPIOBSID = ' + strtrim(string(data->get_header_info('SPIOBSID', 0)), 2), $
-      'PURPOSE  = ' + data->get_header_info('PURPOSE', 0, ''), $
-      'SOOPNAME = ' + data->get_header_info('SOOPNAME', 0, '')]
+    box_message, ['FILENAME = ' + data->get_header_keyword('FILENAME', 0), $
+      'EXTNAME  = ' + data->get_header_keyword('EXTNAME', 0), $
+      'STUDYTYP = ' + data->get_header_keyword('STUDYTYP', 0), $
+      'STUDYDES = ' + data->get_header_keyword('STUDYDES', 0, ''), $
+      'STUDY    = ' + data->get_header_keyword('STUDY', 0, ''), $
+      'OBS_TYPE = ' + data->get_header_keyword('OBS_TYPE', 0, ''), $
+      'OBS_ID   = ' + data->get_header_keyword('OBS_ID', 0, ''), $
+      'SPIOBSID = ' + strtrim(string(data->get_header_keyword('SPIOBSID', 0)), 2), $
+      'PURPOSE  = ' + data->get_header_keyword('PURPOSE', 0, ''), $
+      'SOOPNAME = ' + data->get_header_keyword('SOOPNAME', 0, '')]
   ENDIF
 
   spice_browser_widget, data, yoffsets=yoffsets, chunk_size=chunk_size, $

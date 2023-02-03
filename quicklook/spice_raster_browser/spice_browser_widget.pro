@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2021-10-27 21:20 CEST $
+; $Id: 2022-09-20 15:06 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -92,6 +92,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ; rast_direct=0.
   ;
   midtime=meta.midtime
+  midtime_earth=meta.midtime_earth
   tmid_min=meta.tmid_min
   utc=meta.utc
 
@@ -275,6 +276,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     line_ids: line_ids, $      ; 0 or 1 if line IDs available
     idstr: idstr, $            ; structure of line IDs
     midtime: midtime, $
+    midtime_earth: midtime_earth, $
     utc: utc, $
     velocity: 0, $
     linlog: 0, $
@@ -294,7 +296,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     tmid: midtime, $
     tmid_min: tmid_min, $
     rast_direct: rast_direct, $
-    roll: data->get_header_info('CROTA', 0, 0), $
+    roll: data->get_header_keyword('CROTA', 0, 0), $
     l1p5_ver: meta.l1p5_ver, $
     sji: sji, $
     sji_file: sji_file, $     ; array of all SJI filenames
@@ -332,7 +334,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ; So we just use the sfirst 3 or 4 windows
   FOR i_plot_window=0,n_plot_window-1 DO BEGIN
     wid_data.iwin[i_plot_window] = i_plot_window
-    wid_data.lambda[i_plot_window] = data->get_header_info('CRVAL3', i_plot_window)
+    wid_data.lambda[i_plot_window] = data->get_header_keyword('CRVAL3', i_plot_window)
     lam = data->get_lambda_vector(i_plot_window)
     getmin = min(abs(lam), imin)
     wid_data.ilambda[i_plot_window] = imin
@@ -421,8 +423,10 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   xtext=widget_label(textbase,value=xt,font=font,xsiz=100)
   yt='Y-pixel: '+trim(0)
   ytext=widget_label(textbase,value=yt,font=font,xsiz=100)
-  tt='Time: '
+  tt='S/C Time: '
   ttext=widget_label(textbase,value=tt,font=font,xsiz=150)
+  ett='Earth Time: '
+  ettext=widget_label(textbase,value=ett,font=font,xsiz=150)
 
 
   ;
@@ -528,6 +532,13 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   endelse
 
   ;
+  ; MASKING option, mask regions outside of slit?
+  ; ---------------------------------
+  mask_base=widget_base(opt_base,/col,frame=1)
+  mask_butt=cw_bgroup(mask_base,['Mask regions outside slit'], $
+    set_value=[1],/nonexclusive,font=font,/row)
+
+  ;
   ; NEXP_PRP > 1 BUTTONS
   ; --------------------
   ;  IF nexp_prp GT 1 THEN BEGIN
@@ -549,13 +560,13 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   ; The following contains meta-data that goes on the Metadata tab.
   ;
-  stud_acr=data->get_header_info('OBS_ID', 0, '')
+  stud_acr=data->get_header_keyword('OBS_ID', 0, '')
   ;  IF n_tags(filestr) NE 0 THEN BEGIN
   ;    date_obs=filestr.t0
   ;    date_end=filestr.t1
   ;  ENDIF ELSE BEGIN
-  date_obs=data->get_header_info('DATE-BEG', 0, '')
-  date_end=data->get_header_info('DATE-END', 0, '')
+  date_obs=data->get_header_keyword('DATE-BEG', 0, '')
+  date_end=data->get_header_keyword('DATE-END', 0, '')
   ;  ENDELSE
   ;
   text1=widget_label(meta_base,val='OBSID: '+stud_acr,font=font, $
@@ -588,9 +599,9 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   text4=widget_label(meta_base,val='CADENCE: '+cadstr,font=font, $
     /align_left)
   ;  ENDIF
-  nuvbin=data->get_header_info('NBIN3', 0)
-  fuvbin=data->get_header_info('NBIN3', 0)
-  spatbin=data->get_header_info('NBIN2', 0)
+  nuvbin=data->get_header_keyword('NBIN3', 0)
+  fuvbin=data->get_header_keyword('NBIN3', 0)
+  spatbin=data->get_header_keyword('NBIN2', 0)
   text5a=widget_label(meta_base,val='FUV SPEC BIN: '+trim(fuvbin),font=font, $
     /align_left)
   text5b=widget_label(meta_base,val='NUV SPEC BIN: '+trim(nuvbin),font=font, $
@@ -818,7 +829,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   nl = intarr(data->get_number_windows())
   FOR i=0,data->get_number_windows()-1 DO BEGIN
-    nl[i] = data->get_header_info('NAXIS3', i)
+    nl[i] = data->get_header_keyword('NAXIS3', i)
   END
   spectra=fltarr(max(nl),n_plot_window)
 
@@ -872,6 +883,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     xtext: xtext, $
     ytext: ytext, $
     ttext: ttext, $
+    ettext: ettext, $
     nexp_prp_butts: nexp_prp_butts, $
     wpix_sum: wpix_sum, $
     im_plot: im_plot, $
@@ -897,6 +909,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     exp_slider: exp_slider, $
     exp_butt1: exp_butt1, $
     exp_butt2: exp_butt2, $
+    mask_butt:mask_butt, $
     text3: text3, $
     min_text_sji: min_text_sji, $
     max_text_sji: max_text_sji, $
@@ -986,8 +999,10 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     spice_browser_plot_sji, state
   ENDIF
 
-  tt='Time: '+trim(midtime[state.wid_data.xpix-1])
+  tt='S/C Time: '+trim(midtime[state.wid_data.xpix-1])
   widget_control,state.ttext,set_value=tt
+  ett='Earth Time: '+trim(midtime_earth[state.wid_data.xpix-1])
+  widget_control,state.ettext,set_value=ett
 
 
   XMANAGER, 'spice_browser_base', spice_browser_base, group=group

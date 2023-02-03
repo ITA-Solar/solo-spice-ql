@@ -35,7 +35,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 25.04.2020 21:57 CEST $
+; $Id: 2022-09-20 14:35 CEST $
 
 
 FUNCTION spice_browser_get_metadata, data
@@ -65,8 +65,10 @@ FUNCTION spice_browser_get_metadata, data
   mid_ti = data->get_time_vector(0)
   t_tai = anytim2tai(data->get_start_time()) + mid_ti
   utc = anytim2utc(t_tai)
-  midtime=anytim2utc(t_tai,/ccsds,/time_only,/trunc)
-  tmid_min=(t_tai-t_tai[0])/60.
+  midtime = anytim2utc(t_tai,/ccsds,/time_only,/trunc)
+  tmid_min = (t_tai-t_tai[0])/60.
+  t_tai_earth = t_tai + data->get_header_keyword('EAR_TDEL',0)
+  midtime_earth = anytim2utc(t_tai_earth,/ccsds,/time_only,/trunc)
 
   ;
   ; Modify things if it's a sit-and-stare observation
@@ -102,8 +104,8 @@ FUNCTION spice_browser_get_metadata, data
   ;
   ; Get xcen and ycen
   ;
-  xcen = data->get_header_info('CRVAL1', 0)
-  ycen = data->get_header_info('CRVAL2', 0)
+  xcen = data->get_header_keyword('CRVAL1', 0)
+  ycen = data->get_header_keyword('CRVAL2', 0)
 
   ;
   ; Exposure times can vary between NUV and FUV, and also over time. The
@@ -115,13 +117,14 @@ FUNCTION spice_browser_get_metadata, data
   outstr={ origin: origin, $
     scale: scale, $
     midtime: midtime, $
+    midtime_earth:midtime_earth, $
     sit_stare: sit_stare, $
     xpos: xpos, $
     ypos: ypos, $
     tmid_min: tmid_min, $
     utc: utc, $
-    stud_acr: data->get_header_info('SPIOBSID', 0), $
-    date_obs: data->get_header_info('DATE-OBS', 0, ''), $
+    stud_acr: data->get_header_keyword('SPIOBSID', 0), $
+    date_obs: data->get_header_keyword('DATE-OBS', 0, ''), $
     l1p5_ver: 'NA', $
     obs_type: obs_type, $
     cadence: cadence, $

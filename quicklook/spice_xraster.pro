@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2021-10-26 14:49 CEST $
+; $Id: 2022-09-21 10:42 CEST $
 ;-
 ;
 ; save as postscript file
@@ -120,8 +120,8 @@ pro spice_xraster_draw, event
     j=(*info).windows[i]
     ;pos=*(*info).data->getpos(j)
     ;sz = size(wd)
-    xsz = xsz > *(*info).data->get_header_info('naxis3', j)
-    ysz = ysz > *(*info).data->get_header_info('naxis2', j)
+    xsz = xsz > *(*info).data->get_header_keyword('naxis3', j)
+    ysz = ysz > *(*info).data->get_header_keyword('naxis2', j)
   endfor
   ; determine size of each window. The scale factors
   ; (xpixels*2)x(ypixels/2), with a minimum of
@@ -145,7 +145,7 @@ pro spice_xraster_draw, event
   for i = 0, (*info).nwin-1 do begin
     j = (*info).windows[i]
     for it=0,min([5,nr-1]) do begin
-      var=*(*info).data->get_one_image(j,it)
+      var=*(*info).data->get_one_image(j,it,no_masking=(*info).no_masking)
       wdmin[i]=min([min(iris_histo_opt(var,0.01,/bot_only,missing=missing),/nan),wdmin[i]],/nan)
       wdmax[i]=max([max(iris_histo_opt(var,0.001,/top_only,missing=missing),/nan),wdmax[i]],/nan)
     endfor
@@ -178,7 +178,7 @@ pro spice_xraster_draw, event
 
     ; draw images
     for it = 0, nr-1 do begin
-      drawimage = congrid(*(*info).data->get_one_image(j,it),xpix,ypix)
+      drawimage = congrid(*(*info).data->get_one_image(j,it,no_masking=(*info).no_masking),xpix,ypix)
       sz=size(drawimage)
       scale=[(max(xscale)-min(xscale))/sz[1],(max(yscale)-min(yscale))/sz[2]]
       ymin = wdmin[i]
@@ -359,6 +359,26 @@ pro spice_xraster_wangstr, event
   ; set titles for image plots
   (*info).xtitle = *(*info).data->get_axis_title((*info).xdim)
   (*info).xdim_unit = 1
+  pseudoevent={widget_button,id:0L, $
+    top:event.top, handler:0l, select:1}
+  spice_xraster_draw, pseudoevent
+end
+
+; Toggle masking of pixels outside slit ON
+pro spice_xraster_mask_on, event
+  widget_control, event.top, get_uvalue = info
+  ; set titles for image plots
+  (*info).no_masking = 0
+  pseudoevent={widget_button,id:0L, $
+    top:event.top, handler:0l, select:1}
+  spice_xraster_draw, pseudoevent
+end
+
+; Toggle masking of pixels outside slit OFF
+pro spice_xraster_mask_off, event
+  widget_control, event.top, get_uvalue = info
+  ; set titles for image plots
+  (*info).no_masking = 1
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
   spice_xraster_draw, pseudoevent
@@ -574,6 +594,9 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
   sscalemenu=widget_button(optmenu, value='Change spatial scale',/menu)
   pixmenu=widget_button(sscalemenu, value='Pixels',event_pro='spice_xraster_spix')
   angstrmenu=widget_button(sscalemenu, value='arcsec',event_pro='spice_xraster_sarcsec')
+  maskmenu=widget_button(optmenu, value='Toggle masking', /menu)
+  maskonmenu=widget_button(maskmenu, value='On',event_pro='spice_xraster_mask_on')
+  maskoffmenu=widget_button(maskmenu, value='Off',event_pro='spice_xraster_mask_off')
 
   ; display window:
   displaybase = widget_base(rcol, /row)
@@ -633,6 +656,7 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
     xs:0, $
     ys:0, $
     redraw:0, $
+    no_masking:0, $
     timer:'off', $
     x_scroll_size:d_xsz, $
     y_scroll_size:d_ysz, $

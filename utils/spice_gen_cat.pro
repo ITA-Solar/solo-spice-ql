@@ -3,9 +3,9 @@
 ;                   
 ; Name        : SPICE_GEN_CAT
 ;               
-; Purpose     : Create/update the spice_catalog.txt file.
+; Purpose     : Create/update the spice_catalog.csv file.
 ;               
-; Explanation : This program creates a file called spice_catalog.txt in the
+; Explanation : This program creates a file called spice_catalog.csv in the
 ;               $SPICE_DATA/ directory (but other paths can be specified),
 ;               with various information on the content of the files found in
 ;               the directory hierarchy below that path.
@@ -48,11 +48,13 @@
 ;                          Eliminated many super-slow hash operations
 ;                          Reinstated reuse of old catalog for speed purposes
 ;                          Made REGENERATE=1 by default, with warning about slowness
+;               Version 6, Martin Wiesmann, 10 August 2022
+;                          Reads now also *fits.gz files
 ;
-; Version     : Version 5, SVHH, 15 July 2022
+; Version     : Version 6, SVHH+MW, 10 August 2022
 ;
-; $Id: 2022-07-15 15:31 CEST $
-;-            
+; $Id: 2022-08-11 15:08 CEST $
+;-           
 
 FUNCTION spice_gen_cat::extract_basename,line
   foreach level, [3, 2, 1, 0] DO BEGIN
@@ -65,9 +67,7 @@ END
 
 
 FUNCTION spice_gen_cat::get_header,filename
-  openr,lun,filename,/get_lun
-  fxhread,lun,header
-  free_lun,lun
+  header = headfits(filename) 
   return,header
 END
 
@@ -231,7 +231,7 @@ END
 PRO spice_gen_cat::execute
   print
   print, "Finding list of files... ", format='(A,$)'
-  self.d.filelist = file_search(self.d.spice_datadir,"*.fits")
+  self.d.filelist = file_search(self.d.spice_datadir,"*.{fits,fits.gz}")
   
   IF self.d.filelist[0] EQ '' THEN BEGIN
      MESSAGE,"No fits files found, exiting"

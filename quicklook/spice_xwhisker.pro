@@ -16,7 +16,7 @@
 ;       spice_xwhisker, data, line [, group_leader = group_leader, ncolors = ncolors]
 ;
 ; INPUTS:
-;       data: Can be either the name and path of a SPICE data file, 
+;       data: Can be either the name and path of a SPICE data file,
 ;             or a SPICE data object.
 ;       line: The index of the line window to be displayed
 ;
@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2021-10-27 11:20 CEST $
+; $Id: 2022-09-22 13:47 CEST $
 
 
 ; save as postscript file
@@ -216,11 +216,7 @@ pro spice_xwhisker_expprp_slider, event
   (*info).exprp=event.value
   (*info).expindx = indgen((*info).nraster)*(*info).nexpprp + (*info).exprp - 1
   nr=(*info).exprp-1
-  ;  message = ['Loading data into memory...','...this may take some time']
-  ;  xmessage,message,wbase=wbase,font='helvetica'
-  ;  wd=(*(*info).data)->getvar((*info).line,/load)
   wd=*(*info).wd
-  ;  xkill,wbase
   (*info).image = reform(wd[*,(*info).slitpos,(*info).expindx])
   good=finite((*info).image)
   if (where(good))[0] eq -1 then begin
@@ -239,7 +235,7 @@ pro spice_xwhisker_expprp_slider, event
     pzty=(*(*info).data->getypos((*info).line))[(*info).slitpos]
   endelse
   widget_control,(*info).fmirrytext, $
-    set_value = 'Y: '+ string(pzty,format='(f8.3)')+' arcsec'
+    set_value = 'Y: '+ string(pzty,format='(f10.3)')+' arcsec'
   ; display new exposure nr
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
@@ -251,11 +247,7 @@ end
 pro spice_xwhisker_slitslider, event
   widget_control, event.top,get_uvalue=info
   (*info).slitpos=event.value
-  message = ['Loading data into memory...','...this may take some time']
-  ;  xmessage,message,wbase=wbase,font='helvetica'
-  ;  wd=(*(*info).data)->getvar((*info).line,/load)
   wd=*(*info).wd
-  ;  xkill,wbase
   if (*info).nexpprp le 1 then begin
     (*info).image = reform(wd[*,(*info).slitpos,*])
   endif else begin
@@ -277,7 +269,7 @@ pro spice_xwhisker_slitslider, event
     slittxt='Y: '
   endelse
   widget_control,(*info).fmirrytext, $
-    set_value = slittxt + string(pzty[0],format='(f8.3)')+' arcsec'
+    set_value = slittxt + string(pzty[(*info).slitpos],format='(f10.3)')+' arcsec'
   ; display new raster position
   pseudoevent={widget_button,id:0L, $
     top:event.top, handler:0l, select:1}
@@ -570,6 +562,26 @@ pro spice_xwhisker_lineplot, event
 end
 
 
+pro spice_xwhisker_mask, event
+  widget_control, event.top, get_uvalue = info
+  widget_control, (*info).maskbutton, get_value=masking
+  print,masking
+  wd = *(*info).data->get_window_data((*info).line, no_masking=masking eq 0)
+  image = reform(wd[*,(*info).slitpos,*,*])
+  if *(*info).data->get_missing_value() ne *(*info).data->get_missing_value() then missing=-99999L $
+  else missing=*(*info).data->get_missing_value()
+  wd=iris_histo_opt(wd,missing=missing)
+  imin=min(wd)
+  imax=max(wd)
+  image=iris_histo_opt(image)
+  *(*info).wd = wd
+  (*info).image = image
+  pseudoevent={widget_button,id:0L, $
+    top:event.top,handler:0l,select:1}
+  spice_xwhisker_draw, pseudoevent
+end
+
+
 ; close spice_xwhisker
 pro spice_xwhisker_destroy, event
   widget_control, event.top,/destroy
@@ -612,7 +624,7 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
   d_ysz = sz[0]/1.4
   ;
   sit_and_stare = data->get_sit_and_stare()
-  nslit=data->get_header_info('NAXIS2', line)
+  nslit=data->get_header_keyword('NAXIS2', line)
   nraster = data->get_number_exposures(line)
   nexpprp = 1 ;data->getnexp_prp(line)  ; number of exp pr. raster pos.
   slitpos = nslit/2
@@ -624,7 +636,7 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
   message = ['Loading data into memory...','...this may take some time']
   xmessage,message,wbase=wbase,font='helvetica'
   widget_control,/hourglass
-  wd = data->get_window_data(line,/load)
+  wd = data->get_window_data(line)
   xkill,wbase
   if nexpprp le 1 then begin
     image = reform(wd[*,slitpos,*,*])
@@ -648,7 +660,7 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
   ysz = sz[3]
   ;
   xdim = 2
-  if sit_and_stare then ydim = 3 else ydim = 1
+  if sit_and_stare then ydim = 3 else ydim = 0
   xtitle = data->get_axis_title(xdim)
   ytitle = data->get_axis_title(ydim)
   window, /pixmap, /free, xsize = xsz, ysize = ysz
@@ -726,8 +738,8 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
 
   xycenbase = widget_base(exposurebase,/col)
   xycentext = widget_label(xycenbase, $
-    value = 'Xcen: '+ string((data->get_header_info('crval1', line)),format='(f8.3)')+ $
-    ' Ycen: '+ string((data->get_header_info('crval2', line)),format='(f8.3)'), $
+    value = 'Xcen: '+ string((data->get_header_keyword('crval1', line)),format='(f10.3)')+ $
+    ' Ycen: '+ string((data->get_header_keyword('crval2', line)),format='(f10.3)'), $
     /align_left)
 
   rot=data->get_satellite_rotation()
@@ -742,13 +754,19 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
     slittxt='Y: '
   endelse
   fmirrytext = widget_label(exposurebase, $
-    value = strtrim(slittxt+ string(pzty[0],format='(f8.3)'),2)+' arcsec', $
+    value = strtrim(slittxt+ string(pzty[slitpos],format='(f10.3)'),2)+' arcsec', $
     /align_left)
 
   title = 'Slit Position'
   slitslider = widget_slider(sliderbase, xsize=90, $
     minimum=0, maximum=nslit-1, title=title, $
     value=slitpos, event_pro='spice_xwhisker_slitslider',/drag)
+
+  maskfield = widget_base(lcol, /column, /frame, event_pro = 'spice_xwhisker_mask')
+  maskbutton = cw_bgroup(maskfield, ['Mask regions outside slit'], $
+    set_value=[1],/nonexclusive)
+
+
   ; control of gamma and histo_
   gammacol = widget_base(lcol, /row)
   gamma=1.0
@@ -820,6 +838,7 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
     exprp:1, $
     ndim:ndim, $
     line:line, $
+    maskbutton:maskbutton, $
     screensize:screensize, $
     lcol_xsz:lcol_xsz, $
     d_xsz:d_xsz, $

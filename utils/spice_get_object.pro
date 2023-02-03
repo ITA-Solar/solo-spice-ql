@@ -29,7 +29,7 @@
 ; HISTORY:
 ;      Ver. 1, 22-Oct-2020, Martin Wiesmann
 ;-
-; $Id: 2020-11-25 13:57 CET $
+; $Id: 2022-08-10 11:17 CEST $
 
 
 FUNCTION spice_get_object, file, is_spice=is_spice, object_created=object_created
@@ -40,7 +40,7 @@ FUNCTION spice_get_object, file, is_spice=is_spice, object_created=object_create
   if type eq 7 then begin
     object_created=1
     is_spice=1
-    return, spice_object(file)
+    return, spice_data(file)
   endif else if type eq 11 then begin
     if typename(file) ne 'SPICE_DATA' then begin
       box_message,'input is not a SPICE_DATA object'
