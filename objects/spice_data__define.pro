@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2023-01-05 14:53 CET $
+; $Id: 2023-02-05 20:53 CET $
 
 
 ;+
@@ -2532,7 +2532,7 @@ PRO spice_data::get_bintable_info
       bintable_columns = [bintable_columns, column_current]
     endforeach
   ENDFOR ; iwin=0,self.get_number_windows()-1
-  if N_ELEMENTS(bintable_columns) eq 0 then bintable_columns = make_array(1, value=temp_column) $
+  if N_ELEMENTS(bintable_columns) eq 0 then bintable_columns = make_array(1, value=temp_column)
   self.bintable_columns = ptr_new(bintable_columns)
 END
 
