@@ -55,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 13:40 CET $
+; $Id: 2023-02-05 21:06 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -108,7 +108,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, '', ' '
   fits_util->add, hdr, 'NXDIM', 1, 'Number of dimensions absorbed by analysis'
   IF spice_header THEN BEGIN
-    fits_util->add, hdr, 'XDIMTY1', fxpar(header_l2, 'CTYPE1', missing=''), 'Type of 1st dimension absorbed by analysis'
+    fits_util->add, hdr, 'XDIMTY1', fxpar(header_l2, 'CTYPE3', missing=''), 'Type of 1st dimension absorbed by analysis'
   ENDIF ELSE BEGIN
     fits_util->add, hdr, 'XDIMTY1', 'Original type of absorbed dimension', 'Type of 1st dimension absorbed by analysis'
   ENDELSE
