@@ -55,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-03-15 10:39 CET $
+; $Id: 2023-03-15 11:32 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -119,6 +119,14 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   ENDELSE
   fits_util->add, hdr, 'XDIMXT1', data_id+' lambda', 'Extension name of 1st dim absorbed by analysis'
 
+  IF spice_header THEN BEGIN
+    bunit = fxpar(header_l2, 'BUNIT', missing='')
+    cunit_absorb = fxpar(header_l2, 'CTYPE3', missing='')
+  ENDIF ELSE BEGIN
+    bunit = ''
+    cunit_absorb = ''
+  ENDELSE
+  
   for itag=0,n_components-1 do begin
     ; Add keywords for each fit component
     fitnr = strtrim(string(itag+1), 2)
@@ -143,11 +151,23 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
     n_params = N_ELEMENTS(fit_cur.param)
     fits_util->add, hdr, 'CMP_NP'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
 
+    velocity = 0
     for ipar=0,n_params-1 do begin
       ; Add keywords for each fit parameter
       param = fit_cur.param[ipar]
       parnr = string(byte(ipar+97))
       fits_util->add, hdr, 'PNAME'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
+      IF param.name EQ 'intensity' THEN BEGIN
+        punit = bunit
+      ENDIF ELSE BEGIN
+        IF param.name EQ 'velocity' OR velocity THEN BEGIN
+          punit = 'km/s'
+          velocity = 1
+        ENDIF ELSE
+          punit = cunit_absorb
+        ENDELSE
+      ENDELSE
+      fits_util->add, hdr, 'PUNIT'+fitnr+parnr, param.name, 'Phys. unit of parameter '+parnr+' for component '+fitnr
       ind = where(param.description NE '', count)
       if count gt 0 then description = strjoin(param.description[ind], ';') $
       else description = ''
@@ -165,8 +185,8 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   ; Add keywords for Chi^2
   fitnr = strtrim(string(n_components+1), 2)
   fits_util->add_description, hdr, 'Keywords describing fit component '+fitnr
-  fits_util->add, hdr, 'CMPTYP'+fitnr, 'Error of fit curve (Chi^2)', 'Type of component '+fitnr
-  fits_util->add, hdr, 'CMPNAM'+fitnr, 'Chi^2', 'Name of component '+fitnr
+  fits_util->add, hdr, 'CMPTYP'+fitnr, 'Polynomial', 'Type of component '+fitnr
+  fits_util->add, hdr, 'CMPNAM'+fitnr, 'Error of fit curve (Chi^2)', 'Name of component '+fitnr
   fits_util->add, hdr, 'CMP_NP'+fitnr, 1, 'Number of parameters in component '+fitnr
   ipar=0
   parnr = string(byte(ipar+97))
