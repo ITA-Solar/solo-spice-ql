@@ -55,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-03-15 11:32 CET $
+; $Id: 2023-03-16 10:46 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -163,7 +163,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
         IF param.name EQ 'velocity' OR velocity THEN BEGIN
           punit = 'km/s'
           velocity = 1
-        ENDIF ELSE
+        ENDIF ELSE BEGIN
           punit = cunit_absorb
         ENDELSE
       ENDELSE
@@ -173,7 +173,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       else description = ''
       fits_util->add, hdr, 'PDESC'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PINIT'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
+;      fits_util->add, hdr, 'PVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient A in Lambda=PVAL*PTRA+PTRB'
