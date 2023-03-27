@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2022-12-02 20:33 CET $
+; $Id: 2023-03-27 13:54 CEST $
 
 
 ;+
@@ -2324,7 +2324,7 @@ END
 ; OUTPUT:
 ;     array of structure of type:
 ;             {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
-;               extension:'', values:ptr_new()}
+;               tag:'', bin_extension_name:'', data_extension_name:'', data_extension_index:-1, values:ptr_new()}
 ;     or the data only, i.e. an array of numbers.
 ;
 ; KEYWORDS:
@@ -2366,7 +2366,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
         col_num = strtrim(string(fxbcolnum(unit, ttypes_up[i])), 2)
         (*self.bintable_columns)[ind].wcsn = strtrim(fxpar(hdr, 'WCSN'+col_num, missing=''), 2)
         (*self.bintable_columns)[ind].tform = strtrim(fxpar(hdr, 'TFORM'+col_num, missing=''), 2)
-        (*self.bintable_columns)[ind].ttype = strtrim(fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment), 2)
+        (*self.bintable_columns)[ind].ttype = strup(strtrim(fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment), 2))
         comment = strtrim(strcompress(comment), 2)
         (*self.bintable_columns)[ind].tdim = strtrim(fxpar(hdr, 'TDIM'+col_num, missing=''), 2)
         (*self.bintable_columns)[ind].tdmin = strtrim(fxpar(hdr, 'TDMIN'+col_num, missing=''), 2)
@@ -2452,8 +2452,9 @@ PRO spice_data::read_file, file
     ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
   ENDFOR ; iwin = 0, self.nwin-1
 
+  fits_open, file, fcb
   iwin = self.nwin
-  while 1 do begin
+  for iwin=self.nwin, fcb.nextend-1 do begin
     hdr = headfits(file, exten=iwin)
     if size(hdr, /type) ne 7 then break
     self.next = self.next + 1
@@ -2461,7 +2462,7 @@ PRO spice_data::read_file, file
     headers_string = [headers_string, ptr_new(hdr)]
     hdr = fitshead2struct(hdr)
     headers = [headers, ptr_new(hdr)]
-  endwhile
+  endfor
 
   self.window_data = ptr_new(ptrarr(self.next))
   self.window_descaled = ptr_new(bytarr(self.next))
@@ -2500,23 +2501,39 @@ PRO spice_data::get_bintable_info
   COMPILE_OPT IDL2
 
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
-    extension:'', values:ptr_new()}
+    tag:'', bin_extension_name:'', data_extension_name:'', data_extension_index:-1, values:ptr_new()}
 
-  var_keys = self.get_header_keyword('VAR_KEYS', 0, '')
-  var_keys = strsplit(var_keys, ',', count=count, /extract)
-  extension = ''
-  self.n_bintable_columns = count
-  if count eq 0 then bintable_columns = make_array(1, value=temp_column) $
-  else bintable_columns = make_array(self.n_bintable_columns, value=temp_column)
-  foreach column, var_keys, index do begin
-    entry = strsplit(column, ';', count=count, /extract)
-    if count eq 2 then begin
-      extension = strtrim(entry[0], 2)
-      column = entry[1]
-    endif
-    bintable_columns[index].ttype = strup(strtrim(column, 2))
-    bintable_columns[index].extension = extension
-  endforeach
+  self.n_bintable_columns = 0
+  bintable_columns = []
+  FOR iwin=0,self.get_number_windows()-1 DO BEGIN
+    var_keys = self.get_header_keyword('VAR_KEYS', iwin, '')
+    var_keys = strsplit(var_keys, ',', count=count, /extract)
+    bin_extension_name = ''
+    self.n_bintable_columns += count
+    foreach column, var_keys, index do begin
+      entry = strsplit(column, ';', count=count, /extract)
+      if count eq 2 then begin
+        bin_extension_name = strtrim(entry[0], 2)
+        column = entry[1]
+      endif
+      column = strsplit(column, '[', count=count, /extract)
+      if count eq 2 then begin
+        tag = strsplit(column[1], ']', count=count, /extract)
+        tag = tag[0]
+      endif else begin
+        tag = ''
+      endelse
+      ttype = column[0]
+      column_current = temp_column
+      column_current.ttype = strup(strtrim(ttype, 2))
+      column_current.tag = strup(strtrim(tag, 2))
+      column_current.bin_extension_name = bin_extension_name
+      column_current.data_extension_name = self.get_header_keyword('EXTNAME', iwin, '')
+      column_current.data_extension_index = iwin
+      bintable_columns = [bintable_columns, column_current]
+    endforeach
+  ENDFOR ; iwin=0,self.get_number_windows()-1
+  if N_ELEMENTS(bintable_columns) eq 0 then bintable_columns = make_array(1, value=temp_column)
   self.bintable_columns = ptr_new(bintable_columns)
 END
 

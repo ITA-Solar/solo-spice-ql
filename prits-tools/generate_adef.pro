@@ -49,7 +49,7 @@
 ;      Ver. 1.3, Nov-2022, Martin Wiesmann: Uses now spice_line_list() to get a list of possible
 ;                                            peaks to be included.
 ;-
-; $Id: 2022-12-05 14:34 CET $
+; $Id: 2023-03-16 10:46 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -99,10 +99,12 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
         ENDELSE
       endfor
       ind = where(peakinds gt 0, npeaks)
-      if npeaks gt 0 then peakinds = peakinds[ind]
+      if npeaks gt 0 then begin
+        peakinds = peakinds[ind]
+        fwhm = intarr(npeaks) ; TODO: Estimate FWHM in pixels for each peak
+        fwhm[*] = 3 ; for now
+      endif
 
-      fwhm = intarr(npeaks) ; TODO: Estimate FWHM in pixels for each peak
-      fwhm[*] = 3 ; for now
     ENDIF ; npeaks GT 0
 
   ENDIF ELSE BEGIN ; use_list

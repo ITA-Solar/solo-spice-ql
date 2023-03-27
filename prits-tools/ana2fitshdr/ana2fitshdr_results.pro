@@ -55,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 13:40 CET $
+; $Id: 2023-03-16 10:46 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -75,31 +75,36 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
+  fits_util->add, hdr, 'SOLARNET', 1, 'HDU contains SOLARNET Type P data'  ; TODO: comment? value=0.5 or 1?
+  fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
   fits_util->add, hdr, 'EXTNAME', data_id+' results', 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
 
   IF spice_header THEN BEGIN
-    fits_util->add, hdr, 'L2EXTNAM', fxpar(header_l2, 'EXTNAME', missing=''), 'Extension name in level 2 file'
-    fits_util->add, hdr, 'L2FILENA', fxpar(header_l2, 'FILENAME', missing=''), 'Level 2 filename'
+    fits_util->add, hdr, 'PGEXTNAM', fxpar(header_l2, 'EXTNAME', missing=''), 'Extension name in progenitor file'
+    fits_util->add, hdr, 'PGFILENA', fxpar(header_l2, 'FILENAME', missing=''), 'Progenitor filename'
   ENDIF
 
   ; Add keywords valid for whole ANA
   fits_util->add_description, hdr, 'Keywords describing the whole ANA'
-  fits_util->add, hdr, 'ANA_FILE', filename_ana, 'ANA filename'
-  fits_util->add, hdr, 'ANA_SRC', datasource, 'ANA datasource'
-  fits_util->add, hdr, 'ANA_DEF', definition, 'ANA definition'
-  fits_util->add, hdr, 'ANA_MISS', missing, 'ANA missing value in fitted data'
-  fits_util->add, hdr, 'ANA_LABL', label, 'ANA label'
+;  fits_util->add, hdr, 'ANA_FILE', filename_ana, 'ANA filename'
+;  fits_util->add, hdr, 'ANA_SRC', datasource, 'ANA datasource'
+;  fits_util->add, hdr, 'ANA_DEF', definition, 'ANA definition'
+;  fits_util->add, hdr, 'ANA_MISS', missing, 'ANA missing value in fitted data'
+;  fits_util->add, hdr, 'ANA_LABL', label, 'ANA label'
   ind = where(history NE '', count)
-  if count gt 0 then history_string = strjoin(history[ind], ';') $
-  else history_string = ''
-  fits_util->add, hdr, 'ANA_HIST', history_string, 'ANA history'
+  if count gt 0 then begin
+    history_string = strjoin(history[ind], ';')
+    history_string = 'ANA_HISTORY: ' + history_string
+  endif else history_string = ''
+;  fits_util->add, hdr, 'ANA_HIST', history_string, 'ANA history'
+
   n_components = N_TAGS(fit)
   fits_util->add, hdr, 'ANA_NCMP', n_components, 'Number of fit components'
 
   fits_util->add, hdr, 'RESEXT', data_id+' results', 'Extension name of results'
   fits_util->add, hdr, 'DATAEXT', data_id+' data', 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', data_id+' lambda', 'Extension name of lambda'
+;  fits_util->add, hdr, 'LAMBDEXT', data_id+' lambda', 'Extension name of lambda'
   fits_util->add, hdr, 'RESIDEXT', data_id+' residuals', 'Extension name of residuals'
   fits_util->add, hdr, 'WGTEXT', data_id+' weights', 'Extension name of weights'
   fits_util->add, hdr, 'INCLEXT', data_id+' includes', 'Extension name of includes'
@@ -108,18 +113,33 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, '', ' '
   fits_util->add, hdr, 'NXDIM', 1, 'Number of dimensions absorbed by analysis'
   IF spice_header THEN BEGIN
-    fits_util->add, hdr, 'XDIMTY1', fxpar(header_l2, 'CTYPE1', missing=''), 'Type of 1st dimension absorbed by analysis'
+    fits_util->add, hdr, 'XDIMTY1', fxpar(header_l2, 'CTYPE3', missing=''), 'Type of 1st dim absorbed by analysis'
   ENDIF ELSE BEGIN
-    fits_util->add, hdr, 'XDIMTY1', 'Original type of absorbed dimension', 'Type of 1st dimension absorbed by analysis'
+    fits_util->add, hdr, 'XDIMTY1', 'Original type of absorbed dimension', 'Type of 1st dim absorbed by analysis'
   ENDELSE
-  fits_util->add, hdr, 'XDIMEX1', data_id+' lambda', 'Extension name of 1st dimension absorbed by analysis'
+  fits_util->add, hdr, 'XDIMXT1', data_id+' lambda', 'Extension name of 1st dim absorbed by analysis'
 
+  IF spice_header THEN BEGIN
+    bunit = fxpar(header_l2, 'BUNIT', missing='')
+    cunit_absorb = fxpar(header_l2, 'CTYPE3', missing='')
+  ENDIF ELSE BEGIN
+    bunit = ''
+    cunit_absorb = ''
+  ENDELSE
+  
   for itag=0,n_components-1 do begin
     ; Add keywords for each fit component
     fitnr = strtrim(string(itag+1), 2)
     fits_util->add_description, hdr, 'Keywords describing fit component '+fitnr
     fit_cur = fit.(itag)
-    fits_util->add, hdr, 'CMPTYP'+fitnr, fit_cur.FUNC_NAME, 'Type of fit component '+fitnr
+    CASE fit_cur.FUNC_NAME OF
+      'comp_gauss': component_type = 'Gaussian'
+      'comp_poly': component_type = 'Polynomial'
+      'comp_bgauss': component_type = 'SSW comp_bgauss'
+      'comp_voigt': component_type = 'SSW comp_voigt'
+      else: component_type = fit_cur.FUNC_NAME
+    ENDCASE
+    fits_util->add, hdr, 'CMPTYP'+fitnr, component_type, 'Type of fit component '+fitnr
     fits_util->add, hdr, 'CMPNAM'+fitnr, fit_cur.NAME, 'Name of fit component '+fitnr
     fits_util->add, hdr, 'CMPSTR'+fitnr, fit_cur.FUNC_STRING, 'Function string of fit component '+fitnr
     ind = where(fit_cur.description NE '', count)
@@ -131,21 +151,33 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
     n_params = N_ELEMENTS(fit_cur.param)
     fits_util->add, hdr, 'CMP_NP'+fitnr, n_params, 'Number of parameters in fit component '+fitnr
 
+    velocity = 0
     for ipar=0,n_params-1 do begin
       ; Add keywords for each fit parameter
       param = fit_cur.param[ipar]
       parnr = string(byte(ipar+97))
       fits_util->add, hdr, 'PNAME'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
+      IF param.name EQ 'intensity' THEN BEGIN
+        punit = bunit
+      ENDIF ELSE BEGIN
+        IF param.name EQ 'velocity' OR velocity THEN BEGIN
+          punit = 'km/s'
+          velocity = 1
+        ENDIF ELSE BEGIN
+          punit = cunit_absorb
+        ENDELSE
+      ENDELSE
+      fits_util->add, hdr, 'PUNIT'+fitnr+parnr, param.name, 'Phys. unit of parameter '+parnr+' for component '+fitnr
       ind = where(param.description NE '', count)
       if count gt 0 then description = strjoin(param.description[ind], ';') $
       else description = ''
       fits_util->add, hdr, 'PDESC'+fitnr+parnr, description, 'Description of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PINIT'+fitnr+parnr, param.initial, 'Initial value of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
+;      fits_util->add, hdr, 'PVAL'+fitnr+parnr, param.value, 'Value of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PMAX'+fitnr+parnr, param.max_val, 'Maximum value of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
-      fits_util->add, hdr, 'PTRNA'+fitnr+parnr, param.trans_a, 'Linear coefficient A in Lambda=PVAL*PTRNA+PTRNB'
-      fits_util->add, hdr, 'PTRNB'+fitnr+parnr, param.trans_b, 'Linear coefficient B in Lambda=PVAL*PTRNA+PTRNB'
+      fits_util->add, hdr, 'PTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient A in Lambda=PVAL*PTRA+PTRB'
+      fits_util->add, hdr, 'PTRB'+fitnr+parnr, param.trans_b, 'Linear coefficient B in Lambda=PVAL*PTRA+PTRB'
       fits_util->add, hdr, 'PCONS'+fitnr+parnr, param.const, 'Indicates whether parameter '+parnr+' for component '+fitnr+'is constant'
     endfor ; ipar0,n_params-1
   endfor ; itag=0,N_TAGS(fit)-1
@@ -153,8 +185,8 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   ; Add keywords for Chi^2
   fitnr = strtrim(string(n_components+1), 2)
   fits_util->add_description, hdr, 'Keywords describing fit component '+fitnr
-  fits_util->add, hdr, 'CMPTYP'+fitnr, 'Error of fit curve (Chi^2)', 'Type of component '+fitnr
-  fits_util->add, hdr, 'CMPNAM'+fitnr, 'Chi^2', 'Name of component '+fitnr
+  fits_util->add, hdr, 'CMPTYP'+fitnr, 'Polynomial', 'Type of component '+fitnr
+  fits_util->add, hdr, 'CMPNAM'+fitnr, 'Error of fit curve (Chi^2)', 'Name of component '+fitnr
   fits_util->add, hdr, 'CMP_NP'+fitnr, 1, 'Number of parameters in component '+fitnr
   ipar=0
   parnr = string(byte(ipar+97))
@@ -214,7 +246,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   ENDIF ELSE BEGIN ; spice_header
 
     ; Add WCS keywords
-    fits_util->add, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
+    fits_util->add, hdr, 'CTYPE1', 'PARAMETER', 'Type of 1st coordinate'
     fits_util->add, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'
     for idim=1,n_dims-1 do begin
       idim_str = strtrim(string(idim+1), 2)
@@ -239,6 +271,8 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'WINNO', winno, 'Window number (starting at 0) within this study in this FITS file'
 
   fits_util->clean_header, hdr
+  
+  IF history_string NE '' THEN FXADDPAR, hdr, 'HISTORY', history_string
 
   return, hdr
 end

@@ -91,7 +91,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2022-10-12 11:55 CEST $
+; $Id: 2023-03-27 13:45 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -163,9 +163,12 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
 
   IF ~keyword_set(no_tree_struct) && ~keyword_set(search_subdir) THEN BEGIN
     file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
-    files1 = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count1)
+    dirs = ssw_time2paths(time0, time1, topdir)
+    files1 = file_list(dirs, file_pattern, /quiet)
+    ind = where(files1 ne '', count1)
     file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits.gz'
-    files2 = ssw_time2paths(time0, time1, topdir, file_pat=file_pattern, count=count2)
+    files2 = file_list(dirs, file_pattern, /quiet)
+    ind = where(files2 ne '', count2)
     count0 = count1 + count2
     files = []
     IF count1 GT 0 THEN BEGIN

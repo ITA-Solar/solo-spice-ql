@@ -44,7 +44,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2022-11-14 14:16 CET $
+; $Id: 2023-03-16 10:46 CET $
 
 
 function fits2ana, fitsfile, headers_results=headers_results, headers_data=headers_data, $
@@ -89,13 +89,13 @@ function fits2ana, fitsfile, headers_results=headers_results, headers_data=heade
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
 
     ;extract info from header
-    filename = strtrim(fxpar(hdr, 'ANA_FILE', missing=''), 2)
-    datasource = strtrim(fxpar(hdr, 'ANA_SRC', missing=''), 2)
-    definition = strtrim(fxpar(hdr, 'ANA_DEF', missing=''), 2)
-    missing = fxpar(hdr, 'ANA_MISS', missing=0)
-    label = strtrim(fxpar(hdr, 'ANA_LABL', missing=''), 2)
-    history = fxpar(hdr, 'ANA_HIST', missing='')
-    history = strtrim(strsplit(history,';',/extract,count=count), 2)
+;    filename = strtrim(fxpar(hdr, 'ANA_FILE', missing=''), 2)
+;    datasource = strtrim(fxpar(hdr, 'ANA_SRC', missing=''), 2)
+;    definition = strtrim(fxpar(hdr, 'ANA_DEF', missing=''), 2)
+;    missing = fxpar(hdr, 'ANA_MISS', missing=0)
+;    label = strtrim(fxpar(hdr, 'ANA_LABL', missing=''), 2)
+;    history = fxpar(hdr, 'ANA_HIST', missing='')
+;    history = strtrim(strsplit(history,';',/extract,count=count), 2)
 
     ; extract fit components
     tag_names = hash()
@@ -106,7 +106,15 @@ function fits2ana, fitsfile, headers_results=headers_results, headers_data=heade
       fitnr = strtrim(string(icomp+1), 2)
       n_params = fxpar(hdr, 'CMP_NP'+fitnr, missing=0)
       stc = mk_component_stc(n_params)
-      stc.FUNC_NAME = strtrim(fxpar(hdr, 'CMPTYP'+fitnr, missing=''), 2)
+      FUNC_NAME = strtrim(fxpar(hdr, 'CMPTYP'+fitnr, missing=''), 2)
+      CASE FUNC_NAME OF
+        'Gaussian': component_type = 'comp_gauss'
+        'Polynomial': component_type = 'comp_poly'
+        'SSW comp_bgauss': component_type = 'comp_bgauss'
+        'SSW comp_voigt': component_type = 'comp_voigt'
+        else: component_type = FUNC_NAME
+      ENDCASE
+      stc.FUNC_NAME = component_type
       stc.NAME = strtrim(fxpar(hdr, 'CMPNAM'+fitnr, missing=''), 2)
       stc.FUNC_STRING = strtrim(fxpar(hdr, 'CMPSTR'+fitnr, missing=''), 2)
       stc.description[*] = ''
@@ -120,15 +128,16 @@ function fits2ana, fitsfile, headers_results=headers_results, headers_data=heade
         parnr = string(byte(ipar+97))
         param = stc.param[ipar]
         param.name = strtrim(fxpar(hdr, 'PNAME'+fitnr+parnr, missing=''), 2)
+        punit = strtrim(fxpar(hdr, 'PUNIT'+fitnr+parnr, missing=''), 2)
         param.description[*] = ''
         description = fxpar(hdr, 'PDESC'+fitnr+parnr, missing='')
         param.description = strtrim(strsplit(description,';',/extract,count=count), 2)
         param.initial = fxpar(hdr, 'PINIT'+fitnr+parnr, missing=0)
-        param.value = fxpar(hdr, 'PVAL'+fitnr+parnr, missing=0)
+;        param.value = fxpar(hdr, 'PVAL'+fitnr+parnr, missing=0)
         param.max_val = fxpar(hdr, 'PMAX'+fitnr+parnr, missing=0)
         param.min_val = fxpar(hdr, 'PMIN'+fitnr+parnr, missing=0)
-        param.trans_a = fxpar(hdr, 'PTRNA'+fitnr+parnr, missing=0)
-        param.trans_b = fxpar(hdr, 'PTRNB'+fitnr+parnr, missing=0)
+        param.trans_a = fxpar(hdr, 'PTRA'+fitnr+parnr, missing=0)
+        param.trans_b = fxpar(hdr, 'PTRB'+fitnr+parnr, missing=0)
         param.const = fxpar(hdr, 'PCONS'+fitnr+parnr, missing=0)
         stc.param[ipar] = param
       endfor ; ipar=0,n_params-1
@@ -176,11 +185,11 @@ function fits2ana, fitsfile, headers_results=headers_results, headers_data=heade
 
     IF NOT exist(ana) THEN ana = mk_analysis()
 
-    ana.filename = filename
-    ana.datasource = datasource
-    ana.definition = definition
-    ana.missing = missing
-    ana.label = label
+;    ana.filename = filename
+    ana.datasource = fitsfile
+;    ana.definition = definition
+;    ana.missing = missing
+;    ana.label = label
 
     handle_value,ana.history_h,history,/no_copy,/set
     handle_value,ana.lambda_h,lambda,/no_copy,/set
