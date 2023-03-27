@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-11-04 14:11 CET $
+; $Id: 2023-03-16 10:48 CET $
 ;-
 ;
 ;
@@ -108,7 +108,7 @@ pro spice_xcontrol_l23_save_file, event
     original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
 
     if iwindow gt 0 then extension=1 else extension=0
-    headers = spice_ana2fitshdr(ana_l3[iwindow], header_l2=(*info).object_l2->get_header(winno_l3[iwindow]), $
+    headers = ana2fitshdr(ana_l3[iwindow], header_l2=(*info).object_l2->get_header(winno_l3[iwindow]), $
       extension=extension, filename_l3=filename_l3, n_windows=nwin_l3, winno=iwindow, $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
@@ -259,7 +259,7 @@ pro spice_xcontrol_l23_update_state_display, info
       status = 'NOT CREATED'
       editable = 0
       IF state_l3[iwin].l3_winno GE 0 THEN BEGIN
-        title = fxpar(*hdr_l3[state_l3[iwin].l3_winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+        title = fxpar(*hdr_l3[state_l3[iwin].l3_winno], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
         status = 'CREATED'
         IF state_l3[iwin].edited THEN status = status + ' and EDITED'
         editable = 1
@@ -300,13 +300,13 @@ pro spice_xcontrol_l23_open_l3, event
     1: BEGIN
       ana_l3 = *(*info).ana_l3_official
       hdr_l3 = *(*info).hdr_l3_official
-      title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+      title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_official
     END
     2: BEGIN
       ana_l3 = *(*info).ana_l3_user
       hdr_l3 = *(*info).hdr_l3_user
-      title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+      title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_user
     END
   endcase
@@ -358,10 +358,10 @@ pro spice_xcontrol_l23_copy_window, event
   widget_control, event.id, get_uvalue=win_info
   ana_l3 = *(*info).ana_l3_official
   hdr_l3 = *(*info).hdr_l3_official
-  print,fxpar(*hdr_l3[win_info], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+  print,fxpar(*hdr_l3[win_info], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
   hdr_new = ptrarr(1)
   hdr_new[0] = ptr_new(*hdr_l3[win_info])
-  print,fxpar(*hdr_new[0], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+  print,fxpar(*hdr_new[0], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
   help,win_info
   result = {l3_file:'', $
     ana:ptr_new(ana_l3[win_info]), $
@@ -547,7 +547,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       IF count GT 0 THEN BEGIN
         win_created = 1
         state_l3_official[iwin].l3_winno=ind[0]
-        title = fxpar(*hdr_l3_official[ind[0]], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+        title = fxpar(*hdr_l3_official[ind[0]], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
         status = 'CREATED'
       ENDIF
     ENDIF
@@ -582,7 +582,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       IF count GT 0 THEN BEGIN
         win_created = 1
         state_l3_user[iwin].l3_winno=ind[0]
-        title = fxpar(*hdr_l3_user[ind[0]], 'L2EXTNAM', 'L2EXTNAM keyword empty/missing')
+        title = fxpar(*hdr_l3_user[ind[0]], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
         status = 'CREATED'
       ENDIF
     ENDIF
