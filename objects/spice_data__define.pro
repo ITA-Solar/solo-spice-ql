@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2023-02-05 20:53 CET $
+; $Id: 2023-03-27 13:54 CEST $
 
 
 ;+
@@ -2324,7 +2324,7 @@ END
 ; OUTPUT:
 ;     array of structure of type:
 ;             {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
-;               extension:'', values:ptr_new()}
+;               tag:'', bin_extension_name:'', data_extension_name:'', data_extension_index:-1, values:ptr_new()}
 ;     or the data only, i.e. an array of numbers.
 ;
 ; KEYWORDS:
@@ -2452,8 +2452,9 @@ PRO spice_data::read_file, file
     ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
   ENDFOR ; iwin = 0, self.nwin-1
 
+  fits_open, file, fcb
   iwin = self.nwin
-  while 1 do begin
+  for iwin=self.nwin, fcb.nextend-1 do begin
     hdr = headfits(file, exten=iwin)
     if size(hdr, /type) ne 7 then break
     self.next = self.next + 1
@@ -2461,7 +2462,7 @@ PRO spice_data::read_file, file
     headers_string = [headers_string, ptr_new(hdr)]
     hdr = fitshead2struct(hdr)
     headers = [headers, ptr_new(hdr)]
-  endwhile
+  endfor
 
   self.window_data = ptr_new(ptrarr(self.next))
   self.window_descaled = ptr_new(bytarr(self.next))
