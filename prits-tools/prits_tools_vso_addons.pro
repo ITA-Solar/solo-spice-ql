@@ -7,8 +7,10 @@ FUNCTION prits_tools::vso_cached_get, result
   fileid_link = self.vso.cache_dir + "/" + fileid + ".lnk"
   link_status = file_info(fileid_link)
   have_file = link_status.symlink AND NOT link_status.dangling_symlink
-  IF have_file THEN return, fileid_link
-
+  IF have_file THEN BEGIN
+     box_message, "Already have " + fileid_link
+     return, fileid_link
+  END
   status = vso_get(result, out_dir=self.vso.cache_dir, filename=file, /use_network)
   IF status.info NE '' OR file EQ '' THEN return, ""
 
@@ -25,7 +27,7 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end,  $
   ix = where(*self.vso.search_strings EQ search_string, count)
   IF count EQ 1 THEN BEGIN
      box_message, "Found cached search for " + search_string
-     return, (*self.vso.search_results)[ix[0]]
+     return, *(*self.vso.search_results)[ix[0]]
   END 
   results = vso_search(date_beg, date_end, instrument=instrument, wave=wave, urls=urls, sample=sample)
   IF size(results, /tname) NE 'STRUCT' THEN BEGIN
@@ -33,14 +35,14 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end,  $
      return, !null
   END
   *self.vso.search_strings = [*self.vso.search_strings, search_string]
-  *self.vso.search_results = [*self.vso.search_results, results]
+  *self.vso.search_results = [*self.vso.search_results, ptr_new(results)]
   return, results
 END
 
 
 PRO prits_tools::vso_addons_init
-  self.vso.search_strings = ptr_new([])
-  self.vso.search_results = ptr_new([])
+  self.vso.search_strings = ptr_new([""])
+  self.vso.search_results = ptr_new([ptr_new()])
   IF NOT file_test("$HOME/vso-cache") THEN message, "You must create a VSO cache: mkdir $HOME/vso-cache"
   self.vso.cache_dir = expand_path("$HOME/vso-cache")
 END
