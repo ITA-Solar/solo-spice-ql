@@ -1,4 +1,5 @@
 FUNCTION prits_tools::vso_cached_get, result
+  
   ; We don't know file name until we've gotten the file, so construct the name
   ; of a link with a name that we can construct from the result, check if it
   ; exists already
@@ -21,21 +22,30 @@ END
 
 FUNCTION prits_tools::vso_cached_search, date_beg, date_end,  $
                                          instrument=instrument, wave=wave, sample=sample, urls=urls
+  search_string = date_beg + "-"
+  search_string += date_end + "-" 
+  search_string += instrument + "-"
+  search_string += wave + "-"
+  search_string += sample.tostring() + '-' 
+  search_string += urls.tostring()  
+  savefile = self.vso.cache_dir + "/" + search_string + ".sav"
   
-  search_string = date_beg + "-" + date_end + "-" + instrument + $
-                  "-" + wave + "-" + sample.tostring() + '-' + urls.tostring()
-  ix = where(*self.vso.search_strings EQ search_string, count)
-  IF count EQ 1 THEN BEGIN
-     box_message, "Found cached search for " + search_string
-     return, *(*self.vso.search_results)[ix[0]]
-  END 
+  IF file_test(savefile) THEN BEGIN
+     box_message, "Found cached vso search in " + savefile
+     restore, savefile
+     IF size(results, /tname) NE 'STRUCT' THEN results = !null
+     return, results
+  END
+  
   results = vso_search(date_beg, date_end, instrument=instrument, wave=wave, urls=urls, sample=sample)
   IF size(results, /tname) NE 'STRUCT' THEN BEGIN
-     box_message, "VSO_SEARCH did not work!"
+     box_message, "VSO_SEARCH did not work: " + search_string
+     results = 0
+     save, results, filename=savefile
      return, !null
   END
-  *self.vso.search_strings = [*self.vso.search_strings, search_string]
-  *self.vso.search_results = [*self.vso.search_results, ptr_new(results)]
+  
+  save, results, filename=savefile
   return, results
 END
 
@@ -56,5 +66,3 @@ FUNCTION prits_tools_vso_addons
         }
   return, vso
 END
-     
-
