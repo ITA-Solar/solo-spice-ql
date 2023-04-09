@@ -1,25 +1,3 @@
-FUNCTION prits_tools::vso_cached_get, result
-  
-  ; We don't know file name until we've gotten the file, so construct the name
-  ; of a link with a name that we can construct from the result, check if it
-  ; exists already
-  
-  fileid = file_basename(result.fileid) ;; AIA fileid isn't a file name, but does not hurt
-  fileid_link = self.vso.cache_dir + "/" + fileid + ".lnk"
-  link_status = file_info(fileid_link)
-  have_file = link_status.symlink AND NOT link_status.dangling_symlink
-  IF have_file THEN BEGIN
-     box_message, "Already have " + fileid_link
-     return, fileid_link
-  END
-  status = vso_get(result, out_dir=self.vso.cache_dir, filename=file, /use_network)
-  IF status.info NE '' OR file EQ '' THEN return, ""
-
-  box_message, "Linking " + file + " -> " + fileid_link
-  file_link, file, fileid_link
-  return, fileid_link
-END
-
 FUNCTION prits_tools::vso_cached_search, date_beg, date_end,  $
                                          instrument=instrument, wave=wave, sample=sample, urls=urls
   search_string = date_beg + "-"
@@ -48,6 +26,31 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end,  $
   save, results, filename=savefile
   return, results
 END
+
+
+
+FUNCTION prits_tools::vso_cached_get, result
+  
+  ; We don't know file name until we've gotten the file, so construct the name
+  ; of a link with a name that we can construct from the result, check if it
+  ; exists already
+  
+  fileid = file_basename(result.fileid) ;; AIA fileid isn't a file name, but does not hurt
+  fileid_link = self.vso.cache_dir + "/" + fileid + ".lnk"
+  link_status = file_info(fileid_link)
+  have_file = link_status.symlink AND NOT link_status.dangling_symlink
+  IF have_file THEN BEGIN
+     box_message, "Already have " + fileid_link
+     return, fileid_link
+  END
+  status = vso_get(result, out_dir=self.vso.cache_dir, filename=file, /use_network)
+  IF status.info NE '' OR file EQ '' THEN return, ""
+
+  box_message, "Linking " + file + " -> " + fileid_link
+  file_link, file, fileid_link
+  return, fileid_link
+END
+
 
 
 PRO prits_tools::vso_addons_init
