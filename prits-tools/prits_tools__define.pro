@@ -16,7 +16,7 @@ END
 
   
 PRO prits_tools__define
-  vso = prits_tools_vso_addons()
+  vso = {prits_tools_vso_addons}
   struct = {prits_tools, vso:vso, dummy:0b}  
 END
 

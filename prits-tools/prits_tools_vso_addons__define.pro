@@ -60,12 +60,11 @@ PRO prits_tools::vso_addons_init
   self.vso.cache_dir = expand_path("$HOME/vso-cache")
 END
 
-FUNCTION prits_tools_vso_addons
+PRO prits_tools_vso_addons__define
   compile_opt static
-  vso = {prits_tools_vso_info, $
+  vso = {prits_tools_vso_addons, $
          search_strings:ptr_new(), $
          search_results:ptr_new(), $
          cache_dir:"" $
         }
-  return, vso
 END
