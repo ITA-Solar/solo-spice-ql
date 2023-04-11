@@ -39,7 +39,7 @@
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;-
-; $Id: 2023-03-27 13:54 CEST $
+; $Id: 2023-04-11 15:31 CEST $
 
 
 ;+
@@ -450,7 +450,9 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
 
   detector = self->get_header_keyword('DETECTOR', window_index)
-  widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
+  widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
+  slitwid_factor = 2./self->get_header_keyword('SLIT_WID', window_index)
+  widmin_pixels = widmin_pixels_2_arcsec_slit * slitwid_factor
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
   IF ~keyword_set(no_line_list) THEN line_list=spice_line_list()
