@@ -2,6 +2,7 @@ FUNCTION prits_tools::init
   COMMON prits_tools, first_pt
   IF n_elements(first_pt) EQ 0 THEN first_pt = self
   self.vso_addons_init
+  self.gen_addons_init
   return, 1
 END
 
@@ -16,8 +17,9 @@ END
 
   
 PRO prits_tools__define
-  vso = {prits_tools_vso_addons}
-  struct = {prits_tools, vso:vso, dummy:0b}  
+  vso = {prits_tools__vso_addons}
+  gen = {prits_tools__gen_addons}
+  struct = {prits_tools, vso:vso, gen:gen, dummy:0b}  
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
