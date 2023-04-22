@@ -1,6 +1,8 @@
-FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, $
+FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=quiet, $
                                          instrument=instrument, wave_str=wave_str_in, sample=sample, urls=urls
   wave_str = wave_str_in
+  quiet = keyword_set(quiet)
+  
   IF instrument EQ 'eit' THEN BEGIN
      IF wave_str EQ '193' THEN wave_str = '195'
      IF wave_str EQ '211' THEN wave_str = '284'
@@ -9,6 +11,8 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, $
      IF wave_str EQ '195' THEN wave_str = '193'
      IF wave_str EQ '284' THEN wave_str = '211'
   END
+  
+  IF instrument EQ 'aia' AND date_end LT '2010' THEN return, !null
   
   search_string = date_beg + "--"
   search_string += date_end + "--" 
@@ -19,16 +23,16 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, $
   savefile = self.vso.cache_dir + "/" + search_string + ".sav"
   
   IF file_test(savefile) THEN BEGIN
-     message, /info, "Found cached vso search in " + savefile
+     IF NOT quiet THEN message, /info, "Found cached vso search in " + savefile
      restore, savefile
      IF size(results, /tname) EQ 'STRUCT' THEN return, results
      IF NOT keyword_set(retry) THEN return, !null
-     message, /info, "Retrying: " + savefile
+     IF quiet THEN message, /info, "Retrying: " + savefile
   END
   
   results = vso_search(date_beg, date_end, instrument=instrument, wave=wave_str, urls=urls, sample=sample)
   IF size(results, /tname) NE 'STRUCT' THEN BEGIN
-     box_message, "VSO_SEARCH did not work: " + search_string
+     IF NOT quiet THEN box_message, "VSO_SEARCH did not work: " + search_string
      results = 0
      save, results, filename=savefile
      return, !null
@@ -40,7 +44,8 @@ END
 
 
 
-FUNCTION prits_tools::vso_cached_get, result
+FUNCTION prits_tools::vso_cached_get, result, quiet=quiet
+  quiet = keyword_set(quiet)
   
   ; We don't know file name until we've gotten the file, so construct the name
   ; of a link with a name that we can construct from the result, check if it
@@ -51,16 +56,16 @@ FUNCTION prits_tools::vso_cached_get, result
   link_status = file_info(fileid_link)
   have_file = link_status.symlink AND NOT link_status.dangling_symlink
   IF have_file THEN BEGIN
-     box_message, "Already have " + fileid_link
+     IF NOT quiet THEN box_message, "Already have " + fileid_link
      return, fileid_link
   END
   status = vso_get(result, out_dir=self.vso.cache_dir, filename=file, /use_network)
   IF status.info NE '' OR file EQ '' THEN BEGIN
-     box_message, "VSO_GET failed, status.info:" + status.info
+     IF NOT quiet THEN box_message, "VSO_GET failed, status.info:" + status.info
      return, ""
   END
   
-  box_message, "Linking " + file + " -> " + fileid_link
+  IF NOT quiet THEN box_message, "Linking " + file + " -> " + fileid_link
   file_link, file, fileid_link
   return, fileid_link
 END
@@ -148,13 +153,13 @@ PRO prits_tools::vso_fill_day_cache, results, hours
 END 
 
 PRO prits_tools::vso_fill_cache, start, final, reverse=reverse, waves_str=waves_str, $
-                                 instruments=instruments, hours=hours, retry=retry
+                                 instruments=instruments, hours=hours, retry=retry, quiet=quiet
   
   self.default, start, '2006/10/18' ;; First Hinode obs
   self.default, final, 'today'      ;; Calculated later
   self.default, reverse, 0
   self.default, waves_str, ['171', '193', '304', '211']
-  self.default, instruments, ['eit', 'aia']
+  self.default, instruments, ['aia', 'eit']
   self.default, hours, ['00', '12']
   self.default, retry, 0
   
@@ -180,11 +185,11 @@ PRO prits_tools::vso_fill_cache, start, final, reverse=reverse, waves_str=waves_
            catch, err
            IF err NE 0 THEN BEGIN
               catch, /cancel
-              message, "Caught error:" + !error_state.msg, /continue
+              IF NOT quiet THEN message, "Caught error:" + !error_state.msg, /continue
               CONTINUE
            END
            results = self.vso_cached_search(day, day_end, _extra = extra, /retry)
-           IF n_elements(results) GT 0 THEN  msvos_fill_day_cache, results, hours
+           IF n_elements(results) GT 0 THEN  self.vso_fill_day_cache, results, hours
         END
      END
   END 
