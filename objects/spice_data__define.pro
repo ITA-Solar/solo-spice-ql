@@ -38,8 +38,10 @@
 ;                  a little army of help methods is now called when the
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
+;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
+;                                 and ::mk_analysis
 ;-
-; $Id: 2023-04-11 15:31 CEST $
+; $Id: 2023-04-26 15:08 CEST $
 
 
 ;+
@@ -159,16 +161,16 @@ END
 ;
 ;-
 function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  position=position, velocity=velocity
+  position=position, velocity=velocity, no_line_list=no_line_list
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity)
+  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, no_line_list=no_line_list)
   if size(ana, /type) EQ 8 then begin
     XCFIT_BLOCK, ana=ana
   endif else begin
-    print, 'Something went wrong when trying to produce an ANA structure.
+    print, 'Something went wrong when trying to produce an ANA structure.'
   endelse
 
   return, ana
