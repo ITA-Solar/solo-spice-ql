@@ -1,32 +1,3 @@
-FUNCTION prits_tools::day_from_julday, juldays, delimiter=delimiter
-  compile_opt static
-  prits_tools.default, delimiter, '-'
-  day = string(juldays, format='(C(CYI, "-", CMOI2.2, "-", CDI2.2))')
-  return, day.replace('-', delimiter)
-END
-
-
-FUNCTION prits_tools::list_of_days, start, final, reverse=reverse, delimiter=delimiter
-  compile_opt static
-  start_jd = anytim2jd(start + 'T12:00')
-  final_jd = anytim2jd(final + 'T12:00')
-  
-  start_jd = start_jd.int + start_jd.frac
-  final_jd = final_jd.int + final_jd.frac
-  
-  julian_days = timegen(start=start_jd, final=final_jd, units='days')
-  IF keyword_set(reverse) THEN julian_days = reverse(julian_days)
-  
-  ;; See calendar C() format codes in 
-  ;; file:///mn/alruba2/astro/local/harris/idl88/help/online_help/help.htm#../Subsystems/idl/
-  ;; Content/Creating%20IDL%20Programs/Components%20of%20the%20IDL%20Language/Format_Codes_Fortran.htm
-  
-  days = prits_tools.day_from_julday(julian_days, delimiter=delimiter)
-  
-  return, days
-END
-
-
 FUNCTION prits_tools::concat_dirs, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10
   compile_opt static
   result = concat_dir(x1, x2)
@@ -56,7 +27,7 @@ FUNCTION prits_tools::shorten_symlink, link_to_input, link_from_input, verbose=v
   IF link_to.startswith(link_from + "/") THEN message, link_from + " can't point below itself: " + link_to
   
   IF link_to EQ link_from THEN BEGIN
-     return, 'file_basename(link_to)'
+     return, file_basename(link_to)
   END
 
   link_to_bytarr = byte(link_to)
@@ -110,7 +81,9 @@ PRO prits_tools__gen_addons__define
 END
 
 IF getenv("USER") EQ 'steinhh' THEN BEGIN
-   pt = prits_tools()
+   COMMON prits_tools, gen_addons_pt
+   IF n_elements(gen_addons_pt) EQ 0 THEN gen_addons_pt = prits_tools()
+   pt = gen_addons_pt
    cd, '$HOME/tmp/link-test'
    ff = pt.shorten_symlink('A/a', 'A/a', /verbose)
    ff = pt.shorten_symlink('A/a', 'A/b', /verbose)
