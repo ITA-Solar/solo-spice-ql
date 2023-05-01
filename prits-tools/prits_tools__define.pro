@@ -8,9 +8,11 @@ FUNCTION prits_tools::init
   return, 1
 END
 
-PRO prits_tools::getproperty, au=au, rsun=rsun
+PRO prits_tools::getproperty, au=au, rsun=rsun, deg2rad=deg2rad, rad2deg=rad2deg
   au = 1.49597e11 ; meters
   rsun = 6.957e8  ; meters
+  deg2rad = !const.dtor
+  rad2deg = !const.rtod
 END
 
 PRO prits_tools::cleanup
