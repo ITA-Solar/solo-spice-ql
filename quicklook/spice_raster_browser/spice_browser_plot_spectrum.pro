@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2023-05-05 14:43 CEST $
 
 
 PRO spice_browser_plot_spectrum, state, pwin
@@ -72,7 +72,7 @@ PRO spice_browser_plot_spectrum, state, pwin
 
   title='lpix='+trim(lpix)+', t_exp='+trim(string(format='(f6.2)',state.wid_data.exptime[pwin]))+' s'
 
-  ytitle='Intensity / DN s!u-1!n'
+  ytitle='Intensity / ' + state.data->get_header_keyword('BUNIT', iwin, '')
 
   wset,state.wid_data.spec_plot_id[pwin]
   IF state.wid_data.velocity EQ 1 THEN BEGIN
