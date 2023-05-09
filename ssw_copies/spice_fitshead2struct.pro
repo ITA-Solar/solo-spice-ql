@@ -1,6 +1,6 @@
-function fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore, $
+function spice_fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore, $
 	   ncomment=ncomment, nhistory=nhistory, add_standard=add_standard, $
-           debug=debug,nofill=nofill, wcs=wcs, SILENT=silent, _extra=_extra
+           debug=debug,nofill=nofill, wcs=wcs, SILENT=silent, MULTIVALUE=MULTIVALUE, _extra=_extra
 ;+
 ;   Name: fitshead2struct
 ;
@@ -20,6 +20,7 @@ function fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore, $
 ;      wcs      - If set, add WCS structure
 ;     /DASH2UNDERSCORE - Convert all dashes and dots in keywords to underscore (instead of _D$)
 ;     /SILENT     Don't print messages
+;     /MULTIVALUE - Allow multiple values to be returned, if found in the header.
 ;
 ;      Also takes any keywords accepted by FITSHEAD2WCS.
 ;
@@ -50,6 +51,7 @@ function fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore, $
 ;      24-Nov-2010, N.Rich - Implement /DASH2UNDERSCORE and /SILENT 
 ;      15-sep-2014, S. Freeland - uniq -> ssw_uniq (avoid 8.3/Exelis uniq collision)
 ;      20-jun-2019, William Thompson - support multivalued distortion keywords
+;       9-May-2023, Martin Wiesmann - Add keyword /MULTIVALUE
 ; 
 ;   Motivation:
 ;      use by mreadfits if no structure template is passed 
@@ -178,8 +180,8 @@ if not data_chk(template,/struct) then begin
 ;  -------- create the structure --------------------------------
    structarr=strarr(kcnt)
    for i=0,kcnt-1 do begin
-       multivalue = wcs_test_distortion(keys[i])
-       structarr[i]=fmt_tag(size(fxpar(ohead,id_unesc(keys[i]),multivalue=multivalue)))
+       multivalue_use = keyword_set(MULTIVALUE) || wcs_test_distortion(id_unesc(keys[i]))
+       structarr[i]=fmt_tag(size(fxpar(ohead,id_unesc(keys[i]),multivalue=multivalue_use)))
    endfor
    strstr='{dummy,' + arr2str(tags+':'+structarr) + ','+comarr+','+hisarr + '}'
    retval=mrd_struct([tags,'COMMENT','HISTORY'],[structarr,'strarr('+string(ncomment)+')','strarr('+string(nhistory)+')'],1)
@@ -197,9 +199,9 @@ not_found=intarr(kcnt)
 if not keyword_set(nofill) then begin
  for i=0,kcnt-1 do  begin
   unesc_key = id_unesc(keys(i))
-  multivalue = wcs_test_distortion(unesc_key)
+  multivalue_use = keyword_set(MULTIVALUE) || wcs_test_distortion(unesc_key)
   if strlen(strtrim(unesc_key,2)) le 8 then begin    ;Don't try to process overlong tag names (e.g. WCS_STRUCT)
-   temp=fxpar(ohead,id_unesc(keys(i)),count=fcount,multivalue=multivalue)
+   temp=fxpar(ohead,unesc_key,count=fcount,multivalue=multivalue_use)
    dtype=datatype(retval.(i),2)
    ok=1
    if (dtype ge 1) and (dtype le 5) then ok=is_number(temp)
