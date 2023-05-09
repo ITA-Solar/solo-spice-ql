@@ -20,7 +20,7 @@ function spice_fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore,
 ;      wcs      - If set, add WCS structure
 ;     /DASH2UNDERSCORE - Convert all dashes and dots in keywords to underscore (instead of _D$)
 ;     /SILENT     Don't print messages
-;     /MULTIVALUE - Allow multiple values to be returned, if found in the header.
+;     /MULTIVALUE - Allow multiple occurences of keywords in the header, only first occurence is preserved.
 ;
 ;      Also takes any keywords accepted by FITSHEAD2WCS.
 ;
