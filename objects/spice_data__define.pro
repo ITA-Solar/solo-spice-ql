@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-04-26 15:08 CEST $
+; $Id: 2023-05-09 14:03 CEST $
 
 
 ;+
@@ -2439,34 +2439,27 @@ PRO spice_data::read_file, file
   self.close
   message, 'reading file: ' + file, /info
   self.file = file
-  mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
-  self.nwin = hdr.nwin
-  self.next = hdr.nwin
-
-  headers = ptrarr(self.nwin)
-  headers_string = ptrarr(self.nwin)
-  wcs = ptrarr(self.nwin)
-  FOR iwin = 0, self.nwin-1 DO BEGIN
-    hdr = headfits(file, exten=iwin)
-    headers_string[iwin] = ptr_new(hdr)
-    hdr = fitshead2struct(hdr)
-    headers[iwin] = ptr_new(hdr)
-    wcs[iwin] = ptr_new(fitshead2wcs(hdr))
-    IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
-    ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
-  ENDFOR ; iwin = 0, self.nwin-1
-
+  hdr = headfits(file, exten=0)
+  self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
-  iwin = self.nwin
-  for iwin=self.nwin, fcb.nextend-1 do begin
-    hdr = headfits(file, exten=iwin)
-    if size(hdr, /type) ne 7 then break
-    self.next = self.next + 1
-    iwin = iwin + 1
-    headers_string = [headers_string, ptr_new(hdr)]
-    hdr = fitshead2struct(hdr)
-    headers = [headers, ptr_new(hdr)]
-  endfor
+  self.next = fcb.nextend
+
+  headers = ptrarr(self.next)
+  headers_string = ptrarr(self.next)
+  wcs = ptrarr(self.nwin)
+  FOR iwin = 0, self.next-1 DO BEGIN
+    if iwin gt 0 then begin
+      hdr = headfits(file, exten=iwin)
+    endif
+    headers_string[iwin] = ptr_new(hdr)
+    hdr = spice_fitshead2struct(hdr, /multivalue, /silent)
+    headers[iwin] = ptr_new(hdr)
+    IF iwin LT self.nwin THEN BEGIN
+      wcs[iwin] = ptr_new(fitshead2wcs(hdr))
+      IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
+      ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
+    ENDIF
+  ENDFOR ; iwin = 0, self.next-1
 
   self.window_data = ptr_new(ptrarr(self.next))
   self.window_descaled = ptr_new(bytarr(self.next))
