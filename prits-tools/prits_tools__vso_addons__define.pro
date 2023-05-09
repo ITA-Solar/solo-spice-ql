@@ -199,7 +199,8 @@ END
 PRO prits_tools::vso_addons_init
   self.vso.search_strings = ptr_new([""])
   self.vso.search_results = ptr_new([ptr_new()])
-  IF NOT file_test("$HOME/vso-cache") THEN message, "You must create a VSO cache: mkdir $HOME/vso-cache"
+  ; TODO: Stein Vidar 
+  ;IF NOT file_test("$HOME/vso-cache") THEN message, "You must create a VSO cache: mkdir $HOME/vso-cache"
   self.vso.cache_dir = expand_path("$HOME/vso-cache")
 END
 
