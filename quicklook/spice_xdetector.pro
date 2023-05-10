@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2022-09-20 15:34 CEST $
+; $Id: 2023-05-10 10:58 CEST $
 
 
 ; save as postscript file
@@ -822,6 +822,8 @@ pro spice_xdetector_cleanup, tlb
   ptr_free, (*info).drawimage
   ptr_free, (*info).xscale
   ptr_free, (*info).yscale
+  ; Set !except back to original value
+  !except = (*info).except
   ptr_free, info
 end
 
@@ -1264,13 +1266,19 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     mainpixid:pixid, $
     pixid:pixid, $
     xtitle:xtitle, $
-    ytitle :ytitle $
+    ytitle :ytitle, $
+    
+    ; System
+    except:!except $
   }
 
   info = ptr_new(info, /no_copy)
   (*info).data=ptr_new(data)
   ; set user value of tlb widget to be the info ptr
   widget_control, tlb, set_uvalue = info
+
+  ; Suppress all warnings
+  !except = 0
 
   ; create pseudoevent and send this event to spice_xdetector_draw,
   ; in order to draw the image
