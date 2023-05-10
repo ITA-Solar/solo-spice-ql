@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-05-09 14:03 CEST $
+; $Id: 2023-05-10 10:29 CEST $
 
 
 ;+
@@ -1254,7 +1254,7 @@ END
 ;     reverse_y : Y-coordinates are given as (CCD-size +1 - (original y-coords)).
 ;     reverse_x : For dumbbells x-coordinates are flipped. If this keyword is set, the coordinates will
 ;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped.
-;     no_warning: If set, warnings about x-flipping will be suppressed.
+;     loud      : If set, warnings will be printed.
 ;
 ; OUTPUT:
 ;     Integer array with 4 elements [lambda0, lambda1, y0, y1].
@@ -1263,7 +1263,7 @@ END
 ;     detector : int, 1 or 2 to indicate on which detector the window is.
 ;-
 FUNCTION spice_data::get_window_position, window_index, detector=detector, $
-  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, no_warning=no_warning
+  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
 
@@ -1290,7 +1290,7 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
       PXEND3 = PXBEG3
       PXBEG3 = beg_temp
     ENDIF ELSE BEGIN
-      IF ~keyword_set(no_warning) THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
+      IF keyword_set(loud) THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
     ENDELSE
   ENDIF
   IF PXEND3 GT 2*ccd_size[0] THEN $
@@ -1303,7 +1303,8 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
 
   PXEND2 = self.get_header_keyword('PXEND2', window_index)
   IF PXEND2 LT 0 THEN message, 'PXEND2 < 0: '+strtrim(string(PXEND2))+' < 0', /info
-  IF PXEND2 GT PXBEG2 THEN message, 'PXEND2 > PXBEG2: '+strtrim(string(PXEND2))+' > '+strtrim(string(PXBEG2)), /info
+  IF keyword_set(loud) && PXEND2 GT PXBEG2 THEN $
+    message, 'PXEND2 > PXBEG2: '+strtrim(string(PXEND2))+' > '+strtrim(string(PXBEG2)), /info
   IF PXEND2 GT ccd_size[1] THEN $
     message, 'PXEND2 > CCD-size: '+strtrim(string(PXEND2))+' > '+strtrim(string(ccd_size[1])), /info
 
