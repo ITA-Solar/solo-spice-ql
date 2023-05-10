@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-10 11:09 CEST $
+; $Id: 2023-05-10 13:16 CEST $
 
 
 ; save as postscript file
@@ -497,7 +497,7 @@ end
 
 ; create animation widget and launch animation
 pro spice_xdetector_anim, event
-  print,'does NOT work yet'
+  print,'does NOT work yet' ; TODO
   return
   widget_control, event.top, get_uvalue = info
   magnification=0.95
@@ -1011,8 +1011,8 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   optmenu=widget_button(menubar,value='Options', uvalue='options')
   colmenu=widget_button(optmenu, value='Colour table', $
     event_pro='spice_xdetector_colors')
-  animenu=widget_button(optmenu, value='Create Animation', $
-    event_pro='spice_xdetector_control_anim')
+  ; animenu=widget_button(optmenu, value='Create Animation', $ ; TODO: does not work yet
+  ;   event_pro='spice_xdetector_control_anim')
   wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
   pixmenu=widget_button(wscalemenu, value=data->get_axis_title(xdim, /pixels), event_pro='spice_xdetector_wpix')
   angstrmenu=widget_button(wscalemenu, value=data->get_axis_title(xdim), event_pro='spice_xdetector_wangstr')
@@ -1207,7 +1207,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     ;    xycentext:xycentext, $
     dwoption_menu:dwoption_menu, $
     drawsizeoption_menu:drawsizeoption_menu, $
-    animenu:animenu, $
+    ;animenu:animenu, $
     drawid:drawid, $
     wid:wid, $
     colorbar_title:colorbar_title,$
