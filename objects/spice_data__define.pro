@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-05-10 10:29 CEST $
+; $Id: 2023-05-10 10:57 CEST $
 
 
 ;+
@@ -1864,7 +1864,7 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG3 = (self.get_window_position(window_index, /reverse_y, /no_warning))[2]
+    PXBEG3 = (self.get_window_position(window_index, /reverse_y))[2]
     cripx = crpix + PXBEG3
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
