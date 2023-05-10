@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-10 10:58 CEST $
+; $Id: 2023-05-10 11:09 CEST $
 
 
 ; save as postscript file
@@ -1014,9 +1014,8 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   animenu=widget_button(optmenu, value='Create Animation', $
     event_pro='spice_xdetector_control_anim')
   wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
-  angstr = string("305B)+'ngstr'+string("370B)+'m'
-  pixmenu=widget_button(wscalemenu, value='Pixels',event_pro='spice_xdetector_wpix')
-  angstrmenu=widget_button(wscalemenu, value=angstr,event_pro='spice_xdetector_wangstr')
+  pixmenu=widget_button(wscalemenu, value=data->get_axis_title(xdim, /pixels), event_pro='spice_xdetector_wpix')
+  angstrmenu=widget_button(wscalemenu, value=data->get_axis_title(xdim), event_pro='spice_xdetector_wangstr')
 
   ;display window:
   displaybase = widget_base(rcol, /row)
@@ -1109,8 +1108,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
 
   lsubpix=widget_base(lcol,/row)
   wlbase = widget_base(lsubpix, /column, /frame)
-  angstr = string("305B)+'ngstr'+string("370B)+'m'
-  wl_names = ['Pixels', angstr]
+  wl_names = [data->get_axis_title(xdim, /pixels), data->get_axis_title(xdim)]
   wlbutton = cw_bgroup(wlbase, wl_names, /return_index, $
     /exclusive, set_value = 0, $
     event_func = 'spice_xdetector_wloption')
