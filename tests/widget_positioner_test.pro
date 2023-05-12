@@ -1,3 +1,33 @@
+;+
+; NAME:
+;     WIDGET_POSITIONER_TEST
+;
+; PURPOSE:
+;     This procedure tests the class widget_positioner
+;
+; CATEGORY:
+;     PRITS - Tools.
+;
+; CALLING SEQUENCE:
+;
+; INPUTS:
+;
+; OUTPUT:
+;
+; CALLS:
+;
+; COMMON BLOCKS:
+;
+; PROCEDURE:
+;
+; RESTRICTIONS:
+;
+; HISTORY:
+;     11-May-2023: Martin Wiesmann
+;-
+; $Id: 2023-05-12 15:10 CEST $
+
+
 pro widget_positioner_test
 
   parent = widget_base(/column, title='Parent Widget', xsize=300, ysize=400)

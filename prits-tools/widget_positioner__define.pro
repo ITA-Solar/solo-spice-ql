@@ -1,15 +1,24 @@
-
 ;+
 ; NAME:
 ;     WIDGET_POSITIONER
 ;
 ; PURPOSE:
-;     pwidget_positioner__define
+;     This object can be used to position a new widget relative to another widget,
+;     or relative to the screen. This also works with multiple screens.
 ;
 ; CATEGORY:
 ;     PRITS - Tools.
 ;
 ; CALLING SEQUENCE:
+; parent = widget_base(/column, title='Parent Widget', xsize=300, ysize=400)
+; widget_control, parent, /realize
+; 
+; new_window = widget_base(/row, title='New Widget', xsize=400, ysize=300, group_leader=parent)
+; 
+; wp = widget_positioner(new_window, parent)
+; wp->position, xoffset=xoffset, yoffset=yoffset
+; 
+; widget_control, new_window, /realize  ; Alternatively the new widget may be also realized before calling widget_positioner->position
 ;
 ; INPUTS:
 ;
@@ -26,7 +35,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-12 14:53 CEST $
+; $Id: 2023-05-12 15:10 CEST $
 
 
 ;+
@@ -36,7 +45,8 @@
 ; INPUTS:
 ;     widget : The ID of the widget to be positioned. Can also be set later.
 ;     parent : The ID of the parent widget to which the widget should get a certain position.
-;              Can also be set later. The parent widget must be realised already.
+;              Optional, but if provided then the parent widget must be realised already.
+;              If not provided the widget will be positioned relative to upper left corner of display.
 ;
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise
@@ -76,6 +86,19 @@ PRO widget_positioner::help, description=description, _extra=_extra
 END
 
 
+;+
+; Description:
+;     This procedure calculates where the new widget should be placed and checks, whether the
+;     whole widget is within the display. If this is not the case it alters the new position,
+;     so that it is fully, if possible, within the display. It also sets the new offset to the
+;     widget.
+;
+; INPUTS:
+;     xoffset : Optional. The offset in x-direction relativ to the parent widget or the display.
+;               Default=50 pixels.
+;     yoffset : Optional. The offset in y-direction relativ to the parent widget or the display.
+;               Default=50 pixels.
+;-
 PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
   ;Positions the widget relative to parent or screen if no parent given
   COMPILE_OPT IDL2
