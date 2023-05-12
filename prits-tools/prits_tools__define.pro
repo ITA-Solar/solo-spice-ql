@@ -14,7 +14,7 @@ PRO prits_tools::getproperty, au=au, rsun=rsun
 END
 
 PRO prits_tools::cleanup
-  message, /info, "Cleanup"
+  ;message, /info, "Cleanup"
 END 
 
 
