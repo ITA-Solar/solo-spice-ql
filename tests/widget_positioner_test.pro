@@ -25,7 +25,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 11:06 CEST $
+; $Id: 2023-05-15 11:32 CEST $
 
 
 pro widget_positioner_test
@@ -34,7 +34,6 @@ pro widget_positioner_test
   widget_control, parent, /realize
   
   new_window = widget_base(/row, title='New Widget', xsize=400, ysize=300, group_leader=parent)
-  widget_control, new_window, /realize
   
   print,spice_get_screen_size()
 
@@ -46,13 +45,28 @@ pro widget_positioner_test
   print,'IDLsysMonitorInfo::GetResolutions   ' , monitor->GetResolutions()
   print,'IDLsysMonitorInfo::IsExtendedDesktop   ' , monitor->IsExtendedDesktop()
   
-  wp = widget_positioner(new_window, parent)
+  wp = widget_positioner(new_window, parent=parent)
   
   print,''
   print,'test 1'
   wp->position
+  widget_control, new_window, /realize
   wait,3
   
+
+  new_window = widget_base(/row, title='New Widget 2', xsize=500, ysize=500, group_leader=parent);, xoffset=50, yoffset=50)
+  wp = widget_positioner(new_window, parent=parent)
+  print,''
+  print,'test 1 b'
+  wp->position, xoffset=200, yoffset=300
+  widget_control, new_window, /realize
+  wait,3
+  print,'test 1 c'
+  wp->position, xoffset=2000, yoffset=800
+  wait,3
+
+
+
   print,''
   print,'test 2'
   widget_control, parent, TLB_SET_XOFFSET=1000, TLB_SET_YOFFSET=600
@@ -83,7 +97,8 @@ pro widget_positioner_test
 
 
   new_window = widget_base(/row, title='New Widget', xsize=4000, ysize=300)
-  wp = widget_positioner(new_window)
+  wp->set_widget, new_window
+  wp->set_parent, -1
   print,''
   print,'test 6'
   wp->position, yoffset=200
@@ -111,7 +126,7 @@ pro widget_positioner_test
   print,'IDLsysMonitorInfo::GetResolutions   ' , monitor->GetResolutions()
   print,'IDLsysMonitorInfo::IsExtendedDesktop   ' , monitor->IsExtendedDesktop()
 
-  wp = widget_positioner(new_window, parent)
+  wp = widget_positioner(new_window, parent=parent)
 
   print,''
   print,'test 7'
