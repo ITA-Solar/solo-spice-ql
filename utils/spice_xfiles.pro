@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2023-01-10 09:58 CET $
+; $Id: 2023-05-15 14:03 CEST $
 ;-
 
 
@@ -106,9 +106,13 @@ pro spice_xfiles_save_params, info, valid_times=valid_times
       widget_control, (*info).recentdroplist, set_value=(*info).recentwindows->getwindows()
     endif
     (*info).recentwindows->gettimes, starttimes, endtimes
+    
+    ;save also position of window on screen
+    widget_control, (*info).tlb, TLB_GET_OFFSET=offset_widget
 
     save, tstartval, tstopval, ignoretime, starttimes, endtimes, $
       top_dir_choice, top_dir_env_var, dir_manual, level, use_path_prefix, $
+      offset_widget, $
       filename=SPICE_xfiles_appReadme()+'/spice_xfiles_searches.sav'
 
   endif
@@ -535,6 +539,7 @@ pro spice_xfiles
     restore,sdirfile
     ;    save, tstartval, tstopval, ignoretime, starttimes, endtimes, $
     ;      top_dir_choice, top_dir_env_var, dir_manual, level, use_path_prefix, $
+    ;      offset_widget, $
     ;      filename=SPICE_xfiles_appReadme()+'/spice_xfiles_searches.sav'
     ; TO BE ADDED
     ; filter_purpose, filter_studytyp, filter_slitwid = [min,max]
@@ -562,14 +567,14 @@ pro spice_xfiles
   if N_ELEMENTS(filter_purpose) eq 0 then filter_purpose='All'
   if N_ELEMENTS(filter_studytyp) eq 0 then filter_studytyp='All'
   if N_ELEMENTS(filter_slitwid) eq 0 then filter_slitwid=[0,10000]
+  if N_ELEMENTS(offset_widget) eq 0 then offset_widget=[200,200]
 
   sfilter = 'solo_L' + strtrim(string(level),2) + '_spice-*.fits(.gz)'
   dirsep = path_sep()
 
 
   ; top level base widget:
-  tlb = widget_base(/column, title='SPICE_Xfiles - QL Control Window', $
-    xoffset=200,yoffset=200, event_pro='spice_xfiles_event')
+  tlb = widget_base(/column, title='SPICE_Xfiles - QL Control Window', event_pro='spice_xfiles_event')
 
   ; first row contains exit button
   exitbase = widget_base(tlb, /row, /frame)
@@ -664,8 +669,10 @@ pro spice_xfiles
   widget_control,foundfiles,scr_ysize=space*3
 
   ; realize the top level base widget
-  widget_control, tlb, /realize
-
+  wp = widget_positioner(tlb)
+  wp->position, xoffset=offset_widget[0], yoffset=offset_widget[1]
+  ;widget_control, tlb, /realize
+  
 
   ; Define the info structure, used to send information around
   info= { tlb:tlb, $
