@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-10 13:16 CEST $
+; $Id: 2023-05-15 14:47 CEST $
 
 
 ; save as postscript file
@@ -1102,9 +1102,9 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   colorbase = widget_base(lsubcol1,/col)
   colorbutton=widget_button(colorbase, value='Colour table', $
     event_pro='spice_xdetector_colors')
-  animbase = widget_base(lsubcol1,/col)
-  animbutton=widget_button(animbase, value='Create Animation', $
-    event_pro='spice_xdetector_control_anim')
+  ;animbase = widget_base(lsubcol1,/col)
+  ;animbutton=widget_button(animbase, value='Create Animation', $
+  ;  event_pro='spice_xdetector_control_anim')
 
   lsubpix=widget_base(lcol,/row)
   wlbase = widget_base(lsubpix, /column, /frame)
