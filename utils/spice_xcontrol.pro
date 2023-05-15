@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2023-05-15 13:38 CEST $
 ;-
 ;
 ;
@@ -475,8 +475,7 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   ;
   ; top level base widget:
   tlb = widget_base(/row, mbar=menubar, $
-    title='SPICE_Xcontrol - '+data->get_filename(), $
-    xoffset=50, yoffset=50,group_leader=group_leader, /tlb_kill_request_events)
+    title='SPICE_Xcontrol - '+data->get_filename(), group_leader=group_leader, /tlb_kill_request_events)
 
   lcol = widget_base(tlb, /frame, /column)      ;left column.
   mcol = widget_base(tlb, /frame, /column)      ;middle column.
@@ -604,8 +603,10 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   widget_control, tlb, set_uvalue=info
 
   ; realize the top level base widget
-  widget_control, tlb, /realize
-  ;
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
+  ;widget_control, tlb, /realize
+
   spice_xcontrol_get_data_info, info
   widget_control, data_info, set_value = (*info).data_textdump, /append
 
