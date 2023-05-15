@@ -25,7 +25,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-12 15:10 CEST $
+; $Id: 2023-05-15 11:06 CEST $
 
 
 pro widget_positioner_test
@@ -53,29 +53,29 @@ pro widget_positioner_test
   wp->position
   wait,3
   
-;  print,''
-;  print,'test 2'
-;  widget_control, parent, TLB_SET_XOFFSET=1000, TLB_SET_YOFFSET=600
-;  wp->position
-;  wait,3
+  print,''
+  print,'test 2'
+  widget_control, parent, TLB_SET_XOFFSET=1000, TLB_SET_YOFFSET=600
+  wp->position
+  wait,3
   
-;  print,''
-;  print,'test 3'
-;  widget_control, parent, TLB_SET_XOFFSET=3000, TLB_SET_YOFFSET=600
-;  wp->position
-;  print,'move parent window manually'
-;  wait,6
-;
-;  print,''
-;  print,'test 4'
-;  wp->position
-;  wait,5
-;
-;  print,''
-;  print,'test 5'
-;  widget_control, parent, TLB_SET_XOFFSET=3900, TLB_SET_YOFFSET=600
-;  wp->position, xoffset=-90, yoffset=-200
-;  wait,3
+  print,''
+  print,'test 3'
+  widget_control, parent, TLB_SET_XOFFSET=3000, TLB_SET_YOFFSET=600
+  wp->position
+  print,'move parent window manually'
+  wait,6
+
+  print,''
+  print,'test 4'
+  wp->position
+  wait,5
+
+  print,''
+  print,'test 5'
+  widget_control, parent, TLB_SET_XOFFSET=3900, TLB_SET_YOFFSET=600
+  wp->position, xoffset=-90, yoffset=-200
+  wait,3
 
   widget_control, parent, /destroy
 
@@ -97,6 +97,7 @@ pro widget_positioner_test
 
 
   parent = widget_base(/column, title='Parent Widget', xsize=300, ysize=400)
+  widget_control, parent, /realize
 
   new_window = widget_base(/row, title='New Widget', xsize=400, ysize=300, group_leader=parent)
 
@@ -113,12 +114,10 @@ pro widget_positioner_test
   wp = widget_positioner(new_window, parent)
 
   print,''
-  print,'test 1'
+  print,'test 7'
   wp->position, xoffset=2000
-
-
-  widget_control, parent, /realize
   widget_control, new_window, /realize
 
   wait,3
+  widget_control, parent, /destroy
 end
