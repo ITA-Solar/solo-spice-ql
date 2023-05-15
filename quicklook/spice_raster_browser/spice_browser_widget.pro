@@ -49,7 +49,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 15:06 CEST $
+; $Id: 2023-05-15 14:58 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -928,7 +928,9 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     eis_butt: eis_butt, $
     goes_butt: goes_butt}
 
-  WIDGET_CONTROL, spice_browser_base, /REALIZE, set_uvalue=state
+  wp = widget_positioner(spice_browser_base, parent=group_leader)
+  wp->position
+  WIDGET_CONTROL, spice_browser_base, set_uvalue=state
 
 
   ;

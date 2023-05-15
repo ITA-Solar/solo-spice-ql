@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2022-09-21 11:47 CEST $
+; $Id: 2023-05-15 14:58 CEST $
 ;-
 ;
 ; save as postscript file
@@ -1118,7 +1118,9 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ;;                               frame       = 1)
 
   ; realize main window:
-  widget_control, tlb, /realize, tlb_get_size = tlb_sz
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
+  widget_control, tlb, tlb_get_size = tlb_sz
 
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0]  ; xsize of whole widget in pixels

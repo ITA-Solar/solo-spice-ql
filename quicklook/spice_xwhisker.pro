@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2022-09-22 13:47 CEST $
+; $Id: 2023-05-15 14:58 CEST $
 
 
 ; save as postscript file
@@ -683,8 +683,8 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
   optmenu=widget_button(menubar,value='Options', uvalue='options')
   colmenu=widget_button(optmenu, value='Colour table', $
     event_pro='spice_xwhisker_colors')
-  animenu=widget_button(optmenu, value='Create Animation', $
-    event_pro='spice_xwhisker_anim')
+  ;animenu=widget_button(optmenu, value='Create Animation', $
+  ;  event_pro='spice_xwhisker_anim')
   wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
   angstr = string("305B)+'ngstr'+string("370B)+'m'
   pixmenu=widget_button(wscalemenu, value='Pixels',event_pro='spice_xwhisker_wpix')
@@ -793,7 +793,9 @@ pro spice_xwhisker , input_data, line, group_leader = group_leader, $
     event_pro = 'spice_xwhisker_destroy')
 
   ; realize main window:
-  widget_control, tlb, /realize, tlb_get_size = tlb_sz
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
+  widget_control, tlb, tlb_get_size = tlb_sz
 
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0]  ; xsize of whole widget in pixels

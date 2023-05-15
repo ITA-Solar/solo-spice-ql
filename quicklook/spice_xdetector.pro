@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-15 14:47 CEST $
+; $Id: 2023-05-15 14:58 CEST $
 
 
 ; save as postscript file
@@ -1161,7 +1161,9 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ;;                               frame       = 1)
 
   ; realize main window:
-  widget_control, tlb, /realize, tlb_get_size = tlb_sz
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
+  widget_control, tlb, tlb_get_size = tlb_sz
 
   ; set realsizebutton to de-select:
   widget_control, realsizebutton, set_button = 0

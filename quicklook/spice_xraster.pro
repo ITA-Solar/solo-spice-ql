@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2022-09-21 10:42 CEST $
+; $Id: 2023-05-15 14:58 CEST $
 ;-
 ;
 ; save as postscript file
@@ -585,8 +585,8 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
   optmenu=widget_button(menubar,value='Options', uvalue='options')
   colmenu=widget_button(optmenu, value='Colour table', $
     event_pro='spice_xraster_colors')
-  animenu = widget_button(optmenu, value = 'Create Animation', uvalue='anim', $
-    event_pro = 'spice_xraster_control_anim')
+  ;animenu = widget_button(optmenu, value = 'Create Animation', uvalue='anim', $
+  ;  event_pro = 'spice_xraster_control_anim')
   wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
   angstr = string('305'oB)+'ngstr'+string('370'oB)+'m'
   pixmenu=widget_button(wscalemenu, value='Pixels',event_pro='spice_xraster_wpix')
@@ -616,7 +616,9 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
     event_pro = 'spice_xraster_destroy')
   ; realize main window:
 
-  widget_control, tlb, /realize, tlb_get_size = tlb_sz
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
+  widget_control, tlb, tlb_get_size = tlb_sz
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0]  ; xsize of whole widget in pixels
   tlb_ysz = tlb_sz[1]  ; ysize of whole widget in pixels
@@ -664,7 +666,7 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
     tlb:tlb, $
     lcol:lcol, $
     rcol:rcol,  $
-    animenu:animenu, $
+    ;animenu:animenu, $
     messenger:0, $
     r:r, g:g, b:b, $
     bottom:bottom, $
