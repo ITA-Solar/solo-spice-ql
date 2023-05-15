@@ -33,7 +33,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 13:37 CEST $
+; $Id: 2023-05-15 14:02 CEST $
 
 
 ;+
@@ -108,7 +108,7 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
     message, 'No widget provided. Doing nothing.', /informational
     return
   ENDIF
-  display_coord = self.get_display_coords(offset_parent=offset_parent)
+  display_coord = self.get_display_coords(offset_parent=offset_parent, offset_widget=[xoffset, yoffset])
 
   geometry = widget_info(self.widget, /geometry)
   xsize = geometry.SCR_XSIZE + (2* geometry.MARGIN)
@@ -146,18 +146,22 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
 END
 
 
-FUNCTION widget_positioner::get_display_coords, offset_parent=offset_parent
+FUNCTION widget_positioner::get_display_coords, offset_parent=offset_parent, offset_widget=offset_widget
   COMPILE_OPT IDL2
   IF self.parent GE 0 THEN BEGIN
     widget_control, self.parent, TLB_GET_OFFSET=offset_parent
   ENDIF ELSE BEGIN
-    offset_parent = [0, 0]
+    offset_parent = offset_widget
   ENDELSE
+  print,'offset_parent',offset_parent
   rectangles = self.monitor->GetRectangles()
   rectangles[2,*] = rectangles[0,*] + rectangles[2,*]
   rectangles[3,*] = rectangles[1,*] + rectangles[3,*]
   ind_display = where(rectangles[0,*] LE offset_parent[0] AND rectangles[2,*] GT offset_parent[0] AND $
     rectangles[1,*] LE offset_parent[1] AND rectangles[3,*] GT offset_parent[1])
+  IF self.parent LT 0 THEN BEGIN
+    offset_parent = [0, 0]
+  ENDIF
   return, rectangles[*,ind_display]
 END
 
