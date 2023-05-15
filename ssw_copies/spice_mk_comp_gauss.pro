@@ -108,8 +108,12 @@
 ;                       relate to the initial intensity.
 ;               Version 4, Martin Wiesmann, 13 Juni 2022
 ;                       Changed the parameter names
+;               Version 5, Terje Fredvik, 26 April 2023, changed explanation
+;                       of the meaning of the sign of the linear
+;                       transformation coefficient to be more in line with how
+;                       we actually do it with SPICE (redshift is positive)
 ;
-; Version     : 3, 27 May 1997
+; Version     : 5, 26 April 2023
 ;-            
 FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
                        max_arr=max_arr,min_arr=min_arr,$
@@ -210,14 +214,15 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
   implied_velocity = abs(abs(trans_b(1)/c) - abs(trans_a(1))) LT 0.001
   
   IF implied_velocity THEN BEGIN
-    positiontx = $
-     ['The line position is described as a velocity shift in km/s ',$
-      'relative to the "lab wavelength" (~'+trim(trans_b(1))+').',$
-      '',$
-      'NOTE: Having a negative linear transformation A coefficient', $
-      'means that blueshifts correspond to a positive velocity, and',$
-      'a positive linear trans. A works the other way around.']
-    param1_name='velocity'
+     positiontx = $
+        ['The line position is described as a velocity shift in km/s ',$
+         'relative to the "lab wavelength" (~'+trim(trans_b(1))+').',$
+         '',$
+         'NOTE: Having a positive linear transformation A coefficient', $
+         'means that redshifts correspond to a positive velocity, and',$
+         'a negative A works the other way around.']
+        
+      param1_name='velocity'
   ENDIF ELSE BEGIN
     positiontx = $
      ['The line position is described by the wavelengt at the center',$

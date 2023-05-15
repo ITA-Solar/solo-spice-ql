@@ -48,12 +48,17 @@
 ;                                            velocity, added keywords velocity and position.
 ;      Ver. 1.3, Nov-2022, Martin Wiesmann: Uses now spice_line_list() to get a list of possible
 ;                                            peaks to be included.
+;      Ver. 1.4, 26-Apr-2023, Terje Fredvik: When blue_means_negative_velocity
+;                                            the min and max values of
+;                                            parameters corresponding to 
+;                                            velocities must be switched and
+;                                            change sign.
 ;-
-; $Id: 2023-03-16 10:46 CET $
+; $Id: 2023-04-26 15:08 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
-  line_list=line_list
+  line_list=line_list, plot=plot
   ;; Automatically generate cfit analysis definitions based on input intensity and
   ;; wavelength arrays
 
@@ -108,7 +113,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     ENDIF ; npeaks GT 0
 
   ENDIF ELSE BEGIN ; use_list
-    peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5, /sort, /plot)
+    peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5, /sort, plot=plot)
     npeaks = n_elements(peakinds)
   ENDELSE ; use_list
 
@@ -145,7 +150,10 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
         min_intens=intmin[i], $
         velocity=vel)
       IF ~keyword_set(position) AND keyword_set(blue_means_negative_velocity) THEN BEGIN
-        gauss.param(1).trans_a = -gauss.param(1).trans_a
+         gauss.param[1].trans_a = -gauss.param[1].trans_a
+         max_vel = -gauss.param[1].min_val
+         gauss.param[1].min_val = -gauss.param[1].max_val
+         gauss.param[1].max_val = max_vel
       ENDIF
       lam0txt = trim(lam0[i],'(F6.2)')
       gauss.name = 'AutoGauss ' + lam0txt

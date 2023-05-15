@@ -38,8 +38,10 @@
 ;                  a little army of help methods is now called when the
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
+;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
+;                                 and ::mk_analysis
 ;-
-; $Id: 2023-03-27 13:54 CEST $
+; $Id: 2023-05-10 10:57 CEST $
 
 
 ;+
@@ -159,16 +161,16 @@ END
 ;
 ;-
 function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-  position=position, velocity=velocity
+  position=position, velocity=velocity, no_line_list=no_line_list
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity)
+  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, no_line_list=no_line_list)
   if size(ana, /type) EQ 8 then begin
     XCFIT_BLOCK, ana=ana
   endif else begin
-    print, 'Something went wrong when trying to produce an ANA structure.
+    print, 'Something went wrong when trying to produce an ANA structure.'
   endelse
 
   return, ana
@@ -450,7 +452,9 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
 
   detector = self->get_header_keyword('DETECTOR', window_index)
-  widmin_pixels = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
+  widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
+  slitwid_factor = 2./self->get_header_keyword('SLIT_WID', window_index)
+  widmin_pixels = widmin_pixels_2_arcsec_slit * slitwid_factor
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
   IF ~keyword_set(no_line_list) THEN line_list=spice_line_list()
@@ -1250,7 +1254,7 @@ END
 ;     reverse_y : Y-coordinates are given as (CCD-size +1 - (original y-coords)).
 ;     reverse_x : For dumbbells x-coordinates are flipped. If this keyword is set, the coordinates will
 ;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped.
-;     no_warning: If set, warnings about x-flipping will be suppressed.
+;     loud      : If set, warnings will be printed.
 ;
 ; OUTPUT:
 ;     Integer array with 4 elements [lambda0, lambda1, y0, y1].
@@ -1259,7 +1263,7 @@ END
 ;     detector : int, 1 or 2 to indicate on which detector the window is.
 ;-
 FUNCTION spice_data::get_window_position, window_index, detector=detector, $
-  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, no_warning=no_warning
+  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
 
@@ -1286,7 +1290,7 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
       PXEND3 = PXBEG3
       PXBEG3 = beg_temp
     ENDIF ELSE BEGIN
-      IF ~keyword_set(no_warning) THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
+      IF keyword_set(loud) THEN message, 'PXEND3 < PXBEG3: '+strtrim(string(PXEND3))+' < '+strtrim(string(PXBEG3)), /info
     ENDELSE
   ENDIF
   IF PXEND3 GT 2*ccd_size[0] THEN $
@@ -1299,7 +1303,8 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
 
   PXEND2 = self.get_header_keyword('PXEND2', window_index)
   IF PXEND2 LT 0 THEN message, 'PXEND2 < 0: '+strtrim(string(PXEND2))+' < 0', /info
-  IF PXEND2 GT PXBEG2 THEN message, 'PXEND2 > PXBEG2: '+strtrim(string(PXEND2))+' > '+strtrim(string(PXBEG2)), /info
+  IF keyword_set(loud) && PXEND2 GT PXBEG2 THEN $
+    message, 'PXEND2 > PXBEG2: '+strtrim(string(PXEND2))+' > '+strtrim(string(PXBEG2)), /info
   IF PXEND2 GT ccd_size[1] THEN $
     message, 'PXEND2 > CCD-size: '+strtrim(string(PXEND2))+' > '+strtrim(string(ccd_size[1])), /info
 
@@ -1859,7 +1864,7 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG3 = (self.get_window_position(window_index, /reverse_y, /no_warning))[2]
+    PXBEG3 = (self.get_window_position(window_index, /reverse_y))[2]
     cripx = crpix + PXBEG3
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
@@ -2435,34 +2440,27 @@ PRO spice_data::read_file, file
   self.close
   message, 'reading file: ' + file, /info
   self.file = file
-  mreadfits_header, file, hdr, extension=0, only_tags='NWIN'
-  self.nwin = hdr.nwin
-  self.next = hdr.nwin
-
-  headers = ptrarr(self.nwin)
-  headers_string = ptrarr(self.nwin)
-  wcs = ptrarr(self.nwin)
-  FOR iwin = 0, self.nwin-1 DO BEGIN
-    hdr = headfits(file, exten=iwin)
-    headers_string[iwin] = ptr_new(hdr)
-    hdr = fitshead2struct(hdr)
-    headers[iwin] = ptr_new(hdr)
-    wcs[iwin] = ptr_new(fitshead2wcs(hdr))
-    IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
-    ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
-  ENDFOR ; iwin = 0, self.nwin-1
-
+  hdr = headfits(file, exten=0)
+  self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
-  iwin = self.nwin
-  for iwin=self.nwin, fcb.nextend-1 do begin
-    hdr = headfits(file, exten=iwin)
-    if size(hdr, /type) ne 7 then break
-    self.next = self.next + 1
-    iwin = iwin + 1
-    headers_string = [headers_string, ptr_new(hdr)]
-    hdr = fitshead2struct(hdr)
-    headers = [headers, ptr_new(hdr)]
-  endfor
+  self.next = fcb.nextend
+
+  headers = ptrarr(self.next)
+  headers_string = ptrarr(self.next)
+  wcs = ptrarr(self.nwin)
+  FOR iwin = 0, self.next-1 DO BEGIN
+    if iwin gt 0 then begin
+      hdr = headfits(file, exten=iwin)
+    endif
+    headers_string[iwin] = ptr_new(hdr)
+    hdr = spice_fitshead2struct(hdr, /multivalue, /silent)
+    headers[iwin] = ptr_new(hdr)
+    IF iwin LT self.nwin THEN BEGIN
+      wcs[iwin] = ptr_new(fitshead2wcs(hdr))
+      IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
+      ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
+    ENDIF
+  ENDFOR ; iwin = 0, self.next-1
 
   self.window_data = ptr_new(ptrarr(self.next))
   self.window_descaled = ptr_new(bytarr(self.next))
