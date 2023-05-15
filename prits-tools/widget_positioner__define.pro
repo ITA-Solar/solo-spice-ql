@@ -20,12 +20,6 @@
 ; 
 ; widget_control, new_window, /realize  ; Alternatively the new widget may be also realized before calling widget_positioner->position
 ;
-; INPUTS:
-;
-; OUTPUT:
-;
-; CALLS:
-;
 ; COMMON BLOCKS:
 ;
 ; PROCEDURE:
@@ -35,7 +29,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-12 15:10 CEST $
+; $Id: 2023-05-15 11:06 CEST $
 
 
 ;+
@@ -43,10 +37,11 @@
 ;     Class initialisation function
 ;
 ; INPUTS:
-;     widget : The ID of the widget to be positioned. Can also be set later.
+;     widget : The ID of the widget to be positioned. Can also be set later with method 'set_widget'.
 ;     parent : The ID of the parent widget to which the widget should get a certain position.
 ;              Optional, but if provided then the parent widget must be realised already.
 ;              If not provided the widget will be positioned relative to upper left corner of display.
+;              Can also be set later with method 'set_parent'.
 ;
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise
@@ -58,7 +53,6 @@ FUNCTION widget_positioner::init, widget, parent
   prits_tools.parcheck, parent, 2, "parent", ['integers'], 0, default=-1
   self.widget = widget
   self.parent = parent
-  self.screen_size = spice_get_screen_size()
   self.monitor =  obj_new('IDLsysMonitorInfo')
   
   return, 1
@@ -216,8 +210,7 @@ PRO widget_positioner__define
   struct = {widget_positioner, $
     widget: -1, $         ; The ID of the widget to be positioned.
     parent: -1, $         ; The ID of the parent widget to which the widget should get a certain position.
-    screen_size: [0,0], $ ; The screen size vector
-    monitor: obj_new('IDLsysMonitorInfo') $
+    monitor: obj_new('IDLsysMonitorInfo') $   ; An object containing information about the displays.
     }
 END
 
