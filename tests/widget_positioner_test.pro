@@ -25,7 +25,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 11:32 CEST $
+; $Id: 2023-05-15 13:38 CEST $
 
 
 pro widget_positioner_test
@@ -49,6 +49,7 @@ pro widget_positioner_test
   
   print,''
   print,'test 1'
+  wait,5
   wp->position
   widget_control, new_window, /realize
   wait,3
