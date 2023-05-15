@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2022-09-20 15:34 CEST $
+; $Id: 2023-05-10 13:16 CEST $
 
 
 ; save as postscript file
@@ -497,7 +497,7 @@ end
 
 ; create animation widget and launch animation
 pro spice_xdetector_anim, event
-  print,'does NOT work yet'
+  print,'does NOT work yet' ; TODO
   return
   widget_control, event.top, get_uvalue = info
   magnification=0.95
@@ -822,6 +822,8 @@ pro spice_xdetector_cleanup, tlb
   ptr_free, (*info).drawimage
   ptr_free, (*info).xscale
   ptr_free, (*info).yscale
+  ; Set !except back to original value
+  !except = (*info).except
   ptr_free, info
 end
 
@@ -1009,12 +1011,11 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   optmenu=widget_button(menubar,value='Options', uvalue='options')
   colmenu=widget_button(optmenu, value='Colour table', $
     event_pro='spice_xdetector_colors')
-  animenu=widget_button(optmenu, value='Create Animation', $
-    event_pro='spice_xdetector_control_anim')
+  ; animenu=widget_button(optmenu, value='Create Animation', $ ; TODO: does not work yet
+  ;   event_pro='spice_xdetector_control_anim')
   wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
-  angstr = string("305B)+'ngstr'+string("370B)+'m'
-  pixmenu=widget_button(wscalemenu, value='Pixels',event_pro='spice_xdetector_wpix')
-  angstrmenu=widget_button(wscalemenu, value=angstr,event_pro='spice_xdetector_wangstr')
+  pixmenu=widget_button(wscalemenu, value=data->get_axis_title(xdim, /pixels), event_pro='spice_xdetector_wpix')
+  angstrmenu=widget_button(wscalemenu, value=data->get_axis_title(xdim), event_pro='spice_xdetector_wangstr')
 
   ;display window:
   displaybase = widget_base(rcol, /row)
@@ -1107,8 +1108,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
 
   lsubpix=widget_base(lcol,/row)
   wlbase = widget_base(lsubpix, /column, /frame)
-  angstr = string("305B)+'ngstr'+string("370B)+'m'
-  wl_names = ['Pixels', angstr]
+  wl_names = [data->get_axis_title(xdim, /pixels), data->get_axis_title(xdim)]
   wlbutton = cw_bgroup(wlbase, wl_names, /return_index, $
     /exclusive, set_value = 0, $
     event_func = 'spice_xdetector_wloption')
@@ -1207,7 +1207,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     ;    xycentext:xycentext, $
     dwoption_menu:dwoption_menu, $
     drawsizeoption_menu:drawsizeoption_menu, $
-    animenu:animenu, $
+    ;animenu:animenu, $
     drawid:drawid, $
     wid:wid, $
     colorbar_title:colorbar_title,$
@@ -1264,13 +1264,19 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     mainpixid:pixid, $
     pixid:pixid, $
     xtitle:xtitle, $
-    ytitle :ytitle $
+    ytitle :ytitle, $
+    
+    ; System
+    except:!except $
   }
 
   info = ptr_new(info, /no_copy)
   (*info).data=ptr_new(data)
   ; set user value of tlb widget to be the info ptr
   widget_control, tlb, set_uvalue = info
+
+  ; Suppress all warnings
+  !except = 0
 
   ; create pseudoevent and send this event to spice_xdetector_draw,
   ; in order to draw the image
