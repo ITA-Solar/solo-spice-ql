@@ -15,21 +15,24 @@
 ; 
 ; new_window = widget_base(/row, title='New Widget', xsize=400, ysize=300, group_leader=parent)
 ; 
-; wp = widget_positioner(new_window, parent)
+; wp = widget_positioner(new_window, parent=parent)
 ; wp->position, xoffset=xoffset, yoffset=yoffset
 ; 
 ; widget_control, new_window, /realize  ; Alternatively the new widget may be also realized before calling widget_positioner->position
+;                                       ; see also Restrictions
 ;
 ; COMMON BLOCKS:
 ;
 ; PROCEDURE:
 ;
 ; RESTRICTIONS:
+; If the widget_base is initialised with some x/yoffset values, then repositioning only works after
+; the widget was realised.
 ;
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 11:06 CEST $
+; $Id: 2023-05-15 11:31 CEST $
 
 
 ;+
@@ -46,11 +49,11 @@
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise
 ;-
-FUNCTION widget_positioner::init, widget, parent
+FUNCTION widget_positioner::init, widget, parent=parent
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, widget, 1, "widget", ['integers'], 0, default=-1
-  prits_tools.parcheck, parent, 2, "parent", ['integers'], 0, default=-1
+  prits_tools.parcheck, parent, 0, "parent", ['integers'], 0, default=-1
   self.widget = widget
   self.parent = parent
   self.monitor =  obj_new('IDLsysMonitorInfo')
@@ -174,10 +177,10 @@ END
 
 
 PRO widget_positioner::set_parent, parent
-  ;Sets a new parent widget to which the widget should be relatively positioned.
+  ;Sets a new parent widget to which the widget should be relatively positioned. Set to a negative value to remove parent.
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, parent, 1, "parent", ['integers'], 0, minval=0
+  prits_tools.parcheck, parent, 1, "parent", ['integers'], 0
   self.parent = parent
 END
 
