@@ -4,7 +4,8 @@
 ;
 ; PURPOSE:
 ;     This object can be used to position a new widget relative to another widget,
-;     or relative to the screen. This also works with multiple screens.
+;     or relative to the screen. This also works with multiple screens. The widget
+;     is positioned and realised by this object.
 ;
 ; CATEGORY:
 ;     PRITS - Tools.
@@ -12,12 +13,12 @@
 ; CALLING SEQUENCE:
 ; parent = widget_base(/column, title='Parent Widget', xsize=300, ysize=400)
 ; widget_control, parent, /realize
-; 
+;
 ; new_window = widget_base(/row, title='New Widget', xsize=400, ysize=300, group_leader=parent)
-; 
+;
 ; wp = widget_positioner(new_window, parent=parent)
 ; wp->position, xoffset=xoffset, yoffset=yoffset
-; 
+;
 ; widget_control, new_window, /realize  ; Alternatively the new widget may be also realized before calling widget_positioner->position
 ;                                       ; see also Restrictions
 ;
@@ -32,7 +33,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 11:31 CEST $
+; $Id: 2023-05-15 13:37 CEST $
 
 
 ;+
@@ -57,7 +58,7 @@ FUNCTION widget_positioner::init, widget, parent=parent
   self.widget = widget
   self.parent = parent
   self.monitor =  obj_new('IDLsysMonitorInfo')
-  
+
   return, 1
 END
 
@@ -88,7 +89,7 @@ END
 ;     This procedure calculates where the new widget should be placed and checks, whether the
 ;     whole widget is within the display. If this is not the case it alters the new position,
 ;     so that it is fully, if possible, within the display. It also sets the new offset to the
-;     widget.
+;     widget and realises the widget then.
 ;
 ; INPUTS:
 ;     xoffset : Optional. The offset in x-direction relativ to the parent widget or the display.
@@ -102,14 +103,13 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
 
   prits_tools.parcheck, xoffset, 0, "xoffset", ['numeric'], 0, default=50
   prits_tools.parcheck, yoffset, 0, "yoffset", ['numeric'], 0, default=50
-  
+
   IF self.widget LT 0 THEN BEGIN
     message, 'No widget provided. Doing nothing.', /informational
     return
   ENDIF
-  
   display_coord = self.get_display_coords(offset_parent=offset_parent)
-  
+
   geometry = widget_info(self.widget, /geometry)
   xsize = geometry.SCR_XSIZE + (2* geometry.MARGIN)
   ysize = geometry.SCR_YSIZE + (2* geometry.MARGIN)
@@ -139,7 +139,10 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
       yoffset_new = yoffset_new - move_dist
     ENDELSE
   ENDIF
+  widget_control, self.widget, map=0
+  widget_control, self.widget, /realize
   widget_control, self.widget, TLB_SET_XOFFSET=xoffset_new, TLB_SET_YOFFSET=yoffset_new
+  widget_control, self.widget, map=1
 END
 
 
@@ -214,6 +217,6 @@ PRO widget_positioner__define
     widget: -1, $         ; The ID of the widget to be positioned.
     parent: -1, $         ; The ID of the parent widget to which the widget should get a certain position.
     monitor: obj_new('IDLsysMonitorInfo') $   ; An object containing information about the displays.
-    }
+  }
 END
 
