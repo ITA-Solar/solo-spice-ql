@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2022-09-21 11:47 CEST $
+; $Id: 2023-05-16 15:03 CEST $
 ;-
 ;
 ; save as postscript file
@@ -429,8 +429,8 @@ pro spice_xmap_zoom, event
             image=congrid(image,sz[1]*2 < xmax, sz[2]*2 < ymax)
             xscale = interpol(xscale, sz[1]*2 < xmax)
             yscale = interpol(yscale, sz[2]*2 < ymax)
-            iris_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
-              ytitle = (*info).ytitle, group_leader=event.top
+            spice_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
+              ytitle = (*info).ytitle, group_leader=event.top, n_subplot=(*info).n_subplot
           endif
         end
         1:begin
@@ -440,11 +440,11 @@ pro spice_xmap_zoom, event
           xytitle = *(*info).data->get_axis_title()
           dmean = total(image, 2)/sz[2]
           if sz[0] ge 2 then begin
-            iris_xlineplot, dmean, xscale = xscale, $
+            spice_xlineplot, dmean, xscale = xscale, $
               title = varname, $
               xtitle = xytitle[(*info).xdim], $
               ytitle = varname, $
-              groupl = event.top
+              groupl = event.top, n_subplot=(*info).n_subplot
           endif
         end
         2:begin
@@ -454,14 +454,15 @@ pro spice_xmap_zoom, event
           xytitle = *(*info).data->get_axis_title()
           dmean = total(image, 1)/sz[1]
           if sz[0] ge 2 then begin
-            iris_xlineplot, dmean, xscale = yscale, $
+            spice_xlineplot, dmean, xscale = yscale, $
               title = varname, $
               xtitle = xytitle[(*info).ydim], $
               ytitle = varname, $
-              groupl = event.top
+              groupl = event.top, n_subplot=(*info).n_subplot
           endif
         end
       endcase
+      (*info).n_subplot = (*info).n_subplot + 1
     endcase
     'motion':  begin
       ;  erase previous box
@@ -693,7 +694,7 @@ pro spice_xmap_pixplot, event
       return
     end
     1: begin
-      iris_xlineplot, *(*info).drawimage, $
+      spice_xlineplot, *(*info).drawimage, $
         xscale=*(*info).xscale, $
         xtitle = xytitle[(*info).xdim], $
         ytitle = varname, $
@@ -701,7 +702,7 @@ pro spice_xmap_pixplot, event
         groupl = (*info).tlb
     end
     2: begin
-      iris_xlineplot, transpose(*(*info).drawimage), $
+      spice_xlineplot, transpose(*(*info).drawimage), $
         xtitle = xytitle[(*info).ydim], $
         ytitle = varname, $
         cslider_title = xytitle[(*info).xdim], $
@@ -1118,7 +1119,9 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ;;                               frame       = 1)
 
   ; realize main window:
-  widget_control, tlb, /realize, tlb_get_size = tlb_sz
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
+  widget_control, tlb, tlb_get_size = tlb_sz
 
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0]  ; xsize of whole widget in pixels
@@ -1143,6 +1146,7 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   info = {drawimage:ptr_new(), $
     wd:ptr_new(wd,/no_copy), $
     ;pos:pos, $
+    n_subplot:0, $
     xscale:ptr_new(xscale_physical), $
     yscale:ptr_new(yscale_physical), $
     xscale_pixels:xscale_pixels, $

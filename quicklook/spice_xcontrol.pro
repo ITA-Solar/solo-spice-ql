@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2023-05-15 13:38 CEST $
+; $Id: 2023-05-16 11:46 CEST $
 ;-
 ;
 ;
@@ -241,7 +241,7 @@ function spice_xcontrol_dispselect, event
       spice_xdetector,*(*info).d,lindx, group_leader = (*info).tlb
     end
     1: begin
-      spice_raster_browser,*(*info).d
+      spice_raster_browser,*(*info).d, group_leader = (*info).tlb
     end
     2: begin
       lindx = where((*info).lines eq 1)

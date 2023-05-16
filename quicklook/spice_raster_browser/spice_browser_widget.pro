@@ -37,6 +37,7 @@
 ;     NO_GOES: This disables the GOES plot.
 ;
 ;     FLARE_DATA: the structure returned by iris_hek_swpc_flares() or -1
+;     group_leader: Widget parent (if any).
 ;
 ; OUTPUT:
 ;     None
@@ -49,12 +50,12 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 15:06 CEST $
+; $Id: 2023-05-16 11:46 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   chunk_size=chunk_size, retina=retina, no_goes=no_goes, $
-  flare_data=flare_data
+  flare_data=flare_data, group_leader=group_leader
   COMPILE_OPT IDL2
 
   ;
@@ -398,7 +399,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
       extra_title=' -- '+trim(hcr.obstitle)
     ENDIF
   ENDIF
-  spice_browser_base=widget_base(/row,map=1,title='SPICE_RASTER_BROWSER'+extra_title)
+  spice_browser_base=widget_base(/row,map=1,title='SPICE_RASTER_BROWSER'+extra_title, group_leader=group_leader)
 
   subbase1=widget_base(spice_browser_base,/col,map=1)
   ;; exit=cw_bgroup(subbase1,/row,['EXIT','HELP'], $
@@ -928,7 +929,9 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     eis_butt: eis_butt, $
     goes_butt: goes_butt}
 
-  WIDGET_CONTROL, spice_browser_base, /REALIZE, set_uvalue=state
+  wp = widget_positioner(spice_browser_base, parent=group_leader)
+  wp->position
+  WIDGET_CONTROL, spice_browser_base, set_uvalue=state
 
 
   ;

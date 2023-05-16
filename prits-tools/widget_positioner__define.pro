@@ -33,7 +33,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 14:02 CEST $
+; $Id: 2023-05-16 14:59 CEST $
 
 
 ;+
@@ -93,16 +93,31 @@ END
 ;
 ; INPUTS:
 ;     xoffset : Optional. The offset in x-direction relativ to the parent widget or the display.
-;               Default=50 pixels.
+;               Default=50 pixels. Overwritten if left_align or right_align is set.
 ;     yoffset : Optional. The offset in y-direction relativ to the parent widget or the display.
-;               Default=50 pixels.
+;               Default=50 pixels. Overwritten if top_align or bottom_align is set.
+;     n_subplot: Optional. Number of widgets already shifted. Each widget is positioned in a slightly
+;               different position.
+; 
+; KEYWORDS:
+;     left_align : If set, the widget will be positioned to the left of the parent, if there is 
+;               enough space.
+;     right_align : If set, the widget will be positioned to the left of the parent, if there is
+;               enough space. Ignored if left_align is set.
+;     top_align : If set, the widget will be positioned to the left of the parent, if there is
+;               enough space.
+;     bottom_align : If set, the widget will be positioned to the left of the parent, if there is
+;               enough space. Ignored if top_align is set.
 ;-
-PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
+PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset, $
+  left_align=left_align, right_align=right_align, top_align=top_align, bottom_align=bottom_align, $
+  n_subplot=n_subplot
   ;Positions the widget relative to parent or screen if no parent given
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, xoffset, 0, "xoffset", ['numeric'], 0, default=50
   prits_tools.parcheck, yoffset, 0, "yoffset", ['numeric'], 0, default=50
+  prits_tools.parcheck, n_subplot, 0, "n_subplot", ['integers'], 0, default=0
 
   IF self.widget LT 0 THEN BEGIN
     message, 'No widget provided. Doing nothing.', /informational
@@ -112,7 +127,25 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
 
   geometry = widget_info(self.widget, /geometry)
   xsize = geometry.SCR_XSIZE + (2* geometry.MARGIN)
+  IF xsize GT display_coord[2] THEN message, 'Widget is too wide for the screen', /informational
+  IF keyword_set(left_align) THEN BEGIN
+    xoffset = -xsize
+  ENDIF ELSE IF keyword_set(right_align) && self.parent GE 0 THEN BEGIN
+    geometry_parent = widget_info(self.parent, /geometry)
+    xoffset = geometry_parent.SCR_XSIZE + (2* geometry_parent.MARGIN)
+  ENDIF
+
   ysize = geometry.SCR_YSIZE + (2* geometry.MARGIN)
+  IF ysize GT display_coord[3] THEN message, 'Widget is too high for the screen', /informational
+  IF keyword_set(top_align) THEN BEGIN
+    yoffset = -ysize
+  ENDIF ELSE IF keyword_set(bottom_align) && self.parent GE 0 THEN BEGIN
+    geometry_parent = widget_info(self.parent, /geometry)
+    yoffset = geometry_parent.SCR_YSIZE + (2* geometry_parent.MARGIN)
+  ENDIF
+  
+  IF ~keyword_set(left_align) && ~keyword_set(right_align) THEN xoffset = xoffset + n_subplot * 20
+  IF ~keyword_set(top_align) && ~keyword_set(bottom_align) THEN yoffset = yoffset + n_subplot * 20
 
   xoffset_new = offset_parent[0] + xoffset
   IF xoffset_new LT display_coord[0] THEN xoffset_new = display_coord[0]
@@ -120,7 +153,6 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
   IF x2_edge GT display_coord[2] THEN BEGIN
     move_dist = x2_edge - display_coord[2]
     IF move_dist GT xoffset_new-display_coord[0] THEN BEGIN
-      message, 'Widget is too wide for the screen', /informational
       xoffset_new = display_coord[0]
     ENDIF ELSE BEGIN
       xoffset_new = xoffset_new - move_dist
@@ -133,7 +165,6 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
   IF y2_edge GT display_coord[3] THEN BEGIN
     move_dist = y2_edge - display_coord[3]
     IF move_dist GT yoffset_new-display_coord[1] THEN BEGIN
-      message, 'Widget is too high for the screen', /informational
       yoffset_new = display_coord[1]
     ENDIF ELSE BEGIN
       yoffset_new = yoffset_new - move_dist
@@ -153,7 +184,6 @@ FUNCTION widget_positioner::get_display_coords, offset_parent=offset_parent, off
   ENDIF ELSE BEGIN
     offset_parent = offset_widget
   ENDELSE
-  print,'offset_parent',offset_parent
   rectangles = self.monitor->GetRectangles()
   rectangles[2,*] = rectangles[0,*] + rectangles[2,*]
   rectangles[3,*] = rectangles[1,*] + rectangles[3,*]
