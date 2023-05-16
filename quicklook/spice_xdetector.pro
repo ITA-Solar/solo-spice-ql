@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-15 14:58 CEST $
+; $Id: 2023-05-16 14:27 CEST $
 
 
 ; save as postscript file
@@ -410,7 +410,7 @@ pro spice_xdetector_zoom, event
           varname = *(*info).data->get_variable_type()
           varname = varname[0] +': column average'
           dmean = total(image, 1, /nan)/sz[1]
-          iris_xlineplot, dmean, xscale = yscale, $
+          spice_xlineplot, dmean, xscale = yscale, $
             title = varname, $
             xtitle = (*info).ytitle, $
             ytitle = varname, $
@@ -421,7 +421,7 @@ pro spice_xdetector_zoom, event
           varname = *(*info).data->get_variable_type()
           varname = varname[0] +': row average'
           if y1 eq y2 then dmean=image else dmean = total(image, 2, /nan)/sz[2]
-          iris_xlineplot, dmean, xscale = xscale, $
+          spice_xlineplot, dmean, xscale = xscale, $
             title = varname, $
             xtitle = (*info).xtitle, $
             ytitle = varname, $
@@ -734,7 +734,7 @@ pro spice_xdetector_lineplot, event
     end
     1: begin
       data = (*info).detector[*, *]
-      iris_xlineplot, data, xscale = (*info).lambda, $
+      spice_xlineplot, data, xscale = (*info).lambda, $
         xtitle = (*info).xtitle, $
         cslider_title = (*info).ytitle, $
         ytitle = varname, $
@@ -742,7 +742,7 @@ pro spice_xdetector_lineplot, event
     end
     2: begin
       data = transpose((*info).detector[*, *])
-      iris_xlineplot, data, xtitle = (*info).ytitle, $
+      spice_xlineplot, data, xtitle = (*info).ytitle, $
         cslider_title = (*info).xtitle, $
         ytitle = varname, $
         groupl = (*info).tlb
