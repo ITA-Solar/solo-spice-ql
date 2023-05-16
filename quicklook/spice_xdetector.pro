@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-16 14:42 CEST $
+; $Id: 2023-05-16 15:03 CEST $
 
 
 ; save as postscript file
@@ -402,7 +402,7 @@ pro spice_xdetector_zoom, event
             xscale = interpol(xscale, sz[1]*2 < xmax)
             yscale = interpol(yscale, sz[2]*2 < ymax)
             spice_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
-              ytitle = (*info).ytitle, group_leader=event.top
+              ytitle = (*info).ytitle, group_leader=event.top, n_subplot=(*info).n_subplot
           endif
         end
         1:begin
@@ -414,7 +414,7 @@ pro spice_xdetector_zoom, event
             title = varname, $
             xtitle = (*info).ytitle, $
             ytitle = varname, $
-            groupl = event.top
+            groupl = event.top, n_subplot=(*info).n_subplot
         end
         2:begin
           ;set up axis titles for line plots (options 1 or 2 below)
@@ -425,9 +425,10 @@ pro spice_xdetector_zoom, event
             title = varname, $
             xtitle = (*info).xtitle, $
             ytitle = varname, $
-            groupl = event.top
+            groupl = event.top, n_subplot=(*info).n_subplot
         end
       endcase
+      (*info).n_subplot = (*info).n_subplot + 1
     endcase
     'motion':  begin
       ;  erase previous box
@@ -1214,6 +1215,8 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     wid:wid, $
     colorbar_title:colorbar_title,$
     pixelplot:pixelplot,  $
+    
+    n_subplot:0, $
 
     ; Options
     log:0, $

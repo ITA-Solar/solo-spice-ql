@@ -26,7 +26,9 @@
 ;	ytitle: The ytitle of the zoomed image display
 ;	xrange: The range of the x axis
 ;	yrange: The range of the y axis
-;       group_leader: Widget parent (if any).
+; group_leader: Widget parent (if any).
+; n_subplot: Optional. Number of widgets already shifted. Each widget is positioned in a slightly
+;            different position.
 ;
 ; OUTPUTS:
 ;       None
@@ -223,7 +225,7 @@ pro spice_xzoom_destroy, event
 end
 
 pro spice_xzoom, image, xscale, yscale, xtitle = xtitle, ytitle = ytitle, $
-           xrange = xrange, yrange = yrange, group_leader=group
+           xrange = xrange, yrange = yrange, group_leader=group, n_subplot=n_subplot
 
 if n_params() eq 0 then begin
   print,'spice_xzoom: No image specified!'
@@ -270,7 +272,7 @@ closearea = widget_base(lcol, /row)
 closebutton = widget_button(closearea, value = 'Close', $
                               event_pro = 'spice_xzoom_destroy')
 wp = widget_positioner(tlb, parent=group)
-wp->position, /left_align
+wp->position, /left_align, n_subplot=n_subplot
 widget_control,drawid,get_value=wid
 wset,wid
 device,copy=[0,0,xsize,ysize,0,0,pixid]

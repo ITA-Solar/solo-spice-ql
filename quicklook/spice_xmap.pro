@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2023-05-16 14:42 CEST $
+; $Id: 2023-05-16 15:03 CEST $
 ;-
 ;
 ; save as postscript file
@@ -430,7 +430,7 @@ pro spice_xmap_zoom, event
             xscale = interpol(xscale, sz[1]*2 < xmax)
             yscale = interpol(yscale, sz[2]*2 < ymax)
             spice_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
-              ytitle = (*info).ytitle, group_leader=event.top
+              ytitle = (*info).ytitle, group_leader=event.top, n_subplot=(*info).n_subplot
           endif
         end
         1:begin
@@ -444,7 +444,7 @@ pro spice_xmap_zoom, event
               title = varname, $
               xtitle = xytitle[(*info).xdim], $
               ytitle = varname, $
-              groupl = event.top
+              groupl = event.top, n_subplot=(*info).n_subplot
           endif
         end
         2:begin
@@ -458,10 +458,11 @@ pro spice_xmap_zoom, event
               title = varname, $
               xtitle = xytitle[(*info).ydim], $
               ytitle = varname, $
-              groupl = event.top
+              groupl = event.top, n_subplot=(*info).n_subplot
           endif
         end
       endcase
+      (*info).n_subplot = (*info).n_subplot + 1
     endcase
     'motion':  begin
       ;  erase previous box
@@ -1145,6 +1146,7 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   info = {drawimage:ptr_new(), $
     wd:ptr_new(wd,/no_copy), $
     ;pos:pos, $
+    n_subplot:0, $
     xscale:ptr_new(xscale_physical), $
     yscale:ptr_new(yscale_physical), $
     xscale_pixels:xscale_pixels, $

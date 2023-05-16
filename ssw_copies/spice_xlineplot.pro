@@ -1,4 +1,4 @@
-; $Id: 2023-05-16 14:27 CEST $
+; $Id: 2023-05-16 15:03 CEST $
 
 ; save as postscript file
 pro spice_xlineplot_ps,event
@@ -237,7 +237,7 @@ end
 
 pro spice_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
               cscale = cscale, cslider_title = cslider_title, title = title, $
-              groupl = groupl, $
+              groupl = groupl, n_subplot=n_subplot, $
               widget_xsz = widget_xsz, widget_ysz = widget_ysz
 
   sz = size(data)
@@ -354,7 +354,7 @@ pro spice_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
 
     ; realize main window:
   wp = widget_positioner(tlb, parent=groupl)
-  wp->position, /left_align
+  wp->position, /left_align, n_subplot=n_subplot
   widget_control, tlb, tlb_get_size = tlb_sz
 
   ; get window id of display window
