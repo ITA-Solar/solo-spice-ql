@@ -1,4 +1,4 @@
-; $Id: 2023-05-16 13:53 CEST $
+; $Id: 2023-05-16 14:27 CEST $
 
 ; save as postscript file
 pro spice_xlineplot_ps,event
@@ -353,7 +353,9 @@ pro spice_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
                               event_pro = 'spice_xlineplot_destroy')
 
     ; realize main window:
-  widget_control, tlb, /realize, tlb_get_size = tlb_sz
+  wp = widget_positioner(tlb, parent=groupl)
+  wp->position, /left_align
+  widget_control, tlb, tlb_get_size = tlb_sz
 
   ; get window id of display window
   widget_control, drawid, get_value = wid
