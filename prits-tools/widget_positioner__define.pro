@@ -33,7 +33,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-16 11:45 CEST $
+; $Id: 2023-05-16 13:44 CEST $
 
 
 ;+
@@ -112,7 +112,9 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
 
   geometry = widget_info(self.widget, /geometry)
   xsize = geometry.SCR_XSIZE + (2* geometry.MARGIN)
+  IF xsize GT display_coord[2] THEN message, 'Widget is too wide for the screen', /informational
   ysize = geometry.SCR_YSIZE + (2* geometry.MARGIN)
+  IF ysize GT display_coord[3] THEN message, 'Widget is too high for the screen', /informational
 
   xoffset_new = offset_parent[0] + xoffset
   IF xoffset_new LT display_coord[0] THEN xoffset_new = display_coord[0]
@@ -120,7 +122,6 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
   IF x2_edge GT display_coord[2] THEN BEGIN
     move_dist = x2_edge - display_coord[2]
     IF move_dist GT xoffset_new-display_coord[0] THEN BEGIN
-      message, 'Widget is too wide for the screen', /informational
       xoffset_new = display_coord[0]
     ENDIF ELSE BEGIN
       xoffset_new = xoffset_new - move_dist
@@ -133,7 +134,6 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset
   IF y2_edge GT display_coord[3] THEN BEGIN
     move_dist = y2_edge - display_coord[3]
     IF move_dist GT yoffset_new-display_coord[1] THEN BEGIN
-      message, 'Widget is too high for the screen', /informational
       yoffset_new = display_coord[1]
     ENDIF ELSE BEGIN
       yoffset_new = yoffset_new - move_dist
