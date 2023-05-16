@@ -53,6 +53,7 @@
 ;                                     scales.  
 ;        21-Feb-2020: Martin Wiesmann - Added keyword /NAN to calls of bytscl()
 ;                                     - fixed bug, x/yscale was not defined in spice_xzoom_ps
+;        16-May-2023: Martin Wiesmann - Renamed it to spice_xzoom and uses widget_positioner
 ;-
 ; save as postscript file
 pro spice_xzoom_ps, event
@@ -268,7 +269,8 @@ drawid=widget_draw(rcol,xsize=xsize,ysize=ysize,/button_events, $
 closearea = widget_base(lcol, /row)
 closebutton = widget_button(closearea, value = 'Close', $
                               event_pro = 'spice_xzoom_destroy')
-widget_control,tlb,/realize
+wp = widget_positioner(tlb, parent=group)
+wp->position, /left_align
 widget_control,drawid,get_value=wid
 wset,wid
 device,copy=[0,0,xsize,ysize,0,0,pixid]
