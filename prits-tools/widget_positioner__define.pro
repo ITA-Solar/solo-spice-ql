@@ -33,7 +33,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 14:02 CEST $
+; $Id: 2023-05-16 11:45 CEST $
 
 
 ;+
@@ -153,7 +153,6 @@ FUNCTION widget_positioner::get_display_coords, offset_parent=offset_parent, off
   ENDIF ELSE BEGIN
     offset_parent = offset_widget
   ENDELSE
-  print,'offset_parent',offset_parent
   rectangles = self.monitor->GetRectangles()
   rectangles[2,*] = rectangles[0,*] + rectangles[2,*]
   rectangles[3,*] = rectangles[1,*] + rectangles[3,*]
