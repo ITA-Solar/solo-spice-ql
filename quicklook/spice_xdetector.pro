@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-16 14:27 CEST $
+; $Id: 2023-05-16 14:42 CEST $
 
 
 ; save as postscript file
@@ -401,7 +401,7 @@ pro spice_xdetector_zoom, event
             image=congrid(image,sz[1]*2 < xmax, sz[2]*2 < ymax)
             xscale = interpol(xscale, sz[1]*2 < xmax)
             yscale = interpol(yscale, sz[2]*2 < ymax)
-            iris_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
+            spice_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
               ytitle = (*info).ytitle, group_leader=event.top
           endif
         end

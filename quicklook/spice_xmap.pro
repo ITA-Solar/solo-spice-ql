@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2023-05-15 14:58 CEST $
+; $Id: 2023-05-16 14:42 CEST $
 ;-
 ;
 ; save as postscript file
@@ -429,7 +429,7 @@ pro spice_xmap_zoom, event
             image=congrid(image,sz[1]*2 < xmax, sz[2]*2 < ymax)
             xscale = interpol(xscale, sz[1]*2 < xmax)
             yscale = interpol(yscale, sz[2]*2 < ymax)
-            iris_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
+            spice_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
               ytitle = (*info).ytitle, group_leader=event.top
           endif
         end
@@ -440,7 +440,7 @@ pro spice_xmap_zoom, event
           xytitle = *(*info).data->get_axis_title()
           dmean = total(image, 2)/sz[2]
           if sz[0] ge 2 then begin
-            iris_xlineplot, dmean, xscale = xscale, $
+            spice_xlineplot, dmean, xscale = xscale, $
               title = varname, $
               xtitle = xytitle[(*info).xdim], $
               ytitle = varname, $
@@ -454,7 +454,7 @@ pro spice_xmap_zoom, event
           xytitle = *(*info).data->get_axis_title()
           dmean = total(image, 1)/sz[1]
           if sz[0] ge 2 then begin
-            iris_xlineplot, dmean, xscale = yscale, $
+            spice_xlineplot, dmean, xscale = yscale, $
               title = varname, $
               xtitle = xytitle[(*info).ydim], $
               ytitle = varname, $
@@ -693,7 +693,7 @@ pro spice_xmap_pixplot, event
       return
     end
     1: begin
-      iris_xlineplot, *(*info).drawimage, $
+      spice_xlineplot, *(*info).drawimage, $
         xscale=*(*info).xscale, $
         xtitle = xytitle[(*info).xdim], $
         ytitle = varname, $
@@ -701,7 +701,7 @@ pro spice_xmap_pixplot, event
         groupl = (*info).tlb
     end
     2: begin
-      iris_xlineplot, transpose(*(*info).drawimage), $
+      spice_xlineplot, transpose(*(*info).drawimage), $
         xtitle = xytitle[(*info).ydim], $
         ytitle = varname, $
         cslider_title = xytitle[(*info).xdim], $
