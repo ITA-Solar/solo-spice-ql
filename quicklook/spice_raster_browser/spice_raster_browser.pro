@@ -62,6 +62,7 @@
 ;             so I've added this keyword to shrink the fonts.
 ;
 ;     NO_GOES: This disables the GOES plot.
+;     group_leader: Widget parent (if any).
 ;
 ; OUTPUT:
 ;     None
@@ -103,12 +104,12 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2023-05-16 11:46 CEST $
 
 
 ;---------------------
 PRO spice_raster_browser, input_data, quiet=quiet, yoffsets=yoffsets, $
-  chunk_size=chunk_size, retina=retina, no_goes=no_goes
+  chunk_size=chunk_size, retina=retina, no_goes=no_goes, group_leader=group_leader
   COMPILE_OPT IDL2
 
   IF n_params() EQ 0 THEN BEGIN
@@ -159,7 +160,7 @@ PRO spice_raster_browser, input_data, quiet=quiet, yoffsets=yoffsets, $
   ENDIF
 
   spice_browser_widget, data, yoffsets=yoffsets, chunk_size=chunk_size, $
-    retina=retina, no_goes=no_goes, flare_data=flare_data, quiet=quiet
+    retina=retina, no_goes=no_goes, flare_data=flare_data, quiet=quiet, group_leader=group_leader
 
   ;
   ; Tidy up before exiting.
