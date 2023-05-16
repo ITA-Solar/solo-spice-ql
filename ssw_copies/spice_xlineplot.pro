@@ -1,5 +1,5 @@
 ; save as postscript file
-pro iris_xlineplot_ps,event
+pro spice_xlineplot_ps,event
   thisfile=dialog_pickfile(/write,file='pixelplot.ps')
   if thisfile eq '' then return
   widget_control,event.top,get_uvalue=info
@@ -10,13 +10,13 @@ pro iris_xlineplot_ps,event
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
   device,/close_file
   set_plot,thisdevice
 end
 
 ; save as jpeg file
-pro iris_xlineplot_jpeg,event
+pro spice_xlineplot_jpeg,event
   thisfile=dialog_pickfile(/write,file='pixelplot.jpg')
   if thisfile eq '' then return
   widget_control,event.top,get_uvalue=info
@@ -31,16 +31,16 @@ pro iris_xlineplot_jpeg,event
   write_jpeg,thisfile,image24,true=1,quality=75
 end
 
-pro iris_xlineplot_cslider, event
+pro spice_xlineplot_cslider, event
   widget_control, event.top,get_uvalue=info
   (*info).cpos=event.value
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
 end
 
-pro iris_xlineplot_startslider, event
+pro spice_xlineplot_startslider, event
   widget_control, event.top,get_uvalue=info
   (*info).start=event.value
 
@@ -56,10 +56,10 @@ pro iris_xlineplot_startslider, event
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
 end
 
-pro iris_xlineplot_stopslider, event
+pro spice_xlineplot_stopslider, event
   widget_control, event.top,get_uvalue=info
   (*info).stop=event.value
 
@@ -75,10 +75,10 @@ pro iris_xlineplot_stopslider, event
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
 end
 
-pro iris_xlineplot_yminslider, event
+pro spice_xlineplot_yminslider, event
   widget_control, event.top,get_uvalue=info
   (*info).ymin=event.value
 
@@ -94,10 +94,10 @@ pro iris_xlineplot_yminslider, event
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
 end
 
-pro iris_xlineplot_ymaxslider, event
+pro spice_xlineplot_ymaxslider, event
   widget_control, event.top,get_uvalue=info
   (*info).ymax=event.value
 
@@ -113,20 +113,20 @@ pro iris_xlineplot_ymaxslider, event
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
 end
 
-pro iris_xlineplot_psym, event
+pro spice_xlineplot_psym, event
   widget_control, event.top, get_uvalue = info
   (*info).psym=event.select
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
 end
 
 ; set automatic y-scale or not
-pro iris_xlineplot_yauto, event
+pro spice_xlineplot_yauto, event
   widget_control, event.top, get_uvalue = info
   (*info).yauto=event.select
   if (*info).yauto eq 1 then begin
@@ -140,15 +140,15 @@ pro iris_xlineplot_yauto, event
   pseudoevent={widget_button,id:(*info).action, $
     top:event.top, handler:0l, select:1}
   widget_control,event.top,set_uvalue=info
-  iris_xlineplot_draw,pseudoevent
+  spice_xlineplot_draw,pseudoevent
 end
 
-pro iris_xlineplot_movie, event
+pro spice_xlineplot_movie, event
   widget_control, event.top, get_uvalue = info
 
   sz = size((*info).data)
   if sz[0] lt 2 then begin
-    ok = dialog_message('Iris_Xlineplot: Data must be 2D to play movie')
+    ok = dialog_message('Spice_Xlineplot: Data must be 2D to play movie')
     return
   endif
 
@@ -177,7 +177,7 @@ pro iris_xlineplot_movie, event
   endfor
 end
 
-pro iris_xlineplot_draw, event
+pro spice_xlineplot_draw, event
   widget_control, event.top, get_uvalue = info
   if !d.name ne 'PS' then wset, (*info).wid
   xtitle = (*info).xtitle
@@ -211,7 +211,7 @@ pro iris_xlineplot_draw, event
 end
 
 ;resize main window
-pro iris_xlineplot_resize, event
+pro spice_xlineplot_resize, event
   widget_control, event.top ,get_uvalue = info
   (*info).d_xsz = event.x  > 0
   (*info).d_ysz = event.y - (*info).menu_ysz
@@ -224,16 +224,16 @@ pro iris_xlineplot_resize, event
 ;  widget_control, pseudoevent
 end
 
-pro iris_xlineplot_destroy, event
+pro spice_xlineplot_destroy, event
     widget_control, event.top, /destroy
 end
 
-pro iris_xlineplot_cleanup, tlb
+pro spice_xlineplot_cleanup, tlb
   widget_control, tlb, get_uvalue = info
   ptr_free, info
 end
 
-pro iris_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
+pro spice_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
               cscale = cscale, cslider_title = cslider_title, title = title, $
               groupl = groupl, $
               widget_xsz = widget_xsz, widget_ysz = widget_ysz
@@ -285,14 +285,14 @@ pro iris_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
   ymax = n_elements(yscale)-1
 
   drawid=widget_draw(displaybase, retain = 2, xsize = d_xsz, ysize = d_ysz, $
-                     /button_events, event_pro = 'iris_xlineplot_draw')
+                     /button_events, event_pro = 'spice_xlineplot_draw')
 
   filemenu=widget_button(menubar, value='File',/menu, uvalue='file')
   savemenu=widget_button(filemenu, value='Save as', /menu)
-  psmenu=widget_button(savemenu, value='Postscript', event_pro = 'iris_xlineplot_ps')
-  jpgmenu=widget_button(savemenu, value='JPG', event_pro = 'iris_xlineplot_jpeg')
+  psmenu=widget_button(savemenu, value='Postscript', event_pro = 'spice_xlineplot_ps')
+  jpgmenu=widget_button(savemenu, value='JPG', event_pro = 'spice_xlineplot_jpeg')
 
-  exitmenu=widget_button(filemenu, value='Close', event_pro='iris_xlineplot_destroy')
+  exitmenu=widget_button(filemenu, value='Close', event_pro='spice_xlineplot_destroy')
 
   cslider = -1
   if sz[0] gt 1 then begin
@@ -306,7 +306,7 @@ pro iris_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
     cslider = widget_slider(lcol, xsize=120, $
                           minimum=0, maximum=cmax, $
                           title=cslider_title, $
-                          value=0, event_pro = 'iris_xlineplot_cslider', /drag)
+                          value=0, event_pro = 'spice_xlineplot_cslider', /drag)
   endif
 
   starttitle = 'Start [X]'
@@ -317,38 +317,38 @@ pro iris_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
   startslider = widget_slider(lcol, xsize=120, $
                           minimum=xmin, maximum=xmax, $
                           title=starttitle, $
-                          value=xmin, event_pro = 'iris_xlineplot_startslider', /drag)
+                          value=xmin, event_pro = 'spice_xlineplot_startslider', /drag)
   stopslider = widget_slider(lcol, xsize=120, $
                           minimum=xmin, maximum=xmax, $
                           title=stoptitle, $
                           value=xmax, $
-                          event_pro = 'iris_xlineplot_stopslider', /drag)
+                          event_pro = 'spice_xlineplot_stopslider', /drag)
 
   yminslider = widget_slider(lcol, xsize=120, $
                           minimum=ymin, maximum=ymax, $
                           title=ymintitle, $
                           value=ymin, /sensitive,$
-                          event_pro = 'iris_xlineplot_yminslider', /drag)
+                          event_pro = 'spice_xlineplot_yminslider', /drag)
 
   ymaxslider = widget_slider(lcol, xsize=120, $
                           minimum=ymin, maximum=ymax, $
                           title=ymaxtitle, $
                           value=ymax, /sensitive, $
-                          event_pro = 'iris_xlineplot_ymaxslider', /drag)
+                          event_pro = 'spice_xlineplot_ymaxslider', /drag)
 
   moviebutton = widget_button(lcol, value = 'Movie', $
-                              event_pro = 'iris_xlineplot_movie')
+                              event_pro = 'spice_xlineplot_movie')
 
   ; button for switching psym-plot on/off:
   psymbase = widget_base(lcol, /column, /nonexclusive)
   psymbutton = widget_button(psymbase, value='Mark each data point', $
-                              event_pro = 'iris_xlineplot_psym')
+                              event_pro = 'spice_xlineplot_psym')
   yautobutton = widget_button(psymbase, value='Automatic y-scale', $
-                              event_pro = 'iris_xlineplot_yauto')
+                              event_pro = 'spice_xlineplot_yauto')
 
   closefield = widget_base(lcol,/column)
   closebutton = widget_button(closefield, value = 'Close', $
-                              event_pro = 'iris_xlineplot_destroy')
+                              event_pro = 'spice_xlineplot_destroy')
 
     ; realize main window:
   widget_control, tlb, /realize, tlb_get_size = tlb_sz
@@ -405,7 +405,7 @@ pro iris_xlineplot, data, xscale = xscale, xtitle = xtitle, ytitle = ytitle, $
                top:tlb, handler:0l, select:1}
   widget_control, (*info).action, send_event = pseudoevent
 
-  xmanager, 'iris_xlineplot', tlb, /no_block, group_leader = groupl, $
-            event_handler = 'iris_xlineplot_resize', cleanup = 'iris_xlineplot_cleanup'
+  xmanager, 'spice_xlineplot', tlb, /no_block, group_leader = groupl, $
+            event_handler = 'spice_xlineplot_resize', cleanup = 'spice_xlineplot_cleanup'
 end
 
