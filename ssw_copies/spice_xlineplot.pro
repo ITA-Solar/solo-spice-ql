@@ -1,3 +1,5 @@
+; $Id: 2023-05-16 13:53 CEST $
+
 ; save as postscript file
 pro spice_xlineplot_ps,event
   thisfile=dialog_pickfile(/write,file='pixelplot.ps')
