@@ -25,7 +25,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-15 13:38 CEST $
+; $Id: 2023-05-16 14:26 CEST $
 
 
 pro widget_positioner_test
@@ -135,5 +135,41 @@ pro widget_positioner_test
   widget_control, new_window, /realize
 
   wait,3
+
+
+  ; test alignment
+  widget_control, parent, TLB_SET_XOFFSET=1000, TLB_SET_YOFFSET=600
+  print,''
+  print,'test 8  --  LEFT'
+  wp->position, /left_align
+  wait,3
+
+  print,''
+  print,'test 9  --  RIGHT'
+  wp->position, /right_align
+  wait,3
+
+  print,''
+  print,'test 10  --  TOP'
+  wp->position, /top_align
+  wait,3
+
+  print,''
+  print,'test 11  --  BOTTOM'
+  wp->position, /bottom_align
+  wait,3
+
+  print,''
+  print,'test 12  --  BOTTOM LEFT'
+  wp->position, /bottom_align, /left_align
+  wait,3
+
+  print,''
+  print,'test 12  --  TOP RIGHT'
+  wp->position, /top_align, /right_align
+  wait,3
+
+
+
   widget_control, parent, /destroy
 end

@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-10 13:16 CEST $
+; $Id: 2023-05-16 15:03 CEST $
 
 
 ; save as postscript file
@@ -401,8 +401,8 @@ pro spice_xdetector_zoom, event
             image=congrid(image,sz[1]*2 < xmax, sz[2]*2 < ymax)
             xscale = interpol(xscale, sz[1]*2 < xmax)
             yscale = interpol(yscale, sz[2]*2 < ymax)
-            iris_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
-              ytitle = (*info).ytitle, group_leader=event.top
+            spice_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
+              ytitle = (*info).ytitle, group_leader=event.top, n_subplot=(*info).n_subplot
           endif
         end
         1:begin
@@ -410,24 +410,25 @@ pro spice_xdetector_zoom, event
           varname = *(*info).data->get_variable_type()
           varname = varname[0] +': column average'
           dmean = total(image, 1, /nan)/sz[1]
-          iris_xlineplot, dmean, xscale = yscale, $
+          spice_xlineplot, dmean, xscale = yscale, $
             title = varname, $
             xtitle = (*info).ytitle, $
             ytitle = varname, $
-            groupl = event.top
+            groupl = event.top, n_subplot=(*info).n_subplot
         end
         2:begin
           ;set up axis titles for line plots (options 1 or 2 below)
           varname = *(*info).data->get_variable_type()
           varname = varname[0] +': row average'
           if y1 eq y2 then dmean=image else dmean = total(image, 2, /nan)/sz[2]
-          iris_xlineplot, dmean, xscale = xscale, $
+          spice_xlineplot, dmean, xscale = xscale, $
             title = varname, $
             xtitle = (*info).xtitle, $
             ytitle = varname, $
-            groupl = event.top
+            groupl = event.top, n_subplot=(*info).n_subplot
         end
       endcase
+      (*info).n_subplot = (*info).n_subplot + 1
     endcase
     'motion':  begin
       ;  erase previous box
@@ -734,7 +735,7 @@ pro spice_xdetector_lineplot, event
     end
     1: begin
       data = (*info).detector[*, *]
-      iris_xlineplot, data, xscale = (*info).lambda, $
+      spice_xlineplot, data, xscale = (*info).lambda, $
         xtitle = (*info).xtitle, $
         cslider_title = (*info).ytitle, $
         ytitle = varname, $
@@ -742,7 +743,7 @@ pro spice_xdetector_lineplot, event
     end
     2: begin
       data = transpose((*info).detector[*, *])
-      iris_xlineplot, data, xtitle = (*info).ytitle, $
+      spice_xlineplot, data, xtitle = (*info).ytitle, $
         cslider_title = (*info).xtitle, $
         ytitle = varname, $
         groupl = (*info).tlb
@@ -1102,9 +1103,9 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   colorbase = widget_base(lsubcol1,/col)
   colorbutton=widget_button(colorbase, value='Colour table', $
     event_pro='spice_xdetector_colors')
-  animbase = widget_base(lsubcol1,/col)
-  animbutton=widget_button(animbase, value='Create Animation', $
-    event_pro='spice_xdetector_control_anim')
+  ;animbase = widget_base(lsubcol1,/col)
+  ;animbutton=widget_button(animbase, value='Create Animation', $
+  ;  event_pro='spice_xdetector_control_anim')
 
   lsubpix=widget_base(lcol,/row)
   wlbase = widget_base(lsubpix, /column, /frame)
@@ -1161,7 +1162,9 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ;;                               frame       = 1)
 
   ; realize main window:
-  widget_control, tlb, /realize, tlb_get_size = tlb_sz
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
+  widget_control, tlb, tlb_get_size = tlb_sz
 
   ; set realsizebutton to de-select:
   widget_control, realsizebutton, set_button = 0
@@ -1212,6 +1215,8 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     wid:wid, $
     colorbar_title:colorbar_title,$
     pixelplot:pixelplot,  $
+    
+    n_subplot:0, $
 
     ; Options
     log:0, $
