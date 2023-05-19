@@ -24,6 +24,7 @@ END
 
 
 FUNCTION prits_tools::anytim2julday, anytim
+  compile_opt static
   jd = anytim2jd(anytim)
   return, jd.int + jd.frac
 END
@@ -31,11 +32,11 @@ END
 
 FUNCTION prits_tools::list_of_days, start, final, reverse=reverse, delimiter=delimiter
   compile_opt static
-  start_jd = anytim2jd(start + 'T12:00')
-  final_jd = anytim2jd(final + 'T12:00')
   
-  start_jd = start_jd.int + start_jd.frac
-  final_jd = final_jd.int + final_jd.frac
+  addon = strpos(start, 'T') EQ -1 ? 'T12:00' : ''
+  
+  start_jd = prits_tools.anytim2julday(start + addon)
+  final_jd = prits_tools.anytim2julday(final + addon)
   
   julian_days = timegen(start=start_jd, final=final_jd, units='days')
   IF keyword_set(reverse) THEN julian_days = reverse(julian_days)
