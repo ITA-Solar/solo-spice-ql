@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-16 15:03 CEST $
+; $Id: 2023-05-22 13:11 CEST $
 
 
 ; save as postscript file
@@ -1027,7 +1027,9 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   colorbar_title=data->get_title()+' '+(data->get_variable_unit())
   ; create menu for controlling action in draw window
   dwoption = widget_base(lcol, /column, /frame)
-  dwoption_title = widget_label(dwoption, value = 'Window action')
+  dwoption_title = widget_label(dwoption, value = 'Apply chosen action to', /align_left)
+  dwoption_title = widget_label(dwoption, value = 'user-defined rectangle', /align_left)
+  dwoption_title = widget_label(dwoption, value = '(click and hold to draw rectangle)', /align_left)
   dwoption_names=['Zoom','Average along wavelength', 'Average along slit']
   dwoption_menu = cw_bgroup(dwoption, dwoption_names, /return_index, $
     /exclusive, set_value = 0, $
