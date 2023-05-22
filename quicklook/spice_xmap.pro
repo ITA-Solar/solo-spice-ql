@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2023-05-16 15:03 CEST $
+; $Id: 2023-05-22 14:39 CEST $
 ;-
 ;
 ; save as postscript file
@@ -958,7 +958,9 @@ pro spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ;    /align_left)
   ; menu for controlling action in draw window
   dwoption = widget_base(lcol, /column, /frame)
-  dwoption_title = widget_label(dwoption, value = 'Window action')
+  dwoption_title = widget_label(dwoption, value = 'Apply chosen action to', /align_left)
+  dwoption_title = widget_label(dwoption, value = 'user-defined rectangle', /align_left)
+  dwoption_title = widget_label(dwoption, value = '(click and hold to draw rectangle)', /align_left)
   menu = ['Zoom','Average along wavelength', 'Average along slit',$
     'Average along raster posistion', 'Average in Time']
   if sit_and_stare then begin
