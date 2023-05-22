@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2022-09-20 15:06 CEST $
+; $Id: 2023-05-22 14:39 CEST $
 
 
 PRO spice_browser_base_event, event
@@ -271,7 +271,7 @@ PRO spice_browser_base_event, event
       ;
       iwin EQ nw: BEGIN
         xrange=state.wid_data.xrange+state.wid_data.ichunk*state.wid_data.nxpos
-        iris_xwhisker, state.data, state.wid_data.iwin[pwin], slitpos=state.wid_data.ypix, $
+        spice_xwhisker, state.data, state.wid_data.iwin[pwin], slitpos=state.wid_data.ypix, $
           wpix_range=reform(state.wid_data.lrange[*,pwin]), $
           tpix_range=xrange
       END
@@ -911,10 +911,10 @@ PRO spice_browser_base_event, event
           spice_browser_font,font,retina=state.wid_data.retina
           str1=['HELP FOR SPICE_RASTER_BROWSER',$
             '',$
-            'spice_raster_browser is used to browse the 3D data cubes produced by the',$
-            'IRIS instrument from narrow slit rasters. ',$
+            'spice_raster_browser is used to browse the 4D data cubes produced by the',$
+            'SPICE instrument from narrow slit rasters. ',$
             '',$
-            'It is recommended that you order your IRIS data files into a standard hierarchy', $
+            'It is recommended that you order your SPICE data files into a standard hierarchy', $
             'see the', $
             '',$
             'You will see four pairs of images in the graphic user interface',$
@@ -946,7 +946,7 @@ PRO spice_browser_base_event, event
             '     OPTION+CLICK - Select a new image pixel',$
             '     COMMAND+CLICK - Zoom out from image',$
             '',$
-            'CHANGING THE WAVELENTH WINDOWS',$
+            'CHANGING THE WAVELENGTH WINDOWS',$
             '',$
             'Above each of the four pairs of graphic windows is a drop-down list',$
             'menu which allows you to choose different wavelength windows.',$
