@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-05-22 13:11 CEST $
+; $Id: 2023-05-22 14:15 CEST $
 
 
 ; save as postscript file
@@ -123,8 +123,7 @@ pro spice_xdetector_draw, event
     oplot,*(*info).xscale,spectrum
   endif
   if ymax-ymin eq 0.0 then ymax=ymin+1
-  format='(f10.1)'
-  if ymax-ymin lt 10 then format='(f7.4)'
+  if ymax-ymin lt 10 then format='(f7.4)' else format='(f10.1)'
   hw_colorbar, position = [((*info).imagepos)[2]+0.01, $
     ((*info).imagepos)[1], $
     ((*info).imagepos)[2]+0.02, $
@@ -323,23 +322,25 @@ pro spice_xdetector_zoom, event
     xs = ((*info).imagepos)[0]*(*info).d_xsz
     ys = ((*info).imagepos)[1]*(*info).d_ysz
   endelse
+  if *(*info).data->get_missing_value() ne *(*info).data->get_missing_value() then missing=-99999L $
+  else missing=*(*info).data->get_missing_value()
   if (*info).log then begin
     ;im_min=*(*info).data->datamin()>1.
-    ymin = alog10(min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value(), low_limit=0.5), max=ymax, /nan))
+    ymin = alog10(min(iris_histo_opt(*(*info).drawimage,missing=missing, low_limit=0.5), max=ymax, /nan))
     ymax = alog10(ymax)
     mplot_image,alog10(*(*info).drawimage), $
       *(*info).xscale, *(*info).yscale, $
       min=ymin,max=ymax, $
       xstyle = 1, ystyle = 1, pos=(*info).imagepos, $
-      xtitle = (*info).xtitle, ytitle = (*info).ytitle,/bgblack
+      xtitle = (*info).xtitle, ytitle = (*info).ytitle,/bgblack,ticklen=ticklen
   endif else begin
     ;im_min=*(*info).data->datamin()
-    ymin = min(iris_histo_opt(*(*info).drawimage,missing=*(*info).data->get_missing_value()), max=ymax, /nan)
-    mplot_image,*(*info).drawimage, $
+    ymin = min(iris_histo_opt(*(*info).drawimage,missing=missing), max=ymax, /nan)
+    mplot_image, *(*info).drawimage, $
       *(*info).xscale, *(*info).yscale, $
       min=ymin,max=ymax, $
       xstyle = 1, ystyle = 1, pos=(*info).imagepos, $
-      xtitle = (*info).xtitle, ytitle = (*info).ytitle,/bgblack
+      xtitle = (*info).xtitle, ytitle = (*info).ytitle,/bgblack,ticklen=ticklen
   endelse
   if ymax-ymin eq 0.0 then ymax=ymin+1
   if ymax-ymin lt 10 then format='(f7.4)' else format='(f10.1)'
@@ -360,8 +361,7 @@ pro spice_xdetector_zoom, event
     'up': begin
       ;  erase last box
       ;  turn motion events off
-      device,copy=[0,0,(*info).d_xsz,(*info).d_ysz,0,0, $
-        (*info).pixid]
+      device,copy=[0,0,(*info).d_xsz,(*info).d_ysz,0,0,(*info).pixid]
       widget_control,(*info).drawid,draw_motion_events=0
       sx = (*info).sx - xs
       sy = (*info).sy - ys
