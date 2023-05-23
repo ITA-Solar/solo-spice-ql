@@ -50,7 +50,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-05-16 11:46 CEST $
+; $Id: 2023-05-23 11:35 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -169,48 +169,6 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   origin[1]=origin[1]-yoffset
 
   ;
-  ; By default I pick up the line ID file from my webpage, but if
-  ; this isn't found, then I use the file in SSW.
-  ;
-  line_ids=1
-  sock_list,'http://files.pyoung.org/iris/iris_chianti_lookup_table.txt',page
-  np=n_elements(page)
-  IF np GT 10 THEN BEGIN
-    ion=''
-    str={wvl: 0., ion: ''}
-    FOR i=0,np-1 DO BEGIN
-      reads,page[i],format='(f10.0,a10)',wvl,ion
-      str.wvl=wvl
-      str.ion=trim(ion)
-      IF n_tags(idstr) EQ 0 THEN idstr=str ELSE idstr=[idstr,str]
-    ENDFOR
-  ENDIF ELSE BEGIN
-    chck=file_search('$SSW/iris/idl/nrl/iris_chianti_lookup_table.txt')
-    IF chck[0] EQ '' THEN BEGIN
-      chck=file_search('$SSW/iris/idl/uio/ancillary/iris_chianti_lookup_table.txt')
-      file=chck[0]
-    ENDIF ELSE BEGIN
-      file=chck[0]
-    ENDELSE
-    ;
-    IF file NE '' THEN BEGIN
-      openr,lin,file,/get_lun
-      ion=''
-      str={wvl: 0., ion: ''}
-      WHILE eof(lin) NE 1 DO BEGIN
-        readf,lin,format='(f10.0,a10)',wvl,ion
-        str.wvl=wvl
-        str.ion=ion
-        IF n_tags(idstr) EQ 0 THEN idstr=str ELSE idstr=[idstr,str]
-      ENDWHILE
-      free_lun,lin
-    ENDIF ELSE BEGIN
-      line_ids=0
-      idstr=0
-    ENDELSE
-  ENDELSE
-
-  ;
   ; Get slitjaw information
   ;
   ;  sji_file=filestr.sji_file
@@ -274,8 +232,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
     lambda: fltarr(n_plot_window), $
     ilambda: intarr(n_plot_window), $
     goes_plot_id: 0, $
-    line_ids: line_ids, $      ; 0 or 1 if line IDs available
-    idstr: idstr, $            ; structure of line IDs
+    line_ids: 1, $      ; 0 or 1 if line IDs available
     midtime: midtime, $
     midtime_earth: midtime_earth, $
     utc: utc, $
@@ -477,15 +434,11 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   ;
   ; SWITCH LINE IDS ON OR OFF
   ; -------------------------
-  IF n_tags(wid_data.idstr) NE 0 THEN BEGIN
-    lids_base=widget_base(opt_base,/col,frame=1)
-    lids_text=widget_label(lids_base,val='Show line IDS?', $
-      font=font,/align_left)
-    lids_butts=cw_bgroup(lids_base,['No','Yes'], $
-      set_value=wid_data.line_ids,/exclusive,font=font,/row)
-  ENDIF ELSE BEGIN
-    lids_butts=0
-  ENDELSE
+  lids_base=widget_base(opt_base,/col,frame=1)
+  lids_text=widget_label(lids_base,val='Show line IDS?', $
+    font=font,/align_left)
+  lids_butts=cw_bgroup(lids_base,['No','Yes'], $
+    set_value=wid_data.line_ids,/exclusive,font=font,/row)
 
 
   ;
