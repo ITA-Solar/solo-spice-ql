@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-05-23 12:02 CEST $
+; $Id: 2023-05-23 12:06 CEST $
 ;-
 ;
 ;
@@ -86,7 +86,7 @@ pro spice_xcontrol_l23_save_file, event
   IF size((*info).object_l2, /type) NE 11 THEN BEGIN
     result = dialog_message(['Saving of level 3 SPICE FITS files is not (yet) supported', $
       'when the corresponding level 2 file is not available.', $
-      'Contact martin.wiesmann@astro.uio.no if you need this feature'])
+      'Contact prits-group@astro.uio.no if you need this feature'])
     ; TODO
     return
   ENDIF
@@ -316,7 +316,7 @@ pro spice_xcontrol_l23_open_l3, event
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)
   if count NE 1 then begin
-    print, 'This should not happen. Contact martin.wiesmann@astro.uio.no'
+    print, 'This should not happen. Contact prits-group@astro.uio.no'
     stop
     return
   endif
