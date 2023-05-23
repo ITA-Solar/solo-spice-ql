@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-03-16 10:48 CET $
+; $Id: 2023-05-23 12:02 CEST $
 ;-
 ;
 ;
@@ -505,8 +505,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   file_labels = lonarr(4)
 
   tlb = widget_base(/column, mbar=menubar, $
-    title='SPICE_Xcontrol_L23 - '+file, $
-    xoffset=50, yoffset=50, group_leader=group_leader, /tlb_kill_request_events)
+    title='SPICE_Xcontrol_L23 - '+file, group_leader=group_leader, /tlb_kill_request_events)
 
   win_base = widget_base(tlb, /grid_layout, column=3, /frame)
 
@@ -632,7 +631,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   widget_control, tlb, set_uvalue=info
 
   ; realize the top level base widget
-  widget_control, tlb, /realize
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
 
   xmanager, 'spice_xcontrol_l23', tlb, /no_block, $
     group_leader=group_leader, cleanup='spice_xcontrol_l23_cleanup'
