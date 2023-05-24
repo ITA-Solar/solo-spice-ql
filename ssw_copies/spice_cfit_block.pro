@@ -175,10 +175,10 @@
 ;                       Added /FILL_ONLY
 ;               Version 6, WTT, 8-Oct-2015, use [] for array indices
 ;
-; Version     : 6, 8-Oct-2015
+; $Id: 2023-05-24 11:51 CEST $
 ;-            
 
-PRO cfit_block_point,lambda,data,weights,fit,missing,$
+PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
                      result,residual,include,const,$
                      j,k,l,m,n,o,lam,new_lam,npar,sfit,$
                      double=double,quiet=quiet,$
@@ -272,7 +272,7 @@ restart_point:
   IF n_elements(restart) GT 0 THEN delvarx,restart
 END
 
-PRO cfit_block_progress,pct,lastpct,pctage,pct_slider_id,interrupt_id,halt,$
+PRO spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,interrupt_id,halt,$
                         quiet
   IF pct GE lastpct+pctage THEN BEGIN
      WHILE pct GT lastpct DO lastpct = lastpct+pctage
@@ -289,7 +289,7 @@ PRO cfit_block_progress,pct,lastpct,pctage,pct_slider_id,interrupt_id,halt,$
 END
 
      
-PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
+PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                double=double,use_result=use_result,quiet=quiet,$
                pct_slider_id=pct_slider_id,x_face=x_face,smart=smart,$
                analysis=ana,$
@@ -515,7 +515,7 @@ PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
         ;; Only touch results with one or more non-constant parameters
         ;; 
         
-        cfit_block_point,lambda,data,weights,fit,missing,$
+        spice_cfit_block_point,lambda,data,weights,fit,missing,$
            result,residual,include,const,$
            j,k,l,m,n,o,lam,new_lam,npar,sfit,$
            double=double,quiet=quiet,$
@@ -525,7 +525,7 @@ PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
         ;; 
         ndone = ndone+1L
         pct = (100*ndone)/ndo
-        cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
+        spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
            interrupt_id,halt,quiet
         IF halt THEN GOTO,halt
      ENDFOR 
@@ -548,7 +548,7 @@ PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
            restart = result[*,j,k,l,m,n,o]
            result[*,j,k,l,m,n,o] = last_result
         END
-        cfit_block_point,lambda,data,weights,fit,missing,$
+        spice_cfit_block_point,lambda,data,weights,fit,missing,$
            result,residual,include,const,$
            j,k,l,m,n,o,lam,new_lam,npar,sfit,$
            double=double,quiet=quiet,restart=restart,$
@@ -560,7 +560,7 @@ PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
         ;; 
         ndone = ndone+1L
         pct = (100*ndone)/ndo
-        cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
+        spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
            interrupt_id,halt,quiet
         IF halt THEN GOTO,halt
      END
@@ -580,7 +580,7 @@ PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
         m = ix MOD dimen[4] & ix = ix/dimen[4]
         n = ix MOD dimen[5] & ix = ix/dimen[5]
         o = ix MOD dimen[6]
-        cfit_block_point,lambda,data,weights,fit,missing,$
+        spice_cfit_block_point,lambda,data,weights,fit,missing,$
            result,residual,include,const,$
            j,k,l,m,n,o,lam,new_lam,npar,sfit,$
            double=double,quiet=quiet,restart=restart,$
@@ -592,7 +592,7 @@ PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
         ;; 
         ndone = ndone+1L
         pct = (100*ndone)/ndo
-        cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
+        spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
            interrupt_id,halt,quiet
         IF halt THEN GOTO,halt
      END
