@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-05-23 12:06 CEST $
+; $Id: 2023-05-24 13:40 CEST $
 ;-
 ;
 ;
@@ -311,7 +311,7 @@ pro spice_xcontrol_l23_open_l3, event
     END
   endcase
   ana = ana_l3[win_info.winno]
-  xcfit_block, ana=ana, title=title
+  spice_xcfit_block, ana=ana, title=title
   ana_l3[win_info.winno] = ana
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)

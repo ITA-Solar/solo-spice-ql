@@ -193,7 +193,7 @@
 ;                       in xcfit_block_event
 ;
 ; Version     :
-; $Id: 2023-05-24 13:25 CEST $
+; $Id: 2023-05-24 13:40 CEST $
 ;-
 
 
@@ -986,7 +986,7 @@ END
 PRO spice_xcfit_block_calculate,info,smart=smart
   spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
-  cfit_block,lambda,data,weights,fit,info.int.a.missing,result,residual,$
+  spice_cfit_block,lambda,data,weights,fit,info.int.a.missing,result,residual,$
      include,const,/double,/x_face,smart=smart
   
   ;;
