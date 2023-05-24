@@ -3,10 +3,12 @@
 ;
 ; Name        : PRITS_TOOLS.CHECK_EQUALITY
 ;
-; Purpose     : Checks if a variable is the same as another variable. The variable may
+; Purpose     : Checks if a variable is equal to another variable. The variable may
 ;               be an array, in that case the output is also an array of same size of type byte.
 ;               This function can also perform the check if the reference variable
 ;               is not a finite number.
+;               A tolerance value can be provided by which the variable may maximally differ from the
+;               reference value and still be considered equal.
 ;
 ; Use         : result = PRITS_TOOLS.CHECK_EQUALITY( VARIABLE, REFERENCE_VALUE [, /NANorINF] [, /SIGN] )
 ;
@@ -15,7 +17,7 @@
 ;                                 This may also be +/-NAN or +/-INF.
 ;
 ; Opt. Inputs : TOLERANCE : A value that the variable may maximally differ from the reference value and still
-;                           be considerate to be equal. This keyword is ignored if NANorINF is set.
+;                           be considered to be equal. This keyword is ignored if NANorINF is set.
 ;
 ; Outputs     : Boolean. True if the variable is the same, False otherwise. If input variable is an array
 ;                        the output is also an array of same size of type byte.
@@ -41,7 +43,7 @@
 ;
 ; Modified    : Never
 ;
-; $Id: 2023-05-24 15:21 CEST $
+; $Id: 2023-05-24 15:24 CEST $
 ;-
 
 FUNCTION PRITS_TOOLS::CHECK_EQUALITY, VARIABLE, REFERENCE_VALUE, TOLERANCE=TOLERANCE, NANorINF=NANorINF, SIGN=SIGN
