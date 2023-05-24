@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-05-24 13:41 CEST $
+; $Id: 2023-05-24 13:46 CEST $
 
 
 ;+
@@ -360,8 +360,7 @@ END
 ;      WEIGHTS: Weights to use in the fitting process. Same dimensions as DATA.
 ;               All pixels are set to 1.0.
 ;      MISSING: The MISSING value, used to flag missing data points,
-;               and parameter values at points where the fit has been
-;               declared as "FAILED". This is set to -1000.0 for now, because cfit_block does not handle NAN.
+;               and parameter values at points where the fit has been declared as "FAILED".
 ;
 ;-
 PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
