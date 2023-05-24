@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-05-10 10:57 CEST $
+; $Id: 2023-05-24 13:41 CEST $
 
 
 ;+
@@ -168,7 +168,7 @@ function spice_data::xcfit_block, window_index, no_masking=no_masking, approxima
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
   ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, no_line_list=no_line_list)
   if size(ana, /type) EQ 8 then begin
-    XCFIT_BLOCK, ana=ana
+    SPICE_XCFIT_BLOCK, ana=ana
   endif else begin
     print, 'Something went wrong when trying to produce an ANA structure.'
   endelse
@@ -289,11 +289,11 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       print, 'fitting data'
       print, 'this may take a while'
       print, '====================='
-      cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
+      spice_cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
     endif
 
     if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      XCFIT_BLOCK, ana=ana
+      SPICE_XCFIT_BLOCK, ana=ana
     endif
 
     data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
@@ -393,7 +393,6 @@ PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, app
   type_data = size(data, /type)
   lambda = fix(lambda, type=type_data)
   missing = self->get_missing_value()
-  missing = -1000.0d
 END
 
 
