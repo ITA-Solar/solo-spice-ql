@@ -9,6 +9,10 @@
 ;               is not a finite number.
 ;               A tolerance value can be provided by which the variable may maximally differ from the
 ;               reference value and still be considered equal.
+;               
+;               YOU MAY BE BETTER SERVED BY USING THE FUNCTIONS:
+;               WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING, IS_NOT_MISSING
+;               because those are already in the 'gen' branch of solarsoft.
 ;
 ; Use         : result = PRITS_TOOLS.CHECK_EQUALITY( VARIABLE, REFERENCE_VALUE [, /NANorINF] [, /SIGN] )
 ;
@@ -43,7 +47,7 @@
 ;
 ; Modified    : Never
 ;
-; $Id: 2023-05-24 15:24 CEST $
+; $Id: 2023-05-25 13:38 CEST $
 ;-
 
 FUNCTION PRITS_TOOLS::CHECK_EQUALITY, VARIABLE, REFERENCE_VALUE, TOLERANCE=TOLERANCE, NANorINF=NANorINF, SIGN=SIGN
