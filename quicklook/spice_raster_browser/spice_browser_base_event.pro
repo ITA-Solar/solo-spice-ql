@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-05-22 14:39 CEST $
+; $Id: 2023-05-25 22:03 CEST $
 
 
 PRO spice_browser_base_event, event
@@ -970,11 +970,8 @@ PRO spice_browser_base_event, event
             '',$
             'If this option is selected then suggested line identifications are',$
             'overplotted on the spectrum. These IDs are not complete and may not be',$
-            'accurate in all conditions (e.g., Ca XVII will not be present in quiet',$
-            'Sun conditions), but it is hoped they will be a useful guidance for',$
-            'understanding the data. The wavelengths are from the CHIANTI',$
-            'database. Note that you must have the CHIANTI database installed in',$
-            'Solarsoft for this feature to work.',$
+            'accurate in all conditions, but it is hoped they will be a useful guidance for',$
+            'understanding the data. The wavelengths are defined in spice_line_list.pro.',$
             '']
 
           xpopup,str1,tfont=font,bfont=font,xsiz=70,ysiz=30, $
