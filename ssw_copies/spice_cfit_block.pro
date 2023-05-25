@@ -174,8 +174,11 @@
 ;               Version 5, SVHH, 6 May 1998
 ;                       Added /FILL_ONLY
 ;               Version 6, WTT, 8-Oct-2015, use [] for array indices
+;               Version 7, Martin Wiesmann, 25 May 2023
+;                       Whenever variables are checked for 'missing' values, it uses now
+;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
-; $Id: 2023-05-25 13:19 CEST $
+; $Id: 2023-05-25 13:20 CEST $
 ;-            
 
 PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
