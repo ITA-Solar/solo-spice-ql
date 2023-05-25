@@ -175,7 +175,7 @@
 ;                       Added /FILL_ONLY
 ;               Version 6, WTT, 8-Oct-2015, use [] for array indices
 ;
-; $Id: 2023-05-24 12:58 CEST $
+; $Id: 2023-05-25 13:19 CEST $
 ;-            
 
 PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
@@ -192,7 +192,7 @@ PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
      ;; Extract spectrum and discard bad points
      ;;
      spec = data[*,j,k,l,m,n,o]
-     ix = where(spec NE missing AND spec EQ spec,ngood)
+     ix = where_not_missing(spec, ngood, missing=missing)
      
      ;;
      ;; No dice if we have too few good points
@@ -250,11 +250,9 @@ restart_point:
      ;; If no parameters variable - check if parameters are flagged
      ;;
      
-     IF finite(missing) THEN npar_missing = total(result[0:npar-2,j,k,l,m,n,o] EQ missing) $
-     ELSE npar_missing = total(~finite(result[0:npar-2,j,k,l,m,n,o]))
-     IF npar_missing NE npar-1 THEN BEGIN
+     IF total(is_missing(result[0:npar-2,j,k,l,m,n,o], missing=missing)) NE npar-1 THEN BEGIN
         spec = data[*,j,k,l,m,n,o]
-        ix = where(spec NE missing AND spec EQ spec,ngood)
+        ix = where_not_missing(spec, ngood, missing=missing)
         
         IF ngood NE 0 THEN BEGIN 
            IF new_lam THEN lam = lambda[*,j,k,l,m,n,o]
