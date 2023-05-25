@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-12-09 10:41 CET $
+; $Id: 2023-05-23 12:02 CEST $
 ;-
 ;
 ;
@@ -310,16 +310,9 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   }
   spice_create_l3_widget_calc_l3_dir, info
 
-  ; Center the widgets on display.
-  Device, Get_Screen_Size=screenSize
-  xCenter = screenSize(0) / 2
-  yCenter = screenSize(1) / 2
-  geom = Widget_Info(base, /Geometry)
-  xHalfSize = geom.Scr_XSize / 2
-  yHalfSize = geom.Scr_YSize / 2
-  Widget_Control, base, XOffset = xCenter-xHalfSize, YOffset = yCenter-yHalfSize
   widget_control, base, set_Uvalue=info, /No_Copy
-  widget_control, base, /realize
+  wp = widget_positioner(base, parent=group_leader)
+  wp->position
   xmanager, 'spice_create_l3_widget', base, event_handler='spice_create_l3_widget_event'
 
   res = *result

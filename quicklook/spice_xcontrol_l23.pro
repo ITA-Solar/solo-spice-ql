@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-03-16 10:48 CET $
+; $Id: 2023-05-24 13:40 CEST $
 ;-
 ;
 ;
@@ -86,7 +86,7 @@ pro spice_xcontrol_l23_save_file, event
   IF size((*info).object_l2, /type) NE 11 THEN BEGIN
     result = dialog_message(['Saving of level 3 SPICE FITS files is not (yet) supported', $
       'when the corresponding level 2 file is not available.', $
-      'Contact martin.wiesmann@astro.uio.no if you need this feature'])
+      'Contact prits-group@astro.uio.no if you need this feature'])
     ; TODO
     return
   ENDIF
@@ -311,12 +311,12 @@ pro spice_xcontrol_l23_open_l3, event
     END
   endcase
   ana = ana_l3[win_info.winno]
-  xcfit_block, ana=ana, title=title
+  spice_xcfit_block, ana=ana, title=title
   ana_l3[win_info.winno] = ana
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)
   if count NE 1 then begin
-    print, 'This should not happen. Contact martin.wiesmann@astro.uio.no'
+    print, 'This should not happen. Contact prits-group@astro.uio.no'
     stop
     return
   endif
@@ -505,8 +505,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   file_labels = lonarr(4)
 
   tlb = widget_base(/column, mbar=menubar, $
-    title='SPICE_Xcontrol_L23 - '+file, $
-    xoffset=50, yoffset=50, group_leader=group_leader, /tlb_kill_request_events)
+    title='SPICE_Xcontrol_L23 - '+file, group_leader=group_leader, /tlb_kill_request_events)
 
   win_base = widget_base(tlb, /grid_layout, column=3, /frame)
 
@@ -632,7 +631,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   widget_control, tlb, set_uvalue=info
 
   ; realize the top level base widget
-  widget_control, tlb, /realize
+  wp = widget_positioner(tlb, parent=group_leader)
+  wp->position
 
   xmanager, 'spice_xcontrol_l23', tlb, /no_block, $
     group_leader=group_leader, cleanup='spice_xcontrol_l23_cleanup'

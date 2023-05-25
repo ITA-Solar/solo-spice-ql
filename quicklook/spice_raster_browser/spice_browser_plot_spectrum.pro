@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-05-05 14:43 CEST $
+; $Id: 2023-05-23 11:35 CEST $
 
 
 PRO spice_browser_plot_spectrum, state, pwin
@@ -94,6 +94,6 @@ PRO spice_browser_plot_spectrum, state, pwin
   ENDELSE
 
 
-  IF state.wid_data.line_ids EQ 1 THEN result=spice_browser_oplot_line_ids(wrange,!y.crange,state.wid_data.idstr,velocity=state.wid_data.velocity,refwvl=lambda)
+  IF state.wid_data.line_ids EQ 1 THEN spice_browser_oplot_line_ids, wrange, !y.crange, velocity=state.wid_data.velocity, refwvl=lambda
 
 END
