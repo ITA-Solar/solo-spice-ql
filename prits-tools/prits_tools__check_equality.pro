@@ -14,7 +14,8 @@
 ;               WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING, IS_NOT_MISSING
 ;               because those are already in the 'gen' branch of solarsoft.
 ;
-; Use         : result = PRITS_TOOLS.CHECK_EQUALITY( VARIABLE, REFERENCE_VALUE [, /NANorINF] [, /SIGN] )
+; Use         : result = PRITS_TOOLS.CHECK_EQUALITY( VARIABLE, REFERENCE_VALUE [, /NANorINF] [, /SIGN] $
+;                             [, TOLERANCE=TOLERANCE] )
 ;
 ; Inputs      : VARIABLE : The variable to be checked against the reference_value.
 ;               REFERENCE_VALUE : The reference value that the variable shold be checked against.
@@ -47,7 +48,7 @@
 ;
 ; Modified    : Never
 ;
-; $Id: 2023-05-25 13:38 CEST $
+; $Id: 2023-05-25 13:39 CEST $
 ;-
 
 FUNCTION PRITS_TOOLS::CHECK_EQUALITY, VARIABLE, REFERENCE_VALUE, TOLERANCE=TOLERANCE, NANorINF=NANorINF, SIGN=SIGN
