@@ -191,9 +191,12 @@
 ;               Version 9, Martin Wiesmann, 25 August 2021
 ;                       handles new event from cw_loadct and calls cw_cubeview_force_redraw
 ;                       in xcfit_block_event
+;               Version 10, Martin Wiesmann, 25 May 2023
+;                       Whenever variables are checked for 'missing' values, it uses now
+;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-05-25 11:12 CEST $
+; $Id: 2023-05-25 11:18 CEST $
 ;-
 
 
