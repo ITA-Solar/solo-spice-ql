@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-05-25 11:18 CEST $
+; $Id: 2023-05-25 13:38 CEST $
 ;-
 
 
@@ -273,7 +273,7 @@ PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
   IF szl(0) EQ 1 THEN lam = lambda $
   ELSE lam = reform(lambda[*,f(1),f(2),f(3),f(4),f(5),f(6)],/overwrite)
   
-  ix = where_not_missing(spec, ngood, missinginfo.int.a.missing)
+  ix = where_not_missing(spec, ngood, missing=info.int.a.missing)
   
   IF ngood GT 0 THEN BEGIN
      spec = spec(ix)
