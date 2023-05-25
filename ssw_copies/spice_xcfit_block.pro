@@ -193,7 +193,7 @@
 ;                       in xcfit_block_event
 ;
 ; Version     :
-; $Id: 2023-05-24 22:12 CEST $
+; $Id: 2023-05-25 11:12 CEST $
 ;-
 
 
@@ -263,14 +263,14 @@ PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
   
   this_result = this_result(0:n_elements(this_result)-2)
   
-  failed = (total(prits_tools.check_equality(this_result, info.int.a.missing)) $
-            EQ n_elements(this_result))
+  failed = where_not_missing(this_result, count, missing=info.int.a.missing)
+  failed = count EQ 0
   
   szl = size(lambda)
   IF szl(0) EQ 1 THEN lam = lambda $
   ELSE lam = reform(lambda[*,f(1),f(2),f(3),f(4),f(5),f(6)],/overwrite)
   
-  ix = where(~prits_tools.check_equality(spec, info.int.a.missing), ngood)
+  ix = where_not_missing(spec, ngood, missinginfo.int.a.missing)
   
   IF ngood GT 0 THEN BEGIN
      spec = spec(ix)
@@ -499,7 +499,7 @@ PRO spice_xcfit_block_register,info
      cona = [sfit.const]
      const = dimrebin(dimreform(cona,con_dim1,/overwrite),con_dim,/sample)
      
-     ix = where(total(prits_tools.check_equality(result, info.int.a.missing),1) EQ na+1,nfailed)
+     ix = where(total(is_missing(result, missing=info.int.a.missing),1) EQ na+1,nfailed)
      IF ix(0) NE -1 THEN BEGIN
         print,"Keeping "+trim(nfailed)+" points constant (FAILED)"
         FOR i = 0,na-1 DO cfit_bpatch,const,ix,i,1b
@@ -725,7 +725,7 @@ PRO spice_xcfit_block_pix_wmask,info,mask
      ;; Find which fits have been flagged as failed.
      
      handle_value,info.int.a.result_h,result,/no_copy
-     failed = total(prits_tools.check_equality(result, info.int.a.missing),1) $
+     failed = total(where_missing(result, missing=info.int.a.missing),1) $
         EQ n_elements(result(*,0,0,0,0,0,0))
      handle_value,info.int.a.result_h,result,/set,/no_copy
      
@@ -1044,7 +1044,7 @@ PRO spice_xcfit_block_visitp,info,recalculate=recalculate,restart=restart
   
   ;; If chi2==missing, the point should be done (unless it's failed)
 
-  IF ~prits_tools.check_equality(chi2, info.int.a.missing) $
+  IF is_not_missing(chi2, missing=info.int.a.missing) $
      AND NOT recalculate AND NOT restart THEN BEGIN
      
      spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed,/nochange
@@ -1058,7 +1058,7 @@ PRO spice_xcfit_block_visitp,info,recalculate=recalculate,restart=restart
   ;; parameter is not constant, then calculate best fit
   ;;
   some_variable = total(this_p_const EQ 0b) NE 0
-  recalculate = (recalculate OR prits_tools.check_equality(chi2, info.int.a.missing)) $
+  recalculate = (recalculate OR is_missing(chi2, missing=info.int.a.missing)) $
      AND some_variable OR restart
   
   IF recalculate THEN BEGIN
@@ -1068,7 +1068,7 @@ PRO spice_xcfit_block_visitp,info,recalculate=recalculate,restart=restart
      ;;
      ;; Unless, of course, the /restart flag is set...
      ;; 
-     IF prits_tools.check_equality(chi2, info.int.a.missing) THEN delvarx,start_aa $
+     IF is_missing(chi2, missing=info.int.a.missing) THEN delvarx,start_aa $
      ELSE                               start_aa = this_p_result(0:nres-2)
      
      IF keyword_set(restart) THEN BEGIN
@@ -1283,7 +1283,7 @@ PRO spice_xcfit_block_findspot,info,what_to_find
   thisresult = result(info.ext.result_no,*,*,*,*,*,*)
   
   IF what_to_find EQ 'MAX' OR what_to_find EQ 'MIN' THEN BEGIN
-     missix = where(prits_tools.check_equality(thisresult, info.int.a.missing))
+     missix = where_missing(thisresult, missing=info.int.a.missing)
      IF missix(0) NE -1L THEN BEGIN
         mini = min(thisresult,max=maxi)
         IF what_to_find EQ 'MAX' THEN thisresult(missix) = mini $
@@ -1294,7 +1294,7 @@ PRO spice_xcfit_block_findspot,info,what_to_find
   IF info.int.find_ix EQ -1L THEN BEGIN 
      CASE what_to_find OF 
         'ZERO': ix = where(thisresult EQ 0)
-        'MISS': ix = where(prits_tools.check_equality(thisresult, info.int.a.missing))
+        'MISS': ix = where_missing(thisresult, missing=info.int.a.missing)
         'MAX': ix = reverse(sort(thisresult))
         'MIN': ix = sort(thisresult)
      END
@@ -1336,7 +1336,7 @@ PRO spice_xcfit_block_set_initial,info,average=average_flag
   handle_value,info.int.a.const_h,const,/set,/no_copy
   
   ;; Find invalid points
-  ix = where(chi2 EQ 0.0 OR prits_tools.check_equality(chi2, info.int.a.missing) OR cons)
+  ix = where(chi2 EQ 0.0 OR is_missing(chi2, missing=info.int.a.missing) OR cons)
   
   ;; Set this result for those points to MISSING
   IF ix(0) NE -1L THEN this_result(ix) = info.int.a.missing
@@ -1346,7 +1346,7 @@ PRO spice_xcfit_block_set_initial,info,average=average_flag
   IF keyword_set(average_flag) THEN BEGIN
      new_init = average(this_result,missing=info.int.a.missing)
   END ELSE BEGIN
-     ix = where(~prits_tools.check_equality(this_result, info.int.a.missing))
+     ix = where_not_missing(this_result, missing=info.int.a.missing)
      IF ix(0) NE -1 THEN new_init = median(this_result(ix)) $
      ELSE BEGIN
         xack,['No non-missing points! - No new initial value set']
