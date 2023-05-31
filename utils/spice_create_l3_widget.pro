@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-05-23 12:02 CEST $
+; $Id: 2023-05-31 14:53 CEST $
 ;-
 ;
 ;
@@ -197,7 +197,7 @@ pro spice_create_l3_widget_calc_l3_dir, info
   user_dir = user_dir[0]
   file_l2 = info.l2_object->get_filename()
   spice_ingest, file_l2, user_dir=user_dir, top_dir=top_dir, /dry_run, /force, $
-    destination=file_l3_calc
+    destination=file_l3_calc, /quiet
   file_l3_calc = file_l3_calc[0].replace('level2', 'level3')
   file_l3_calc = file_l3_calc.replace('_L2_','_L3_')
   info.file_l3 = file_l3_calc
