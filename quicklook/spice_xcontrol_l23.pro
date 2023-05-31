@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-05-31 14:48 CEST $
+; $Id: 2023-05-31 14:52 CEST $
 ;-
 ;
 ;
@@ -425,7 +425,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     2: file_l2 = file_in
     3: IF file_l3_official NE file_in THEN BEGIN
       file_l3_user = file_in
-      spice_ingest, file_l3_user, /user, /dry_run, destination=destination
+      spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
       IF file_l3_user EQ destination THEN BEGIN
         file_in_user_dir=1
         file_top_dir=''
