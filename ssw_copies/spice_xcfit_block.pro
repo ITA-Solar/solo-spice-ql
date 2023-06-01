@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-05-25 13:38 CEST $
+; $Id: 2023-06-01 15:24 CEST $
 ;-
 
 
@@ -1704,8 +1704,13 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   sml = {xpad:1,ypad:1,space:1}
   
-  base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml)
-  
+  screen = spice_get_screen_size()
+  IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, /scroll, x_scroll_size=screen[0], y_scroll_size=screen[1])
+  ENDIF ELSE BEGIN
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml)
+  ENDELSE
+
   leftside_col = widget_base(base,/column,_extra=sml)
   center_col = widget_base(base,/column,_extra=sml)
   rightside_col = widget_base(base,/column,_extra=sml)
