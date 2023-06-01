@@ -6,6 +6,8 @@
 ;     This object can be used to position a new widget relative to another widget,
 ;     or relative to the screen. This also works with multiple screens. The widget
 ;     is positioned and realised by this object.
+;     
+;     Note, this is similar to the xrealize procedure, but slightly more sophisticated.
 ;
 ; CATEGORY:
 ;     PRITS - Tools.
@@ -19,9 +21,6 @@
 ; wp = widget_positioner(new_window, parent=parent)
 ; wp->position, xoffset=xoffset, yoffset=yoffset
 ;
-; widget_control, new_window, /realize  ; Alternatively the new widget may be also realized before calling widget_positioner->position
-;                                       ; see also Restrictions
-;
 ; COMMON BLOCKS:
 ;
 ; PROCEDURE:
@@ -33,7 +32,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-05-16 14:59 CEST $
+; $Id: 2023-06-01 14:10 CEST $
 
 
 ;+
@@ -53,10 +52,10 @@
 FUNCTION widget_positioner::init, widget, parent=parent
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, widget, 1, "widget", ['integers'], 0, default=-1
-  prits_tools.parcheck, parent, 0, "parent", ['integers'], 0, default=-1
+  prits_tools.parcheck, widget, 1, "widget", ['integers'], 0, minval=0
+  prits_tools.parcheck, parent, 0, "parent", ['integers'], 0, minval=0, /optional
   self.widget = widget
-  self.parent = parent
+  IF N_ELEMENTS(parent) EQ 1 THEN self.parent = parent ELSE self.parent = -1
   self.monitor =  obj_new('IDLsysMonitorInfo')
 
   return, 1

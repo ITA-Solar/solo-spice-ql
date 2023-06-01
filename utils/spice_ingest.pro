@@ -37,6 +37,7 @@
 ;      HELP:    If set, then a help message is printed.
 ;      DRY_RUN: If set, the file won't be moved, no directories will be created. The optional outputs
 ;               will be the same as if this keyword was not set.
+;      QUIET:   If set, warnings will be suppressed.
 ;
 ; OUTPUTS:
 ;      Moves the SPICE file(s) into the correct location in the local
@@ -70,14 +71,14 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2022-10-13 11:24 CEST $
+; $Id: 2023-05-31 14:47 CEST $
 
 
 PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel, $
   search_subdir=search_subdir, $
   destination=destination, file_moved=file_moved, files_found=files_found, $
   user_dir=user_dir, top_dir=top_dir, dry_run=dry_run, $
-  help=help, debug=debug
+  help=help, debug=debug, quiet=quiet
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
     print,''
@@ -159,7 +160,7 @@ PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel,
     file_info = spice_file2info(files[ifiles])
 
     IF ~file_info.is_spice_file THEN BEGIN
-      print,'% SPICE_INGEST: File '+file_info.filename+' has not been moved as it is not a spice file.'
+      if ~keyword_set(quiet) then print,'% SPICE_INGEST: File '+file_info.filename+' has not been moved as it is not a spice file.'
       continue
     ENDIF
 
@@ -177,11 +178,11 @@ PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel,
       if ~keyword_set(dry_run) then file_move,files[ifiles], outdir, /overwrite
       file_moved[ifiles] = 1
       destination[ifiles] = concat_dir(outdir, file_info.filename)
-    ENDIF ELSE BEGIN
+    ENDIF ELSE IF ~keyword_set(quiet) THEN BEGIN
       print,'% SPICE_INGEST: file '+file_info.filename+' was not moved '
       print,'               as it already exists in the data directory.'
       print,'               Use the keyword /FORCE to overwrite the existing file.'
-    ENDELSE
+    ENDIF
 
   ENDFOR ; ifiles=0,nfiles-1
 

@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-05-24 13:40 CEST $
+; $Id: 2023-06-01 13:39 CEST $
 ;-
 ;
 ;
@@ -70,11 +70,11 @@ pro spice_xcontrol_l23_event, event
   if tag_names(event, /structure_name) eq 'WIDGET_KILL_REQUEST' then begin
     widget_control, event.top, get_uvalue=info
     IF total((*info).state_l3_user.edited) GT 0 THEN BEGIN
-      result = dialog_message(['WARNING: Possibly UNSAVED changes.', $
+      answer = dialog_message(['WARNING: Possibly UNSAVED changes.', $
         'This warning also shows up, even if you only looked at level 3 data',$
         'without changing anything.', $
         'Do you really want to exit?'], /question, /default_no, title='WARNING: Possibly UNSAVED changes.', /center)
-      IF result EQ 'No' THEN return
+      IF answer EQ 'No' THEN return
     ENDIF
     widget_control, event.top, /destroy
   endif
@@ -84,7 +84,7 @@ end
 pro spice_xcontrol_l23_save_file, event
   widget_control, event.top, get_uvalue=info
   IF size((*info).object_l2, /type) NE 11 THEN BEGIN
-    result = dialog_message(['Saving of level 3 SPICE FITS files is not (yet) supported', $
+    answer = dialog_message(['Saving of level 3 SPICE FITS files is not (yet) supported', $
       'when the corresponding level 2 file is not available.', $
       'Contact prits-group@astro.uio.no if you need this feature'])
     ; TODO
@@ -95,11 +95,11 @@ pro spice_xcontrol_l23_save_file, event
   ana_l3 = *(*info).ana_l3_user
   file_l3 = (*info).file_l3_user
   IF file_exist(file_l3) THEN BEGIN
-    result = dialog_message(['This file already exists.',file_l3,'Do you want to overwrite it?'], $
+    answer = dialog_message(['This file already exists.',file_l3,'Do you want to overwrite it?'], $
       /question, /default_no, title='File exists. Overwrite?',/center)
-    IF result EQ 'No' THEN return
+    IF answer EQ 'No' THEN return
     file_old = 1
-    file_move, file_l3, file_l3+'.old'
+    file_move, file_l3, file_l3+'.old', /overwrite
   ENDIF ELSE file_old = 0
 
   all_result_headers = ptrarr(nwin_l3)
@@ -109,12 +109,12 @@ pro spice_xcontrol_l23_save_file, event
 
     if iwindow gt 0 then extension=1 else extension=0
     headers = ana2fitshdr(ana_l3[iwindow], header_l2=(*info).object_l2->get_header(winno_l3[iwindow]), $
-      extension=extension, filename_l3=filename_l3, n_windows=nwin_l3, winno=iwindow, $
+      extension=extension, filename_out=file_l3, n_windows=nwin_l3, winno=iwindow, $
       HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data)
+      original_data=original_data, /spice)
 
     writefits, file_l3, RESULT, *headers[0], append=extension
     writefits, file_l3, original_data, *headers[1], /append
@@ -148,7 +148,7 @@ pro spice_xcontrol_l23_update_state_add, info, result
   nwin_l3_result = N_ELEMENTS(*result.ana)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', -1)
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1)
   ENDFOR
 
   nwin_l3 = 0
@@ -203,10 +203,10 @@ end
 pro spice_xcontrol_l23_update_state_replace, info, result
 
   state_l3 = (*info).state_l3_user
-  nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', 0)
+  nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', missing=0)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', -1)
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1)
   ENDFOR
 
   FOR iwin=0,(*info).nwin-1 DO BEGIN
@@ -259,7 +259,7 @@ pro spice_xcontrol_l23_update_state_display, info
       status = 'NOT CREATED'
       editable = 0
       IF state_l3[iwin].l3_winno GE 0 THEN BEGIN
-        title = fxpar(*hdr_l3[state_l3[iwin].l3_winno], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
+        title = fxpar(*hdr_l3[state_l3[iwin].l3_winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
         status = 'CREATED'
         IF state_l3[iwin].edited THEN status = status + ' and EDITED'
         editable = 1
@@ -300,13 +300,13 @@ pro spice_xcontrol_l23_open_l3, event
     1: BEGIN
       ana_l3 = *(*info).ana_l3_official
       hdr_l3 = *(*info).hdr_l3_official
-      title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
+      title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_official
     END
     2: BEGIN
       ana_l3 = *(*info).ana_l3_user
       hdr_l3 = *(*info).hdr_l3_user
-      title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
+      title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_user
     END
   endcase
@@ -358,10 +358,10 @@ pro spice_xcontrol_l23_copy_window, event
   widget_control, event.id, get_uvalue=win_info
   ana_l3 = *(*info).ana_l3_official
   hdr_l3 = *(*info).hdr_l3_official
-  print,fxpar(*hdr_l3[win_info], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
+  print,fxpar(*hdr_l3[win_info], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
   hdr_new = ptrarr(1)
   hdr_new[0] = ptr_new(*hdr_l3[win_info])
-  print,fxpar(*hdr_new[0], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
+  print,fxpar(*hdr_new[0], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
   help,win_info
   result = {l3_file:'', $
     ana:ptr_new(ana_l3[win_info]), $
@@ -425,7 +425,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     2: file_l2 = file_in
     3: IF file_l3_official NE file_in THEN BEGIN
       file_l3_user = file_in
-      spice_ingest, file_l3_user, /user, /dry_run, destination=destination
+      spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
       IF file_l3_user EQ destination THEN BEGIN
         file_in_user_dir=1
         file_top_dir=''
@@ -455,12 +455,12 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
   IF exist_l3_official THEN BEGIN
     ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official)
-    nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', 0)
-    if nwin eq 0 then nwin = fxpar(*hdr_l3_official[0], 'L2NWIN', 0)
+    nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', missing=0)
+    if nwin eq 0 then nwin = fxpar(*hdr_l3_official[0], 'L2NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_official
     winno_l3_official = intarr(nwin_l3_official)
     FOR iwin=0,nwin_l3_official-1 DO BEGIN
-      winno_l3_official[iwin] = fxpar(*hdr_l3_official[iwin], 'L2WINNO', -1)
+      winno_l3_official[iwin] = fxpar(*hdr_l3_official[iwin], 'L2WINNO', missing=-1)
     ENDFOR
   ENDIF ELSE BEGIN
     IF exist_l2 THEN BEGIN
@@ -476,12 +476,12 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
   IF exist_l3_user THEN BEGIN
     ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user)
-    nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', 0)
-    if nwin eq 0 then nwin = fxpar(*hdr_l3_user[0], 'L2NWIN', 0)
+    nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', missing=0)
+    if nwin eq 0 then nwin = fxpar(*hdr_l3_user[0], 'L2NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_user
     winno_l3_user = intarr(nwin_l3_user)
     FOR iwin=0,nwin_l3_user-1 DO BEGIN
-      winno_l3_user[iwin] = fxpar(*hdr_l3_user[iwin], 'L2WINNO', -1)
+      winno_l3_user[iwin] = fxpar(*hdr_l3_user[iwin], 'L2WINNO', missing=-1)
     ENDFOR
   ENDIF ELSE BEGIN
     old_path_part = path_sep()+'spice'+path_sep()+'level3'+path_sep()
@@ -546,7 +546,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       IF count GT 0 THEN BEGIN
         win_created = 1
         state_l3_official[iwin].l3_winno=ind[0]
-        title = fxpar(*hdr_l3_official[ind[0]], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
+        title = fxpar(*hdr_l3_official[ind[0]], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
         status = 'CREATED'
       ENDIF
     ENDIF
@@ -581,7 +581,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       IF count GT 0 THEN BEGIN
         win_created = 1
         state_l3_user[iwin].l3_winno=ind[0]
-        title = fxpar(*hdr_l3_user[ind[0]], 'PGEXTNAM', 'PGEXTNAM keyword empty/missing')
+        title = fxpar(*hdr_l3_user[ind[0]], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
         status = 'CREATED'
       ENDIF
     ENDIF
