@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-05-31 14:52 CEST $
+; $Id: 2023-06-01 13:39 CEST $
 ;-
 ;
 ;
@@ -114,7 +114,7 @@ pro spice_xcontrol_l23_save_file, event
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data)
+      original_data=original_data, /spice)
 
     writefits, file_l3, RESULT, *headers[0], append=extension
     writefits, file_l3, original_data, *headers[1], /append
