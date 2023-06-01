@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-05-31 14:53 CEST $
+; $Id: 2023-06-01 14:29 CEST $
 ;-
 ;
 ;
@@ -103,7 +103,7 @@ pro spice_create_l3_widget_event, event
       no_masking = options[2]
       approximated_slit = options[3]
       no_fitting = options[0]
-      no_widget = options[1]
+      no_xcfit_block = options[1]
       position = options[4]
       widget_control, info.fit_velocity_field, get_value = velocity
       widget_control, info.top_dir_choice_bg, get_value=top_dir_choice
@@ -122,7 +122,7 @@ pro spice_create_l3_widget_event, event
         ENDIF
       ENDIF
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-        no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
+        no_fitting=no_fitting, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
         official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
         all_ana=all_ana, all_result_headers=all_result_headers)
       (*info.result).l3_file = l3_file
