@@ -122,21 +122,21 @@ PRO cw_pselect_setv,id,uvalue
   WIDGET_CONTROL,keeper,get_uvalue=info
   
   IF datatype(uvalue) EQ 'STR' THEN BEGIN
-     ix = (WHERE(info.menu(*).uvalue EQ uvalue))(0)
+     ix = (WHERE(info.menu[*].uvalue EQ uvalue))(0)
      IF ix EQ -1 THEN  $
         MESSAGE,"Cannot set UVALUE="+uvalue+" for button "+info.title,/continue
      
-     selection = info.menu(ix).btext
+     selection = info.menu[ix].btext
      WIDGET_CONTROL,button,set_value=info.title+selection
   
-     WIDGET_CONTROL,id,set_uvalue=info.menu(ix).uvalue
+     WIDGET_CONTROL,id,set_uvalue=info.menu[ix].uvalue
   END ELSE IF datatype(uvalue) EQ 'STC' THEN BEGIN
      
      ;; Sensitize any buttons?
      IF tag_exist(uvalue,"sensitive",/top_level) THEN BEGIN
         sensitive = uvalue.sensitive
         FOR i = 0,N_ELEMENTS(sensitive)-1 DO BEGIN
-           ix = WHERE(info.menu(*).uvalue EQ sensitive(i),count)
+           ix = WHERE(info.menu[*].uvalue EQ sensitive(i),count)
            IF count GT 0 THEN BEGIN
               FOR ii = 0,N_ELEMENTS(ix)-1 DO BEGIN
                  WIDGET_CONTROL,info.ids(ix(ii)+1),/sensitive
@@ -149,7 +149,7 @@ PRO cw_pselect_setv,id,uvalue
      IF tag_exist(uvalue,"insensitive",/top_level) THEN BEGIN
         insensitive = uvalue.insensitive
         FOR i = 0,N_ELEMENTS(insensitive)-1 DO BEGIN
-           ix = WHERE(info.menu(*).uvalue EQ insensitive(i),count)
+           ix = WHERE(info.menu[*].uvalue EQ insensitive(i),count)
            IF count GT 0 THEN BEGIN
               FOR ii = 0,N_ELEMENTS(ix)-1 DO BEGIN
                  WIDGET_CONTROL,info.ids(ix(ii)+1),sensitive = 0
@@ -167,13 +167,13 @@ FUNCTION cw_pselect_event,ev
   Widget_CONTROL,ev.id,Get_UVALUE=info
   
   ;; EV.VALUE is INDEX into menu
-  selection = info.menu(ev.value-1).btext
+  selection = info.menu[ev.value-1].btext
   
   ;; Set value of root button
   Widget_CONTROL,widget_info(ev.id,/child),Set_value=info.title+selection
   
   ;; Set UVALUE of the compound widget
-  Widget_control,ev.handler,set_uvalue=info.menu(ev.value-1).uvalue
+  Widget_control,ev.handler,set_uvalue=info.menu[ev.value-1].uvalue
   
   ;; Send on the event, with new ID
   ev.id = ev.handler
@@ -207,9 +207,9 @@ FUNCTION cw_pselect,base,title,options,initial=initial,IDS=IDS
   menu = [{CW_PDMENU_S, 1, title+options(initial).btext},$
 	  replicate({CW_PDMENU_S},N_elements(options))]
   
-  menu(1:*).flags = options(*).flags
-  menu(1:*).name  = options(*).mtext
-  menu(N_elements(options)).flags = 2
+  menu[1:*].flags = options(*).flags
+  menu[1:*].name  = options(*).mtext
+  menu[N_elements(options)].flags = 2
   
   info = { menu:options, title:title, ids:lonarr(N_ELEMENTS(menu))}
   
