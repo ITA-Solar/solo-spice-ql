@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-06-07 13:29 CEST $
+; $Id: 2023-06-07 14:10 CEST $
 ;-
 
 
@@ -1370,10 +1370,11 @@ PRO spice_xcfit_block_event,ev
   widget_control,/hourglass
   widget_control,ev.top,get_uvalue=info,/no_copy
   widget_control,ev.id,get_uvalue=uvalue
-  if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' then begin
-    cw_cubeview_force_redraw, info.int.data_id
-    cw_cubeview_force_redraw, info.int.residual_id
-    cw_cubeview_force_redraw, info.int.result_id
+  if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $
+    tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
+    spice_cw_cubeview_force_redraw, info.int.data_id
+    spice_cw_cubeview_force_redraw, info.int.residual_id
+    spice_cw_cubeview_force_redraw, info.int.result_id
     widget_control,ev.top,set_uvalue=info,/no_copy
     return
   endif
@@ -1712,7 +1713,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   ENDIF ELSE BEGIN
     base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml)
   ENDELSE
-  widget_control, base, /TLB_KILL_REQUEST_EVENTS
+  widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
   leftside_col = widget_base(base,/column,_extra=sml)
   center_col = widget_base(base,/column,_extra=sml)
@@ -1985,13 +1986,13 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
 ;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
-  info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a.data_h,$
+  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
                                  scale=scale,phys_scale=phys_scale)
   
-  info.int.residual_id = cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
+  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
@@ -2001,7 +2002,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   IF keyword_set(scale) THEN r_scale = scale(1:*)
   IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale(1:*)
   
-  info.int.result_id = cw_cubeview(result_b,value=this_result,$
+  info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames(1:*),$
                                    title=title, origin=r_origin, $
