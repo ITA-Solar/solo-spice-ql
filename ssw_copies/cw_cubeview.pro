@@ -107,9 +107,11 @@
 ;                       part of the info structure
 ;               Version 7, Martin Wiesmann, 25 August 2021
 ;                       Implemented method cw_cubeview_force_redraw
+;               Version 8, Martin Wiesmann, 7 Juni 2023
+;                       Extended cw_cubeview_force_redraw to redraw also plot
 ;
 ; Version     :
-; $Id: 2023-06-07 13:58 CEST $
+; $Id: 2023-06-07 13:59 CEST $
 ;-
 
 ;;
@@ -309,10 +311,18 @@ END
 pro cw_cubeview_force_redraw, id
   stash = widget_info(id,/child)
   widget_control,stash,get_uvalue=info,/no_copy
-  cw_cubeview_get_image,info,im_arr,set,/newdata
-  widget_control,info.int.image_id,set_value=set
-  IF n_elements(im_arr) GT 0 THEN $
-    widget_control,info.int.image_id,set_value=im_arr
+  ;; Update plot
+  cw_cubeview_get_plot,info,arr,set
+  widget_control,info.int.plot_id,set_value=set
+  widget_control,info.int.plot_id,set_value=arr
+
+  IF info.int.image_id NE 0L THEN BEGIN
+    ;; Update image
+    cw_cubeview_get_image,info,im_arr,set,/newdata
+    widget_control,info.int.image_id,set_value=set
+    IF n_elements(im_arr) GT 0 THEN $
+      widget_control,info.int.image_id,set_value=im_arr
+  END
   widget_control,stash,set_uvalue=info,/no_copy
 end
 
