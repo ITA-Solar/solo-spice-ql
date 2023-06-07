@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-06-07 13:27 CEST $
+; $Id: 2023-06-07 13:29 CEST $
 ;-
 
 
@@ -1378,6 +1378,7 @@ PRO spice_xcfit_block_event,ev
     return
   endif
 
+  if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then uvalue='EXIT'
   uvalue = str_sep(uvalue,':')
   evtype = tag_names(ev,/structure_name)
   
@@ -1711,6 +1712,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   ENDIF ELSE BEGIN
     base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml)
   ENDELSE
+  widget_control, base, /TLB_KILL_REQUEST_EVENTS
 
   leftside_col = widget_base(base,/column,_extra=sml)
   center_col = widget_base(base,/column,_extra=sml)
