@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-06-07 14:10 CEST $
+; $Id: 2023-06-07 14:36 CEST $
 ;-
 
 
@@ -1375,6 +1375,23 @@ PRO spice_xcfit_block_event,ev
     spice_cw_cubeview_force_redraw, info.int.data_id
     spice_cw_cubeview_force_redraw, info.int.residual_id
     spice_cw_cubeview_force_redraw, info.int.result_id
+    
+    if tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
+      handle_value,info.int.a.fit_h,orgfit
+      widget_control,info.int.status1_id,set_value=orgfit
+      widget_control,info.int.status2_id,$
+        set_value={SET_HILIT,hilit:info.ext.result_no}
+      ;; Replot microplot
+      widget_control,info.int.microplot_id,set_value={replot:1}
+
+      ;; Overplot
+      handle_value,info.int.microfine_h,microfine
+      IF exist(microfine) THEN oplot,microfine(*,0),microfine(*,1)
+      handle_value,info.int.errplot_h,errp
+      IF exist(errp) AND info.ext.plot_err THEN $
+        oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+    endif
+
     widget_control,ev.top,set_uvalue=info,/no_copy
     return
   endif
