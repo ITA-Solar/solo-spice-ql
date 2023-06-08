@@ -107,11 +107,11 @@
 ;                       part of the info structure
 ;               Version 7, Martin Wiesmann, 25 August 2021
 ;                       Implemented method cw_cubeview_force_redraw
-;               Version 8, Martin Wiesmann, 7 Juni 2023
+;               Version 8, Martin Wiesmann, 7 June 2023
 ;                       Extended cw_cubeview_force_redraw to redraw also plot
 ;
-; Version     :
-; $Id: 2023-06-07 14:04 CEST $
+; Version     : 8, 7 June 2023
+; $Id: 2023-06-08 11:47 CEST $
 ;-
 
 ;;
