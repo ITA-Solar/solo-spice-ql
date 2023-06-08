@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-05-24 13:46 CEST $
+; $Id: 2023-06-08 10:00 CEST $
 
 
 ;+
@@ -2441,7 +2441,8 @@ PRO spice_data::read_file, file
   hdr = headfits(file, exten=0)
   self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
-  self.next = fcb.nextend
+  self.next = fcb.nextend + 1
+  fits_close, fcb
 
   headers = ptrarr(self.next)
   headers_string = ptrarr(self.next)
