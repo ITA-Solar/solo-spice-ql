@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-06-07 14:36 CEST $
+; $Id: 2023-06-08 10:46 CEST $
 ;-
 
 
@@ -1623,6 +1623,8 @@ PRO spice_xcfit_block_event,ev
   'PIX_FAIL':BEGIN
      spice_xcfit_block_pix_fail,info,restore=mark
      ENDCASE
+     
+  else: print, 'unknown case !!!    : ', uvalue
      
   END
   
