@@ -99,8 +99,10 @@
 ;                       Minor space-saving change.
 ;               Version 4, SVHH, 23 October 1996
 ;                       Added /DYNAMIC_RESIZE for IDL v 4.0.1 and later.
+;               Version 5, Martin Wiesmann, 6 June 2023
+;                       Replaced paranthesis of variable menu with square brackets.
 ;
-; Version     : 4, 23 October 1996
+; Version     : 5, 6 June 2023
 ;-            
 
 

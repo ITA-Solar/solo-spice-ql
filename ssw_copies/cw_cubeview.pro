@@ -111,13 +111,13 @@
 ;                       Extended cw_cubeview_force_redraw to redraw also plot
 ;
 ; Version     : 8, 7 June 2023
-; $Id: 2023-06-08 11:47 CEST $
+; $Id: 2023-06-08 11:50 CEST $
 ;-
 
 ;;
 ;; Extract plot from data cube
 ;;
-PRO spice_cw_cubeview_get_plot,info,arr,set
+PRO cw_cubeview_get_plot,info,arr,set
   handle_value,info.int.value_h,value,/no_copy
   
   f = info.ext.focus
@@ -152,7 +152,7 @@ END
 ;;
 ;; Extract image from the data cube
 ;;
-PRO spice_cw_cubeview_get_image,info,arr,set,newdata=newdata
+PRO cw_cubeview_get_image,info,arr,set,newdata=newdata
   handle_value,info.int.value_h,value,/no_copy
   
   f = info.ext.focus
@@ -271,7 +271,7 @@ END
 ;;
 ;; Form the text showing how the slice (image/plot) is done
 ;;
-FUNCTION spice_cw_cubeview_slicetext,info,dims
+FUNCTION cw_cubeview_slicetext,info,dims
 
   IF dims(0) GT dims(1) THEN t = 'T' ELSE t = ''
   tx = t+'('
@@ -287,16 +287,16 @@ END
 ;;
 ;; Update texts
 ;;
-PRO spice_cw_cubeview_upd_info,info
+PRO cw_cubeview_upd_info,info
   
   IF since_version('4.0.1') THEN widget_control,info.int.mybase,update=0
   
   IF info.int.title_id NE 0L THEN $
      widget_control,info.int.title_id,set_value=info.ext.title
   
-  txfocus = spice_cw_cubeview_slicetext(info,[-1,-1])
-  txim = spice_cw_cubeview_slicetext(info,info.ext.image_dim)
-  txplot = spice_cw_cubeview_slicetext(info,[-1,info.ext.plot_dim])
+  txfocus = cw_cubeview_slicetext(info,[-1,-1])
+  txim = cw_cubeview_slicetext(info,info.ext.image_dim)
+  txplot = cw_cubeview_slicetext(info,[-1,info.ext.plot_dim])
   
   widget_control,info.int.focustx_id,set_value=txfocus
   widget_control,info.int.imagetx_id,set_value=txim
@@ -308,17 +308,17 @@ END
 ;;
 ;; Redraw the widgets with the images
 ;;
-pro spice_cw_cubeview_force_redraw, id
+pro cw_cubeview_force_redraw, id
   stash = widget_info(id,/child)
   widget_control,stash,get_uvalue=info,/no_copy
   ;; Update plot
-  spice_cw_cubeview_get_plot,info,arr,set
+  cw_cubeview_get_plot,info,arr,set
   widget_control,info.int.plot_id,set_value=set
   widget_control,info.int.plot_id,set_value=arr
 
   IF info.int.image_id NE 0L THEN BEGIN
     ;; Update image
-    spice_cw_cubeview_get_image,info,im_arr,set,/newdata
+    cw_cubeview_get_image,info,im_arr,set,/newdata
     widget_control,info.int.image_id,set_value=set
     IF n_elements(im_arr) GT 0 THEN $
       widget_control,info.int.image_id,set_value=im_arr
@@ -329,7 +329,7 @@ end
 ;;
 ;; Set-value procedure - either a new data cube or new status values
 ;;
-PRO spice_cw_cubeview_setv,id,value
+PRO cw_cubeview_setv,id,value
   stash = widget_info(id,/child)
   widget_control,stash,get_uvalue=info,/no_copy
   
@@ -353,17 +353,17 @@ PRO spice_cw_cubeview_setv,id,value
   END
   
   ;; Update texts
-  IF stat_changed THEN spice_cw_cubeview_upd_info,info
+  IF stat_changed THEN cw_cubeview_upd_info,info
   
   IF data_changed OR stat_changed THEN BEGIN 
      ;; Update plot
-     spice_cw_cubeview_get_plot,info,arr,set
+     cw_cubeview_get_plot,info,arr,set
      widget_control,info.int.plot_id,set_value=set
      widget_control,info.int.plot_id,set_value=arr
      
      IF info.int.image_id NE 0L THEN BEGIN 
         ;; Update image
-        spice_cw_cubeview_get_image,info,im_arr,set,/newdata
+        cw_cubeview_get_image,info,im_arr,set,/newdata
         widget_control,info.int.image_id,set_value=set
         IF n_elements(im_arr) GT 0 THEN $
            widget_control,info.int.image_id,set_value=im_arr
@@ -376,7 +376,7 @@ END
 ;;
 ;; Returns the status value structure
 ;;
-FUNCTION spice_cw_cubeview_getv,id
+FUNCTION cw_cubeview_getv,id
   
   stash = widget_info(id,/child)
   widget_control,stash,get_uvalue=info,/no_copy
@@ -390,7 +390,7 @@ END
 ;;
 ;; Event handling
 ;; 
-FUNCTION spice_cw_cubeview_event,ev
+FUNCTION cw_cubeview_event,ev
   
   stash = widget_info(ev.handler,/child)
   widget_control,stash,get_uvalue=info,/no_copy
@@ -418,11 +418,11 @@ FUNCTION spice_cw_cubeview_event,ev
      info.ext.focus(imd) = [ev.set.xfocus,ev.set.yfocus]
 
      ;; Get new plot data and send it to the plotter
-     spice_cw_cubeview_get_plot,info,arr,set
+     cw_cubeview_get_plot,info,arr,set
      IF n_elements(set) NE 0 THEN $
         widget_control,info.int.plot_id,set_value=set
      widget_control,info.int.plot_id,set_value=arr
-     spice_cw_cubeview_upd_info,info
+     cw_cubeview_upd_info,info
      ENDCASE
      
   'XPLOTSCALER':BEGIN
@@ -450,22 +450,22 @@ FUNCTION spice_cw_cubeview_event,ev
      info.ext.focus(info.ext.plot_dim) = ev.set.focusi
      IF info.int.image_id NE 0L THEN BEGIN
         ;; Get new image data, send to displayer
-        spice_cw_cubeview_get_image,info,arr,set
+        cw_cubeview_get_image,info,arr,set
         widget_control,info.int.image_id,set_value=set
         IF n_elements(arr) NE 0 THEN $
            widget_control,info.int.image_id,set_value=arr
      END
      
-     spice_cw_cubeview_upd_info,info
+     cw_cubeview_upd_info,info
      ENDCASE
      
   'PLOT_DIM':BEGIN
      dim = fix(uvalue(1))
      info.ext.plot_dim = dim
-     spice_cw_cubeview_get_plot,info,arr,set
+     cw_cubeview_get_plot,info,arr,set
      widget_control,info.int.plot_id,set_value=set
      widget_control,info.int.plot_id,set_value=arr     
-     spice_cw_cubeview_upd_info,info
+     cw_cubeview_upd_info,info
      IF NOT info.ext.all_events THEN GOTO,skip_event
      ENDCASE
      
@@ -522,12 +522,12 @@ FUNCTION spice_cw_cubeview_event,ev
      END
      
      IF info.int.image_id NE 0L THEN BEGIN
-        spice_cw_cubeview_get_image,info,arr,set
+        cw_cubeview_get_image,info,arr,set
         widget_control,info.int.image_id,set_value=set
         IF n_elements(arr) NE 0 THEN $
            widget_control,info.int.image_id,set_value=arr
      END
-     spice_cw_cubeview_upd_info,info
+     cw_cubeview_upd_info,info
      IF NOT info.ext.all_events THEN GOTO,skip_event
      ENDCASE
   END
@@ -548,7 +548,7 @@ skip_event:
 END
 
 
-FUNCTION spice_cw_cubeview_dummy
+FUNCTION cw_cubeview_dummy
   s = 20
   f = 4*!pi/(s-1)
   x = rebin(f*findgen(s,1,1,1),s,s,s,s,/sample)
@@ -560,7 +560,7 @@ FUNCTION spice_cw_cubeview_dummy
 END
 
 
-FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
+FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
                      dimnames=dimnames,origin=origin,scale=scale,$
                      phys_scale=phys_scale,missing=missing,$
                      uvalue=uvalue,image_dim=image_dim,plot_dim=plot_dim,$
@@ -579,7 +579,7 @@ FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   
   value_h = hvalue
   
-  IF n_elements(value) EQ 0 THEN value = spice_cw_cubeview_dummy()
+  IF n_elements(value) EQ 0 THEN value = cw_cubeview_dummy()
   szv = size(value)
   
   handle_value,value_h,value,/set,no_copy=value_hpass
@@ -687,18 +687,18 @@ FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   
   ;; Get data
 
-  IF szv(0) GT 1 THEN spice_cw_cubeview_get_image,info,im
-  spice_cw_cubeview_get_plot,info,plt
+  IF szv(0) GT 1 THEN cw_cubeview_get_image,info,im
+  cw_cubeview_get_plot,info,plt
   
   ;; Build widget
   
   sml = 1
   tight = {xpad:sml,ypad:sml,space:sml}
   
-  mybase = widget_base(base,event_func="spice_cw_cubeview_event",$
+  mybase = widget_base(base,event_func="cw_cubeview_event",$
                        /column,$
-                       pro_set_value="spice_cw_cubeview_setv",$
-                       func_get_value="spice_cw_cubeview_getv",$
+                       pro_set_value="cw_cubeview_setv",$
+                       func_get_value="cw_cubeview_getv",$
                        _extra=tight)
   info.int.mybase = mybase
   
@@ -800,7 +800,7 @@ FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
      widget_control,plottx_id,/dynamic_resize
   END
   
-  spice_cw_cubeview_upd_info,info
+  cw_cubeview_upd_info,info
   
   widget_control,storage,set_uvalue=info,/no_copy
   return,mybase
@@ -808,7 +808,7 @@ END
 
 
 
-PRO spice_cw_cubeview_test_event,ev
+PRO cw_cubeview_test_event,ev
   widget_control,ev.id,get_uvalue=uvalue
   
   IF uvalue EQ "EXIT" THEN BEGIN
@@ -820,7 +820,7 @@ PRO spice_cw_cubeview_test_event,ev
 END
 
 
-PRO spice_cw_cubeview_test,value
+PRO cw_cubeview_test,value
   
   xkill,/all
   
@@ -833,16 +833,16 @@ PRO spice_cw_cubeview_test,value
      scale = [1,2,1]
      dimnames = ['LAMBDA','SOLAR_X','SOLAR_Y']
      cbase = widget_base(ibase,/column)
-     cube = spice_cw_cubeview(cbase,value=value,dimnames=dimnames,uvalue='CUBEVIEW',$
+     cube = cw_cubeview(cbase,value=value,dimnames=dimnames,uvalue='CUBEVIEW',$
                         phys_scale=phys_scale,origin=origin,scale=scale,$
                         title='adfadf')
      cbase = widget_base(ibase,/column)
-     cube2 = spice_cw_cubeview(cbase,value=value,dimnames=dimnames,uvalue='CUBEVIEW',$
+     cube2 = cw_cubeview(cbase,value=value,dimnames=dimnames,uvalue='CUBEVIEW',$
                          phys_scale=phys_scale,origin=origin,scale=scale,$
                          title='adfadf')
      
   END ELSE BEGIN
-     cube = spice_cw_cubeview(base,uvalue='CUBEVIEW')
+     cube = cw_cubeview(base,uvalue='CUBEVIEW')
   END
   
   
@@ -850,12 +850,12 @@ PRO spice_cw_cubeview_test,value
   
   widget_control,base,/realize
   
-  xmanager,"spice_cw_cubeview_test",base,/modal
+  xmanager,"cw_cubeview_test",base,/modal
 END
 
 
 
-PRO spice_cw_cubeview_test_hpass,h
+PRO cw_cubeview_test_hpass,h
   xkill,/all
   
   base = widget_base(/column)
@@ -864,7 +864,7 @@ PRO spice_cw_cubeview_test_hpass,h
   origin = [0,0,0]
   scale = [1,1,1]
   dimnames = ['LAMBDA','SOLAR_X','SOLAR_Y']
-  cube = spice_cw_cubeview(base,dimnames=dimnames,uvalue='CUBEVIEW',$
+  cube = cw_cubeview(base,dimnames=dimnames,uvalue='CUBEVIEW',$
                      phys_scale=phys_scale,origin=origin,scale=scale,$
                      hvalue=h)
   
@@ -872,7 +872,7 @@ PRO spice_cw_cubeview_test_hpass,h
   
   widget_control,base,/realize
   
-  xmanager,"spice_cw_cubeview_test",base,/modal
+  xmanager,"cw_cubeview_test",base,/modal
 END
 
 
