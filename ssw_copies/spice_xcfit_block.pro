@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-06-08 10:46 CEST $
+; $Id: 2023-06-08 11:13 CEST $
 ;-
 
 
@@ -1370,8 +1370,9 @@ PRO spice_xcfit_block_event,ev
   widget_control,/hourglass
   widget_control,ev.top,get_uvalue=info,/no_copy
   widget_control,ev.id,get_uvalue=uvalue
-  if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $
-    tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
+  if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $  ; An event from cw_loadct.pro
+    tag_names(ev, /Structure_name) eq 'CW_LOADCT' || $    ; An event from an unofficial cw_loadct.pro
+    tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
     spice_cw_cubeview_force_redraw, info.int.data_id
     spice_cw_cubeview_force_redraw, info.int.residual_id
     spice_cw_cubeview_force_redraw, info.int.result_id
@@ -1624,7 +1625,10 @@ PRO spice_xcfit_block_event,ev
      spice_xcfit_block_pix_fail,info,restore=mark
      ENDCASE
      
-  else: print, 'unknown case !!!    : ', uvalue
+  else: BEGIN
+    print, 'ERROR!!!: unknown case : ', uvalue
+    print, 'Please report to prits-group@astro.uio.no'
+    ENDCASE
      
   END
   
