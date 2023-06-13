@@ -62,12 +62,12 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2023-05-15 14:58 CEST $
+; $Id: 2023-06-13 14:55 CEST $
 ;-
 ;
 ; save as postscript file
 pro spice_xraster_ps,event
-  thisfile=dialog_pickfile(/write,file='spice_xraster.ps')
+  thisfile=dialog_pickfile(/write,file='spice_xraster.ps', dialog_parent=event.top)
   if thisfile eq '' then return
   widget_control,event.top,get_uvalue=info
   thisdevice=!d.name
@@ -83,7 +83,7 @@ end
 
 ; save as jpeg file
 pro spice_xraster_jpeg,event
-  thisfile=dialog_pickfile(/write,file='spice_xraster.jpg')
+  thisfile=dialog_pickfile(/write,file='spice_xraster.jpg', dialog_parent=event.top)
   if thisfile eq '' then return
   widget_control,event.top,get_uvalue=info
   wset,(*info).wid
@@ -457,9 +457,11 @@ pro spice_xraster_colors, event
   thisevent = tag_names(event, /structure_name)
   case thisevent of
     'WIDGET_BUTTON': begin
+      widget_control, event.top, TLB_GET_OFFSET=offset_parent
       xcolors, ncolors = (*info).ncolors, bottom = (*info).bottom, $
         title = 'spice_xraster colors (' + strtrim((*info).wid, 2) + ')', $
-        group_leader = event.top, notifyid = [event.id, event.top]
+        group_leader = event.top, notifyid = [event.id, event.top], $
+        xoffset=offset_parent[0]+50, yoffset=offset_parent[1]+50
     endcase
     'XCOLORS_LOAD': begin
       (*info).r = event.r((*info).bottom:(*info).ncolors-1 + (*info).bottom)
