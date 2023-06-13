@@ -74,7 +74,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-01 14:29 CEST $
+; $Id: 2023-06-13 11:50 CEST $
 ;-
 ;
 ;
@@ -116,7 +116,7 @@ pro spice_create_l3_widget_event, event
         overwrite = spice_overwrite_l3_file(info.file_l3, event.top, allow_xcontrol_l23=info.allow_xcontrol_l23)
         IF overwrite EQ 'No' THEN return
         IF overwrite EQ 'Open' THEN BEGIN
-          spice_xcontrol_l23, info.file_l3
+          spice_xcontrol_l23, info.file_l3, group_leader=info.group_leader
           widget_control, event.top, /destroy
           return
         ENDIF
@@ -290,6 +290,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
 
   result = ptr_new({l3_file:'Cancel', ana:ptr_new(), result_headers:ptr_new(), file_saved:0b, user_dir:0b, top_dir:''})
   info = { $
+    group_leader:group_leader, $
     l2_object:l2_object, $
     file_l3:'', $
     official_l3dir:official_l3dir, $
