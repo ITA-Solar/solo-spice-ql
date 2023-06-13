@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-05-25 22:03 CEST $
+; $Id: 2023-06-13 14:58 CEST $
 
 
 PRO spice_browser_base_event, event
@@ -975,7 +975,7 @@ PRO spice_browser_base_event, event
             '']
 
           xpopup,str1,tfont=font,bfont=font,xsiz=70,ysiz=30, $
-            title='HELP file for spice_raster_browser'
+            title='HELP file for spice_raster_browser', group=event.top
         END
 
         ELSE: BEGIN
