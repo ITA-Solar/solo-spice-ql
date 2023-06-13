@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2023-06-13 14:55 CEST $
+; $Id: 2023-06-13 15:16 CEST $
 ;-
 ;
 ; save as postscript file
@@ -184,7 +184,7 @@ pro spice_xraster_draw, event
       ymin = wdmin[i]
       ymax = wdmax[i]
       if it eq 0 then ytitle=*(*info).data->get_window_id(j)+' '+(*info).ytitle else ytitle=''
-      spice_br_panel,it,i,nx=nr,ny=(*info).nwin,order=0,ydist=3,/xlabel,ytop=3,xright=5
+      spice_br_panel,it,i,nx=nr,ny=(*info).nwin,order=0,ydist=3,/xlabel,ytop=3,xright=5,xleft=12
       plot_image,drawimage,origin=origin,scale=scale,/nosquare, $
         xtitle = (*info).xtitle, xticks = nxticks, ytitle=ytitle,min=ymin,max=ymax
       if i eq 0 then xyouts,timepos[0],timepos[1],'t = '+ $
@@ -592,7 +592,7 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
   wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
   angstr = string('305'oB)+'ngstr'+string('370'oB)+'m'
   pixmenu=widget_button(wscalemenu, value='Pixels',event_pro='spice_xraster_wpix')
-  angstrmenu=widget_button(wscalemenu, value=angstr,event_pro='spice_xraster_wangstr')
+  angstrmenu=widget_button(wscalemenu, value='nm',event_pro='spice_xraster_wangstr')
   sscalemenu=widget_button(optmenu, value='Change spatial scale',/menu)
   pixmenu=widget_button(sscalemenu, value='Pixels',event_pro='spice_xraster_spix')
   angstrmenu=widget_button(sscalemenu, value='arcsec',event_pro='spice_xraster_sarcsec')
