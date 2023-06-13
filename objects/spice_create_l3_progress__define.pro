@@ -61,7 +61,7 @@
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2022-12-09 10:41 CET $
+; $Id: 2023-06-13 13:52 CEST $
 
 
 ;+
@@ -72,11 +72,12 @@
 ;     n_files: (Possibly optional) The number of files to be processed. This number is ignored if 'FILES' is provided, but
 ;             required if 'FILES' is not provided.
 ;     files: Optional. An array of the names of the files to be processed. Preferably with the full path.
+;     group_leader: Optional. Widget ID of parent widget.
 ;
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise.
 ;-
-FUNCTION spice_create_l3_progress::init, n_files, files=files
+FUNCTION spice_create_l3_progress::init, n_files, files=files, group_leader=group_leader
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, files, 0, "files", 'string', [0, 1], /optional
@@ -117,7 +118,8 @@ FUNCTION spice_create_l3_progress::init, n_files, files=files
 
   self.list_files = widget_list(self.base, value=file_basename(files), /frame, xsize=75, scr_ysize=200)
   self.stop_button = widget_button(self.base, value='Stop creation of level 3 files')
-  xrealize, self.base
+  wp = widget_positioner(self.base, parent=group_leader)
+  wp->position, /left_align
 
   return, 1
 END

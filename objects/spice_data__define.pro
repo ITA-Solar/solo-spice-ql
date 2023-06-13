@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-08 10:00 CEST $
+; $Id: 2023-06-13 13:52 CEST $
 
 
 ;+
@@ -203,6 +203,7 @@ END
 ;                 keyword allows you to specify to which path you send
 ;                 the file. Default is 0.
 ;     progress_widget: An object of type SPICE_CREATE_L3_PROGRESS, to display the progress of the creation.
+;     group_leader: Widget ID of parent widget.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -241,12 +242,12 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
-  progress_widget=progress_widget
+  progress_widget=progress_widget, group_leader=group_leader
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
-  IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1)
+  IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
 
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
@@ -293,7 +294,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     endif
 
     if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      SPICE_XCFIT_BLOCK, ana=ana
+      SPICE_XCFIT_BLOCK, ana=ana, group_leader=group_leader
     endif
 
     data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
