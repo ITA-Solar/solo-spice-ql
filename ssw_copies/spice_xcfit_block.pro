@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-06-13 13:15 CEST $
+; $Id: 2023-06-14 15:25 CEST $
 ;-
 
 
@@ -2013,13 +2013,13 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
-                                 scale=scale,phys_scale=phys_scale)
+                                 scale=scale,phys_scale=phys_scale, image_dim=[1,2])
   
   info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
-                                     scale=scale,phys_scale=phys_scale)
+                                     scale=scale,phys_scale=phys_scale, image_dim=[1,2])
   
   IF keyword_set(origin) THEN r_origin = origin(1:*)
   IF keyword_set(scale) THEN r_scale = scale(1:*)
