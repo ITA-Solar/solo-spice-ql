@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-06-13 14:58 CEST $
+; $Id: 2023-06-14 13:30 CEST $
 
 
 PRO spice_browser_base_event, event
@@ -903,104 +903,104 @@ PRO spice_browser_base_event, event
     END
 
     state.exit: BEGIN
+      IF tag_names(event, /structure_name) EQ 'XCOLORS_LOAD' THEN BEGIN 
+        ; User selected new color in xcolors window
+        n=state.wid_data.n_plot_window
+        FOR i=0,n-1 DO BEGIN
+          spice_browser_plot_image,state,i
+        ENDFOR
+      ENDIF ELSE BEGIN
+        
+        CASE event.value OF
+  
+          0: widget_control, event.top, /destroy
+          1: BEGIN
+            spice_browser_font,font,retina=state.wid_data.retina
+            str1=['HELP FOR SPICE_RASTER_BROWSER',$
+              '',$
+              'spice_raster_browser is used to browse the 4D data cubes produced by the',$
+              'SPICE instrument from narrow slit rasters. ',$
+              '',$
+              'It is recommended that you order your SPICE data files into a standard hierarchy', $
+              'see the', $
+              '',$
+              'You will see four pairs of images in the graphic user interface',$
+              '(GUI). The top row of four shows images in four of the emission lines,',$
+              'the bottom row of four show spectra containing the four emission lines.',$
+              '',$
+              'A star in the images and a cross in the spectra indicate the pixel',$
+              'that is highlighted from the data cube. Thus the image represents a',$
+              'slice through the data cube at the specified wavelength pixel',$
+              '(actually it is an average of several wavelength pixels - see below).',$
+              '',$
+              'USING THE MOUSE BUTTONS',$
+              '',$
+              'You can change the chosen pixel by clicking with the MIDDLE mouse',$
+              'button in either of the two graphic windows. Clicking in the image',$
+              'changes the spatial pixel; clicking in the spectrum changes the',$
+            'wavelength pixel.',$
+              '',$
+              'You can zoom into and out of the images and spectra by using the LEFT',$
+              'and RIGHT mouse buttons.  The LEFT zooms in; the RIGHT button zooms',$
+            'out.',$
+              '',$
+              'If you are using the Mac trackpad on a laptop, then you can use',$
+              'keyboard commands to substitute for the extra mouse buttons. First go',$
+              'to X11->Preferences...->Input and select the Emulate 3 button mouse',$
+              'option. You can now do:',$
+              '',$
+              '     CLICK - Zoom in to image',$
+              '     OPTION+CLICK - Select a new image pixel',$
+              '     COMMAND+CLICK - Zoom out from image',$
+              '',$
+              'CHANGING THE WAVELENGTH WINDOWS',$
+              '',$
+              'Above each of the four pairs of graphic windows is a drop-down list',$
+              'menu which allows you to choose different wavelength windows.',$
+              '',$
+              'ADJUSTING THE INTENSITY SCALING',$
+              '',$
+              'Above each of the four pairs of graphic windows are two text boxes',$
+              'which allow you to change the intensity scaling in the images. (This',$
+              'is useful to bring out weak features in the images.)  By default the',$
+              'routine uses the minimum and maximum of the image. You can reset the',$
+              'values by clicking on the AUTO button.',$
+              '',$
+              'WAVELENGTH PIXELS TO SUM',$
+              '',$
+              'This allows the signal-to-noise in the image to be increased by binning', $
+              'over multiple wavelength pixels. The default is to average over 5 pixels.', $
+              'The buttons on the left-hand side of the widget can be used to change to 1, ', $
+              '3, 5 or 7 pixels.',$
+              '',$
+              'SHOW LINE IDS?',$
+              '',$
+              'If this option is selected then suggested line identifications are',$
+              'overplotted on the spectrum. These IDs are not complete and may not be',$
+              'accurate in all conditions, but it is hoped they will be a useful guidance for',$
+              'understanding the data. The wavelengths are defined in spice_line_list.pro.',$
+              '']
+  
+            xpopup,str1,tfont=font,bfont=font,xsiz=70,ysiz=30, $
+              title='HELP file for spice_raster_browser', group=event.top
+          END
+          2: BEGIN
+            widget_control, event.top, TLB_GET_OFFSET=offset_parent
+            xcolors, title = 'spice_raster_browser colors', $
+              group_leader = event.top, notifyid = [event.id, event.top], $
+              xoffset=offset_parent[0]+50, yoffset=offset_parent[1]+50  
+          END
+  
+          ELSE: ; Unknown button?
+  
+        ENDCASE ; event.value
 
-      CASE event.value OF
+      ENDELSE
 
-        0: widget_control, event.top, /destroy
-        1: BEGIN
-          spice_browser_font,font,retina=state.wid_data.retina
-          str1=['HELP FOR SPICE_RASTER_BROWSER',$
-            '',$
-            'spice_raster_browser is used to browse the 4D data cubes produced by the',$
-            'SPICE instrument from narrow slit rasters. ',$
-            '',$
-            'It is recommended that you order your SPICE data files into a standard hierarchy', $
-            'see the', $
-            '',$
-            'You will see four pairs of images in the graphic user interface',$
-            '(GUI). The top row of four shows images in four of the emission lines,',$
-            'the bottom row of four show spectra containing the four emission lines.',$
-            '',$
-            'A star in the images and a cross in the spectra indicate the pixel',$
-            'that is highlighted from the data cube. Thus the image represents a',$
-            'slice through the data cube at the specified wavelength pixel',$
-            '(actually it is an average of several wavelength pixels - see below).',$
-            '',$
-            'USING THE MOUSE BUTTONS',$
-            '',$
-            'You can change the chosen pixel by clicking with the MIDDLE mouse',$
-            'button in either of the two graphic windows. Clicking in the image',$
-            'changes the spatial pixel; clicking in the spectrum changes the',$
-          'wavelength pixel.',$
-            '',$
-            'You can zoom into and out of the images and spectra by using the LEFT',$
-            'and RIGHT mouse buttons.  The LEFT zooms in; the RIGHT button zooms',$
-          'out.',$
-            '',$
-            'If you are using the Mac trackpad on a laptop, then you can use',$
-            'keyboard commands to substitute for the extra mouse buttons. First go',$
-            'to X11->Preferences...->Input and select the Emulate 3 button mouse',$
-            'option. You can now do:',$
-            '',$
-            '     CLICK - Zoom in to image',$
-            '     OPTION+CLICK - Select a new image pixel',$
-            '     COMMAND+CLICK - Zoom out from image',$
-            '',$
-            'CHANGING THE WAVELENGTH WINDOWS',$
-            '',$
-            'Above each of the four pairs of graphic windows is a drop-down list',$
-            'menu which allows you to choose different wavelength windows.',$
-            '',$
-            'ADJUSTING THE INTENSITY SCALING',$
-            '',$
-            'Above each of the four pairs of graphic windows are two text boxes',$
-            'which allow you to change the intensity scaling in the images. (This',$
-            'is useful to bring out weak features in the images.)  By default the',$
-            'routine uses the minimum and maximum of the image. You can reset the',$
-            'values by clicking on the AUTO button.',$
-            '',$
-            'WAVELENGTH PIXELS TO SUM',$
-            '',$
-            'This allows the signal-to-noise in the image to be increased by binning', $
-            'over multiple wavelength pixels. The default is to average over 5 pixels.', $
-            'The buttons on the left-hand side of the widget can be used to change to 1, ', $
-            '3, 5 or 7 pixels.',$
-            '',$
-            'SHOW LINE IDS?',$
-            '',$
-            'If this option is selected then suggested line identifications are',$
-            'overplotted on the spectrum. These IDs are not complete and may not be',$
-            'accurate in all conditions, but it is hoped they will be a useful guidance for',$
-            'understanding the data. The wavelengths are defined in spice_line_list.pro.',$
-            '']
-
-          xpopup,str1,tfont=font,bfont=font,xsiz=70,ysiz=30, $
-            title='HELP file for spice_raster_browser', group=event.top
-        END
-
-        ELSE: BEGIN
-          ;
-          ; Have to subtract 3 as exit=0, help=1, color=2, so coltables start at 3.
-          ;
-          new_coltable=event.value-3
-          coltable=state.wid_data.coltable
-          IF coltable NE event.value THEN BEGIN
-            spice_browser_coltable,state=state,set_value=new_coltable
-            ;
-            n=state.wid_data.n_plot_window
-            FOR i=0,n-1 DO BEGIN
-              spice_browser_plot_image,state,i
-            ENDFOR
-            IF state.wid_data.sji EQ 1 THEN spice_browser_plot_sji, state
-          ENDIF
-        END
-
-      ENDCASE
-
-    END
+    END ; event.id = state.exit
 
     ELSE:
 
-  ENDCASE
+  ENDCASE ; event.id
 
 END
