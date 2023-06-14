@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2023-05-22 14:39 CEST $
+; $Id: 2023-06-14 13:43 CEST $
 
 
 ; save as postscript file
@@ -494,9 +494,11 @@ pro spice_xwhisker_colors, event
   thisevent = tag_names(event, /structure_name)
   case thisevent of
     'WIDGET_BUTTON': begin
-      xcolors, ncolors = (*info).ncolors, bottom = (*info).bottom, $
+     widget_control, event.top, TLB_GET_OFFSET=offset_parent
+     xcolors, ncolors = (*info).ncolors, bottom = (*info).bottom, $
         title = 'spice_xwhisker colors (' + strtrim((*info).wid, 2) + ')', $
-        group_leader = event.top, notifyid = [event.id, event.top]
+        group_leader = event.top, notifyid = [event.id, event.top], $
+        xoffset=offset_parent[0]+50, yoffset=offset_parent[1]+50
     endcase
     'XCOLORS_LOAD': begin
       (*info).r = event.r((*info).bottom:(*info).ncolors-1 + (*info).bottom)
