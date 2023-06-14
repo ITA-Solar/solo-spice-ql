@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-05-23 11:35 CEST $
+; $Id: 2023-06-14 11:30 CEST $
 
 
 PRO spice_browser_plot_spectrum, state, pwin
@@ -70,7 +70,7 @@ PRO spice_browser_plot_spectrum, state, pwin
 
   IF nk NE 0 THEN yrange=[max([0,min(spec[k])*0.90]),max(spec[k])*1.10]
 
-  title='lpix='+trim(lpix)+', t_exp='+trim(string(format='(f6.2)',state.wid_data.exptime[pwin]))+' s'
+  title='lambda pixel no='+trim(lpix)+', XPOSURE='+trim(string(format='(f6.2)',state.wid_data.exptime[pwin]))+' s'
 
   ytitle='Intensity / ' + state.data->get_header_keyword('BUNIT', iwin, '')
 
