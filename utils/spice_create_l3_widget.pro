@@ -50,6 +50,15 @@
 ;                 this keyword has not been set.
 ;     block_save: If set, then the options concerning where and whether to save the FITS file are not sensitive.
 ;     allow_xcontrol_l23: Gives user option to open spice_xcontrol_l23, when trying to overwrite an existing file.
+;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
+;                 By default, the list returned by the function spice_line_list() will be used.
+;
+;                 IMPORTANT NOTE: For now, this keyword is set by default. One has to set it explicitly to zero
+;                 if one wants to use the predefined line list. This implementation may change in the future.
+;
+;                 Due to instrument temperature variations the wavelength scale changes significantly during
+;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
+;                 that using the line list when fitting fails in many cases.
 ;
 ; OUTPUTS:
 ;     A structure with tags:
@@ -74,7 +83,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-13 13:52 CEST $
+; $Id: 2023-06-14 10:55 CEST $
 ;-
 ;
 ;
@@ -104,7 +113,8 @@ pro spice_create_l3_widget_event, event
       approximated_slit = options[3]
       no_fitting = options[0]
       no_xcfit_block = options[1]
-      position = options[4]
+      position = options[5]
+      no_line_list = options[4]
       widget_control, info.fit_velocity_field, get_value = velocity
       widget_control, info.top_dir_choice_bg, get_value=top_dir_choice
       IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value=top_dir
@@ -122,7 +132,7 @@ pro spice_create_l3_widget_event, event
         ENDIF
       ENDIF
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-        no_fitting=no_fitting, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
+        no_fitting=no_fitting, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, no_line_list=no_line_list, $
         official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
         all_ana=all_ana, all_result_headers=all_result_headers, group_leader=info.group_leader)
       (*info.result).l3_file = l3_file
@@ -212,13 +222,12 @@ end
 ; -----------------------------------------------------------------------
 
 function spice_create_l3_widget, l2_object, group_leader, window_index=window_index, $
-  no_masking=no_masking, approximated_slit=approximated_slit, $
+  no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
   no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, block_save=block_save, $
   allow_xcontrol_l23=allow_xcontrol_l23
 
-  ;l2_object = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
-  ;l2_object = '/Users/mawiesma/data/spice/level2/2022/03/26/solo_L2_spice-n-ras_20220326T031318_V01_100663899-000.fits'
+  IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
 
   IF N_PARAMS() EQ 0 THEN BEGIN
     print, 'Usage: res = spice_create_l3_widget(l2_object [, group_leader] [, window_index=window_index] $'
@@ -234,7 +243,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   top_dir_choice = keyword_set(top_dir)
   dir_user_choice = [~official_l3dir && ~top_dir_choice]
   option_choice = [keyword_set(no_fitting), keyword_set(no_widget), keyword_set(no_masking), $
-    keyword_set(apporximated_slit), keyword_set(position)]
+    keyword_set(apporximated_slit), keyword_set(no_line_list), keyword_set(position)]
   if N_ELEMENTS(velocity) eq 0 then velocity = 0.0
   save_choice = [~keyword_set(save_not)]
   if N_ELEMENTS(top_dir) eq 0 then cd, current=dir_manual else dir_manual=top_dir
@@ -271,11 +280,11 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
     event_func='spice_create_l3_widget_change_topdir')
   widget_control, dir_user_bg, sensitive=official_l3dir
 
-  options_base = widget_base(base, /row)
   options_values = ['Do not run the fit routine', 'Do not open xcfit_block', $
-    'No masking of dumbbell', 'Approximate dumbbell masking', 'Use position, i.e. fit lambda, not velocity']
-  options_bg = cw_bgroup(options_base, options_values, set_value=option_choice, /nonexclusive, column=3)
-  fit_velocity_field = cw_field(options_base, title='velocity', value = velocity, /float, xsize = 10)
+    'No masking of dumbbell', 'Approximate dumbbell masking', 'Do not use line list', 'Use position, i.e. fit lambda, not velocity']
+    print,options_values,option_choice
+  options_bg = cw_bgroup(base, options_values, set_value=option_choice, /nonexclusive, column=3)
+  fit_velocity_field = cw_field(base, title='Initial velocity', value = velocity, /float, xsize = 10)
 
   save_base = widget_base(base, /row, sensitive=~keyword_set(block_save))
   save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
