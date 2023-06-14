@@ -61,6 +61,16 @@
 ;               returned. Ignored if NO_TREE_STRUCT is not set.
 ;               This keyword is used by spice_xfiles, it makes it possible to return
 ;               all files that are stored locally
+;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
+;                 By default, the list returned by the function spice_line_list() will be used.
+;
+;                 IMPORTANT NOTE: For now, this keyword is set by default. One has to set it explicitly to zero
+;                 if one wants to use the predefined line list. This implementation may change in the future.
+;
+;                 Due to instrument temperature variations the wavelength scale changes significantly during
+;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
+;                 that using the line list when fitting fails in many cases.
+;
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;               This procedure masks any y regions in a narrow slit data cube that don't contain
 ;               slit data, i.e. pixels with contributions from parts of the
@@ -101,14 +111,14 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2023-05-31 14:52 CEST $
+; $Id: 2023-06-14 11:25 CEST $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
   top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
   all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
   search_subdir=search_subdir, ignore_time=ignore_time, $
-  no_masking=no_masking, approximated_slit=approximated_slit, $
+  no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
   no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, create_images=create_images, images_top_dir=images_top_dir, $
   files_l3=files_l3, search_level3=search_level3, no_overwrite=no_overwrite
@@ -120,6 +130,8 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
   prits_tools.parcheck, path_index, 0, "path_index", ['integers', 'undefined'], 0
   prits_tools.parcheck, velocity, 0, "velocity", ['NUMERIC', 'undefined'], 0
   prits_tools.parcheck, images_top_dir, 0, "images_top_dir", ['string', 'undefined'], 0
+
+  IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
 
   IF ~keyword_set(l2_files) THEN BEGIN
 
