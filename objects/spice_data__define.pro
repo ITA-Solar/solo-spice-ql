@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-13 13:52 CEST $
+; $Id: 2023-06-14 10:40 CEST $
 
 
 ;+
@@ -224,6 +224,14 @@ END
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
 ;                 By default, the list returned by the function spice_line_list() will be used.
+;                 
+;                 IMPORTANT NOTE: For now, this keyword is set by default. One has to set it explicitly to zero
+;                 if one wants to use the predefined line list. This implementation may change in the future.
+;                 
+;                 Due to instrument temperature variations the wavelength scale changes significantly during
+;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
+;                 that using the line list when fitting fails in many cases.
+;                 
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
 ;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
@@ -249,6 +257,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
 
+  IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
+  
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
   IF ARG_PRESENT(all_result_headers) THEN BEGIN
