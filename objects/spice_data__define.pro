@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-15 11:06 CEST $
+; $Id: 2023-06-15 13:01 CEST $
 
 
 ;+
@@ -247,6 +247,38 @@ END
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;-
 
+FUNCTION spice_data::get_version_l3, filename_l3, official_l3dir=official_l3dir
+  ;; Finds all existing L3 files with the same SPIOBSID and RASTERNO as
+  ;; filename_l3, then returns the highest existing version number incremented
+  ;; by 1. If no L3 files exist the version number is set to 'V01' 
+  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
+  l3_dir = file_dirname(destination)
+  spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
+  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+  IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
+     versions = existing_l3_files.extract('V[0-9]{2}')
+     versions = fix(versions.substring(1,2))
+     this_version = 'V'+fns('##',max(versions)+1)
+  ENDELSE 
+  
+  return, this_version
+END
+
+FUNCTION spice_data::get_filename_l3, official_l3dir=official_l3dir, version_l3=version_l3
+  ;; Returns L3 filename based on L2 filename, with version number being the
+  ;; highest version number of any existing L3 files incremented by 1.
+  ;;
+  filename_l2 = self.get_header_keyword('FILENAME', 0, '')
+  version_l2 = filename_l2.extract('V[0-9]{2}')
+  
+  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  version_l3 = self.get_version_l3(filename_l3,  official_l3dir=official_l3dir)
+  
+  filename_l3 = filename_l3.replace(version_l2, version_l3)
+  
+  return, filename_l3
+END
+
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
@@ -268,10 +300,15 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ENDIF ELSE collect_hdr=0
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+;  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  filename_l3 = self.get_filename_l3(official_l3dir = official_l3dir, version_l3 = version_l3)
   filename_out = filepath(filename_l3, /tmp)
   file_info_l2 = spice_file2info(filename_l2)
-  file_id = 'V' + fns('##', file_info_l2.version) + $
+   
+ ; file_id = 'V' + fns('##', file_info_l2.version) + $
+ ;   '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
+ ;           fns('-###', file_info_l2.rasterno)
+    file_id = version_l3 + $
     '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno)
 
