@@ -83,7 +83,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-14 10:55 CEST $
+; $Id: 2023-06-15 14:15 CEST $
 ;-
 ;
 ;
@@ -282,7 +282,6 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
 
   options_values = ['Do not run the fit routine', 'Do not open xcfit_block', $
     'No masking of dumbbell', 'Approximate dumbbell masking', 'Do not use line list', 'Use position, i.e. fit lambda, not velocity']
-    print,options_values,option_choice
   options_bg = cw_bgroup(base, options_values, set_value=option_choice, /nonexclusive, column=3)
   fit_velocity_field = cw_field(base, title='Initial velocity', value = velocity, /float, xsize = 10)
 
