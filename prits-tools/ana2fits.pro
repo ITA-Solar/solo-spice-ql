@@ -41,6 +41,7 @@
 ;      EXTENSION: If set, then the first ANA's result array will be an extension,
 ;                 i.e. this should be set if the FITS file already exists and data should be appended.
 ;                 If not set, the first ANA's result array will be the primary header.
+;      print_headers: If set, then all headers created will be printed out.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      n_windows: Total number of windows that will be included in this FITS file.
@@ -100,7 +101,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2022-11-24 14:52 CET $
+; $Id: 2023-06-15 11:06 CEST $
 
 
 PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
@@ -109,7 +110,7 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  EXTENSION=EXTENSION
+  EXTENSION=EXTENSION, print_headers=print_headers
 
   prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ana)
@@ -142,25 +143,25 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
   for iwindow=0,n_ana-1 do begin
     input_type = size(ana[iwindow], /type)
 
-    extension = keyword_set(extension) || iwindow GT 0
+    extension_win = keyword_set(extension) || iwindow GT 0
 
     if input_type then begin
       headers = ana2fitshdr(ana[iwindow], filename_out=filename_out, n_windows=n_windows, $
-        winno=iwindow+winno, data_id=data_id[iwindow], extension=extension, $
+        winno=iwindow+winno, data_id=data_id[iwindow], extension=extension_win, $
         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, print_headers=print_headers)
     endif else begin
       headers = ana2fitshdr(filename_out=filename_out, n_windows=n_windows, $
-        winno=iwindow+winno, data_id=data_id[iwindow], extension=extension, $
+        winno=iwindow+winno, data_id=data_id[iwindow], extension=extension_win, $
         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, print_headers=print_headers)
     endelse
 
-    writefits, filepath_out, RESULT, *headers[0], append=extension
+    writefits, filepath_out, RESULT, *headers[0], append=extension_win
     writefits, filepath_out, INPUT_DATA, *headers[1], /append
     writefits, filepath_out, LAMBDA, *headers[2], /append
     writefits, filepath_out, RESIDUAL, *headers[3], /append
