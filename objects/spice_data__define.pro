@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-14 10:40 CEST $
+; $Id: 2023-06-15 11:06 CEST $
 
 
 ;+
@@ -236,6 +236,7 @@ END
 ;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
 ;                 level 3 FITS file, if it would have been saved.
+;     quiet:      If set, print messages will be suppressed.
 ;
 ; OPTIONAL OUTPUTS:
 ;     all_ana:    Array of ana structure, number of elements is the same as number of windows in the FITS file.
@@ -250,7 +251,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
-  progress_widget=progress_widget, group_leader=group_leader
+  progress_widget=progress_widget, group_leader=group_leader, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
@@ -296,10 +297,12 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     ENDIF
 
     if ~keyword_set(no_fitting) then begin
-      print, '====================='
-      print, 'fitting data'
-      print, 'this may take a while'
-      print, '====================='
+      if ~keyword_set(quiet) then begin
+        print, '====================='
+        print, 'fitting data'
+        print, 'this may take a while'
+        print, '====================='
+      endif
       spice_cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
     endif
 
