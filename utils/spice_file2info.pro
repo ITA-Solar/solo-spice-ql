@@ -36,7 +36,7 @@
 ; HISTORY:
 ;      Ver. 1, 17-Jun-2020, Martin Wiesmann
 ;-
-; $Id: 2022-03-31 10:23 CEST $
+; $Id: 2023-06-16 09:37 CEST $
 
 
 FUNCTION spice_file2info, file
@@ -112,6 +112,8 @@ FUNCTION spice_file2info, file
     ELSE info = [info, info_temp]
 
   ENDFOR ; ifile=0,N_ELEMENTS(file)-1
+  
+  IF nfile EQ 0 THEN info=info_template
 
   return, info
 END
