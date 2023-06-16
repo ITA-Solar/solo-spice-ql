@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-15 14:59 CEST $
+; $Id: 2023-06-16 12:45 CEST $
 
 
 ;+
@@ -51,6 +51,7 @@
 FUNCTION spice_data_l3::init, file
   COMPILE_OPT IDL2
 
+  prits_tools.parcheck, file, 1, "file", 'string', 0
   file_info = spice_file2info(file)
   if ~file_info.is_spice_file then begin
     print, 'File is not a SPICE file: '+file
@@ -71,6 +72,37 @@ FUNCTION spice_data_l3::init, file
   self.rasterno = file_info.rasterno
 
   return, 1
+END
+
+
+;+
+; Description:
+;     called by obj_destroy, frees all pointers and closes all associated files
+;-
+pro spice_data_l3::cleanup
+  COMPILE_OPT IDL2
+
+END
+
+
+;+
+; Description:
+;     This routine prints out information about the class, such as name, location of definition file
+;     and version if there is a line in the header comment beginning with '$ID: ' (comes from CVS).
+;     Then it prints out each procedure and function that has a comment line right after the definition.
+;
+; KEYWORD PARAMETERS:
+;     description : If set, the header info of the class will also be printed.
+;
+;-
+pro spice_data_l3::help, description=description, _extra=_extra
+  ;Prints out this help, setting the 'description' keyword will also print the header info
+  COMPILE_OPT IDL2
+
+  IF arg_present(description) || keyword_set(description) THEN $
+    obj_help, self, description=description, _extra=_extra $
+  ELSE $
+    obj_help, self, _extra=_extra
 END
 
 
