@@ -83,7 +83,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-15 14:15 CEST $
+; $Id: 2023-06-16 12:48 CEST $
 ;-
 ;
 ;
@@ -206,13 +206,11 @@ pro spice_create_l3_widget_calc_l3_dir, info
   widget_control, info.dir_user_bg, get_value=user_dir
   user_dir = user_dir[0]
   file_l2 = info.l2_object->get_filename()
-  spice_ingest, file_l2, user_dir=user_dir, top_dir=top_dir, /dry_run, /force, $
-    destination=file_l3_calc, /quiet
-  file_l3_calc = file_l3_calc[0].replace('level2', 'level3')
-  file_l3_calc = file_l3_calc.replace('_L2_','_L3_')
-  info.file_l3 = file_l3_calc
-  widget_control, info.file_l3_dir_label, set_value=(file_dirname(file_l3_calc))[0]
-  widget_control, info.file_l3_name_label, set_value=(file_basename(file_l3_calc))[0]
+  file_l3 = spice_data.get_filename_l3(file_l2, force_version=force_version, official_l3dir=~user_dir, $
+    version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir
+  info.file_l3 = file_l3
+  widget_control, info.file_l3_dir_label, set_value=l3_dir
+  widget_control, info.file_l3_name_label, set_value=file_l3
 end
 
 
