@@ -83,7 +83,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-16 12:48 CEST $
+; $Id: 2023-06-16 13:48 CEST $
 ;-
 ;
 ;
@@ -207,10 +207,13 @@ pro spice_create_l3_widget_calc_l3_dir, info
   user_dir = user_dir[0]
   file_l2 = info.l2_object->get_filename()
   file_l3 = spice_data.get_filename_l3(file_l2, force_version=force_version, official_l3dir=~user_dir, $
-    version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir
-  info.file_l3 = file_l3
+    version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir)
+  info.file_l3 = l3_dir+file_l3
   widget_control, info.file_l3_dir_label, set_value=l3_dir
-  widget_control, info.file_l3_name_label, set_value=file_l3
+  ind = where(existing_l3_files NE '', count)
+  IF count GT 0 THEN all_files = [file_l3+' [new]', existing_l3_files[ind]+' [overwrite]'] $
+    ELSE all_files = [file_l3+' [new]']
+  widget_control, info.file_l3_name_list, set_value=all_files
 end
 
 
@@ -287,7 +290,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
   file_l3_base = widget_base(save_base, /column)
   file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  ;file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  file_l3_name_list = widget_droplist(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
 
   button_base = widget_base(base, /row)
   button_ok = widget_button(button_base, value='OK')
@@ -310,7 +314,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
     fit_velocity_field:fit_velocity_field, $
     save_bg:save_bg, $
     file_l3_dir_label:file_l3_dir_label, $
-    file_l3_name_label:file_l3_name_label, $
+    file_l3_name_list:file_l3_name_list, $
     ok:button_ok, $
     cancel:button_cancel, $
     allow_xcontrol_l23:keyword_set(allow_xcontrol_l23) $
