@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-16 09:37 CEST $
+; $Id: 2023-06-16 11:00 CEST $
 
 
 ;+
@@ -187,6 +187,84 @@ END
 
 ;+
 ; Description:
+;   Finds all existing L3 files with the same SPIOBSID and RASTERNO as
+;   filename_l3, then returns the highest existing version number incremented
+;   by 1. If no L3 files exist the version number is set to 'V01' 
+;
+; INPUTS:
+;     filename_l3 : The level 3 filename, version number can be anything.
+;
+; OPTIONAL INPUTS:
+;     force_version : The version number (integer) the level 3 file must have.
+;
+; KEYWORD PARAMETERS:
+;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
+;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
+;
+; OPTIONAL OUTPUTS:
+;     existing_l3_files: A list of filenames with the saem SPIOBSID and RASTERNO but different version number
+;                        that already exist
+;
+; OUTPUT:
+;     The version of the new level 3 file, as a string in the format 'V##'.
+;-
+FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
+  existing_l3_files=existing_l3_files
+  ; Returns the version for a new level 3
+  
+  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
+  l3_dir = file_dirname(destination)
+  spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
+  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+  IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version)
+  ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
+     versions = existing_l3_files.extract('V[0-9]{2}')
+     versions = fix(versions.substring(1,2))
+     this_version = 'V'+fns('##',max(versions)+1)
+  ENDELSE 
+  
+  return, this_version
+END
+
+
+;+
+; Description:
+;   Returns L3 filename based on L2 filename, with version number being the
+;   highest version number of any existing L3 files incremented by 1.
+;
+; OPTIONAL INPUTS:
+;     force_version : The version number (integer) the level 3 file must have.
+;
+; KEYWORD PARAMETERS:
+;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
+;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
+;
+; OPTIONAL OUTPUTS:
+;     version_l3: The version of the new level 3 file, as a string in the format 'V##'.
+;     existing_l3_files: A list of filenames with the saem SPIOBSID and RASTERNO but different version number
+;                        that already exist
+;
+; OUTPUT:
+;     The new filename of the level 3 file.
+;-
+FUNCTION spice_data::get_filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
+  version_l3=version_l3, existing_l3_files=existing_l3_files
+  ; Returns L3 filename based on L2 filename, with version number being the highest version number of any existing L3 files incremented by 1.
+  
+  filename_l2 = self.get_header_keyword('FILENAME', 0, '')
+  version_l2 = filename_l2.extract('V[0-9]{2}')
+  
+  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  version_l3 = self.get_version_l3(filename_l3, force_version=force_version, official_l3dir=official_l3dir, existing_l3_files=existing_l3_files)
+  
+  filename_l3 = filename_l3.replace(version_l2, version_l3)
+  
+  return, filename_l3
+END
+
+
+;+
+; Description:
 ;     This routine creates a level 3 FITS file for the chosen window(s).
 ;     The data is arranged so that cfit_block can read it. The routine estimates
 ;     the positions of the main peaks and fits those to the data by calling cfit_block.
@@ -212,6 +290,7 @@ END
 ;                 the file. Default is 0.
 ;     progress_widget: An object of type SPICE_CREATE_L3_PROGRESS, to display the progress of the creation.
 ;     group_leader: Widget ID of parent widget.
+;     force_version : The version number (integer) the level 3 file must have.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -232,14 +311,14 @@ END
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
 ;                 By default, the list returned by the function spice_line_list() will be used.
-;                 
+;
 ;                 IMPORTANT NOTE: For now, this keyword is set by default. One has to set it explicitly to zero
 ;                 if one wants to use the predefined line list. This implementation may change in the future.
-;                 
+;
 ;                 Due to instrument temperature variations the wavelength scale changes significantly during
 ;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
 ;                 that using the line list when fitting fails in many cases.
-;                 
+;
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
 ;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
@@ -254,42 +333,9 @@ END
 ;     The path and name of the Level 3 FITS file.
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;-
-
-FUNCTION spice_data::get_version_l3, filename_l3, official_l3dir=official_l3dir
-  ;; Finds all existing L3 files with the same SPIOBSID and RASTERNO as
-  ;; filename_l3, then returns the highest existing version number incremented
-  ;; by 1. If no L3 files exist the version number is set to 'V01' 
-  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
-  l3_dir = file_dirname(destination)
-  spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
-  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
-  IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
-     versions = existing_l3_files.extract('V[0-9]{2}')
-     versions = fix(versions.substring(1,2))
-     this_version = 'V'+fns('##',max(versions)+1)
-  ENDELSE 
-  
-  return, this_version
-END
-
-FUNCTION spice_data::get_filename_l3, official_l3dir=official_l3dir, version_l3=version_l3
-  ;; Returns L3 filename based on L2 filename, with version number being the
-  ;; highest version number of any existing L3 files incremented by 1.
-  ;;
-  filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-  version_l2 = filename_l2.extract('V[0-9]{2}')
-  
-  filename_l3 = filename_l2.replace('_L2_', '_L3_')
-  version_l3 = self.get_version_l3(filename_l3,  official_l3dir=official_l3dir)
-  
-  filename_l3 = filename_l3.replace(version_l2, version_l3)
-  
-  return, filename_l3
-END
-
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
-  official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
+  force_version=force_version, official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
   progress_widget=progress_widget, group_leader=group_leader, quiet=quiet
   ; Creates a level 3 file from the level 2
@@ -308,15 +354,10 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ENDIF ELSE collect_hdr=0
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-;  filename_l3 = filename_l2.replace('_L2_', '_L3_')
-  filename_l3 = self.get_filename_l3(official_l3dir = official_l3dir, version_l3 = version_l3)
-  filename_out = filepath(filename_l3, /tmp)
+  filename_l3 = self.get_filename_l3(force_version=force_version, official_l3dir = official_l3dir, version_l3 = version_l3)
   file_info_l2 = spice_file2info(filename_l2)
    
- ; file_id = 'V' + fns('##', file_info_l2.version) + $
- ;   '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
- ;           fns('-###', file_info_l2.rasterno)
-    file_id = version_l3 + $
+  file_id = version_l3 + $
     '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno)
 
