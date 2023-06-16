@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-01 13:39 CEST $
+; $Id: 2023-06-13 13:20 CEST $
 ;-
 ;
 ;
@@ -73,7 +73,9 @@ pro spice_xcontrol_l23_event, event
       answer = dialog_message(['WARNING: Possibly UNSAVED changes.', $
         'This warning also shows up, even if you only looked at level 3 data',$
         'without changing anything.', $
-        'Do you really want to exit?'], /question, /default_no, title='WARNING: Possibly UNSAVED changes.', /center)
+        'Do you really want to exit?'], $
+        /question, /default_no, title='WARNING: Possibly UNSAVED changes.', $
+        /center, dialog_parent=event.top)
       IF answer EQ 'No' THEN return
     ENDIF
     widget_control, event.top, /destroy
@@ -86,7 +88,9 @@ pro spice_xcontrol_l23_save_file, event
   IF size((*info).object_l2, /type) NE 11 THEN BEGIN
     answer = dialog_message(['Saving of level 3 SPICE FITS files is not (yet) supported', $
       'when the corresponding level 2 file is not available.', $
-      'Contact prits-group@astro.uio.no if you need this feature'])
+      'Contact prits-group@astro.uio.no if you need this feature'], $
+      title='WARNING: NOT supported.', $
+      /center, dialog_parent=event.top)
     ; TODO
     return
   ENDIF
@@ -311,7 +315,7 @@ pro spice_xcontrol_l23_open_l3, event
     END
   endcase
   ana = ana_l3[win_info.winno]
-  spice_xcfit_block, ana=ana, title=title
+  spice_xcfit_block, ana=ana, title=title, group_leader=(*info).tlb
   ana_l3[win_info.winno] = ana
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)

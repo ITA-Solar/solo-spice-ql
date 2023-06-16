@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-08 10:00 CEST $
+; $Id: 2023-06-15 13:01 CEST $
 
 
 ;+
@@ -203,6 +203,7 @@ END
 ;                 keyword allows you to specify to which path you send
 ;                 the file. Default is 0.
 ;     progress_widget: An object of type SPICE_CREATE_L3_PROGRESS, to display the progress of the creation.
+;     group_leader: Widget ID of parent widget.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -223,10 +224,19 @@ END
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
 ;                 By default, the list returned by the function spice_line_list() will be used.
+;                 
+;                 IMPORTANT NOTE: For now, this keyword is set by default. One has to set it explicitly to zero
+;                 if one wants to use the predefined line list. This implementation may change in the future.
+;                 
+;                 Due to instrument temperature variations the wavelength scale changes significantly during
+;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
+;                 that using the line list when fitting fails in many cases.
+;                 
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
 ;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
 ;                 level 3 FITS file, if it would have been saved.
+;     quiet:      If set, print messages will be suppressed.
 ;
 ; OPTIONAL OUTPUTS:
 ;     all_ana:    Array of ana structure, number of elements is the same as number of windows in the FITS file.
@@ -237,17 +247,51 @@ END
 ;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
 ;-
 
+FUNCTION spice_data::get_version_l3, filename_l3, official_l3dir=official_l3dir
+  ;; Finds all existing L3 files with the same SPIOBSID and RASTERNO as
+  ;; filename_l3, then returns the highest existing version number incremented
+  ;; by 1. If no L3 files exist the version number is set to 'V01' 
+  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
+  l3_dir = file_dirname(destination)
+  spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
+  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+  IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
+     versions = existing_l3_files.extract('V[0-9]{2}')
+     versions = fix(versions.substring(1,2))
+     this_version = 'V'+fns('##',max(versions)+1)
+  ENDELSE 
+  
+  return, this_version
+END
+
+FUNCTION spice_data::get_filename_l3, official_l3dir=official_l3dir, version_l3=version_l3
+  ;; Returns L3 filename based on L2 filename, with version number being the
+  ;; highest version number of any existing L3 files incremented by 1.
+  ;;
+  filename_l2 = self.get_header_keyword('FILENAME', 0, '')
+  version_l2 = filename_l2.extract('V[0-9]{2}')
+  
+  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  version_l3 = self.get_version_l3(filename_l3,  official_l3dir=official_l3dir)
+  
+  filename_l3 = filename_l3.replace(version_l2, version_l3)
+  
+  return, filename_l3
+END
+
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
-  progress_widget=progress_widget
+  progress_widget=progress_widget, group_leader=group_leader, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
-  IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1)
+  IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
 
+  IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
+  
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
   IF ARG_PRESENT(all_result_headers) THEN BEGIN
@@ -256,10 +300,15 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ENDIF ELSE collect_hdr=0
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+;  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  filename_l3 = self.get_filename_l3(official_l3dir = official_l3dir, version_l3 = version_l3)
   filename_out = filepath(filename_l3, /tmp)
   file_info_l2 = spice_file2info(filename_l2)
-  file_id = 'V' + fns('##', file_info_l2.version) + $
+   
+ ; file_id = 'V' + fns('##', file_info_l2.version) + $
+ ;   '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
+ ;           fns('-###', file_info_l2.rasterno)
+    file_id = version_l3 + $
     '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno)
 
@@ -285,15 +334,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     ENDIF
 
     if ~keyword_set(no_fitting) then begin
-      print, '====================='
-      print, 'fitting data'
-      print, 'this may take a while'
-      print, '====================='
+      if ~keyword_set(quiet) then begin
+        print, '====================='
+        print, 'fitting data'
+        print, 'this may take a while'
+        print, '====================='
+      endif
       spice_cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
     endif
 
     if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      SPICE_XCFIT_BLOCK, ana=ana
+      SPICE_XCFIT_BLOCK, ana=ana, group_leader=group_leader
     endif
 
     data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))

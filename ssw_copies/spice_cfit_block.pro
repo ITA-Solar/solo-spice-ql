@@ -178,7 +178,7 @@
 ;                       Whenever variables are checked for 'missing' values, it uses now
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
-; $Id: 2023-05-25 13:20 CEST $
+; $Id: 2023-06-15 11:12 CEST $
 ;-            
 
 PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
@@ -394,7 +394,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      IF total(szr[2:szr[0]] NE szd[2:szr[0]]) GT 0 THEN $
         message,"Suggested RESULT has incompatible size"
      default,use_result,1
-     IF use_result THEN print,"Using previous result array"
+     IF use_result && ~quiet THEN print,"Using previous result array"
   END ELSE BEGIN
      result = make_array(dimension=res_dim,/float,double=double)
      use_result = 0
@@ -499,7 +499,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
   
   default,smart,0
   
-  IF smart NE 0 THEN print,"Smart: "+trim(smart)
+  IF smart NE 0 && ~quiet THEN print,"Smart: "+trim(smart)
   
   IF make_sigma THEN sigma = make_array(dimension=const_dim,/float)
   
@@ -573,7 +573,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      ;; "SMART" option #2 - only those with chi^2 equal to zero
      
      doix = where(result[npar-1,*,*,*,*,*,*] EQ 0.0,ndo)
-     print,"Doing "+trim(ndo)+" points"
+     if ~quiet then print,"Doing "+trim(ndo)+" points"
      ;; Start with highest S/N ration
      FOR jj = ndo-1L,0L,-1L DO BEGIN
         ix = doix[jj]

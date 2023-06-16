@@ -13,13 +13,14 @@
 ; CALLING SEQUENCE:
 ;      headers = ana2fitshdr(ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 ;        filename_out=filename_out, $
-;        EXTENSION=EXTENSION, $
+;        /EXTENSION, $
 ;        HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;        FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
 ;        CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
 ;        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-;        spice=spice, $
-;        original_data=original_data, header_l2=header_l2] )
+;        /spice, $
+;        original_data=original_data, header_l2=header_l2, $
+;        /print_headers )
 ;
 ; INPUTS:
 ;      ana: An ANA object or the name and path of an ANA file.
@@ -43,6 +44,7 @@
 ;                 and incorporated into this level 3 FITS file. And the 'data' extension
 ;                 will get 'original_data' as its data array, instead of the data array
 ;                 saved in the ana or 'input_data'.
+;      print_headers: If set, then all headers created will be printed out.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ana' is not
@@ -80,7 +82,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-21 12:02 CET $
+; $Id: 2023-06-15 11:06 CEST $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
@@ -91,7 +93,8 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
   spice=spice, $
-  original_data=original_data, header_l2=header_l2
+  original_data=original_data, header_l2=header_l2, $
+  print_headers=print_headers
 
   prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', 0, structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ana)
@@ -117,7 +120,6 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   prits_tools.parcheck, n_windows, 0, 'n_windows', 'INTEGERS', 0
   prits_tools.parcheck, winno, 0, 'winno', 'INTEGERS', 0
 
-  print_headers = 0
 
   input_type = size(ana, /type)
   case input_type of
@@ -200,7 +202,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   all_headers[0] = ptr_new(hdr)
 
-  if print_headers then begin
+  if keyword_set(print_headers) then begin
     print,''
     print,'--- results ---'
     print,''
@@ -219,7 +221,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   all_headers[1] = ptr_new(hdr)
 
-  if print_headers then begin
+  if keyword_set(print_headers) then begin
     print,''
     print,'--- data ---'
     print,''
@@ -236,7 +238,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   all_headers[2] = ptr_new(hdr)
 
-  if print_headers then begin
+  if keyword_set(print_headers) then begin
     print,''
     print,'--- lambda ---'
     print,''
@@ -253,7 +255,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   all_headers[3] = ptr_new(hdr)
 
-  if print_headers then begin
+  if keyword_set(print_headers) then begin
     print,''
     print,'--- residuals ---'
     print,''
@@ -270,7 +272,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   all_headers[4] = ptr_new(hdr)
 
-  if print_headers then begin
+  if keyword_set(print_headers) then begin
     print,''
     print,'--- weights ---'
     print,''
@@ -287,7 +289,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   all_headers[5] = ptr_new(hdr)
 
-  if print_headers then begin
+  if keyword_set(print_headers) then begin
     print,''
     print,'--- include ---'
     print,''
@@ -304,7 +306,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   all_headers[6] = ptr_new(hdr)
 
-  if print_headers then begin
+  if keyword_set(print_headers) then begin
     print,''
     print,'--- const ---'
     print,''
