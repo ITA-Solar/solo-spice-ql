@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-15 14:59 CEST $
+; $Id: 2023-06-16 09:37 CEST $
 
 
 ;+
@@ -51,6 +51,7 @@
 FUNCTION spice_data_l3::init, file
   COMPILE_OPT IDL2
 
+  prits_tools.parcheck, file, 1, "file", 'string', 0
   file_info = spice_file2info(file)
   if ~file_info.is_spice_file then begin
     print, 'File is not a SPICE file: '+file
