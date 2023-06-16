@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-16 10:58 CEST $
+; $Id: 2023-06-16 12:16 CEST $
 
 
 ;+
@@ -253,15 +253,17 @@ FUNCTION spice_data::get_version_l3, filename_l3, official_l3dir=official_l3dir
   ;; by 1. If no L3 files exist the version number is set to 'V01' 
   stop
   spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
+  stop
   l3_dir = file_dirname(destination)
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
   existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+  stop
   IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
      versions = existing_l3_files.extract('V[0-9]{2}')
      versions = fix(versions.substring(1,2))
      this_version = 'V'+fns('##',max(versions)+1)
   ENDELSE 
-  
+  stop
   return, this_version
 END
 
