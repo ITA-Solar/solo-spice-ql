@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-16 11:00 CEST $
+; $Id: 2023-06-16 11:32 CEST $
 
 
 ;+
@@ -192,7 +192,7 @@ END
 ;   by 1. If no L3 files exist the version number is set to 'V01' 
 ;
 ; INPUTS:
-;     filename_l3 : The level 3 filename, version number can be anything.
+;     filename_l3 : The name of the level 3 file, version number can be anything.
 ;
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
@@ -204,19 +204,21 @@ END
 ; OPTIONAL OUTPUTS:
 ;     existing_l3_files: A list of filenames with the saem SPIOBSID and RASTERNO but different version number
 ;                        that already exist
+;     l3_dir: The directory in which the level 3 file will be saved.
 ;
 ; OUTPUT:
 ;     The version of the new level 3 file, as a string in the format 'V##'.
 ;-
 FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
-  existing_l3_files=existing_l3_files
+  existing_l3_files=existing_l3_files, l3_dir=l3_dir
   ; Returns the version for a new level 3
-  
+  compile_opt idl2, static
+
   spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
-  l3_dir = file_dirname(destination)
+  l3_dir = file_dirname(destination, /mark_directory)
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
   existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
-  IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version)
+  IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
   ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
      versions = existing_l3_files.extract('V[0-9]{2}')
      versions = fix(versions.substring(1,2))
@@ -232,6 +234,9 @@ END
 ;   Returns L3 filename based on L2 filename, with version number being the
 ;   highest version number of any existing L3 files incremented by 1.
 ;
+; INPUTS:
+;     filename_l2 : The full path and name to the level 2 file.
+;
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
 ;
@@ -243,19 +248,21 @@ END
 ;     version_l3: The version of the new level 3 file, as a string in the format 'V##'.
 ;     existing_l3_files: A list of filenames with the saem SPIOBSID and RASTERNO but different version number
 ;                        that already exist
+;     l3_dir: The directory in which the level 3 file will be saved.
 ;
 ; OUTPUT:
 ;     The new filename of the level 3 file.
 ;-
-FUNCTION spice_data::get_filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
-  version_l3=version_l3, existing_l3_files=existing_l3_files
+FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, official_l3dir=official_l3dir, $
+  version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir
   ; Returns L3 filename based on L2 filename, with version number being the highest version number of any existing L3 files incremented by 1.
-  
-  filename_l2 = self.get_header_keyword('FILENAME', 0, '')
+  compile_opt idl2, static
+
   version_l2 = filename_l2.extract('V[0-9]{2}')
-  
-  filename_l3 = filename_l2.replace('_L2_', '_L3_')
-  version_l3 = self.get_version_l3(filename_l3, force_version=force_version, official_l3dir=official_l3dir, existing_l3_files=existing_l3_files)
+  filename_l3 = file_basename(filename_l2)
+  filename_l3 = filename_l3.replace('_L2_', '_L3_')
+  version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
+    existing_l3_files=existing_l3_files, l3_dir=l3_dir)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
   
@@ -343,6 +350,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
+  prits_tools.parcheck, force_version, 0, "force_version", 'integers', 0, minval=0, maxval=99, /optional
 
   IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
   
@@ -354,7 +362,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ENDIF ELSE collect_hdr=0
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-  filename_l3 = self.get_filename_l3(force_version=force_version, official_l3dir = official_l3dir, version_l3 = version_l3)
+  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, official_l3dir = official_l3dir, version_l3 = version_l3)
   file_info_l2 = spice_file2info(filename_l2)
    
   file_id = version_l3 + $
