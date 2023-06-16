@@ -196,6 +196,11 @@ END
 ;
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
+;     TOP_DIR : A path to a directory in which the file should be saved. The necessary subdirectories
+;                 will be created (e.g. level2/2020/06/21).
+;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
+;                 keyword allows you to specify to which path you send
+;                 the file. Default is 0.
 ;
 ; KEYWORD PARAMETERS:
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
@@ -210,11 +215,12 @@ END
 ;     The version of the new level 3 file, as a string in the format 'V##'.
 ;-
 FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
-  existing_l3_files=existing_l3_files, l3_dir=l3_dir
+  existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir, path_index=path_index
   ; Returns the version for a new level 3
   compile_opt idl2, static
 
-  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
+  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination, $
+    top_dir=top_dir, path_index=path_index
   l3_dir = file_dirname(destination, /mark_directory)
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
   existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
@@ -239,6 +245,11 @@ END
 ;
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
+;     TOP_DIR : A path to a directory in which the file should be saved. The necessary subdirectories
+;                 will be created (e.g. level2/2020/06/21).
+;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
+;                 keyword allows you to specify to which path you send
+;                 the file. Default is 0.
 ;
 ; KEYWORD PARAMETERS:
 ;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
@@ -254,7 +265,7 @@ END
 ;     The new filename of the level 3 file.
 ;-
 FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, official_l3dir=official_l3dir, $
-  version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir
+  version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir, path_index=path_index
   ; Returns L3 filename based on L2 filename, with version number being the highest version number of any existing L3 files incremented by 1.
   compile_opt idl2, static
 
@@ -262,7 +273,7 @@ FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, 
   filename_l3 = file_basename(filename_l2)
   filename_l3 = filename_l3.replace('_L2_', '_L3_')
   version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
-    existing_l3_files=existing_l3_files, l3_dir=l3_dir)
+    existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir, path_index=path_index)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
   
@@ -363,7 +374,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ENDIF ELSE collect_hdr=0
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, official_l3dir = official_l3dir, version_l3 = version_l3)
+  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, official_l3dir=official_l3dir, version_l3=version_l3, $
+    top_dir=top_dir, path_index=path_index)
   file_info_l2 = spice_file2info(filename_l2)
    
   file_id = version_l3 + $
