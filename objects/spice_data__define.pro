@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-15 13:01 CEST $
+; $Id: 2023-06-16 09:37 CEST $
 
 
 ;+
@@ -57,12 +57,20 @@
 FUNCTION spice_data::init, file
   COMPILE_OPT IDL2
 
+  prits_tools.parcheck, file, 1, "file", 'string', 0
+  file_info = spice_file2info(file)
+  if ~file_info.is_spice_file then begin
+    print, 'File is not a SPICE file: '+file
+    return, 0
+  endif
+  if file_info.level ne 2 then begin
+    print, 'This is not a SPICE level 2 file: '+file
+    return, 0
+  endif
   self.title = 'SPICE'
   self.ccd_size = [1024, 1024]
-  IF n_elements(file) EQ 1 THEN BEGIN
-    self->read_file, file
-    return, 1
-  ENDIF ELSE return, 0
+  self->read_file, file
+  return, 1
 END
 
 
