@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-15 13:01 CEST $
+; $Id: 2023-06-16 10:58 CEST $
 
 
 ;+
@@ -251,6 +251,7 @@ FUNCTION spice_data::get_version_l3, filename_l3, official_l3dir=official_l3dir
   ;; Finds all existing L3 files with the same SPIOBSID and RASTERNO as
   ;; filename_l3, then returns the highest existing version number incremented
   ;; by 1. If no L3 files exist the version number is set to 'V01' 
+  stop
   spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination
   l3_dir = file_dirname(destination)
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
@@ -272,6 +273,7 @@ FUNCTION spice_data::get_filename_l3, official_l3dir=official_l3dir, version_l3=
   version_l2 = filename_l2.extract('V[0-9]{2}')
   
   filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  stop
   version_l3 = self.get_version_l3(filename_l3,  official_l3dir=official_l3dir)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
@@ -301,7 +303,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
 ;  filename_l3 = filename_l2.replace('_L2_', '_L3_')
+  stop
   filename_l3 = self.get_filename_l3(official_l3dir = official_l3dir, version_l3 = version_l3)
+  stop
   filename_out = filepath(filename_l3, /tmp)
   file_info_l2 = spice_file2info(filename_l2)
    
