@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-16 11:32 CEST $
+; $Id: 2023-06-16 12:18 CEST $
 
 
 ;+
@@ -192,7 +192,7 @@ END
 ;   by 1. If no L3 files exist the version number is set to 'V01' 
 ;
 ; INPUTS:
-;     filename_l3 : The name of the level 3 file, version number can be anything.
+;     filename_l3 : The name of the level 3 file, with or without the path, version number can be anything.
 ;
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
@@ -235,7 +235,7 @@ END
 ;   highest version number of any existing L3 files incremented by 1.
 ;
 ; INPUTS:
-;     filename_l2 : The full path and name to the level 2 file.
+;     filename_l2 : The name of the level 2 file, with or without the path.
 ;
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
@@ -352,7 +352,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
   prits_tools.parcheck, force_version, 0, "force_version", 'integers', 0, minval=0, maxval=99, /optional
 
-  IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
+  IF N_ELEMENTS(no_line_list) EQ 0 THEN no_line_list=1 ; See note for this keyword in documentation
   
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
