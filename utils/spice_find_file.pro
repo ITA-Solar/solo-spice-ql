@@ -94,7 +94,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2023-06-08 13:45 CEST $
+; $Id: 2023-06-19 11:37 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -208,7 +208,8 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
   ENDIF
   
   
-  IF keyword_set(remove_duplicates) THEN BEGIN
+  IF keyword_set(remove_duplicates) || $
+    (no_endtime && ~keyword_set(all) && N_ELEMENTS(remove_duplicates) EQ 0) THEN BEGIN
     ; Remove duplicates of files
     ind_keep = []
     ind_keep_not = []
@@ -253,6 +254,11 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
         same_obs_ind = where(fileinfo.spiobsid eq fileinfo[min_index].spiobsid, count_file)
         files = files[same_obs_ind]
         count_seq = 1
+      ENDIF ELSE IF N_ELEMENTS(remove_duplicates) GT 0 && ~keyword_set(remove_duplicates) THEN BEGIN
+        ind = where(fileinfo.spiobsid eq fileinfo[min_index].spiobsid AND $
+          fileinfo.rasterno eq fileinfo[min_index].rasterno AND $
+          fileinfo.level eq fileinfo[min_index].level, count_file)
+        files = files[ind]
       ENDIF ELSE BEGIN ; keyword_set(sequence)
         files = files[min_index]
         count_file = 1
