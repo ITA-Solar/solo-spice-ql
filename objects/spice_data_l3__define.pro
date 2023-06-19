@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-16 12:45 CEST $
+; $Id: 2023-06-19 13:11 CEST $
 
 
 ;+
@@ -70,6 +70,8 @@ FUNCTION spice_data_l3::init, file
   self.version = file_info.version
   self.spiobsid = file_info.spiobsid
   self.rasterno = file_info.rasterno
+  hdr = headfits(file, exten=0)
+  self.hdr = ptr_new(hdr)
 
   return, 1
 END
@@ -82,6 +84,7 @@ END
 pro spice_data_l3::cleanup
   COMPILE_OPT IDL2
 
+  IF ptr_valid(self.hdr) THEN ptr_free, self.hdr
 END
 
 
@@ -108,6 +111,45 @@ END
 
 ;+
 ; Description:
+;     Returns the level 2 filename that was used to create this level 3 file.
+;
+; INPUTS:
+;     file : path of a SPICE FITS file.
+;
+; OUTPUT:
+;     Name of the level 2 file.
+;-
+FUNCTION spice_data_l3::get_l2_filename
+  COMPILE_OPT IDL2
+
+  return, fxpar(*self.hdr, 'PGFILENA', missing='')
+END
+
+
+;+
+; Description:
+;     Finds and returns the level 2 file that was used to create this level 3 file.
+;
+; INPUTS:
+;     file : path of a SPICE FITS file.
+;
+; OUTPUT:
+;     Full path and name of the level 2 file, if it exists, otherwise an empty string.
+;-
+FUNCTION spice_data_l3::find_l2_file
+  COMPILE_OPT IDL2
+
+  file_l2 = spice_find_file(self.datetime, remove_duplicates=0)
+  filename_l2 = file_basename(file_l2)
+  pgfilena = self->get_l2_filename()
+  ind = where(filename_l2 eq pgfilena, count)
+  if count gt 0 then result = file_l2[ind] else result = ''
+  return, result
+END
+
+
+;+
+; Description:
 ;     Class definition procedure
 ;-
 PRO spice_data_l3__define
@@ -122,6 +164,7 @@ PRO spice_data_l3__define
     datetime:'', $        ; date and time in CCSDS format of observation
     version:-1, $         ; version number (version of the spice data pipeline)
     spiobsid:-1L, $       ; SPICE OBS ID
-    rasterno:-1 $         ; raster repetition number
+    rasterno:-1, $        ; raster repetition number
+    hdr:ptr_new() $       ; A pointer to the header string of the first extension
   }
 END
