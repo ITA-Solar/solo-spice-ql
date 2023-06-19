@@ -60,7 +60,8 @@
 ;               all files that are stored locally
 ;     REMOVE_DUPLICATES: If set, then the procedures checks whether there are any files that have same
 ;               SPIOBS, raster number and level. If yes, it keeps only the one with the highest version
-;               number.
+;               number. This keyword is set by default if TIME_END is not provided and /ALL is not set.
+;               REMOVE_DUPLICATES has to be set to zero explicitly to get all versions of a file.
 ;
 ; OUTPUTS:
 ;     A string or string array containing the full path to a SPICE file or files. 
@@ -94,7 +95,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2023-06-19 11:37 CEST $
+; $Id: 2023-06-19 11:39 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
