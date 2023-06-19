@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-13 13:20 CEST $
+; $Id: 2023-06-19 14:19 CEST $
 ;-
 ;
 ;
@@ -393,13 +393,39 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
   file_in = (file_search(file, /fully_qualify_path))[0]
   IF file_in EQ '' THEN BEGIN
-    print, 'Cannot find file ' + file
+    print, 'Cannot find file : ' + file
     return
   ENDIF
   file_info = spice_file2info(file_in)
-  IF ~file_info.is_spice_file THEN return
-
   help, file_info
+  IF ~file_info.is_spice_file THEN BEGIN
+    print, 'File is not a SPICE FITS file : ' + file
+    return
+  ENDIF
+
+  CASE file_info.level OF
+    2: file_l2 = file_in
+    3: IF file_l3_official NE file_in THEN BEGIN
+      file_l3_user = file_in
+      spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
+      IF file_l3_user EQ destination THEN BEGIN
+        file_in_user_dir=1
+        file_top_dir=''
+      ENDIF ELSE BEGIN
+        file_in_user_dir=0
+        file_top_dir='xxx'
+      ENDELSE
+    ENDIF
+    ELSE: BEGIN
+      print, 'SPICE FITS file needs to be either level 2 or level 3 : ' + file
+      return
+    END
+  ENDCASE
+
+
+
+
+
   file_l2 = spice_find_file(file_info.datetime)
   IF file_l2 NE '' THEN BEGIN
     file_l2_info = spice_file2info(file_l2)
