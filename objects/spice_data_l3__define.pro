@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-20 14:54 CEST $
+; $Id: 2023-06-20 15:33 CEST $
 
 
 ;+
@@ -146,7 +146,7 @@ FUNCTION spice_data_l3::find_l2_file, user_dir=user_dir
   filename_l2 = file_basename(file_l2)
   pgfilena = self->get_l2_filename()
   ind = where(filename_l2 eq pgfilena, count)
-  if count gt 0 then result = file_l2[ind] else result = ''
+  if count gt 0 then result = file_l2[ind[0]] else result = ''
   return, result
 END
 
