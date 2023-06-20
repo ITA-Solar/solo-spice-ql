@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-19 14:19 CEST $
+; $Id: 2023-06-20 15:34 CEST $
 ;-
 ;
 ;
@@ -385,7 +385,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
   prits_tools.parcheck, file, 1, "file", 'string', 0
   prits_tools.parcheck, group_leader, 0, "group_leader", 'integers', 0, /optional
- 
+
   if n_params() lt 1 then begin
     message,'Usage: spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
     ;return
@@ -403,73 +403,48 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     return
   ENDIF
 
+  file_top_dir=''
+  file_in_user_dir=0
+
   CASE file_info.level OF
-    2: file_l2 = file_in
-    3: IF file_l3_official NE file_in THEN BEGIN
-      file_l3_user = file_in
-      spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
-      IF file_l3_user EQ destination THEN BEGIN
-        file_in_user_dir=1
-        file_top_dir=''
+    2: BEGIN
+      file_l2 = file_in
+      file_l3_official = spice_data_l3.find_l3_file_from_l2(file_l2, /latest)
+      file_l3_user = spice_data_l3.find_l3_file_from_l2(file_l2, /user_dir, /latest)
+    ENDCASE
+
+    3: BEGIN
+      l3_obj = spice_data(file_in)
+      file_l2 = l3_obj->find_l2_file()
+      IF file_l2 EQ '' THEN file_l2 = l3_obj->find_l2_file(/user_dir)
+stop
+      file_l3_official = ''
+      file_l3_official_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file)
+      FOR ifile=0,count_file-1 DO BEGIN
+        IF file_l3_official_all[ifile] EQ file_in THEN BEGIN
+          file_l3_official = file_l3_official_all[ifile]
+          break
+        ENDIF
+      ENDFOR
+
+      IF file_l3_official EQ '' THEN BEGIN
+        file_l3_user = file_in
+        spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
+        IF file_l3_user EQ destination THEN BEGIN
+          file_in_user_dir=1
+        ENDIF ELSE BEGIN
+          file_top_dir='xxx'
+        ENDELSE
       ENDIF ELSE BEGIN
-        file_in_user_dir=0
-        file_top_dir='xxx'
+        file_l3_user = ''
       ENDELSE
-    ENDIF
+    ENDCASE
+
     ELSE: BEGIN
       print, 'SPICE FITS file needs to be either level 2 or level 3 : ' + file
       return
-    END
+    ENDCASE
   ENDCASE
-
-
-
-
-
-  file_l2 = spice_find_file(file_info.datetime)
-  IF file_l2 NE '' THEN BEGIN
-    file_l2_info = spice_file2info(file_l2)
-    IF file_l2_info.version NE file_info.version || $
-      file_l2_info.spiobsid NE file_info.spiobsid || $
-      file_l2_info.rasterno NE file_info.rasterno THEN file_l2 = ''
-  ENDIF
-  print,'file_l2           ',file_l2
-  file_l3_official = spice_find_file(file_info.datetime, level=3)
-  IF file_l3_official NE '' THEN BEGIN
-    file_l3_official_info = spice_file2info(file_l3_official)
-    IF file_l3_official_info.version NE file_info.version || $
-      file_l3_official_info.spiobsid NE file_info.spiobsid || $
-      file_l3_official_info.rasterno NE file_info.rasterno THEN file_l3_official = ''
-  ENDIF
-  print,'file_l3_official  ',file_l3_official
-  file_l3_user = spice_find_file(file_info.datetime, /user, level=3)
-  IF file_l3_user NE '' THEN BEGIN
-    file_l3_user_info = spice_file2info(file_l3_user)
-    IF file_l3_user_info.version NE file_info.version || $
-      file_l3_user_info.spiobsid NE file_info.spiobsid || $
-      file_l3_user_info.rasterno NE file_info.rasterno THEN file_l3_user = ''
-  ENDIF
-  IF file_l3_user NE '' THEN file_in_user_dir=1 ELSE file_in_user_dir=0
-  file_top_dir=''
-  CASE file_info.level OF
-    2: file_l2 = file_in
-    3: IF file_l3_official NE file_in THEN BEGIN
-      file_l3_user = file_in
-      spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
-      IF file_l3_user EQ destination THEN BEGIN
-        file_in_user_dir=1
-        file_top_dir=''
-      ENDIF ELSE BEGIN
-        file_in_user_dir=0
-        file_top_dir='xxx'
-      ENDELSE
-    ENDIF
-    ELSE: BEGIN
-      print, 'SPICE FITS file needs to be either level 2 or level 3.'
-      return
-    END
-  ENDCASE
-  print,'file_l3_user      ',file_l3_user
 
   exist_l2 = file_l2 NE ''
   exist_l3_official = file_l3_official NE ''
