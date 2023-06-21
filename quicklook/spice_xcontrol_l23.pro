@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-21 09:43 CEST $
+; $Id: 2023-06-21 11:52 CEST $
 ;-
 ;
 ;
@@ -433,7 +433,12 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
         IF file_l3_user EQ destination THEN BEGIN
           file_in_user_dir=1
         ENDIF ELSE BEGIN
-          file_top_dir='xxx'
+          file_top_dir = file_dirname(file_l3_user)
+          file_top_dir = file_top_dir.split(path_sep())
+          IF N_ELEMENTS(file_top_dir) GT 6 THEN BEGIN
+            file_top_dir = file_top_dir[0:-5]
+          ENDIF
+          file_top_dir = file_top_dir.join(path_sep())
         ENDELSE
       ENDIF ELSE BEGIN
         file_l3_user = ''
