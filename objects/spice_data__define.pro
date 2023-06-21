@@ -225,7 +225,7 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, o
   l3_dir = file_dirname(destination, /mark_directory)
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
   existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
-
+  existing_l3_files = file_basename(existing_l3_files)
   IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
   ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
      versions = existing_l3_files.extract('V[0-9]{2}')

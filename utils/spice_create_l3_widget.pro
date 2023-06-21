@@ -83,10 +83,11 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-16 12:48 CEST $
+; $Id: 2023-06-16 14:17 CEST $
 ;-
 ;
 ;
+
 
 pro spice_create_l3_widget_event, event
   widget_control, event.top, get_Uvalue=info
@@ -122,18 +123,24 @@ pro spice_create_l3_widget_event, event
       official_l3dir = user_dir[0] EQ 0
       widget_control, info.save_bg, get_value=save
       save_not = save[0] EQ 0
-      IF ~save_not && file_exist(info.file_l3) THEN BEGIN
-        overwrite = spice_overwrite_l3_file(info.file_l3, event.top, allow_xcontrol_l23=info.allow_xcontrol_l23)
-        IF overwrite EQ 'No' THEN return
-        IF overwrite EQ 'Open' THEN BEGIN
-          spice_xcontrol_l23, info.file_l3, group_leader=info.group_leader
-          widget_control, event.top, /destroy
-          return
+      droplist_select = widget_info(info.file_l3_name_list, /droplist_select)
+      file_l3 = info.dir_l3 + (*info.file_l3)[droplist_select]
+      IF droplist_select GT 0 THEN BEGIN
+        force_version = file_l3.extract('V[0-9]{2}')
+        force_version = fix(force_version.substring(1,2))
+       IF ~save_not && file_exist(file_l3) THEN BEGIN
+          overwrite = spice_overwrite_l3_file(file_l3, event.top, allow_xcontrol_l23=info.allow_xcontrol_l23)
+          IF overwrite EQ 'No' THEN return
+          IF overwrite EQ 'Open' THEN BEGIN
+            spice_xcontrol_l23, file_l3, group_leader=info.group_leader
+            widget_control, event.top, /destroy
+            return
+          ENDIF
         ENDIF
       ENDIF
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
         no_fitting=no_fitting, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, no_line_list=no_line_list, $
-        official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, $
+        official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, force_version=force_version, $
         all_ana=all_ana, all_result_headers=all_result_headers, group_leader=info.group_leader)
       (*info.result).l3_file = l3_file
       (*info.result).ana = ptr_new(all_ana)
@@ -207,10 +214,19 @@ pro spice_create_l3_widget_calc_l3_dir, info
   user_dir = user_dir[0]
   file_l2 = info.l2_object->get_filename()
   file_l3 = spice_data.get_filename_l3(file_l2, force_version=force_version, official_l3dir=~user_dir, $
-    version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir
-  info.file_l3 = file_l3
+    version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir)
+  all_files = [file_l3]
+  all_files_list = [file_l3+' [new]']
+  ind = where(existing_l3_files NE '', count)
+  IF count GT 0 THEN BEGIN
+    all_files = [all_files, existing_l3_files[ind]]
+    all_files_list = [all_files_list, existing_l3_files[ind]+' [overwrite]']
+  ENDIF
+  if ptr_valid(info.file_l3) then ptr_free, info.file_l3
+  info.file_l3 = ptr_new(all_files)
+  info.dir_l3 = l3_dir
+  widget_control, info.file_l3_name_list, set_value=all_files_list
   widget_control, info.file_l3_dir_label, set_value=l3_dir
-  widget_control, info.file_l3_name_label, set_value=file_l3
 end
 
 
@@ -287,7 +303,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
   file_l3_base = widget_base(save_base, /column)
   file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  ;file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  file_l3_name_list = widget_droplist(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
 
   button_base = widget_base(base, /row)
   button_ok = widget_button(button_base, value='OK')
@@ -298,7 +315,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   info = { $
     group_leader:group_leader, $
     l2_object:l2_object, $
-    file_l3:'', $
+    file_l3:ptr_new(), $
+    dir_l3:'', $
     official_l3dir:official_l3dir, $
     result:result, $
     lineselect:lineselect, $
@@ -310,7 +328,7 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
     fit_velocity_field:fit_velocity_field, $
     save_bg:save_bg, $
     file_l3_dir_label:file_l3_dir_label, $
-    file_l3_name_label:file_l3_name_label, $
+    file_l3_name_list:file_l3_name_list, $
     ok:button_ok, $
     cancel:button_cancel, $
     allow_xcontrol_l23:keyword_set(allow_xcontrol_l23) $

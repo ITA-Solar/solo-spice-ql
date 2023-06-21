@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-16 12:45 CEST $
+; $Id: 2023-06-20 15:33 CEST $
 
 
 ;+
@@ -70,6 +70,8 @@ FUNCTION spice_data_l3::init, file
   self.version = file_info.version
   self.spiobsid = file_info.spiobsid
   self.rasterno = file_info.rasterno
+  hdr = headfits(file, exten=0)
+  self.hdr = ptr_new(hdr)
 
   return, 1
 END
@@ -82,6 +84,7 @@ END
 pro spice_data_l3::cleanup
   COMPILE_OPT IDL2
 
+  IF ptr_valid(self.hdr) THEN ptr_free, self.hdr
 END
 
 
@@ -108,6 +111,108 @@ END
 
 ;+
 ; Description:
+;     Returns the level 2 filename that was used to create this level 3 file.
+;
+; INPUTS:
+;     file : path of a SPICE FITS file.
+;
+; OUTPUT:
+;     Name of the level 2 file.
+;-
+FUNCTION spice_data_l3::get_l2_filename
+  COMPILE_OPT IDL2
+
+  return, fxpar(*self.hdr, 'PGFILENA', missing='')
+END
+
+
+;+
+; Description:
+;     Finds and returns the level 2 file that was used to create this level 3 file.
+;
+; INPUTS:
+;     file : path of a SPICE FITS file.
+;
+; KEYWORD PARAMETERS:
+;     USER_DIR: If set, the procedure searches in TOP_DIR/user/ instead of TOP_DIR/.
+;
+; OUTPUT:
+;     Full path and name of the level 2 file, if it exists, otherwise an empty string.
+;-
+FUNCTION spice_data_l3::find_l2_file, user_dir=user_dir
+  COMPILE_OPT IDL2
+
+  file_l2 = spice_find_file(self.datetime, remove_duplicates=0, user_dir=user_dir)
+  filename_l2 = file_basename(file_l2)
+  pgfilena = self->get_l2_filename()
+  ind = where(filename_l2 eq pgfilena, count)
+  if count gt 0 then result = file_l2[ind[0]] else result = ''
+  return, result
+END
+
+
+;+
+; Description:
+;     Finds and returns the level 3 file(s) that was produced with the given level 2 file.
+;
+; INPUTS:
+;     file_l2 : filename of a SPICE FITS level 2 file.
+;
+; KEYWORD PARAMETERS:
+;     USER_DIR: If set, the procedure searches in TOP_DIR/user/ instead of TOP_DIR/.
+;     latest: If set, then only the level 3 file with highest version number will be returned.
+;
+; OPTIONAL OUTPUTS:
+;     l3_objects : the found level 3 files as SPICE_DATA_L3 objects. Either a scalar object,
+;                  or an array of objects.
+;     count: Number of level 3 files found.
+;
+; OUTPUT:
+;     Full path and name of the level 3 file(s), that made by the given level 2 file.
+;     This is an empty string if no files were found, a scalar string if one file was found or /latest keyword was set
+;     or an array of strings if multiple files were found.
+;-
+FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir=user_dir, l3_objects=l3_objects, COUNT=COUNT, latest=latest
+  COMPILE_OPT IDL2, static
+
+  file_l2_info = spice_file2info(file_l2)
+  file_l3_all = spice_find_file(file_l2_info.datetime, remove_duplicates=0, user_dir=user_dir, level=3, COUNT_FILE=COUNT_FILE)
+  count = 0
+  IF count_file eq 0 then return, ''
+  FOR ifile=0,count_file-1 DO BEGIN
+    file_l3_info = spice_file2info(file_l3_all[ifile])
+    IF file_l3_info.spiobsid NE file_l2_info.spiobsid || $
+      file_l3_info.rasterno NE file_l2_info.rasterno THEN continue
+
+    l3_obj_temp = spice_data_l3(file_l3_all[ifile])
+    l2_file_temp = l3_obj_temp->get_l2_filename()
+    l2_version = l2_file_temp.extract('V[0-9]{2}')
+    l2_version = fix(l2_version.substring(1,2))
+    IF l2_version EQ file_l2_info.version THEN BEGIN
+      count++
+      IF N_ELEMENtS(found_l3_file) EQ 0 THEN BEGIN
+        found_l3_file = file_l3_all[ifile]
+        l3_objects = l3_obj_temp
+      ENDIF ELSE BEGIN
+        found_l3_file = [found_l3_file, file_l3_all[ifile]]
+        l3_objects = [l3_objects, l3_obj_temp]
+      ENDELSE
+    ENDIF
+  ENDFOR
+
+  IF keyword_set(latest) && count GT 1 THEN BEGIN
+    versions = found_l3_file.extract('V[0-9]{2}')
+    versions = fix(versions.substring(1,2))
+    max_version = max(versions, maxind)
+    found_l3_file = found_l3_file[maxind]
+    l3_objects = l3_objects[maxind]
+  ENDIF
+  return, found_l3_file
+END
+
+
+;+
+; Description:
 ;     Class definition procedure
 ;-
 PRO spice_data_l3__define
@@ -122,6 +227,7 @@ PRO spice_data_l3__define
     datetime:'', $        ; date and time in CCSDS format of observation
     version:-1, $         ; version number (version of the spice data pipeline)
     spiobsid:-1L, $       ; SPICE OBS ID
-    rasterno:-1 $         ; raster repetition number
+    rasterno:-1, $        ; raster repetition number
+    hdr:ptr_new() $       ; A pointer to the header string of the first extension
   }
 END
