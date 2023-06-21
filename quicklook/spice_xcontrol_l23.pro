@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-20 15:34 CEST $
+; $Id: 2023-06-21 09:43 CEST $
 ;-
 ;
 ;
@@ -417,7 +417,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       l3_obj = spice_data(file_in)
       file_l2 = l3_obj->find_l2_file()
       IF file_l2 EQ '' THEN file_l2 = l3_obj->find_l2_file(/user_dir)
-stop
+
       file_l3_official = ''
       file_l3_official_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file)
       FOR ifile=0,count_file-1 DO BEGIN
