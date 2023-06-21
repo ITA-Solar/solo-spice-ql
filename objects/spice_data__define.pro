@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-19 11:34 CEST $
+; $Id: 2023-06-21 13:02 CEST $
 
 
 ;+
@@ -231,7 +231,7 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, o
      versions = existing_l3_files.extract('V[0-9]{2}')
      versions = fix(versions.substring(1,2))
      this_version = 'V'+fns('##',max(versions)+1)
-     PRINT,TRIM(N_L3_FILES)+' FILES WITH SPIOBSID_RASTERNO '+TRIM(SPIOBSID_RASTERNO)+' ALREADY EXIST. NEW VERSION IS '+THIS_VERSION
+    ; PRINT,TRIM(N_L3_FILES)+' FILES WITH SPIOBSID_RASTERNO '+TRIM(SPIOBSID_RASTERNO)+' ALREADY EXIST. NEW VERSION IS '+THIS_VERSION
   ENDELSE 
 
   return, this_version
