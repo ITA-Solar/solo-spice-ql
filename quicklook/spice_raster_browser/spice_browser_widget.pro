@@ -50,7 +50,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-05-23 11:35 CEST $
+; $Id: 2023-06-14 13:30 CEST $
 
 
 PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
@@ -359,12 +359,7 @@ PRO spice_browser_widget, data, yoffsets=yoffsets, quiet=quiet, $
   spice_browser_base=widget_base(/row,map=1,title='SPICE_RASTER_BROWSER'+extra_title, group_leader=group_leader)
 
   subbase1=widget_base(spice_browser_base,/col,map=1)
-  ;; exit=cw_bgroup(subbase1,/row,['EXIT','HELP'], $
-  ;;                font=bigfont)
-
-  spice_browser_coltable,desc=desc
-  desc=['0\EXIT','0\HELP',desc]
-  exit=cw_pdmenu(subbase1,desc,font=bigfont)
+  exit=cw_bgroup(subbase1,/row,['EXIT','HELP','COLORS'], font=bigfont)
 
 
   tab=widget_tab(subbase1)

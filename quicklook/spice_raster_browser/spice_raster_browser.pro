@@ -82,7 +82,7 @@
 ;     spice_browser_plot_image, IRIS_BROWSER_PLOT_SPEC,
 ;     spice_browser_font, IRIS_BROWSER_EVENT, IRIS_BROWSER_WIDGET,
 ;     spice_browser_update_spectrum, spice_browser_update_image,
-;     spice_browser_plot_sji, spice_browser_coltable,
+;     spice_browser_plot_sji,
 ;     spice_browser_wvl_list, IRB_GET_FLARE_TEXT
 ;
 ; PROGRAMMING NOTES:
@@ -104,7 +104,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-05-16 11:46 CEST $
+; $Id: 2023-06-14 13:30 CEST $
 
 
 ;---------------------

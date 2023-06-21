@@ -33,7 +33,7 @@
 ; MODIFICATION HISTORY:
 ;     12-Sep-2022: First version by Martin Wiesmann
 ;
-; $Id: 2022-09-12 12:12 CEST $
+; $Id: 2023-06-13 11:50 CEST $
 ;-
 ;
 ;
@@ -69,15 +69,9 @@ function spice_overwrite_l3_file, file, group_leader, allow_xcontrol_l23=allow_x
   }
 
   ; Center the widget on display.
-  Device, Get_Screen_Size=screenSize
-  xCenter = screenSize(0) / 2
-  yCenter = screenSize(1) / 2
-  geom = Widget_Info(base, /Geometry)
-  xHalfSize = geom.Scr_XSize / 2
-  yHalfSize = geom.Scr_YSize / 2
-  Widget_Control, base, XOffset = xCenter-xHalfSize, YOffset = yCenter-yHalfSize
   widget_control, base, set_Uvalue=info, /No_Copy
-  widget_control, base, /realize
+  wp = widget_positioner(base, parent=group_leader)
+  wp->position, /center
   xmanager, 'spice_overwrite_l3_file', base, event_handler='spice_overwrite_l3_file_event'
 
   res = *result

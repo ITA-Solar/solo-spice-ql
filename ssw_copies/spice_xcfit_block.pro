@@ -196,7 +196,7 @@
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
 ; Version     :
-; $Id: 2023-06-08 11:13 CEST $
+; $Id: 2023-06-20 13:08 CEST $
 ;-
 
 
@@ -1373,9 +1373,9 @@ PRO spice_xcfit_block_event,ev
   if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $  ; An event from cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'CW_LOADCT' || $    ; An event from an unofficial cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
-    spice_cw_cubeview_force_redraw, info.int.data_id
-    spice_cw_cubeview_force_redraw, info.int.residual_id
-    spice_cw_cubeview_force_redraw, info.int.result_id
+    cw_cubeview_force_redraw, info.int.data_id
+    cw_cubeview_force_redraw, info.int.residual_id
+    cw_cubeview_force_redraw, info.int.result_id
     
     if tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
       handle_value,info.int.a.fit_h,orgfit
@@ -1638,7 +1638,7 @@ END
 
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
-                analysis=ana, title=title
+                analysis=ana, title=title, group_leader=group_leader
   
   on_error,2
   
@@ -1731,10 +1731,10 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   screen = spice_get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, /scroll, $
-      x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]))
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
+      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]))
   ENDIF ELSE BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml)
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader)
   ENDELSE
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
@@ -2009,23 +2009,23 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
 ;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
-  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
+  info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
-                                 scale=scale,phys_scale=phys_scale)
+                                 scale=scale,phys_scale=phys_scale, image_dim=[1,2]) ; image_dim is probably spice-specific
   
-  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
+  info.int.residual_id = cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
-                                     scale=scale,phys_scale=phys_scale)
+                                     scale=scale,phys_scale=phys_scale, image_dim=[1,2]) ; image_dim is probably spice-specific
   
   IF keyword_set(origin) THEN r_origin = origin(1:*)
   IF keyword_set(scale) THEN r_scale = scale(1:*)
   IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale(1:*)
   
-  info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
+  info.int.result_id = cw_cubeview(result_b,value=this_result,$
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames(1:*),$
                                    title=title, origin=r_origin, $
@@ -2034,7 +2034,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   widget_control,info.int.initval_id,set_value=title
   spice_xcfit_block_sensitize,info,title
   
-  widget_control,base,/realize
+  xrealize, base, group=group_leader, /center
   
   spice_xcfit_block_visitp,info
   

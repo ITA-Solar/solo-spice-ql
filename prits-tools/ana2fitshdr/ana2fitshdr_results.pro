@@ -55,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-03-16 10:46 CET $
+; $Id: 2023-06-16 14:31 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -92,6 +92,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
 ;  fits_util->add, hdr, 'ANA_DEF', definition, 'ANA definition'
 ;  fits_util->add, hdr, 'ANA_MISS', missing, 'ANA missing value in fitted data'
 ;  fits_util->add, hdr, 'ANA_LABL', label, 'ANA label'
+  if N_ELEMENTS(history) EQ 0 then history=''
   ind = where(history NE '', count)
   if count gt 0 then begin
     history_string = strjoin(history[ind], ';')
@@ -205,6 +206,8 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       hdr = [hdr[0:ind_end-1], header_l2[ind_start-3:*]]
     endif
     
+    fits_util->add, hdr, 'PARENT', fxpar(header_l2, 'FILENAME', missing=''), 'L2 file'
+
     ; Adapt WCS keywords
     fits_util->add, hdr, 'CTYPE1', 'FIT PARAMETER', 'Type of 1st coordinate'
     fits_util->add, hdr, 'CNAME1', 'Parameter', 'Name of 1st coordinate'

@@ -18,7 +18,7 @@
 ; CALLING SEQUENCE:
 ;     Result = SPICE_FIND_FILE(time_start [, time_end=time_end, level=level, $
 ;       top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-;       /SEQUENCE, /ALL, /NO_LEVEL, /NO_TREE_STRUCT, /USER_DIR, /SEARCH_SUBDIR, /IGNORE_TIME ] )
+;       /SEQUENCE, /ALL, /NO_LEVEL, /NO_TREE_STRUCT, /USER_DIR, /SEARCH_SUBDIR, /IGNORE_TIME , /REMOVE_DUPLICATES] )
 ;
 ; INPUTS:
 ;     TIME_START: This can be in any format accepted by the ANYTIM suite of
@@ -58,6 +58,10 @@
 ;               returned. Ignored if NO_TREE_STRUCT is not set.
 ;               This keyword is used by spice_xfiles, it makes it possible to return
 ;               all files that are stored locally
+;     REMOVE_DUPLICATES: If set, then the procedures checks whether there are any files that have same
+;               SPIOBS, raster number and level. If yes, it keeps only the one with the highest version
+;               number. This keyword is set by default if TIME_END is not provided and /ALL is not set.
+;               REMOVE_DUPLICATES has to be set to zero explicitly to get all versions of a file.
 ;
 ; OUTPUTS:
 ;     A string or string array containing the full path to a SPICE file or files. 
@@ -91,13 +95,13 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2023-03-27 13:45 CEST $
+; $Id: 2023-06-19 11:39 CEST $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
   top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
   all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
-  search_subdir=search_subdir, ignore_time=ignore_time
+  search_subdir=search_subdir, ignore_time=ignore_time, remove_duplicates=remove_duplicates
 
   count_file = 0
   count_seq = 0
@@ -205,28 +209,31 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
   ENDIF
   
   
-  ; Remove duplicates of files
-  ind_keep = []
-  ind_keep_not = []
-  FOR i=0,count0-1 DO BEGIN
-    IF where(ind_keep eq i) GE 0 || where(ind_keep_not eq i) GE 0 THEN continue
-    ind = where(fileinfo.spiobsid eq fileinfo[i].spiobsid AND $
-      fileinfo.rasterno eq fileinfo[i].rasterno AND $
-      fileinfo.level eq fileinfo[i].level, count)
-    IF count GT 1 THEN BEGIN
-      max_version = max(fileinfo[ind].version, max_ind)
-      ind_keep = [ind_keep, ind[max_ind]]
-      remove, max_ind, ind
-      ind_keep_not = [ind_keep_not, ind]
-    ENDIF ELSE BEGIN
-      ind_keep = [ind_keep, i]
-    ENDELSE
-  ENDFOR
-  IF N_ELEMENTS(ind_keep_not) GT 0 THEN BEGIN
-    files=files[ind_keep]
-    fileinfo=fileinfo[ind_keep]
-    count0=N_ELEMENTS(ind_keep)
-  ENDIF
+  IF keyword_set(remove_duplicates) || $
+    (no_endtime && ~keyword_set(all) && N_ELEMENTS(remove_duplicates) EQ 0) THEN BEGIN
+    ; Remove duplicates of files
+    ind_keep = []
+    ind_keep_not = []
+    FOR i=0,count0-1 DO BEGIN
+      IF where(ind_keep eq i) GE 0 || where(ind_keep_not eq i) GE 0 THEN continue
+      ind = where(fileinfo.spiobsid eq fileinfo[i].spiobsid AND $
+        fileinfo.rasterno eq fileinfo[i].rasterno AND $
+        fileinfo.level eq fileinfo[i].level, count)
+      IF count GT 1 THEN BEGIN
+        max_version = max(fileinfo[ind].version, max_ind)
+        ind_keep = [ind_keep, ind[max_ind]]
+        remove, max_ind, ind
+        ind_keep_not = [ind_keep_not, ind]
+      ENDIF ELSE BEGIN
+        ind_keep = [ind_keep, i]
+      ENDELSE
+    ENDFOR
+    IF N_ELEMENTS(ind_keep_not) GT 0 THEN BEGIN
+      files=files[ind_keep]
+      fileinfo=fileinfo[ind_keep]
+      count0=N_ELEMENTS(ind_keep)
+    ENDIF
+  ENDIF ; keyword_set(remove_duplicates)
 
 
   IF keyword_set(all) && ~keyword_set(no_tree_struct) && no_endtime && ~keyword_set(sequence) THEN BEGIN
@@ -248,6 +255,11 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
         same_obs_ind = where(fileinfo.spiobsid eq fileinfo[min_index].spiobsid, count_file)
         files = files[same_obs_ind]
         count_seq = 1
+      ENDIF ELSE IF N_ELEMENTS(remove_duplicates) GT 0 && ~keyword_set(remove_duplicates) THEN BEGIN
+        ind = where(fileinfo.spiobsid eq fileinfo[min_index].spiobsid AND $
+          fileinfo.rasterno eq fileinfo[min_index].rasterno AND $
+          fileinfo.level eq fileinfo[min_index].level, count_file)
+        files = files[ind]
       ENDIF ELSE BEGIN ; keyword_set(sequence)
         files = files[min_index]
         count_file = 1

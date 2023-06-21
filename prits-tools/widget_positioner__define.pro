@@ -32,7 +32,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-01 14:10 CEST $
+; $Id: 2023-06-13 11:50 CEST $
 
 
 ;+
@@ -107,9 +107,12 @@ END
 ;               enough space.
 ;     bottom_align : If set, the widget will be positioned to the left of the parent, if there is
 ;               enough space. Ignored if top_align is set.
+;     center : If set, the widget will be positioned in the center of the parent, or of the screen
+;               if no parent is provided.
 ;-
 PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset, $
   left_align=left_align, right_align=right_align, top_align=top_align, bottom_align=bottom_align, $
+  center=center, $
   n_subplot=n_subplot
   ;Positions the widget relative to parent or screen if no parent given
   COMPILE_OPT IDL2
@@ -124,24 +127,43 @@ PRO widget_positioner::position, xoffset=xoffset, yoffset=yoffset, $
   ENDIF
   display_coord = self.get_display_coords(offset_parent=offset_parent, offset_widget=[xoffset, yoffset])
 
+  IF self.parent GE 0 THEN geometry_parent = widget_info(self.parent, /geometry)
   geometry = widget_info(self.widget, /geometry)
   xsize = geometry.SCR_XSIZE + (2* geometry.MARGIN)
   IF xsize GT display_coord[2] THEN message, 'Widget is too wide for the screen', /informational
   IF keyword_set(left_align) THEN BEGIN
     xoffset = -xsize
-  ENDIF ELSE IF keyword_set(right_align) && self.parent GE 0 THEN BEGIN
-    geometry_parent = widget_info(self.parent, /geometry)
-    xoffset = geometry_parent.SCR_XSIZE + (2* geometry_parent.MARGIN)
+  ENDIF ELSE IF keyword_set(right_align) THEN BEGIN
+    IF self.parent GE 0 THEN BEGIN
+      xoffset = geometry_parent.SCR_XSIZE + (2* geometry_parent.MARGIN)      
+    ENDIF ELSE BEGIN
+      xoffset = display_coord[2]
+    ENDELSE
+  ENDIF ELSE IF keyword_set(center) THEN BEGIN
+    IF self.parent GE 0 THEN BEGIN
+      xoffset = (geometry_parent.SCR_XSIZE - geometry.SCR_XSIZE) / 2
+    ENDIF ELSE BEGIN
+      xoffset = (display_coord[2] - geometry.SCR_XSIZE ) / 2
+    ENDELSE
   ENDIF
 
   ysize = geometry.SCR_YSIZE + (2* geometry.MARGIN)
   IF ysize GT display_coord[3] THEN message, 'Widget is too high for the screen', /informational
   IF keyword_set(top_align) THEN BEGIN
     yoffset = -ysize
-  ENDIF ELSE IF keyword_set(bottom_align) && self.parent GE 0 THEN BEGIN
-    geometry_parent = widget_info(self.parent, /geometry)
-    yoffset = geometry_parent.SCR_YSIZE + (2* geometry_parent.MARGIN)
-  ENDIF
+  ENDIF ELSE IF keyword_set(bottom_align) THEN BEGIN
+    IF self.parent GE 0 THEN BEGIN
+      yoffset = geometry_parent.SCR_YSIZE + (2* geometry_parent.MARGIN)
+    ENDIF ELSE BEGIN
+      yoffset = display_coord[3]
+    ENDELSE
+  ENDIF ELSE IF keyword_set(center) THEN BEGIN
+    IF self.parent GE 0 THEN BEGIN
+      yoffset = (geometry_parent.SCR_YSIZE - geometry.SCR_YSIZE) / 2
+    ENDIF ELSE BEGIN
+      yoffset = (display_coord[3] - geometry.SCR_YSIZE ) / 2
+    ENDELSE
+  ENDIF      
   
   IF ~keyword_set(left_align) && ~keyword_set(right_align) THEN xoffset = xoffset + n_subplot * 20
   IF ~keyword_set(top_align) && ~keyword_set(bottom_align) THEN yoffset = yoffset + n_subplot * 20
