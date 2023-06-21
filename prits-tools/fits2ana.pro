@@ -19,10 +19,15 @@
 ;
 ; INPUTS:
 ;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
+; 
+; OPTIONAL INPUTS:
+;     windows : A scalar or array of indices of windows to be returned. If not provided all windows will
+;               be returned.
 ;
 ; OUTPUT:
 ;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
 ;     Output is scalar if there is only one window.
+;     Output is zero if an error occurred.
 ;
 ; OPTIONAL OUTPUT:
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
@@ -44,47 +49,73 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-03-16 10:46 CET $
+; $Id: 2023-06-21 13:48 CEST $
 
 
-function fits2ana, fitsfile, headers_results=headers_results, headers_data=headers_data, $
+function fits2ana, fitsfile, windows=windows, $
+  headers_results=headers_results, headers_data=headers_data, $
   headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
   headers_include=headers_include, headers_contants=headers_contants
 
+  prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
+  prits_tools.parcheck, windows, 0, "windows", 'integers', [0, 1], /optional
+
   result = readfits(fitsfile, hdr)
   n_windows = fxpar(hdr, 'NWIN', missing=0)
+  IF n_windows EQ 0 THEN BEGIN
+    print, 'Header keyword NWIN is missing or set to zero, can not read FITS file : ' + fitsfile
+    return, 0
+  ENDIF
+  IF N_ELEMENTS(windows) EQ 0 THEN BEGIN
+    windows_process = indgen(n_windows)
+    n_windows_process = n_windows
+  ENDIF ELSE BEGIN
+    ind = where(windows LT n_windows AND windows GE 0, count)
+    IF count EQ 0 THEN BEGIN
+      print, 'All provided window indices are outside of the available range. The FITS file contains ' + strtrim(string(n_windows), 2) + ' windows.'
+      return, 0
+    ENDIF ELSE BEGIN
+      windows_process = windows[ind]
+      n_windows_process = count
+      IF count NE N_ELEMENTS(windows) THEN BEGIN
+        print, 'Not all provided window indices are within the available range. The FITS file contains ' + strtrim(string(n_windows), 2) + ' windows.'
+      ENDIF
+    ENDELSE
+  ENDELSE
+  print, 'Reading ' + strtrim(string(n_windows_process), 2) + ' out of ' +  + strtrim(string(n_windows), 2) + ' windows.'
   get_headers = bytarr(7)
   if arg_present(headers_results) then begin
-    headers_results = ptrarr(n_windows)
+    headers_results = ptrarr(n_windows_process)
     get_headers[0] = 1
     headers_results[0] = ptr_new(hdr)
   endif
   if arg_present(headers_data) then begin
-    headers_data = ptrarr(n_windows)
+    headers_data = ptrarr(n_windows_process)
     get_headers[1] = 1
   endif
   if arg_present(headers_lambda) then begin
-    headers_lambda = ptrarr(n_windows)
+    headers_lambda = ptrarr(n_windows_process)
     get_headers[2] = 1
   endif
   if arg_present(headers_residuals) then begin
-    headers_residuals = ptrarr(n_windows)
+    headers_residuals = ptrarr(n_windows_process)
     get_headers[3] = 1
   endif
   if arg_present(headers_weights) then begin
-    headers_weights = ptrarr(n_windows)
+    headers_weights = ptrarr(n_windows_process)
     get_headers[4] = 1
   endif
   if arg_present(headers_include) then begin
-    headers_include = ptrarr(n_windows)
+    headers_include = ptrarr(n_windows_process)
     get_headers[5] = 1
   endif
   if arg_present(headers_contants) then begin
-    headers_contants = ptrarr(n_windows)
+    headers_contants = ptrarr(n_windows_process)
     get_headers[6] = 1
   endif
-  for iwin=0,n_windows-1 do begin
-    extension = iwin*7
+  for iwin=0,n_windows_process-1 do begin
+    wind_ind = windows_process[iwin]
+    extension = wind_ind*7
     if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
 
