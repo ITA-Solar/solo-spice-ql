@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-21 13:02 CEST $
+; $Id: 2023-06-22 09:50 CEST $
 
 
 ;+
@@ -221,16 +221,26 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, o
 
   spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination, $
                top_dir=top_dir, path_index=path_index
-
+  
+  PRINT,'   - L3 DESTINATION: '+DESTINATION
+  
   l3_dir = file_dirname(destination, /mark_directory)
+   PRINT,'   - L3_DIR AFTER FILE_DIRNAME (SHOULD MATCH DESTINATION: '+L3_DIR
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
   existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
-  existing_l3_files = file_basename(existing_l3_files)
+  PRINT,'  - N L3 FILES IN L3 DIR: '+TRIM(N_L3_FILES)
+
+ existing_l3_files = file_basename(existing_l3_files)
+  PRINT,'  - EXISTING L3 FILES: '+EXISTING_L3_FILES
   IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
   ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
+     PRINT,'   - N_L3_FILES IS GREATER THAN 0'
      versions = existing_l3_files.extract('V[0-9]{2}')
+     print,  ' VERSIONS: '+VERSIONS
      versions = fix(versions.substring(1,2))
+     PRINT,'  - FIX(VERSIONS): '+trim(VERSIONS)
      this_version = 'V'+fns('##',max(versions)+1)
+     PRINT,'  - THIS VERSION: '+THIS_VERSION
     ; PRINT,TRIM(N_L3_FILES)+' FILES WITH SPIOBSID_RASTERNO '+TRIM(SPIOBSID_RASTERNO)+' ALREADY EXIST. NEW VERSION IS '+THIS_VERSION
   ENDELSE 
 
@@ -275,11 +285,13 @@ FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, 
   version_l2 = filename_l2.extract('V[0-9]{2}')
   filename_l3 = file_basename(filename_l2)
   filename_l3 = filename_l3.replace('_L2_', '_L3_')
+  PRINT,'   - L3 FILENAME BEFORE CHANGING VERSION: '+filename_l3
   version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
     existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir, path_index=path_index)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
-  
+  PRINT,'    - L3 FILENAME WITH CORRECT VERSION NUMBER: '+filename_l3
+  PRINT,'#################################################'
   return, filename_l3
 END
 
