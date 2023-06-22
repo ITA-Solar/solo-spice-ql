@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 13:12 CEST $
+; $Id: 2023-06-22 13:30 CEST $
 
 
 ;+
@@ -218,10 +218,7 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
   existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir=pipeline_dir
   ; Returns the version for a new level 3
   compile_opt idl2, static
-
-;  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir),
-;  /dry_run,/force, destination=destination, $
-     
+stop
   spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
                top_dir=top_dir, path_index=path_index
   destination_dir = file_dirname(destination, /mark_directory)
@@ -230,20 +227,13 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
 
   existing_l3_files = file_search(destination_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
 
-  PRINT,'  - N L3 FILES IN TOP L3 DIR: '+TRIM(N_L3_FILES)
-
   existing_l3_files = file_basename(existing_l3_files)
-  PRINT,'  - EXISTING L3 FILES: '+EXISTING_L3_FILES
   IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
   ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
-     PRINT,'   - N_L3_FILES IS GREATER THAN 0'
      versions = existing_l3_files.extract('V[0-9]{2}')
      print,  ' VERSIONS: '+VERSIONS
      versions = fix(versions.substring(1,2))
-     PRINT,'  - FIX(VERSIONS): '+trim(VERSIONS)
      this_version = 'V'+fns('##',max(versions)+1)
-     PRINT,'  - THIS VERSION: '+THIS_VERSION
-    ; PRINT,TRIM(N_L3_FILES)+' FILES WITH SPIOBSID_RASTERNO '+TRIM(SPIOBSID_RASTERNO)+' ALREADY EXIST. NEW VERSION IS '+THIS_VERSION
   ENDELSE 
 
   return, this_version
@@ -287,13 +277,10 @@ FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, 
   version_l2 = filename_l2.extract('V[0-9]{2}')
   filename_l3 = file_basename(filename_l2)
   filename_l3 = filename_l3.replace('_L2_', '_L3_')
-  PRINT,'   - L3 FILENAME BEFORE CHANGING VERSION: '+filename_l3
-  version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, $;official_l3dir=official_l3dir, $
-    existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir = pipeline_dir)
+  version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, $ ;official_l3dir=official_l3dir, $
+                                         existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir = pipeline_dir)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
-  PRINT,'    - L3 FILENAME WITH CORRECT VERSION NUMBER: '+filename_l3
-  PRINT,'#################################################'
   return, filename_l3
 END
 
@@ -354,8 +341,7 @@ END
 ;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
 ;                 that using the line list when fitting fails in many cases.
 ;
-;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
-;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
+;     pipeline_dir: path to output directory used by the pipeline where L3 file is saved
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
 ;                 level 3 FITS file, if it would have been saved.
 ;     quiet:      If set, print messages will be suppressed.
@@ -366,14 +352,9 @@ END
 ;
 ; OUTPUT:
 ;     The path and name of the Level 3 FITS file.
-;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
+;     Level 3 FITS file saved to directory $SPICE_DATA/user/level3, or to pipeline_dir if that keyword is set.
 ;-
 
-;FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-;  no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
-;  force_version=force_version, official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
-;  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
-;  progress_widget=progress_widget, group_leader=group_leader, quiet=quiet
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
@@ -468,9 +449,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
   
-  IF pipeline_dir THEN destination = pipeline_dir+filename_l3 ELSE BEGIN 
+  IF pipeline_dir THEN destination = file ELSE BEGIN 
      spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
-                  ;    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /force, $
                    /user_dir, top_dir=top_dir, path_index=path_index, /force, $
                    dry_run=keyword_set(save_not)
      IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
