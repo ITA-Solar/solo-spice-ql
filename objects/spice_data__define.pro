@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 12:35 CEST $
+; $Id: 2023-06-22 12:46 CEST $
 
 
 ;+
@@ -227,19 +227,13 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
                top_dir=top_dir, path_index=path_index
   destination_dir = file_dirname(destination, /mark_directory)
   
- ;    PRINT,'   - L3 DESTINATION: '+DESTINATION
-  
- ; destination_dir = file_dirname(destination, /mark_directory)
-;   PRINT,'   - L3_DIR AFTER FILE_DIRNAME (SHOULD MATCH DESTINATION: '+L3_DIR
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
-;  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*',
-;  count=n_l3_files)
-  stop
+
   existing_l3_files = file_search(destination_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
-  stop
+
   PRINT,'  - N L3 FILES IN TOP L3 DIR: '+TRIM(N_L3_FILES)
 
- existing_l3_files = file_basename(existing_l3_files)
+  existing_l3_files = file_basename(existing_l3_files)
   PRINT,'  - EXISTING L3 FILES: '+EXISTING_L3_FILES
   IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
   ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
@@ -403,8 +397,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ENDIF ELSE collect_hdr=0
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-;  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, official_l3dir=official_l3dir, version_l3=version_l3, $
-;                                           top_dir=top_dir, path_index=path_index)
+
    filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, version_l3=version_l3, $
     top_dir=top_dir, path_index=path_index, pipeline_dir = pipeline_dir)
   file_info_l2 = spice_file2info(filename_l2)
@@ -475,12 +468,13 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
   
-  IF ~pipeline THEN BEGIN spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
- ;    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /force, $
-     /user_dir, top_dir=top_dir, path_index=path_index, /force, $
-    dry_run=keyword_set(save_not)
+  IF pipeline_dir THEN destination = pipeline_dir+filename_l3 ELSE BEGIN 
+     spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
+                  ;    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /force, $
+                   /user_dir, top_dir=top_dir, path_index=path_index, /force, $
+                   dry_run=keyword_set(save_not)
      IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
-  ENDIF
+  ENDELSE 
   
   return, destination
 END
