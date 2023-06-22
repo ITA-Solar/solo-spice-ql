@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 11:55 CEST $
+; $Id: 2023-06-22 11:59 CEST $
 
 
 ;+
@@ -221,10 +221,10 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
 
 ;  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir),
 ;  /dry_run,/force, destination=destination, $
-  
+  stop
   IF keyword_set(pipeline_dir) THEN destination_dir = pipeline_dir ELSE BEGIN 
      
-     spice_ingest,filename_l3, pipeline=pipeline, /dry_run,/force, destination=destination, $
+     spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
                   top_dir=top_dir, path_index=path_index
      destination_dir = file_dirname(destination, /mark_directory)
   ENDELSE 
@@ -234,7 +234,9 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
  ; destination_dir = file_dirname(destination, /mark_directory)
 ;   PRINT,'   - L3_DIR AFTER FILE_DIRNAME (SHOULD MATCH DESTINATION: '+L3_DIR
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
-;  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+;  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*',
+;  count=n_l3_files)
+  stop
   existing_l3_files = file_search(destination_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
   stop
   PRINT,'  - N L3 FILES IN TOP L3 DIR: '+TRIM(N_L3_FILES)
