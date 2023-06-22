@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 13:30 CEST $
+; $Id: 2023-06-22 14:21 CEST $
 
 
 ;+
@@ -218,7 +218,9 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
   existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir=pipeline_dir
   ; Returns the version for a new level 3
   compile_opt idl2, static
-stop
+  stop
+
+  
   spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
                top_dir=top_dir, path_index=path_index
   destination_dir = file_dirname(destination, /mark_directory)
@@ -362,7 +364,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   progress_widget=progress_widget, group_leader=group_leader, pipeline_dir=pipeline_dir, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
-
+  
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
   prits_tools.parcheck, force_version, 0, "force_version", 'integers', 0, minval=0, maxval=99, /optional
@@ -375,11 +377,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     all_result_headers = ptrarr(N_ELEMENTS(window_index))
     collect_hdr=1
   ENDIF ELSE collect_hdr=0
-
+stop  
+  IF ~keyword_set(top_dir) THEN BEGIN 
+     spice_data_dir = getenv('SPICE_DATA')
+     top_dir = (keyword_set(pipeline_dir)) ? spice_data_dir+'/level3/' : spice_data_dir+'/user/level3/'
+  ENDIF
+stop   
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
 
-   filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, version_l3=version_l3, $
+  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, version_l3=version_l3, $
     top_dir=top_dir, path_index=path_index, pipeline_dir = pipeline_dir)
+stop  
   file_info_l2 = spice_file2info(filename_l2)
    
   file_id = version_l3 + $
