@@ -35,6 +35,7 @@
 ;      Structure containing a list of found fit components, including background component.
 ;
 ; OPTIONAL OUTPUTS:
+;     version :   Returns the version number of this software.
 ;
 ; CALLS:
 ;      spice_gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
@@ -54,13 +55,15 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2023-04-26 15:08 CEST $
+; $Id: 2023-06-22 14:33 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
-  line_list=line_list, plot=plot
+  line_list=line_list, plot=plot, version=version
   ;; Automatically generate cfit analysis definitions based on input intensity and
   ;; wavelength arrays
+
+  version = 1 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, data, 1, "data", 'NUMERIC', [2,3,4]
   prits_tools.parcheck, lam, 2, "lam", 'NUMERIC', [2,3,4]
@@ -120,7 +123,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
 
   IF npeaks GT 0 THEN BEGIN
 
-    gaussians = replicate(mk_comp_gauss([0,0,0]), npeaks)
+    gaussians = replicate(spice_mk_comp_gauss([0,0,0]), npeaks)
 
     int0 = meanprofile[peakinds]
     IF use_list THEN lam0 = lines[ind_lines] $

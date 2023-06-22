@@ -41,11 +41,14 @@
 ;      EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
-;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
-;                 and incorporated into this level 3 FITS file.
 ; 
 ; OPTIONAL INPUTS:
 ;      header_l2: The header (string array) of the SPICE level 2 file.
+;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
+;                 and incorporated into this level 3 FITS file.
+;                 This keyword should be set to a structure with the tags 'version' and 'params'.
+;                 'version' contains a version number, and 'params' is a structure with all
+;                 the input parameters used to create the level 3 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -55,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-22 13:31 CEST $
+; $Id: 2023-06-22 14:33 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $

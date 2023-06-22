@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-21 13:02 CEST $
+; $Id: 2023-06-22 14:33 CEST $
 
 
 ;+
@@ -363,6 +363,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
+  version = 1 ; PLEASE increase this number when editing the code
+
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
   prits_tools.parcheck, force_version, 0, "force_version", 'integers', 0, minval=0, maxval=99, /optional
@@ -399,7 +401,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     ENDIF
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list)
+      position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add)
+    IF iwindow EQ 0 THEN version += version_add
     if size(ana, /type) NE 8 then continue
     IF collect_ana THEN BEGIN
       if iwindow eq 0 then all_ana = ana $
@@ -422,7 +425,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
     data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
     original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
-    if iwindow gt 0 then extension=1 else extension=0
+    if iwindow gt 0 then extension=1 else begin
+      extension=0
+      IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
+      version_and_params = { version:version, $
+        params:{line_list:~keyword_set(no_line_list), $
+        masking:~keyword_set(no_masking), $
+        approximated_slit:keyword_set(approximated_slit), $
+        fitting:~keyword_set(no_fitting), $
+        position:keyword_set(position), $
+        velocity:vel} }
+    endif
 
     headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
       extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
@@ -430,7 +443,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data, /spice)
+      original_data=original_data, spice=version_and_params)
 
     if iwindow eq 0 then file = filepath(filename_l3, /tmp)
     IF ~keyword_set(save_not) THEN BEGIN
@@ -485,6 +498,7 @@ END
 ;               All pixels are set to 1.0.
 ;      MISSING: The MISSING value, used to flag missing data points,
 ;               and parameter values at points where the fit has been declared as "FAILED".
+;     version :   Returns the version number of this software.
 ;
 ;-
 PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
@@ -492,6 +506,8 @@ PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, app
   DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
   ;Transforms data so that it can be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
+
+  version = 1 ; PLEASE increase this number when editing the code
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
 
@@ -535,6 +551,9 @@ END
 ;                 This input is ignored if /POSITION is set.
 ;                 Default is zero.
 ;
+; OPTIONAL OUTPUTS:
+;     version :   Returns the version number of this software.
+;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
@@ -563,15 +582,18 @@ END
 ;-
 FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   init_all_cubes=init_all_cubes, debug_plot=debug_plot, position=position, velocity=velocity, $
-  no_line_list=no_line_list
+  no_line_list=no_line_list, version=version
   ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
+  
+  version = 1 ; PLEASE increase this number when editing the code
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
 
   self->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
     debug_plot=debug_plot, $
-    DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
+    DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING, version=version_add
+  version += version_add
 
   detector = self->get_header_keyword('DETECTOR', window_index)
   widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
@@ -580,7 +602,8 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
   IF ~keyword_set(no_line_list) THEN line_list=spice_line_list()
-  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity, line_list=line_list)
+  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity, line_list=line_list, version=version_add)
+  version += version_add
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
 
