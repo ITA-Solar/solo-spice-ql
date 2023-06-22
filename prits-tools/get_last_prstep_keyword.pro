@@ -27,6 +27,7 @@
 ;     pr_keywords_ind: An integer array, indices of found processing step keywords in the header.
 ;     pr_versions: An integer array, version numbers of the found processing step keywords.
 ;               Note: Some keywords have letters after the version number.
+;     pr_types: A string array, indicating the types of processing step keyword.
 ;
 ; CALLS:
 ;
@@ -39,11 +40,11 @@
 ; HISTORY:
 ;     22-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-22 11:53 CEST $
+; $Id: 2023-06-22 12:41 CEST $
 
 
 FUNCTION get_last_prstep_keyword, header, count=count, pr_keywords=pr_keywords, pr_keywords_ind=pr_keywords_ind, $
-  pr_versions=pr_versions
+  pr_versions=pr_versions, pr_types=pr_types
   compile_opt idl2
 
   prits_tools.parcheck, header, 1, "header", 'string', 1
@@ -58,6 +59,7 @@ FUNCTION get_last_prstep_keyword, header, count=count, pr_keywords=pr_keywords, 
 
   pr_versions = fix(pr_keywords.extract('[1-9][0-9]{0,1}'))
   pr_version_max = max(pr_versions)
+  pr_types = pr_keywords.extract('(STEP|PROC|PVER|MODE|PARA|REF|LOG|ENV|VER|HSH|BRA|LIB)')
   
   return, pr_version_max
 
