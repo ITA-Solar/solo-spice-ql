@@ -46,9 +46,9 @@
 ;      header_l2: The header (string array) of the SPICE level 2 file.
 ;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
 ;                 and incorporated into this level 3 FITS file.
-;                 This keyword should be set to a structure with the tags 'version' and 'params'.
-;                 'version' contains a version number, and 'params' is a structure with all
-;                 the input parameters used to create the level 3 file.
+;                 This keyword should be set to a structure with the tags 'version', 'proc' and 'params'.
+;                 'version' contains a version number, 'proc' the name of the procedure and 'params' is a 
+;                 structure with all the input parameters used to create the level 3 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-22 14:33 CEST $
+; $Id: 2023-06-22 15:23 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -257,10 +257,17 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
     ENDIF
     new_version = strtrim(string(max_version_number+1), 2)
     fits_util->add, hdr, 'PRLIB'+new_version+'A', 'uio-spice-solarsoft', 'Software library containing PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPARA'+new_version, '', 'Parameters for PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPVER'+new_version, '0.1', 'Version of procedure PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPROC'+new_version, 'spice_data::create_l3_file', 'Name of procedure performing PRSTEP'+new_version, after=after
-    fits_util->add, hdr, 'PRSTEP'+new_version, 'Fitting parameters', 'Processing step type ', after=after
+    params = spice.params
+    param_names = tag_names(params)
+    param_text = ''
+    for iparam=0,n_tags(params)-1 do begin
+      if iparam gt 0 then param_text += ', '
+      param_text += strtrim(param_names[iparam], 2) + '=' + strtrim(string(fix(params.(iparam))), 2)
+    endfor
+    fits_util->add, hdr, 'PRPARA'+new_version, param_text, 'Parameters for PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPVER'+new_version, spice.version, 'Version of procedure PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
+    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
     fits_util->add, hdr, '', ' ', after=after
   
   ENDIF ELSE BEGIN ; spice_header

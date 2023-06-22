@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 14:43 CEST $
+; $Id: 2023-06-22 15:23 CEST $
 
 
 ;+
@@ -429,6 +429,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       extension=0
       IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
       version_and_params = { version:version, $
+        proc:'spice_data::create_l3_file', $
         params:{line_list:~keyword_set(no_line_list), $
         masking:~keyword_set(no_masking), $
         approximated_slit:keyword_set(approximated_slit), $
