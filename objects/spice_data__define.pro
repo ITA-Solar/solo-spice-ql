@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 14:33 CEST $
+; $Id: 2023-06-22 14:43 CEST $
 
 
 ;+
@@ -434,8 +434,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         approximated_slit:keyword_set(approximated_slit), $
         fitting:~keyword_set(no_fitting), $
         position:keyword_set(position), $
-        velocity:vel} }
-    endif
+        velocity:vel, $
+        possible_manual_editing:~keyword_set(no_widget) && ~keyword_set(no_xcfit_block)} }
+    endelse
 
     headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
       extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
@@ -503,7 +504,7 @@ END
 ;-
 PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   debug_plot=debug_plot, $
-  DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING
+  DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING, version=version
   ;Transforms data so that it can be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
