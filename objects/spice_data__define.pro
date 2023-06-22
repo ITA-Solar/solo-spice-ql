@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 11:59 CEST $
+; $Id: 2023-06-22 12:35 CEST $
 
 
 ;+
@@ -222,12 +222,10 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
 ;  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir),
 ;  /dry_run,/force, destination=destination, $
   stop
-  IF keyword_set(pipeline_dir) THEN destination_dir = pipeline_dir ELSE BEGIN 
      
-     spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
-                  top_dir=top_dir, path_index=path_index
-     destination_dir = file_dirname(destination, /mark_directory)
-  ENDELSE 
+  spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
+               top_dir=top_dir, path_index=path_index
+  destination_dir = file_dirname(destination, /mark_directory)
   
  ;    PRINT,'   - L3 DESTINATION: '+DESTINATION
   
