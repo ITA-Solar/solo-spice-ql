@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 14:47 CEST $
+; $Id: 2023-06-22 14:52 CEST $
 
 
 ;+
@@ -218,9 +218,7 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
   existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir=pipeline_dir
   ; Returns the version for a new level 3
   compile_opt idl2, static
-  stop
 
-  
   spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
                top_dir=top_dir, path_index=path_index
   destination_dir = file_dirname(destination, /mark_directory)
@@ -230,11 +228,10 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
   existing_l3_files = file_search(destination_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
 
   existing_l3_files = file_basename(existing_l3_files)
-  stop
+  
   IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
   ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
      versions = existing_l3_files.extract('V[0-9]{2}')
-     print,  ' VERSIONS: '+VERSIONS
      versions = fix(versions.substring(1,2))
      this_version = 'V'+fns('##',max(versions)+1)
   ENDELSE 
@@ -388,7 +385,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, version_l3=version_l3, $
     top_dir=top_dir, path_index=path_index, pipeline_dir = pipeline_dir)
-stop  
+
   file_info_l2 = spice_file2info(filename_l2)
    
   file_id = version_l3 + $
