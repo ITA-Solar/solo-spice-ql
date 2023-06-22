@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 09:50 CEST $
+; $Id: 2023-06-22 10:55 CEST $
 
 
 ;+
@@ -224,11 +224,12 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, o
   
   PRINT,'   - L3 DESTINATION: '+DESTINATION
   
-  l3_dir = file_dirname(destination, /mark_directory)
-   PRINT,'   - L3_DIR AFTER FILE_DIRNAME (SHOULD MATCH DESTINATION: '+L3_DIR
+;  l3_dir = file_dirname(destination, /mark_directory)
+;   PRINT,'   - L3_DIR AFTER FILE_DIRNAME (SHOULD MATCH DESTINATION: '+L3_DIR
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
-  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
-  PRINT,'  - N L3 FILES IN L3 DIR: '+TRIM(N_L3_FILES)
+;  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+  existing_l3_files = file_search(top_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+  PRINT,'  - N L3 FILES IN TOP L3 DIR: '+TRIM(N_L3_FILES)
 
  existing_l3_files = file_basename(existing_l3_files)
   PRINT,'  - EXISTING L3 FILES: '+EXISTING_L3_FILES
