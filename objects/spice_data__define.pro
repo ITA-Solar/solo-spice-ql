@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 13:09 CEST $
+; $Id: 2023-06-22 13:12 CEST $
 
 
 ;+
@@ -221,7 +221,6 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
 
 ;  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir),
 ;  /dry_run,/force, destination=destination, $
-  stop
      
   spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
                top_dir=top_dir, path_index=path_index
@@ -453,8 +452,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
       original_data=original_data, /spice)
     
-    IF pipeline_dir THEN file = pipeline_dir + '/' + filename_l3 ELSE if iwindow eq 0 then file = filepath(filename_l3, /tmp)
-    stop
+    IF iwindow EQ 0 THEN file = (pipeline_dir) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
+    
     IF ~keyword_set(save_not) THEN BEGIN
       writefits, file, RESULT, *headers[0], append=extension
       writefits, file, original_data, *headers[1], /append
