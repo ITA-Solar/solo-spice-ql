@@ -55,7 +55,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-16 14:31 CEST $
+; $Id: 2023-06-22 13:31 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -75,7 +75,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'SOLARNET', 1, 'HDU contains SOLARNET Type P data'  ; TODO: comment? value=0.5 or 1?
+  fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
   fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
   fits_util->add, hdr, 'EXTNAME', data_id+' results', 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
@@ -179,7 +179,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       fits_util->add, hdr, 'PMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient A in Lambda=PVAL*PTRA+PTRB'
       fits_util->add, hdr, 'PTRB'+fitnr+parnr, param.trans_b, 'Linear coefficient B in Lambda=PVAL*PTRA+PTRB'
-      fits_util->add, hdr, 'PCONS'+fitnr+parnr, param.const, 'Indicates whether parameter '+parnr+' for component '+fitnr+'is constant'
+      fits_util->add, hdr, 'PCONS'+fitnr+parnr, param.const, '1 if parameter '+parnr+' for component '+fitnr+' is constant'
     endfor ; ipar0,n_params-1
   endfor ; itag=0,N_TAGS(fit)-1
 
@@ -243,8 +243,22 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
     endif
   
     fits_util->add, hdr, 'LEVEL', 'L3', 'Data processing level'
-    fits_util->add, hdr, 'L2NWIN', fxpar(header_l2, 'NWIN', missing=0), 'Total number of windows (incl. db and int win) in level 2 file', after='NWIN'
-    fits_util->add, hdr, 'L2WINNO', fxpar(header_l2, 'WINNO', missing=0), 'Window number (starting at 0) within this study in level 2 file', after='WINNO'
+    fits_util->add, hdr, 'L2NWIN', fxpar(header_l2, 'NWIN', missing=0), 'Total no of windows (incl. db and int win) in L2 file', after='NWIN'
+    fits_util->add, hdr, 'L2WINNO', fxpar(header_l2, 'WINNO', missing=0), 'Win no (starting at 0) within this study in L2 file', after='WINNO'
+    
+    max_version_number = get_last_prstep_keyword(header_l2, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
+      pr_versions=pr_versions, pr_types=pr_types)
+    IF count gt 0 THEN BEGIN
+      ind = where(pr_types eq 'LIB' AND pr_versions eq max_version_number, count)
+      after = pr_keywords[ind[0]]
+    ENDIF
+    new_version = strtrim(string(max_version_number+1), 2)
+    fits_util->add, hdr, 'PRLIB'+new_version+'A', 'uio-spice-solarsoft', 'Software library containing PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPARA'+new_version, '', 'Parameters for PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPVER'+new_version, '0.1', 'Version of procedure PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPROC'+new_version, 'spice_data::create_l3_file', 'Name of procedure performing PRSTEP'+new_version, after=after
+    fits_util->add, hdr, 'PRSTEP'+new_version, 'Fitting parameters', 'Processing step type ', after=after
+    fits_util->add, hdr, '', ' ', after=after
   
   ENDIF ELSE BEGIN ; spice_header
 
@@ -271,7 +285,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'BUNIT', ' '
 
   fits_util->add, hdr, 'NWIN', n_windows, 'Number of windows'
-  fits_util->add, hdr, 'WINNO', winno, 'Window number (starting at 0) within this study in this FITS file'
+  fits_util->add, hdr, 'WINNO', winno, 'Win no (starting at 0) within this study in this FITS file'
 
   fits_util->clean_header, hdr
   
