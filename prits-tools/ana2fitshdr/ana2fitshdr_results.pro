@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-22 15:23 CEST $
+; $Id: 2023-06-23 11:18 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -78,8 +78,6 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
-  fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
   fits_util->add, hdr, 'EXTNAME', data_id+' results', 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
 
@@ -209,6 +207,8 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       hdr = [hdr[0:ind_end-1], header_l2[ind_start-3:*]]
     endif
     
+    fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
+    fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
     fits_util->add, hdr, 'PARENT', fxpar(header_l2, 'FILENAME', missing=''), 'L2 file'
 
     ; Adapt WCS keywords
@@ -271,6 +271,9 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
     fits_util->add, hdr, '', ' ', after=after
   
   ENDIF ELSE BEGIN ; spice_header
+
+    fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
+    fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
 
     ; Add WCS keywords
     fits_util->add, hdr, 'CTYPE1', 'PARAMETER', 'Type of 1st coordinate'
