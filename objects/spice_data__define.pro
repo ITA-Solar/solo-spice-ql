@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 15:23 CEST $
+; $Id: 2023-06-23 13:35 CEST $
 
 
 ;+
@@ -401,7 +401,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     ENDIF
 
     ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add)
+      position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
     IF iwindow EQ 0 THEN version += version_add
     if size(ana, /type) NE 8 then continue
     IF collect_ana THEN BEGIN
@@ -428,15 +428,20 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     if iwindow gt 0 then extension=1 else begin
       extension=0
       IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
-      version_and_params = { version:version, $
+      version_and_params = { $
         proc:'spice_data::create_l3_file', $
+        version:version, $
+        lib:'solarsoft/so/spice/idl/quicklook', $
         params:{line_list:~keyword_set(no_line_list), $
-        masking:~keyword_set(no_masking), $
-        approximated_slit:keyword_set(approximated_slit), $
-        fitting:~keyword_set(no_fitting), $
-        position:keyword_set(position), $
-        velocity:vel, $
-        possible_manual_editing:~keyword_set(no_widget) && ~keyword_set(no_xcfit_block)} }
+          masking:~keyword_set(no_masking), $
+          approximated_slit:keyword_set(approximated_slit), $
+          fitting:~keyword_set(no_fitting), $
+          position:keyword_set(position), $
+          velocity:vel, $
+          possible_manual_editing:~keyword_set(no_widget) && ~keyword_set(no_xcfit_block)}, $
+        proc_find_line:proc_find_line.proc, $
+        version_find_line:proc_find_line.version $
+        }
     endelse
 
     headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
@@ -555,6 +560,7 @@ END
 ;
 ; OPTIONAL OUTPUTS:
 ;     version :   Returns the version number of this software.
+;     proc_find_line: Returns the procedure that was used to find the lines to fit, and its version number as a structure.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -584,7 +590,7 @@ END
 ;-
 FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   init_all_cubes=init_all_cubes, debug_plot=debug_plot, position=position, velocity=velocity, $
-  no_line_list=no_line_list, version=version
+  no_line_list=no_line_list, version=version, proc_find_line=proc_find_line
   ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
   
@@ -603,9 +609,14 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   widmin_pixels = widmin_pixels_2_arcsec_slit * slitwid_factor
   widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
 
-  IF ~keyword_set(no_line_list) THEN line_list=spice_line_list()
-  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity, line_list=line_list, version=version_add)
+  IF ~keyword_set(no_line_list) THEN BEGIN
+    line_list=spice_line_list(version=version_line_list)
+    proc_find_line = {proc:'spice_line_list', version:version_line_list}
+  ENDIF
+  adef = generate_adef(data, LAMbda, widmin=widmin, position=position, velocity=velocity, line_list=line_list, $
+    version=version_add, gt_peaks_version=version_gt_peaks)
   version += version_add
+  IF keyword_set(no_line_list) THEN proc_find_line = {proc:'spice_gt_peaks', version:version_gt_peaks}
   badix = where(data ne data, n_bad)
   IF n_bad GT 0 THEN data[badix] = missing
 

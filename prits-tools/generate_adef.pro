@@ -36,6 +36,7 @@
 ;
 ; OPTIONAL OUTPUTS:
 ;     version :   Returns the version number of this software.
+;     gt_peaks_version : Returns the version number of spice_gt_peaks.
 ;
 ; CALLS:
 ;      spice_gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
@@ -55,11 +56,11 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2023-06-22 14:33 CEST $
+; $Id: 2023-06-23 13:35 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
-  line_list=line_list, plot=plot, version=version
+  line_list=line_list, plot=plot, version=version, gt_peaks_version=version_gt_peaks
   ;; Automatically generate cfit analysis definitions based on input intensity and
   ;; wavelength arrays
 
@@ -116,7 +117,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     ENDIF ; npeaks GT 0
 
   ENDIF ELSE BEGIN ; use_list
-    peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5, /sort, plot=plot)
+    peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5, /sort, plot=plot, version=version_gt_peaks)
     npeaks = n_elements(peakinds)
   ENDELSE ; use_list
 

@@ -1,8 +1,8 @@
 ; 31/10/2022 - Martin Wiesmann, copied from hinode/eis/idl/atest/osdc/gt_peaks.pro
 ;                               to make SPICE independent of EIS.
-; $Id: 2022-10-31 10:44 CET $
+; $Id: 2023-06-23 13:35 CEST $
 
-FUNCTION spice_gt_peaks, int, fwhm=fwhm, minmedian=minmedian, sort=sort, plot=plot
+FUNCTION spice_gt_peaks, int, fwhm=fwhm, minmedian=minmedian, sort=sort, plot=plot, version=version
   ;; Find all peaks in input array int. Returns -1 if no suitable peaks are found.
   ;; KEYWORDS: 
   ;;          fwhm: IF set to a named variable fwhm returns a very rough
@@ -14,7 +14,12 @@ FUNCTION spice_gt_peaks, int, fwhm=fwhm, minmedian=minmedian, sort=sort, plot=pl
   ;;                peak will be the last.
   ;;          plot: plot the input array and mark the the peaks with solid
   ;;                lines. Rejected peaks are marked with a broken line
+  ; OPTIONAL OUTPUTS:
+  ;     version :   Returns the version number of this software.
+  ;
   
+  version = 1 ; PLEASE increase this number when editing the code
+
   default, minmedian, 6
   
   int -= min(int)               ; Must subtract pedestal before calculating median
