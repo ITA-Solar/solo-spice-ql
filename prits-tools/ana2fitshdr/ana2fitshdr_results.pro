@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-23 13:35 CEST $
+; $Id: 2023-06-23 13:50 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -261,8 +261,15 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       ind = where(pr_types eq 'LIB' AND pr_versions eq max_version_number, count)
       after = pr_keywords[ind[0]]
     ENDIF
+    new_version = strtrim(string(max_version_number+2), 2)
+    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPVER'+new_version, spice.version_find_line, 'Version of procedure PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc_find_line, 'Name of procedure performing PRSTEP'+new_version, after=after
+    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
+    fits_util->add, hdr, '', ' ', after=after
+
     new_version = strtrim(string(max_version_number+1), 2)
-    fits_util->add, hdr, 'PRLIB'+new_version+'A', 'uio-spice-solarsoft', 'Software library containing PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
     params = spice.params
     param_names = tag_names(params)
     param_text = ''
