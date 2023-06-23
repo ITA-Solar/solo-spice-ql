@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-23 11:18 CEST $
+; $Id: 2023-06-23 13:35 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -66,9 +66,9 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  spice=spice, header_l2=header_l2
+  spice=spice, header_l2=header_l2_in
 
-  spice_header = keyword_set(spice) && keyword_set(header_l2)
+  spice_header = keyword_set(spice) && keyword_set(header_l2_in)
   n_dims = size(result, /n_dimensions)
 
   fits_util = obj_new('oslo_fits_util')
@@ -82,6 +82,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
 
   IF spice_header THEN BEGIN
+    header_l2 = header_l2_in
     fits_util->add, hdr, 'PGEXTNAM', fxpar(header_l2, 'EXTNAME', missing=''), 'Extension name in progenitor file'
     fits_util->add, hdr, 'PGFILENA', fxpar(header_l2, 'FILENAME', missing=''), 'Progenitor filename'
   ENDIF
@@ -197,6 +198,11 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   IF spice_header THEN BEGIN
 
     ; Add level 2 header to this header
+    ; but withou doubling this keyword
+    temp = fxpar(hdr, 'LONGSTRN', count=count_l3)
+    temp = fxpar(header_l2, 'LONGSTRN', count=count_l2)
+    IF count_l3 && count_l2 then fits_util->remove_keyword, header_l2, 'LONGSTRN', /remove_comment
+
     ind_start = where(strmatch(header_l2, '*Study parameters valid for all Obs-HDUs in this file*') eq 1, count_l2)
     if count_l2 eq 1 then begin
       ind_end = where(strmatch(hdr, 'END *') eq 1, count_l3)
@@ -269,7 +275,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
     fits_util->add, hdr, 'PRPROC'+new_version, spice.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
     fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
     fits_util->add, hdr, '', ' ', after=after
-  
+
   ENDIF ELSE BEGIN ; spice_header
 
     fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
