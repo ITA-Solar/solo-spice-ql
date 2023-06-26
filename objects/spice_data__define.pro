@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-23 13:35 CEST $
+; $Id: 2023-06-26 10:31 CEST $
 
 
 ;+
@@ -197,7 +197,7 @@ END
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
 ;     TOP_DIR : A path to a directory in which the file should be saved. The necessary subdirectories
-;                 will be created (e.g. level2/2020/06/21).
+;                 will be created (e.g. level3/2020/06/21).
 ;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
 ;                 keyword allows you to specify to which path you send
 ;                 the file. Default is 0.
@@ -214,24 +214,26 @@ END
 ; OUTPUT:
 ;     The version of the new level 3 file, as a string in the format 'V##'.
 ;-
-FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
-  existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir, path_index=path_index
+FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
+  existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index
   ; Returns the version for a new level 3
   compile_opt idl2, static
 
-  spice_ingest,filename_l3, user_dir=~keyword_set(official_l3dir), /dry_run,/force, destination=destination, $
+  spice_ingest,filename_l3, /dry_run,/force, destination=destination, $
                top_dir=top_dir, path_index=path_index
-
-  l3_dir = file_dirname(destination, /mark_directory)
+  destination_dir = file_dirname(destination, /mark_directory)
+  
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
-  existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+
+  existing_l3_files = file_search(destination_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
+
   existing_l3_files = file_basename(existing_l3_files)
+  
   IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
   ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
      versions = existing_l3_files.extract('V[0-9]{2}')
      versions = fix(versions.substring(1,2))
      this_version = 'V'+fns('##',max(versions)+1)
-    ; PRINT,TRIM(N_L3_FILES)+' FILES WITH SPIOBSID_RASTERNO '+TRIM(SPIOBSID_RASTERNO)+' ALREADY EXIST. NEW VERSION IS '+THIS_VERSION
   ENDELSE 
 
   return, this_version
@@ -249,7 +251,7 @@ END
 ; OPTIONAL INPUTS:
 ;     force_version : The version number (integer) the level 3 file must have.
 ;     TOP_DIR : A path to a directory in which the file should be saved. The necessary subdirectories
-;                 will be created (e.g. level2/2020/06/21).
+;                 will be created (e.g. level3/2020/06/21).
 ;     PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
 ;                 keyword allows you to specify to which path you send
 ;                 the file. Default is 0.
@@ -267,19 +269,18 @@ END
 ; OUTPUT:
 ;     The new filename of the level 3 file.
 ;-
-FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, official_l3dir=official_l3dir, $
-  version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir, path_index=path_index
+FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, $
+  version_l3=version_l3, existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index
   ; Returns L3 filename based on L2 filename, with version number being the highest version number of any existing L3 files incremented by 1.
   compile_opt idl2, static
 
   version_l2 = filename_l2.extract('V[0-9]{2}')
   filename_l3 = file_basename(filename_l2)
   filename_l3 = filename_l3.replace('_L2_', '_L3_')
-  version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, official_l3dir=official_l3dir, $
-    existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir, path_index=path_index)
+  version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, $ ;official_l3dir=official_l3dir, $
+                                         existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
-  
   return, filename_l3
 END
 
@@ -340,8 +341,7 @@ END
 ;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
 ;                 that using the line list when fitting fails in many cases.
 ;
-;     official_l3dir: If set, the file will be moved to the directory $SPICE_DATA/level3, the directory
-;                     for the official level 3 files, instead of $SPICE_DATA/user/level3.
+;     pipeline_dir: path to output directory used by the pipeline where L3 file is saved
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
 ;                 level 3 FITS file, if it would have been saved.
 ;     quiet:      If set, print messages will be suppressed.
@@ -352,14 +352,14 @@ END
 ;
 ; OUTPUT:
 ;     The path and name of the Level 3 FITS file.
-;     Level 3 file, as FITS file, saved to directory $SPICE_DATA/level3/ .
+;     Level 3 FITS file saved to directory $SPICE_DATA/user/level3, or to pipeline_dir if that keyword is set.
 ;-
 
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
-  force_version=force_version, official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, save_not=save_not, $
+  force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
-  progress_widget=progress_widget, group_leader=group_leader, quiet=quiet
+  progress_widget=progress_widget, group_leader=group_leader, pipeline_dir=pipeline_dir, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
@@ -378,9 +378,16 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     collect_hdr=1
   ENDIF ELSE collect_hdr=0
 
+  IF ~keyword_set(top_dir) THEN BEGIN 
+     spice_data_dir = getenv('SPICE_DATA')
+     top_dir = (keyword_set(pipeline_dir)) ? spice_data_dir : spice_data_dir+'/user/'
+  ENDIF
+     
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
-  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, official_l3dir=official_l3dir, version_l3=version_l3, $
+
+  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, version_l3=version_l3, $
     top_dir=top_dir, path_index=path_index)
+
   file_info_l2 = spice_file2info(filename_l2)
    
   file_id = version_l3 + $
@@ -452,7 +459,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
       original_data=original_data, spice=version_and_params)
 
-    if iwindow eq 0 then file = filepath(filename_l3, /tmp)
+    IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
+    
     IF ~keyword_set(save_not) THEN BEGIN
       writefits, file, RESULT, *headers[0], append=extension
       writefits, file, original_data, *headers[1], /append
@@ -466,11 +474,14 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
-
-  spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
-    user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /force, $
-    dry_run=keyword_set(save_not)
-  IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
+  
+  IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN 
+     spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
+                   /user_dir, top_dir=top_dir, path_index=path_index, /force, $
+                   dry_run=keyword_set(save_not)
+     IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
+  ENDELSE 
+  
   return, destination
 END
 
