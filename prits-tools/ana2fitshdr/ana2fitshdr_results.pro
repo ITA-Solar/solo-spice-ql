@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-26 10:47 CEST $
+; $Id: 2023-06-26 15:12 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -263,28 +263,18 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       ind = where(pr_types eq 'LIB' AND pr_versions eq max_version_number, count)
       after = pr_keywords[ind[0]]
     ENDIF
-    new_version = strtrim(string(max_version_number+2), 2)
-    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPVER'+new_version, spice.version_find_line, 'Version of procedure PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc_find_line, 'Name of procedure performing PRSTEP'+new_version, after=after
-    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
-    fits_util->add, hdr, '', ' ', after=after
-
-    new_version = strtrim(string(max_version_number+1), 2)
-    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
-    params = spice.params
-    param_names = tag_names(params)
-    param_text = ''
-    for iparam=0,n_tags(params)-1 do begin
-      if iparam gt 0 then param_text += ', '
-      param_text += strtrim(param_names[iparam], 2) + '=' + strtrim(string(fix(params.(iparam))), 2)
+    for istep=N_ELEMENTS(spice)-1,0,-1 do begin
+      new_version = strtrim(string(max_version_number+1+istep), 2)
+      prstep = spice[istep]
+      fits_util->add, hdr, 'PRLIB'+new_version+'A', prstep.lib, 'Software library containing PRPROC'+new_version, after=after
+      IF prstep.params NE '' THEN $
+        fits_util->add, hdr, 'PRPARA'+new_version, prstep.params, 'Parameters for PRPROC'+new_version, after=after
+      fits_util->add, hdr, 'PRPVER'+new_version, prstep.version, 'Version of procedure PRPROC'+new_version, after=after
+      fits_util->add, hdr, 'PRPROC'+new_version, prstep.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
+      fits_util->add, hdr, 'PRSTEP'+new_version, prstep.step, 'Processing step type ', after=after
+      fits_util->add, hdr, '', ' ', after=after
     endfor
-    fits_util->add, hdr, 'PRPARA'+new_version, param_text, 'Parameters for PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPVER'+new_version, spice.version, 'Version of procedure PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
-    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
-    fits_util->add, hdr, '', ' ', after=after
-
+    
   ENDIF ELSE BEGIN ; spice_header
 
     fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
