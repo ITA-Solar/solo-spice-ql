@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-22 14:52 CEST $
+; $Id: 2023-06-26 10:31 CEST $
 
 
 ;+
@@ -214,8 +214,8 @@ END
 ; OUTPUT:
 ;     The version of the new level 3 file, as a string in the format 'V##'.
 ;-
-FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $;official_l3dir=official_l3dir, $
-  existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir=pipeline_dir
+FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
+  existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index
   ; Returns the version for a new level 3
   compile_opt idl2, static
 
@@ -269,8 +269,8 @@ END
 ; OUTPUT:
 ;     The new filename of the level 3 file.
 ;-
-FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, $;official_l3dir=official_l3dir, $
-  version_l3=version_l3, existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir=pipeline_dir
+FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, $
+  version_l3=version_l3, existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index
   ; Returns L3 filename based on L2 filename, with version number being the highest version number of any existing L3 files incremented by 1.
   compile_opt idl2, static
 
@@ -278,7 +278,7 @@ FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, 
   filename_l3 = file_basename(filename_l2)
   filename_l3 = filename_l3.replace('_L2_', '_L3_')
   version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, $ ;official_l3dir=official_l3dir, $
-                                         existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, pipeline_dir = pipeline_dir)
+                                         existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
   return, filename_l3
@@ -380,11 +380,11 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
      spice_data_dir = getenv('SPICE_DATA')
      top_dir = (keyword_set(pipeline_dir)) ? spice_data_dir : spice_data_dir+'/user/'
   ENDIF
-
+     
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
 
   filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, version_l3=version_l3, $
-    top_dir=top_dir, path_index=path_index, pipeline_dir = pipeline_dir)
+    top_dir=top_dir, path_index=path_index)
 
   file_info_l2 = spice_file2info(filename_l2)
    
@@ -439,7 +439,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
       original_data=original_data, /spice)
     
-    IF iwindow EQ 0 THEN file = (pipeline_dir) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
+    IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
     
     IF ~keyword_set(save_not) THEN BEGIN
       writefits, file, RESULT, *headers[0], append=extension
@@ -455,7 +455,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
   
-  IF pipeline_dir THEN destination = file ELSE BEGIN 
+  IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN 
      spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
                    /user_dir, top_dir=top_dir, path_index=path_index, /force, $
                    dry_run=keyword_set(save_not)
