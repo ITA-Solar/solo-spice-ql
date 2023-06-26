@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-26 10:31 CEST $
+; $Id: 2023-06-26 10:46 CEST $
 
 
 ;+
@@ -390,7 +390,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   file_info_l2 = spice_file2info(filename_l2)
    
-  file_id = version_l3 + $
+  file_id = file_info_l2.version + $
     '_' + strtrim(string(file_info_l2.spiobsid), 2) + $
     fns('-###', file_info_l2.rasterno)
 
