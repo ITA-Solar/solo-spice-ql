@@ -40,10 +40,6 @@
 ;      EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
-;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
-;                 and incorporated into this level 3 FITS file. And the 'data' extension
-;                 will get 'original_data' as its data array, instead of the data array
-;                 saved in the ana or 'input_data'.
 ;      print_headers: If set, then all headers created will be printed out.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
@@ -73,6 +69,13 @@
 ;               and parameter values at points where the fit has been
 ;               declared as "FAILED".
 ;      LABEL: A string.
+;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
+;                 and incorporated into this level 3 FITS file. And the 'data' extension
+;                 will get 'original_data' as its data array, instead of the data array
+;                 saved in the ana or 'input_data'. 
+;                 This keyword should be set to a structure with the tags 'version' and 'params'.
+;                 'version' contains a version number, 'proc' the name of the procedure and 'params' is a 
+;                 structure with all the input parameters used to create the level 3 file.
 ;
 ; OUTPUTS:
 ;      a pointer array, containing 7 FITS keyword headers
@@ -82,7 +85,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-15 11:06 CEST $
+; $Id: 2023-06-22 15:23 CEST $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $

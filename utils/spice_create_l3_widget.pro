@@ -83,7 +83,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-16 14:17 CEST $
+; $Id: 2023-06-26 11:36 CEST $
 ;-
 ;
 ;
@@ -140,7 +140,7 @@ pro spice_create_l3_widget_event, event
       ENDIF
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
         no_fitting=no_fitting, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, no_line_list=no_line_list, $
-        official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, force_version=force_version, $
+        top_dir=top_dir, save_not=save_not, force_version=force_version, $
         all_ana=all_ana, all_result_headers=all_result_headers, group_leader=info.group_leader)
       (*info.result).l3_file = l3_file
       (*info.result).ana = ptr_new(all_ana)
@@ -213,7 +213,7 @@ pro spice_create_l3_widget_calc_l3_dir, info
   widget_control, info.dir_user_bg, get_value=user_dir
   user_dir = user_dir[0]
   file_l2 = info.l2_object->get_filename()
-  file_l3 = spice_data.get_filename_l3(file_l2, force_version=force_version, official_l3dir=~user_dir, $
+  file_l3 = spice_data.get_filename_l3(file_l2, force_version=force_version, $
     version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir)
   all_files = [file_l3]
   all_files_list = [file_l3+' [new]']

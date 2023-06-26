@@ -41,11 +41,14 @@
 ;      EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
-;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
-;                 and incorporated into this level 3 FITS file.
 ; 
 ; OPTIONAL INPUTS:
 ;      header_l2: The header (string array) of the SPICE level 2 file.
+;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
+;                 and incorporated into this level 3 FITS file.
+;                 This keyword should be set to a structure with the tags 'version', 'proc' and 'params'.
+;                 'version' contains a version number, 'proc' the name of the procedure and 'params' is a 
+;                 structure with all the input parameters used to create the level 3 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -55,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-16 14:31 CEST $
+; $Id: 2023-06-26 10:47 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -63,9 +66,9 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   winno=winno, EXTENSION=EXTENSION, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  spice=spice, header_l2=header_l2
+  spice=spice, header_l2=header_l2_in
 
-  spice_header = keyword_set(spice) && keyword_set(header_l2)
+  spice_header = keyword_set(spice) && keyword_set(header_l2_in)
   n_dims = size(result, /n_dimensions)
 
   fits_util = obj_new('oslo_fits_util')
@@ -75,12 +78,11 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'SOLARNET', 1, 'HDU contains SOLARNET Type P data'  ; TODO: comment? value=0.5 or 1?
-  fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
   fits_util->add, hdr, 'EXTNAME', data_id+' results', 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
 
   IF spice_header THEN BEGIN
+    header_l2 = header_l2_in
     fits_util->add, hdr, 'PGEXTNAM', fxpar(header_l2, 'EXTNAME', missing=''), 'Extension name in progenitor file'
     fits_util->add, hdr, 'PGFILENA', fxpar(header_l2, 'FILENAME', missing=''), 'Progenitor filename'
   ENDIF
@@ -179,7 +181,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       fits_util->add, hdr, 'PMIN'+fitnr+parnr, param.min_val, 'Minimum value of parameter '+parnr+' for component '+fitnr
       fits_util->add, hdr, 'PTRA'+fitnr+parnr, param.trans_a, 'Linear coefficient A in Lambda=PVAL*PTRA+PTRB'
       fits_util->add, hdr, 'PTRB'+fitnr+parnr, param.trans_b, 'Linear coefficient B in Lambda=PVAL*PTRA+PTRB'
-      fits_util->add, hdr, 'PCONS'+fitnr+parnr, param.const, 'Indicates whether parameter '+parnr+' for component '+fitnr+'is constant'
+      fits_util->add, hdr, 'PCONS'+fitnr+parnr, param.const, '1 if parameter '+parnr+' for component '+fitnr+' is constant'
     endfor ; ipar0,n_params-1
   endfor ; itag=0,N_TAGS(fit)-1
 
@@ -196,6 +198,11 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   IF spice_header THEN BEGIN
 
     ; Add level 2 header to this header
+    ; but withou doubling this keyword
+    temp = fxpar(hdr, 'LONGSTRN', count=count_l3)
+    temp = fxpar(header_l2, 'LONGSTRN', count=count_l2)
+    IF count_l3 && count_l2 then fits_util->remove_keyword, header_l2, 'LONGSTRN', /remove_comment
+
     ind_start = where(strmatch(header_l2, '*Study parameters valid for all Obs-HDUs in this file*') eq 1, count_l2)
     if count_l2 eq 1 then begin
       ind_end = where(strmatch(hdr, 'END *') eq 1, count_l3)
@@ -206,6 +213,8 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       hdr = [hdr[0:ind_end-1], header_l2[ind_start-3:*]]
     endif
     
+    fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
+    fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
     fits_util->add, hdr, 'PARENT', fxpar(header_l2, 'FILENAME', missing=''), 'L2 file'
 
     ; Adapt WCS keywords
@@ -242,11 +251,44 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       fits_util->add, hdr, 'PC4_2', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 2 to coord 4 due to roll', after='PC4_4'
     endif
   
+    file_info_l3 = spice_file2info(filename_out)
     fits_util->add, hdr, 'LEVEL', 'L3', 'Data processing level'
-    fits_util->add, hdr, 'L2NWIN', fxpar(header_l2, 'NWIN', missing=0), 'Total number of windows (incl. db and int win) in level 2 file', after='NWIN'
-    fits_util->add, hdr, 'L2WINNO', fxpar(header_l2, 'WINNO', missing=0), 'Window number (starting at 0) within this study in level 2 file', after='WINNO'
-  
+    fits_util->add, hdr, 'VERSION', fns('##',file_info_l3.version), 'Incremental file version number'
+    fits_util->add, hdr, 'L2NWIN', fxpar(header_l2, 'NWIN', missing=0), 'Total no of windows (incl. db and int win) in L2 file', after='NWIN'
+    fits_util->add, hdr, 'L2WINNO', fxpar(header_l2, 'WINNO', missing=0), 'Win no (starting at 0) within this study in L2 file', after='WINNO'
+    
+    max_version_number = get_last_prstep_keyword(header_l2, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
+      pr_versions=pr_versions, pr_types=pr_types)
+    IF count gt 0 THEN BEGIN
+      ind = where(pr_types eq 'LIB' AND pr_versions eq max_version_number, count)
+      after = pr_keywords[ind[0]]
+    ENDIF
+    new_version = strtrim(string(max_version_number+2), 2)
+    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPVER'+new_version, spice.version_find_line, 'Version of procedure PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc_find_line, 'Name of procedure performing PRSTEP'+new_version, after=after
+    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
+    fits_util->add, hdr, '', ' ', after=after
+
+    new_version = strtrim(string(max_version_number+1), 2)
+    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
+    params = spice.params
+    param_names = tag_names(params)
+    param_text = ''
+    for iparam=0,n_tags(params)-1 do begin
+      if iparam gt 0 then param_text += ', '
+      param_text += strtrim(param_names[iparam], 2) + '=' + strtrim(string(fix(params.(iparam))), 2)
+    endfor
+    fits_util->add, hdr, 'PRPARA'+new_version, param_text, 'Parameters for PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPVER'+new_version, spice.version, 'Version of procedure PRPROC'+new_version, after=after
+    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
+    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
+    fits_util->add, hdr, '', ' ', after=after
+
   ENDIF ELSE BEGIN ; spice_header
+
+    fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
+    fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
 
     ; Add WCS keywords
     fits_util->add, hdr, 'CTYPE1', 'PARAMETER', 'Type of 1st coordinate'
@@ -271,7 +313,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   fits_util->add, hdr, 'BUNIT', ' '
 
   fits_util->add, hdr, 'NWIN', n_windows, 'Number of windows'
-  fits_util->add, hdr, 'WINNO', winno, 'Window number (starting at 0) within this study in this FITS file'
+  fits_util->add, hdr, 'WINNO', winno, 'Win no (starting at 0) within this study in this FITS file'
 
   fits_util->clean_header, hdr
   
