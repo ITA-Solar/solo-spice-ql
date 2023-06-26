@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-23 13:50 CEST $
+; $Id: 2023-06-26 10:47 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -251,7 +251,9 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       fits_util->add, hdr, 'PC4_2', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 2 to coord 4 due to roll', after='PC4_4'
     endif
   
+    file_info_l3 = spice_file2info(filename_out)
     fits_util->add, hdr, 'LEVEL', 'L3', 'Data processing level'
+    fits_util->add, hdr, 'VERSION', fns('##',file_info_l3.version), 'Incremental file version number'
     fits_util->add, hdr, 'L2NWIN', fxpar(header_l2, 'NWIN', missing=0), 'Total no of windows (incl. db and int win) in L2 file', after='NWIN'
     fits_util->add, hdr, 'L2WINNO', fxpar(header_l2, 'WINNO', missing=0), 'Win no (starting at 0) within this study in L2 file', after='WINNO'
     
