@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-20 15:33 CEST $
+; $Id: 2023-06-21 13:51 CEST $
 
 
 ;+
@@ -106,6 +106,48 @@ pro spice_data_l3::help, description=description, _extra=_extra
     obj_help, self, description=description, _extra=_extra $
   ELSE $
     obj_help, self, _extra=_extra
+END
+
+
+;+
+; Description:
+;     This routine calls xcfit_block with the data of the chosen window.
+;
+; OPTIONAL INPUTS:
+;     window_index : The index of the desired window, default is 0.
+;
+; OUTPUT:
+;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
+;     Output is scalar if there is only one window.
+;     Output is zero if an error occurred.
+;
+; OPTIONAL OUTPUT:
+;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
+;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
+;     headers_lambda: A pointer array, containing the headers of the lambda extensions as string arrays.
+;     headers_residuals: A pointer array, containing the headers of the residuals extensions as string arrays.
+;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
+;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
+;     headers_contants: A pointer array, containing the headers of the constants extensions as string arrays.
+;-
+function spice_data_l3::xcfit_block, window_index, $
+  headers_results=headers_results, headers_data=headers_data, $
+  headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+  headers_include=headers_include, headers_contants=headers_contants
+  ;Calls xcfit_block with the data of the chosen window(s)
+  COMPILE_OPT IDL2
+
+  ana = fits2ana(self.file, windows=window_index, $
+    headers_results=headers_results, headers_data=headers_data, $
+    headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+    headers_include=headers_include, headers_contants=headers_contants)
+  if size(ana, /type) EQ 8 then begin
+    SPICE_XCFIT_BLOCK, ana=ana
+  endif else begin
+    print, 'Something went wrong when trying to reproduce an ANA structure.'
+  endelse
+
+  return, ana
 END
 
 

@@ -35,6 +35,8 @@
 ;      Structure containing a list of found fit components, including background component.
 ;
 ; OPTIONAL OUTPUTS:
+;     version :   Returns the version number of this software.
+;     gt_peaks_version : Returns the version number of spice_gt_peaks.
 ;
 ; CALLS:
 ;      spice_gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
@@ -54,13 +56,15 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2023-04-26 15:08 CEST $
+; $Id: 2023-06-23 13:35 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
-  line_list=line_list, plot=plot
+  line_list=line_list, plot=plot, version=version, gt_peaks_version=version_gt_peaks
   ;; Automatically generate cfit analysis definitions based on input intensity and
   ;; wavelength arrays
+
+  version = 1 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, data, 1, "data", 'NUMERIC', [2,3,4]
   prits_tools.parcheck, lam, 2, "lam", 'NUMERIC', [2,3,4]
@@ -113,14 +117,14 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     ENDIF ; npeaks GT 0
 
   ENDIF ELSE BEGIN ; use_list
-    peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5, /sort, plot=plot)
+    peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5, /sort, plot=plot, version=version_gt_peaks)
     npeaks = n_elements(peakinds)
   ENDELSE ; use_list
 
 
   IF npeaks GT 0 THEN BEGIN
 
-    gaussians = replicate(mk_comp_gauss([0,0,0]), npeaks)
+    gaussians = replicate(spice_mk_comp_gauss([0,0,0]), npeaks)
 
     int0 = meanprofile[peakinds]
     IF use_list THEN lam0 = lines[ind_lines] $

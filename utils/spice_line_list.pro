@@ -17,17 +17,22 @@
 ; A HASH table, with the wavelength in nm as keys, and the
 ; corresponding names as values.
 ;
+; OPTIONAL OUTPUTS:
+;     version :   Returns the version number of this software.
+;
 ; Category    : SPICE, Fitting
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2022-11-24 14:52 CET $
+; $Id: 2023-06-23 13:35 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
 
-function spice_line_list
+function spice_line_list, version=version
+
+  version = 1 ; PLEASE increase this number when editing the code
 
   line_list = HASH( $
 
