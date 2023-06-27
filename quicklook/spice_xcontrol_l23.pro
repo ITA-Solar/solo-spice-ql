@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-27 11:57 CEST $
+; $Id: 2023-06-27 12:51 CEST $
 ;-
 
 
@@ -114,6 +114,17 @@ pro spice_xcontrol_l23_save_file, event
   FOR iwindow=0,nwin_l3-1 DO BEGIN
 
     original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+    
+    pr_steps = *(*info).proc_steps_user
+    if (*info).state_l3_user[iwindow].edited then begin
+      pr_steps = [pr_steps, { $
+        step:'PARAMETER-FITTING', $
+        proc:'spice_xcfit_block, spice_xcontrol_l23', $
+        version:0L, $
+        lib:'solarsoft/so/spice/idl/quicklook', $
+        params:'POSSIBLE_MANUAL_EDITING = 1' $
+      } ]
+    endif
 
     if iwindow gt 0 then extension=1 else extension=0
     headers = ana2fitshdr(ana_l3[iwindow], header_l2=(*info).object_l2->get_header(winno_l3[iwindow]), $
@@ -122,7 +133,7 @@ pro spice_xcontrol_l23_save_file, event
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data, spice=*(*info).proc_steps_user)
+      original_data=original_data, spice=pr_steps)
 
     writefits, file_l3, RESULT, *headers[0], append=extension
     writefits, file_l3, original_data, *headers[1], /append
