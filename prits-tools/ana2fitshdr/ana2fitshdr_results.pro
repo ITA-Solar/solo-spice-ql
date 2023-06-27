@@ -46,9 +46,9 @@
 ;      header_l2: The header (string array) of the SPICE level 2 file.
 ;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
 ;                 and incorporated into this level 3 FITS file.
-;                 This keyword should be set to a structure with the tags 'version', 'proc' and 'params'.
-;                 'version' contains a version number, 'proc' the name of the procedure and 'params' is a 
-;                 structure with all the input parameters used to create the level 3 file.
+;                 This keyword should be set to a structure or array of structures.
+;                 Each structure contains the tags: step, proc, version, lib and params.
+;                 Those describe the processing steps taken to produce a SPICE level 3 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-26 15:12 CEST $
+; $Id: 2023-06-27 11:23 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
