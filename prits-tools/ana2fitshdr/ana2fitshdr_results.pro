@@ -46,9 +46,9 @@
 ;      header_l2: The header (string array) of the SPICE level 2 file.
 ;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
 ;                 and incorporated into this level 3 FITS file.
-;                 This keyword should be set to a structure with the tags 'version', 'proc' and 'params'.
-;                 'version' contains a version number, 'proc' the name of the procedure and 'params' is a 
-;                 structure with all the input parameters used to create the level 3 file.
+;                 This keyword should be set to a structure or array of structures.
+;                 Each structure contains the tags: step, proc, version, lib and params.
+;                 Those describe the processing steps taken to produce a SPICE level 3 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array)
@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-26 10:47 CEST $
+; $Id: 2023-06-27 14:30 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -170,7 +170,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
           punit = cunit_absorb
         ENDELSE
       ENDELSE
-      fits_util->add, hdr, 'PUNIT'+fitnr+parnr, param.name, 'Phys. unit of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PUNIT'+fitnr+parnr, punit, 'Phys. unit of parameter '+parnr+' for component '+fitnr
       ind = where(param.description NE '', count)
       if count gt 0 then description = strjoin(param.description[ind], ';') $
       else description = ''
@@ -212,6 +212,21 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       endif
       hdr = [hdr[0:ind_end-1], header_l2[ind_start-3:*]]
     endif
+
+    ; Remove auxiliary data part of the level 2 header
+    ind_start = where(strmatch(hdr, '*Auxiliary data and reference to bintab with variable keywords*') eq 1, count_aux1)
+    ind_end = where(strmatch(hdr, '* -------------------------------*') eq 1, count_aux2)
+    IF count_aux1 EQ 1 && count_aux2 GT 0 THEN BEGIN
+      ind_aux2 = where(ind_end GT ind_start[0]+1, count_aux2)
+      IF count_aux2 GT 0 THEN hdr = [ hdr[0:ind_start-2], hdr[ind_end[ind_aux2[0]]:*] ]
+    ENDIF
+    
+    hdr = hdr.replace(' | Study parameters valid for all Obs-HDUs in this file |  ', $
+                      ' | Study parameters valid for all Obs-HDUs in the L2 file |')
+    hdr = hdr.replace(' | Other keywords valid for all Obs-HDUs in this file |  ', $
+                      ' | Other keywords valid for all Obs-HDUs in the L2 file |')
+    hdr = hdr.replace(' | Keywords valid for this HDU (', $
+                      ' | Keywords valid for  L2  HDU (')
     
     fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
     fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
@@ -263,28 +278,18 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
       ind = where(pr_types eq 'LIB' AND pr_versions eq max_version_number, count)
       after = pr_keywords[ind[0]]
     ENDIF
-    new_version = strtrim(string(max_version_number+2), 2)
-    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPVER'+new_version, spice.version_find_line, 'Version of procedure PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc_find_line, 'Name of procedure performing PRSTEP'+new_version, after=after
-    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
-    fits_util->add, hdr, '', ' ', after=after
-
-    new_version = strtrim(string(max_version_number+1), 2)
-    fits_util->add, hdr, 'PRLIB'+new_version+'A', spice.lib, 'Software library containing PRPROC'+new_version, after=after
-    params = spice.params
-    param_names = tag_names(params)
-    param_text = ''
-    for iparam=0,n_tags(params)-1 do begin
-      if iparam gt 0 then param_text += ', '
-      param_text += strtrim(param_names[iparam], 2) + '=' + strtrim(string(fix(params.(iparam))), 2)
+    for istep=N_ELEMENTS(spice)-1,0,-1 do begin
+      new_version = strtrim(string(max_version_number+1+istep), 2)
+      prstep = spice[istep]
+      fits_util->add, hdr, 'PRLIB'+new_version+'A', prstep.lib, 'Software library containing PRPROC'+new_version, after=after
+      IF prstep.params NE '' THEN $
+        fits_util->add, hdr, 'PRPARA'+new_version, prstep.params, 'Parameters for PRPROC'+new_version, after=after
+      fits_util->add, hdr, 'PRPVER'+new_version, prstep.version, 'Version of procedure PRPROC'+new_version, after=after
+      fits_util->add, hdr, 'PRPROC'+new_version, prstep.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
+      fits_util->add, hdr, 'PRSTEP'+new_version, prstep.step, 'Processing step type ', after=after
+      fits_util->add, hdr, '', ' ', after=after
     endfor
-    fits_util->add, hdr, 'PRPARA'+new_version, param_text, 'Parameters for PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPVER'+new_version, spice.version, 'Version of procedure PRPROC'+new_version, after=after
-    fits_util->add, hdr, 'PRPROC'+new_version, spice.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
-    fits_util->add, hdr, 'PRSTEP'+new_version, 'PARAMETER-FITTING', 'Processing step type ', after=after
-    fits_util->add, hdr, '', ' ', after=after
-
+    
   ENDIF ELSE BEGIN ; spice_header
 
     fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'

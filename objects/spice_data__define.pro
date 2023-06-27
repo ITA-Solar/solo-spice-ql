@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-26 11:40 CEST $
+; $Id: 2023-06-26 15:12 CEST $
 
 
 ;+
@@ -429,20 +429,30 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     if iwindow gt 0 then extension=1 else begin
       extension=0
       IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
-      version_and_params = { $
+      version_and_params_1 = { $
+        step:'PARAMETER-FITTING', $
         proc:'spice_data::create_l3_file', $
-        version:version, $
+        version:fix(version, type=3), $
         lib:'solarsoft/so/spice/idl/quicklook', $
-        params:{line_list:~keyword_set(no_line_list), $
-          masking:~keyword_set(no_masking), $
-          approximated_slit:keyword_set(approximated_slit), $
-          fitting:~keyword_set(no_fitting), $
-          position:keyword_set(position), $
-          velocity:vel, $
-          possible_manual_editing:~keyword_set(no_widget) && ~keyword_set(no_xcfit_block)}, $
-        proc_find_line:proc_find_line.proc, $
-        version_find_line:proc_find_line.version $
-        }
+        params: $
+        string('LINE_LIST = '+strtrim(string(fix(~keyword_set(no_line_list))), 2)+',', format='(A-67)') + $
+        string('MASKING   = '+strtrim(string(fix(~keyword_set(no_masking))), 2)+',', format='(A-67)') + $
+        string('FITTING   = '+strtrim(string(fix(~keyword_set(no_fitting))), 2)+',', format='(A-67)') + $
+        string('POSITION  = '+strtrim(string(fix(keyword_set(position))), 2)+',', format='(A-67)') + $
+        string('VELOCITY  = '+strtrim(string(vel), 2)+',', format='(A-67)') + $
+        'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2) $
+      }
+
+      version_and_params_2 = { $
+        step:'PARAMETER-FITTING', $
+        proc:proc_find_line.proc, $
+        version:fix(proc_find_line.version, type=3), $
+        lib:'solarsoft/so/spice/idl/quicklook', $
+        params:'' $
+      }
+
+      version_and_params = [version_and_params_1, version_and_params_2]
+
     endelse
 
     headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $

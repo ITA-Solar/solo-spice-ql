@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-21 13:51 CEST $
+; $Id: 2023-06-27 11:22 CEST $
 
 
 ;+
@@ -250,6 +250,53 @@ FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir=user_dir, l3_obj
     l3_objects = l3_objects[maxind]
   ENDIF
   return, found_l3_file
+END
+
+
+;+
+; Description:
+;     Returns all processing step keywords that are related with producing this level 3 file.
+;
+; OUTPUT:
+;     A structure or array of structure, containing the keywords PRSTEPn, PRPROCn, PRPVERn, PRLIBn, PRPARA.
+;     This structure was used as input to ana2fitshdr
+;-
+FUNCTION spice_data_l3::get_l3_processing_steps
+  COMPILE_OPT IDL2
+
+  max_version = get_last_prstep_keyword(*self.hdr, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
+    pr_versions=pr_versions, pr_types=pr_types)
+  ind = where(pr_keywords.startswith('PRSTEP'), count_step)
+  FOR istep=0,count_step-1 DO BEGIN
+    IF fxpar(*self.hdr, pr_keywords[ind[istep]], missing='') EQ 'PARAMETER-FITTING' THEN BEGIN
+      step = 'PARAMETER-FITTING'
+      
+      ind_proc = where(pr_keywords.startswith('PRPROC') AND pr_versions EQ pr_versions[ind[istep]], count_proc)
+      IF count_proc GT 0 THEN proc = fxpar(*self.hdr, pr_keywords[ind_proc[0]], missing='') $
+      ELSE proc = '' 
+      
+      ind_version = where(pr_keywords.startswith('PRPVER') AND pr_versions EQ pr_versions[ind[istep]], count_version)
+      IF count_version GT 0 THEN version = fix(fxpar(*self.hdr, pr_keywords[ind_version[0]], missing=0L), type=3) $
+      ELSE version = 0L
+
+      ind_lib = where(pr_keywords.startswith('PRLIB') AND pr_versions EQ pr_versions[ind[istep]], count_lib)
+      IF count_lib GT 0 THEN lib = fxpar(*self.hdr, pr_keywords[ind_lib[0]], missing='') $
+      ELSE lib = '' 
+
+      ind_params = where(pr_keywords.startswith('PRPARA') AND pr_versions EQ pr_versions[ind[istep]], count_params)
+      IF count_params GT 0 THEN params = fxpar(*self.hdr, pr_keywords[ind_params[0]], missing='') $
+      ELSE params = ''
+      
+      temp = {step:step, proc:proc, version:version, lib:lib, params:params}
+      
+      IF N_ELEMENTS(l3_pr_steps) EQ 0 THEN BEGIN
+        l3_pr_steps = temp
+      ENDIF ELSE BEGIN
+        l3_pr_steps = [l3_pr_steps, temp]
+      ENDELSE
+    ENDIF
+  ENDFOR
+  return, l3_pr_steps
 END
 
 

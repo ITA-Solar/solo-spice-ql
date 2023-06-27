@@ -73,9 +73,9 @@
 ;                 and incorporated into this level 3 FITS file. And the 'data' extension
 ;                 will get 'original_data' as its data array, instead of the data array
 ;                 saved in the ana or 'input_data'. 
-;                 This keyword should be set to a structure with the tags 'version' and 'params'.
-;                 'version' contains a version number, 'proc' the name of the procedure and 'params' is a 
-;                 structure with all the input parameters used to create the level 3 file.
+;                 This keyword should be set to a structure or array of structures.
+;                 Each structure contains the tags: step, proc, version, lib and params.
+;                 Those describe the processing steps taken to produce a SPICE level 3 file.
 ;
 ; OUTPUTS:
 ;      a pointer array, containing 7 FITS keyword headers
@@ -85,7 +85,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-22 15:23 CEST $
+; $Id: 2023-06-27 11:23 CEST $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $

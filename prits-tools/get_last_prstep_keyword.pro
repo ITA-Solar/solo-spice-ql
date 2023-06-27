@@ -40,7 +40,7 @@
 ; HISTORY:
 ;     22-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-22 13:31 CEST $
+; $Id: 2023-06-27 11:23 CEST $
 
 
 FUNCTION get_last_prstep_keyword, header, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
@@ -50,14 +50,14 @@ FUNCTION get_last_prstep_keyword, header, count=count, pr_keywords=pr_keywords, 
   prits_tools.parcheck, header, 1, "header", 'string', 1
 
   pr_keywords = header.extract('^PR(STEP|PROC|PVER|MODE|PARA|REF|LOG|ENV|VER|HSH|BRA|LIB)[1-9][0-9]{0,1}[^ =]?')
-  pr_keywords_ind = where(pr_keywords NE '', count)
+  ind_pr_keywords = where(pr_keywords NE '', count)
   if count eq 0 then begin
     pr_keywords = ''
     pr_versions = 0
     pr_version_max = 0
     pr_types = ''
   endif else begin
-    pr_keywords = pr_keywords[pr_keywords_ind]
+    pr_keywords = pr_keywords[ind_pr_keywords]
     pr_versions = fix(pr_keywords.extract('[1-9][0-9]{0,1}'))
     pr_version_max = max(pr_versions)
     pr_types = pr_keywords.extract('(STEP|PROC|PVER|MODE|PARA|REF|LOG|ENV|VER|HSH|BRA|LIB)')
