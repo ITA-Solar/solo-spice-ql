@@ -58,7 +58,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-27 14:13 CEST $
+; $Id: 2023-06-27 14:30 CEST $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
@@ -170,7 +170,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
           punit = cunit_absorb
         ENDELSE
       ENDELSE
-      fits_util->add, hdr, 'PUNIT'+fitnr+parnr, param.name, 'Phys. unit of parameter '+parnr+' for component '+fitnr
+      fits_util->add, hdr, 'PUNIT'+fitnr+parnr, punit, 'Phys. unit of parameter '+parnr+' for component '+fitnr
       ind = where(param.description NE '', count)
       if count gt 0 then description = strjoin(param.description[ind], ';') $
       else description = ''
