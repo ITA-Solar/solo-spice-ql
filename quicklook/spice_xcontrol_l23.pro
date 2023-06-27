@@ -41,10 +41,10 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-21 11:52 CEST $
+; $Id: 2023-06-27 11:57 CEST $
 ;-
-;
-;
+
+
 pro spice_xcontrol_l23_destroy, event
   pseudoevent = {WIDGET_KILL_REQUEST, $
     ID:event.id, $
@@ -52,6 +52,7 @@ pro spice_xcontrol_l23_destroy, event
     HANDLER:event.handler}
   spice_xcontrol_event, pseudoevent
 end
+
 
 pro spice_xcontrol_l23_cleanup, tlb
   widget_control, tlb, get_uvalue=info
@@ -63,8 +64,11 @@ pro spice_xcontrol_l23_cleanup, tlb
   ptr_free,(*info).hdr_l3_official
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user)-1 DO ptr_free, (*(*info).hdr_l3_user)[i]
   ptr_free,(*info).hdr_l3_user
+  ptr_free,(*info).proc_steps_official
+  ptr_free,(*info).proc_steps_user
   ptr_free,info
 end
+
 
 pro spice_xcontrol_l23_event, event
   if tag_names(event, /structure_name) eq 'WIDGET_KILL_REQUEST' then begin
@@ -118,7 +122,7 @@ pro spice_xcontrol_l23_save_file, event
       FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data, /spice)
+      original_data=original_data, spice=*(*info).proc_steps_user)
 
     writefits, file_l3, RESULT, *headers[0], append=extension
     writefits, file_l3, original_data, *headers[1], /append
@@ -472,6 +476,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     FOR iwin=0,nwin_l3_official-1 DO BEGIN
       winno_l3_official[iwin] = fxpar(*hdr_l3_official[iwin], 'L2WINNO', missing=-1)
     ENDFOR
+    l3_obj = spice_data(file_l3_official)
+    proc_steps_official = l3_obj->get_l3_processing_steps()
   ENDIF ELSE BEGIN
     IF exist_l2 THEN BEGIN
       file_l3_official = file_l3_calc
@@ -482,6 +488,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     ana_l3_official = 0
     hdr_l3_official = ptr_new(0)
     winno_l3_official = -1
+    proc_steps_official = 0
   ENDELSE
 
   IF exist_l3_user THEN BEGIN
@@ -493,6 +500,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     FOR iwin=0,nwin_l3_user-1 DO BEGIN
       winno_l3_user[iwin] = fxpar(*hdr_l3_user[iwin], 'L2WINNO', missing=-1)
     ENDFOR
+    l3_obj = spice_data(file_l3_user)
+    proc_steps_user = l3_obj->get_l3_processing_steps()
   ENDIF ELSE BEGIN
     old_path_part = path_sep()+'spice'+path_sep()+'level3'+path_sep()
     new_path_part = path_sep()+'spice'+path_sep()+'user'+path_sep()+'level3'+path_sep()
@@ -505,6 +514,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     ana_l3_user = 0
     hdr_l3_user = ptr_new(0)
     winno_l3_user = -1
+    proc_steps_user = 0
   ENDELSE
 
 
@@ -631,6 +641,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_user:nwin_l3_user, $
     hdr_l3_official:ptr_new(hdr_l3_official), $
     hdr_l3_user:ptr_new(hdr_l3_user), $
+    proc_steps_official:ptr_new(proc_steps_official), $
+    proc_steps_user:ptr_new(proc_steps_user), $
     state_l3_official:state_l3_official, $
     state_l3_user:state_l3_user, $
     save_button_user:save_button_user $
