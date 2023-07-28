@@ -41,7 +41,7 @@
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
 ;-
-; $Id: 2023-06-26 15:12 CEST $
+; $Id: 2023-07-28 13:28 CEST $
 
 
 ;+
@@ -1393,7 +1393,7 @@ FUNCTION spice_data::get_window_index, input
         iwin[iw]=input[iw]
       ENDIF ELSE BEGIN
         ;   else e.g. input=1334.
-        nwin=self->getnwin()
+        nwin=self->get_number_windows()
         winmax=fltarr(nwin)
         winmin=fltarr(nwin)
         FOR i=0,nwin-1 DO BEGIN

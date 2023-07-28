@@ -102,14 +102,8 @@
 ;       IDL> wd = spice_getwindata(file,1393)
 ;
 ; TODO:
-;     - get numbers for gain, yield and dark current noise
-;       The gain is the number of electrons released in the detector that
-;       yield 1 DN.
-;       Note that dark_unc is specified in DN.
-;       The quantum yield is the number of electrons released by a single
-;       incident photon on the detector.
 ;     - calibration procedure to be run when /calib has been set
-;     - hot to handle axes for rolled cases?
+;     - how to handle axes for rolled cases?
 ;
 ; PROGRAMMING NOTES:
 ;     - The level-2 IRIS files return intensities in "corrected DN"
@@ -147,12 +141,16 @@
 ;         modified from iris_getwindata
 ;       Version 2, 8-Jul-2021, William Thompson, corrected time calculation
 ;       Version 3, 25-Jan-2022, Terje Fredvik. Added keyword nodumbell, if set
-;       mask any pixels with contributions from the dumbbells, or any other
-;       pixels below or above the narrow slit. Added keyword
-;       approximated_slit, if set (when slit_only is set) use a quicker way 
-;       of estimating the pixels to be masked
+;         mask any pixels with contributions from the dumbbells, or any other
+;         pixels below or above the narrow slit. Added keyword
+;         approximated_slit, if set (when slit_only is set) use a quicker way 
+;         of estimating the pixels to be masked
+;       Ver.4, 18-Jul-2023, Peter Young
+;         Compute error using method of Z. Huang et al. (2023, A&A).
+;         Set negative intensities to missing.
+;         Changed data quality flag.
 ;-
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2023-07-28 13:40 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
@@ -222,11 +220,6 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ENDIF
 
   ;
-  ; SPICE missing data are assigned value given in header keyword 'BLANK' in level 0
-  ; and level 1. Level 2, NAN
-  missing_val = d->get_missing_value()
-
-  ;
   ; Get spatial binning factor
   ;
   ;ybin=d->getinfo('SUMSPAT')
@@ -247,6 +240,16 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ;
   ; Extract the data array.
   wd = d->get_window_data(iwin, no_masking=no_masking, approximated_slit=approximated_slit)
+
+  ;
+  ; SPICE missing data are set to NaN in level 2, so these get set to the
+  ; missing value. I also set any negative numbers to missing, too.
+  ;
+  ;missing_val = d->get_missing_value()
+  missing_val = -100.
+  k=where(~finite(wd) OR wd LE 0.,nk)
+  IF nk NE 0 THEN wd[k]=missing_val
+
 
   t1=systime(1)
 
@@ -333,84 +336,6 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
 
 
   ;
-  ; Saturated data seem to be set at 16183 DN so I will flag these
-  ; values as missing
-  ; Not (yet) defined in SPICE
-  ;
-  ;IF ~keyword_set(keep_sat) THEN BEGIN
-  ;  k=where(wd EQ 16183,nk)
-  ;  IF nk NE 0 THEN wd[k]=missing_val
-  ;ENDIF
-
-
-  ;
-  ; The gain is the number of electrons released in the detector that
-  ; yield 1 DN.
-  ;
-  ; Set the values for the gain (g) and dark current noise
-  ; (dark_unc). The values have been taken from the IRIS instrument
-  ; paper. Note that dark_unc is specified in DN.
-  ; 
-  ; TODO: UPDATE for SPICE needed !!!!!!
-  ;
-  ; The quantum yield is the number of electrons released by a single
-  ; incident photon on the detector. The theoretical yield is
-  ; 12398.5/wvl/3.65 (wvl in angstroms) and this works well at EUV and
-  ; X-ray wavelengths. J.P.Wuelser in a message from 29-Sep-2014 says
-  ; that this formula can't be used at FUV wavelengths and it should be assumed
-  ; that 1.5 electrons are generated for the entire FUV channel. For
-  ; the NUV channel it is 1.0. Note that these are the numbers given in
-  ; the IRIS instrument paper.
-  ;
-;  IF trim(reg) EQ 'FUV' THEN BEGIN
-;    yield=1.5
-;    g=6.0
-;    dark_unc=3.1
-;  ENDIF ELSE BEGIN
-;    yield=1.0
-;    g=18.0
-;    dark_unc=1.2
-;  ENDELSE
-yield = 1
-g = 0
-dark_unc=0
-  ;
-  ; Compute the DN to photon conversion factor.
-  ;
-  ;
-  dn_to_p=g/yield
-
-  ;
-  ; Compute dark current uncertainty in photons (rather than DN)
-  ;
-  dark_unc_p=dark_unc*dn_to_p
-
-
-  ;
-  ; Create the photon array, making sure to set missing pixels.
-  ;
-  wd_p=wd*dn_to_p
-  k_miss=where(wd EQ missing_val,nk)
-
-
-  ;
-  ; Compute errors on photon counts by combining sqrt(N) photon
-  ; statistics with a Gaussian distribution for the dark current
-  ; uncertainty. Note that for wd_p<0 the uncertainty is only from the
-  ; dark current.
-  ;
-  x=wd_p>0 + dark_unc_p^2
-  err_p=sqrt(temporary(x))
-
-  ;
-  ; Now convert the photon errors to an error in DN
-  ;
-  err=temporary(err_p)/dn_to_p
-  wd_p=0
-  IF nk NE 0 THEN err[k_miss]=missing_val
-
-
-  ;
   ; Below I extract time information.
   ;   - getti_1() seems to be the same as gettime() which is mentioned
   ;     in the IRIS user guide.
@@ -465,6 +390,45 @@ dark_unc=0
 
 
   ;
+  ; Compute error using method of Z. Huang et al. (2023, A&A).
+  ;
+  ; Set various calibration parameters:
+  alpha=hdr.radcal
+  np=hdr.nbin
+  t=hdr.xposure
+  IF mean(lam) GT 900. THEN BEGIN
+    f=1.6
+    g=0.57
+    sig_read=6.9
+    i_dark=0.54
+  ENDIF ELSE BEGIN
+    f=1.0
+    g=3.58
+    sig_read=6.9
+    i_dark=0.89
+  ENDELSE
+  ;
+  err=wd
+  ind_good=where(wd NE missing_val, n_good, complement=ind_miss, ncomplement=n_miss)
+  IF n_good GT 0 THEN err[ind_good]=sqrt( f^2*alpha*wd[ind_good]*g + np*sig_read^2 + np*i_dark*t ) / alpha
+  IF n_miss GT 0 THEN err[ind_miss]=missing_val
+
+
+  ;
+  ; Convert to erg/cm2/s/sr/Ang
+  ;
+  wd[ind_good]=wd[ind_good]*100.
+  err[ind_good]=err[ind_good]*100.
+  units='erg/cm2/s/sr'
+  ;units=d->get_variable_unit()
+
+  ;
+  ; Convert to angstroms
+  ;
+  lam=lam*10.
+
+
+  ;
   ; Get satellite roll angle
   ;
   roll_angle=d->get_satellite_rotation()
@@ -508,7 +472,6 @@ dark_unc=0
 
   exp_time = make_array(d->get_number_exposures(iwin), value=d->get_exposure_time(iwin))
 
-  units=d->get_variable_unit()
 
 
   ;
@@ -537,7 +500,7 @@ dark_unc=0
     int: wd, $
     err: err, $
     wvl: lam, $
-    data_quality: bytarr(nl), $
+    data_quality: bytarr(nx), $
     exposure_time: exp_time[ix0:ix1], $
     time: time[ix0:ix1], $
     time_ccsds: ti1[ix0:ix1], $
