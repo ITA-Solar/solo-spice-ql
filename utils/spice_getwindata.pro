@@ -150,7 +150,7 @@
 ;         Set negative intensities to missing.
 ;         Changed data quality flag.
 ;-
-; $Id: 2023-07-28 13:40 CEST $
+; $Id: 2023-08-01 09:40 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
@@ -419,7 +419,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ;
   wd[ind_good]=wd[ind_good]*100.
   err[ind_good]=err[ind_good]*100.
-  units='erg/cm2/s/sr'
+  units='erg/cm2/s/sr/Ang'
   ;units=d->get_variable_unit()
 
   ;
