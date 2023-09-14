@@ -1,4 +1,4 @@
-; $Id: 2022-12-16 10:25 CET $
+; $Id: 2023-09-14 09:34 CEST $
 FUNCTION spice_keyword_info_header
   text = inline_text()
 ;NAXIS1  =                    1 /
@@ -49,6 +49,49 @@ FUNCTION spice_keyword_info_header
 ;WAVECOV = '70.01061-70.790746, 71.580633-72.068218, 75.57883-76.358966, 76.232’
 ;
 ;          END NEW KEYWORDS SENT FROM TERJE 15. DECEMBER 2022 --------------
+;
+;
+;  
+;          NEW KEYWORDS ADDED BY TERJE 14. SEPTEMBER 2023 -------------
+;  
+;  
+;POINT_ID= '00001730'           / SVO pointing ID                                
+;MOSAICID= '        '           / Blank when study is not a mosaic               
+;SVO_GRP = '00001730'           / SVO file group ID, =POINT_ID when not in a SOOP
+;
+;PRSTEP9 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC9 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER9 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA9 = 'burn-in correction data version: 2023-06-15' / Parameters for PRPROC9
+;PRLIB9A = 'uio-spice-pipeline' / Software library containing PRPROC9            
+;                                                                                
+;PRSTEP10= 'SPATIAL-SPECTRAL-DISTORTION-CORRECTION' / Type of processing, step 10
+;PRPROC10= 'spice_prep_distortion_correction.pro' / Name of procedure, step 10   
+;PRPVER10= '2.2     '           / Version of procedure, step 10                  
+;PRPARA10= 'distortion correction matrix version: 2021-09-08' / Parameters for PR
+;PRLIB10A= 'uio-spice-pipeline' / Software library containing PRPROC10           
+;                                                                                
+;PRSTEP11= 'RADIOMETRIC-CALIBRATION' / Type of processing, step 11               
+;PRPROC11= 'spice_prep_radiometric_calibration.pro' / Name of procedure, step 11 
+;PRPVER11= '1.6     '           / Version of procedure, step 11                  
+;PRPARA11= 'based on comparison to QS SUMER spectrum' / Parameters for PRPROC11  
+;PRLIB11A= 'uio-spice-pipeline' / Software library containing PRPROC11           
+;                                                                                
+;PRSTEP12= 'WINDOW-CONCATENATION' / Type of processing, step 12                  
+;PRPROC12= 'spice_prep.pro'     / Name of procedure, step 12                     
+;PRPVER12= '3998    '           / Version of procedure, step 12                  
+;PRPARA12= '   WINNOs_of_concatenated_windows=[0,1],                           &'
+;CONTINUE  'WINTABIDs_of_concatenated_windows=[128,135],                       &'
+;CONTINUE  ' MISOWINs_of_concatenated_windows=[3039,3033],                     &'
+;CONTINUE  ' EXTNAMEs_of_concatenated_windows="O III 703 / Mg IX 706 - SH (lamb&'
+;CONTINUE  'da bin 2),O III 703 / Mg IX 706 - LH"                              &'
+;CONTINUE  '       ' / Parameters for PRPROC12                                   
+;PRLIB12A= 'uio-spice-pipeline' / Software library containing PRPROC12    
+;    
+;          END NEW KEYWORDS ADDED BY TERJE 14. SEPTEMBER 2023 -------------
+;
+;
+;
 ;
 ;AUTHOR  = 'Tim Grundy'         / Author of study  
 ;STP     =                  122 / SoLO Short-Term Plan number   
