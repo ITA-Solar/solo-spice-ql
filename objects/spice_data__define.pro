@@ -40,8 +40,10 @@
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
+;     25-Sep-2023: Terje Fredvik: ::create_l3_file: call delete_analysis when
+;                                 line fitting is done to prevent memory leak
 ;-
-; $Id: 2023-09-21 14:50 CEST $
+; $Id: 2023-09-25 10:20 CEST $
 
 
 ;+
@@ -134,31 +136,6 @@ pro spice_data::help, description=description, _extra=_extra
     obj_help, self, _extra=_extra
 END
 
-
-;+
-; Description:
-;     Free all handles in ana structure to prevent memory leak
-;-
-PRO spice_data::handle_free, ana
- ; handle_free causes IDL to crash quite frequently!
- ; tags = tag_names(ana)
- ; handle_ix = where(tags.contains('_H'))
- ; FOR i=0,n_elements(handle_ix)-1 DO handle_free, ana.(handle_ix[i])
-
-  handle_value, ana.history_h,    history,   /no_copy
-  handle_value, ana.lambda_h,     lambda,    /no_copy
-  handle_value, ana.data_h,       data,      /no_copy
-  handle_value, ana.weights_h,    weights,   /no_copy
-  handle_value, ana.fit_h,        fit,       /no_copy
-  handle_value, ana.result_h,     result,    /no_copy
-  handle_value, ana.residual_h,   residual,  /no_copy
-  handle_value, ana.include_h,    include,   /no_copy
-  handle_value, ana.const_h,      const,     /no_copy
-  handle_value, ana.origin_h,     origin,    /no_copy
-  handle_value, ana.scale_h,      scale,     /no_copy
-  handle_value, ana.phys_scale_h, phys_scale,/no_copy
-  handle_value, ana.dimnames_h,   dimnames,  /no_copy
-END
 
 ;+
 ; Description:
@@ -488,7 +465,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
       original_data=original_data, spice=version_and_params)
     
-    self->handle_free, ana
+    delete_analysis, ana
     
     IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
     
