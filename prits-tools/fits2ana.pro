@@ -49,7 +49,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-06-21 13:51 CEST $
+; $Id: 2023-10-09 12:02 CEST $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -214,7 +214,7 @@ function fits2ana, fitsfile, windows=windows, $
     const = readfits(fitsfile, hdr, ext=extension+6)
     if get_headers[6] then headers_contants[iwin] = ptr_new(hdr)
 
-    IF NOT exist(ana) THEN ana = mk_analysis()
+    ana = mk_analysis()
 
 ;    ana.filename = filename
     ana.datasource = fitsfile
