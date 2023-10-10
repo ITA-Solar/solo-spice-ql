@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-27 12:51 CEST $
+; $Id: 2023-10-10 14:39 CEST $
 ;-
 
 
@@ -62,8 +62,12 @@ pro spice_xcontrol_l23_cleanup, tlb
   ptr_free,(*info).ana_l3_user
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official)-1 DO ptr_free, (*(*info).hdr_l3_official)[i]
   ptr_free,(*info).hdr_l3_official
+  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official_data)-1 DO ptr_free, (*(*info).hdr_l3_official_data)[i]
+  ptr_free,(*info).hdr_l3_official_data
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user)-1 DO ptr_free, (*(*info).hdr_l3_user)[i]
   ptr_free,(*info).hdr_l3_user
+  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user_data)-1 DO ptr_free, (*(*info).hdr_l3_user_data)[i]
+  ptr_free,(*info).hdr_l3_user_data
   ptr_free,(*info).proc_steps_official
   ptr_free,(*info).proc_steps_user
   ptr_free,info
@@ -319,18 +323,24 @@ pro spice_xcontrol_l23_open_l3, event
     1: BEGIN
       ana_l3 = *(*info).ana_l3_official
       hdr_l3 = *(*info).hdr_l3_official
+      hdr_l3_data = *(*info).hdr_l3_official_data
       title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_official
     END
     2: BEGIN
       ana_l3 = *(*info).ana_l3_user
       hdr_l3 = *(*info).hdr_l3_user
+      hdr_l3_data = *(*info).hdr_l3_user_data
       title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_user
     END
   endcase
   ana = ana_l3[win_info.winno]
-  spice_xcfit_block, ana=ana, title=title, group_leader=(*info).tlb
+  origin = [0,0,0]
+  scale = [1,1,1]
+  phys_scale = [0,0,0]
+  spice_data_l3.get_plot_variables, *hdr_l3_data[win_info.winno], origin=origin, scale=scale, phys_scale=phys_scale
+  spice_xcfit_block, ana=ana, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb
   ana_l3[win_info.winno] = ana
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)
@@ -479,7 +489,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ENDIF ELSE object_l2=0
 
   IF exist_l3_official THEN BEGIN
-    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official)
+    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official, headers_data=hdr_l3_official_data)
     nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', missing=0)
     if nwin eq 0 then nwin = fxpar(*hdr_l3_official[0], 'L2NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_official
@@ -503,7 +513,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ENDELSE
 
   IF exist_l3_user THEN BEGIN
-    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user)
+    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user, headers_data=hdr_l3_user_data)
     nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', missing=0)
     if nwin eq 0 then nwin = fxpar(*hdr_l3_user[0], 'L2NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_user
@@ -651,7 +661,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_official:nwin_l3_official, $
     nwin_l3_user:nwin_l3_user, $
     hdr_l3_official:ptr_new(hdr_l3_official), $
+    hdr_l3_official_data:ptr_new(hdr_l3_official_data), $
     hdr_l3_user:ptr_new(hdr_l3_user), $
+    hdr_l3_user_data:ptr_new(hdr_l3_user_data), $
     proc_steps_official:ptr_new(proc_steps_official), $
     proc_steps_user:ptr_new(proc_steps_user), $
     state_l3_official:state_l3_official, $
