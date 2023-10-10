@@ -141,6 +141,9 @@
 ;                          Same structure as is returned by mk_analysis().
 ;                          If ANALYSIS is provided the following inputs are ignored:
 ;                          LAM, DA, WTS, FIT, MISS
+;                          And the following inputs will overwrite values saved
+;                          within the ANALYSIS structure:
+;                          INCLUDE, CONST, ORIGIN, SCALE, PHYS_SCALE
 ;
 ;                      
 ; Opt. Inputs : INCLUDE, CONST, TITLE, ANALYSIS
@@ -194,9 +197,12 @@
 ;               Version 10, Martin Wiesmann, 25 May 2023
 ;                       Whenever variables are checked for 'missing' values, it uses now
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
+;               Version 11, Martin Wiesmann, 10 October 2023
+;                       INCLUDE, CONST, ORIGIN, SCALE, PHYS_SCALE input variables will now
+;                       overwrite values within ANALYSIS structure if provided
 ;
 ; Version     :
-; $Id: 2023-06-20 13:08 CEST $
+; $Id: 2023-10-10 12:56 CEST $
 ;-
 
 
@@ -1663,12 +1669,17 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
      missing = ana.missing
      handle_value,ana.result_h,result,/no_copy
      handle_value,ana.residual_h,residual,/no_copy
-     handle_value,ana.include_h,include,/no_copy
-     handle_value,ana.const_h,const,/no_copy
+     IF ~keyword_set(include) THEN $
+       handle_value,ana.include_h,include,/no_copy
+     IF ~keyword_set(const) THEN $
+       handle_value,ana.const_h,const,/no_copy
      
-     handle_value,ana.origin_h,origin
-     handle_value,ana.scale_h,scale
-     handle_value,ana.phys_scale_h,phys_scale
+     IF ~keyword_set(origin) THEN $
+       handle_value,ana.origin_h,origin
+     IF ~keyword_set(scale) THEN $
+       handle_value,ana.scale_h,scale
+     IF ~keyword_set(phys_scale) THEN $
+       handle_value,ana.phys_scale_h,phys_scale
      handle_value,ana.dimnames_h,dimnames
      
 ;     catch,error
