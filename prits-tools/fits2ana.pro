@@ -15,7 +15,7 @@
 ; CALLING SEQUENCE:
 ;     anas = fits2ana(fitsfile [ ,headers_results=headers_results, headers_data=headers_data, $
 ;       headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
-;       headers_include=headers_include, headers_contants=headers_contants])
+;       headers_include=headers_include, headers_constants=headers_constants])
 ;
 ; INPUTS:
 ;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
@@ -36,7 +36,7 @@
 ;     headers_residuals: A pointer array, containing the headers of the residuals extensions as string arrays.
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
 ;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
-;     headers_contants: A pointer array, containing the headers of the constants extensions as string arrays.
+;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
 ;
 ; CALLS:
 ;
@@ -49,13 +49,13 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-10-09 12:02 CEST $
+; $Id: 2023-10-10 11:08 CEST $
 
 
 function fits2ana, fitsfile, windows=windows, $
   headers_results=headers_results, headers_data=headers_data, $
   headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
-  headers_include=headers_include, headers_contants=headers_contants
+  headers_include=headers_include, headers_constants=headers_constants
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
   prits_tools.parcheck, windows, 0, "windows", 'integers', [0, 1], /optional
@@ -109,8 +109,8 @@ function fits2ana, fitsfile, windows=windows, $
     headers_include = ptrarr(n_windows_process)
     get_headers[5] = 1
   endif
-  if arg_present(headers_contants) then begin
-    headers_contants = ptrarr(n_windows_process)
+  if arg_present(headers_constants) then begin
+    headers_constants = ptrarr(n_windows_process)
     get_headers[6] = 1
   endif
   for iwin=0,n_windows_process-1 do begin
@@ -212,7 +212,7 @@ function fits2ana, fitsfile, windows=windows, $
     include = readfits(fitsfile, hdr, ext=extension+5)
     if get_headers[5] then headers_include[iwin] = ptr_new(hdr)
     const = readfits(fitsfile, hdr, ext=extension+6)
-    if get_headers[6] then headers_contants[iwin] = ptr_new(hdr)
+    if get_headers[6] then headers_constants[iwin] = ptr_new(hdr)
 
     ana = mk_analysis()
 
