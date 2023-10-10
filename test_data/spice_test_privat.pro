@@ -1,7 +1,7 @@
 PRO spice_test_privat, file_number
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(file_number) NE 1 then file_number=500
+  IF N_ELEMENTS(file_number) NE 1 then file_number=1000
   have_proc = have_proc('spice_test', out=path)
   path = file_dirname(path, /mark_directory)
 
@@ -88,6 +88,11 @@ PRO spice_test_privat, file_number
     500: file = '/Users/mawiesma/data/spice/level2/2022/04/04/solo_L2_spice-n-ras_20220404T195533_V02_100664048-000.fits'
     501: file = '/Users/mawiesma/data/spice/level2/2022/04/12/solo_L2_spice-n-exp_20220412T080039_V01_117440593-000.fits' ; single exposure
     510: file = '/Users/mawiesma/data/spice/user/level2/2022/04/04/solo_L2_spice-n-exp_20220404T150410_V01_100664043-002.fits.gz' ; single exposure
+    520: file = '/Users/mawiesma/data/spice/level2/2023/03/29/solo_L2_spice-n-ras_20230329T203732_V02_184549524-000.fits'
+    521: file = '/Users/mawiesma/data/spice/level2/2023/04/04/solo_L2_spice-n-ras_20230404T040302_V02_184549660-000.fits'
+    
+    
+    1000: file = '/Users/mawiesma/data/spice/user/level3/2023/04/04/solo_L3_spice-n-ras_20230404T040302_V47_184549660-000.fits' ; Level 3
     else: file = ''
   ENDCASE
 
@@ -97,8 +102,14 @@ PRO spice_test_privat, file_number
 
 
   obj = spice_data(file)
-  obj->show_lines
-  d=obj->get_window_data(0)
+  
+  ;obj->show_lines
+  ;d=obj->get_window_data(0)
+  
+  ana = obj->xcfit_block(0)
+  
+  return
+  
   ;obj->help
   ;stop
   ;obj->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
