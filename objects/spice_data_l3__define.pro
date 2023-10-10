@@ -35,7 +35,7 @@
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-10-10 11:08 CEST $
+; $Id: 2023-10-10 14:38 CEST $
 
 
 ;+
@@ -141,14 +141,64 @@ function spice_data_l3::xcfit_block, window_index, $
     headers_results=headers_results, headers_data=headers_data, $
     headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
     headers_include=headers_include, headers_constants=headers_constants)
+  
   if size(ana, /type) EQ 8 then begin
-    SPICE_XCFIT_BLOCK, ana=ana
+    origin = [0,0,0]
+    scale = [1,1,1]
+    phys_scale = [0,0,0]
+    spice_data_l3.get_plot_variables, *headers_data[0], origin=origin, scale=scale, phys_scale=phys_scale
+    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale=phys_scale
   endif else begin
     print, 'Something went wrong when trying to reproduce an ANA structure.'
   endelse
 
   return, ana
 END
+
+
+;+
+; Description:
+;     This routine calculates the origin and the scale of the datacube, to be used in xcfit_block.
+;
+; INPUTS:
+;     header_data : A string array. The header of the data extension of a SPICE level 3 FTIS file.
+;
+; OPTIONAL OUTPUT:
+;     origin: A 3-element array. The starting values of each axis.
+;     scale: A 3-element array. The CDELT values of each exis.
+;     phys_scale: A 3-element array. Boolean values, whether the axis should be scaled physically.
+;-
+pro spice_data_l3::get_plot_variables, header_data, origin=origin, scale=scale, phys_scale=phys_scale
+  COMPILE_OPT IDL2, static
+  
+  crval = fxpar(header_data, 'CRVAL1', missing=1)
+  naxis = fxpar(header_data, 'NAXIS1', missing=1)
+  crpix = fxpar(header_data, 'CRPIX1', missing=0)
+  cdelt1 = fxpar(header_data, 'CDELT1', missing=1)
+  pc1_1 = fxpar(header_data, 'PC1_1', missing=0)
+  x_vector = crval + cdelt1 * pc1_1 * (findgen(naxis)+1.0-crpix)
+  IF naxis EQ 1 THEN BEGIN
+    naxis = fxpar(header_data, 'NAXIS4', missing=1)
+    x_vector = replicate(x_vector, naxis)
+  ENDIF
+
+  crval = fxpar(header_data, 'CRVAL2', missing=1)
+  naxis = fxpar(header_data, 'NAXIS2', missing=1)
+  crpix = fxpar(header_data, 'CRPIX2', missing=0)
+  cdelt2 = fxpar(header_data, 'CDELT2', missing=1)
+  pc2_2 = fxpar(header_data, 'PC2_2', missing=0)
+  y_vector = crval + cdelt2 * pc2_2 * (findgen(naxis)+1.0-crpix)
+
+  crval = fxpar(header_data, 'CRVAL3', missing=1)
+  naxis = fxpar(header_data, 'NAXIS3', missing=1)
+  crpix = fxpar(header_data, 'CRPIX3', missing=0)
+  cdelt3 = fxpar(header_data, 'CDELT3', missing=1)
+  lambda_vector = crval + cdelt3 * (findgen(naxis)+1.0-crpix)
+  
+  origin = [ lambda_vector[0], x_vector[0], y_vector[0] ]
+  scale = [ cdelt3, cdelt1, cdelt2 ]
+  phys_scale = [ 0, 1, 1 ]
+end
 
 
 ;+
