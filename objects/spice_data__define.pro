@@ -43,7 +43,7 @@
 ;     25-Sep-2023: Terje Fredvik: ::create_l3_file: call delete_analysis when
 ;                                 line fitting is done to prevent memory leak
 ;-
-; $Id: 2023-09-25 10:20 CEST $
+; $Id: 2023-10-10 12:57 CEST $
 
 
 ;+
@@ -178,7 +178,9 @@ function spice_data::xcfit_block, window_index, no_masking=no_masking, approxima
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
   ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, no_line_list=no_line_list)
   if size(ana, /type) EQ 8 then begin
-    SPICE_XCFIT_BLOCK, ana=ana
+    origin = [ (self->get_lambda_vector(window_index))[0], (self->get_instr_x_vector(window_index))[0], (self->get_instr_y_vector(window_index))[0] ]
+    scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
+    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1]
   endif else begin
     print, 'Something went wrong when trying to produce an ANA structure.'
   endelse
@@ -423,7 +425,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     endif
 
     if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      SPICE_XCFIT_BLOCK, ana=ana, group_leader=group_leader
+      origin = [ (self->get_lambda_vector(window_index))[0], (self->get_instr_x_vector(window_index))[0], (self->get_instr_y_vector(window_index))[0] ]
+      scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
+      SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
     endif
 
     data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
