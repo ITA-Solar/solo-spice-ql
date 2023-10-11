@@ -43,7 +43,7 @@
 ;     25-Sep-2023: Terje Fredvik: ::create_l3_file: call delete_analysis when
 ;                                 line fitting is done to prevent memory leak
 ;-
-; $Id: 2023-10-10 12:57 CEST $
+; $Id: 2023-10-11 11:24 CEST $
 
 
 ;+
@@ -361,7 +361,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  version = 1 ; PLEASE increase this number when editing the code
+  version = 2 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
@@ -435,8 +435,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     if iwindow gt 0 then extension=1 else begin
       extension=0
       IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
+
       version_and_params_1 = { $
-        step:'PARAMETER-FITTING', $
+        step:'PEAK-FINDING', $
+        proc:proc_find_line.proc, $
+        version:fix(proc_find_line.version, type=3), $
+        lib:'solarsoft/so/spice/idl/quicklook', $
+        params:'' $
+      }
+
+      version_and_params_2 = { $
+        step:'LINE-FITTING', $
         proc:'spice_data::create_l3_file', $
         version:fix(version, type=3), $
         lib:'solarsoft/so/spice/idl/quicklook', $
@@ -447,14 +456,6 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         string('POSITION  = '+strtrim(string(fix(keyword_set(position))), 2)+',', format='(A-67)') + $
         string('VELOCITY  = '+strtrim(string(vel), 2)+',', format='(A-67)') + $
         'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2) $
-      }
-
-      version_and_params_2 = { $
-        step:'PARAMETER-FITTING', $
-        proc:proc_find_line.proc, $
-        version:fix(proc_find_line.version, type=3), $
-        lib:'solarsoft/so/spice/idl/quicklook', $
-        params:'' $
       }
 
       version_and_params = [version_and_params_1, version_and_params_2]
