@@ -42,8 +42,15 @@
 ;                                 and ::mk_analysis
 ;     25-Sep-2023: Terje Fredvik: ::create_l3_file: call delete_analysis when
 ;                                 line fitting is done to prevent memory leak
+;     13-Oct-2023: Terje Fredvik: ::read_file: if the number of observational
+;                                 HDUs in the L2 file is less than the the
+;                                 NWIN keyword: set self.nwin to the number of 
+;                                 observational HDUs in L2 instead of
+;                                 hdr.nwin, to prevent crash when
+;                                 processing L2 file with missing HDUs due to 
+;                                 incomplete telemetry 
 ;-
-; $Id: 2023-10-11 11:24 CEST $
+; $Id: 2023-10-13 10:15 CEST $
 
 
 ;+
@@ -2625,6 +2632,14 @@ PRO spice_data::read_file, file
   hdr = headfits(file, exten=0)
   self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
+  
+  image_hdu_ix = where(fcb.xtension NE 'BINTABLE')
+  n_obs_hdu = n_elements(where(fcb.extname[image_hdu_ix] NE 'WCSDVARR'))
+  IF self.nwin GT n_obs_hdu THEN BEGIN 
+     message,'Image extensions are missing due to incomplete telemetry. Ignoring missing HDUs.',/info
+     self.nwin = n_obs_hdu
+  ENDIF
+  
   self.next = fcb.nextend + 1
   fits_close, fcb
 
