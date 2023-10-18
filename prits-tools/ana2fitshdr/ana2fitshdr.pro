@@ -85,7 +85,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-06-27 11:23 CEST $
+; $Id: 2023-10-18 15:27 CEST $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
@@ -101,7 +101,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 
   prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', 0, structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ana)
-  prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', 1, optional=ana_given
+  prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', [0, 1], optional=ana_given
   prits_tools.parcheck, LAMBDA, 0, 'LAMBDA', 'NUMERIC', [1, 2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given

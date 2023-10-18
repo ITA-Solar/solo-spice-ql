@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2023-10-18 09:40 CEST $
+; $Id: 2023-10-18 15:27 CEST $
 
 
 ;+
@@ -72,8 +72,15 @@ FUNCTION spice_data_l3::init, file
   self.spiobsid = file_info.spiobsid
   self.rasterno = file_info.rasterno
   hdr = headfits(file, exten=0)
-  self.hdr = ptr_new(hdr)
-
+  self.nwin = fxpar(hdr, 'NWIN', missing=0)
+  self.l2_filename = fxpar(hdr, 'PGFILENA', missing='')
+  headers_results = ptrarr(self.nwin)
+  headers_results[0] = ptr_new(hdr)
+  for i=1,self.nwin-1 do begin
+    hdr = headfits(file, exten=7*i)
+    headers_results[i] = ptr_new(hdr)
+  endfor
+  self.headers_results = ptr_new(headers_results)
   return, 1
 END
 
@@ -85,7 +92,8 @@ END
 pro spice_data_l3::cleanup
   COMPILE_OPT IDL2
 
-  IF ptr_valid(self.hdr) THEN ptr_free, self.hdr
+  FOR i=0,N_ELEMENTS(*self.headers_results)-1 DO ptr_free, (*self.headers_results)[i]
+  ptr_free,self.headers_results
 END
 
 
@@ -215,7 +223,7 @@ end
 FUNCTION spice_data_l3::get_l2_filename
   COMPILE_OPT IDL2
 
-  return, fxpar(*self.hdr, 'PGFILENA', missing='')
+  return, self.l2_filename
 END
 
 
@@ -309,45 +317,60 @@ END
 ;     Returns all processing step keywords that are related with producing this level 3 file.
 ;
 ; OUTPUT:
-;     A structure or array of structure, containing the keywords PRSTEPn, PRPROCn, PRPVERn, PRLIBn, PRPARA.
+;     A pointer array of pointers containting each
+;     an array of structures, containing the keywords PRSTEPn, PRPROCn, PRPVERn, PRLIBn, PRPARA.
 ;     This structure was used as input to ana2fitshdr
 ;-
-FUNCTION spice_data_l3::get_l3_processing_steps
+FUNCTION spice_data_l3::get_l3_processing_steps, headers_results
   COMPILE_OPT IDL2
+  
+  IF N_ELEMENTS(headers_results) EQ 0 THEN headers_results = *self.headers_results
+  nwin = N_ELEMENTS(headers_results)
+  l3_pr_steps_all = ptrarr(nwin)
 
-  max_version = get_last_prstep_keyword(*self.hdr, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
-    pr_versions=pr_versions, pr_types=pr_types)
-  ind = where(pr_keywords.startswith('PRSTEP'), count_step)
-  FOR istep=0,count_step-1 DO BEGIN
-    IF fxpar(*self.hdr, pr_keywords[ind[istep]], missing='') EQ 'LINE-FITTING' THEN BEGIN
-      step = 'LINE-FITTING'
-      
-      ind_proc = where(pr_keywords.startswith('PRPROC') AND pr_versions EQ pr_versions[ind[istep]], count_proc)
-      IF count_proc GT 0 THEN proc = fxpar(*self.hdr, pr_keywords[ind_proc[0]], missing='') $
-      ELSE proc = '' 
-      
-      ind_version = where(pr_keywords.startswith('PRPVER') AND pr_versions EQ pr_versions[ind[istep]], count_version)
-      IF count_version GT 0 THEN version = fix(fxpar(*self.hdr, pr_keywords[ind_version[0]], missing=0L), type=3) $
-      ELSE version = 0L
+  for iwin=0,nwin-1 do begin
+    
+    hdr = *(headers_results)[iwin]
 
-      ind_lib = where(pr_keywords.startswith('PRLIB') AND pr_versions EQ pr_versions[ind[istep]], count_lib)
-      IF count_lib GT 0 THEN lib = fxpar(*self.hdr, pr_keywords[ind_lib[0]], missing='') $
-      ELSE lib = '' 
+    max_version = get_last_prstep_keyword(hdr, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
+      pr_versions=pr_versions, pr_types=pr_types)
+    ind = where(pr_keywords.startswith('PRSTEP'), count_step)
+    l3_pr_steps = !NULL
+    FOR istep=0,count_step-1 DO BEGIN
+      prstep = fxpar(hdr, pr_keywords[ind[istep]], missing='')
+      IF prstep EQ 'LINE-FITTING' || prstep EQ 'PEAK-FINDING' THEN BEGIN
+        
+        ind_proc = where(pr_keywords.startswith('PRPROC') AND pr_versions EQ pr_versions[ind[istep]], count_proc)
+        IF count_proc GT 0 THEN proc = fxpar(hdr, pr_keywords[ind_proc[0]], missing='') $
+        ELSE proc = '' 
+        
+        ind_version = where(pr_keywords.startswith('PRPVER') AND pr_versions EQ pr_versions[ind[istep]], count_version)
+        IF count_version GT 0 THEN version = fix(fxpar(hdr, pr_keywords[ind_version[0]], missing=0L), type=3) $
+        ELSE version = 0L
+  
+        ind_lib = where(pr_keywords.startswith('PRLIB') AND pr_versions EQ pr_versions[ind[istep]], count_lib)
+        IF count_lib GT 0 THEN lib = fxpar(hdr, pr_keywords[ind_lib[0]], missing='') $
+        ELSE lib = '' 
+  
+        ind_params = where(pr_keywords.startswith('PRPARA') AND pr_versions EQ pr_versions[ind[istep]], count_params)
+        IF count_params GT 0 THEN params = fxpar(hdr, pr_keywords[ind_params[0]], missing='') $
+        ELSE params = ''
+        
+        temp = {step:prstep, proc:proc, version:version, lib:lib, params:params}
+        
+        IF N_ELEMENTS(l3_pr_steps) EQ 0 THEN BEGIN
+          l3_pr_steps = [temp]
+        ENDIF ELSE BEGIN
+          l3_pr_steps = [l3_pr_steps, temp]
+        ENDELSE
+      ENDIF
+    ENDFOR
+    
+    l3_pr_steps_all[iwin] = ptr_new(l3_pr_steps)
+    
+  endfor
 
-      ind_params = where(pr_keywords.startswith('PRPARA') AND pr_versions EQ pr_versions[ind[istep]], count_params)
-      IF count_params GT 0 THEN params = fxpar(*self.hdr, pr_keywords[ind_params[0]], missing='') $
-      ELSE params = ''
-      
-      temp = {step:step, proc:proc, version:version, lib:lib, params:params}
-      
-      IF N_ELEMENTS(l3_pr_steps) EQ 0 THEN BEGIN
-        l3_pr_steps = temp
-      ENDIF ELSE BEGIN
-        l3_pr_steps = [l3_pr_steps, temp]
-      ENDELSE
-    ENDIF
-  ENDFOR
-  return, l3_pr_steps
+  return, l3_pr_steps_all
 END
 
 
@@ -368,6 +391,8 @@ PRO spice_data_l3__define
     version:-1, $         ; version number (version of the spice data pipeline)
     spiobsid:-1L, $       ; SPICE OBS ID
     rasterno:-1, $        ; raster repetition number
-    hdr:ptr_new() $       ; A pointer to the header string of the first extension
+    nwin:-1, $            ; number of windows in this file
+    l2_filename:'', $     ; filename of level 2 file
+    headers_results:ptr_new() $ ; A pointer array to the header strings of the results extensions
   }
 END

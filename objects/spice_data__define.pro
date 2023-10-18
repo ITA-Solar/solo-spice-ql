@@ -50,7 +50,7 @@
 ;                                 processing L2 file with missing HDUs due to 
 ;                                 incomplete telemetry 
 ;-
-; $Id: 2023-10-18 11:02 CEST $
+; $Id: 2023-10-18 15:27 CEST $
 
 
 ;+
@@ -355,6 +355,7 @@ END
 ;     all_ana:    Array of ana structure, number of elements is the same as number of windows in the FITS file.
 ;     all_result_headers: A pointer array, containing the headers of the results extensions as string arrays.
 ;     all_data_headers: A pointer array, containing the headers of the data extensions as string arrays.
+;     all_proc_steps_user: A pointer array, containing the structures of the processing steps.
 ;
 ; OUTPUT:
 ;     The path and name of the Level 3 FITS file.
@@ -364,12 +365,13 @@ END
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
-  all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, no_line_list=no_line_list, $
+  all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, all_proc_steps=all_proc_steps, $
+  no_line_list=no_line_list, $
   progress_widget=progress_widget, group_leader=group_leader, pipeline_dir=pipeline_dir, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  version = 2 ; PLEASE increase this number when editing the code
+  version = 3 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
@@ -387,6 +389,10 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     all_data_headers = ptrarr(N_ELEMENTS(window_index))
     collect_hdr_data=1
   ENDIF ELSE collect_hdr_data=0
+  IF ARG_PRESENT(all_proc_steps) THEN BEGIN
+    all_proc_steps = ptrarr(N_ELEMENTS(window_index))
+    collect_proc_steps=1
+  ENDIF ELSE collect_proc_steps=0
 
   IF ~keyword_set(top_dir) THEN BEGIN 
      spice_data_dir = getenv('SPICE_DATA')
@@ -437,7 +443,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     endif
 
     if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      origin = [ (self->get_lambda_vector(window_index))[0], (self->get_instr_x_vector(window_index))[0], (self->get_instr_y_vector(window_index))[0] ]
+      origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
       scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
       SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
     endif
@@ -498,6 +504,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
     IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
     IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers[1])
+    IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(version_and_params)
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
   
