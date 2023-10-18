@@ -34,8 +34,9 @@
 ;
 ; HISTORY:
 ;     15-Jun-2023: Martin Wiesmann
+;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2023-10-10 14:38 CEST $
+; $Id: 2023-10-18 09:40 CEST $
 
 
 ;+
@@ -318,8 +319,8 @@ FUNCTION spice_data_l3::get_l3_processing_steps
     pr_versions=pr_versions, pr_types=pr_types)
   ind = where(pr_keywords.startswith('PRSTEP'), count_step)
   FOR istep=0,count_step-1 DO BEGIN
-    IF fxpar(*self.hdr, pr_keywords[ind[istep]], missing='') EQ 'PARAMETER-FITTING' THEN BEGIN
-      step = 'PARAMETER-FITTING'
+    IF fxpar(*self.hdr, pr_keywords[ind[istep]], missing='') EQ 'LINE-FITTING' THEN BEGIN
+      step = 'LINE-FITTING'
       
       ind_proc = where(pr_keywords.startswith('PRPROC') AND pr_versions EQ pr_versions[ind[istep]], count_proc)
       IF count_proc GT 0 THEN proc = fxpar(*self.hdr, pr_keywords[ind_proc[0]], missing='') $

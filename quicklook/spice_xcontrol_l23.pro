@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-10-10 14:39 CEST $
+; $Id: 2023-10-18 09:40 CEST $
 ;-
 
 
@@ -122,7 +122,7 @@ pro spice_xcontrol_l23_save_file, event
     pr_steps = *(*info).proc_steps_user
     if (*info).state_l3_user[iwindow].edited then begin
       pr_steps = [pr_steps, { $
-        step:'PARAMETER-FITTING', $
+        step:'LINE-FITTING', $
         proc:'spice_xcfit_block, spice_xcontrol_l23', $
         version:0L, $
         lib:'solarsoft/so/spice/idl/quicklook', $
