@@ -50,7 +50,7 @@
 ;                                 processing L2 file with missing HDUs due to 
 ;                                 incomplete telemetry 
 ;-
-; $Id: 2023-10-13 10:15 CEST $
+; $Id: 2023-10-18 11:02 CEST $
 
 
 ;+
@@ -354,6 +354,7 @@ END
 ; OPTIONAL OUTPUTS:
 ;     all_ana:    Array of ana structure, number of elements is the same as number of windows in the FITS file.
 ;     all_result_headers: A pointer array, containing the headers of the results extensions as string arrays.
+;     all_data_headers: A pointer array, containing the headers of the data extensions as string arrays.
 ;
 ; OUTPUT:
 ;     The path and name of the Level 3 FITS file.
@@ -363,7 +364,7 @@ END
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
-  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
+  all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, no_line_list=no_line_list, $
   progress_widget=progress_widget, group_leader=group_leader, pipeline_dir=pipeline_dir, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
@@ -382,6 +383,10 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     all_result_headers = ptrarr(N_ELEMENTS(window_index))
     collect_hdr=1
   ENDIF ELSE collect_hdr=0
+  IF ARG_PRESENT(all_data_headers) THEN BEGIN
+    all_data_headers = ptrarr(N_ELEMENTS(window_index))
+    collect_hdr_data=1
+  ENDIF ELSE collect_hdr_data=0
 
   IF ~keyword_set(top_dir) THEN BEGIN 
      spice_data_dir = getenv('SPICE_DATA')
@@ -492,6 +497,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     ENDIF
 
     IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
+    IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers[1])
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
   

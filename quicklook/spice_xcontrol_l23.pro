@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-10-18 09:40 CEST $
+; $Id: 2023-10-18 11:02 CEST $
 ;-
 
 
@@ -115,6 +115,7 @@ pro spice_xcontrol_l23_save_file, event
   ENDIF ELSE file_old = 0
 
   all_result_headers = ptrarr(nwin_l3)
+  all_data_headers = ptrarr(nwin_l3)
   FOR iwindow=0,nwin_l3-1 DO BEGIN
 
     original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
@@ -148,6 +149,7 @@ pro spice_xcontrol_l23_save_file, event
     writefits, file_l3, CONST, *headers[6], /append
 
     all_result_headers[iwindow] = ptr_new(*headers[0])
+    all_data_headers[iwindow] = ptr_new(*headers[1])
 
   ENDFOR ; iwin=0,nwin_l3-1
 
@@ -155,6 +157,8 @@ pro spice_xcontrol_l23_save_file, event
 
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(all_result_headers)
+  ptr_free, (*info).hdr_l3_user_data
+  (*info).hdr_l3_user_data = ptr_new(all_data_headers)
   (*info).state_l3_user.edited = 0
   spice_xcontrol_l23_update_state_display, info
 end
@@ -165,6 +169,7 @@ end
 pro spice_xcontrol_l23_update_state_add, info, result
   ana_l3 = *(*info).ana_l3_user
   hdr_l3 = *(*info).hdr_l3_user
+  hdr_data_l3 = *(*info).hdr_l3_user_data
   state_l3 = (*info).state_l3_user
   winno_l3 = *(*info).winno_l3_user
 
@@ -182,12 +187,16 @@ pro spice_xcontrol_l23_update_state_add, info, result
       state_l3[iwin].l3_winno = nwin_l3
       state_l3[iwin].edited = ~result.file_saved
       spice_xcontrol_l23_add_window, ana_l3_new, (*result.ana)[ind_result[0]], $
-        hdr_l3_new, *(*result.result_headers)[ind_result[0]], winno_l3_new, iwin
+        hdr_l3_new, *(*result.result_headers)[ind_result[0]], $
+        hdr_data_l3_new, *(*result.data_headers)[ind_result[0]], $
+        winno_l3_new, iwin
       nwin_l3++
     ENDIF ELSE IF count_old GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = nwin_l3
       spice_xcontrol_l23_add_window, ana_l3_new, ana_l3[ind_old[0]], $
-        hdr_l3_new, *hdr_l3[ind_old[0]], winno_l3_new, iwin
+        hdr_l3_new, *hdr_l3[ind_old[0]], $
+        hdr_data_l3_new,  *hdr_data_l3[ind_old[0]], $
+        winno_l3_new, iwin
       nwin_l3++
     ENDIF ELSE BEGIN
       state_l3[iwin].l3_winno = -1
@@ -200,6 +209,8 @@ pro spice_xcontrol_l23_update_state_add, info, result
   (*info).ana_l3_user = ptr_new(ana_l3_new)
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(hdr_l3_new)
+  ptr_free, (*info).hdr_l3_user_data
+  (*info).hdr_l3_user_data = ptr_new(hdr_data_l3_new)
   ptr_free, (*info).winno_l3_user
   (*info).winno_l3_user = ptr_new(winno_l3_new)
   (*info).state_l3_user = state_l3
@@ -208,14 +219,16 @@ pro spice_xcontrol_l23_update_state_add, info, result
 end
 
 
-pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, hdr_l3_new, new_hdr, winno_l3_new, new_winno
+pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, hdr_l3_new, new_hdr, hdr_data_l3_new, new_hdr_data, winno_l3_new, new_winno
   IF N_ELEMENTS(ana_l3_new) EQ 0 THEN BEGIN
     ana_l3_new = new_ana
     hdr_l3_new = ptr_new(new_hdr)
+    hdr_data_l3_new = ptr_new(new_hdr_data)
     winno_l3_new = new_winno
   ENDIF ELSE BEGIN
     ana_l3_new = [ana_l3_new, new_ana]
     hdr_l3_new = [hdr_l3_new, ptr_new(new_hdr)]
+    hdr_data_l3_new = [hdr_data_l3_new, ptr_new(new_hdr_data)]
     winno_l3_new = [winno_l3_new, new_winno]
   ENDELSE
 end
@@ -251,6 +264,8 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   (*info).ana_l3_user = ptr_new(*result.ana)
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(*result.result_headers)
+  ptr_free, (*info).hdr_l3_user_data
+  (*info).hdr_l3_user_data = ptr_new(*result.data_headers)
   ptr_free, (*info).winno_l3_user
   (*info).winno_l3_user = ptr_new(winno_l3_result)
   (*info).state_l3_user = state_l3
@@ -387,14 +402,15 @@ pro spice_xcontrol_l23_copy_window, event
   widget_control, event.id, get_uvalue=win_info
   ana_l3 = *(*info).ana_l3_official
   hdr_l3 = *(*info).hdr_l3_official
-  print,fxpar(*hdr_l3[win_info], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
   hdr_new = ptrarr(1)
   hdr_new[0] = ptr_new(*hdr_l3[win_info])
-  print,fxpar(*hdr_new[0], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
-  help,win_info
+  hdr_l3_data = *(*info).hdr_l3_official_data
+  hdr_new_data = ptrarr(1)
+  hdr_new_data[0] = ptr_new(*hdr_l3_data[win_info])
   result = {l3_file:'', $
     ana:ptr_new(ana_l3[win_info]), $
     result_headers:ptr_new(hdr_new), $
+    data_headers:ptr_new(hdr_new_data), $
     file_saved:0b, user_dir:0b, top_dir:''}
 
   spice_xcontrol_l23_update_state_add, info, result
@@ -508,6 +524,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_official = 0
     ana_l3_official = 0
     hdr_l3_official = ptr_new(0)
+    hdr_l3_official_data = ptr_new(0)
     winno_l3_official = -1
     proc_steps_official = 0
   ENDELSE
@@ -534,6 +551,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_user = 0
     ana_l3_user = 0
     hdr_l3_user = ptr_new(0)
+    hdr_l3_user_data = ptr_new(0)
     winno_l3_user = -1
     proc_steps_user = 0
   ENDELSE

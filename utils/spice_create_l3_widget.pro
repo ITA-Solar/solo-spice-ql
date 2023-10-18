@@ -67,6 +67,8 @@
 ;       ana: This is a pointer to a CFIT_ANALYSIS structure array. One ANA per processed window.
 ;       result_headers: This is a pointer to a pointer array, of which each element contains
 ;                 a string array, the level 3 header of the result extension of one window.
+;       data_headers: This is a pointer to a pointer array, of which each element contains
+;                 a string array, the level 3 header of the data extension of one window.
 ;       file_saved: A boolean, indicating whether the level 3 file has been saved.
 ;       user_dir: A boolean, indicating whether the output path points to 'user' subdirectory.
 ;       top_dir: A string, which points to the top directory in which the file has been saved.
@@ -83,7 +85,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-26 11:36 CEST $
+; $Id: 2023-10-18 11:02 CEST $
 ;-
 ;
 ;
@@ -141,10 +143,11 @@ pro spice_create_l3_widget_event, event
       l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
         no_fitting=no_fitting, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, no_line_list=no_line_list, $
         top_dir=top_dir, save_not=save_not, force_version=force_version, $
-        all_ana=all_ana, all_result_headers=all_result_headers, group_leader=info.group_leader)
+        all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, group_leader=info.group_leader)
       (*info.result).l3_file = l3_file
       (*info.result).ana = ptr_new(all_ana)
       (*info.result).result_headers = ptr_new(all_result_headers)
+      (*info.result).data_headers = ptr_new(all_data_headers)
       (*info.result).file_saved = save[0]
       (*info.result).user_dir = user_dir[0]
       IF top_dir_choice EQ 1 THEN (*info.result).top_dir = top_dir
