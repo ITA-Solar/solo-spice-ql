@@ -202,7 +202,7 @@
 ;                       overwrite values within ANALYSIS structure if provided
 ;
 ; Version     :
-; $Id: 2023-10-19 14:00 CEST $
+; $Id: 2023-10-19 21:49 CEST $
 ;-
 
 
@@ -409,8 +409,8 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
      set_value={SET_HILIT,hilit:info.ext.result_no}
   
   ;; Recalculate the display cubes
-  result_display = histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = histo_opt(residual, info.int.a_display.residual_threshold)
+  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
+  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
   ;;
   ;; Put data blocks back
@@ -573,8 +573,8 @@ PRO spice_xcfit_block_register,info
   ;;widget_control,info.int.status2_id,set_value=fit
   
   ;; Recalculate the display cubes
-  result_display = histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = histo_opt(residual, info.int.a_display.residual_threshold)
+  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
+  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
   spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
      /set
@@ -868,7 +868,7 @@ PRO spice_xcfit_block_exclude_patch,info
         END
      END
   END
-  result_display = histo_opt(result, info.int.a_display.result_threshold)
+  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
 
   spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/set
 END
@@ -989,8 +989,8 @@ PRO spice_xcfit_block_pix_fail,info,restore=restore
   FOR j = 0,(size(da))(1)-1 DO $
      cfit_bpatch,residual,ix,j,info.int.a.missing
   
- result_display = histo_opt(result, info.int.a_display.result_threshold)
- residual_display = histo_opt(residual, info.int.a_display.residual_threshold)
+ result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
+ residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
   spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/set
   
@@ -1015,8 +1015,8 @@ PRO spice_xcfit_block_calculate,info,smart=smart
   spice_cfit_block,lambda,data,weights,fit,info.int.a.missing,result,residual,$
      include,const,/double,/x_face,smart=smart
   
-  result_display = histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = histo_opt(residual, info.int.a_display.residual_threshold)
+  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
+  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
   ;;
   ;; Put back data.
@@ -2043,9 +2043,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   no_copy = 0
   
-  data_display = histo_opt(data, int.a_display.data_threshold)
-  result_display = histo_opt(result, int.a_display.result_threshold)
-  residual_display = histo_opt(residual, int.a_display.residual_threshold)
+  data_display = spice_histo_opt(data, int.a_display.data_threshold)
+  result_display = spice_histo_opt(result, int.a_display.result_threshold)
+  residual_display = spice_histo_opt(residual, int.a_display.residual_threshold)
   
   ;; Put data blocks into their handles
   
