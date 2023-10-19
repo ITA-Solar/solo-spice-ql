@@ -199,6 +199,7 @@ not_found=intarr(kcnt)
 if not keyword_set(nofill) then begin
  for i=0,kcnt-1 do  begin
   unesc_key = id_unesc(keys(i))
+  if unesc_key eq '' then continue
   multivalue_use = keyword_set(MULTIVALUE) || wcs_test_distortion(unesc_key)
   if strlen(strtrim(unesc_key,2)) le 8 then begin    ;Don't try to process overlong tag names (e.g. WCS_STRUCT)
    temp=fxpar(ohead,unesc_key,count=fcount,multivalue=multivalue_use)
