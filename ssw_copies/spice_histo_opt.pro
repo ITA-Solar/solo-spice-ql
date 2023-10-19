@@ -45,6 +45,7 @@ FUNCTION spice_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
   ;       14-Jan-2014  M.Carlsson, ITA: added silent keyword
   ;       27-Sep-2016  M.Wiesmann, ITA: added keywords low_limit and high_limit
   ;       19-Oct-2023  M.Wiesmann, ITA: Changed name to spice_histo_opt
+  ;                    The procedure handles now NAN and INF values correctly.
   ;-
 
   on_error, 2
