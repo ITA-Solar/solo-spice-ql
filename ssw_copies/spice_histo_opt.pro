@@ -1,15 +1,15 @@
-FUNCTION iris_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
+FUNCTION spice_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
   missing=missing, low_limit=low_limit, high_limit=high_limit, silent=silent
 ;+
 ; NAME:
-;       IRIS_HISTO_OPT
+;       SPICE_HISTO_OPT
 ; PURPOSE:
 ;       Clip image values which are the CUTOFF brightest or darkest,
 ;       resp.
 ; CATEGORY:
 ;
 ; CALLING SEQUENCE:
-;       CLIP_IMAGE = IRIS_HISTO_OPT ( IMAGE [, CUTOFF [, IX]] [,<keywords>])
+;       CLIP_IMAGE = SPICE_HISTO_OPT ( IMAGE [, CUTOFF [, IX]] [,<keywords>] )
 ; INPUTS:
 ;       IMAGE : Array with data. may be 1 to 3dim
 ; OPTIONAL PARAMETERS:
@@ -45,23 +45,19 @@ FUNCTION iris_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
 ;                    to avoid clashes with other peoples old histo_opts
 ;       14-Jan-2014  M.Carlsson, ITA: added silent keyword
 ;       27-Sep-2016  M.Wiesmann, ITA: added keywords low_limit and high_limit
+;       19-Oct-2023  M.Wiesmann, ITA: Changed name to spice_histo_opt
 ;-
 
   on_error, 2
   
   IF n_params() EQ 0 THEN BEGIN
-    message, 'Usage: RESULT = IRIS_HISTO_OPT ( IMAGE [,CUTOFF,MISSING=MISSING,/SILENT] )', /cont
+    message, 'Usage: CLIP_IMAGE = SPICE_HISTO_OPT ( IMAGE [, CUTOFF [, IX]] [,<keywords>] )', /cont
     return, undefined
   ENDIF
   
   IF n_params() LT 2 THEN cutoff = 1e-3
   s = size(image)
-;;;
-;;; If the image is in a float format, then histogram() doesn't know
-;;; what to do. In that case, convert to fix. But then you have to be
-;;; shure that the range is ok (especially for normalized images with
-;;; a range from 0. to 1.).
-;;;
+
   good=finite(image)
   if (where(good))[0] eq -1 then begin
     if ~keyword_set(silent) then message,'All data is NaN! Returning',/info
@@ -106,6 +102,12 @@ FUNCTION iris_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
     image=image[good]
   endif
 
+  ;;;
+  ;;; If the image is in a float format, then histogram() doesn't know
+  ;;; what to do. In that case, convert to fix. But then you have to be
+  ;;; shure that the range is ok (especially for normalized images with
+  ;;; a range from 0. to 1.).
+  ;;;
   IF s(s(0)+1) GT 3 THEN BEGIN
     fak = 10000./(max(image, min = hmin)-hmin)
     h = histogram(fix((image-hmin)*fak))
