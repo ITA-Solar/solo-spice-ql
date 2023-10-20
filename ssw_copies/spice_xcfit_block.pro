@@ -159,11 +159,21 @@
 ;                            scale, signifying which dimension scale is to be
 ;                            taken as physical (i.e., to be used for scaling
 ;                            the image size).
+;               
+;               DISPLAY_THRESHOLD : This is the threshold in percent to be used
+;                                   in histo_opt. The displayed image with the CUTOFF 
+;                                   fraction lowest and highest values set to the value of 
+;                                   the next highest/lowest point.
+;                                   This threshold can be separately defined for the 3 different
+;                                   views (data, result, residual). I a scalar is provided
+;                                   all views have the same threshold, if a 3-element array is
+;                                   provided, the different values will be used as following:
+;                                   [data, result, residual]. Default is 0.02 for all views.
 ;
 ; Calls       : cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(),
 ;               cw_pselect(), cwf_status(), default, exist(),
 ;               handle_killer_hookup, mk_analysis(), mk_comp_poly(),
-;               ndim_indices(), parcheck, typ()
+;               ndim_indices(), parcheck, typ(), spice_histo_opt()
 ;
 ; Common      : None.
 ;               
@@ -200,9 +210,13 @@
 ;               Version 11, Martin Wiesmann, 10 October 2023
 ;                       INCLUDE, CONST, ORIGIN, SCALE, PHYS_SCALE input variables will now
 ;                       overwrite values within ANALYSIS structure if provided
+;               Version 12, Martin Wiesmann, 20 October 2023
+;                       New keyword DISPLAY_THRESHOLD. SPICE_HISTO_OPT is applied to all 
+;                       data being displayed (data, result, residual) without altering the 
+;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
 ;
 ; Version     :
-; $Id: 2023-10-20 10:23 CEST $
+; $Id: 2023-10-20 14:48 CEST $
 ;-
 
 
