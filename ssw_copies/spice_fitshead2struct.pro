@@ -52,6 +52,7 @@ function spice_fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore,
 ;      15-sep-2014, S. Freeland - uniq -> ssw_uniq (avoid 8.3/Exelis uniq collision)
 ;      20-jun-2019, William Thompson - support multivalued distortion keywords
 ;       9-May-2023, Martin Wiesmann - Add keyword /MULTIVALUE
+;      19-Oct-2023, Martin Wiesmann - Ignore empty keywords (unesc_key)
 ; 
 ;   Motivation:
 ;      use by mreadfits if no structure template is passed 
