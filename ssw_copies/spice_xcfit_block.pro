@@ -202,7 +202,7 @@
 ;                       overwrite values within ANALYSIS structure if provided
 ;
 ; Version     :
-; $Id: 2023-10-19 21:49 CEST $
+; $Id: 2023-10-20 10:23 CEST $
 ;-
 
 
@@ -1664,7 +1664,8 @@ END
 
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
-                analysis=ana, title=title, group_leader=group_leader
+                analysis=ana, title=title, group_leader=group_leader, $
+                display_treshold=display_threshold
   
   ;on_error,2
   
@@ -1774,13 +1775,21 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   center_col = widget_base(base,/column,_extra=sml)
   rightside_col = widget_base(base,/column,_extra=sml)
   
+  CASE N_ELEMENTS(display_threshold) OF
+    0: threshold = [0.02, 0.02, 0.02]
+    1: threshold = make_array(3, value=display_threshold)
+    2: threshold = [display_threshold, 0.02]
+    3: threshold = display_threshold
+    ELSE: threshold = display_threshold[0:2]
+  ENDCASE
+  
   display_handles = { $
     data_display_h : handle_create(), $
-    data_threshold : 0.02, $
+    data_threshold : threshold[0], $
     result_display_h : handle_create(), $
-    result_threshold : 0.02, $
+    result_threshold : threshold[1], $
     residual_display_h : handle_create(), $
-    residual_threshold : 0.02 $
+    residual_threshold : threshold[2] $
     }
 
   
