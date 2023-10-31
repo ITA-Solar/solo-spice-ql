@@ -50,7 +50,7 @@
 ;                                 processing L2 file with missing HDUs due to 
 ;                                 incomplete telemetry 
 ;-
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2023-10-31 14:20 CET $
 
 
 ;+
@@ -371,7 +371,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  version = 3 ; PLEASE increase this number when editing the code
+  version = 4 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
