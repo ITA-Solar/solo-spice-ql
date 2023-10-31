@@ -27,7 +27,7 @@
 ;           If this is not provided, then all of the optional inputs
 ;           must be provided
 ;      filename_out: Full path and filename of the resulting FITS file.
-;      data_id: A string defining the prefix to the names of the 7 extensions
+;      data_id: A string defining the prefix to the names of the 6 extensions
 ;      n_windows: Total number of windows to be included in FITS file.
 ;      winno: Window number (starting at 0) within this study in this FITS file.
 ;      header_l2: The header (string array) of the SPICE level 2 file.
@@ -56,8 +56,8 @@
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
 ;              the Chi^2) values. May contain current results.
-;      RESIDUAL: Array to contain the residual. Same size as DATA, may be
-;                undefined on input.
+;      RESIDUAL: Optional. Array to contain the residual. Same size as DATA, this will
+;                be ignored and not saved into the FITS file.
 ;      INCLUDE: Array to keep the INCLUDE status of each component
 ;               at each point.
 ;      CONST: Array to keep the CONST status of each parameter at
@@ -78,14 +78,14 @@
 ;                 Those describe the processing steps taken to produce a SPICE level 3 file.
 ;
 ; OUTPUTS:
-;      a pointer array, containing 7 FITS keyword headers
+;      a pointer array, containing 6 FITS keyword headers
 ;
 ; OPTIONAL OUTPUTS:
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2023-10-31 14:18 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
@@ -107,7 +107,7 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
   prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
-  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=ana_given
@@ -244,23 +244,6 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   if keyword_set(print_headers) then begin
     print,''
     print,'--- lambda ---'
-    print,''
-    print,hdr
-  endif
-
-
-  ; ------
-  ; Create residuals header
-  ; ------
-
-  hdr = ana2fitshdr_residuals(datetime=datetime, data_id=data_id, RESIDUAL=RESIDUAL, $
-  header_l2=header_l2)
-
-  all_headers[3] = ptr_new(hdr)
-
-  if keyword_set(print_headers) then begin
-    print,''
-    print,'--- residuals ---'
     print,''
     print,hdr
   endif

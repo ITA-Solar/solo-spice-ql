@@ -33,8 +33,8 @@
 ;      data_id: A string vector of same length as 'ana', or if 'ana' is not provided
 ;               scalar string. These strings are used to identify the data, i.e. they will
 ;               be used in the extension names of the FITS file. Each dataset will get
-;               7 extensions, which all have the same ID, but the extension name will be
-;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'residuals', 'weights', 'includes', 'constants').
+;               6 extensions, which all have the same ID, but the extension name will be
+;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'weights', 'includes', 'constants').
 ;               Default is the dataset numbers.
 ;
 ; KEYWORDS:
@@ -72,8 +72,8 @@
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
 ;              the Chi^2) values. May contain current results.
-;      RESIDUAL: Array to contain the residual. Same size as DATA, may be
-;                undefined on input.
+;      RESIDUAL: Optional. Array to contain the residual. Same size as DATA, this will
+;                be ignored and not saved into the FITS file.
 ;      INCLUDE: Array to keep the INCLUDE status of each component
 ;               at each point.
 ;      CONST: Array to keep the CONST status of each parameter at
@@ -101,7 +101,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-06-15 11:06 CEST $
+; $Id: 2023-10-31 14:18 CET $
 
 
 PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
@@ -120,7 +120,7 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
   prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
   prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
-  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=ana_given
@@ -164,10 +164,9 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
     writefits, filepath_out, RESULT, *headers[0], append=extension_win
     writefits, filepath_out, INPUT_DATA, *headers[1], /append
     writefits, filepath_out, LAMBDA, *headers[2], /append
-    writefits, filepath_out, RESIDUAL, *headers[3], /append
-    writefits, filepath_out, WEIGHTS, *headers[4], /append
-    writefits, filepath_out, INCLUDE, *headers[5], /append
-    writefits, filepath_out, CONST, *headers[6], /append
+    writefits, filepath_out, WEIGHTS, *headers[3], /append
+    writefits, filepath_out, INCLUDE, *headers[4], /append
+    writefits, filepath_out, CONST, *headers[5], /append
 
   endfor ; iwindow=0,n_windows-1
 

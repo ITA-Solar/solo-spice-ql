@@ -14,7 +14,7 @@
 ;
 ; CALLING SEQUENCE:
 ;     anas = fits2ana(fitsfile [ ,headers_results=headers_results, headers_data=headers_data, $
-;       headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+;       headers_lambda=headers_lambda, headers_weights=headers_weights, $
 ;       headers_include=headers_include, headers_constants=headers_constants])
 ;
 ; INPUTS:
@@ -33,7 +33,6 @@
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
 ;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
 ;     headers_lambda: A pointer array, containing the headers of the lambda extensions as string arrays.
-;     headers_residuals: A pointer array, containing the headers of the residuals extensions as string arrays.
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
 ;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
@@ -49,12 +48,12 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-10-10 11:08 CEST $
+; $Id: 2023-10-31 14:18 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
   headers_results=headers_results, headers_data=headers_data, $
-  headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+  headers_lambda=headers_lambda, headers_weights=headers_weights, $
   headers_include=headers_include, headers_constants=headers_constants
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
@@ -83,7 +82,7 @@ function fits2ana, fitsfile, windows=windows, $
     ENDELSE
   ENDELSE
   print, 'Reading ' + strtrim(string(n_windows_process), 2) + ' out of ' +  strtrim(string(n_windows), 2) + ' windows.'
-  get_headers = bytarr(7)
+  get_headers = bytarr(6)
   if arg_present(headers_results) then begin
     headers_results = ptrarr(n_windows_process)
     get_headers[0] = 1
@@ -97,25 +96,21 @@ function fits2ana, fitsfile, windows=windows, $
     headers_lambda = ptrarr(n_windows_process)
     get_headers[2] = 1
   endif
-  if arg_present(headers_residuals) then begin
-    headers_residuals = ptrarr(n_windows_process)
-    get_headers[3] = 1
-  endif
   if arg_present(headers_weights) then begin
     headers_weights = ptrarr(n_windows_process)
-    get_headers[4] = 1
+    get_headers[3] = 1
   endif
   if arg_present(headers_include) then begin
     headers_include = ptrarr(n_windows_process)
-    get_headers[5] = 1
+    get_headers[4] = 1
   endif
   if arg_present(headers_constants) then begin
     headers_constants = ptrarr(n_windows_process)
-    get_headers[6] = 1
+    get_headers[5] = 1
   endif
   for iwin=0,n_windows_process-1 do begin
     wind_ind = windows_process[iwin]
-    extension = wind_ind*7
+    extension = wind_ind*6
     if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
 
@@ -205,13 +200,11 @@ function fits2ana, fitsfile, windows=windows, $
     if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
     lambda = readfits(fitsfile, hdr, ext=extension+2)
     if get_headers[2] then headers_lambda[iwin] = ptr_new(hdr)
-    residual = readfits(fitsfile, hdr, ext=extension+3)
-    if get_headers[3] then headers_residuals[iwin] = ptr_new(hdr)
-    weights = readfits(fitsfile, hdr, ext=extension+4)
+    weights = readfits(fitsfile, hdr, ext=extension+3)
     if get_headers[4] then headers_weights[iwin] = ptr_new(hdr)
-    include = readfits(fitsfile, hdr, ext=extension+5)
+    include = readfits(fitsfile, hdr, ext=extension+4)
     if get_headers[5] then headers_include[iwin] = ptr_new(hdr)
-    const = readfits(fitsfile, hdr, ext=extension+6)
+    const = readfits(fitsfile, hdr, ext=extension+5)
     if get_headers[6] then headers_constants[iwin] = ptr_new(hdr)
 
     ana = mk_analysis()
@@ -228,7 +221,7 @@ function fits2ana, fitsfile, windows=windows, $
     handle_value,ana.weights_h,weights,/no_copy,/set
     handle_value,ana.fit_h,fit,/no_copy,/set
     handle_value,ana.result_h,result,/no_copy,/set
-    handle_value,ana.residual_h,residual,/no_copy,/set
+    ;handle_value,ana.residual_h,residual,/no_copy,/set
     handle_value,ana.include_h,include,/no_copy,/set
     handle_value,ana.const_h,const,/no_copy,/set
     handle_value,ana.origin_h,origin,/no_copy,/set
