@@ -216,7 +216,7 @@
 ;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
 ;
 ; Version     :
-; $Id: 2023-10-20 14:48 CEST $
+; $Id: 2023-10-31 13:59 CET $
 ;-
 
 
@@ -2068,7 +2068,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   data_display = spice_histo_opt(data, int.a_display.data_threshold)
   result_display = spice_histo_opt(result, int.a_display.result_threshold)
-  residual_display = spice_histo_opt(residual, int.a_display.residual_threshold)
+  IF N_ELEMENTS(residual) GT 0 THEN $
+    residual_display = spice_histo_opt(residual, int.a_display.residual_threshold)
   
   ;; Put data blocks into their handles
   
