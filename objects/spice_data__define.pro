@@ -40,8 +40,17 @@
 ;                  * The SLIT_ONLY keyword is set when xcfit_block is called.
 ;     26-Apr-2023: Terje Fredvik: add keyword no_line in call of ::xcfit_block
 ;                                 and ::mk_analysis
+;     25-Sep-2023: Terje Fredvik: ::create_l3_file: call delete_analysis when
+;                                 line fitting is done to prevent memory leak
+;     13-Oct-2023: Terje Fredvik: ::read_file: if the number of observational
+;                                 HDUs in the L2 file is less than the the
+;                                 NWIN keyword: set self.nwin to the number of 
+;                                 observational HDUs in L2 instead of
+;                                 hdr.nwin, to prevent crash when
+;                                 processing L2 file with missing HDUs due to 
+;                                 incomplete telemetry 
 ;-
-; $Id: 2023-07-28 13:28 CEST $
+; $Id: 2023-10-18 15:27 CEST $
 
 
 ;+
@@ -176,7 +185,9 @@ function spice_data::xcfit_block, window_index, no_masking=no_masking, approxima
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
   ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, no_line_list=no_line_list)
   if size(ana, /type) EQ 8 then begin
-    SPICE_XCFIT_BLOCK, ana=ana
+    origin = [ (self->get_lambda_vector(window_index))[0], (self->get_instr_x_vector(window_index))[0], (self->get_instr_y_vector(window_index))[0] ]
+    scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
+    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1]
   endif else begin
     print, 'Something went wrong when trying to produce an ANA structure.'
   endelse
@@ -343,6 +354,8 @@ END
 ; OPTIONAL OUTPUTS:
 ;     all_ana:    Array of ana structure, number of elements is the same as number of windows in the FITS file.
 ;     all_result_headers: A pointer array, containing the headers of the results extensions as string arrays.
+;     all_data_headers: A pointer array, containing the headers of the data extensions as string arrays.
+;     all_proc_steps_user: A pointer array, containing the structures of the processing steps.
 ;
 ; OUTPUT:
 ;     The path and name of the Level 3 FITS file.
@@ -352,12 +365,13 @@ END
 FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
-  all_ana=all_ana, all_result_headers=all_result_headers, no_line_list=no_line_list, $
+  all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, all_proc_steps=all_proc_steps, $
+  no_line_list=no_line_list, $
   progress_widget=progress_widget, group_leader=group_leader, pipeline_dir=pipeline_dir, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  version = 1 ; PLEASE increase this number when editing the code
+  version = 3 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
@@ -371,6 +385,14 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     all_result_headers = ptrarr(N_ELEMENTS(window_index))
     collect_hdr=1
   ENDIF ELSE collect_hdr=0
+  IF ARG_PRESENT(all_data_headers) THEN BEGIN
+    all_data_headers = ptrarr(N_ELEMENTS(window_index))
+    collect_hdr_data=1
+  ENDIF ELSE collect_hdr_data=0
+  IF ARG_PRESENT(all_proc_steps) THEN BEGIN
+    all_proc_steps = ptrarr(N_ELEMENTS(window_index))
+    collect_proc_steps=1
+  ENDIF ELSE collect_proc_steps=0
 
   IF ~keyword_set(top_dir) THEN BEGIN 
      spice_data_dir = getenv('SPICE_DATA')
@@ -421,7 +443,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     endif
 
     if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      SPICE_XCFIT_BLOCK, ana=ana, group_leader=group_leader
+      origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
+      scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
+      SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
     endif
 
     data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
@@ -429,8 +453,17 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     if iwindow gt 0 then extension=1 else begin
       extension=0
       IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
+
       version_and_params_1 = { $
-        step:'PARAMETER-FITTING', $
+        step:'PEAK-FINDING', $
+        proc:proc_find_line.proc, $
+        version:fix(proc_find_line.version, type=3), $
+        lib:'solarsoft/so/spice/idl/quicklook', $
+        params:'' $
+      }
+
+      version_and_params_2 = { $
+        step:'LINE-FITTING', $
         proc:'spice_data::create_l3_file', $
         version:fix(version, type=3), $
         lib:'solarsoft/so/spice/idl/quicklook', $
@@ -441,14 +474,6 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         string('POSITION  = '+strtrim(string(fix(keyword_set(position))), 2)+',', format='(A-67)') + $
         string('VELOCITY  = '+strtrim(string(vel), 2)+',', format='(A-67)') + $
         'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2) $
-      }
-
-      version_and_params_2 = { $
-        step:'PARAMETER-FITTING', $
-        proc:proc_find_line.proc, $
-        version:fix(proc_find_line.version, type=3), $
-        lib:'solarsoft/so/spice/idl/quicklook', $
-        params:'' $
       }
 
       version_and_params = [version_and_params_1, version_and_params_2]
@@ -462,7 +487,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
       DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
       original_data=original_data, spice=version_and_params)
-
+    
+    delete_analysis, ana
+    
     IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
     
     IF ~keyword_set(save_not) THEN BEGIN
@@ -476,6 +503,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     ENDIF
 
     IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
+    IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers[1])
+    IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(version_and_params)
 
   endfor ; iwindow=0,N_ELEMENTS(window_index)-1
   
@@ -2616,6 +2645,14 @@ PRO spice_data::read_file, file
   hdr = headfits(file, exten=0)
   self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
+  
+  image_hdu_ix = where(fcb.xtension NE 'BINTABLE')
+  n_obs_hdu = n_elements(where(fcb.extname[image_hdu_ix] NE 'WCSDVARR'))
+  IF self.nwin GT n_obs_hdu THEN BEGIN 
+     message,'Image extensions are missing due to incomplete telemetry. Ignoring missing HDUs.',/info
+     self.nwin = n_obs_hdu
+  ENDIF
+  
   self.next = fcb.nextend + 1
   fits_close, fcb
 

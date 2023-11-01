@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-27 12:51 CEST $
+; $Id: 2023-10-18 15:27 CEST $
 ;-
 
 
@@ -62,10 +62,16 @@ pro spice_xcontrol_l23_cleanup, tlb
   ptr_free,(*info).ana_l3_user
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official)-1 DO ptr_free, (*(*info).hdr_l3_official)[i]
   ptr_free,(*info).hdr_l3_official
+  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official_data)-1 DO ptr_free, (*(*info).hdr_l3_official_data)[i]
+  ptr_free,(*info).hdr_l3_official_data
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user)-1 DO ptr_free, (*(*info).hdr_l3_user)[i]
   ptr_free,(*info).hdr_l3_user
-  ptr_free,(*info).proc_steps_official
+  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user_data)-1 DO ptr_free, (*(*info).hdr_l3_user_data)[i]
+  ptr_free,(*info).hdr_l3_user_data
+  FOR i=0,N_ELEMENTS(*(*info).proc_steps_user)-1 DO IF ptr_valid((*(*info).proc_steps_user)[i]) THEN ptr_free, (*(*info).proc_steps_user)[i]
   ptr_free,(*info).proc_steps_user
+  FOR i=0,N_ELEMENTS(*(*info).proc_steps_official)-1 DO IF ptr_valid((*(*info).proc_steps_official)[i]) THEN ptr_free, (*(*info).proc_steps_official)[i]
+  ptr_free,(*info).proc_steps_official
   ptr_free,info
 end
 
@@ -109,16 +115,19 @@ pro spice_xcontrol_l23_save_file, event
     file_old = 1
     file_move, file_l3, file_l3+'.old', /overwrite
   ENDIF ELSE file_old = 0
+  IF ~FILE_TEST(file_dirname(file_l3)) THEN FILE_MKDIR, file_dirname(file_l3)
 
   all_result_headers = ptrarr(nwin_l3)
+  all_data_headers = ptrarr(nwin_l3)
+  l3_pr_steps_all = ptrarr(nwin_l3)
   FOR iwindow=0,nwin_l3-1 DO BEGIN
 
     original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
     
-    pr_steps = *(*info).proc_steps_user
+    pr_steps = *(*(*info).proc_steps_user)[iwindow]
     if (*info).state_l3_user[iwindow].edited then begin
       pr_steps = [pr_steps, { $
-        step:'PARAMETER-FITTING', $
+        step:'LINE-FITTING', $
         proc:'spice_xcfit_block, spice_xcontrol_l23', $
         version:0L, $
         lib:'solarsoft/so/spice/idl/quicklook', $
@@ -144,6 +153,8 @@ pro spice_xcontrol_l23_save_file, event
     writefits, file_l3, CONST, *headers[6], /append
 
     all_result_headers[iwindow] = ptr_new(*headers[0])
+    all_data_headers[iwindow] = ptr_new(*headers[1])
+    l3_pr_steps_all[iwindow] = ptr_new(pr_steps)
 
   ENDFOR ; iwin=0,nwin_l3-1
 
@@ -151,6 +162,10 @@ pro spice_xcontrol_l23_save_file, event
 
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(all_result_headers)
+  ptr_free, (*info).hdr_l3_user_data
+  (*info).hdr_l3_user_data = ptr_new(all_data_headers)
+  ptr_free, (*info).proc_steps_user
+  (*info).proc_steps_user = ptr_new(l3_pr_steps_all)
   (*info).state_l3_user.edited = 0
   spice_xcontrol_l23_update_state_display, info
 end
@@ -161,6 +176,8 @@ end
 pro spice_xcontrol_l23_update_state_add, info, result
   ana_l3 = *(*info).ana_l3_user
   hdr_l3 = *(*info).hdr_l3_user
+  hdr_data_l3 = *(*info).hdr_l3_user_data
+  proc_steps_user = *(*info).proc_steps_user
   state_l3 = (*info).state_l3_user
   winno_l3 = *(*info).winno_l3_user
 
@@ -178,12 +195,18 @@ pro spice_xcontrol_l23_update_state_add, info, result
       state_l3[iwin].l3_winno = nwin_l3
       state_l3[iwin].edited = ~result.file_saved
       spice_xcontrol_l23_add_window, ana_l3_new, (*result.ana)[ind_result[0]], $
-        hdr_l3_new, *(*result.result_headers)[ind_result[0]], winno_l3_new, iwin
+        hdr_l3_new, *(*result.result_headers)[ind_result[0]], $
+        hdr_data_l3_new, *(*result.data_headers)[ind_result[0]], $
+        l3_pr_steps_new, *(*result.proc_steps)[ind_result[0]], $
+        winno_l3_new, iwin
       nwin_l3++
     ENDIF ELSE IF count_old GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = nwin_l3
       spice_xcontrol_l23_add_window, ana_l3_new, ana_l3[ind_old[0]], $
-        hdr_l3_new, *hdr_l3[ind_old[0]], winno_l3_new, iwin
+        hdr_l3_new, *hdr_l3[ind_old[0]], $
+        hdr_data_l3_new,  *hdr_data_l3[ind_old[0]], $
+        l3_pr_steps_new,  *proc_steps_user[ind_old[0]], $
+        winno_l3_new, iwin
       nwin_l3++
     ENDIF ELSE BEGIN
       state_l3[iwin].l3_winno = -1
@@ -196,6 +219,10 @@ pro spice_xcontrol_l23_update_state_add, info, result
   (*info).ana_l3_user = ptr_new(ana_l3_new)
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(hdr_l3_new)
+  ptr_free, (*info).hdr_l3_user_data
+  (*info).hdr_l3_user_data = ptr_new(hdr_data_l3_new)
+  ptr_free, (*info).proc_steps_user
+  (*info).proc_steps_user = ptr_new(l3_pr_steps_new)
   ptr_free, (*info).winno_l3_user
   (*info).winno_l3_user = ptr_new(winno_l3_new)
   (*info).state_l3_user = state_l3
@@ -204,14 +231,18 @@ pro spice_xcontrol_l23_update_state_add, info, result
 end
 
 
-pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, hdr_l3_new, new_hdr, winno_l3_new, new_winno
+pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, hdr_l3_new, new_hdr, hdr_data_l3_new, new_hdr_data, l3_pr_steps_new, new_pr_step, winno_l3_new, new_winno
   IF N_ELEMENTS(ana_l3_new) EQ 0 THEN BEGIN
     ana_l3_new = new_ana
     hdr_l3_new = ptr_new(new_hdr)
+    hdr_data_l3_new = ptr_new(new_hdr_data)
+    l3_pr_steps_new = ptr_new(new_pr_step)
     winno_l3_new = new_winno
   ENDIF ELSE BEGIN
     ana_l3_new = [ana_l3_new, new_ana]
     hdr_l3_new = [hdr_l3_new, ptr_new(new_hdr)]
+    hdr_data_l3_new = [hdr_data_l3_new, ptr_new(new_hdr_data)]
+    l3_pr_steps_new = [l3_pr_steps_new, ptr_new(new_pr_step)]
     winno_l3_new = [winno_l3_new, new_winno]
   ENDELSE
 end
@@ -247,6 +278,10 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   (*info).ana_l3_user = ptr_new(*result.ana)
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(*result.result_headers)
+  ptr_free, (*info).hdr_l3_user_data
+  (*info).hdr_l3_user_data = ptr_new(*result.data_headers)
+  ptr_free, (*info).proc_steps_user
+  (*info).proc_steps_user = ptr_new(*result.proc_steps)
   ptr_free, (*info).winno_l3_user
   (*info).winno_l3_user = ptr_new(winno_l3_result)
   (*info).state_l3_user = state_l3
@@ -319,18 +354,24 @@ pro spice_xcontrol_l23_open_l3, event
     1: BEGIN
       ana_l3 = *(*info).ana_l3_official
       hdr_l3 = *(*info).hdr_l3_official
+      hdr_l3_data = *(*info).hdr_l3_official_data
       title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_official
     END
     2: BEGIN
       ana_l3 = *(*info).ana_l3_user
       hdr_l3 = *(*info).hdr_l3_user
+      hdr_l3_data = *(*info).hdr_l3_user_data
       title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       state_l3 = (*info).state_l3_user
     END
   endcase
   ana = ana_l3[win_info.winno]
-  spice_xcfit_block, ana=ana, title=title, group_leader=(*info).tlb
+  origin = [0,0,0]
+  scale = [1,1,1]
+  phys_scale = [0,0,0]
+  spice_data_l3.get_plot_variables, *hdr_l3_data[win_info.winno], origin=origin, scale=scale, phys_scale=phys_scale
+  spice_xcfit_block, ana=ana, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb
   ana_l3[win_info.winno] = ana
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)
@@ -377,14 +418,19 @@ pro spice_xcontrol_l23_copy_window, event
   widget_control, event.id, get_uvalue=win_info
   ana_l3 = *(*info).ana_l3_official
   hdr_l3 = *(*info).hdr_l3_official
-  print,fxpar(*hdr_l3[win_info], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
   hdr_new = ptrarr(1)
   hdr_new[0] = ptr_new(*hdr_l3[win_info])
-  print,fxpar(*hdr_new[0], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
-  help,win_info
+  hdr_l3_data = *(*info).hdr_l3_official_data
+  hdr_new_data = ptrarr(1)
+  hdr_new_data[0] = ptr_new(*hdr_l3_data[win_info])
+  proc_step_l3 = *(*info).proc_steps_official
+  pr_step_new = ptrarr(1)
+  pr_step_new[0] = ptr_new(*proc_step_l3[win_info])
   result = {l3_file:'', $
     ana:ptr_new(ana_l3[win_info]), $
     result_headers:ptr_new(hdr_new), $
+    data_headers:ptr_new(hdr_new_data), $
+    proc_steps:ptr_new(pr_step_new), $
     file_saved:0b, user_dir:0b, top_dir:''}
 
   spice_xcontrol_l23_update_state_add, info, result
@@ -479,7 +525,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ENDIF ELSE object_l2=0
 
   IF exist_l3_official THEN BEGIN
-    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official)
+    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official, headers_data=hdr_l3_official_data)
     nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', missing=0)
     if nwin eq 0 then nwin = fxpar(*hdr_l3_official[0], 'L2NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_official
@@ -498,12 +544,13 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_official = 0
     ana_l3_official = 0
     hdr_l3_official = ptr_new(0)
+    hdr_l3_official_data = ptr_new(0)
     winno_l3_official = -1
     proc_steps_official = 0
   ENDELSE
 
   IF exist_l3_user THEN BEGIN
-    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user)
+    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user, headers_data=hdr_l3_user_data)
     nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', missing=0)
     if nwin eq 0 then nwin = fxpar(*hdr_l3_user[0], 'L2NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_user
@@ -524,6 +571,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_user = 0
     ana_l3_user = 0
     hdr_l3_user = ptr_new(0)
+    hdr_l3_user_data = ptr_new(0)
     winno_l3_user = -1
     proc_steps_user = 0
   ENDELSE
@@ -651,7 +699,9 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     nwin_l3_official:nwin_l3_official, $
     nwin_l3_user:nwin_l3_user, $
     hdr_l3_official:ptr_new(hdr_l3_official), $
+    hdr_l3_official_data:ptr_new(hdr_l3_official_data), $
     hdr_l3_user:ptr_new(hdr_l3_user), $
+    hdr_l3_user_data:ptr_new(hdr_l3_user_data), $
     proc_steps_official:ptr_new(proc_steps_official), $
     proc_steps_user:ptr_new(proc_steps_user), $
     state_l3_official:state_l3_official, $

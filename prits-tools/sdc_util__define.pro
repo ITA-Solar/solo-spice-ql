@@ -102,6 +102,12 @@
 ;               
 ; Modified    : Relevant log entries below:
 ;               $Log: not supported by cvs2svn $
+;
+;               Revision 1.11  2023/26/10 11:40:51  tfredvik
+;               # ::init: new input parameter idl_pid. 
+;               # ::clone: use self.idl_pid to give the savefile
+;                 a name that is unique for the current IDL session
+;
 ;               Revision 1.9  2007/12/06 09:18:51  tfredvik
 ;               # set: remove help,extra,/str
 ;
@@ -118,18 +124,20 @@
 ;               Added documentation & read/write sensitivity
 ;
 ;
+;
 ; Version     : $Revision: 1.10 $$Date: 2007-12-06 09:28:56 $
 ;-
 
 
-FUNCTION sdc_util::init,quiet=quiet
+FUNCTION sdc_util::init,idl_pid=idl_pid, quiet=quiet
   o = self                      ; Shorthand
   class = obj_class(o)
   stc = create_struct(name=class)
   tags = tag_names(stc)
   o.sdc_util_tags = ptr_new(tags,/no_copy)
   IF NOT keyword_set(quiet) THEN print,"I am a "+o->classdef()
-
+  
+  IF keyword_set(idl_pid) THEN self.idl_pid = idl_pid
   return,1
 END
 
@@ -182,7 +190,7 @@ FUNCTION sdc_util::clone, object=object
   ;; Shamelessly copied from http://www.idlcoyote.com/tips/copy_objects.html .
   IF( NOT Keyword_Set(object) ) THEN object = self
   obj = object
-  filename = '/tmp/clone.sav'
+  filename = '/tmp/clone_'+self.idl_pid+'.sav'
   save, obj, filename=filename
   obj = 0                      
   restore, filename
@@ -240,8 +248,10 @@ END
 PRO sdc_util__define
   pseudo = 0b
   ptr = ptr_new()
+  str = ''
   d = { sdc_util, $
         sdc_util_version:pseudo,$
-        sdc_util_tags:ptr $
+        sdc_util_tags:ptr,      $
+        idl_pid:str      $
       }
 END
