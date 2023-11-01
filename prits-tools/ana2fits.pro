@@ -59,7 +59,7 @@
 ;              A wrong number in this keyword won't create any problems when reading the FITS file
 ;              with FITS2ANA.
 ;
-;      All of the following optional inputs must be provided if 'ana' is not
+;      All of the following optional inputs, except RESIDUAL, must be provided if 'ana' is not
 ;      provided. If 'ana' is provided, they will be overwritten and can be used
 ;      as output.
 ;      HISTORY: A string array.
@@ -101,7 +101,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-10-31 14:18 CET $
+; $Id: 2023-11-01 11:51 CET $
 
 
 PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $

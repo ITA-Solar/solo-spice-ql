@@ -43,7 +43,7 @@
 ;      print_headers: If set, then all headers created will be printed out.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
-;      All of the following optional inputs must be provided if 'ana' is not
+;      All of the following optional inputs, except RESIDUAL, must be provided if 'ana' is not
 ;      provided. If 'ana' is provided, they will be overwritten and can be used
 ;      as output.
 ;      HISTORY: A string array.
@@ -85,7 +85,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-10-31 14:18 CET $
+; $Id: 2023-11-01 11:51 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
