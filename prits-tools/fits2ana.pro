@@ -48,7 +48,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-10-31 14:18 CET $
+; $Id: 2023-11-02 14:22 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -62,7 +62,7 @@ function fits2ana, fitsfile, windows=windows, $
   result = readfits(fitsfile, hdr)
   n_windows = fxpar(hdr, 'NWIN', missing=0)
   IF n_windows EQ 0 THEN BEGIN
-    print, 'Header keyword NWIN is missing or set to zero, can not read FITS file : ' + fitsfile
+    message, 'Header keyword NWIN is missing or set to zero, can not read FITS file : ' + fitsfile, /info
     return, 0
   ENDIF
   IF N_ELEMENTS(windows) EQ 0 THEN BEGIN
@@ -71,13 +71,13 @@ function fits2ana, fitsfile, windows=windows, $
   ENDIF ELSE BEGIN
     ind = where(windows LT n_windows AND windows GE 0, count)
     IF count EQ 0 THEN BEGIN
-      print, 'All provided window indices are outside of the available range. The FITS file contains ' + strtrim(string(n_windows), 2) + ' windows.'
+      message, 'All provided window indices are outside of the available range. The FITS file contains ' + strtrim(string(n_windows), 2) + ' windows.', /info
       return, 0
     ENDIF ELSE BEGIN
       windows_process = windows[ind]
       n_windows_process = count
       IF count NE N_ELEMENTS(windows) THEN BEGIN
-        print, 'Not all provided window indices are within the available range. The FITS file contains ' + strtrim(string(n_windows), 2) + ' windows.'
+        message, 'Not all provided window indices are within the available range. The FITS file contains ' + strtrim(string(n_windows), 2) + ' windows.', /info
       ENDIF
     ENDELSE
   ENDELSE
@@ -108,9 +108,32 @@ function fits2ana, fitsfile, windows=windows, $
     headers_constants = ptrarr(n_windows_process)
     get_headers[5] = 1
   endif
+  
+  fits_open, fitsfile, fits_content
+  fits_close, fits_content
+  data_ids = fits2ana_get_data_id(fits_content)
+  IF N_ELEMENTS(data_ids) NE n_windows THEN BEGIN
+    message, 'Number of data_ids is not the same as number of windows, cannot read FITS file', /info
+  ENDIF
+
+  
   for iwin=0,n_windows_process-1 do begin
     wind_ind = windows_process[iwin]
-    extension = wind_ind*6
+    extname = data_ids[wind_ind] + ' results'
+    extension = where(fits_content.extname EQ extname, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find result extension of window ' + strtrim(str(wind_ind), 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Ignoring this window', /info
+      hdr = ''
+      if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
+      if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
+      if get_headers[2] then headers_lambda[iwin] = ptr_new(hdr)
+      if get_headers[3] then headers_weights[iwin] = ptr_new(hdr)
+      if get_headers[4] then headers_include[iwin] = ptr_new(hdr)
+      if get_headers[5] then headers_constants[iwin] = ptr_new(hdr)
+     continue
+    ENDIF
+    extension = extension[0]
     if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
 
@@ -190,22 +213,77 @@ function fits2ana, fitsfile, windows=windows, $
 
     fit = fit_components_hash.tostruct(/no_copy)
 
-    data = readfits(fitsfile, hdr, ext=extension+1)
-    file_info = spice_file2info(fitsfile)
-    if file_info.is_spice_file && file_info.level eq 3 then begin
-      size_data = size(data)
-      if size_data[0] eq 4 then data = transpose(data, [2, 0, 1, 3]) $
-      else data = transpose(data, [2, 0, 1])
-    endif
+    extname = data_ids[wind_ind] + ' data'
+    extension = where(fits_content.extname EQ extname, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find data extension of window ' + strtrim(str(wind_ind), 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Creating dummy data cube', /info
+      hdr = ''
+      data = 0 ; TODO
+    ENDIF ELSE BEGIN
+      extension = extension[0]
+      data = readfits(fitsfile, hdr, ext=extension)
+      file_info = spice_file2info(fitsfile)
+      if file_info.is_spice_file && file_info.level eq 3 then begin
+        size_data = size(data)
+        if size_data[0] eq 4 then data = transpose(data, [2, 0, 1, 3]) $
+        else data = transpose(data, [2, 0, 1])
+      endif
+    ENDELSE
     if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
-    lambda = readfits(fitsfile, hdr, ext=extension+2)
+    
+    extname = data_ids[wind_ind] + ' xdim1'
+    extname_old = data_ids[wind_ind] + ' lambda'
+    extension = where(fits_content.extname EQ extname OR fits_content.extname EQ extname_old, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find xdim1 extension of window ' + strtrim(str(wind_ind), 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Creating xdim1 cube from WCS coordinates given in data extension', /info
+      lambda = 0 ; TODO
+      hdr = ''
+    ENDIF ELSE BEGIN
+      extension = extension[0]
+      lambda = readfits(fitsfile, hdr, ext=extension)
+    ENDELSE
     if get_headers[2] then headers_lambda[iwin] = ptr_new(hdr)
-    weights = readfits(fitsfile, hdr, ext=extension+3)
-    if get_headers[4] then headers_weights[iwin] = ptr_new(hdr)
-    include = readfits(fitsfile, hdr, ext=extension+4)
-    if get_headers[5] then headers_include[iwin] = ptr_new(hdr)
-    const = readfits(fitsfile, hdr, ext=extension+5)
-    if get_headers[6] then headers_constants[iwin] = ptr_new(hdr)
+
+    extname = data_ids[wind_ind] + ' weights'
+    extension = where(fits_content.extname EQ extname, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find weights extension of window ' + strtrim(str(wind_ind), 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Creating weights cube with default values', /info
+      weights = 0 ; TODO
+      hdr = ''
+    ENDIF ELSE BEGIN
+      extension = extension[0]
+      weights = readfits(fitsfile, hdr, ext=extension)
+    ENDELSE
+    if get_headers[3] then headers_weights[iwin] = ptr_new(hdr)
+
+    extname = data_ids[wind_ind] + ' includes'
+    extension = where(fits_content.extname EQ extname, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find includes extension of window ' + strtrim(str(wind_ind), 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Creating includes cube with default values', /info
+      include = 0 ; TODO
+      hdr = ''
+    ENDIF ELSE BEGIN
+      extension = extension[0]
+      include = readfits(fitsfile, hdr, ext=extension)
+    ENDELSE
+    if get_headers[4] then headers_include[iwin] = ptr_new(hdr)
+
+    extname = data_ids[wind_ind] + ' constants'
+    extension = where(fits_content.extname EQ extname, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find constants extension of window ' + strtrim(str(wind_ind), 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Creating constants cube with default values', /info
+      const = 0 ; TODO
+      hdr = ''
+    ENDIF ELSE BEGIN
+      extension = extension[0]
+      const = readfits(fitsfile, hdr, ext=extension)
+    ENDELSE
+    if get_headers[5] then headers_constants[iwin] = ptr_new(hdr)
 
     ana = mk_analysis()
 
