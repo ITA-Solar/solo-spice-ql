@@ -30,12 +30,6 @@
 ;           must be provided. If more than one ANA should be saved into one FITS file,
 ;           then 'ana' must be provided as an array of either file paths or objects.
 ;      filepath_out: Full path and filename of the resulting FITS file.
-;      data_id: A string vector of same length as 'ana', or if 'ana' is not provided
-;               scalar string. These strings are used to identify the data, i.e. they will
-;               be used in the extension names of the FITS file. Each dataset will get
-;               6 extensions, which all have the same ID, but the extension name will be
-;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'weights', 'includes', 'constants').
-;               Default is the dataset numbers.
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then the first ANA's result array will be an extension,
@@ -58,10 +52,16 @@
 ;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
 ;              A wrong number in this keyword won't create any problems when reading the FITS file
 ;              with FITS2ANA.
+;      data_id: A string vector of same length as 'ana', or if 'ana' is not provided
+;               scalar string. These strings are used to identify the data, i.e. they will
+;               be used in the extension names of the FITS file. Each dataset will get
+;               6 extensions, which all have the same ID, but the extension name will be
+;               'data_id'+' '+extension_type (='results', 'data', 'lambda', 'weights', 'includes', 'constants').
+;               Default is the dataset indeces.
 ;
 ;      All of the following optional inputs, except RESIDUAL, must be provided if 'ana' is not
 ;      provided. If 'ana' is provided, they will be overwritten and can be used
-;      as output.
+;      as OPTIONAL OUTPUT.
 ;      HISTORY: A string array.
 ;      LAMBDA: An array of wavelength values. Either one value for
 ;              every point in the data array, or a one-dimensional
@@ -78,6 +78,8 @@
 ;               at each point.
 ;      CONST: Array to keep the CONST status of each parameter at
 ;             each point.
+;       
+;      The following optional inputs will be ignored, but can be used as OPTIONAL OUTPUT, if 'ana' is provided.
 ;      FILENAME_ANA: The filename of the ANA-file.
 ;      DATASOURCE: A string.
 ;      DEFINITION: A string.
@@ -101,11 +103,12 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-01 11:51 CET $
+; $Id: 2023-11-02 10:52 CET $
 
 
-PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
+PRO ana2fits, ana, filepath_out=filepath_out, $
   n_windows=n_windows, winno=winno, $
+  data_id=data_id, $
   HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
@@ -164,9 +167,12 @@ PRO ana2fits, ana, filepath_out=filepath_out, data_id=data_id, $
     writefits, filepath_out, RESULT, *headers[0], append=extension_win
     writefits, filepath_out, INPUT_DATA, *headers[1], /append
     writefits, filepath_out, LAMBDA, *headers[2], /append
-    writefits, filepath_out, WEIGHTS, *headers[3], /append
-    writefits, filepath_out, INCLUDE, *headers[4], /append
-    writefits, filepath_out, CONST, *headers[5], /append
+    IF (*headers[3])[0] NE '' THEN $
+      writefits, filepath_out, WEIGHTS, *headers[3], /append
+    IF (*headers[4])[0] NE '' THEN $
+      writefits, filepath_out, INCLUDE, *headers[4], /append
+    IF (*headers[5])[0] NE '' THEN $
+      writefits, filepath_out, CONST, *headers[5], /append
 
   endfor ; iwindow=0,n_windows-1
 
