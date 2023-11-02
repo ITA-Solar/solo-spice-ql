@@ -33,14 +33,14 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-02 14:52 CET $
+; $Id: 2023-11-02 15:02 CET $
 
 
 FUNCTION ana2fitshdr_weights, datetime=datetime, data_id=data_id, WEIGHTS=WEIGHTS, $
   header_l2=header_l2
 
-  min_include = min(WEIGHTS, max=max_include)
-  IF min_include EQ 1.0 && max_include EQ 1.0 THEN return, ''
+  min_weights = min(WEIGHTS, max=max_weights)
+  IF min_weights EQ 1.0 && max_weights EQ 1.0 THEN return, ''
 
   n_dims = size(WEIGHTS, /n_dimensions)
 

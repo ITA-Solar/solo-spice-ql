@@ -89,7 +89,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-02 14:52 CET $
+; $Id: 2023-11-02 15:02 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
@@ -123,9 +123,9 @@ FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $
   prits_tools.parcheck, filename_out, 0, 'filename_out', 'STRING', 0
   prits_tools.parcheck, header_l2, 0, 'header_l2', 'STRING', 1, /optional
   prits_tools.parcheck, original_data, 0, 'original_data', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
-  prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', 0, default='XXX'
   prits_tools.parcheck, n_windows, 0, 'n_windows', 'INTEGERS', 0
   prits_tools.parcheck, winno, 0, 'winno', 'INTEGERS', 0
+  prits_tools.parcheck, data_id, 0, 'data_id', 'STRING', 0, default=strtrim(winno, 2)
 
 
   input_type = size(ana, /type)
