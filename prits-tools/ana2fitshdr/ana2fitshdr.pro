@@ -82,10 +82,14 @@
 ;
 ; OPTIONAL OUTPUTS:
 ;
+; CALLS:
+;     prits_tools.parcheck, caldat, ana2fitshdr_results, ana2fitshdr_data, ana2fitshdr_lambda, 
+;     ana2fitshdr_weights, ana2fitshdr_include, ana2fitshdr_const
+;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-01 11:51 CET $
+; $Id: 2023-11-02 14:52 CET $
 
 
 FUNCTION ana2fitshdr, ana, n_windows=n_windows, winno=winno, data_id=data_id, $

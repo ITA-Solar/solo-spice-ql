@@ -32,10 +32,13 @@
 ;
 ; OPTIONAL OUTPUTS:
 ;
+; CALLS:
+;      oslo_fits_util, mkhdr, fxpar
+;
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 13:40 CET $
+; $Id: 2023-11-02 14:52 CET $
 
 
 FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_array, $

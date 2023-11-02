@@ -38,6 +38,8 @@
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
 ;
 ; CALLS:
+;     prits_tools.parcheck, fits_open, fits_close, fits2ana_get_data_id, readfits, fxpar, mk_component_stc, 
+;     spice_file2info, mk_analysis
 ;
 ; COMMON BLOCKS:
 ;
@@ -48,7 +50,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-02 14:22 CET $
+; $Id: 2023-11-02 14:52 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $

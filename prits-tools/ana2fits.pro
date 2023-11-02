@@ -98,7 +98,10 @@
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
 ;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
-
+;
+; CALLS:
+;     prits_tools.parcheck, ana2fitshdr, writefits
+;
 ; RESTRICTIONS:
 ; It is possible to call this procedure multiple times with the same filepath_out,
 ; if in these cases the EXTENSION keyword is set, the windows will be appended to the 
@@ -111,7 +114,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-02 14:29 CET $
+; $Id: 2023-11-02 14:52 CET $
 
 
 PRO ana2fits, ana, filepath_out=filepath_out, $
