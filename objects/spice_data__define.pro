@@ -50,7 +50,7 @@
 ;                                 processing L2 file with missing HDUs due to 
 ;                                 incomplete telemetry 
 ;-
-; $Id: 2023-10-31 14:20 CET $
+; $Id: 2023-11-02 14:53 CET $
 
 
 ;+
@@ -477,6 +477,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       }
 
       version_and_params = [version_and_params_1, version_and_params_2]
+      
+      file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
 
     endelse
 
@@ -489,9 +491,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
       original_data=original_data, spice=version_and_params)
     
     delete_analysis, ana
-    
-    IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
-    
+        
     IF ~keyword_set(save_not) THEN BEGIN
       writefits, file, RESULT, *headers[0], append=extension
       writefits, file, original_data, *headers[1], /append
