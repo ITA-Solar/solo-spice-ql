@@ -89,8 +89,16 @@
 ;      LABEL: A string.
 ;
 ; OUTPUTS:
-; This procedure saves one or more ANA structures as FITS files.
+; This procedure saves one or more ANA structures into a FITS file.
 ; 
+; OPTIONAL OUTPUT:
+;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
+;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
+;     headers_xdim1: A pointer array, containing the headers of the xdim1 extensions as string arrays.
+;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
+;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
+;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
+
 ; RESTRICTIONS:
 ; It is possible to call this procedure multiple times with the same filepath_out,
 ; if in these cases the EXTENSION keyword is set, the windows will be appended to the 
@@ -103,7 +111,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-02 10:52 CET $
+; $Id: 2023-11-02 14:29 CET $
 
 
 PRO ana2fits, ana, filepath_out=filepath_out, $
@@ -113,7 +121,10 @@ PRO ana2fits, ana, filepath_out=filepath_out, $
   FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-  EXTENSION=EXTENSION, print_headers=print_headers
+  EXTENSION=EXTENSION, print_headers=print_headers, $
+  headers_results=headers_results, headers_data=headers_data, $
+  headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
+  headers_include=headers_include, headers_constants=headers_constants
 
   prits_tools.parcheck, ana, 1, 'ana', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ana)
@@ -139,6 +150,32 @@ PRO ana2fits, ana, filepath_out=filepath_out, $
     default=strtrim(indgen(max([1, ana_given])), 2)
 
   filename_out = file_basename(filepath_out)
+
+  get_headers = bytarr(6)
+  if arg_present(headers_results) then begin
+    headers_results = ptrarr(n_windows_process)
+    get_headers[0] = 1
+  endif
+  if arg_present(headers_data) then begin
+    headers_data = ptrarr(n_windows_process)
+    get_headers[1] = 1
+  endif
+  if arg_present(headers_xdim1) then begin
+    headers_xdim1 = ptrarr(n_windows_process)
+    get_headers[2] = 1
+  endif
+  if arg_present(headers_weights) then begin
+    headers_weights = ptrarr(n_windows_process)
+    get_headers[3] = 1
+  endif
+  if arg_present(headers_include) then begin
+    headers_include = ptrarr(n_windows_process)
+    get_headers[4] = 1
+  endif
+  if arg_present(headers_constants) then begin
+    headers_constants = ptrarr(n_windows_process)
+    get_headers[5] = 1
+  endif
 
   n_ana = N_ELEMENTS(ana)
   if n_ana eq 0 then n_ana=1
@@ -173,6 +210,13 @@ PRO ana2fits, ana, filepath_out=filepath_out, $
       writefits, filepath_out, INCLUDE, *headers[4], /append
     IF (*headers[5])[0] NE '' THEN $
       writefits, filepath_out, CONST, *headers[5], /append
+
+    if get_headers[0] then headers_results[iwindow] = ptr_new(*headers[0])
+    if get_headers[1] then headers_data[iwindow] = ptr_new(*headers[1])
+    if get_headers[2] then headers_xdim1[iwindow] = ptr_new(*headers[2])
+    if get_headers[3] then headers_weights[iwindow] = ptr_new(*headers[3])
+    if get_headers[4] then headers_include[iwindow] = ptr_new(*headers[4])
+    if get_headers[5] then headers_constants[iwindow] = ptr_new(*headers[5])
 
   endfor ; iwindow=0,n_windows-1
 
