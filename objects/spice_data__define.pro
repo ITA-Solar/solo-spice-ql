@@ -49,8 +49,10 @@
 ;                                 hdr.nwin, to prevent crash when
 ;                                 processing L2 file with missing HDUs due to 
 ;                                 incomplete telemetry 
+;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
+;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2023-11-03 09:51 CET $
 
 
 ;+
@@ -292,7 +294,8 @@ END
 
 ;+
 ; Description:
-;     This routine creates a level 3 FITS file for the chosen window(s).
+;     This routine creates a level 3 FITS file for the chosen window(s). If
+;     the window is a Dumbbell or an Intensity-window no fits are made.
 ;     The data is arranged so that cfit_block can read it. The routine estimates
 ;     the positions of the main peaks and fits those to the data by calling cfit_block.
 ;     This may take a while. After that, the xcfit_block routine is called with
@@ -371,8 +374,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  version = 3 ; PLEASE increase this number when editing the code
-
+  version = 4 ; PLEASE increase this number when editing the code
+  
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
   prits_tools.parcheck, force_version, 0, "force_version", 'integers', 0, minval=0, maxval=99, /optional
@@ -393,7 +396,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     all_proc_steps = ptrarr(N_ELEMENTS(window_index))
     collect_proc_steps=1
   ENDIF ELSE collect_proc_steps=0
-
+  
+  win_type = self.get_header_keyword('WINTYPE', w, '')
   IF ~keyword_set(top_dir) THEN BEGIN 
      spice_data_dir = getenv('SPICE_DATA')
      top_dir = (keyword_set(pipeline_dir)) ? spice_data_dir : spice_data_dir+'/user/'
@@ -413,100 +417,102 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   IF ~keyword_set(no_widget) THEN $
     progress_widget->next_file, N_ELEMENTS(window_index), filename=filename_l2, halt=halt
 
-  for iwindow=0,N_ELEMENTS(window_index)-1 do begin
-
-    IF ~keyword_set(no_widget) THEN BEGIN
-      progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index[iwindow], fns('Window ##', iwindow)), halt=halt
-      if halt then begin
-        print,'Calculation stopped'
-        return, 'Cancelled'
-      endif
-    ENDIF
-
-    ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
-    IF iwindow EQ 0 THEN version += version_add
-    if size(ana, /type) NE 8 then continue
-    IF collect_ana THEN BEGIN
-      if iwindow eq 0 then all_ana = ana $
-      else all_ana = [all_ana, ana]
-    ENDIF
-
-    if ~keyword_set(no_fitting) then begin
-      if ~keyword_set(quiet) then begin
-        print, '====================='
-        print, 'fitting data'
-        print, 'this may take a while'
-        print, '====================='
-      endif
-      spice_cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
-    endif
-
-    if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
-      scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
-      SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
-    endif
-
-    data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
-    original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
-    if iwindow gt 0 then extension=1 else begin
-      extension=0
-      IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
-
-      version_and_params_1 = { $
-        step:'PEAK-FINDING', $
-        proc:proc_find_line.proc, $
-        version:fix(proc_find_line.version, type=3), $
-        lib:'solarsoft/so/spice/idl/quicklook', $
-        params:'' $
-      }
-
-      version_and_params_2 = { $
-        step:'LINE-FITTING', $
-        proc:'spice_data::create_l3_file', $
-        version:fix(version, type=3), $
-        lib:'solarsoft/so/spice/idl/quicklook', $
-        params: $
-        string('LINE_LIST = '+strtrim(string(fix(~keyword_set(no_line_list))), 2)+',', format='(A-67)') + $
-        string('MASKING   = '+strtrim(string(fix(~keyword_set(no_masking))), 2)+',', format='(A-67)') + $
-        string('FITTING   = '+strtrim(string(fix(~keyword_set(no_fitting))), 2)+',', format='(A-67)') + $
-        string('POSITION  = '+strtrim(string(fix(keyword_set(position))), 2)+',', format='(A-67)') + $
-        string('VELOCITY  = '+strtrim(string(vel), 2)+',', format='(A-67)') + $
-        'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2) $
-      }
-
-      version_and_params = [version_and_params_1, version_and_params_2]
-
-    endelse
-
-    headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
-      extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
-      HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-      FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-      CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data, spice=version_and_params)
-    
-    delete_analysis, ana
-    
-    IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
-    
-    IF ~keyword_set(save_not) THEN BEGIN
-      writefits, file, RESULT, *headers[0], append=extension
-      writefits, file, original_data, *headers[1], /append
-      writefits, file, LAMBDA, *headers[2], /append
-      writefits, file, RESIDUAL, *headers[3], /append
-      writefits, file, WEIGHTS, *headers[4], /append
-      writefits, file, INCLUDE, *headers[5], /append
-      writefits, file, CONST, *headers[6], /append
-    ENDIF
-
-    IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
-    IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers[1])
-    IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(version_and_params)
-
-  endfor ; iwindow=0,N_ELEMENTS(window_index)-1
+  for iwindow=0,N_ELEMENTS(window_index)-1 do BEGIN
+     dumbbell = self->get_header_keyword('DUMBBELL', iwindow) NE 0
+     intensity_window = self->get_header_keyword('WIN_TYPE', iwindow) EQ 'Intensity-window'
+     IF ~dumbbell AND ~intensity_window THEN BEGIN 
+        IF ~keyword_set(no_widget) THEN BEGIN
+           progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index[iwindow], fns('Window ##', iwindow)), halt=halt
+           if halt then begin
+              print,'Calculation stopped'
+              return, 'Cancelled'
+           endif
+        ENDIF
+        
+        ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
+                                position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
+        IF iwindow EQ 0 THEN version += version_add
+        if size(ana, /type) NE 8 then continue
+        IF collect_ana THEN BEGIN
+           if iwindow eq 0 then all_ana = ana $
+           else all_ana = [all_ana, ana]
+        ENDIF
+        
+        if ~keyword_set(no_fitting) then begin
+           if ~keyword_set(quiet) then begin
+              print, '====================='
+              print, 'fitting data'
+              print, 'this may take a while'
+              print, '====================='
+           endif
+           spice_cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
+        endif
+        
+        if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
+           origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
+           scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
+           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
+        endif
+        
+        data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
+        original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+        if iwindow gt 0 then extension=1 else begin
+           extension=0
+           IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
+           
+           version_and_params_1 = { $
+                                  step:'PEAK-FINDING', $
+                                  proc:proc_find_line.proc, $
+                                  version:fix(proc_find_line.version, type=3), $
+                                  lib:'solarsoft/so/spice/idl/quicklook', $
+                                  params:'' $
+                                  }
+           
+           version_and_params_2 = { $
+                                  step:'LINE-FITTING', $
+                                  proc:'spice_data::create_l3_file', $
+                                  version:fix(version, type=3), $
+                                  lib:'solarsoft/so/spice/idl/quicklook', $
+                                  params: $
+                                  string('LINE_LIST = '+strtrim(string(fix(~keyword_set(no_line_list))), 2)+',', format='(A-67)') + $
+                                  string('MASKING   = '+strtrim(string(fix(~keyword_set(no_masking))), 2)+',', format='(A-67)') + $
+                                  string('FITTING   = '+strtrim(string(fix(~keyword_set(no_fitting))), 2)+',', format='(A-67)') + $
+                                  string('POSITION  = '+strtrim(string(fix(keyword_set(position))), 2)+',', format='(A-67)') + $
+                                  string('VELOCITY  = '+strtrim(string(vel), 2)+',', format='(A-67)') + $
+                                  'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2) $
+                                  }
+           
+           version_and_params = [version_and_params_1, version_and_params_2]
+           
+        endelse
+        
+        headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
+                              extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
+                              HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
+                              FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
+                              CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+                              DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
+                              original_data=original_data, spice=version_and_params)
+        
+        delete_analysis, ana
+        
+        IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
+        
+        IF ~keyword_set(save_not) THEN BEGIN
+           writefits, file, RESULT, *headers[0], append=extension
+           writefits, file, original_data, *headers[1], /append
+           writefits, file, LAMBDA, *headers[2], /append
+           writefits, file, RESIDUAL, *headers[3], /append
+           writefits, file, WEIGHTS, *headers[4], /append
+           writefits, file, INCLUDE, *headers[5], /append
+           writefits, file, CONST, *headers[6], /append
+        ENDIF
+        
+        IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
+        IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers[1])
+        IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(version_and_params)
+     endif
+  endfor                        ; iwindow=0,N_ELEMENTS(window_index)-1
   
   IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN 
      spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
@@ -518,7 +524,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   return, destination
 END
 
-
+  
 ;+
 ; Description:
 ;     This procedure transforms the data of a chosen window, so that it can be used
@@ -1017,7 +1023,7 @@ PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
 
     dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
     intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
-    IF NOT dumbbell AND NOT intensity_window THEN BEGIN
+    IF ~dumbbell AND ~intensity_window THEN BEGIN
       nbin2 = self->get_header_keyword('NBIN2', window_index)
 
       IF nbin2 NE 1 THEN self->debin_y_dimension, data, nbin2
