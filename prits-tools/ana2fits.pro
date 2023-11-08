@@ -44,6 +44,7 @@
 ;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
 ;              A wrong number in this keyword won't create any problems when reading the FITS file
 ;              with FITS2ANA.
+;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. spectra).
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then the first ANA's result array will be an extension,
@@ -55,14 +56,16 @@
 ;      PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
-;      HEADERS_INPUT_XDIM1: A pointer array, containing the headers of the absorbed dimension extensions as string arrays.
-;              One string array per ANA provided.
+;      HEADERS_INPUT_XDIM1: A pointer array or string array, containing the headers of the absorbed dimension extensions as string arrays.
+;              One string array per ANA provided. Can be a string array, if ANA is scalar or not provided.
 ;              This is used to save the WCS parameters to recreate the XDIM1 cube when loading the FITS file again.
 ;              This is only required if HEADERS_INPUT_DATA is not provided, or if it doesn't (fully) contain the WCS parameters.
-;      HEADERS_INPUT_DATA: A pointer array, containing the headers of the data extensions as string arrays.
-;              One string array per ANA provided.
+;      HEADERS_INPUT_DATA: A pointer array or string array, containing the headers of the data extensions as string arrays.
+;              One string array per ANA provided. Can be a string array, if ANA is scalar or not provided.
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
-;      PROGENITOR_DATA
+;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
+;              alog the first dimension. If these data arrays are provided, they will be saved into the XDIM1 extensions instead of INPUT_DATA.
+;              One data array per ANA provided. Can be a string array, if ANA is scalar or not provided.
 ;      DATA_ID: A string vector of same length as 'ana', or if 'ana' is not provided
 ;              scalar string. These strings are used to identify the data, i.e. they will
 ;              be used in the extension names of the FITS file. Each dataset will get
@@ -76,14 +79,14 @@
 ;      HISTORY: A string array.
 ;      LAMBDA: An array of wavelength values. Either one value for
 ;              every point in the data array, or a one-dimensional
-;              array to go with all the spectra in the data array.
-;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with spectra
+;              array to go with all the spectra in the data array or same size as INPUT_DATA.
+;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with absorbed dimension (e.g. spectra)
 ;              along the first dimension.
 ;      WEIGHTS: Weights to use in the fitting process. No default!
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
 ;              the Chi^2) values. May contain current results.
-;      RESIDUAL: Optional. Array to contain the residual. Same size as DATA, this will
+;      RESIDUAL: Optional. Array to contain the residual. Same size as INPUT_DATA, this will
 ;              be ignored and not saved into the FITS file.
 ;      INCLUDE: Array to keep the INCLUDE status of each component
 ;              at each point.
@@ -133,12 +136,12 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-08 13:45 CET $
+; $Id: 2023-11-08 14:37 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
-  DATA_ID=DATA_ID, $
+  DATA_ID=DATA_ID, XDIM1_TYPE=XDIM1_TYPE, $
   EXTENSION=EXTENSION, $
   LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, FIT=FIT, $
   RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
@@ -154,14 +157,15 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ANA)
   prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', 1, optional=ana_given
-  prits_tools.parcheck, LAMBDA, 0, 'LAMBDA', 'NUMERIC', [1, 2, 3, 4, 5, 6, 7], optional=ana_given
-  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
-  prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, LAMBDA, 0, 'LAMBDA', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional=1
+  prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
+  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given || N_ELEMENTS(PROGENITOR_DATA)
+  prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
   prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
-  prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
+  prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
+  prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=1
   prits_tools.parcheck, DATASOURCE, 0, 'DATASOURCE', 'STRING', 0, optional=1
   prits_tools.parcheck, DEFINITION, 0, 'DEFINITION', 'STRING', 0, optional=1
@@ -173,6 +177,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
   prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=max([1, ana_given]), $
     default=strtrim(indgen(max([1, ana_given])), 2)
+  prits_tools.parcheck, XDIM1_TYPE, 0, 'XDIM1_TYPE', 'STRING', 0
 
   filename_out = file_basename(filepath_out)
 
