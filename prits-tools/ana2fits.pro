@@ -38,13 +38,8 @@
 ;              will have the wrong number. This will cause problems when reading the FITS file
 ;              with FITS2ANA. It is therefore highly recommended to provide this number,
 ;              when it is planned to add windows to the FITS file in different sessions.
-;      WINNO: Window number (starting at 0) of the first 'ana' provided within this study in this FITS file.
-;              Default is zero. If you call this procedure mutliple times with the same filepath_out and
-;              EXTENSION keyword set, you can define here what the index of the currently provided
-;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
-;              A wrong number in this keyword won't create any problems when reading the FITS file
-;              with FITS2ANA.
-;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. spectra).
+;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. 'WAVE'). A string array, or a scalar, in which case
+;              the same value will be used for all windows.
 ;
 ; KEYWORDS:
 ;      EXTENSION: If set, then the first ANA's result array will be an extension,
@@ -55,7 +50,7 @@
 ;              in HEADERS_INPUT_XDIM1 or in HEADERS_INPUT_DATA.
 ;      PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
 ;
-; OPTIONAL INPUTS/OUTPUTS:
+; OPTIONAL INPUTS:
 ;      HEADERS_INPUT_XDIM1: A pointer array or string array, containing the headers of the absorbed dimension extensions as string arrays.
 ;              One string array per ANA provided. Can be a string array, if ANA is scalar or not provided.
 ;              This is used to save the WCS parameters to recreate the XDIM1 cube when loading the FITS file again.
@@ -70,9 +65,16 @@
 ;              scalar string. These strings are used to identify the data, i.e. they will
 ;              be used in the extension names of the FITS file. Each dataset will get
 ;              6 extensions, which all have the same ID, but the extension name will be
-;              'data_id'+' '+extension_type (='results', 'data', 'lambda', 'weights', 'includes', 'constants').
-;              Default is the dataset indeces.
+;              'data_id'+' '+extension_type (='results', 'data', 'xdim1', 'weights', 'includes', 'constants').
+;              Default is the dataset indices.
+;      WINNO: Window number (starting at 0) of the first 'ana' provided within this study in this FITS file.
+;              If you call this procedure mutliple times with the same filepath_out and
+;              EXTENSION keyword set, you can define here what the index of the currently provided
+;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
+;              A wrong number in this keyword won't create any problems when reading the FITS file
+;              with FITS2ANA. Default is the dataset indices.
 ;
+; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs, except RESIDUAL, must be provided if 'ANA' is not provided. 
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
 ;      
@@ -82,26 +84,29 @@
 ;              array to go with all the spectra in the data array or same size as INPUT_DATA.
 ;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with absorbed dimension (e.g. spectra)
 ;              along the first dimension.
-;      WEIGHTS: Weights to use in the fitting process. No default!
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
 ;              the Chi^2) values. May contain current results.
-;      RESIDUAL: Optional. Array to contain the residual. Same size as INPUT_DATA, this will
-;              be ignored and not saved into the FITS file.
-;      INCLUDE: Array to keep the INCLUDE status of each component
-;              at each point.
-;      CONST: Array to keep the CONST status of each parameter at
-;              each point.
 ;       
+;      All of the following optional inputs can be provided if 'ANA' is not provided. If not
+;      provided, it is assumed they contain only default values.
+;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
+;
+;      WEIGHTS: Weights to use in the fitting process.
+;      INCLUDE: Array to keep the INCLUDE status of each component at each point.
+;      CONST: Array to keep the CONST status of each parameter at each point.
+;
 ;      The following optional inputs will be ignored. 
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
 ;      
+;      RESIDUAL: Array to contain the residual. Same size as INPUT_DATA, this will
+;              be ignored and not saved into the FITS file.
 ;      FILENAME_ANA: The filename of the ANA-file.
 ;      DATASOURCE: A string.
 ;      DEFINITION: A string.
 ;      MISSING: The MISSING value, used to flag missing data points,
 ;              and parameter values at points where the fit has been
-;              declared as "FAILED".
+;              declared as "FAILED". This is assumed to be NAN.
 ;      LABEL: A string.
 ;
 ; OUTPUTS:
@@ -136,7 +141,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-08 14:37 CET $
+; $Id: 2023-11-15 15:32 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -174,7 +179,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
 
   prits_tools.parcheck, FILEPATH_OUT, 0, 'FILEPATH_OUT', 'STRING', 0
   prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
-  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
+  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0, default=indgen(max([1, ana_given]))
   prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=max([1, ana_given]), $
     default=strtrim(indgen(max([1, ana_given])), 2)
   prits_tools.parcheck, XDIM1_TYPE, 0, 'XDIM1_TYPE', 'STRING', 0
