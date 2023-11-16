@@ -12,7 +12,7 @@
 ;      DATE, EXTNAME, RESEXT, DATAEXT, XDIMXT1, WGTEXT, INCLEXT, CONSTEXT, PRGDATA
 ;
 ; CATEGORY:
-;      FITS -- utility
+;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
 ;      header = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -59,7 +59,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-16 11:30 CET $
+; $Id: 2023-11-16 12:15 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -100,7 +100,7 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
 
   fits_util->add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
   fits_util->add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
-  fits_util->add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of xdim1'
+  fits_util->add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
   fits_util->add, hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
   fits_util->add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
