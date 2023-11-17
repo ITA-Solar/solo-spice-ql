@@ -24,6 +24,8 @@
 ;             should be taken. If not provided HDR will be returned unaltered.
 ;
 ; KEYWORDS:
+;      Exactly one of these keywords must be set.
+;      
 ;      RESULT: If set, the WCS parameters will have 'FIT PARAMETER' as the
 ;             first dimension's type. The absorbed dimension is not included.
 ;      XDIM1: If set, the WCS parameters will have the absorbed dimension as the
@@ -46,7 +48,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-17 15:19 CET $
+; $Id: 2023-11-17 15:27 CET $
 
 
 FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
