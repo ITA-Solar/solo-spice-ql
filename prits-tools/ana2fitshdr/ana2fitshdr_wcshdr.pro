@@ -40,7 +40,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-16 14:23 CET $
+; $Id: 2023-11-17 10:20 CET $
 
 
 FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
@@ -103,7 +103,18 @@ FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
         fits_util->add, hdr, 'CRPIX1', crpix1, '[pixel] 1st pixel index of reference point '
 
         pc1 = fxpar(HEADERS_INPUT_DATA, 'PC'+ind_xdim1_str+'_*', missing=0)
-        fits_util->add, hdr, 'PC1_1', fxpar(HEADERS_INPUT_DATA, 'PC3_3', missing=0), 'Default value, no rotation'
+        fits_util->add, hdr, 'PC1_1', pc1[ind_xdim1], 'Contribution of dim 1 to coord 1'
+        iplus = 1
+        FOR i=0,N_ELEMENTS(pc1)-1 DO BEGIN
+          IF i EQ ind_xdim1 THEN BEGIN
+            iplus = 0
+            continue
+          ENDIF
+          IF pc1[i] EQ 0 && $
+            fxpar(HEADERS_INPUT_DATA, 'PC'+ind_xdim1_str+'_'+strtrim(i+1,2), missing=1) EQ 1 $
+            THEN continue
+          fits_util->add, hdr, 'PC1_'+strtrim(i+iplus+1,2), pc1[i], 'Contribution of dim '+strtrim(i+iplus+1,2)+' to coord 1'
+        ENDFOR
 
       ENDELSE
 
@@ -115,5 +126,6 @@ FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
 
   ENDFOR ; iaxis=0,naxis-1
 
+  fits_util->clean_header, hdr
   return, HDR
 END
