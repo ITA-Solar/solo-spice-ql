@@ -37,8 +37,39 @@ pro test_new
   help,wcs.position
   help,wcs.spectrum
   
+  print,''
+  print,'OLD'
+  print,wcs.pc
+  new_pc = wcs.pc
+  new_pc[0,*] = wcs.pc[2,*]
+  new_pc[1:2,*] = wcs.pc[0:1,*]
+  new_pc[3,*] = wcs.pc[3,*]
+
+  print,''
+  print,'NEW'
+  print,new_pc
+  new_new_pc = new_pc
+  new_new_pc[*,0] = new_pc[*,2]
+  new_new_pc[*,1:2] = new_pc[*,0:1]
+  new_new_pc[*,3] = new_pc[*,3]
+
+  print,''
+  print,'NEW NEW'
+  print,new_new_pc
+  
+  wcs.pc = new_new_pc
+  
   new_hdr = wcs2fitshead(wcs)
   help,new_hdr
   print,new_hdr
 
 end
+
+
+;PC1_1   =       0.997119168647 / Non-default value due to CROTA degrees S/C roll
+;PC1_2   =     -0.0208210801654 / Contribution of dim 2 to coord 1 due to roll
+;PC2_1   =       0.276323969269 / Contribution of dim 1 to coord 2 due to roll
+;PC2_2   =       0.997119168647 / Non-default value due to CROTA degrees S/C roll
+;PC3_3   =              1.00000 / Default value, no rotation
+;PC4_4   =              1.00000 / Default value, no rotation
+;PC4_1   =       -5.30000305176 / Contribution of dimension 1 to coordinate 4
