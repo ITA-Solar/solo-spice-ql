@@ -4,33 +4,39 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the const cube of an ANA object or file.
-;      It will return an empty string if all values in the cube are zero or if
-;      CONST is not provided.
+;      This function adds the WCS parameters to the input header, given by 
+;      HEADERS_INPUT_DATA. The WCS parameters are transformed according to
+;      which keyword is set.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_const(datetime=datetime, data_id=data_id, CONST=CONST, $
-;        header_l2=header_l2)
+;      header = ANA2FITSHDR_WCSHDR( HDR [, HEADERS_INPUT_DATA] [, XDIM1_TYPE=XDIM1_TYPE] $
+;         [, /RESULT] [, /XDIM1] [, /WEIGHTS] [, /INCLUDE] [, /CONST] )
 ;
 ; INPUTS:
-;      DATETIME: Date and time string.
-;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
-;
-; KEYWORDS:
+;      HDR: String array. The header to which the WCS parameters should be added.
+;      XDIM1_TYPE: String. The CTYPE of the absorbed dimension (e.g. 'WAVE').
 ;
 ; OPTIONAL INPUTS:
-;      CONST: Array to keep the CONST status of each parameter at each point.
+;      HEADERS_INPUT_DATA: String array. The header from which the WCS parameters
+;             should be taken. If not provided HDR will be returned unaltered.
 ;
 ; KEYWORDS:
-;
-; OPTIONAL INPUTS:
-;      header_l2: The header (string array) of the SPICE level 2 file.
+;      RESULT: If set, the WCS parameters will have 'FIT PARAMETER' as the
+;             first dimension's type. The absorbed dimension is not included.
+;      XDIM1: If set, the WCS parameters will have the absorbed dimension as the
+;             first dimension.
+;      WEIGHTS: If set, the WCS parameters will have the absorbed dimension as the
+;             first dimension.
+;      INCLUDE: If set, the WCS parameters will have 'FIT COMPONENT' as the
+;             first dimension's type. The absorbed dimension is not included.
+;      CONST: If set, the WCS parameters will have 'FIT PARAMETER' as the
+;             first dimension's type. The absorbed dimension is not included.
 ;
 ; OUTPUTS:
-;      a fits header (string array), may be an empty string.
+;      String array. The HDR with the added WCS parameters.
 ;
 ; OPTIONAL OUTPUTS:
 ;
@@ -40,11 +46,22 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-17 10:20 CET $
+; $Id: 2023-11-17 15:19 CET $
 
 
 FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
   RESULT=RESULT, XDIM1=XDIM1, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, CONST=CONST
+
+  prits_tools.parcheck, HDR, 1, 'HDR', 'STRING', 1
+  prits_tools.parcheck, HEADERS_INPUT_DATA, 2, 'HEADERS_INPUT_DATA', 'STRING', 1, /optional
+  prits_tools.parcheck, XDIM1_TYPE, 0, 'XDIM1_TYPE', 'STRING', 0
+  IF total( [ keyword_set(RESULT), keyword_set(XDIM1), keyword_set(WEIGHTS), $
+    keyword_set(INCLUDE), keyword_set(CONST) ] ) NE 1 THEN BEGIN
+    message, ['You must set exactly one of the keywords', $
+      'RESULT, XDIM1, WEIGHTS, INCLUDE, CONST'], $
+      /informational
+    return, HDR
+  ENDIF
 
   IF N_ELEMENTS(HEADERS_INPUT_DATA) EQ 0 THEN return, HDR
   naxis = fxpar(HEADERS_INPUT_DATA, 'NAXIS', missing=0)
