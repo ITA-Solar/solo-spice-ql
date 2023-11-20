@@ -27,7 +27,7 @@
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
-;      header_l2: The header (string array) of the SPICE level 2 file.
+;      HEADERS_INPUT_DATA: The header (string array) of the SPICE level 2 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array), may be an empty string.
@@ -40,11 +40,11 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-16 12:15 CET $
+; $Id: 2023-11-20 14:45 CET $
 
 
-FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, $
-  header_l2=header_l2
+FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1_TYPE=XDIM1_TYPE, $
+  CONST=CONST, HEADERS_INPUT_DATA=HEADERS_INPUT_DATA
 
   prits_tools.parcheck, DATETIME, 0, 'DATETIME', 'STRING', 0
   prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
@@ -71,6 +71,20 @@ FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, 
   fits_util->add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
+  fits_util->add, hdr, '', ' '
+  fits_util->add, hdr, 'BTYPE', 'WEIGHTS', 'Type of data'
+  fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
+
+  fits_util->clean_header, hdr
+
+  new_hdr = ana2fitshdr_wcshdr(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, /CONST)
+    
+  return, new_hdr
+  
+  
+  
+  
+  
   IF keyword_set(header_l2) THEN BEGIN
 
     ; Add WCS keywords
@@ -133,11 +147,4 @@ FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, 
 
   ENDELSE ; header_l2
 
-  fits_util->add, hdr, '', ' '
-  fits_util->add, hdr, 'BTYPE', ' ', 'Type of data'
-  fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
-
-  fits_util->clean_header, hdr
-
-  return, hdr
 end
