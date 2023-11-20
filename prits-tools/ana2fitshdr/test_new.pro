@@ -9,7 +9,8 @@ pro test_new
   mkhdr, hdr, indgen(3,3)
   result = ana2fitshdr_wcshdr(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE='WAVE')
   
-  ;print,HEADERS_INPUT_DATA
+  print,HEADERS_INPUT_DATA
+  stop
   
   a0 = fxpar(HEADERS_INPUT_DATA, 'PC*', missing='xxx')
   help,a0
@@ -67,10 +68,28 @@ pro test_new
   
   a = indgen(5)
   print, a
+  print,''
   print, ana_wcs_transform_vector(a, 3, 0, 5)
+  print,''
   print, ana_wcs_transform_vector(a, 3, 1, 5)
+  print,''
   print, ana_wcs_transform_vector(a, 0, 3, 5)
+  print,''
   print, ana_wcs_transform_vector(a, 0, 0, 5)
+  print,''
+  print,''
+
+  a = indgen(4,4)
+  print, a
+  print,''
+  print, ana_wcs_transform_array(a, 2, 0, 4)
+  print,''
+  print, ana_wcs_transform_array(a, 2, 1, 4)
+  print,''
+  print, ana_wcs_transform_array(a, 0, 2, 4)
+  print,''
+  print, ana_wcs_transform_array(a, 0, 0, 4)
+  print,''
 
 end
 
