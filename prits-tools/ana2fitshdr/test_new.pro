@@ -1,6 +1,7 @@
 pro test_new
 
   file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
+  file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
   d = readfits(file, h)
   
   HEADERS_INPUT_DATA = h
@@ -8,7 +9,7 @@ pro test_new
   mkhdr, hdr, indgen(3,3)
   result = ana2fitshdr_wcshdr(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE='WAVE')
   
-  print,HEADERS_INPUT_DATA
+  ;print,HEADERS_INPUT_DATA
   
   a0 = fxpar(HEADERS_INPUT_DATA, 'PC*', missing='xxx')
   help,a0
@@ -62,6 +63,14 @@ pro test_new
   new_hdr = wcs2fitshead(wcs)
   help,new_hdr
   print,new_hdr
+  
+  
+  a = indgen(5)
+  print, a
+  print, ana_wcs_transform_vector(a, 3, 0, 5)
+  print, ana_wcs_transform_vector(a, 3, 1, 5)
+  print, ana_wcs_transform_vector(a, 0, 3, 5)
+  print, ana_wcs_transform_vector(a, 0, 0, 5)
 
 end
 
