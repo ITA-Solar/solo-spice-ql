@@ -40,11 +40,41 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-17 15:28 CET $
+; $Id: 2023-11-20 13:13 CET $
 
 
-FUNCTION ana_wcs_transform, wcs
+FUNCTION ana_wcs_transform_vector, vector, move_dim, dest_dim, naxis
+  new_vector = vector
+  move_i = 0
+  FOR i=0,naxis-1 DO BEGIN
+    IF move_i EQ move_dim THEN move_i++
+    IF i EQ dest_dim THEN BEGIN
+      new_vector[i] = vector[move_dim]
+    ENDIF ELSE BEGIN
+      new_vector[i] = vector[move_i]
+      move_i++
+    ENDELSE
+  ENDFOR
+  return, new_vector
+END
 
 
+FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
+
+  prits_tools.parcheck, wcs, 1, 'wcs', 8, 0
+  prits_tools.parcheck, move_dim, 2, 'move_dim', 'INTEGERS', 0
+  prits_tools.parcheck, dest_dim, 3, 'dest_dim', 'INTEGERS', 0
+
+  IF move_dim EQ dest_dim THEN return, wcs
+  naxis = N_ELEMENTS(wcs.naxis)
+  IF move_dim LT 0 || move_dim GE naxis|| dest_dim LT 0 || dest_dim GE naxis THEN BEGIN
+    message, ['At least one of the indices is out of range', $
+      'NAXIS    : ' + strtrim(naxis), $
+      'MOVE_DIM : ' + strtrim(move_dim), $
+      'DEST_DIM : ' + strtrim(dest_dim) ]
+    return, wcs
+  ENDIF
+
+  new_wcs = wcs
 
 END
