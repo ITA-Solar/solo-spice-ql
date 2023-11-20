@@ -1,46 +1,43 @@
 ;+
 ; NAME:
-;      ANA2FITSHDR_WCSHDR
+;      ANA_WCS_TRANSFORM
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the const cube of an ANA object or file.
-;      It will return an empty string if all values in the cube are zero or if
-;      CONST is not provided.
+;      This function returns takes a WCS structure, transforms it and then returns it.
+;      It transforms it thus that one of the dimension is moved to another place.
+;      This is used to move the absorbed dimension to the first dimension. Or vice versa.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_const(datetime=datetime, data_id=data_id, CONST=CONST, $
-;        header_l2=header_l2)
+;      new_wcs = ana_wcs_transform(wcs, move_dim, dest_dim)
 ;
 ; INPUTS:
-;      DATETIME: Date and time string.
-;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
+;      WCS: Structure containing World Coordinate System information.
+;      MOVE_DIM: Integer. The index of the dimension to be moved.
+;      DEST_DIM: Integer. The index of the destination dimension.
 ;
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
-;      CONST: Array to keep the CONST status of each parameter at each point.
 ;
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
-;      header_l2: The header (string array) of the SPICE level 2 file.
 ;
 ; OUTPUTS:
-;      a fits header (string array), may be an empty string.
+;      WCS: Structure containing World Coordinate System information.
 ;
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      oslo_fits_util, fxpar
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-20 13:13 CET $
+; $Id: 2023-11-20 14:30 CET $
 
 
 FUNCTION ana_wcs_transform_vector, vector, move_dim, dest_dim, naxis
@@ -56,6 +53,33 @@ FUNCTION ana_wcs_transform_vector, vector, move_dim, dest_dim, naxis
     ENDELSE
   ENDFOR
   return, new_vector
+END
+
+
+FUNCTION ana_wcs_transform_array, array, move_dim, dest_dim, naxis
+  new_array = array
+  move_i = 0
+  FOR i=0,naxis-1 DO BEGIN
+    IF move_i EQ move_dim THEN move_i++
+    IF i EQ dest_dim THEN BEGIN
+      new_array[i,*] = array[move_dim,*]
+    ENDIF ELSE BEGIN
+      new_array[i,*] = array[move_i,*]
+      move_i++
+    ENDELSE
+  ENDFOR
+  array1 =new_array
+  move_i = 0
+  FOR i=0,naxis-1 DO BEGIN
+    IF move_i EQ move_dim THEN move_i++
+    IF i EQ dest_dim THEN BEGIN
+      new_array[*,i] = array1[*,move_dim]
+    ENDIF ELSE BEGIN
+      new_array[*,i] = array1[*,move_i]
+      move_i++
+    ENDELSE
+  ENDFOR
+  return, new_array
 END
 
 
@@ -76,5 +100,18 @@ FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
   ENDIF
 
   new_wcs = wcs
+  new_wcs.NAXIS = ana_wcs_transform_vector(wcs.NAXIS, move_dim, dest_dim, naxis)
+  new_wcs.CRPIX = ana_wcs_transform_vector(wcs.CRPIX, move_dim, dest_dim, naxis)
+  new_wcs.CRVAL = ana_wcs_transform_vector(wcs.CRVAL, move_dim, dest_dim, naxis)
+  new_wcs.CTYPE = ana_wcs_transform_vector(wcs.CTYPE, move_dim, dest_dim, naxis)
+  new_wcs.CNAME = ana_wcs_transform_vector(wcs.CNAME, move_dim, dest_dim, naxis)
+  new_wcs.CUNIT = ana_wcs_transform_vector(wcs.CUNIT, move_dim, dest_dim, naxis)
+  IF tag_exist(wcs, 'CDELT') THEN $
+    new_wcs.CDELT = ana_wcs_transform_vector(wcs.CDELT, move_dim, dest_dim, naxis)
+  IF tag_exist(wcs, 'PC') THEN $
+    new_wcs.PC = ana_wcs_transform_array(wcs.PC, move_dim, dest_dim, naxis)
+  IF tag_exist(wcs, 'CD') THEN $
+    new_wcs.CD = ana_wcs_transform_array(wcs.CD, move_dim, dest_dim, naxis)
 
+  return, new_wcs
 END
