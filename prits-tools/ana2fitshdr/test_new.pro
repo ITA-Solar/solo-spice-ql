@@ -6,12 +6,52 @@ pro test_new
   
   HEADERS_INPUT_DATA = h
   
+  ; Add time to DATE
+  caldat, systime(/julian), month, day, year, hour, minute, second
+  datetime = {CDS_EXT_TIME, $
+    year:year, $
+    month:month, $
+    day:day, $
+    hour:hour, $
+    minute:minute, $
+    second:second, $
+    millisecond:0}
+  datetime = anytim(datetime, /ccsds)
+
+  data_id = 'data_id'
+  extension_names = data_id + [ $
+    ' results', $
+    ' data', $
+    ' xdim1', $
+    ' weights', $
+    ' includes', $
+    ' constants']
+    
+    XDIM1_TYPE = 'WAVE'
+    
+    CONST = d
+
+  
+  
+  
+  ;print,HEADERS_INPUT_DATA
+  
+  
+  
+  
+  hdr_const = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1_TYPE=XDIM1_TYPE, $
+    CONST=CONST, HEADERS_INPUT_DATA=HEADERS_INPUT_DATA)
+    
+    
+  print, hdr_const
+  return
+  
+  
+  
+  
   mkhdr, hdr, indgen(3,3)
   result = ana2fitshdr_wcshdr(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE='WAVE')
-  
-  print,HEADERS_INPUT_DATA
-  stop
-  
+
   a0 = fxpar(HEADERS_INPUT_DATA, 'PC*', missing='xxx')
   help,a0
   print,a0
