@@ -1,6 +1,6 @@
 ;+
 ; NAME:
-;      ANA2FITSHDR_WCSHDR
+;      ANA2FITSHDR_ADDWCS
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
@@ -12,7 +12,7 @@
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ANA2FITSHDR_WCSHDR( HDR [, HEADERS_INPUT_DATA] [, XDIM1_TYPE=XDIM1_TYPE] $
+;      header = ANA2FITSHDR_ADDWCS( HDR [, HEADERS_INPUT_DATA] [, XDIM1_TYPE=XDIM1_TYPE] $
 ;         [, /RESULT] [, /XDIM1] [, /WEIGHTS] [, /INCLUDE] [, /CONST] )
 ;
 ; INPUTS:
@@ -48,10 +48,10 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-21 11:15 CET $
+; $Id: 2023-11-21 11:23 CET $
 
 
-FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
+FUNCTION ana2fitshdr_addwcs, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
   RESULT=RESULT, XDIM1=XDIM1, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, CONST=CONST
 
   prits_tools.parcheck, HDR, 1, 'HDR', 'STRING', 1
