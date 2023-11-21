@@ -22,12 +22,12 @@
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
-;      CONST: Array to keep the CONST status of each parameter at each point.
+;      CONST: Array to keep the CONST status of each parameter at each point. If not provided, or if
+;             all values are zero, an empty string will be returned.
+;      WCS: Structure. The structure from which the WCS parameters
+;             should be taken. If not provided HDR will be returned unaltered.
 ;
 ; KEYWORDS:
-;
-; OPTIONAL INPUTS:
-;      HEADERS_INPUT_DATA: The header (string array) of the SPICE level 2 file.
 ;
 ; OUTPUTS:
 ;      a fits header (string array), may be an empty string.
@@ -35,26 +35,24 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      oslo_fits_util, mkhdr, fxpar
+;      oslo_fits_util, mkhdr, prits_tools.parcheck, ana2fitshdr_addwcs
 ;
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-21 13:47 CET $
+; $Id: 2023-11-21 15:05 CET $
 
 
-FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1_TYPE=XDIM1_TYPE, $
-  CONST=CONST, HEADERS_INPUT_DATA=HEADERS_INPUT_DATA
+FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS
 
   prits_tools.parcheck, DATETIME, 0, 'DATETIME', 'STRING', 0
   prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
   prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  prits_tools.parcheck, WCS, 0, 'WCS', 8, 0, /optional
 
   IF N_ELEMENTS(CONST) EQ 0 THEN return, ''
   min_const = min(CONST, max=max_const)
   IF min_const EQ 0 && max_const EQ 0 THEN return, ''
-
-  n_dims = size(CONST, /n_dimensions)
 
   fits_util = obj_new('oslo_fits_util')
   mkhdr, hdr, CONST, /image
@@ -75,9 +73,9 @@ FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, 
   fits_util->add, hdr, 'BTYPE', 'BOOL', 'Type of data'
   fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
 
-  new_hdr = ana2fitshdr_addwcs(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, /CONST)
+  hdr = ana2fitshdr_addwcs(HDR, WCS, /CONST)
 
-  fits_util->clean_header, new_hdr
-  return, new_hdr
+  fits_util->clean_header, hdr
+  return, hdr
 
 END

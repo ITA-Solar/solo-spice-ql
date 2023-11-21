@@ -54,10 +54,11 @@ pro test_new
   ;print,HEADERS_INPUT_DATA
   
   
+  wcs = ana_wcs_get_transform(XDIM1_TYPE, HEADERS_INPUT_DATA)
+
   
   
-  hdr_const = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1_TYPE=XDIM1_TYPE, $
-    CONST=CONST, HEADERS_INPUT_DATA=HEADERS_INPUT_DATA)
+  hdr_const = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
     
     
   print, hdr_const

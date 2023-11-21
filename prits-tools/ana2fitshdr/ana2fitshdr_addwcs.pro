@@ -4,23 +4,21 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function adds the WCS parameters to the input header, given by
-;      HEADERS_INPUT_DATA. The WCS parameters are transformed according to
-;      which keyword is set.
+;      This function adds the WCS parameters to the input header, given by WCS. 
+;      The WCS parameters are transformed according to which keyword is set.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ANA2FITSHDR_ADDWCS( HDR [, HEADERS_INPUT_DATA] [, XDIM1_TYPE=XDIM1_TYPE] $
+;      header = ANA2FITSHDR_ADDWCS( HDR [, WCS] $
 ;         [, /RESULT] [, /XDIM1] [, /WEIGHTS] [, /INCLUDE] [, /CONST] )
 ;
 ; INPUTS:
 ;      HDR: String array. The header to which the WCS parameters should be added.
-;      XDIM1_TYPE: String. The CTYPE of the absorbed dimension (e.g. 'WAVE').
 ;
 ; OPTIONAL INPUTS:
-;      HEADERS_INPUT_DATA: String array. The header from which the WCS parameters
+;      WCS: Structure. The structure from which the WCS parameters
 ;             should be taken. If not provided HDR will be returned unaltered.
 ;
 ; KEYWORDS:
@@ -43,20 +41,19 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      oslo_fits_util, fxpar
+;      oslo_fits_util, prits_tools.parcheck
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-21 13:45 CET $
+; $Id: 2023-11-21 15:05 CET $
 
 
-FUNCTION ana2fitshdr_addwcs, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
+FUNCTION ana2fitshdr_addwcs, HDR, WCS, $
   RESULT=RESULT, XDIM1=XDIM1, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, CONST=CONST
 
   prits_tools.parcheck, HDR, 1, 'HDR', 'STRING', 1
-  prits_tools.parcheck, HEADERS_INPUT_DATA, 2, 'HEADERS_INPUT_DATA', 'STRING', 1, /optional
-  prits_tools.parcheck, XDIM1_TYPE, 0, 'XDIM1_TYPE', 'STRING', 0
+  prits_tools.parcheck, WCS, 2, 'WCS', 8, 0, /optional
   IF total( [ keyword_set(RESULT), keyword_set(XDIM1), keyword_set(WEIGHTS), $
     keyword_set(INCLUDE), keyword_set(CONST) ] ) NE 1 THEN BEGIN
     message, ['You must set exactly one of the keywords', $
@@ -65,47 +62,34 @@ FUNCTION ana2fitshdr_addwcs, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
     return, HDR
   ENDIF
 
-  IF N_ELEMENTS(HEADERS_INPUT_DATA) EQ 0 THEN return, HDR
-  naxis = fxpar(HEADERS_INPUT_DATA, 'NAXIS', missing=0)
-  IF naxis EQ 0 THEN return, HDR
-
-  ctypes = strtrim(fxpar(HEADERS_INPUT_DATA, 'CTYPE*', missing='xx'), 2)
-  ind_xdim1 = where(strcmp(ctypes, XDIM1_TYPE, /fold_case), count)
-  IF count EQ 0 THEN BEGIN
-    message, 'Did not find CTYPEn with value: ' + XDIM1_TYPE, /informational
-    return, HDR
-  ENDIF
-  ind_xdim1 = ind_xdim1[0]
-
-  wcs_original = fitshead2wcs(HEADERS_INPUT_DATA)
-  wcs_transformed = ana_wcs_transform(wcs_original, ind_xdim1, 0)
+  IF N_ELEMENTS(WCS) EQ 0 THEN return, HDR
   new_hdr = hdr
 
-  IF tag_exist(wcs_transformed, 'CDELT') THEN cdelt_exists = 1 ELSE cdelt_exists = 0
+  IF tag_exist(wcs, 'CDELT') THEN cdelt_exists = 1 ELSE cdelt_exists = 0
   matrix_exists = 1
-  IF tag_exist(wcs_transformed, 'PC') THEN rot_array = wcs_transformed.pc $
-  ELSE IF tag_exist(wcs_transformed, 'CD') THEN rot_array = wcs_transformed.cd $
+  IF tag_exist(wcs, 'PC') THEN rot_array = wcs.pc $
+  ELSE IF tag_exist(wcs, 'CD') THEN rot_array = wcs.cd $
   ELSE matrix_exists = 0
 
   fits_util = obj_new('oslo_fits_util')
 
   ; Add WCS keywords
   fits_util->add_description, new_hdr, 'World Coordinate System (WCS) keywords'
-  fits_util->add, new_hdr, 'WCSNAME', wcs_transformed.WCSNAME
-  IF tag_exist(wcs_transformed, 'PROJ_NAMES') && tag_exist(wcs_transformed, 'PROJ_VALUES') THEN BEGIN
-    FOR i=0,min([N_ELEMENTS(wcs_transformed.PROJ_NAMES),N_ELEMENTS(wcs_transformed.PROJ_VALUES)])-1 DO BEGIN
-      fits_util->add, new_hdr, wcs_transformed.PROJ_NAMES[i], wcs_transformed.PROJ_VALUES[i]
+  fits_util->add, new_hdr, 'WCSNAME', wcs.WCSNAME
+  IF tag_exist(wcs, 'PROJ_NAMES') && tag_exist(wcs, 'PROJ_VALUES') THEN BEGIN
+    FOR i=0,min([N_ELEMENTS(wcs.PROJ_NAMES),N_ELEMENTS(wcs.PROJ_VALUES)])-1 DO BEGIN
+      fits_util->add, new_hdr, wcs.PROJ_NAMES[i], wcs.PROJ_VALUES[i]
     ENDFOR
   ENDIF
-  IF tag_exist(wcs_transformed, 'spectrum') THEN BEGIN
-    IF tag_exist(wcs_transformed.spectrum, 'SPECSYS') THEN $
-      fits_util->add, new_hdr, 'SPECSYS', wcs_transformed.spectrum.SPECSYS
-    IF tag_exist(wcs_transformed.spectrum, 'VELOSYS') THEN $
-      fits_util->add, new_hdr, 'VELOSYS', wcs_transformed.spectrum.VELOSYS
+  IF tag_exist(wcs, 'spectrum') THEN BEGIN
+    IF tag_exist(wcs.spectrum, 'SPECSYS') THEN $
+      fits_util->add, new_hdr, 'SPECSYS', wcs.spectrum.SPECSYS
+    IF tag_exist(wcs.spectrum, 'VELOSYS') THEN $
+      fits_util->add, new_hdr, 'VELOSYS', wcs.spectrum.VELOSYS
   ENDIF
   fits_util->add, new_hdr, '', ' '
 
-
+  naxis = N_ELEMENTS(wcs.naxis)
   FOR iaxis=0,naxis-1 DO BEGIN
     iaxis_str = strtrim(string(iaxis+1), 2)
     case iaxis of
@@ -132,13 +116,13 @@ FUNCTION ana2fitshdr_addwcs, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
 
     ENDIF ELSE BEGIN ; iaxis EQ 0 && (keyword_set(RESULT) || keyword_set(CONST) || keyword_set(INCLUDE))
 
-      fits_util->add, new_hdr, 'CTYPE'+iaxis_str, wcs_transformed.CTYPE[iaxis], 'Type of '+axis_name+' coordinate'
-      fits_util->add, new_hdr, 'CNAME'+iaxis_str, wcs_transformed.CNAME[iaxis], 'Name of '+axis_name+' coordinate'
-      fits_util->add, new_hdr, 'CUNIT'+iaxis_str, wcs_transformed.CUNIT[iaxis], 'Units for '+axis_name+' coordinate (for CRVAL'+iaxis_str+', CDELT'+iaxis_str+')'
-      fits_util->add, new_hdr, 'CRVAL'+iaxis_str, wcs_transformed.CRVAL[iaxis], '['+wcs_transformed.CUNIT[iaxis]+'] '+axis_name+' coordinate of reference point'
+      fits_util->add, new_hdr, 'CTYPE'+iaxis_str, wcs.CTYPE[iaxis], 'Type of '+axis_name+' coordinate'
+      fits_util->add, new_hdr, 'CNAME'+iaxis_str, wcs.CNAME[iaxis], 'Name of '+axis_name+' coordinate'
+      fits_util->add, new_hdr, 'CUNIT'+iaxis_str, wcs.CUNIT[iaxis], 'Units for '+axis_name+' coordinate (for CRVAL'+iaxis_str+', CDELT'+iaxis_str+')'
+      fits_util->add, new_hdr, 'CRVAL'+iaxis_str, wcs.CRVAL[iaxis], '['+wcs.CUNIT[iaxis]+'] '+axis_name+' coordinate of reference point'
       IF cdelt_exists THEN $
-        fits_util->add, new_hdr, 'CDELT'+iaxis_str, wcs_transformed.CDELT[iaxis], '['+wcs_transformed.CUNIT[iaxis]+'] Increment of '+axis_name+' coord at ref point'
-      fits_util->add, new_hdr, 'CRPIX'+iaxis_str, wcs_transformed.CRPIX[iaxis], '[pixel] '+axis_name+' pixel index of reference point'
+        fits_util->add, new_hdr, 'CDELT'+iaxis_str, wcs.CDELT[iaxis], '['+wcs.CUNIT[iaxis]+'] Increment of '+axis_name+' coord at ref point'
+      fits_util->add, new_hdr, 'CRPIX'+iaxis_str, wcs.CRPIX[iaxis], '[pixel] '+axis_name+' pixel index of reference point'
 
     ENDELSE ; iaxis EQ 0 && (keyword_set(RESULT) || keyword_set(CONST) || keyword_set(INCLUDE))
 
