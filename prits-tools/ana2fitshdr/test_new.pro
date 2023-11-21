@@ -3,6 +3,7 @@ pro test_new
   file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
   file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
   d = readfits(file, h)
+  help,d
   
   HEADERS_INPUT_DATA = h
   
@@ -32,6 +33,22 @@ pro test_new
     CONST = d
 
   
+    wcs = fitshead2wcs(HEADERS_INPUT_DATA)
+    help,wcs
+    print,wcs.proj_names
+    print,wcs.proj_values
+    help,wcs.time
+    help,wcs.position
+    help,wcs.spectrum
+    help,wcs.distortion
+    help,wcs.distortion.dw1
+    print,wcs.distortion.dw1.param
+    print,wcs.distortion.dw1.value
+    help,wcs.distortion.dw2
+    print,wcs.distortion.dw2.param
+    print,wcs.distortion.dw2.value
+    print,wcs.distortion.associate
+    print,wcs.distortion.apply
   
   
   ;print,HEADERS_INPUT_DATA
@@ -50,7 +67,7 @@ pro test_new
   
   
   mkhdr, hdr, indgen(3,3)
-  result = ana2fitshdr_wcshdr(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE='WAVE')
+  ;result = ana2fitshdr_wcshdr(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE='WAVE')
 
   a0 = fxpar(HEADERS_INPUT_DATA, 'PC*', missing='xxx')
   help,a0
