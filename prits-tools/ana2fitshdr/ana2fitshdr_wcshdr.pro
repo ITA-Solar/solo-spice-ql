@@ -48,7 +48,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-20 14:30 CET $
+; $Id: 2023-11-21 11:15 CET $
 
 
 FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
@@ -77,9 +77,21 @@ FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
   ENDIF
   ind_xdim1 = ind_xdim1[0]
   
+  print,''
+  print,'ana2fitshdr_wcshdr, HDR'
+  print,hdr
   wcs_original = fitshead2wcs(HEADERS_INPUT_DATA)
-  wcs_transformed = ana_wcs_transform(wcs, ind_xdim1, 0)  
+  print,''
+  print, 'wcs_original'
+  help, wcs_original
+  wcs_transformed = ana_wcs_transform(wcs_original, ind_xdim1, 0)
+  print,''
+  print, 'wcs_transformed'  
+  help, wcs_transformed
   new_hdr = wcs2fitshead(wcs_transformed, oldhead=hdr)
+  print,''
+  print,'ana2fitshdr_wcshdr, new_hdr'
+  print,new_hdr
   
   IF keyword_set(RESULT) || keyword_set(CONST) || keyword_set(INCLUDE) THEN BEGIN
     fits_util = obj_new('oslo_fits_util')
@@ -98,7 +110,7 @@ FUNCTION ana2fitshdr_wcshdr, HDR, HEADERS_INPUT_DATA, XDIM1_TYPE=XDIM1_TYPE, $
     FOR i=2,naxis DO BEGIN
       fits_util->add, new_hdr, 'PC1_'+strtrim(i,2), 0.0, 'Contribution of dim '+strtrim(i,2)+' to coord 1'
     ENDFOR
-    fits_util->clean_header, hdr
+    fits_util->clean_header, new_hdr
   ENDIF
   
   return, new_hdr
