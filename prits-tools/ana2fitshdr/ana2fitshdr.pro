@@ -90,7 +90,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-16 12:15 CET $
+; $Id: 2023-11-21 11:15 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -221,7 +221,7 @@ FUNCTION ana2fitshdr, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     ' xdim1', $
     ' weights', $
     ' includes', $
-    'constants']
+    ' constants']
 
   all_headers = ptrarr(6)
 
