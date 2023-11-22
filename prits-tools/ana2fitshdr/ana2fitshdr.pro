@@ -105,7 +105,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 13:36 CET $
+; $Id: 2023-11-22 15:22 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
@@ -222,7 +222,6 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
     ' constants']
 
   wcs = ana_wcs_get_transform(TYPE_XDIM1, HEADER_INPUT_DATA)
-  help,wcs
 
   all_headers = ptrarr(6)
 
@@ -231,15 +230,12 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   ; Create result header
   ; ------
 
-;  hdr = ana2fitshdr_results(header_l2=header_l2, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, $
-;    filename_out=file_basename(FILENAME_OUT), n_windows=n_windows, $
-;    winno=winno, EXTENSION=EXTENSION, spice=spice, $
-;    HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
-;    DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
-hdr=''
-
+  hdr = ana2fitshdr_results(header_l2=header_l2, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, $
+    filename_out=file_basename(FILENAME_OUT), n_windows=n_windows, WCS=WCS, $
+    winno=winno, EXTENSION=EXTENSION, spice=spice, $
+    HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
+    DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
   all_headers[0] = ptr_new(hdr)
-
   if keyword_set(print_headers) then begin
     print,''
     print,'--- RESULTS ---'
@@ -255,9 +251,7 @@ hdr=''
   hdr = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
     HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA, NO_SAVE_DATA=NO_SAVE_DATA, $
     DATA_ARRAY=DATA_ARRAY)
-
   all_headers[1] = ptr_new(hdr)
-
   if keyword_set(print_headers) then begin
     print,''
     print,'--- DATA ---'
@@ -271,9 +265,7 @@ hdr=''
   ; ------
 
   hdr = ana2fitshdr_xdim(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, SAVE_XDIM1=SAVE_XDIM1)
-
   all_headers[2] = ptr_new(hdr)
-
   if keyword_set(print_headers) then begin
     print,''
     print,'--- XDIM ---'
@@ -287,9 +279,7 @@ hdr=''
   ; ------
 
   hdr = ana2fitshdr_weights(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, WEIGHTS=WEIGHTS, WCS=WCS)
-
   all_headers[3] = ptr_new(hdr)
-
   if keyword_set(print_headers) then begin
     print,''
     print,'--- WEIGHTS ---'
@@ -303,9 +293,7 @@ hdr=''
   ; ------
 
   hdr = ana2fitshdr_include(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INCLUDE=INCLUDE, WCS=WCS)
-
   all_headers[4] = ptr_new(hdr)
-
   if keyword_set(print_headers) then begin
     print,''
     print,'--- INCLUDE ---'
@@ -319,9 +307,7 @@ hdr=''
   ; ------
 
   hdr = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
-
   all_headers[5] = ptr_new(hdr)
-
   if keyword_set(print_headers) then begin
     print,''
     print,'--- CONST ---'
