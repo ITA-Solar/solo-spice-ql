@@ -23,8 +23,8 @@
 ;             calculated from the WCS parameters from the data array.
 ;
 ; OPTIONAL INPUTS:
-;      XDIM1: Array to keep the CONST status of each parameter at each point. If not provided, or if
-;             all values are zero, an empty string will be returned.
+;      XDIM1: Array of same size as the input data to xcfit_block. It contains the values of the
+;             absorbed dimension for each point (e.g wavelength).
 ;      WCS: Structure. The structure from which the WCS parameters
 ;             should be taken. If not provided the header won't include any WCS parameters.
 ;
@@ -41,7 +41,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 11:03 CET $
+; $Id: 2023-11-22 11:56 CET $
 
 
 FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, $
