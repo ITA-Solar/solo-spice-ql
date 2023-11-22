@@ -38,6 +38,9 @@
 ;                 If not set, this will be the primary header.
 ;      SAVE_XDIM1: If set, then XDIM1 will be saved, otherwise not. XDIM1 can usually be
 ;             calculated from the WCS parameters from the data array.
+;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
+;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
+;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
 ;      PRINT_HEADERS: If set, then all headers created will be printed out.
 ;
 ; OPTIONAL INPUTS:
@@ -51,16 +54,16 @@
 ;      All of the following optional inputs must be provided if 'ANA' is not provided.
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
 ;
-;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with absorbed dimension (e.g. spectra)
-;              along the first dimension. This is ignored if PROGENITOR_DATA is provided.
-;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and the Chi^2) values.
+;      FIT: The component fit structure
 ;
 ;      All of the following optional inputs can be provided if 'ANA' is not provided. If not
 ;      provided, it is assumed they contain only default values.
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
 ;
 ;      HISTORY: A string array.
+;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with absorbed dimension (e.g. spectra)
+;              along the first dimension. This is ignored if PROGENITOR_DATA is provided.
 ;      XDIM1: Array of same size as the input data to xcfit_block. It contains the values of the
 ;             absorbed dimension for each point (e.g wavelength).
 ;      WEIGHTS: Weights to use in the fitting process.
@@ -93,6 +96,7 @@
 ;      a pointer array, containing 6 FITS keyword headers, of which 5 may be empty strings.
 ;
 ; OPTIONAL OUTPUTS:
+;      DATA_ARRAY: Contains the data array that should be saved into the data extension, if any.
 ;
 ; CALLS:
 ;     prits_tools.parcheck, caldat, ana2fitshdr_results, ana2fitshdr_data, ana2fitshdr_xdim,
@@ -101,7 +105,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 12:46 CET $
+; $Id: 2023-11-22 13:36 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
@@ -113,17 +117,18 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
   PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
-  SAVE_XDIM1=SAVE_XDIM1, PRINT_HEADERS=PRINT_HEADERS
+  SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+  DATA_ARRAY=DATA_ARRAY
 
 
   prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', 0, structure_name='CFIT_ANALYSIS', /optional
   ana_given = N_ELEMENTS(ANA)
-  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given || N_ELEMENTS(PROGENITOR_DATA)
+  prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
+  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
@@ -247,9 +252,9 @@ hdr=''
   ; Create data header
   ; ------
 
-;  hdr = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, input_data=input_data, $
-;    HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA)
-hdr=''
+  hdr = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
+    HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA, NO_SAVE_DATA=NO_SAVE_DATA, $
+    DATA_ARRAY=DATA_ARRAY)
 
   all_headers[1] = ptr_new(hdr)
 

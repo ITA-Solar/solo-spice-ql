@@ -23,6 +23,9 @@
 ;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
 ;
 ; KEYWORDS:
+;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
+;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
+;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
 ;
 ; OPTIONAL INPUTS:
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
@@ -52,6 +55,7 @@
 ;      a fits header (string array), may be an empty string.
 ;
 ; OPTIONAL OUTPUTS:
+;      DATA_ARRAY: Contains the data array that should be saved into the data extension, if any.
 ;
 ; CALLS:
 ;      prits_tools.parcheck, oslo_fits_util, mkhdr
@@ -59,11 +63,12 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-16 12:15 CET $
+; $Id: 2023-11-22 13:36 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
-  HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA
+  HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA, NO_SAVE_DATA=NO_SAVE_DATA, $
+  DATA_ARRAY=DATA_ARRAY
 
   prits_tools.parcheck, DATETIME, 0, 'DATETIME', 'STRING', 0
   prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
@@ -80,9 +85,11 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
     no_data = 0
     PRGDATA = 'F'
   ENDIF ELSE BEGIN
+    data_array = 0
     no_data = 1
     PRGDATA = 'F'
   ENDELSE
+  IF keyword_set(NO_SAVE_DATA) THEN no_data = 1
   IF no_data && N_ELEMENTS(HEADER_INPUT_DATA) EQ 0 THEN return, ''
 
   fits_util = obj_new('oslo_fits_util')
