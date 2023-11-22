@@ -46,7 +46,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-21 15:05 CET $
+; $Id: 2023-11-22 14:08 CET $
 
 
 FUNCTION ana2fitshdr_addwcs, HDR, WCS, $
@@ -123,6 +123,11 @@ FUNCTION ana2fitshdr_addwcs, HDR, WCS, $
       IF cdelt_exists THEN $
         fits_util->add, new_hdr, 'CDELT'+iaxis_str, wcs.CDELT[iaxis], '['+wcs.CUNIT[iaxis]+'] Increment of '+axis_name+' coord at ref point'
       fits_util->add, new_hdr, 'CRPIX'+iaxis_str, wcs.CRPIX[iaxis], '[pixel] '+axis_name+' pixel index of reference point'
+
+      IF iaxis EQ 0 && keyword_set(XDIM1) THEN BEGIN
+        fits_util->add, new_hdr, 'BTYPE', wcs.CTYPE[iaxis], 'Type of data'
+        fits_util->add, new_hdr, 'BUNIT', wcs.CUNIT[iaxis], 'Physical units of data'
+      ENDIF
 
     ENDELSE ; iaxis EQ 0 && (keyword_set(RESULT) || keyword_set(CONST) || keyword_set(INCLUDE))
 

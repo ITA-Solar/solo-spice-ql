@@ -41,7 +41,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 11:56 CET $
+; $Id: 2023-11-22 14:08 CET $
 
 
 FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, $
@@ -72,7 +72,7 @@ FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, X
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
   fits_util->add, hdr, '', ' '
-  fits_util->add, hdr, 'BTYPE', 'BOOL', 'Type of data'
+  fits_util->add, hdr, 'BTYPE', ' ', 'Type of data'
   fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
 
   hdr = ana2fitshdr_addwcs(HDR, WCS, /XDIM1)
