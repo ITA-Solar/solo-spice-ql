@@ -90,7 +90,9 @@ PRO oslo_fits_util::_remove_from_header, hdr, keyword=keyword, description=descr
 
   end_ix_before  = (keyword_set(keyword)) ? ix-1 : ix-2
   start_ix_after = (keyword_set(keyword)) ? ix+n_lines_to_be_removed : ix+2+n_lines_to_remove_after
-  header_without = [hdr[0:end_ix_before],hdr[start_ix_after:*]]
+  IF end_ix_before LT 0 THEN header_without = hdr[start_ix_after:*] $
+  ELSE IF start_ix_after GE n_elements(hdr) THEN header_without = hdr[0:end_ix_before] $
+  ELSE header_without = [hdr[0:end_ix_before],hdr[start_ix_after:*]]
   hdr = header_without
 
 END
