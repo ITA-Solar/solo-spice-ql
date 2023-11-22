@@ -4,16 +4,15 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the const cube of an ANA object or file.
-;      It will return an empty string if all values in the cube are zero or if
+;      This function returns a fits header made from the CONST cube of an ANA object or file.
+;      It will return an empty string if all values in the CONST cube are zero or if
 ;      CONST is not provided.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_const(datetime=datetime, data_id=data_id, CONST=CONST, $
-;        header_l2=header_l2)
+;      header = ana2fitshdr_const(datetime=datetime, data_id=data_id, CONST=CONST, WCS=WCS)
 ;
 ; INPUTS:
 ;      DATETIME: Date and time string.
@@ -25,7 +24,7 @@
 ;      CONST: Array to keep the CONST status of each parameter at each point. If not provided, or if
 ;             all values are zero, an empty string will be returned.
 ;      WCS: Structure. The structure from which the WCS parameters
-;             should be taken. If not provided HDR will be returned unaltered.
+;             should be taken. If not provided the header won't include any WCS parameters.
 ;
 ; KEYWORDS:
 ;
@@ -40,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-21 15:05 CET $
+; $Id: 2023-11-22 10:09 CET $
 
 
 FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS
