@@ -86,6 +86,7 @@ pro test_new
   INCLUDE = d
   WEIGHTS = d
   
+  SAVE_XDIM1 = 1
   PRINT_HEADERS = 1
 
   hdrs = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
