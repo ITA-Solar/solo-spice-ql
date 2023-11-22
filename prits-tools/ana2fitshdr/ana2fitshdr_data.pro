@@ -63,7 +63,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 13:36 CET $
+; $Id: 2023-11-22 14:02 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -80,7 +80,7 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
     data_array = PROGENITOR_DATA
     PRGDATA = 'T'
     IF N_ELEMENTS(PROGENITOR_DATA) EQ 1 THEN no_data = 1 ELSE no_data = 0
-  ENDIF ELSE IF N_ELEMENTS(INPUT_DATA) GT 0 BEGIN
+  ENDIF ELSE IF N_ELEMENTS(INPUT_DATA) GT 0 THEN BEGIN
     data_array = INPUT_DATA
     no_data = 0
     PRGDATA = 'F'
@@ -118,21 +118,24 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
 
     hdr_addition = HEADER_INPUT_DATA
 
-    fits-util->remove_keyword, hdr_addition, 'SIMPLE'
-    fits-util->remove_keyword, hdr_addition, 'XTENSION'
-    fits-util->remove_keyword, hdr_addition, 'BITPIX'
-    fits-util->remove_keyword, hdr_addition, 'EXTEND'
-    fits-util->remove_keyword, hdr_addition, 'DATE'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS1'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS2'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS3'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS4'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS5'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS6'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS7'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS8'
-    fits-util->remove_keyword, hdr_addition, 'NAXIS9'
+    fits_util->add, hdr, 'PRGEXT', fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=''), 'Progenitor extension name'
+
+    fits_util->remove_keyword, hdr_addition, 'SIMPLE'
+    fits_util->remove_keyword, hdr_addition, 'XTENSION'
+    fits_util->remove_keyword, hdr_addition, 'BITPIX'
+    fits_util->remove_keyword, hdr_addition, 'EXTEND'
+    fits_util->remove_keyword, hdr_addition, 'DATE'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS1'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS2'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS3'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS4'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS5'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS6'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS7'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS8'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS9'
+    fits_util->remove_keyword, hdr_addition, 'EXTNAME'
 
     ind_end = where(strmatch(hdr, 'END *') eq 1, count_hdr)
     if count_hdr gt 0 then begin
@@ -140,7 +143,7 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
       hdr_end = hdr[ind_end:*]
     endif else begin
       ind_end = N_ELEMENTS(hdr)
-    endif
+    endelse
     hdr = [hdr[0:ind_end-1], hdr_addition]
     ind_end_addition = where(strmatch(hdr_addition, 'END *') eq 1, count_hdr_addition)
     if count_hdr_addition eq 0 && count_hdr gt 0 then begin
