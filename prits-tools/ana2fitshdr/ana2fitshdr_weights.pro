@@ -38,7 +38,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 10:09 CET $
+; $Id: 2023-11-22 12:45 CET $
 
 
 FUNCTION ana2fitshdr_weights, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, WEIGHTS=WEIGHTS, WCS=WCS
@@ -53,7 +53,7 @@ FUNCTION ana2fitshdr_weights, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES
   IF min_weights EQ 1.0 && max_weights EQ 1.0 THEN return, ''
 
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, CONST, /image
+  mkhdr, hdr, WEIGHTS, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
