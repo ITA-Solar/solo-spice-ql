@@ -48,16 +48,15 @@
 ;             should be taken. If not provided the header won't include any WCS parameters.
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
 ;            respectively. If not provided a generic header will be created.
-;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
-;                 and incorporated into this level 3 FITS file.
-;                 This keyword should be set to a structure or array of structures.
-;                 Each structure contains the tags: step, proc, version, lib and params.
-;                 Those describe the processing steps taken to produce a SPICE level 3 file.
-;      PROC_STEPS: Structure.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
-;      PROJ_KEYWORDS: Structure with additional project-related keywords that should be
-;                 added to the header.
+;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related 
+;                 keywords that should be added to the header.
+;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
+;                 Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
+;                 The type can be any of the following:
+;                 PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
+;                 PRSTEP should be included. The name and the comment will get a number between 1 and 99 added.
 ;
 ; OUTPUTS:
 ;      a fits header (string array).
@@ -65,23 +64,46 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      oslo_fits_util, mkhdr, fxpar, ana2fitshdr_addwcs, fxaddpar
+;      oslo_fits_util, mkhdr, fxpar, ana2fitshdr_addwcs, fxaddpar, get_last_prstep_keyword
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 15:22 CET $
+; $Id: 2023-11-24 15:17 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
   filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
-  winno=winno, EXTENSION=EXTENSION, $
+  winno=winno, EXTENSION=EXTENSION, EXTENSION_NAMES=EXTENSION_NAMES, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, WCS=WCS, $
   PROC_STEPS=PROC_STEPS, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
   LEVEL=LEVEL, VERSION=VERSION, PROJ_KEYWORDS=PROJ_KEYWORDS, $
 
   FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
+
+  prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7]
+  prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0
+
+  prits_tools.parcheck, FILENAME_OUT, 0, 'FILENAME_OUT', 'STRING', 0
+  prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
+  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
+  prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
+
+  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', 0, default=strtrim(winno, 2)
+  prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional=1
+  prits_tools.parcheck, WCS, 0, 'WCS', 8, 0, /optional
+  prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional
+  prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
+
+  prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', [0, 1], optional=1
+  prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=1
+  prits_tools.parcheck, DATASOURCE, 0, 'DATASOURCE', 'STRING', 0, optional=1
+  prits_tools.parcheck, DEFINITION, 0, 'DEFINITION', 'STRING', 0, optional=1
+  prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=1
+  prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=1
 
   n_dims = size(result, /n_dimensions)
   header_exists = keyword_set(HEADER_INPUT_DATA)
@@ -221,38 +243,61 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
 
   hdr = ana2fitshdr_addwcs(HDR, WCS, /RESULT)
 
-  
-  
-  
-; Processing steps
-; ; TODO  
-  
-fits_util->add_description, hdr, 'Processing steps'
-    max_version_number = get_last_prstep_keyword(header_l2, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
-      pr_versions=pr_versions, pr_types=pr_types)
-    IF count gt 0 THEN BEGIN
-      ind = where(pr_types eq 'LIB' AND pr_versions eq max_version_number, count)
-      after = pr_keywords[ind[0]]
-    ENDIF
-    for istep=N_ELEMENTS(PROC_STEPS)-1,0,-1 do begin
-      new_version = strtrim(string(max_version_number+1+istep), 2)
-      prstep = PROC_STEPS[istep]
-      fits_util->add, hdr, 'PRLIB'+new_version+'A', prstep.lib, 'Software library containing PRPROC'+new_version, after=after
-      IF prstep.params NE '' THEN $
-        fits_util->add, hdr, 'PRPARA'+new_version, prstep.params, 'Parameters for PRPROC'+new_version, after=after
-      fits_util->add, hdr, 'PRPVER'+new_version, prstep.version, 'Version of procedure PRPROC'+new_version, after=after
-      fits_util->add, hdr, 'PRPROC'+new_version, prstep.proc, 'Name of procedure performing PRSTEP'+new_version, after=after
-      fits_util->add, hdr, 'PRSTEP'+new_version, prstep.step, 'Processing step type ', after=after
-      fits_util->add, hdr, '', ' ', after=after
-    endfor
-  
+
+  ; Add additional project-related keywords to the header
+  IF N_ELEMENTS(PROJ_KEYWORDS) GT 0 THEN BEGIN
+    fits_util->add_description, hdr, 'Project-related keywords'
+    for ipr=0,N_ELEMENTS(PROJ_KEYWORDS)-1 DO BEGIN
+      fits_util->add, hdr, PROJ_KEYWORDS[ipr].name, PROJ_KEYWORDS[ipr].value, PROJ_KEYWORDS[ipr].comment
+    endfor ; ipr
+    fits_util->add, hdr, '', ' ', after=after    
+  ENDIF
   
 
-
+  ; Processing steps
+  fits_util->add_description, hdr, 'Processing steps'
+  max_version_number = get_last_prstep_keyword(HEADER_INPUT_DATA, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
+    pr_versions=pr_versions, pr_types=pr_types)
+  IF count gt 0 THEN BEGIN
+    FOR ipr=0,count-1 DO BEGIN
+      pr_value = fxpar(HEADER_INPUT_DATA, pr_keywords[ipr], missing='', comment=comment)
+      fits_util->add, hdr, pr_keywords[ipr], pr_value, comment
+    ENDFOR ; ipr
+    ind = where(pr_versions eq max_version_number)
+    after = pr_keywords[max(ind_pr_keywords[ind])]
+    procstep1 = N_ELEMENTS(PROC_STEPS)-1
+    procstep2 = 0
+    procdstep = -1
+  ENDIF ELSE BEGIN
+    procstep1 = 0
+    procstep2 = N_ELEMENTS(PROC_STEPS)-1
+    procdstep = 1
+  ENDELSE
+  for istep=procstep1,procstep2,procdstep do begin
+    new_version = strtrim(string(max_version_number+1+istep), 2)
+    prstep = PROC_STEPS[istep]
+    if count gt 0 then begin
+      prstep1 = N_ELEMENTS(prstep)-1
+      prstep2 = 0
+      prdstep = -1
+    endif else begin
+      prstep1 = 0
+      prstep2 = N_ELEMENTS(prstep)-1
+      prdstep = 1
+    endelse
+    for ipr=prstep1,prstep2,prdstep DO BEGIN
+      fits_util->add, hdr, prstep[ipr].name+new_version, prstep[ipr].value, prstep[ipr].comment+new_version, after=after
+    endfor ; ipr
+    fits_util->add, hdr, '', ' ', after=after
+  endfor ; istep
 
   fits_util->clean_header, hdr
-  
+
+  IF header_exists THEN BEGIN
+    prg_history = fxpar(HEADER_INPUT_DATA, 'HISTORY', missing='')
+    IF prg_history[0] NE '' THEN FXADDPAR, hdr, 'HISTORY', prg_history
+  ENDIF
   IF history_string NE '' THEN FXADDPAR, hdr, 'HISTORY', history_string
-  
+
   return, hdr
 end
