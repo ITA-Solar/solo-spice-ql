@@ -14,7 +14,7 @@
 ; CALLING SEQUENCE:
 ;      headers = ana2fitshdr(ana, n_windows=n_windows, winno=winno, data_id=data_id, $
 ;        FILENAME_OUT=FILENAME_OUT, $
-;        /EXTENSION, $
+;        /IS_EXTENSION, $
 ;        HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
 ;        FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
 ;        CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
@@ -33,7 +33,7 @@
 ;      TYPE_XDIM1
 ;
 ; KEYWORDS:
-;      EXTENSION: If set, then this header will be marked to be an extension,
+;      IS_EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
 ;      SAVE_XDIM1: If set, then XDIM1 will be saved, otherwise not. XDIM1 can usually be
@@ -105,13 +105,13 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 15:22 CET $
+; $Id: 2023-11-24 15:24 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
   DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
-  EXTENSION=EXTENSION, $
+  IS_EXTENSION=IS_EXTENSION, $
   XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
   RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
@@ -230,9 +230,9 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   ; Create result header
   ; ------
 
-  hdr = ana2fitshdr_results(header_l2=header_l2, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, $
+  hdr = ana2fitshdr_results(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, $
     filename_out=file_basename(FILENAME_OUT), n_windows=n_windows, WCS=WCS, $
-    winno=winno, EXTENSION=EXTENSION, spice=spice, $
+    winno=winno, IS_EXTENSION=IS_EXTENSION, $
     HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
   all_headers[0] = ptr_new(hdr)

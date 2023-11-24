@@ -15,7 +15,7 @@
 ; CALLING SEQUENCE:
 ;      header = ana2fitshdr_results(datetime=datetime, $
 ;        filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
-;        winno=winno, EXTENSION=EXTENSION, $
+;        winno=winno, IS_EXTENSION=IS_EXTENSION, $
 ;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
 ;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
 ;        spice=spice, header_l2=header_l2)
@@ -39,7 +39,7 @@
 ;      LABEL: A string.
 ;
 ; KEYWORDS:
-;      EXTENSION: If set, then this header will be marked to be an extension,
+;      IS_EXTENSION: If set, then this header will be marked to be an extension,
 ;                 i.e. if this is not the first window in the FITS file.
 ;                 If not set, this will be the primary header.
 ;
@@ -69,12 +69,12 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-24 15:17 CET $
+; $Id: 2023-11-24 15:24 CET $
 
 
 FUNCTION ana2fitshdr_results, datetime=datetime, $
   filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
-  winno=winno, EXTENSION=EXTENSION, EXTENSION_NAMES=EXTENSION_NAMES, $
+  winno=winno, IS_EXTENSION=IS_EXTENSION, EXTENSION_NAMES=EXTENSION_NAMES, $
   HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, WCS=WCS, $
   PROC_STEPS=PROC_STEPS, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
   LEVEL=LEVEL, VERSION=VERSION, PROJ_KEYWORDS=PROJ_KEYWORDS, $
@@ -110,7 +110,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   wcs_exists = keyword_set(WCS)
 
   fits_util = obj_new('oslo_fits_util')
-  if keyword_set(extension) then mkhdr, hdr, result, /image $
+  if keyword_set(IS_EXTENSION) then mkhdr, hdr, result, /image $
   else mkhdr, hdr, result, /extend
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
