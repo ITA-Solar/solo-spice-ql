@@ -47,10 +47,14 @@
 ;              If not set, the first ANA's result array will be the primary header.
 ;      SAVE_XDIM1: If set, then the XDIM1 cube will be saved into the FITS file. Default is
 ;              not to save it. This cube can be recalculated using the WCS parameters given either
-;              in HEADER_INPUT_DATA.
+;              in HEADER_INPUT_DATA. 
+;              This keyword can also be an array of zeros and ones, 
+;              setting/unsetting this feature separately for each window.
 ;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
-;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
-;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
+;              It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
+;              This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
+;              This keyword can also be an array of zeros and ones,
+;              setting/unsetting this feature separately for each window.
 ;      PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
 ;
 ; OPTIONAL INPUTS:
@@ -60,8 +64,8 @@
 ;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              alog the first dimension. If these data arrays are provided, they will be saved into the XDIM1 extensions instead of INPUT_DATA.
 ;              One data array per ANA provided. Can be a string array, if ANA is scalar or not provided.
-;      DATA_ID: A string vector of same length as 'ana', or if 'ana' is not provided
-;              scalar string. These strings are used to identify the data, i.e. they will
+;      DATA_ID: A string vector of same length as 'ana', or if 'ana' is not provided, same number of windows provided.
+;              These strings are used to identify the data, i.e. they will
 ;              be used in the extension names of the FITS file. Each dataset will get
 ;              6 extensions, which all have the same ID, but the extension name will be
 ;              'data_id'+' '+extension_type (='results', 'data', 'xdim1', 'weights', 'includes', 'constants').
@@ -75,19 +79,26 @@
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related
-;                 keywords that should be added to the header.
+;              keywords that should be added to the header. 
+;              This can also be a pointer array, if each window should get their own sets of keywords.
+;              It must then be of the same size as the RESULT pointer array or the ANA array.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
-;                 Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
-;                 The name can be any of the following:
-;                 PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
-;                 PRSTEP should be included. The name and the comment will get the processing step number added.
+;              Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
+;              The name can be any of the following:
+;              PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
+;              PRSTEP should be included. The name and the comment will get the processing step number added.
+;              This can also be a pointer array, if each window should get their own sets of keywords.
+;              It must then be of the same size as the RESULT pointer array or the ANA array.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ANA' is not provided.
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
 ;
 ;      RESULT: The array to contain the result parameter values (and the Chi^2) values.
+;              This may also be a pointer array, if more than one window should be saved at a time.
 ;      FIT: The component fit structure
+;              This may also be a pointer array, if more than one window should be saved at a time.
+;              It must then be of the same size as the RESULT pointer array.
 ;
 ;      All of the following optional inputs can be provided if 'ANA' is not provided. If not
 ;      provided, it is assumed they contain only default values.
@@ -98,9 +109,17 @@
 ;              along the first dimension. This is ignored if PROGENITOR_DATA is provided.
 ;      XDIM1: Array of same size as the input data to xcfit_block. It contains the values of the
 ;             absorbed dimension for each point (e.g wavelength).
+;              This may also be a pointer array, if more than one window should be saved at a time.
+;              It must then be of the same size as the RESULT pointer array.
 ;      WEIGHTS: Weights to use in the fitting process.
+;              This may also be a pointer array, if more than one window should be saved at a time.
+;              It must then be of the same size as the RESULT pointer array.
 ;      INCLUDE: Array to keep the INCLUDE status of each component at each point.
+;              This may also be a pointer array, if more than one window should be saved at a time.
+;              It must then be of the same size as the RESULT pointer array.
 ;      CONST: Array to keep the CONST status of each parameter at each point.
+;              This may also be a pointer array, if more than one window should be saved at a time.
+;              It must then be of the same size as the RESULT pointer array.
 ;
 ;      The following optional inputs will be ignored.
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
@@ -147,7 +166,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 15:03 CET $
+; $Id: 2023-11-27 15:15 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
