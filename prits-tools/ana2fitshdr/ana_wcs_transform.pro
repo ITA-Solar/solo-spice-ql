@@ -4,9 +4,9 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns takes a WCS structure, transforms it and then returns it.
+;      This function takes a WCS structure, transforms it and then returns it.
 ;      It transforms it thus that one of the dimension is moved to another place.
-;      This is used to move the absorbed dimension to the first dimension. Or vice versa.
+;      This can be  used to move the absorbed dimension to the first dimension. Or vice versa.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
@@ -33,11 +33,12 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
+;      prits_tools.parcheck
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-20 14:30 CET $
+; $Id: 2023-11-27 12:00 CET $
 
 
 FUNCTION ana_wcs_transform_vector, vector, move_dim, dest_dim, naxis

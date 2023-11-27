@@ -25,7 +25,8 @@
 ; KEYWORDS:
 ;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
 ;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
-;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
+;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA or
+;             providing PROGENITOR_DATA as a scalar number.
 ;
 ; OPTIONAL INPUTS:
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
@@ -63,7 +64,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 14:19 CET $
+; $Id: 2023-11-27 12:00 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $

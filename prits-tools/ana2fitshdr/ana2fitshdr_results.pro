@@ -5,38 +5,32 @@
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
 ;      This function returns a fits header made from the results of an ANA object or file.
-;      The fits header contains all fit components as keywords.
-;      In case the SPICE keyword has been set, the the header will also contain original
-;      level 2 header keywords.
+;      The fits header contains all fit components as keywords, as well as
+;      other ANA structure tags.
+;      It is possible to add project-related keywords or processing steps keywords
+;      to the header, by using the keywords PROJ_KEYWORDS and PROC_STEPS, respectively.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_results(datetime=datetime, $
-;        filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
-;        winno=winno, IS_EXTENSION=IS_EXTENSION, $
-;        HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME_ANA, $
-;        DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-;        spice=spice, header_l2=header_l2)
+;      header = ana2fitshdr_results(RESULT=RESULT, FIT=FIT, datetime=datetime, $
+;           filename_out=filename_out, n_windows=n_windows, winno=winno, EXTENSION_NAMES=EXTENSION_NAMES, $
+;           /IS_EXTENSION, $
+;           HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
+;           LEVEL=LEVEL, VERSION=VERSION, $
+;           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+;           HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
+;           DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 ;
 ; INPUTS:
 ;      datetime: Date and time string.
-;      filename_out: The filename the FITS file will/should get
-;      data_id: A string defining the prefix to the names of the 6 extensions
+;      filename_out: The filename the FITS file will/should get.
 ;      n_windows: Number of windows to be included in the FITS file.
 ;      winno: Window number (starting at 0) within this study in this FITS file
-;      HISTORY: A string array.
 ;      FIT: The component fit structure
 ;      RESULT: The array to contain the result parameter values (and
 ;              the Chi^2) values. May contain current results.
-;      FILENAME_ANA: The filename of the ANA-file.
-;      DATASOURCE: A string.
-;      DEFINITION: A string.
-;      MISSING: The MISSING value, used to flag missing data points,
-;               and parameter values at points where the fit has been
-;               declared as "FAILED".
-;      LABEL: A string.
 ;
 ; KEYWORDS:
 ;      IS_EXTENSION: If set, then this header will be marked to be an extension,
@@ -44,10 +38,10 @@
 ;                 If not set, this will be the primary header.
 ;
 ; OPTIONAL INPUTS:
-;      WCS: Structure. The structure from which the WCS parameters
-;             should be taken. If not provided the header won't include any WCS parameters.
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
 ;            respectively. If not provided a generic header will be created.
+;      WCS: Structure. The structure from which the WCS parameters
+;             should be taken. If not provided the header won't include any WCS parameters.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related 
@@ -57,6 +51,15 @@
 ;                 The type can be any of the following:
 ;                 PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
 ;                 PRSTEP should be included. The name and the comment will get a number between 1 and 99 added.
+;      HISTORY: A string array.
+;      FILENAME_ANA: The filename of the ANA-file. This will be ignored.
+;      DATASOURCE: A string. This will be ignored.
+;      DEFINITION: A string. This will be ignored.
+;      MISSING: The MISSING value, used to flag missing data points,
+;               and parameter values at points where the fit has been
+;               declared as "FAILED". This will be ignored. It is assumed
+;               that missing values is NAN.
+;      LABEL: A string. This will be ignored.
 ;
 ; OUTPUTS:
 ;      a fits header (string array).
@@ -69,28 +72,27 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-24 15:24 CET $
+; $Id: 2023-11-27 12:00 CET $
 
 
-FUNCTION ana2fitshdr_results, datetime=datetime, $
-  filename_out=filename_out, data_id=data_id, n_windows=n_windows, $
-  winno=winno, IS_EXTENSION=IS_EXTENSION, EXTENSION_NAMES=EXTENSION_NAMES, $
-  HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, WCS=WCS, $
-  PROC_STEPS=PROC_STEPS, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
-  LEVEL=LEVEL, VERSION=VERSION, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-
-  FILENAME_ANA=FILENAME_ANA, $
+FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
+  filename_out=filename_out, n_windows=n_windows, winno=winno, EXTENSION_NAMES=EXTENSION_NAMES, $
+  IS_EXTENSION=IS_EXTENSION, $
+  HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
+  LEVEL=LEVEL, VERSION=VERSION, $
+  PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+  HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
 
   prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7]
   prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0
 
+  prits_tools.parcheck, datetime, 0, 'datetime', 'STRING', 0
   prits_tools.parcheck, FILENAME_OUT, 0, 'FILENAME_OUT', 'STRING', 0
   prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
   prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
   prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
 
-  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', 0, default=strtrim(winno, 2)
   prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional=1
   prits_tools.parcheck, WCS, 0, 'WCS', 8, 0, /optional
   prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
@@ -105,7 +107,6 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=1
   prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=1
 
-  n_dims = size(result, /n_dimensions)
   header_exists = keyword_set(HEADER_INPUT_DATA)
   wcs_exists = keyword_set(WCS)
 
@@ -122,7 +123,7 @@ FUNCTION ana2fitshdr_results, datetime=datetime, $
   IF header_exists THEN BEGIN
     fits_util->add, hdr, 'PGFILENA', fxpar(HEADER_INPUT_DATA, 'FILENAME', missing=''), 'Progenitor filename'
     fits_util->add, hdr, 'PARENT', fxpar(HEADER_INPUT_DATA, 'FILENAME', missing=''), 'Parent filename'  ; TODO: Don't need both, which one?
-    bunit = fxpar(header_l2, 'BUNIT', missing='')
+    bunit = fxpar(HEADER_INPUT_DATA, 'BUNIT', missing='')
   ENDIF ELSE BEGIN
     bunit = ''
   ENDELSE

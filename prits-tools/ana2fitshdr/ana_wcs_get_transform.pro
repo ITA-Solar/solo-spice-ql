@@ -14,7 +14,8 @@
 ;      new_wcs = ana_wcs_get_transform(XDIM1_TYPE, HEADERS_INPUT_DATA)
 ;
 ; INPUTS:
-;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. 'WAVE'). If not found in HEADERS_INPUT_DATA, !NULL will be returned.
+;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. 'WAVE'). If not found in HEADERS_INPUT_DATA, 
+;             !NULL will be returned.
 ;
 ; KEYWORDS:
 ;
@@ -22,7 +23,7 @@
 ;      HEADERS_INPUT_DATA: String array. The header from which the WCS parameters should be taken.
 ;              This may be the header from the progenitor data, i.e. absorbed dimension does not need
 ;              to be in the first dimension.
-;              If not provided a !NULL or if NAXIS=0 will be returned.
+;              If not provided or if NAXIS=0, !NULL  will be returned.
 ;
 ; KEYWORDS:
 ;
@@ -32,16 +33,17 @@
 ;      WCS: Structure containing World Coordinate System information, with XDIM1_TYPE
 ;            in the first dimension.
 ;            Or !NULL if HEADERS_INPUT_DATA is not provided or NAXIS=0 therein, or does not 
-;            containa CTYPE with value XDIM1_TYPE.
+;            contain a CTYPE with value XDIM1_TYPE.
 ;
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
+;      prits_tools.parcheck, fxpar, fitshead2wcs, ana_wcs_transform
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-21 15:05 CET $
+; $Id: 2023-11-27 12:00 CET $
 
 
 FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA

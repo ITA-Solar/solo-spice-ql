@@ -4,24 +4,36 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITS.
-;      This function returns an array of FITS headers made from an ANA object or file.
-;      The fits headers contains all fit components as keywords and the original
-;      level 2 header keywords in the first (zeroth) extension.
+;      This function returns an array of 6 FITS headers made from an ANA object or file.
+;      The RESULT FITS header is the main header, and contains all analysis-specific
+;      information, i.e. fit components and parameters. This header may also contain
+;      additional project-related keywords.
+;      The DATA FITS header may contain all information about the progenitor data, or
+;      the data cube used in xcfit_block.
+;      THE XDIM1 FITS header, i.e. the header with the absorbed dimension, is only saved
+;      upon request. This header and data cube can be recovered from the WCS parameters
+;      from the DATA extension.
+;      The other headers (INCLUDE, CONST, WEIGHTS) are only saved if at least one
+;      value is not the default value.
+;      RESIDUAL is not saved at all, since this is not required and can be recalculated 
+;      using xcfit_block.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS
 ;
 ; CALLING SEQUENCE:
-;      headers = ana2fitshdr(ana, n_windows=n_windows, winno=winno, data_id=data_id, $
-;        FILENAME_OUT=FILENAME_OUT, $
-;        /IS_EXTENSION, $
-;        HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-;        FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-;        CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-;        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-;        /spice, $
-;        original_data=original_data, header_l2=header_l2, $
-;        /print_headers )
+;      headers = ana2fitshdr(ANA, FILENAME_OUT=FILENAME_OUT, $
+;           N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
+;           DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
+;           IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+;           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+;           XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
+;           RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
+;           CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+;           DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
+;           PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
+;           SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+;           DATA_ARRAY=DATA_ARRAY)
 ;
 ; INPUTS:
 ;      ANA: An ANA object or the name and path of an ANA file.
@@ -30,7 +42,7 @@
 ;      FILENAME_OUT: Filename of the resulting FITS file. May include the path.
 ;      N_WINDOWS: Total number of windows to be included in FITS file.
 ;      WINNO: Window number (starting at 0) within this study in this FITS file.
-;      TYPE_XDIM1
+;      TYPE_XDIM1: CTYPE of the absorbed dimension (e.g. 'WAVE').
 ;
 ; KEYWORDS:
 ;      IS_EXTENSION: If set, then this header will be marked to be an extension,
@@ -49,6 +61,15 @@
 ;      PROGENITOR_DATA: A data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              along the first dimension. If this data array is provided, it will be saved into the XDIM1 extension instead of INPUT_DATA.
 ;      DATA_ID: A string defining the prefix to the names of the 6 extensions, default is WINNO as a string.
+;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
+;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
+;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related
+;                 keywords that should be added to the header.
+;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
+;                 Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
+;                 The type can be any of the following:
+;                 PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
+;                 PRSTEP should be included. The name and the comment will get a number between 1 and 99 added.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ANA' is not provided.
@@ -82,15 +103,6 @@
 ;              and parameter values at points where the fit has been
 ;              declared as "FAILED". This is assumed to be NAN.
 ;      LABEL: A string.
-
-
-;      SPICE: If set, then 'header_l2' will be assumed to be from a level 2 SPICE FITS file
-;                 and incorporated into this level 3 FITS file. And the 'data' extension
-;                 will get 'original_data' as its data array, instead of the data array
-;                 saved in the ana or 'input_data'.
-;                 This keyword should be set to a structure or array of structures.
-;                 Each structure contains the tags: step, proc, version, lib and params.
-;                 Those describe the processing steps taken to produce a SPICE level 3 file.
 ;
 ; OUTPUTS:
 ;      a pointer array, containing 6 FITS keyword headers, of which 5 may be empty strings.
@@ -99,19 +111,21 @@
 ;      DATA_ARRAY: Contains the data array that should be saved into the data extension, if any.
 ;
 ; CALLS:
-;     prits_tools.parcheck, caldat, ana2fitshdr_results, ana2fitshdr_data, ana2fitshdr_xdim,
+;     prits_tools.parcheck, caldat, ana_wcs_get_transform
+;     ana2fitshdr_results, ana2fitshdr_data, ana2fitshdr_xdim,
 ;     ana2fitshdr_weights, ana2fitshdr_include, ana2fitshdr_const
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-24 15:24 CET $
+; $Id: 2023-11-27 12:00 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
   DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
-  IS_EXTENSION=IS_EXTENSION, $
+  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+  PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
   XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
   RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
@@ -129,23 +143,27 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
+
+  prits_tools.parcheck, FILENAME_OUT, 0, 'FILENAME_OUT', 'STRING', 0
+  prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
+  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
+  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0
+  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', 0, default=strtrim(winno, 2)
+  prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional=1
+  prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional
+  prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
+
+  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', [0, 1], optional=1
   prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=1
   prits_tools.parcheck, DATASOURCE, 0, 'DATASOURCE', 'STRING', 0, optional=1
   prits_tools.parcheck, DEFINITION, 0, 'DEFINITION', 'STRING', 0, optional=1
   prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=1
   prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=1
-
-  prits_tools.parcheck, FILENAME_OUT, 0, 'FILENAME_OUT', 'STRING', 0
-  prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
-  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
-  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', 0, default=strtrim(winno, 2)
-  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0
-  prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional=1
-
 
   input_type = size(ana, /type)
   case input_type of
@@ -230,10 +248,13 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   ; Create result header
   ; ------
 
-  hdr = ana2fitshdr_results(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, $
-    filename_out=file_basename(FILENAME_OUT), n_windows=n_windows, WCS=WCS, $
-    winno=winno, IS_EXTENSION=IS_EXTENSION, $
-    HISTORY=HISTORY, FIT=FIT, RESULT=RESULT, FILENAME_ANA=FILENAME, $
+  hdr = ana2fitshdr_results(RESULT=RESULT, FIT=FIT, datetime=datetime, $
+    filename_out=file_basename(FILENAME_OUT), n_windows=n_windows, winno=winno, $
+    EXTENSION_NAMES=EXTENSION_NAMES, IS_EXTENSION=IS_EXTENSION, $
+    HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
+    LEVEL=LEVEL, VERSION=VERSION, $
+    PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+    HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
   all_headers[0] = ptr_new(hdr)
   if keyword_set(print_headers) then begin
