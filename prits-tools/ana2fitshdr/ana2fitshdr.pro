@@ -118,7 +118,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 13:51 CET $
+; $Id: 2023-11-27 14:10 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
@@ -257,12 +257,6 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
     HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
   all_headers[0] = ptr_new(hdr)
-  if keyword_set(print_headers) then begin
-    print,''
-    print,'--- RESULTS ---'
-    print,''
-    print,hdr
-  endif
 
 
   ; ------
@@ -273,12 +267,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
     HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA, NO_SAVE_DATA=NO_SAVE_DATA, $
     DATA_ARRAY=DATA_ARRAY)
   all_headers[1] = ptr_new(hdr)
-  if keyword_set(print_headers) then begin
-    print,''
-    print,'--- DATA ---'
-    print,''
-    print,hdr
-  endif
+  if hdr[0] eq '' then EXTENSION_NAMES[1] = ''
 
 
   ; ------
@@ -287,12 +276,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
 
   hdr = ana2fitshdr_xdim(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, SAVE_XDIM1=SAVE_XDIM1)
   all_headers[2] = ptr_new(hdr)
-  if keyword_set(print_headers) then begin
-    print,''
-    print,'--- XDIM ---'
-    print,''
-    print,hdr
-  endif
+  if hdr[0] eq '' then EXTENSION_NAMES[2] = ''
 
 
   ; ------
@@ -301,12 +285,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
 
   hdr = ana2fitshdr_weights(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, WEIGHTS=WEIGHTS, WCS=WCS)
   all_headers[3] = ptr_new(hdr)
-  if keyword_set(print_headers) then begin
-    print,''
-    print,'--- WEIGHTS ---'
-    print,''
-    print,hdr
-  endif
+  if hdr[0] eq '' then EXTENSION_NAMES[3] = ''
 
 
   ; ------
@@ -315,12 +294,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
 
   hdr = ana2fitshdr_include(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INCLUDE=INCLUDE, WCS=WCS)
   all_headers[4] = ptr_new(hdr)
-  if keyword_set(print_headers) then begin
-    print,''
-    print,'--- INCLUDE ---'
-    print,''
-    print,hdr
-  endif
+  if hdr[0] eq '' then EXTENSION_NAMES[4] = ''
 
 
   ; ------
@@ -329,12 +303,33 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
 
   hdr = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
   all_headers[5] = ptr_new(hdr)
-  if keyword_set(print_headers) then begin
-    print,''
-    print,'--- CONST ---'
-    print,''
-    print,hdr
-  endif
+  if hdr[0] eq '' then EXTENSION_NAMES[5] = ''
+  
+  
+  ; Delete extension names if necessary
+  FOR iext=0,5 DO BEGIN
+    hdr = all_headers[iext]
+    IF (*hdr)[0] NE '' THEN BEGIN
+      fxaddpar, *hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
+      fxaddpar, *hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
+      fxaddpar, *hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
+      fxaddpar, *hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
+      fxaddpar, *hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
+    ENDIF
+    if keyword_set(print_headers) then begin
+      print,''
+      case iext of
+        0: print,'--- RESULTS ---'
+        1: print,'--- DATA ---'
+        2: print,'--- XDIM ---'
+        3: print,'--- WEIGHTS ---'
+        4: print,'--- INCLUDE ---'
+        5: print,'--- CONST ---'
+      endcase
+      print,''
+      print,*hdr
+    endif
+  ENDFOR
 
 
   return, all_headers
