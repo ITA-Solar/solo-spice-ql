@@ -72,7 +72,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 12:00 CET $
+; $Id: 2023-11-27 13:42 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -163,12 +163,12 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   ;  fits_util->add, hdr, 'ANA_DEF', definition, 'ANA definition'
   ;  fits_util->add, hdr, 'ANA_MISS', missing, 'ANA missing value in fitted data'
   ;  fits_util->add, hdr, 'ANA_LABL', label, 'ANA label'
-  if N_ELEMENTS(history) EQ 0 then history=''
-  ind = where(history NE '', count)
-  if count gt 0 then begin
-    history_string = strjoin(history[ind], ';')
-    history_string = 'ANA_HISTORY: ' + history_string
-  endif else history_string = ''
+  ;  if N_ELEMENTS(history) EQ 0 then history=''
+  ;  ind = where(history NE '', count)
+  ;  if count gt 0 then begin
+  ;    history_string = strjoin(history[ind], ';')
+  ;    history_string = 'ANA_HISTORY: ' + history_string
+  ;  endif else history_string = ''
   ;  fits_util->add, hdr, 'ANA_HIST', history_string, 'ANA history'
   n_components = N_TAGS(fit)
   fits_util->add, hdr, 'ANA_NCMP', n_components, 'Number of fit components'
@@ -265,7 +265,8 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
       fits_util->add, hdr, pr_keywords[ipr], pr_value, comment
     ENDFOR ; ipr
     ind = where(pr_versions eq max_version_number)
-    after = pr_keywords[max(ind_pr_keywords[ind])]
+    max_ind_hdr = max(ind_pr_keywords[ind], max_ind)
+    after = pr_keywords[max_ind]
     procstep1 = N_ELEMENTS(PROC_STEPS)-1
     procstep2 = 0
     procdstep = -1
@@ -296,9 +297,13 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
 
   IF header_exists THEN BEGIN
     prg_history = fxpar(HEADER_INPUT_DATA, 'HISTORY', missing='')
-    IF prg_history[0] NE '' THEN FXADDPAR, hdr, 'HISTORY', prg_history
+    IF prg_history[0] NE '' THEN BEGIN
+      FOR i=0,N_ELEMENTS(prg_history)-1 DO FXADDPAR, hdr, 'HISTORY', prg_history[i]
+    ENDIF
   ENDIF
-  IF history_string NE '' THEN FXADDPAR, hdr, 'HISTORY', history_string
+  IF history[0] NE '' THEN BEGIN
+    FOR i=0,N_ELEMENTS(history)-1 DO FXADDPAR, hdr, 'HISTORY', 'ANA: '+history[i]
+  ENDIF
 
   return, hdr
 end
