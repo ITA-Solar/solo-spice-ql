@@ -71,6 +71,28 @@ pro test_new
   print, ' ana2fitshdr   TEST'
   print ,''
   
+  ol2 = spice_data(file)
+  ana = ol2->mk_analysis(0, /init_all_cubes)
+  
+  handle_value,ana.history_h,history
+  handle_value,ana.lambda_h,xdim1
+  handle_value,ana.data_h,input_data
+  handle_value,ana.weights_h,weights
+  handle_value,ana.fit_h,fit
+  handle_value,ana.result_h,result
+  handle_value,ana.residual_h,residual
+  handle_value,ana.include_h,include
+  handle_value,ana.const_h,const
+  handle_value,ana.origin_h,origin
+  handle_value,ana.scale_h,scale
+  handle_value,ana.phys_scale_h,phys_scale
+  handle_value,ana.dimnames_h,dimnames
+  filename_ana = ana.filename
+  datasource = ana.datasource
+  definition = ana.definition
+  missing = ana.missing
+  label = ana.label
+
   FILENAME_OUT = 'file.fits'
   N_WINDOWS = 1
   WINNO = 0
@@ -81,16 +103,16 @@ pro test_new
   VERSION = 3
   HEADER_INPUT_DATA = h
   PROGENITOR_DATA = d
-  RESULT = d
-  FIT = {a:0}
+  ;RESULT = d
+  ;FIT = {a:0}
   ;PROC_STEPS
   ;PROJ_KEYWORDS
   
-  INPUT_DATA = d
-  XDIM1 = d
-  CONST = d
-  INCLUDE = d
-  WEIGHTS = d
+  ;INPUT_DATA = d
+  ;XDIM1 = d
+  ;CONST = d
+  ;INCLUDE = d
+  ;WEIGHTS = d
   
   SAVE_XDIM1 = 1
   NO_SAVE_DATA = 0
@@ -109,10 +131,31 @@ pro test_new
   SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
   DATA_ARRAY=DATA_ARRAY)
   
-  
+  print,''
+  print,'  without ANA '
   help,hdrs
   help,data_array
   
+
+  hdrs = ana2fitshdr(ana,  FILENAME_OUT=FILENAME_OUT, $
+    N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
+    DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
+    IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+    PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+    XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
+    RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
+    CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+    DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
+    PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
+    SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+    DATA_ARRAY=DATA_ARRAY)
+
+
+  print,''
+  print,'  WITH ANA '
+  help,hdrs
+  help,data_array
+
   return
   
   
