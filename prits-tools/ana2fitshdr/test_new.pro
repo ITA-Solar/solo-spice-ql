@@ -114,7 +114,7 @@ pro test_new
   ;INCLUDE = d
   ;WEIGHTS = d
   
-  SAVE_XDIM1 = 1
+  SAVE_XDIM1 = 0
   NO_SAVE_DATA = 0
   PRINT_HEADERS = 1
 
