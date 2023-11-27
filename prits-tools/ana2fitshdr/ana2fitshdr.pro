@@ -67,9 +67,9 @@
 ;                 keywords that should be added to the header.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
 ;                 Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
-;                 The type can be any of the following:
+;                 The name can be any of the following:
 ;                 PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
-;                 PRSTEP should be included. The name and the comment will get a number between 1 and 99 added.
+;                 PRSTEP should be included. The name and the comment will get the processing step number added.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ANA' is not provided.
@@ -118,7 +118,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 12:00 CET $
+; $Id: 2023-11-27 13:51 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
