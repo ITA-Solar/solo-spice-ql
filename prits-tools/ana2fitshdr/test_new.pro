@@ -1,69 +1,69 @@
 pro test_new
 
   file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
-  ;file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
+  file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
   d = readfits(file, h)
   help,d
   
-  HEADERS_INPUT_DATA = h
-  
-  ; Add time to DATE
-  caldat, systime(/julian), month, day, year, hour, minute, second
-  datetime = {CDS_EXT_TIME, $
-    year:year, $
-    month:month, $
-    day:day, $
-    hour:hour, $
-    minute:minute, $
-    second:second, $
-    millisecond:0}
-  datetime = anytim(datetime, /ccsds)
-
-  data_id = 'data_id'
-  extension_names = data_id + [ $
-    ' results', $
-    ' data', $
-    ' xdim1', $
-    ' weights', $
-    ' includes', $
-    ' constants']
-    
-    XDIM1_TYPE = 'WAVE'
-    
-    CONST = d
-
-  
-    wcs = fitshead2wcs(HEADERS_INPUT_DATA)
-    help,wcs
-    print,wcs.proj_names
-    print,wcs.proj_values
-    help,wcs.time
-    help,wcs.position
-    help,wcs.spectrum
-;    help,wcs.distortion
-;    help,wcs.distortion.dw1
-;    print,wcs.distortion.dw1.param
-;    print,wcs.distortion.dw1.value
-;    help,wcs.distortion.dw2
-;    print,wcs.distortion.dw2.param
-;    print,wcs.distortion.dw2.value
-;    print,wcs.distortion.associate
-;    print,wcs.distortion.apply
-  
-  
-  ;print,HEADERS_INPUT_DATA
-  
-  
-  wcs = ana_wcs_get_transform(XDIM1_TYPE, HEADERS_INPUT_DATA)
-
-  
-  
-  hdr_const = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
-    
-    
-  print, hdr_const
-  
-  ;const = !NULL
+;  HEADERS_INPUT_DATA = h
+;  
+;  ; Add time to DATE
+;  caldat, systime(/julian), month, day, year, hour, minute, second
+;  datetime = {CDS_EXT_TIME, $
+;    year:year, $
+;    month:month, $
+;    day:day, $
+;    hour:hour, $
+;    minute:minute, $
+;    second:second, $
+;    millisecond:0}
+;  datetime = anytim(datetime, /ccsds)
+;
+;  data_id = 'data_id'
+;  extension_names = data_id + [ $
+;    ' results', $
+;    ' data', $
+;    ' xdim1', $
+;    ' weights', $
+;    ' includes', $
+;    ' constants']
+;    
+;    XDIM1_TYPE = 'WAVE'
+;    
+;    CONST = d
+;
+;  
+;    wcs = fitshead2wcs(HEADERS_INPUT_DATA)
+;    help,wcs
+;    print,wcs.proj_names
+;    print,wcs.proj_values
+;    help,wcs.time
+;    help,wcs.position
+;    help,wcs.spectrum
+;;    help,wcs.distortion
+;;    help,wcs.distortion.dw1
+;;    print,wcs.distortion.dw1.param
+;;    print,wcs.distortion.dw1.value
+;;    help,wcs.distortion.dw2
+;;    print,wcs.distortion.dw2.param
+;;    print,wcs.distortion.dw2.value
+;;    print,wcs.distortion.associate
+;;    print,wcs.distortion.apply
+;  
+;  
+;  ;print,HEADERS_INPUT_DATA
+;  
+;  
+;  wcs = ana_wcs_get_transform(XDIM1_TYPE, HEADERS_INPUT_DATA)
+;
+;  
+;  
+;  hdr_const = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
+;    
+;    
+;  print, hdr_const
+;  
+;  ;const = !NULL
   
   print, ''
   print, ''
@@ -110,9 +110,9 @@ pro test_new
   
   ;INPUT_DATA = d
   ;XDIM1 = d
-  ;CONST = d
-  ;INCLUDE = d
-  ;WEIGHTS = d
+  CONST[0] = 3
+  INCLUDE[0] = 3
+  WEIGHTS[0] = 3
   
   SAVE_XDIM1 = 0
   NO_SAVE_DATA = 0
@@ -135,7 +135,12 @@ pro test_new
   print,'  without ANA '
   help,hdrs
   help,data_array
+  return
   
+
+  SAVE_XDIM1 = 1
+  NO_SAVE_DATA = 1
+  PRINT_HEADERS = 1
 
   hdrs = ana2fitshdr(ana,  FILENAME_OUT=FILENAME_OUT, $
     N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
