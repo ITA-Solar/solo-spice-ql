@@ -2,8 +2,72 @@ pro test_new
 
   file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
   file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
-  d = readfits(file, h)
-  help,d
+;  d0 = readfits(file, h0)
+;  help,d0
+;  d1 = readfits(file, h1, ext=1)
+;  help,d1
+;  d2 = readfits(file, h2, ext=2)
+;  help,d2
+
+  ol2 = spice_data(file)
+  ana = ol2->mk_analysis(0, /init_all_cubes)
+
+  FILEPATH_OUT = '~/file.fits'
+  N_WINDOWS = 3
+  WINNO = 0
+  DATA_ID = ['data_id_0', 'data_id_1', 'data_id_2']
+  TYPE_XDIM1 = 'WAVE'
+  IS_EXTENSION = 0
+  LEVEL = 'L3'
+  VERSION = 3
+  HEADER_INPUT_DATA = ptrarr(3)
+  HEADER_INPUT_DATA[0] = ptr_new(ol2->get_header(0))
+  HEADER_INPUT_DATA[1] = ptr_new(ol2->get_header(1))
+  HEADER_INPUT_DATA[2] = ptr_new(ol2->get_header(2))
+  PROGENITOR_DATA = ptrarr(3)
+  PROGENITOR_DATA[0] = ptr_new(ol2->get_window_data(0))
+  PROGENITOR_DATA[1] = ptr_new(ol2->get_window_data(1))
+  PROGENITOR_DATA[2] = ptr_new(ol2->get_window_data(2))
+
+
+  SAVE_XDIM1 = 0
+  NO_SAVE_DATA = 0
+  PRINT_HEADERS = 1
+
+
+  ol2 = spice_data(file)
+  ana0 = ol2->mk_analysis(0, /init_all_cubes)
+  ana1 = ol2->mk_analysis(1, /init_all_cubes)
+  ana2 = ol2->mk_analysis(2, /init_all_cubes)
+  ana = [ana0, ana1, ana2]
+  
+
+  ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
+    N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
+    DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
+    IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+    PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+    XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
+    RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
+    CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+    DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
+    PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
+    SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+    SAVE_NOT=SAVE_NOT, $
+    DATA_ARRAY=DATA_ARRAY, $
+    headers_results=headers_results, headers_data=headers_data, $
+    headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
+    headers_include=headers_include, headers_constants=headers_constants
+
+
+
+
+
+
+
+
+  return
+
   
 ;  HEADERS_INPUT_DATA = h
 ;  
