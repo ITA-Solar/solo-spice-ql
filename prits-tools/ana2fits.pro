@@ -56,14 +56,15 @@
 ;              This keyword can also be an array of zeros and ones,
 ;              setting/unsetting this feature separately for each window.
 ;      PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
+;      SAVE_NOT: If set, then the FITS file will not be saved. The optional outputs are created though.
 ;
 ; OPTIONAL INPUTS:
 ;      HEADER_INPUT_DATA: A pointer array or string array, containing the headers of the data extensions as string arrays.
-;              One string array per ANA provided. Can be a string array, if ANA is scalar or not provided.
+;              One string array per ANA provided. Can be a string array, if only one ANA is provided.
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
 ;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              alog the first dimension. If these data arrays are provided, they will be saved into the XDIM1 extensions instead of INPUT_DATA.
-;              One data array per ANA provided. Can be a string array, if ANA is scalar or not provided.
+;              One data array per ANA provided. Can be a string array, if only one ANA is provided.
 ;      DATA_ID: A string vector of same length as 'ana', or if 'ana' is not provided, same number of windows provided.
 ;              These strings are used to identify the data, i.e. they will
 ;              be used in the extension names of the FITS file. Each dataset will get
@@ -107,6 +108,8 @@
 ;      HISTORY: A string array.
 ;      INPUT_DATA: Data Array. Up to 7-dimensional data array, with absorbed dimension (e.g. spectra)
 ;              along the first dimension. This is ignored if PROGENITOR_DATA is provided.
+;              This may also be a pointer array, if more than one window should be saved at a time.
+;              It must then be of the same size as the RESULT pointer array.
 ;      XDIM1: Array of same size as the input data to xcfit_block. It contains the values of the
 ;             absorbed dimension for each point (e.g wavelength).
 ;              This may also be a pointer array, if more than one window should be saved at a time.
@@ -166,7 +169,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-28 12:50 CET $
+; $Id: 2023-11-28 13:30 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -180,6 +183,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
   PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
   SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+  SAVE_NOT=SAVE_NOT, $
   DATA_ARRAY=DATA_ARRAY, $
   headers_results=headers_results, headers_data=headers_data, $
   headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
@@ -194,11 +198,6 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
 
-  prg_data_ptr = 0
-  hdr_in_data_ptr = 0
-  proc_st_ptr = 0
-  proj_kwd_ptr = 0
-
   result_ptr = 0
   fit_ptr = 0
   in_data_ptr = 0
@@ -206,6 +205,11 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   weights_ptr = 0
   incl_ptr = 0
   const_ptr = 0
+
+  prg_data_ptr = 0
+  hdr_in_data_ptr = 0
+  proc_st_ptr = 0
+  proj_kwd_ptr = 0
 
   IF ~n_ana THEN BEGIN
 
@@ -277,72 +281,87 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
 
   get_headers = bytarr(6)
   if arg_present(headers_results) then begin
-    headers_results = ptrarr(n_windows_process)
+    headers_results = ptrarr(n_ana)
     get_headers[0] = 1
   endif
   if arg_present(headers_data) then begin
-    headers_data = ptrarr(n_windows_process)
+    headers_data = ptrarr(n_ana)
     get_headers[1] = 1
   endif
   if arg_present(headers_xdim1) then begin
-    headers_xdim1 = ptrarr(n_windows_process)
+    headers_xdim1 = ptrarr(n_ana)
     get_headers[2] = 1
   endif
   if arg_present(headers_weights) then begin
-    headers_weights = ptrarr(n_windows_process)
+    headers_weights = ptrarr(n_ana)
     get_headers[3] = 1
   endif
   if arg_present(headers_include) then begin
-    headers_include = ptrarr(n_windows_process)
+    headers_include = ptrarr(n_ana)
     get_headers[4] = 1
   endif
   if arg_present(headers_constants) then begin
-    headers_constants = ptrarr(n_windows_process)
+    headers_constants = ptrarr(n_ana)
     get_headers[5] = 1
   endif
 
-  n_windows = max([n_ana, n_windows])
+  n_windows_use = max([n_ana, n_windows])
   for iwindow=0,n_ana-1 do begin
+
+    IF result_ptr THEN result_use = *result[iwindow] ELSE IF N_ELEMENTS(result) GT 0 THEN result_use = result
+    IF fit_ptr THEN fit_use = *fit[iwindow] ELSE IF N_ELEMENTS(fit) GT 0 THEN fit_use = fit
+    IF in_data_ptr THEN INPUT_DATA_use = *INPUT_DATA[iwindow] ELSE IF N_ELEMENTS(input_data) GT 0 THEN input_data_use = input_data
+    IF xdim1_ptr THEN xdim1_use = *xdim1[iwindow] ELSE IF N_ELEMENTS(xdim1) GT 0 THEN xdim1_use = xdim1
+    IF weights_ptr THEN weights_use = *weights[iwindow] ELSE IF N_ELEMENTS(weights) GT 0 THEN weights_use = weights
+    IF incl_ptr THEN include_use = *include[iwindow] ELSE IF N_ELEMENTS(include) GT 0 THEN include_use = include
+    IF const_ptr THEN const_use = *const[iwindow] ELSE IF N_ELEMENTS(const) GT 0 THEN const_use = const
+
+    IF prg_data_ptr THEN PROGENITOR_DATA_use = *PROGENITOR_DATA[iwindow] ELSE IF N_ELEMENTS(PROGENITOR_DATA) GT 0 THEN PROGENITOR_DATA_use = PROGENITOR_DATA
+    IF hdr_in_data_ptr THEN HEADER_INPUT_DATA_use = *HEADER_INPUT_DATA[iwindow] ELSE IF N_ELEMENTS(HEADER_INPUT_DATA) GT 0 THEN HEADER_INPUT_DATA_use = HEADER_INPUT_DATA
+    IF proc_st_ptr THEN PROC_STEPS_use = *PROC_STEPS[iwindow] ELSE IF N_ELEMENTS(PROC_STEPS) GT 0 THEN PROC_STEPS_use = PROC_STEPS
+    IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *PROJ_KEYWORDS[iwindow] ELSE IF N_ELEMENTS(PROJ_KEYWORDS) GT 0 THEN PROJ_KEYWORDS_use = PROJ_KEYWORDS
 
     if N_ELEMENTS(ana) then begin
       headers = ana2fitshdr(ana[iwindow], FILENAME_OUT=FILENAME_OUT, $
-        N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
+        N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
         IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
-        PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-        XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
-        RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
-        CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+        PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
+        XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
+        RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $
+        CONST=const_use, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-        PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
+        PROGENITOR_DATA=PROGENITOR_DATA_use, HEADER_INPUT_DATA=HEADER_INPUT_DATA_use, $
         SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
         DATA_ARRAY=DATA_ARRAY)
     endif else begin
       headers = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
-        N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
+        N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
         IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
-        PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-        XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
-        RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
-        CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+        PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
+        XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
+        RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $
+        CONST=const_use, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-        PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
+        PROGENITOR_DATA=PROGENITOR_DATA_use, HEADER_INPUT_DATA=HEADER_INPUT_DATA_use, $
         SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
         DATA_ARRAY=DATA_ARRAY)
     endelse
 
-    writefits, filepath_out, RESULT, *headers[0], append=keyword_set(extension) || iwindow GT 0
-    IF (*headers[1])[0] NE '' THEN $
-      writefits, filepath_out, DATA_ARRAY, *headers[1], /append
-    IF (*headers[2])[0] NE '' THEN $
-      writefits, filepath_out, LAMBDA, *headers[2], /append
-    IF (*headers[3])[0] NE '' THEN $
-      writefits, filepath_out, WEIGHTS, *headers[3], /append
-    IF (*headers[4])[0] NE '' THEN $
-      writefits, filepath_out, INCLUDE, *headers[4], /append
-    IF (*headers[5])[0] NE '' THEN $
-      writefits, filepath_out, CONST, *headers[5], /append
+    IF ~keyword_set(save_not) THEN BEGIN
+      writefits, filepath_out, result_use, *headers[0], append=keyword_set(extension) || iwindow GT 0
+      IF (*headers[1])[0] NE '' THEN $
+        writefits, filepath_out, DATA_ARRAY, *headers[1], /append
+      IF (*headers[2])[0] NE '' THEN $
+        writefits, filepath_out, xdim1_use, *headers[2], /append
+      IF (*headers[3])[0] NE '' THEN $
+        writefits, filepath_out, weights_use, *headers[3], /append
+      IF (*headers[4])[0] NE '' THEN $
+        writefits, filepath_out, include_use, *headers[4], /append
+      IF (*headers[5])[0] NE '' THEN $
+        writefits, filepath_out, const_use, *headers[5], /append
+    endif
 
     if get_headers[0] then headers_results[iwindow] = ptr_new(*headers[0])
     if get_headers[1] then headers_data[iwindow] = ptr_new(*headers[1])
