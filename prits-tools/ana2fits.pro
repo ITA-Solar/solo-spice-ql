@@ -144,7 +144,7 @@
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
 ;              One string array per ANA provided.
 ;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
-;              One string array per ANA provided.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_xdim1: A pointer array, containing the headers of the xdim1 extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
@@ -169,7 +169,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-28 14:20 CET $
+; $Id: 2023-11-28 15:06 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
