@@ -38,7 +38,7 @@
 ;              will have the wrong number. This will cause problems when reading the FITS file
 ;              with FITS2ANA. It is therefore highly recommended to provide this number,
 ;              when it is planned to add windows to the FITS file in different sessions.
-;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. 'WAVE'). A string array, or a scalar, in which case
+;      TYPE_XDIM1: CTYPE of the absorbed dimension (e.g. 'WAVE'). A string array, or a scalar, in which case
 ;              the same value will be used for all windows.
 ;
 ; KEYWORDS:
@@ -47,8 +47,8 @@
 ;              If not set, the first ANA's result array will be the primary header.
 ;      SAVE_XDIM1: If set, then the XDIM1 cube will be saved into the FITS file. Default is
 ;              not to save it. This cube can be recalculated using the WCS parameters given either
-;              in HEADER_INPUT_DATA. 
-;              This keyword can also be an array of zeros and ones, 
+;              in HEADER_INPUT_DATA.
+;              This keyword can also be an array of zeros and ones,
 ;              setting/unsetting this feature separately for each window.
 ;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
 ;              It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
@@ -79,7 +79,7 @@
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related
-;              keywords that should be added to the header. 
+;              keywords that should be added to the header.
 ;              This can also be a pointer array, if each window should get their own sets of keywords.
 ;              It must then be of the same size as the RESULT pointer array or the ANA array.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
@@ -136,7 +136,7 @@
 ;
 ; OUTPUTS:
 ; This procedure saves one or more ANA structures into a FITS file.
-; 
+;
 ; OPTIONAL OUTPUT:
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
 ;              One string array per ANA provided.
@@ -156,17 +156,17 @@
 ;
 ; RESTRICTIONS:
 ; It is possible to call this procedure multiple times with the same filepath_out,
-; if in these cases the EXTENSION keyword is set, the windows will be appended to the 
-; existing FITS file. However, one needs to 
-; 
+; if in these cases the EXTENSION keyword is set, the windows will be appended to the
+; existing FITS file. However, one needs to
+;
 ; MAKE SURE THAT THE HEADER KEYWORD "NWIN" IS CORRECTLY SET.
-; 
+;
 ; See description of N_WINDOWS for more details.
 ;
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 15:15 CET $
+; $Id: 2023-11-28 12:50 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -186,35 +186,92 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   headers_include=headers_include, headers_constants=headers_constants
 
   prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
-  ana_given = N_ELEMENTS(ANA)
-  prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
-  prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
-  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-
+  n_ana = N_ELEMENTS(ANA)
+  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0
   prits_tools.parcheck, FILEPATH_OUT, 0, 'FILEPATH_OUT', 'STRING', 0
   prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
-  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0, default=indgen(max([1, ana_given]))
-  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=max([1, ana_given]), $
-    default=strtrim(indgen(max([1, ana_given])), 2)
-  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0
-  prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional=1
+  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0, default=0
   prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional
-  prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
 
-  prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', 1, optional=1
-  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=1
-  prits_tools.parcheck, DATASOURCE, 0, 'DATASOURCE', 'STRING', 0, optional=1
-  prits_tools.parcheck, DEFINITION, 0, 'DEFINITION', 'STRING', 0, optional=1
-  prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=1
-  prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=1
+  prg_data_ptr = 0
+  hdr_in_data_ptr = 0
+  proc_st_ptr = 0
+  proj_kwd_ptr = 0
+
+  result_ptr = 0
+  fit_ptr = 0
+  in_data_ptr = 0
+  xdim1_ptr = 0
+  weights_ptr = 0
+  incl_ptr = 0
+  const_ptr = 0
+
+  IF ~n_ana THEN BEGIN
+
+    prits_tools.parcheck, RESULT, 0, 'RESULT', 'POINTER', [0, 1], result=error
+    IF error NE '' THEN prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7] $
+    ELSE result_ptr = N_ELEMENTS(RESULT)
+    IF result_ptr GT 0 THEN n_ana = result_ptr ELSE n_ana = 1
+
+    IF n_ana GT 1 THEN BEGIN
+
+      prits_tools.parcheck, FIT, 0, 'FIT', 'POINTER', 1, VALID_NELEMENTS=n_ana
+      prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
+      prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
+      prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
+      prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
+      prits_tools.parcheck, CONST, 0, 'CONST', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
+
+    ENDIF ELSE BEGIN ; n_ana GT 1
+
+      prits_tools.parcheck, FIT, 0, 'FIT', 'POINTER', [0, 1], VALID_NELEMENTS=n_ana, result=error
+      IF error NE '' THEN prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0 $
+      ELSE fit_ptr = N_ELEMENTS(FIT)
+      prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
+      IF error NE '' THEN prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE in_data_ptr = N_ELEMENTS(INPUT_DATA)
+      prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
+      IF error NE '' THEN prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], /optional $
+      ELSE xdim1_ptr = N_ELEMENTS(XDIM1)
+      prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
+      IF error NE '' THEN prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE weights_ptr = N_ELEMENTS(WEIGHTS)
+      prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
+      IF error NE '' THEN prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE incl_ptr = N_ELEMENTS(INCLUDE)
+      prits_tools.parcheck, CONST, 0, 'CONST', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
+      IF error NE '' THEN prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE const_ptr = N_ELEMENTS(CONST)
+
+    ENDELSE ; n_ana GT 1
+
+  ENDIF ; ~n_ana
+
+  IF n_ana GT 1 THEN BEGIN
+    prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
+    prg_data_ptr = N_ELEMENTS(PROGENITOR_DATA)
+    prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
+    hdr_in_data_ptr = N_ELEMENTS(HEADER_INPUT_DATA)
+  ENDIF ELSE BEGIN ; n_ana GT 1
+    prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
+    IF error NE '' THEN prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+    ELSE prg_data_ptr = N_ELEMENTS(PROGENITOR_DATA)
+    prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
+    IF error NE '' THEN prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional $
+    ELSE hdr_in_data_ptr = N_ELEMENTS(HEADER_INPUT_DATA)
+  ENDELSE ; n_ana GT 1
+
+  prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana, result=error
+  IF error NE '' THEN prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional $
+  ELSE proc_st_ptr = N_ELEMENTS(PROC_STEPS)
+  prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana, result=error
+  IF error NE '' THEN   prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
+  ELSE proj_kwd_ptr = N_ELEMENTS(PROJ_KEYWORDS)
+
+  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=max([1, n_ana]), $
+    default=strtrim(indgen(max([1, n_ana])), 2)
+
 
   filename_out = file_basename(filepath_out)
 
@@ -244,8 +301,6 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     get_headers[5] = 1
   endif
 
-  n_ana = N_ELEMENTS(ana)
-  if n_ana eq 0 then n_ana=1
   n_windows = max([n_ana, n_windows])
   for iwindow=0,n_ana-1 do begin
 
