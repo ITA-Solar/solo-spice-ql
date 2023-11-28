@@ -64,7 +64,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 12:00 CET $
+; $Id: 2023-11-28 10:29 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -90,7 +90,10 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
     no_data = 1
     PRGDATA = 'F'
   ENDELSE
-  IF keyword_set(NO_SAVE_DATA) THEN no_data = 1
+  IF keyword_set(NO_SAVE_DATA) THEN BEGIN
+    data_array = 0
+    no_data = 1
+  ENDIF
   IF no_data && N_ELEMENTS(HEADER_INPUT_DATA) EQ 0 THEN return, ''
 
   fits_util = obj_new('oslo_fits_util')
