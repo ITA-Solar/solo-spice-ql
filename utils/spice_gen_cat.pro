@@ -57,10 +57,15 @@
 ;               Version 8, Terje Fredvik, 28 November 2023
 ;                          Restoring IDL save file containing catalog hashes
 ;                          is default. 
+;               Version 9, Terje Fredvik, 28 November 2023
+;                          Do not build up file list hash based on file
+;                          structure on disk, instead use saved catalog
+;                          hashes. Set use_old_catalog=0 to use disk contents instead.   
+;                   
 ;
-; Version     : Version 8, TF, 28 November 2023
+; Version     : Version 9, TF, 28 November 2023
 ;
-; $Id: 2023-11-28 11:30 CET $
+; $Id: 2023-11-28 15:13 CET $
 ;-           
 FUNCTION spice_gen_cat::extract_key,line 
   foreach level, [3, 2, 1, 0] DO BEGIN
@@ -162,8 +167,8 @@ END
 
 PRO spice_gen_cat::write_hashes_save_file
   print,'Writing '+self.d.catalog_hashes_save_file
-  old_hash = self.d.old_hash
-  old_hash_keys = self.d.old_hash_keys
+  old_hash      = self.d.file_hash
+  old_hash_keys = self.d.file_hash_keys
   save, file=self.d.catalog_hashes_save_file, old_hash, old_hash_keys
 END
 
@@ -214,14 +219,22 @@ END
 PRO spice_gen_cat::populate_hash
   print
   print, "Populating list"
-  FOREACH fits_filename, self.d.filelist, index DO BEGIN
+  
+  IF self.d.use_old_catalog THEN BEGIN 
+     print,'Do not get FITS file names from disk, assuming paths to all modified files are given in input parameter NEW_FILES'
+     self.d.file_hash_keys = self.d.old_hash_keys
+     self.d.file_hash = self.d.old_hash
+     filelist = self.d.new_files
+  ENDIF ELSE filelist = self.d.filelist
+  
+  FOREACH fits_filename, filelist, index DO BEGIN
      key = self.add_file(fits_filename,  message = message)
- 
      IF (index + 1) MOD 100 EQ 0 THEN BEGIN 
-        IF NOT self.d.quiet THEN PRINT, message + "Files done : " + (index+1).toString("(i6)") + " "+key
+        IF NOT self.d.quiet THEN  PRINT, message + "Files done : " + (index+1).toString("(i6)") + " "+key
      END
-  END
+  ENDFOREACH
 END
+
 
 
 PRO spice_gen_cat::remove_files_to_be_updated
@@ -230,10 +243,11 @@ PRO spice_gen_cat::remove_files_to_be_updated
      IF self.d.old_hash.hasKey(this_key) THEN self.d.old_hash.remove, this_key
   ENDFOREACH
 END
-  
+
+
 
 PRO spice_gen_cat::read_old_cat, catalog_filename
-  IF self.d.restore_catalog_hashes_save_file AND file_exist(self.d.catalog_hashes_save_file) THEN BEGIN 
+  IF file_exist(self.d.catalog_hashes_save_file) THEN BEGIN 
      print,'Restoring saved catalog hashes'
      restore,self.d.catalog_hashes_save_file
      self.d.old_hash = old_hash
@@ -242,7 +256,7 @@ PRO spice_gen_cat::read_old_cat, catalog_filename
      return
   ENDIF
   
-  print, "Reading old catalog"
+  print, "Catalog hashes file not found - reading old .txt catalog"
   catalog_lines = rd_ascii(catalog_filename)
   FOR i=1, n_elements(catalog_lines)-1 DO BEGIN
      key = self.extract_key(catalog_lines[i])  
@@ -313,19 +327,17 @@ FUNCTION spice_gen_cat::get_catalog_hashes_save_file
 END
 
 
-FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_old_catalog, restore_catalog_hashes_save_file=restore_catalog_hashes_save_file, $
+FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_old_catalog, $
                               dry_run=dry_run, csv_test=csv_test, new_files=new_files
   self.d = dictionary()
   
   spice_default, spice_data_dir,getenv("SPICE_DATA")
   
   spice_default, use_old_catalog, 1
-  spice_default, restore_catalog_hashes_save_file, 1
   
   self.d.quiet = keyword_set(quiet)
   self.d.use_old_catalog = use_old_catalog
 
-  
   self.d.dry_run = keyword_set(dry_run)
   self.d.csv_test = keyword_set(csv_test)
   
