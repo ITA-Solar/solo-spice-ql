@@ -31,15 +31,21 @@
 ;
 ; OPTIONAL OUTPUT:
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
+;              One string array per ANA provided.
 ;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
-;     headers_lambda: A pointer array, containing the headers of the lambda extensions as string arrays.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
+;     headers_xdim1: A pointer array, containing the headers of the xdim1 extensions as string arrays.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
 ;     prits_tools.parcheck, fits_open, fits_close, fits2ana_get_data_id, readfits, fxpar, mk_component_stc, 
-;     spice_file2info, mk_analysis
+;     spice_file2info, mk_analysis, fitshead2wcs
 ;
 ; COMMON BLOCKS:
 ;
@@ -50,23 +56,22 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-02 14:52 CET $
+; $Id: 2023-11-28 15:06 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
   headers_results=headers_results, headers_data=headers_data, $
-  headers_lambda=headers_lambda, headers_weights=headers_weights, $
+  headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
   headers_include=headers_include, headers_constants=headers_constants
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
   prits_tools.parcheck, windows, 0, "windows", 'integers', [0, 1], /optional
 
-  result = readfits(fitsfile, hdr)
-  n_windows = fxpar(hdr, 'NWIN', missing=0)
-  IF n_windows EQ 0 THEN BEGIN
-    message, 'Header keyword NWIN is missing or set to zero, can not read FITS file : ' + fitsfile, /info
-    return, 0
-  ENDIF
+  fits_open, fitsfile, fits_content
+  fits_close, fits_content
+  data_ids = fits2ana_get_data_id(fits_content)
+  n_windows = N_ELEMENTS(data_ids)
+
   IF N_ELEMENTS(windows) EQ 0 THEN BEGIN
     windows_process = indgen(n_windows)
     n_windows_process = n_windows
@@ -88,14 +93,13 @@ function fits2ana, fitsfile, windows=windows, $
   if arg_present(headers_results) then begin
     headers_results = ptrarr(n_windows_process)
     get_headers[0] = 1
-    headers_results[0] = ptr_new(hdr)
   endif
   if arg_present(headers_data) then begin
     headers_data = ptrarr(n_windows_process)
     get_headers[1] = 1
   endif
-  if arg_present(headers_lambda) then begin
-    headers_lambda = ptrarr(n_windows_process)
+  if arg_present(headers_xdim1) then begin
+    headers_xdim1 = ptrarr(n_windows_process)
     get_headers[2] = 1
   endif
   if arg_present(headers_weights) then begin
@@ -110,13 +114,6 @@ function fits2ana, fitsfile, windows=windows, $
     headers_constants = ptrarr(n_windows_process)
     get_headers[5] = 1
   endif
-  
-  fits_open, fitsfile, fits_content
-  fits_close, fits_content
-  data_ids = fits2ana_get_data_id(fits_content)
-  IF N_ELEMENTS(data_ids) NE n_windows THEN BEGIN
-    message, 'Number of data_ids is not the same as number of windows, cannot read FITS file', /info
-  ENDIF
 
   
   for iwin=0,n_windows_process-1 do begin
@@ -136,7 +133,7 @@ function fits2ana, fitsfile, windows=windows, $
      continue
     ENDIF
     extension = extension[0]
-    if iwin gt 0 then result = readfits(fitsfile, hdr, ext=extension)
+    result = readfits(fitsfile, hdr, ext=extension)
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
 
     ;extract info from header
@@ -215,13 +212,19 @@ function fits2ana, fitsfile, windows=windows, $
 
     fit = fit_components_hash.tostruct(/no_copy)
 
+
+    ; Data extension
+    
     extname = data_ids[wind_ind] + ' data'
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find data extension of window ' + strtrim(str(wind_ind), 2) + '. With EXTNAME: ' + extname, /info
       message, 'Creating dummy data cube', /info
       hdr = ''
-      data = 0 ; TODO
+      wcs_result = fitshead2wcs(hdr)
+      datasize = wcs_result.naxis
+      datasize[0] = datasize[0]*2
+      data = fltarr(datasize)
     ENDIF ELSE BEGIN
       extension = extension[0]
       data = readfits(fitsfile, hdr, ext=extension)
