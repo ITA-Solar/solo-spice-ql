@@ -118,7 +118,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 14:10 CET $
+; $Id: 2023-11-28 12:50 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
@@ -140,7 +140,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
   prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
   prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
+  prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
   prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
