@@ -169,7 +169,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-28 13:30 CET $
+; $Id: 2023-11-28 14:20 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -274,7 +274,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   ELSE proj_kwd_ptr = N_ELEMENTS(PROJ_KEYWORDS)
 
   prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=max([1, n_ana]), $
-    default=strtrim(indgen(max([1, n_ana])), 2)
+    default=strtrim(indgen(n_ana), 2)
 
 
   filename_out = file_basename(filepath_out)
@@ -321,11 +321,13 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     IF proc_st_ptr THEN PROC_STEPS_use = *PROC_STEPS[iwindow] ELSE IF N_ELEMENTS(PROC_STEPS) GT 0 THEN PROC_STEPS_use = PROC_STEPS
     IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *PROJ_KEYWORDS[iwindow] ELSE IF N_ELEMENTS(PROJ_KEYWORDS) GT 0 THEN PROJ_KEYWORDS_use = PROJ_KEYWORDS
 
+    extension = keyword_set(IS_EXTENSION) || iwindow GT 0
+    
     if N_ELEMENTS(ana) then begin
       headers = ana2fitshdr(ana[iwindow], FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
-        DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
-        IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+        DATA_ID=DATA_ID[iwindow], TYPE_XDIM1=TYPE_XDIM1, $
+        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
         RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $
@@ -337,8 +339,8 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     endif else begin
       headers = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
-        DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
-        IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+        DATA_ID=DATA_ID[iwindow], TYPE_XDIM1=TYPE_XDIM1, $
+        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
         RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $
@@ -350,7 +352,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     endelse
 
     IF ~keyword_set(save_not) THEN BEGIN
-      writefits, filepath_out, result_use, *headers[0], append=keyword_set(extension) || iwindow GT 0
+      writefits, filepath_out, result_use, *headers[0], append=extension
       IF (*headers[1])[0] NE '' THEN $
         writefits, filepath_out, DATA_ARRAY, *headers[1], /append
       IF (*headers[2])[0] NE '' THEN $
