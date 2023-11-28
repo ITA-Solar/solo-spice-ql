@@ -60,12 +60,16 @@
 ;               Version 9, Terje Fredvik, 28 November 2023
 ;                          Do not build up file list hash based on file
 ;                          structure on disk, instead use saved catalog
-;                          hashes. Set use_old_catalog=0 to use disk contents instead.   
+;                          hashes. Set use_old_catalog=0 to use disk contents
+;                          instead.  
+;              Version 10, Terje Fredvik, 28 November 2023
+;                          Do not get file list from disk when use_old_catalog
+;                          is set
 ;                   
 ;
-; Version     : Version 9, TF, 28 November 2023
+; Version     : Version 10, TF, 28 November 2023
 ;
-; $Id: 2023-11-28 15:13 CET $
+; $Id: 2023-11-28 15:33 CET $
 ;-           
 FUNCTION spice_gen_cat::extract_key,line 
   foreach level, [3, 2, 1, 0] DO BEGIN
@@ -216,6 +220,7 @@ FUNCTION spice_gen_cat::add_file, fits_filename, message=message
 END
 
 
+
 PRO spice_gen_cat::populate_hash
   print
   print, "Populating list"
@@ -233,6 +238,23 @@ PRO spice_gen_cat::populate_hash
         IF NOT self.d.quiet THEN  PRINT, message + "Files done : " + (index+1).toString("(i6)") + " "+key
      END
   ENDFOREACH
+END
+
+
+PRO spice_gen_cat::set_filelist
+  print
+  print, "Finding list of files... ", format='(A,$)'
+  
+  self.d.filelist = file_search(self.d.spice_datadir,"*.{fits,fits.gz}")
+  
+  IF self.d.filelist[0] EQ '' THEN BEGIN
+     MESSAGE,"No fits files found, exiting"
+     RETURN
+  END ELSE BEGIN
+     PRINT, "Found " + (n_elements(self.d.filelist)).toString() + " files"
+  END
+  
+  print
 END
 
 
@@ -256,7 +278,7 @@ PRO spice_gen_cat::read_old_cat, catalog_filename
      return
   ENDIF
   
-  print, "Catalog hashes file not found - reading old .txt catalog"
+  print, "Catalog hashes file not found - reading old .txt catalog instead"
   catalog_lines = rd_ascii(catalog_filename)
   FOR i=1, n_elements(catalog_lines)-1 DO BEGIN
      key = self.extract_key(catalog_lines[i])  
@@ -272,6 +294,7 @@ PRO spice_gen_cat::read_old_cat, catalog_filename
 END
 
 
+
 PRO spice_gen_cat::compare_hashes
   keys_old = self.d.old_hash_keys
   keys_new = self.d.file_hash_keys
@@ -282,25 +305,12 @@ PRO spice_gen_cat::compare_hashes
 END
 
 
-PRO spice_gen_cat::execute
-  print
-  print, "Finding list of files... ", format='(A,$)'
 
-  self.d.filelist = file_search(self.d.spice_datadir,"*.{fits,fits.gz}")
-  
-  IF self.d.filelist[0] EQ '' THEN BEGIN
-     MESSAGE,"No fits files found, exiting"
-     RETURN
-  END ELSE BEGIN
-     PRINT, "Found " + (n_elements(self.d.filelist)).toString() + " files"
-  END
-  
-  print
-  
+PRO spice_gen_cat::execute
   IF self.d.use_old_catalog THEN BEGIN
      self.read_old_cat, self.d.catalog_basename + '.txt'
      self.remove_files_to_be_updated
-  END
+  END ELSE self->set_filelist
   
   
   IF NOT self.d.csv_test THEN BEGIN
