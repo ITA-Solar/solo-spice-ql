@@ -12,8 +12,8 @@ pro test_new
   ol2 = spice_data(file)
   
   no_fitting=1
-  no_widget=1
-  no_xcfit_block=1
+  no_widget=01
+  no_xcfit_block=0
   SAVE_XDIM1=0
   NO_SAVE_DATA=0
   PRINT_HEADERS=1
@@ -28,7 +28,9 @@ pro test_new
   
   
   
+  ana = fits2ana(l3file)
   
+  spice_xcfit_block, ana=ana
   
   
   
