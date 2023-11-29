@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-11-29 14:26 CET $
+; $Id: 2023-11-29 14:43 CET $
 
 
 ;+
@@ -471,14 +471,14 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
            IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
            
            proc_step_1 =  [ $
-                          HASH('name','PRSTEP', 'value','PEAK-FINDING', 'comment','Processing step type '), $
+                          HASH('name','PRSTEP', 'value','PEAK-FINDING', 'comment','Processing step type, step '), $
                           HASH('name','PRPROC', 'value',proc_find_line.proc, 'comment','Name of procedure performing PRSTEP'), $
                           HASH('name','PRPVER', 'value',fix(proc_find_line.version, type=3), 'comment','Version of procedure PRPROC'), $
                           HASH('name','PRLIB', 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC') $
                           ]
 
            proc_step_2 =  [ $
-                          HASH('name','PRSTEP', 'value','LINE-FITTING', 'comment','Processing step type '), $
+                          HASH('name','PRSTEP', 'value','LINE-FITTING', 'comment','Processing step type, step '), $
                           HASH('name','PRPROC', 'value','spice_data::create_l3_file', 'comment','Name of procedure performing PRSTEP'), $
                           HASH('name','PRPVER', 'value',fix(version, type=3), 'comment','Version of procedure PRPROC'), $
                           HASH('name','PRLIB' , 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC'), $
@@ -489,7 +489,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
                                   string('POSITION  = '+strtrim(fix(keyword_set(position)), 2)+',', format='(A-67)') + $
                                   string('VELOCITY  = '+strtrim(vel, 2)+',', format='(A-67)') + $
                                   'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2), $
-                                      'comment','Software library containing PRPROC') $
+                                      'comment','Parameters for PRPROC') $
                           ]
            
            PROC_STEPS = LIST(proc_step_1, proc_step_2)
