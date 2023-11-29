@@ -15,31 +15,33 @@ pro test_new
   FILEPATH_OUT = '~/file.fits'
   N_WINDOWS = 3
   WINNO = 0
-  DATA_ID = ['data_id_0', 'data_id_1', 'data_id_2']
+  ;DATA_ID = ['data_id_0', 'data_id_1', 'data_id_2']
+  DATA_ID = ['data_id_0']
   TYPE_XDIM1 = 'WAVE'
   IS_EXTENSION = 0
   LEVEL = 'L3'
   VERSION = 3
-  HEADER_INPUT_DATA = ptrarr(3)
+  HEADER_INPUT_DATA = ptrarr(1)
   HEADER_INPUT_DATA[0] = ptr_new(ol2->get_header(0))
-  HEADER_INPUT_DATA[1] = ptr_new(ol2->get_header(1))
-  HEADER_INPUT_DATA[2] = ptr_new(ol2->get_header(2))
-  PROGENITOR_DATA = ptrarr(3)
+  ;HEADER_INPUT_DATA[1] = ptr_new(ol2->get_header(1))
+  ;HEADER_INPUT_DATA[2] = ptr_new(ol2->get_header(2))
+  PROGENITOR_DATA = ptrarr(1)
   PROGENITOR_DATA[0] = ptr_new(ol2->get_window_data(0))
-  PROGENITOR_DATA[1] = ptr_new(ol2->get_window_data(1))
-  PROGENITOR_DATA[2] = ptr_new(ol2->get_window_data(2))
+  ;PROGENITOR_DATA[1] = ptr_new(ol2->get_window_data(1))
+  ;PROGENITOR_DATA[2] = ptr_new(ol2->get_window_data(2))
 
 
   SAVE_XDIM1 = 0
   NO_SAVE_DATA = 0
-  PRINT_HEADERS = 1
+  PRINT_HEADERS = 0
 
 
   ol2 = spice_data(file)
   ana0 = ol2->mk_analysis(0, /init_all_cubes)
-  ana1 = ol2->mk_analysis(1, /init_all_cubes)
-  ana2 = ol2->mk_analysis(2, /init_all_cubes)
-  ana = [ana0, ana1, ana2]
+  ;ana1 = ol2->mk_analysis(1, /init_all_cubes)
+  ;ana2 = ol2->mk_analysis(2, /init_all_cubes)
+  ;ana = [ana0, ana1, ana2]
+  ana = ana0
   
 
   ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -61,8 +63,14 @@ pro test_new
 
 
 
+  l3 = readfits(FILEPATH_OUT, h31, ext=1)
+  print,h31
+  print,''
+  help,fxpar(h31, 'PRGDATA', missing='xxx')
 
 
+
+  a = fits2ana(FILEPATH_OUT)
 
 
 
