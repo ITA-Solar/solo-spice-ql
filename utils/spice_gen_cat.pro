@@ -65,20 +65,27 @@
 ;              Version 10, Terje Fredvik, 28 November 2023
 ;                          Do not get file list from disk when use_old_catalog
 ;                          is set
+;              Version 11, Terje Fredvik, 29 November 2023
+;                          
 ;                   
 ;
 ; Version     : Version 10, TF, 28 November 2023
 ;
-; $Id: 2023-11-28 15:33 CET $
-;-           
+; $Id: 2023-11-29 13:58 CET $
+;-      
+
+FUNCTION spice_gen_cat::extract_filename, line
+  pattern = "solo_L._spice[^.]+" 
+  filename = stregex(line, pattern, /extract)
+  return, filename
+END
+
 FUNCTION spice_gen_cat::extract_key,line 
   foreach level, [3, 2, 1, 0] DO BEGIN
-     level_txt = 'L'+trim(level)
-     pattern = "solo_" + level_txt + "_spice[^.]+" 
-     match = stregex(line, pattern, /extract)
-     IF match NE "" THEN BEGIN 
-        match = level_txt+'_'+match.extract('[0-9]+-[0-9]{3}')
-       return, match
+     filename = self.extract_filename(line)
+     IF filename NE "" THEN BEGIN 
+        key = level_txt+'_'+filename.extract('[0-9]+-[0-9]{3}')
+       return, key
      ENDIF
      
   END
@@ -179,6 +186,12 @@ END
 ;;
 ;; Generating catalog
 ;;
+PRO spice_gen_cat::create_catalog_from_scratch
+  stop
+  self.use_old_catalog = 0
+  self.execute
+END
+
 FUNCTION spice_gen_cat::line_from_header, header, relative_path
   value_array = []
   foreach keyword,self.d.keyword_array DO BEGIN
@@ -304,13 +317,40 @@ PRO spice_gen_cat::compare_hashes
   END
 END
 
+FUNCTION spice_gen_cat::filenames_match
+  self.set_filelist
+  keys = self.d.file_hash.keys()
+  n_keys = n_elements(keys)
+  IF n_keys NE n_elements(self.d.filelist) THEN BEGIN 
+     print,trim(n_elements(self.d.filelist))+' files found on disk, '+trim(n_keys)+' files in restored hash. Must regenerate catalogs from scratch!'
+     ;return, 0
+  ENDIF
+  
+  filenames_match = 1
+  keyct = 0
+  print,'Checking that all filenames match'
+  tic
+  WHILE keyct LT n_keys AND filenames_match DO BEGIN 
+     line = self.d.file_hash[keys[keyct]]
+     filename_hash = self.extract_filename(line)
+     filename_disk = file_basename(self.d.filelist[keyct])
+     IF filename_hash NE filename_disk THEN filenames_match = 0
+     IF keyct MOD 1000 EQ 0 THEN print,'file number '+trim(keyct)
+     keyct++
+  ENDWHILE 
+  
+  IF ~filenames_match THEN print,filename_hash + ' does not match '+filename_disk
+  toc
+  return,filenames_match
+END
+
 
 
 PRO spice_gen_cat::execute
   IF self.d.use_old_catalog THEN BEGIN
      self.read_old_cat, self.d.catalog_basename + '.txt'
      self.remove_files_to_be_updated
-  END ELSE self->set_filelist
+  END ELSE self.set_filelist
   
   
   IF NOT self.d.csv_test THEN BEGIN
@@ -321,7 +361,9 @@ PRO spice_gen_cat::execute
      self.d.file_hash = self.d.old_hash
   END
   
-  ;self.compare_hashes
+                                ;self.compare_hashes
+  filenames_in_hash_and_on_disk_match = self.filenames_match()
+  IF ~filenames_in_hash_and_on_disk_match THEN self.create_catalog_from_scratch
   
   self.write_keyword_info_file, self.d.keyword_info_filename
   
@@ -363,7 +405,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   self.d.file_hash_keys = []
   
   self.d.restore_catalog_hashes_save_file = restore_catalog_hashes_save_file
-  self.d.catalog_hashes_save_file = self->get_catalog_hashes_save_file()
+  self.d.catalog_hashes_save_file = self.get_catalog_hashes_save_file()
   
   self.d.new_files = (new_files NE !NULL) ? new_files : !NULL
   self.d.ingest_new_files = self.d.new_files NE !NULL
