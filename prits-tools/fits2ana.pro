@@ -56,13 +56,14 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-29 11:39 CET $
+; $Id: 2023-11-29 11:59 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
   headers_results=headers_results, headers_data=headers_data, $
   headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
-  headers_include=headers_include, headers_constants=headers_constants
+  headers_include=headers_include, headers_constants=headers_constants, $
+  debug=debug
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
   prits_tools.parcheck, windows, 0, "windows", 'integers', [0, 1], /optional
@@ -213,6 +214,17 @@ function fits2ana, fitsfile, windows=windows, $
     endfor ; icomp=0,component_n-1
 
     fit = fit_components_hash.tostruct(/no_copy)
+    
+    debug = keyword_set(debug)
+    IF debug THEN BEGIN
+      print,''
+      print,''
+      print,' - RESULTS -'
+      print,''
+      print,hdr
+      help,result
+      help,fit
+    ENDIF
 
 
     ; Data extension
@@ -238,7 +250,6 @@ function fits2ana, fitsfile, windows=windows, $
         ; TODO
       ENDIF
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
-      help,wcs_data
       wcs_data_exists = 1
       IF N_ELEMENTS(wcs_data) EQ 0 THEN BEGIN
         wcs_data = {naxis: size_data[1:size_data[0]]}
@@ -250,6 +261,16 @@ function fits2ana, fitsfile, windows=windows, $
     ENDELSE
     if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
 
+    IF debug THEN BEGIN
+      print,''
+      print,''
+      print,' - DATA -'
+      print,''
+      print,hdr
+      help,data
+      help,wcs_data
+    ENDIF
+
     
     ; XDIM1 extension
     
@@ -260,10 +281,8 @@ function fits2ana, fitsfile, windows=windows, $
       message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
       message, 'Creating xdim1 cube from WCS coordinates given in data extension', /info
       IF wcs_data_exists THEN BEGIN
-        help,wcs_data
         xdim1 = wcs_get_coord(wcs_data)
         xdim1 = reform(xdim1[0,*,*,*,*,*,*,*])
-        help,xdim1
       ENDIF ELSE BEGIN
         message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube', /info
         xdim1 = fltarr(wcs_data.naxis)
@@ -275,6 +294,15 @@ function fits2ana, fitsfile, windows=windows, $
     ENDELSE
     if get_headers[2] then headers_xdim1[iwin] = ptr_new(hdr)
 
+    IF debug THEN BEGIN
+      print,''
+      print,''
+      print,' - XDIM1 -'
+      print,''
+      print,hdr
+      help,xdim1
+    ENDIF
+
 
     ; WEIGHTS
     
@@ -283,7 +311,7 @@ function fits2ana, fitsfile, windows=windows, $
     IF count EQ 0 THEN BEGIN
       message, 'Could not find weights extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
       message, 'Creating weights cube with default values', /info
-      weights = 0 ; TODO
+      weights = make_array(wcs_data.naxis, value=1.0)
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
@@ -291,12 +319,26 @@ function fits2ana, fitsfile, windows=windows, $
     ENDELSE
     if get_headers[3] then headers_weights[iwin] = ptr_new(hdr)
 
+    IF debug THEN BEGIN
+      print,''
+      print,''
+      print,' - WEIGHTS -'
+      print,''
+      print,hdr
+      help,weights
+    ENDIF
+
+
+    ; INCLUDES
+
     extname = data_ids[wind_ind] + ' includes'
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find includes extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
       message, 'Creating includes cube with default values', /info
-      include = 0 ; TODO
+      datasize = wcs_result.naxis
+      datasize[0] = n_components
+      include = make_array(datasize, value=1b)
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
@@ -304,18 +346,42 @@ function fits2ana, fitsfile, windows=windows, $
     ENDELSE
     if get_headers[4] then headers_include[iwin] = ptr_new(hdr)
 
+    IF debug THEN BEGIN
+      print,''
+      print,''
+      print,' - INCLUDES -'
+      print,''
+      print,hdr
+      help,include
+    ENDIF
+
+
+    ; CONSTANTS
+
     extname = data_ids[wind_ind] + ' constants'
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find constants extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
       message, 'Creating constants cube with default values', /info
-      const = 0 ; TODO
+      datasize = wcs_result.naxis
+      datasize[0] = datasize[0]-1
+      const = make_array(datasize, value=0b)
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
       const = readfits(fitsfile, hdr, ext=extension)
     ENDELSE
     if get_headers[5] then headers_constants[iwin] = ptr_new(hdr)
+
+    IF debug THEN BEGIN
+      print,''
+      print,''
+      print,' - CONSTANTS -'
+      print,''
+      print,hdr
+      help,const
+    ENDIF
+
 
     ana = mk_analysis()
 
