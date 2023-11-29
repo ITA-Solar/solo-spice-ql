@@ -14,7 +14,7 @@
 ;
 ; CALLING SEQUENCE:
 ;     anas = fits2ana(fitsfile [ ,headers_results=headers_results, headers_data=headers_data, $
-;       headers_lambda=headers_lambda, headers_weights=headers_weights, $
+;       headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
 ;       headers_include=headers_include, headers_constants=headers_constants])
 ;
 ; INPUTS:
@@ -45,7 +45,7 @@
 ;
 ; CALLS:
 ;     prits_tools.parcheck, fits_open, fits_close, fits2ana_get_data_id, readfits, fxpar, mk_component_stc, 
-;     mk_analysis, fitshead2wcs, ana_wcs_get_transform, ana_wcs_transform_vector
+;     mk_analysis, fitshead2wcs, ana_wcs_get_transform, ana_wcs_transform_vector, wcs_get_coord
 ;
 ; COMMON BLOCKS:
 ;
@@ -56,7 +56,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-29 10:49 CET $
+; $Id: 2023-11-29 11:33 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -126,7 +126,7 @@ function fits2ana, fitsfile, windows=windows, $
       hdr = ''
       if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
       if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
-      if get_headers[2] then headers_lambda[iwin] = ptr_new(hdr)
+      if get_headers[2] then headers_xdim1[iwin] = ptr_new(hdr)
       if get_headers[3] then headers_weights[iwin] = ptr_new(hdr)
       if get_headers[4] then headers_include[iwin] = ptr_new(hdr)
       if get_headers[5] then headers_constants[iwin] = ptr_new(hdr)
@@ -135,6 +135,7 @@ function fits2ana, fitsfile, windows=windows, $
     extension = extension[0]
     result = readfits(fitsfile, hdr, ext=extension)
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
+    wcs_result = fitshead2wcs(hdr)
 
     ;extract info from header
 ;    filename = strtrim(fxpar(hdr, 'ANA_FILE', missing=''), 2)
@@ -222,18 +223,21 @@ function fits2ana, fitsfile, windows=windows, $
       message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
       message, 'Creating dummy data cube', /info
       hdr = ''
-      wcs_result = fitshead2wcs(hdr)
       datasize = wcs_result.naxis
       datasize[0] = datasize[0]*2
       data = fltarr(datasize)
+      wcs_data_exists = 0
     ENDIF ELSE BEGIN
       extension = extension[0]
       data = readfits(fitsfile, hdr, ext=extension)
       size_data = size(data)
       progenitor_data = fxpar(hdr, 'PRGDATA', missing=0)
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
+      help,wcs_data
+      wcs_data_exists = 1
       IF N_ELEMENTS(wcs_data) EQ 0 THEN BEGIN
         wcs_data = {naxis: size_data[1:size_data[0]]}
+        wcs_data_exists = 0
       ENDIF ELSE IF ind_xdim1 NE 0 THEN BEGIN
         data_dims = ana_wcs_transform_vector(indgen(size_data[0]), ind_xdim1, 0, size_data[0])
         data = transpose(data, data_dims)
@@ -250,14 +254,25 @@ function fits2ana, fitsfile, windows=windows, $
     IF count EQ 0 THEN BEGIN
       message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
       message, 'Creating xdim1 cube from WCS coordinates given in data extension', /info
-      lambda = 0 ; TODO
+      IF wcs_data_exists THEN BEGIN
+        help,wcs_data
+        xdim1 = wcs_get_coord(wcs_data)
+        xdim1 = reform(xdim1[0,*,*,*,*,*,*,*])
+        help,xdim1
+      ENDIF ELSE BEGIN
+        message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube', /info
+        xdim1 = fltarr(wcs_data.naxis)
+      ENDELSE
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
-      lambda = readfits(fitsfile, hdr, ext=extension)
+      xdim1 = readfits(fitsfile, hdr, ext=extension)
     ENDELSE
-    if get_headers[2] then headers_lambda[iwin] = ptr_new(hdr)
+    if get_headers[2] then headers_xdim1[iwin] = ptr_new(hdr)
 
+
+    ; WEIGHTS
+    
     extname = data_ids[wind_ind] + ' weights'
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
@@ -306,7 +321,7 @@ function fits2ana, fitsfile, windows=windows, $
 ;    ana.label = label
 
     handle_value,ana.history_h,history,/no_copy,/set
-    handle_value,ana.lambda_h,lambda,/no_copy,/set
+    handle_value,ana.lambda_h,xdim1,/no_copy,/set
     handle_value,ana.data_h,data,/no_copy,/set
     handle_value,ana.weights_h,weights,/no_copy,/set
     handle_value,ana.fit_h,fit,/no_copy,/set
