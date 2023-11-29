@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-11-29 14:43 CET $
+; $Id: 2023-11-29 14:53 CET $
 
 
 ;+
@@ -496,7 +496,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
            
            file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
            
-        endelse
+        endelse ; iwindow gt 0
         
         ana2fits, ANA, FILEPATH_OUT=file, $
           N_WINDOWS=N_ELEMENTS(window_index), WINNO=iwindow, $
@@ -511,7 +511,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         delete_analysis, ana
                 
         IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
-     endif
+     endif ;  ~dumbbell AND ~intensity_window
   endfor                        ; iwindow=0,N_ELEMENTS(window_index)-1
 
   IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN 
