@@ -32,7 +32,7 @@
 ; HISTORY:
 ;     2-Nov-2023: Martin Wiesmann
 ;-
-; $Id: 2023-11-02 14:19 CET $
+; $Id: 2023-11-29 11:33 CET $
 
 
 FUNCTION fits2ana_get_data_id, fits_content
@@ -44,7 +44,7 @@ FUNCTION fits2ana_get_data_id, fits_content
   IF count EQ 0 THEN return, ['']
   
   data_ids = strsplit(fits_content.extname[ind_results], ' results', /extract, /regex)
-  data_ids = data_ids.ToArray(/no_copy)
+  IF size(data_ids, /type) EQ 11 THEN data_ids = data_ids.ToArray(/no_copy)
   
   return, data_ids
 END
