@@ -74,7 +74,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 14:33 CET $
+; $Id: 2023-11-29 14:43 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -268,7 +268,7 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
     ENDFOR ; ipr
     ind = where(pr_versions eq max_version_number)
     max_ind_hdr = max(ind_pr_keywords[ind], max_ind)
-    after = pr_keywords[max_ind]
+    after = pr_keywords[ind[max_ind]]
     procstep1 = N_ELEMENTS(PROC_STEPS)-1
     procstep2 = 0
     procdstep = -1
