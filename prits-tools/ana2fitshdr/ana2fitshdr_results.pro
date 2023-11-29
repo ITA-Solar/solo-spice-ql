@@ -44,8 +44,9 @@
 ;             should be taken. If not provided the header won't include any WCS parameters.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
-;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related 
-;                 keywords that should be added to the header.
+;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
+;              where, xxx123 can be a string or a number. These are additional project-related
+;              keywords that should be added to the header.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
 ;              Each processing step consists of an array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
 ;              where, xxx123 can be a string or a number.
@@ -73,7 +74,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 14:26 CET $
+; $Id: 2023-11-29 14:33 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -250,7 +251,7 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   IF N_ELEMENTS(PROJ_KEYWORDS) GT 0 THEN BEGIN
     fits_util->add_description, hdr, 'Project-related keywords'
     for ipr=0,N_ELEMENTS(PROJ_KEYWORDS)-1 DO BEGIN
-      fits_util->add, hdr, PROJ_KEYWORDS[ipr].name, PROJ_KEYWORDS[ipr].value, PROJ_KEYWORDS[ipr].comment
+      fits_util->add, hdr, (PROJ_KEYWORDS[ipr])['name'], (PROJ_KEYWORDS[ipr])['value'], (PROJ_KEYWORDS[ipr])['comment']
     endfor ; ipr
     fits_util->add, hdr, '', ' ', after=after    
   ENDIF

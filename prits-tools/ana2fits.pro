@@ -79,7 +79,8 @@
 ;              with FITS2ANA. Default is the dataset indices.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
-;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related
+;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
+;              where, xxx123 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
 ;              This can also be a pointer array, if each window should get their own sets of keywords.
 ;              It must then be of the same size as the RESULT pointer array or the ANA array.
@@ -170,7 +171,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 14:26 CET $
+; $Id: 2023-11-29 14:33 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
