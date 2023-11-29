@@ -66,12 +66,13 @@
 ;                          Do not get file list from disk when use_old_catalog
 ;                          is set
 ;              Version 11, Terje Fredvik, 29 November 2023
-;                          
+;                          Check that the names of saved files match the
+;                          filenames in the hash
 ;                   
 ;
-; Version     : Version 10, TF, 28 November 2023
+; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-29 13:58 CET $
+; $Id: 2023-11-29 14:04 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -332,7 +333,7 @@ FUNCTION spice_gen_cat::filenames_match
   tic
   WHILE keyct LT n_keys AND filenames_match DO BEGIN 
      line = self.d.file_hash[keys[keyct]]
-     filename_hash = self.extract_filename(line)
+     filename_hash = self.extract_filename(line)+'.fits'
      filename_disk = file_basename(self.d.filelist[keyct])
      IF filename_hash NE filename_disk THEN filenames_match = 0
      IF keyct MOD 1000 EQ 0 THEN print,'file number '+trim(keyct)
