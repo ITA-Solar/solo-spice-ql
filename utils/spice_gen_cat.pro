@@ -72,7 +72,7 @@
 ;
 ; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-29 14:04 CET $
+; $Id: 2023-11-29 14:46 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -82,14 +82,12 @@ FUNCTION spice_gen_cat::extract_filename, line
 END
 
 FUNCTION spice_gen_cat::extract_key,line 
-  foreach level, [3, 2, 1, 0] DO BEGIN
-     filename = self.extract_filename(line)
-     IF filename NE "" THEN BEGIN 
-        key = level_txt+'_'+filename.extract('[0-9]+-[0-9]{3}')
-       return, key
-     ENDIF
-     
-  END
+  filename = self.extract_filename(line)
+  IF filename NE "" THEN BEGIN 
+     key = filename.extract('L.')+'_'+filename.extract('[0-9]+-[0-9]{3}')
+     return, key
+  ENDIF
+  
   message, "NO KEY!!"
 END
 
@@ -188,8 +186,10 @@ END
 ;; Generating catalog
 ;;
 PRO spice_gen_cat::create_catalog_from_scratch
-  stop
-  self.use_old_catalog = 0
+  print,'Generating catalog from scratch. This will take a very long time.'
+  self.d.use_old_catalog = 0
+  self.d.file_hash = orderedhash()
+  self.d.file_hash_keys = []
   self.execute
 END
 
@@ -198,7 +198,7 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
   foreach keyword,self.d.keyword_array DO BEGIN
      keyword_type = self.d.keyword_info[keyword].type
      missing = keyword_type EQ 't' ? 'MISSING' : 999999
-     value = trim(fxpar(header,keyword, missing=missing))
+     value = trim(fxpar(header,keyword, missing=missing,/multivalue))
      IF keyword EQ "FILE_PATH" OR keyword EQ "ICON_PATH" THEN BEGIN
         value = relative_path
      END
@@ -318,29 +318,31 @@ PRO spice_gen_cat::compare_hashes
   END
 END
 
+
+
 FUNCTION spice_gen_cat::filenames_match
   self.set_filelist
   keys = self.d.file_hash.keys()
   n_keys = n_elements(keys)
   IF n_keys NE n_elements(self.d.filelist) THEN BEGIN 
-     print,trim(n_elements(self.d.filelist))+' files found on disk, '+trim(n_keys)+' files in restored hash. Must regenerate catalogs from scratch!'
-     ;return, 0
+     print,trim(n_elements(self.d.filelist))+' files found on disk, '+trim(n_keys)+' files in restored hash.'
+     return, 0
   ENDIF
   
   filenames_match = 1
-  keyct = 0
-  print,'Checking that all filenames match'
+  keyct = n_keys-1
+  print,'Checking that all filenames match...'
   tic
-  WHILE keyct LT n_keys AND filenames_match DO BEGIN 
+  WHILE keyct GE 0 AND filenames_match DO BEGIN 
      line = self.d.file_hash[keys[keyct]]
      filename_hash = self.extract_filename(line)+'.fits'
      filename_disk = file_basename(self.d.filelist[keyct])
      IF filename_hash NE filename_disk THEN filenames_match = 0
-     IF keyct MOD 1000 EQ 0 THEN print,'file number '+trim(keyct)
-     keyct++
+     IF ~ self.d.quiet THEN IF keyct MOD 1000 EQ 0 THEN print,'file number '+trim(keyct)
+     keyct--
   ENDWHILE 
   
-  IF ~filenames_match THEN print,filename_hash + ' does not match '+filename_disk
+  print, (filenames_match) ? 'All filenames match.' : filename_hash + ' does not match '+filename_disk
   toc
   return,filenames_match
 END
@@ -373,11 +375,14 @@ PRO spice_gen_cat::execute
   self.write_hashes_save_file
 END
 
+
+
 FUNCTION spice_gen_cat::get_catalog_hashes_save_file
   level = self.d.spice_datadir.extract('level[0-9]')
   level_dir = (level EQ '') ? '' : '/l'+level.extract('[0-9]')+'/'
   return, getenv('instr_output')+'/catalog_hashes/'+(level_dir)+'spice_catalog_hashes.save'
 END
+
 
 
 FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_old_catalog, $
@@ -411,11 +416,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   self.d.new_files = (new_files NE !NULL) ? new_files : !NULL
   self.d.ingest_new_files = self.d.new_files NE !NULL
 
-  IF ~use_old_catalog THEN BEGIN 
-     print
-     message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
-     IF ~self.d.restore_catalog_hashes_save_file THEN message,'It takes a long time to parse .txt catalog file - consider setting RESTORE_CATALOG_HASHES_SAVE_FILE=1',/info
-  END 
+  IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
   
   return, 1
 END
