@@ -72,7 +72,7 @@
 ;
 ; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-29 15:59 CET $
+; $Id: 2023-11-29 16:01 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -188,7 +188,6 @@ END
 ;; Generating catalog
 ;;
 PRO spice_gen_cat::create_catalog_from_scratch
-  stop
   print,'Generating catalog from scratch. This will take a very long time.'
   self.d.use_old_catalog = 0
   self.d.file_hash = orderedhash()
