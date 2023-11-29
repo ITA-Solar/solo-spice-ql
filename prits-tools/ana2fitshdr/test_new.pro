@@ -70,7 +70,7 @@ pro test_new
 
 
 
-  a = fits2ana(FILEPATH_OUT)
+  a = fits2ana(FILEPATH_OUT, /debug)
 
 
 
