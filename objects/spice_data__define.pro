@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-11-29 13:43 CET $
+; $Id: 2023-11-29 14:26 CET $
 
 
 ;+
@@ -470,29 +470,29 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
            IS_EXTENSION=0
            IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
            
-           version_and_params_1 = { $
-                                  step:'PEAK-FINDING', $
-                                  proc:proc_find_line.proc, $
-                                  version:fix(proc_find_line.version, type=3), $
-                                  lib:'solarsoft/so/spice/idl/quicklook', $
-                                  params:'' $
-                                  }
+           proc_step_1 =  [ $
+                          HASH('name','PRSTEP', 'value','PEAK-FINDING', 'comment','Processing step type '), $
+                          HASH('name','PRPROC', 'value',proc_find_line.proc, 'comment','Name of procedure performing PRSTEP'), $
+                          HASH('name','PRPVER', 'value',fix(proc_find_line.version, type=3), 'comment','Version of procedure PRPROC'), $
+                          HASH('name','PRLIB', 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC') $
+                          ]
+
+           proc_step_2 =  [ $
+                          HASH('name','PRSTEP', 'value','LINE-FITTING', 'comment','Processing step type '), $
+                          HASH('name','PRPROC', 'value','spice_data::create_l3_file', 'comment','Name of procedure performing PRSTEP'), $
+                          HASH('name','PRPVER', 'value',fix(version, type=3), 'comment','Version of procedure PRPROC'), $
+                          HASH('name','PRLIB' , 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC'), $
+                          HASH('name','PRPARA', 'value',$
+                                  string('LINE_LIST = '+strtrim(fix(~keyword_set(no_line_list)), 2)+',', format='(A-67)') + $
+                                  string('MASKING   = '+strtrim(fix(~keyword_set(no_masking)), 2)+',', format='(A-67)') + $
+                                  string('FITTING   = '+strtrim(fix(~keyword_set(no_fitting)), 2)+',', format='(A-67)') + $
+                                  string('POSITION  = '+strtrim(fix(keyword_set(position)), 2)+',', format='(A-67)') + $
+                                  string('VELOCITY  = '+strtrim(vel, 2)+',', format='(A-67)') + $
+                                  'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2), $
+                                      'comment','Software library containing PRPROC') $
+                          ]
            
-           version_and_params_2 = { $
-                                  step:'LINE-FITTING', $
-                                  proc:'spice_data::create_l3_file', $
-                                  version:fix(version, type=3), $
-                                  lib:'solarsoft/so/spice/idl/quicklook', $
-                                  params: $
-                                  string('LINE_LIST = '+strtrim(string(fix(~keyword_set(no_line_list))), 2)+',', format='(A-67)') + $
-                                  string('MASKING   = '+strtrim(string(fix(~keyword_set(no_masking))), 2)+',', format='(A-67)') + $
-                                  string('FITTING   = '+strtrim(string(fix(~keyword_set(no_fitting))), 2)+',', format='(A-67)') + $
-                                  string('POSITION  = '+strtrim(string(fix(keyword_set(position))), 2)+',', format='(A-67)') + $
-                                  string('VELOCITY  = '+strtrim(string(vel), 2)+',', format='(A-67)') + $
-                                  'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2) $
-                                  }
-           
-           version_and_params = [version_and_params_1, version_and_params_2]
+           PROC_STEPS = LIST(proc_step_1, proc_step_2)
            
            file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
            
@@ -508,29 +508,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
           SAVE_NOT=SAVE_NOT, $
           headers_results=all_result_headers, headers_data=all_data_headers
           
-          
-          
-;                  headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
-;                              extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
-;                              HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-;                              FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-;                              CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-;                              DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-;                              original_data=original_data, spice=version_and_params)
-        
         delete_analysis, ana
                 
-;        IF ~keyword_set(save_not) THEN BEGIN
-;           writefits, file, RESULT, *headers[0], append=IS_EXTENSION
-;           writefits, file, original_data, *headers[1], /append
-;           writefits, file, LAMBDA, *headers[2], /append
-;           writefits, file, RESIDUAL, *headers[3], /append
-;           writefits, file, WEIGHTS, *headers[4], /append
-;           writefits, file, INCLUDE, *headers[5], /append
-;           writefits, file, CONST, *headers[6], /append
-;        ENDIF
-        
-        IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(version_and_params)
+        IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
      endif
   endfor                        ; iwindow=0,N_ELEMENTS(window_index)-1
 

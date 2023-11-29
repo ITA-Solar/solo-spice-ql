@@ -47,10 +47,11 @@
 ;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related 
 ;                 keywords that should be added to the header.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
-;                 Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
-;                 The type can be any of the following:
-;                 PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
-;                 PRSTEP should be included. The name and the comment will get a number between 1 and 99 added.
+;              Each processing step consists of an array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
+;              where, xxx123 can be a string or a number.
+;              The name can be any of the following:
+;              PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
+;              PRSTEP should be included. The name and the comment will get the processing step number added.
 ;      HISTORY: A string array.
 ;      FILENAME_ANA: The filename of the ANA-file. This will be ignored.
 ;      DATASOURCE: A string. This will be ignored.
@@ -72,7 +73,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 13:42 CET $
+; $Id: 2023-11-29 14:26 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -288,7 +289,7 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
       prdstep = 1
     endelse
     for ipr=prstep1,prstep2,prdstep DO BEGIN
-      fits_util->add, hdr, prstep[ipr].name+new_version, prstep[ipr].value, prstep[ipr].comment+new_version, after=after
+      fits_util->add, hdr, (prstep[ipr])['name']+new_version, (prstep[ipr])['value'], (prstep[ipr])['comment']+new_version, after=after
     endfor ; ipr
     fits_util->add, hdr, '', ' ', after=after
   endfor ; istep

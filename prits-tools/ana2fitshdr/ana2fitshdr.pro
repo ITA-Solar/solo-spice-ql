@@ -66,10 +66,11 @@
 ;      PROJ_KEYWORDS: A list or array of structures of type {name:'', value:'', comment:''} with additional project-related
 ;                 keywords that should be added to the header.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
-;                 Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
-;                 The name can be any of the following:
-;                 PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
-;                 PRSTEP should be included. The name and the comment will get the processing step number added.
+;              Each processing step consists of an array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
+;              where, xxx123 can be a string or a number.
+;              The name can be any of the following:
+;              PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
+;              PRSTEP should be included. The name and the comment will get the processing step number added.
 ;
 ; OPTIONAL INPUTS/OUTPUTS:
 ;      All of the following optional inputs must be provided if 'ANA' is not provided.
@@ -118,7 +119,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-28 12:50 CET $
+; $Id: 2023-11-29 14:26 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $

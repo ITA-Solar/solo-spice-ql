@@ -84,7 +84,8 @@
 ;              This can also be a pointer array, if each window should get their own sets of keywords.
 ;              It must then be of the same size as the RESULT pointer array or the ANA array.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
-;              Each processing step consists of an array of structures of type {name:'', value:'', comment:''}
+;              Each processing step consists of an array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
+;              where, xxx123 can be a string or a number.
 ;              The name can be any of the following:
 ;              PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
 ;              PRSTEP should be included. The name and the comment will get the processing step number added.
@@ -169,7 +170,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 13:43 CET $
+; $Id: 2023-11-29 14:26 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
