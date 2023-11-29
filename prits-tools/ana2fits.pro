@@ -169,7 +169,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-28 15:06 CET $
+; $Id: 2023-11-29 13:43 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -184,7 +184,6 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
   SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
   SAVE_NOT=SAVE_NOT, $
-  DATA_ARRAY=DATA_ARRAY, $
   headers_results=headers_results, headers_data=headers_data, $
   headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
   headers_include=headers_include, headers_constants=headers_constants
@@ -214,7 +213,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   IF ~n_ana THEN BEGIN
 
     prits_tools.parcheck, RESULT, 0, 'RESULT', 'POINTER', [0, 1], result=error
-    IF error NE '' THEN prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7] $
+    IF error[0] NE '' THEN prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7] $
     ELSE result_ptr = N_ELEMENTS(RESULT)
     IF result_ptr GT 0 THEN n_ana = result_ptr ELSE n_ana = 1
 
@@ -230,22 +229,22 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     ENDIF ELSE BEGIN ; n_ana GT 1
 
       prits_tools.parcheck, FIT, 0, 'FIT', 'POINTER', [0, 1], VALID_NELEMENTS=n_ana, result=error
-      IF error NE '' THEN prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0 $
+      IF error[0] NE '' THEN prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0 $
       ELSE fit_ptr = N_ELEMENTS(FIT)
       prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error NE '' THEN prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      IF error[0] NE '' THEN prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE in_data_ptr = N_ELEMENTS(INPUT_DATA)
       prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error NE '' THEN prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], /optional $
+      IF error[0] NE '' THEN prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], /optional $
       ELSE xdim1_ptr = N_ELEMENTS(XDIM1)
       prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error NE '' THEN prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      IF error[0] NE '' THEN prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE weights_ptr = N_ELEMENTS(WEIGHTS)
       prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error NE '' THEN prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      IF error[0] NE '' THEN prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE incl_ptr = N_ELEMENTS(INCLUDE)
       prits_tools.parcheck, CONST, 0, 'CONST', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error NE '' THEN prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      IF error[0] NE '' THEN prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE const_ptr = N_ELEMENTS(CONST)
 
     ENDELSE ; n_ana GT 1
@@ -259,18 +258,18 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     hdr_in_data_ptr = N_ELEMENTS(HEADER_INPUT_DATA)
   ENDIF ELSE BEGIN ; n_ana GT 1
     prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-    IF error NE '' THEN prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+    IF error[0] NE '' THEN prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
     ELSE prg_data_ptr = N_ELEMENTS(PROGENITOR_DATA)
     prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-    IF error NE '' THEN prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional $
+    IF error[0] NE '' THEN prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional $
     ELSE hdr_in_data_ptr = N_ELEMENTS(HEADER_INPUT_DATA)
   ENDELSE ; n_ana GT 1
 
   prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana, result=error
-  IF error NE '' THEN prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional $
+  IF error[0] NE '' THEN prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional $
   ELSE proc_st_ptr = N_ELEMENTS(PROC_STEPS)
   prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana, result=error
-  IF error NE '' THEN   prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
+  IF error[0] NE '' THEN   prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
   ELSE proj_kwd_ptr = N_ELEMENTS(PROJ_KEYWORDS)
 
   prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=max([1, n_ana]), $
