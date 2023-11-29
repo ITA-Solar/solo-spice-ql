@@ -56,7 +56,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-29 11:59 CET $
+; $Id: 2023-11-29 14:53 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -292,6 +292,7 @@ function fits2ana, fitsfile, windows=windows, $
       extension = extension[0]
       xdim1 = readfits(fitsfile, hdr, ext=extension)
     ENDELSE
+    xdim1 = fix(xdim1, type=size(data, /type))
     if get_headers[2] then headers_xdim1[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
