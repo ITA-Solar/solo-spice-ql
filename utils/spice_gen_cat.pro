@@ -72,7 +72,7 @@
 ;
 ; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-29 14:46 CET $
+; $Id: 2023-11-29 15:59 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -90,6 +90,8 @@ FUNCTION spice_gen_cat::extract_key,line
   
   message, "NO KEY!!"
 END
+
+
 
 
 FUNCTION spice_gen_cat::get_header,filename
@@ -186,6 +188,7 @@ END
 ;; Generating catalog
 ;;
 PRO spice_gen_cat::create_catalog_from_scratch
+  stop
   print,'Generating catalog from scratch. This will take a very long time.'
   self.d.use_old_catalog = 0
   self.d.file_hash = orderedhash()
@@ -198,11 +201,13 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
   foreach keyword,self.d.keyword_array DO BEGIN
      keyword_type = self.d.keyword_info[keyword].type
      missing = keyword_type EQ 't' ? 'MISSING' : 999999
+     
      value = trim(fxpar(header,keyword, missing=missing,/multivalue))
+     
      IF keyword EQ "FILE_PATH" OR keyword EQ "ICON_PATH" THEN BEGIN
         value = relative_path
      END
-     value_array =  [value_array, value]
+     value_array =  [value_array, value[0]]
   END
   RETURN,strjoin(value_array,string(9b))
 END
@@ -365,8 +370,10 @@ PRO spice_gen_cat::execute
   END
   
                                 ;self.compare_hashes
-  filenames_in_hash_and_on_disk_match = self.filenames_match()
-  IF ~filenames_in_hash_and_on_disk_match THEN self.create_catalog_from_scratch
+  IF self.d.use_old_catalog THEN BEGIN 
+     filenames_in_hash_and_on_disk_match = self.filenames_match()
+     IF ~filenames_in_hash_and_on_disk_match THEN self.create_catalog_from_scratch
+  ENDIF
   
   self.write_keyword_info_file, self.d.keyword_info_filename
   
