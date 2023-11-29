@@ -44,8 +44,8 @@
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
-;     prits_tools.parcheck, fits_open, fits_close, fits2ana_get_data_id, readfits, fxpar, mk_component_stc, 
-;     mk_analysis, fitshead2wcs, ana_wcs_get_transform, ana_wcs_transform_vector, wcs_get_coord
+;     SPICE library: prits_tools.parcheck, fits2ana_get_data_id, ana_wcs_get_transform, ana_wcs_transform_vector
+;     GEN library: fits_open, fits_close, readfits, fxpar, mk_analysis, mk_component_stc, fitshead2wcs, wcs_get_coord
 ;
 ; COMMON BLOCKS:
 ;
@@ -56,7 +56,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-29 14:54 CET $
+; $Id: 2023-11-29 15:00 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $

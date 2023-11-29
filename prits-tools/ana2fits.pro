@@ -35,9 +35,8 @@
 ;              in case ana is not provided. But if you call this procedure mutliple times
 ;              with the same filepath_out and EXTENSION keyword set, the procedure can not know
 ;              what the final total number of windows will be, and thus the header keyword 'NWIN' in the result extension
-;              will have the wrong number. This will cause problems when reading the FITS file
-;              with FITS2ANA. It is therefore highly recommended to provide this number,
-;              when it is planned to add windows to the FITS file in different sessions.
+;              may have the wrong number. This will NOT cause any problems when reading the FITS file
+;              with FITS2ANA.
 ;      TYPE_XDIM1: CTYPE of the absorbed dimension (e.g. 'WAVE'). A string array, or a scalar, in which case
 ;              the same value will be used for all windows.
 ;
@@ -157,7 +156,8 @@
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
-;     prits_tools.parcheck, ana2fitshdr, writefits
+;     SPICE library: prits_tools.parcheck, ana2fitshdr
+;     GEN library: writefits
 ;
 ; RESTRICTIONS:
 ; It is possible to call this procedure multiple times with the same filepath_out,
@@ -171,7 +171,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 14:33 CET $
+; $Id: 2023-11-29 15:00 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
