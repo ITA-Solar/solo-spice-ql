@@ -36,6 +36,7 @@
 ;            contain a CTYPE with value XDIM1_TYPE.
 ;
 ; OPTIONAL OUTPUTS:
+;      ind_xdim1: The index of the absorbed dimension before transformation.
 ;
 ; CALLS:
 ;      prits_tools.parcheck, fxpar, fitshead2wcs, ana_wcs_transform
@@ -43,10 +44,10 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 12:00 CET $
+; $Id: 2023-11-29 10:46 CET $
 
 
-FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA
+FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA, ind_xdim1=ind_xdim1
 
   prits_tools.parcheck, XDIM1_TYPE, 1, 'XDIM1_TYPE', 'STRING', 0
   prits_tools.parcheck, HEADERS_INPUT_DATA, 2, 'HEADERS_INPUT_DATA', 'STRING', 1, /optional
