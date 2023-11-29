@@ -10,6 +10,34 @@ pro test_new
 ;  help,d2
 
   ol2 = spice_data(file)
+  
+  no_fitting=1
+  no_widget=1
+  no_xcfit_block=1
+  SAVE_XDIM1=0
+  NO_SAVE_DATA=0
+  PRINT_HEADERS=1
+  
+  window_index = 1
+  
+  l3file = ol2->create_l3_file( window_index, $
+    no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, $
+    SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS )
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  return
+  
+  
   ana = ol2->mk_analysis(0, /init_all_cubes)
 
   FILEPATH_OUT = '~/file.fits'
