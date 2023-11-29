@@ -56,7 +56,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-29 11:33 CET $
+; $Id: 2023-11-29 11:39 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -232,6 +232,11 @@ function fits2ana, fitsfile, windows=windows, $
       data = readfits(fitsfile, hdr, ext=extension)
       size_data = size(data)
       progenitor_data = fxpar(hdr, 'PRGDATA', missing=0)
+      IF size_data[0] EQ 0 THEN BEGIN
+        message, 'Loading data cube from external extension', /info
+        message, 'TODO', /info
+        ; TODO
+      ENDIF
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
       help,wcs_data
       wcs_data_exists = 1
