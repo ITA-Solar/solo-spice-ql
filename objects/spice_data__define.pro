@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-11-29 14:53 CET $
+; $Id: 2023-11-30 10:21 CET $
 
 
 ;+
@@ -402,6 +402,14 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   
   if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
+  IF ARG_PRESENT(all_result_headers) THEN BEGIN
+    all_result_headers = ptrarr(N_ELEMENTS(window_index))
+    collect_hdr=1
+  ENDIF ELSE collect_hdr=0
+  IF ARG_PRESENT(all_data_headers) THEN BEGIN
+    all_data_headers = ptrarr(N_ELEMENTS(window_index))
+    collect_hdr_data=1
+  ENDIF ELSE collect_hdr_data=0
   IF ARG_PRESENT(all_proc_steps) THEN BEGIN
     all_proc_steps = ptrarr(N_ELEMENTS(window_index))
     collect_proc_steps=1
@@ -506,10 +514,12 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
           PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=self->get_header(window_index[iwindow]), $
           SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
           SAVE_NOT=SAVE_NOT, $
-          headers_results=all_result_headers, headers_data=all_data_headers
+          headers_results=headers_results, headers_data=headers_data
           
         delete_analysis, ana
                 
+        IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
+        IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
         IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
      endif ;  ~dumbbell AND ~intensity_window
   endfor                        ; iwindow=0,N_ELEMENTS(window_index)-1
