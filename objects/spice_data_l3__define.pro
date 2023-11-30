@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2023-11-30 11:40 CET $
 
 
 ;+
@@ -338,30 +338,37 @@ FUNCTION spice_data_l3::get_l3_processing_steps, headers_results
     l3_pr_steps = !NULL
     FOR istep=0,count_step-1 DO BEGIN
       prstep = fxpar(hdr, pr_keywords[ind[istep]], missing='')
-      IF prstep EQ 'LINE-FITTING' || prstep EQ 'PEAK-FINDING' THEN BEGIN
+      IF prstep EQ 'LINE-FITTING' || prstep EQ 'PEAK-FINDING' || prstep EQ 'MANUAL-LINE-FITTING' THEN BEGIN
+        proc_step = [HASH('name','PRSTEP', 'value',prstep, 'comment','Processing step type, step ')]
         
         ind_proc = where(pr_keywords.startswith('PRPROC') AND pr_versions EQ pr_versions[ind[istep]], count_proc)
-        IF count_proc GT 0 THEN proc = fxpar(hdr, pr_keywords[ind_proc[0]], missing='') $
-        ELSE proc = '' 
+        IF count_proc GT 0 THEN BEGIN
+          proc = fxpar(hdr, pr_keywords[ind_proc[0]], missing='')
+          proc_step = [proc_step, HASH('name','PRPROC', 'value',proc, 'comment','Name of procedure performing PRSTEP')]
+        ENDIF
         
         ind_version = where(pr_keywords.startswith('PRPVER') AND pr_versions EQ pr_versions[ind[istep]], count_version)
-        IF count_version GT 0 THEN version = fix(fxpar(hdr, pr_keywords[ind_version[0]], missing=0L), type=3) $
-        ELSE version = 0L
+        IF count_version GT 0 THEN BEGIN
+          version = fix(fxpar(hdr, pr_keywords[ind_version[0]], missing=0L), type=3)
+          proc_step = [proc_step, HASH('name','PRPVER', 'value',version, 'comment','Version of procedure PRPROC')]
+        ENDIF
   
         ind_lib = where(pr_keywords.startswith('PRLIB') AND pr_versions EQ pr_versions[ind[istep]], count_lib)
-        IF count_lib GT 0 THEN lib = fxpar(hdr, pr_keywords[ind_lib[0]], missing='') $
-        ELSE lib = '' 
+        IF count_lib GT 0 THEN BEGIN
+          lib = fxpar(hdr, pr_keywords[ind_lib[0]], missing='')
+          proc_step = [proc_step, HASH('name','PRLIB' , 'value',lib, 'comment','Software library containing PRPROC')]
+        ENDIF
   
         ind_params = where(pr_keywords.startswith('PRPARA') AND pr_versions EQ pr_versions[ind[istep]], count_params)
-        IF count_params GT 0 THEN params = fxpar(hdr, pr_keywords[ind_params[0]], missing='') $
-        ELSE params = ''
-        
-        temp = {step:prstep, proc:proc, version:version, lib:lib, params:params}
+        IF count_params GT 0 THEN BEGIN
+          params = fxpar(hdr, pr_keywords[ind_params[0]], missing='')
+          proc_step = [proc_step, HASH('name','PRPARA', 'value',params, 'comment','Parameters for PRPROC')]
+        ENDIF
         
         IF N_ELEMENTS(l3_pr_steps) EQ 0 THEN BEGIN
-          l3_pr_steps = [temp]
+          l3_pr_steps = list(proc_step, /no_copy)
         ENDIF ELSE BEGIN
-          l3_pr_steps = [l3_pr_steps, temp]
+          l3_pr_steps.add, proc_step, /no_copy
         ENDELSE
       ENDIF
     ENDFOR
