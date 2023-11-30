@@ -72,7 +72,7 @@
 ;
 ; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-30 10:48 CET $
+; $Id: 2023-11-30 13:18 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -200,9 +200,7 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
   foreach keyword,self.d.keyword_array DO BEGIN
      keyword_type = self.d.keyword_info[keyword].type
      missing = keyword_type EQ 't' ? 'MISSING' : 999999
-     
      value = trim(fxpar(header,keyword, missing=missing,/multivalue))
-     
      IF keyword EQ "FILE_PATH" OR keyword EQ "ICON_PATH" THEN BEGIN
         value = relative_path
      END
@@ -244,7 +242,7 @@ PRO spice_gen_cat::populate_hash
   print, "Populating list"
   
   IF self.d.use_old_catalog THEN BEGIN 
-     print,'Do not get FITS file names from disk, assuming paths to all modified files are given in input parameter NEW_FILES'
+     print,'Using FITS filenames from saved hash. Only files corresponding to input parameter NEW_FILES are modified.'
      self.d.file_hash_keys = self.d.old_hash_keys
      self.d.file_hash = self.d.old_hash
      filelist = self.d.new_files
@@ -327,28 +325,25 @@ END
 
 
 FUNCTION spice_gen_cat::filenames_match
+  tic
   self.set_filelist
   keys = self.d.file_hash.keys()
   n_keys = n_elements(keys)
-  IF n_keys NE n_elements(self.d.filelist) THEN BEGIN 
-     print,trim(n_elements(self.d.filelist))+' files found on disk, '+trim(n_keys)+' files in restored hash.'
-     return, 0
-  ENDIF
   
-  filenames_match = 1
-  keyct = n_keys-1
-  print,'Checking that FITS filenames in saved hash match FITS filenames on disk:'
-  tic
-  WHILE keyct GE 0 AND filenames_match DO BEGIN 
-     line = self.d.file_hash[keys[keyct]]
-     filename_hash = self.extract_filename(line)+'.fits'
-     filename_disk = file_basename(self.d.filelist[keyct])
-     IF filename_hash NE filename_disk THEN filenames_match = 0
-     IF ~ self.d.quiet THEN IF keyct MOD 1000 EQ 0 THEN print,'Checked '+trim(keyct)+' files...'
-     keyct--
-  ENDWHILE 
+  files_in_hash = strarr(n_keys)
+  FOREACH key, keys, ix DO BEGIN 
+     line = self.d.file_hash[key]
+     files_in_hash[ix] = self.extract_filename(line)+'.fits'
+  ENDFOREACH
+  files_in_hash = files_in_hash[sort(files_in_hash)]
   
-  print, (filenames_match) ? 'All filenames match.' : filename_hash + ' does not match '+filename_disk
+  files_on_disk = file_basename(self.d.filelist)
+  files_on_disk = files_on_disk[sort(files_on_disk)]
+  
+  filenames_match = array_equal(files_on_disk, files_in_hash)
+  
+  match_txt = (filenames_match) ? 'Files match.' : 'Files do not match!'
+  print,'Checking that FITS filenames in saved hash match FITS filenames on disk: ' + match_txt
   toc
   return,filenames_match
 END
