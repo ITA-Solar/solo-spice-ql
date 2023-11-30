@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2023-11-30 11:40 CET $
+; $Id: 2023-11-30 16:17 CET $
 
 
 ;+
@@ -74,11 +74,24 @@ FUNCTION spice_data_l3::init, file
   hdr = headfits(file, exten=0)
   self.nwin = fxpar(hdr, 'NWIN', missing=0)
   self.l2_filename = fxpar(hdr, 'PGFILENA', missing='')
+  fits_open, file, fits_content
+  fits_close, fits_content
+  data_ids = fits2ana_get_data_id(fits_content)
+  n_windows = N_ELEMENTS(data_ids)
   headers_results = ptrarr(self.nwin)
-  headers_results[0] = ptr_new(hdr)
-  for i=1,self.nwin-1 do begin
-    hdr = headfits(file, exten=7*i)
-    headers_results[i] = ptr_new(hdr)
+  for iwin=0,n_windows-1 do begin
+    extname = data_ids[iwin] + ' results'
+    extension = where(fits_content.extname EQ extname, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find result extension of window ' + strtrim(iwin, 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Ignoring this window', /info
+      hdr = ''
+      headers_results[iwin] = ptr_new(hdr)
+      continue
+    ENDIF
+    extension = extension[0]
+    hdr = headfits(file, exten=extension)
+    headers_results[iwin] = ptr_new(hdr)
   endfor
   self.headers_results = ptr_new(headers_results)
   return, 1
