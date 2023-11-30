@@ -64,7 +64,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-28 10:29 CET $
+; $Id: 2023-11-30 16:17 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -117,6 +117,9 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
   fits_util->add, hdr, 'PRGDATA', PRGDATA, 'Indicator whether data is in its original form (progenitor)'
+
+  fits_util->remove_keyword, hdr, 'PCOUNT'
+  fits_util->remove_keyword, hdr, 'GCOUNT'
 
   IF keyword_set(HEADER_INPUT_DATA) && ~no_data THEN BEGIN
 
