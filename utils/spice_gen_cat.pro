@@ -72,7 +72,7 @@
 ;
 ; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-29 16:01 CET $
+; $Id: 2023-11-30 09:29 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -228,7 +228,7 @@ FUNCTION spice_gen_cat::add_file, fits_filename, message=message
   END ELSE BEGIN
      message = "(NEW  ) "
   END
-  
+  stop
   header = self.get_header(fits_filename)
   relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
   relative_path = file_dirname(relative_filename)
@@ -251,6 +251,7 @@ PRO spice_gen_cat::populate_hash
   ENDIF ELSE filelist = self.d.filelist
   
   FOREACH fits_filename, filelist, index DO BEGIN
+     stop
      key = self.add_file(fits_filename,  message = message)
      IF (index + 1) MOD 100 EQ 0 THEN BEGIN 
         IF NOT self.d.quiet THEN  PRINT, message + "Files done : " + (index+1).toString("(i6)") + " "+key
