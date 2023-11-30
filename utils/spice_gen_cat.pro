@@ -72,7 +72,7 @@
 ;
 ; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-30 10:44 CET $
+; $Id: 2023-11-30 10:48 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -250,7 +250,7 @@ PRO spice_gen_cat::populate_hash
      filelist = self.d.new_files
   ENDIF ELSE filelist = self.d.filelist
   
-  print,'Adding/modifying '+n_elements(filelist)+' files:'
+  print,'Adding/modifying '+trim(n_elements(filelist))+' files:'
   
   FOREACH fits_filename, filelist, index DO BEGIN
      key = self.add_file(fits_filename,  message = message)
