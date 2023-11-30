@@ -72,7 +72,7 @@
 ;
 ; Version     : Version 11, TF, 29 November 2023
 ;
-; $Id: 2023-11-30 09:49 CET $
+; $Id: 2023-11-30 10:44 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -250,9 +250,11 @@ PRO spice_gen_cat::populate_hash
      filelist = self.d.new_files
   ENDIF ELSE filelist = self.d.filelist
   
+  print,'Adding/modifying '+n_elements(filelist)+' files:'
+  
   FOREACH fits_filename, filelist, index DO BEGIN
      key = self.add_file(fits_filename,  message = message)
-     IF (index + 1) MOD 100 EQ 0 THEN BEGIN 
+     IF (index + 1) MOD 1000 EQ 0 THEN BEGIN 
         IF NOT self.d.quiet THEN  PRINT, message + "Files done : " + (index+1).toString("(i6)") + " "+key
      END
   ENDFOREACH
@@ -335,14 +337,14 @@ FUNCTION spice_gen_cat::filenames_match
   
   filenames_match = 1
   keyct = n_keys-1
-  print,'Checking that all filenames match...'
+  print,'Checking that FITS filenames in saved hash match FITS filenames on disk:'
   tic
   WHILE keyct GE 0 AND filenames_match DO BEGIN 
      line = self.d.file_hash[keys[keyct]]
      filename_hash = self.extract_filename(line)+'.fits'
      filename_disk = file_basename(self.d.filelist[keyct])
      IF filename_hash NE filename_disk THEN filenames_match = 0
-     IF ~ self.d.quiet THEN IF keyct MOD 1000 EQ 0 THEN print,'file number '+trim(keyct)
+     IF ~ self.d.quiet THEN IF keyct MOD 1000 EQ 0 THEN print,'Checked '+trim(keyct)+' files...'
      keyct--
   ENDWHILE 
   
