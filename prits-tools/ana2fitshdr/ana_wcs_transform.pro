@@ -38,50 +38,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-27 12:00 CET $
-
-
-FUNCTION ana_wcs_transform_vector, vector, move_dim, dest_dim, naxis
-  new_vector = vector
-  move_i = 0
-  FOR i=0,naxis-1 DO BEGIN
-    IF move_i EQ move_dim THEN move_i++
-    IF i EQ dest_dim THEN BEGIN
-      new_vector[i] = vector[move_dim]
-    ENDIF ELSE BEGIN
-      new_vector[i] = vector[move_i]
-      move_i++
-    ENDELSE
-  ENDFOR
-  return, new_vector
-END
-
-
-FUNCTION ana_wcs_transform_array, array, move_dim, dest_dim, naxis
-  new_array = array
-  move_i = 0
-  FOR i=0,naxis-1 DO BEGIN
-    IF move_i EQ move_dim THEN move_i++
-    IF i EQ dest_dim THEN BEGIN
-      new_array[i,*] = array[move_dim,*]
-    ENDIF ELSE BEGIN
-      new_array[i,*] = array[move_i,*]
-      move_i++
-    ENDELSE
-  ENDFOR
-  array1 =new_array
-  move_i = 0
-  FOR i=0,naxis-1 DO BEGIN
-    IF move_i EQ move_dim THEN move_i++
-    IF i EQ dest_dim THEN BEGIN
-      new_array[*,i] = array1[*,move_dim]
-    ENDIF ELSE BEGIN
-      new_array[*,i] = array1[*,move_i]
-      move_i++
-    ENDELSE
-  ENDFOR
-  return, new_array
-END
+; $Id: 2023-11-30 15:21 CET $
 
 
 FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
