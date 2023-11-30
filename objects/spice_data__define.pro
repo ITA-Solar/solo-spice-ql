@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-11-30 10:21 CET $
+; $Id: 2023-11-30 11:40 CET $
 
 
 ;+
@@ -482,7 +482,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
                           HASH('name','PRSTEP', 'value','PEAK-FINDING', 'comment','Processing step type, step '), $
                           HASH('name','PRPROC', 'value',proc_find_line.proc, 'comment','Name of procedure performing PRSTEP'), $
                           HASH('name','PRPVER', 'value',fix(proc_find_line.version, type=3), 'comment','Version of procedure PRPROC'), $
-                          HASH('name','PRLIB', 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC') $
+                          HASH('name','PRLIB' , 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC') $
                           ]
 
            proc_step_2 =  [ $
@@ -500,7 +500,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
                                       'comment','Parameters for PRPROC') $
                           ]
            
-           PROC_STEPS = LIST(proc_step_1, proc_step_2)
+           PROC_STEPS = LIST(proc_step_1, proc_step_2, /no_copy)
            
            file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
            
