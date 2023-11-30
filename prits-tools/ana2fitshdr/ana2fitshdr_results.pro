@@ -74,7 +74,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 14:43 CET $
+; $Id: 2023-11-30 15:22 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -125,6 +125,7 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   IF header_exists THEN BEGIN
     fits_util->add, hdr, 'PGFILENA', fxpar(HEADER_INPUT_DATA, 'FILENAME', missing=''), 'Progenitor filename'
     fits_util->add, hdr, 'PARENT', fxpar(HEADER_INPUT_DATA, 'FILENAME', missing=''), 'Parent filename'  ; TODO: Don't need both, which one?
+    fits_util->add, hdr, 'PGEXTNAM', fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=''), 'Extension name in progenitor file'
     bunit = fxpar(HEADER_INPUT_DATA, 'BUNIT', missing='')
   ENDIF ELSE BEGIN
     bunit = ''
