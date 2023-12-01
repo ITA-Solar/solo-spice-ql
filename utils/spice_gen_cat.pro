@@ -68,11 +68,15 @@
 ;              Version 11, Terje Fredvik, 29 November 2023
 ;                          Check that the names of saved files match the
 ;                          filenames in the hash
-;                   
+;              Version 12, Terje Fredvik, 1 December 2023
+;                          Simplified and cleaned up code, e.g. removed reading
+;                          .txt catalog file, removed *_keys arrays and unused
+;                          methods and lines of code. Ensure that files are not saved to disk 
+;                          more than once when catalog is recreated from scratch. 
 ;
-; Version     : Version 11, TF, 29 November 2023
+; Version     : Version 12, TF, 29 November 2023
 ;
-; $Id: 2023-11-30 13:18 CET $
+; $Id: 2023-12-01 11:07 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -80,6 +84,7 @@ FUNCTION spice_gen_cat::extract_filename, line
   filename = stregex(line, pattern, /extract)
   return, filename
 END
+
 
 FUNCTION spice_gen_cat::extract_key,line 
   filename = self.extract_filename(line)
@@ -92,8 +97,6 @@ FUNCTION spice_gen_cat::extract_key,line
 END
 
 
-
-
 FUNCTION spice_gen_cat::get_header,filename
   header = headfits(filename) 
   return,header
@@ -104,11 +107,6 @@ END
 ;; WRITING:
 ;;
 PRO spice_gen_cat::write_keyword_info_file, filename
-  IF self.d.dry_run THEN BEGIN
-     IF ~self.d.quiet THEN print, "DRY RUN - not writing " + filename
-     return
-  END 
-  
   IF ~self.d.quiet THEN print
   IF ~self.d.quiet THEN print, "Converting keyword info to json"
   json = json_serialize(self.d.keyword_info, /lowercase)
@@ -123,18 +121,13 @@ END
 
 PRO spice_gen_cat::write_plaintext, filename
   print
-  IF self.d.dry_run THEN BEGIN
-     IF ~self.d.quiet THEN print, "DRY RUN - not writing " + filename
-     return
-  END
-  
   print, "Writing " + filename
   tmp_filename = filename + '.tmp'
   OPENW,lun, tmp_filename, /get_lun
   
   comma_separated_keywords = self.d.keyword_array.join(",")
   printf,lun,comma_separated_keywords
-  keys = self.d.file_hash_keys
+  keys = self.d.file_hash.Keys()
   foreach key,keys, index DO BEGIN
      printf,lun,self.d.file_hash[key],format="(a)"
      IF NOT self.d.quiet THEN IF (index + 1) MOD 1000 EQ 0 THEN print, "Done " + trim(index + 1)
@@ -147,17 +140,17 @@ END
 
 PRO spice_gen_cat::write_csv, filename
   lines = list()
-  keys = self.d.file_hash_keys
   
   IF ~self.d.quiet THEN print
   IF ~self.d.quiet THEN print, "Splitting plaintext lines into arrays"
+  keys = self.d.file_hash.Keys() ;;TERJE 
   foreach key, keys, index DO BEGIN
      line = self.d.file_hash[key]
      ;; NOTE: strsplit can't be used!
      ;; It treats two consecutive split patterns as a single one!
      elements = line.split(string(9b))
      lines.add, elements
-     IF NOT self.d.quiet THEN IF (index + 1) MOD 100 EQ 0 THEN print, "Done " + trim(index + 1)
+     IF NOT self.d.quiet THEN IF (index + 1) MOD 1000 EQ 0 THEN print, "Done " + trim(index + 1)
   END
   
   IF ~self.d.quiet THEN print
@@ -165,11 +158,6 @@ PRO spice_gen_cat::write_csv, filename
   lines = lines.toarray()
   lines = transpose(lines)
   
-  IF self.d.dry_run THEN BEGIN
-     IF ~self.d.quiet THEN print
-     IF ~self.d.quiet THEN print, "DRY RUN - not writing " + filename
-     return
-  END
   IF ~self.d.quiet THEN print
   print, "Writing " + filename
   write_csv, filename + '.tmp', lines, header=self.d.keyword_array
@@ -180,9 +168,18 @@ END
 PRO spice_gen_cat::write_hashes_save_file
   print,'Writing '+self.d.catalog_hashes_save_file
   old_hash      = self.d.file_hash
-  old_hash_keys = self.d.file_hash_keys
-  save, file=self.d.catalog_hashes_save_file, old_hash, old_hash_keys
+  save, file=self.d.catalog_hashes_save_file, old_hash
 END
+
+
+PRO spice_gen_cat::write
+  self.write_keyword_info_file, self.d.keyword_info_filename
+  
+  self.write_plaintext, self.d.catalog_basename + '.txt'
+  self.write_csv, self.d.catalog_basename + '.csv'
+  self.write_hashes_save_file
+END
+
 
 ;;
 ;; Generating catalog
@@ -191,9 +188,12 @@ PRO spice_gen_cat::create_catalog_from_scratch
   print,'Generating catalog from scratch. This will take a very long time.'
   self.d.use_old_catalog = 0
   self.d.file_hash = orderedhash()
-  self.d.file_hash_keys = []
-  self.execute
+  self.d.creating_catalog_from_scratch = 1
+  self.d.n_modified_files = 0
+
+  self.populate_hash
 END
+
 
 FUNCTION spice_gen_cat::line_from_header, header, relative_path
   value_array = []
@@ -210,7 +210,7 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
 END
 
 
-FUNCTION spice_gen_cat::add_file, fits_filename, message=message
+FUNCTION spice_gen_cat::add_file, fits_filename
   key = self.extract_key(fits_filename)
   IF self.d.file_hash.haskey(key) THEN BEGIN
      print
@@ -218,50 +218,46 @@ FUNCTION spice_gen_cat::add_file, fits_filename, message=message
      return, !null
   END
  
-  IF self.d.old_hash.haskey(key) THEN BEGIN
-     message = '(REUSE) '
-     self.d.file_hash[key] = self.d.old_hash[key]
-     self.d.file_hash_keys = [self.d.file_hash_keys, key]
-     return, key
-  END ELSE BEGIN
-     message = "(NEW  ) "
-  END
-
   header = self.get_header(fits_filename)
   relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
   relative_path = file_dirname(relative_filename)
   self.d.file_hash[key] = self.line_from_header(header, relative_path)
-  self.d.file_hash_keys = [self.d.file_hash_keys, key]
   return, key
 END
 
 
-
 PRO spice_gen_cat::populate_hash
   print
-  print, "Populating list"
+  print, "Populating list of files to add or modify using names of files", format='(A,$)'
   
   IF self.d.use_old_catalog THEN BEGIN 
-     print,'Using FITS filenames from saved hash. Only files corresponding to input parameter NEW_FILES are modified.'
-     self.d.file_hash_keys = self.d.old_hash_keys
+     print,' in saved hash:'
      self.d.file_hash = self.d.old_hash
      filelist = self.d.new_files
-  ENDIF ELSE filelist = self.d.filelist
+  ENDIF ELSE BEGIN
+     filelist = self.d.filelist
+     print,' on disk:'
+  ENDELSE
+
+  n_modified = self.d.n_modified_files
+  n_new = n_elements(filelist) - n_modified
   
-  print,'Adding/modifying '+trim(n_elements(filelist))+' files:'
+  print,' Adding    '+trim(n_new)+' new files'
+  print,' Modifying '+trim(n_modified)+' existing files'
   
   FOREACH fits_filename, filelist, index DO BEGIN
-     key = self.add_file(fits_filename,  message = message)
-     IF (index + 1) MOD 1000 EQ 0 THEN BEGIN 
-        IF NOT self.d.quiet THEN  PRINT, message + "Files done : " + (index+1).toString("(i6)") + " "+key
+     key = self.add_file(fits_filename)
+     IF (index + 1) MOD 50 EQ 0 THEN BEGIN 
+        PRINT, "Files done : " + (index+1).toString("(i6)") + "  "+key
      END
   ENDFOREACH
+  
+  print
 END
 
 
 PRO spice_gen_cat::set_filelist
-  print
-  print, "Finding list of files... ", format='(A,$)'
+  print, "Finding FITS files on disk... ", format='(A,$)'
   
   self.d.filelist = file_search(self.d.spice_datadir,"*.{fits,fits.gz}")
   
@@ -271,61 +267,33 @@ PRO spice_gen_cat::set_filelist
   END ELSE BEGIN
      PRINT, "Found " + (n_elements(self.d.filelist)).toString() + " files"
   END
-  
-  print
 END
-
 
 
 PRO spice_gen_cat::remove_files_to_be_updated
   FOREACH file, self.d.new_files, index DO BEGIN  
      this_key = self.extract_key(file_basename(file))
-     IF self.d.old_hash.hasKey(this_key) THEN self.d.old_hash.remove, this_key
+     IF self.d.old_hash.hasKey(this_key) THEN BEGIN
+        self.d.old_hash.remove, this_key
+        self.d.n_modified_files++
+     ENDIF
   ENDFOREACH
 END
 
 
-
-PRO spice_gen_cat::read_old_cat, catalog_filename
-  IF file_exist(self.d.catalog_hashes_save_file) THEN BEGIN 
-     print,'Restoring saved catalog hashes'
-     restore,self.d.catalog_hashes_save_file
-     self.d.old_hash = old_hash
-     self.d.old_hash_keys = old_hash_keys
-     print,'Done restoring hashes with '+trim(n_elements(old_hash_keys))+' keys'
-     return
-  ENDIF
+PRO spice_gen_cat::restore_old_cat
+  IF ~ file_exist(self.d.catalog_hashes_save_file) THEN message,'Create hash save files by running spice_gen_cat,dir,use_old_catalog=0'
   
-  print, "Catalog hashes file not found - reading old .txt catalog instead"
-  catalog_lines = rd_ascii(catalog_filename)
-  FOR i=1, n_elements(catalog_lines)-1 DO BEGIN
-     key = self.extract_key(catalog_lines[i])  
-     self.d.old_hash[key] = catalog_lines[i]
-     self.d.old_hash_keys = [self.d.old_hash_keys, key]
-     IF i MOD 1000 EQ 0 THEN BEGIN
-        IF NOT self.d.quiet THEN print, "Done " + trim(i) + "  " + key
-     END
-  END
-  
-  IF self.d.restore_catalog_hashes_save_file THEN self.write_hashes_save_file
-
+  print,'Restoring '+file_basename(self.d.catalog_hashes_save_file)
+  restore,self.d.catalog_hashes_save_file
+  self.d.old_hash = old_hash
+  print,'Done restoring hashes with '+trim(n_elements(old_hash))+' keys'
 END
-
-
-
-PRO spice_gen_cat::compare_hashes
-  keys_old = self.d.old_hash_keys
-  keys_new = self.d.file_hash_keys
-  print, where(keys_new NE keys_old)
-  foreach key, keys_new DO BEGIN
-     IF self.d.file_hash[key] NE self.d.file_hash[key] THEN stop
-  END
-END
-
 
 
 FUNCTION spice_gen_cat::filenames_match
-  tic
+  print,'Checking that FITS filenames in saved hash match FITS filenames on disk: '
+  
   self.set_filelist
   keys = self.d.file_hash.keys()
   n_keys = n_elements(keys)
@@ -340,44 +308,29 @@ FUNCTION spice_gen_cat::filenames_match
   files_on_disk = file_basename(self.d.filelist)
   files_on_disk = files_on_disk[sort(files_on_disk)]
   
-  filenames_match = array_equal(files_on_disk, files_in_hash)
-  
-  match_txt = (filenames_match) ? 'Files match.' : 'Files do not match!'
-  print,'Checking that FITS filenames in saved hash match FITS filenames on disk: ' + match_txt
-  toc
-  return,filenames_match
-END
+  match = array_equal(files_on_disk, files_in_hash)
 
+  print,  (match) ? 'Filenames match.' : 'Filenames do not match!'
+  
+  return,match
+END
 
 
 PRO spice_gen_cat::execute
   IF self.d.use_old_catalog THEN BEGIN
-     self.read_old_cat, self.d.catalog_basename + '.txt'
+     self.restore_old_cat
      self.remove_files_to_be_updated
   END ELSE self.set_filelist
   
-  
-  IF NOT self.d.csv_test THEN BEGIN
-     print, "Generating new catalog"
-     self.populate_hash
-  END ELSE BEGIN
-     self.d.file_hash_keys = self.d.old_hash_keys
-     self.d.file_hash = self.d.old_hash
-  END
-  
-                                ;self.compare_hashes
+  self.populate_hash
+ 
   IF self.d.use_old_catalog THEN BEGIN 
      filenames_in_hash_and_on_disk_match = self.filenames_match()
      IF ~filenames_in_hash_and_on_disk_match THEN self.create_catalog_from_scratch
   ENDIF
   
-  self.write_keyword_info_file, self.d.keyword_info_filename
-  
-  self.write_plaintext, self.d.catalog_basename + '.txt'
-  self.write_csv, self.d.catalog_basename + '.csv'
-  self.write_hashes_save_file
+  self.write
 END
-
 
 
 FUNCTION spice_gen_cat::get_catalog_hashes_save_file
@@ -387,9 +340,8 @@ FUNCTION spice_gen_cat::get_catalog_hashes_save_file
 END
 
 
-
 FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_old_catalog, $
-                              dry_run=dry_run, csv_test=csv_test, new_files=new_files
+                              new_files=new_files
   self.d = dictionary()
   
   spice_default, spice_data_dir,getenv("SPICE_DATA")
@@ -398,9 +350,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   
   self.d.quiet = keyword_set(quiet)
   self.d.use_old_catalog = use_old_catalog
-
-  self.d.dry_run = keyword_set(dry_run)
-  self.d.csv_test = keyword_set(csv_test)
+  self.d.creating_catalog_from_scratch = 0
   
   self.d.spice_datadir = expand_path(spice_data_dir) ; Must have explicit path to find relative paths
   self.d.catalog_basename = concat_dir(spice_data_dir,'spice_catalog')
@@ -409,11 +359,10 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
   
   self.d.old_hash = orderedhash()
-  self.d.old_hash_keys = []
   self.d.file_hash = orderedhash()
-  self.d.file_hash_keys = []
   
-  self.d.restore_catalog_hashes_save_file = restore_catalog_hashes_save_file
+  self.d.n_modified_files = 0
+  
   self.d.catalog_hashes_save_file = self.get_catalog_hashes_save_file()
   
   self.d.new_files = (new_files NE !NULL) ? new_files : !NULL
@@ -424,24 +373,18 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   return, 1
 END
 
-PRO spice_gen_cat::stop
-  stop
-END
 
 PRO spice_gen_cat__define
   spice_gen_cat = {spice_gen_cat, d:dictionary()}
 END
 
+
+;;    ----------------------
+
+
 PRO spice_gen_cat,spice_data_dir, _extra=extra
   ON_ERROR,0
-  tic
   o = obj_new('spice_gen_cat', spice_data_dir, _extra=extra)
   o.execute
-  toc
 END
 
-IF getenv("USER") EQ "steinhh" THEN BEGIN
-   spice_gen_cat, use_old_catalog=1 ; /dry_run
-END
-
-END
