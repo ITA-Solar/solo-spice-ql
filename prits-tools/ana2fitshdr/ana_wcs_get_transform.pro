@@ -39,12 +39,12 @@
 ;      ind_xdim1: The index of the absorbed dimension before transformation.
 ;
 ; CALLS:
-;      prits_tools.parcheck, fxpar, fitshead2wcs, ana_wcs_transform
+;      prits_tools.parcheck, fxpar, fitshead2wcs, ana_wcs_transform, spice_fitshead2struct
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 10:46 CET $
+; $Id: 2023-12-01 10:27 CET $
 
 
 FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA, ind_xdim1=ind_xdim1
@@ -64,7 +64,9 @@ FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA, ind_xdim1=ind_xd
   ENDIF
   ind_xdim1 = ind_xdim1[0]
 
-  wcs_original = fitshead2wcs(HEADERS_INPUT_DATA)
+  IF size(HEADERS_INPUT_DATA, /type) EQ 7 THEN hdr = spice_fitshead2struct(HEADERS_INPUT_DATA, /MULTIVALUE) $
+  ELSE hdr = HEADERS_INPUT_DATA
+  wcs_original = fitshead2wcs(hdr)
   wcs_transformed = ana_wcs_transform(wcs_original, ind_xdim1, 0)
 
   return, wcs_transformed
