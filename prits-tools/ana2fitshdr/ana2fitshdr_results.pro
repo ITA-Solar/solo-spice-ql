@@ -74,7 +74,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-30 15:22 CET $
+; $Id: 2023-12-01 15:01 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -155,9 +155,9 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   fits_util->add, hdr, 'WINNO', winno, 'Win no (starting at 0) within this study in this FITS file'
 
   IF keyword_set(LEVEL) THEN $
-    fits_util->add, hdr, 'LEVEL', strtrim(LEVEL,2), 'Data processing level'
+    fits_util->add, hdr, 'LEVEL', LEVEL, 'Data processing level'
   IF keyword_set(VERSION) THEN $
-    fits_util->add, hdr, 'VERSION', strtrim(VERSION,2), 'Incremental file version number'
+    fits_util->add, hdr, 'VERSION', VERSION, 'File version number'
 
   ; Add keywords valid for whole ANA
   fits_util->add_description, hdr, 'Keywords describing the whole ANA'
