@@ -76,7 +76,7 @@
 ;
 ; Version     : Version 12, TF, 29 November 2023
 ;
-; $Id: 2023-12-01 11:07 CET $
+; $Id: 2023-12-01 13:40 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -238,17 +238,19 @@ PRO spice_gen_cat::populate_hash
      filelist = self.d.filelist
      print,' on disk:'
   ENDELSE
-
+  
+  n_files = n_elements(filelist)
   n_modified = self.d.n_modified_files
-  n_new = n_elements(filelist) - n_modified
+  n_new =  n_files - n_modified
   
   print,' Adding    '+trim(n_new)+' new files'
   print,' Modifying '+trim(n_modified)+' existing files'
   
+  modno = n_files/10 - (n_files/10 MOD 10) > 10
   FOREACH fits_filename, filelist, index DO BEGIN
      key = self.add_file(fits_filename)
-     IF (index + 1) MOD 50 EQ 0 THEN BEGIN 
-        PRINT, "Files done : " + (index+1).toString("(i6)") + "  "+key
+     IF (index + 1) MOD modno EQ 0 THEN BEGIN 
+        PRINT, "Files done : " + (index+1).toString("(i6)") + "    (key: "+key+")"
      END
   ENDFOREACH
   
