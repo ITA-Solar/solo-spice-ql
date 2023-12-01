@@ -16,7 +16,7 @@ pro test_new
   no_xcfit_block=0
   SAVE_XDIM1=0
   NO_SAVE_DATA=0
-  PRINT_HEADERS=1
+  PRINT_HEADERS=0
   
   window_index = 1
   
@@ -24,11 +24,11 @@ pro test_new
     no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, $
     SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS )
   
+  print,l3file
   
   
   
-  
-  ana = fits2ana(l3file)
+  ana = fits2ana(l3file, /debug)
   
   spice_xcfit_block, ana=ana
   
