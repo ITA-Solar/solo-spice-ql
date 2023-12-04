@@ -56,7 +56,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-11-29 15:00 CET $
+; $Id: 2023-12-04 14:16 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -89,6 +89,7 @@ function fits2ana, fitsfile, windows=windows, $
       ENDIF
     ENDELSE
   ENDELSE
+  print, 'Reading file : ' + fitsfile
   print, 'Reading ' + strtrim(n_windows_process, 2) + ' out of ' +  strtrim(n_windows, 2) + ' windows.'
   get_headers = bytarr(6)
   if arg_present(headers_results) then begin
