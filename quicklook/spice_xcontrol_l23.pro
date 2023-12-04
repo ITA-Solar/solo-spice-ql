@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-11-30 15:22 CET $
+; $Id: 2023-12-04 14:16 CET $
 ;-
 
 
@@ -58,7 +58,9 @@ pro spice_xcontrol_l23_cleanup, tlb
   widget_control, tlb, get_uvalue=info
   ptr_free,(*info).winno_l3_official
   ptr_free,(*info).winno_l3_user
+  FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO delete_analysis, (*(*info).ana_l3_official)[i] 
   ptr_free,(*info).ana_l3_official
+  FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO delete_analysis, (*(*info).ana_l3_user)[i]
   ptr_free,(*info).ana_l3_user
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official)-1 DO ptr_free, (*(*info).hdr_l3_official)[i]
   ptr_free,(*info).hdr_l3_official
@@ -378,11 +380,13 @@ pro spice_xcontrol_l23_open_l3, event
 
   CASE win_info.l3_type OF
     1: BEGIN
+      FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO delete_analysis, (*(*info).ana_l3_official)[i]
       ptr_free, (*info).ana_l3_official
       (*info).ana_l3_official = ptr_new(ana_l3)
       (*info).state_l3_official = state_l3
     END
     2: BEGIN
+      FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO delete_analysis, (*(*info).ana_l3_user)[i]
       ptr_free, (*info).ana_l3_user
       (*info).ana_l3_user = ptr_new(ana_l3)
       (*info).state_l3_user = state_l3
@@ -396,16 +400,13 @@ pro spice_xcontrol_l23_create_l3, event
   widget_control, event.top, get_uvalue=info
   widget_control, event.id, get_uvalue=win_info
   IF ~(*info).file_in_user_dir THEN top_dir = (*info).file_top_dir
-print,'spice_xcontrol_l23_create_l3    1'
   IF N_ELEMENTS(win_info) GT 1 THEN all_windows=1 ELSE all_windows=0
   result = spice_create_l3_widget( (*info).object_L2, event.top, window_index=win_info, $
     no_widget=all_windows, top_dir=top_dir, save_not=~all_windows, block_save=~all_windows)
-  print,'spice_xcontrol_l23_create_l3   2'
 
   IF result.l3_file EQ 'Cancel' THEN return
   IF all_windows THEN spice_xcontrol_l23_update_state_replace, info, result $
   ELSE spice_xcontrol_l23_update_state_add, info, result
-  print,'spice_xcontrol_l23_create_l3    3'
 end
 
 
@@ -454,7 +455,6 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     return
   ENDIF
   file_info = spice_file2info(file_in)
-  help, file_info
   IF ~file_info.is_spice_file THEN BEGIN
     print, 'File is not a SPICE FITS file : ' + file
     return
@@ -483,8 +483,28 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
           break
         ENDIF
       ENDFOR
+      IF file_l3_official EQ '' && count_file GT 0 THEN BEGIN
+        file_info_l3_official = spice_file2info(file_l3_official_all)
+        max_version = max(file_info_l3_official.version, max_ind)
+        file_l3_official = file_l3_official_all[max_ind]
+      ENDIF
 
-      IF file_l3_official EQ '' THEN BEGIN
+      file_l3_user = ''
+      file_l3_user_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file, /user_dir)
+      FOR ifile=0,count_file-1 DO BEGIN
+        IF file_l3_user_all[ifile] EQ file_in THEN BEGIN
+          file_l3_user = file_l3_user_all[ifile]
+          file_in_user_dir=1
+          break
+        ENDIF
+      ENDFOR
+      IF file_l3_user EQ '' && count_file GT 0 THEN BEGIN
+        file_info_l3_user = spice_file2info(file_l3_user_all)
+        max_version = max(file_info_l3_user.version, max_ind)
+        file_l3_user = file_l3_user_all[max_ind]
+      ENDIF
+
+      IF file_l3_official EQ '' && file_l3_user EQ '' THEN BEGIN
         file_l3_user = file_in
         spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
         IF file_l3_user EQ destination THEN BEGIN
@@ -497,9 +517,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
           ENDIF
           file_top_dir = file_top_dir.join(path_sep())
         ENDELSE
-      ENDIF ELSE BEGIN
-        file_l3_user = ''
-      ENDELSE
+      ENDIF
     ENDCASE
 
     ELSE: BEGIN
