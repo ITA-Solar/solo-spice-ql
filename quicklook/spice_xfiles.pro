@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2023-05-15 14:03 CEST $
+; $Id: 2023-12-04 14:49 CET $
 ;-
 
 
@@ -199,6 +199,17 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
         ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
         if count gt 0 then begin
           mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
+          IF hdrtemp.seq_beg EQ '' THEN BEGIN
+            fits_open, files[ind[0]], fits_content
+            fits_close, fits_content
+            ind_data = where(fits_content.extname.Contains(' data'), count)
+            IF count EQ 0 THEN BEGIN
+              message, 'File does not contain keyword SEQ_BEG in main header and no extension with name "* data". Cannot display it.',/info
+            ENDIF ELSE BEGIN
+              mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template, $
+                ext=ind_data[0]
+            ENDELSE
+          ENDIF
           if N_ELEMENTS(hdr) eq 0 then hdr=hdrtemp $
           else hdr=[hdr,hdrtemp]
         endif
