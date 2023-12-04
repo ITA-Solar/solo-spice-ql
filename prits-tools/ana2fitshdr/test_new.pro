@@ -18,7 +18,7 @@ pro test_new
   NO_SAVE_DATA=0
   PRINT_HEADERS=0
   
-  window_index = 1
+  window_index = [1,3]
   
   l3file = ol2->create_l3_file( window_index, $
     no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, $
