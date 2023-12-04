@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-12-04 14:16 CET $
+; $Id: 2023-12-04 14:50 CET $
 ;-
 
 
@@ -476,47 +476,44 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       IF file_l2 EQ '' THEN file_l2 = l3_obj->find_l2_file(/user_dir)
 
       file_l3_official = ''
-      file_l3_official_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file)
-      FOR ifile=0,count_file-1 DO BEGIN
+      file_l3_official_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file_official)
+      FOR ifile=0,count_file_official-1 DO BEGIN
         IF file_l3_official_all[ifile] EQ file_in THEN BEGIN
           file_l3_official = file_l3_official_all[ifile]
           break
         ENDIF
       ENDFOR
-      IF file_l3_official EQ '' && count_file GT 0 THEN BEGIN
-        file_info_l3_official = spice_file2info(file_l3_official_all)
-        max_version = max(file_info_l3_official.version, max_ind)
-        file_l3_official = file_l3_official_all[max_ind]
-      ENDIF
 
       file_l3_user = ''
-      file_l3_user_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file, /user_dir)
-      FOR ifile=0,count_file-1 DO BEGIN
+      file_l3_user_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file_user, /user_dir)
+      FOR ifile=0,count_file_user-1 DO BEGIN
         IF file_l3_user_all[ifile] EQ file_in THEN BEGIN
           file_l3_user = file_l3_user_all[ifile]
           file_in_user_dir=1
           break
         ENDIF
       ENDFOR
-      IF file_l3_user EQ '' && count_file GT 0 THEN BEGIN
+
+      IF file_l3_official EQ '' && file_l3_user EQ '' THEN BEGIN
+        file_l3_user = file_in
+        file_top_dir = file_dirname(file_l3_user)
+        file_top_dir = file_top_dir.split(path_sep())
+        IF N_ELEMENTS(file_top_dir) GT 6 THEN BEGIN
+          file_top_dir = file_top_dir[0:-5]
+        ENDIF
+        file_top_dir = file_top_dir.join(path_sep())
+      ENDIF
+
+      IF file_l3_user EQ '' && count_file_user GT 0 THEN BEGIN
         file_info_l3_user = spice_file2info(file_l3_user_all)
         max_version = max(file_info_l3_user.version, max_ind)
         file_l3_user = file_l3_user_all[max_ind]
       ENDIF
 
-      IF file_l3_official EQ '' && file_l3_user EQ '' THEN BEGIN
-        file_l3_user = file_in
-        spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
-        IF file_l3_user EQ destination THEN BEGIN
-          file_in_user_dir=1
-        ENDIF ELSE BEGIN
-          file_top_dir = file_dirname(file_l3_user)
-          file_top_dir = file_top_dir.split(path_sep())
-          IF N_ELEMENTS(file_top_dir) GT 6 THEN BEGIN
-            file_top_dir = file_top_dir[0:-5]
-          ENDIF
-          file_top_dir = file_top_dir.join(path_sep())
-        ENDELSE
+      IF file_l3_official EQ '' && count_file_official GT 0 THEN BEGIN
+        file_info_l3_official = spice_file2info(file_l3_official_all)
+        max_version = max(file_info_l3_official.version, max_ind)
+        file_l3_official = file_l3_official_all[max_ind]
       ENDIF
     ENDCASE
 
