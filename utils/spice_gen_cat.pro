@@ -76,7 +76,7 @@
 ;
 ; Version     : Version 12, TF, 29 November 2023
 ;
-; $Id: 2023-12-01 13:40 CET $
+; $Id: 2023-12-05 09:26 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -314,6 +314,7 @@ FUNCTION spice_gen_cat::filenames_match
 
   print,  (match) ? 'Filenames match.' : 'Filenames do not match!'
   
+  IF ~ match THEN stop
   return,match
 END
 
