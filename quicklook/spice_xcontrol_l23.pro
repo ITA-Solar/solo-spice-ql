@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-12-05 14:34 CET $
+; $Id: 2023-12-05 14:45 CET $
 ;-
 
 
@@ -131,7 +131,7 @@ pro spice_xcontrol_l23_save_file, event
   FOR iwindow=0,nwin_l3-1 DO BEGIN
 
     original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
-    
+
     PROC_STEPS = *(*(*info).proc_steps_user)[iwindow]
     if (*info).state_l3_user[iwindow].edited then begin
       proc_step_new =  [ $
@@ -186,7 +186,9 @@ pro spice_xcontrol_l23_update_state_add, info, result
   nwin_l3_result = N_ELEMENTS(*result.ana)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1)
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1) ; old result header
+    IF winno_l3_result[iwin] EQ -1 THEN $
+      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing=-1)
   ENDFOR
 
   nwin_l3 = 0
@@ -258,7 +260,9 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', missing=0)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1)
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1) ; old result header
+    IF winno_l3_result[iwin] EQ -1 THEN $
+      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing=-1)
   ENDFOR
 
   FOR iwin=0,(*info).nwin-1 DO BEGIN
