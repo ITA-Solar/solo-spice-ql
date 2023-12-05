@@ -44,7 +44,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-12-01 10:27 CET $
+; $Id: 2023-12-05 15:35 CET $
 
 
 FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA, ind_xdim1=ind_xdim1
@@ -64,7 +64,7 @@ FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA, ind_xdim1=ind_xd
   ENDIF
   ind_xdim1 = ind_xdim1[0]
 
-  IF size(HEADERS_INPUT_DATA, /type) EQ 7 THEN hdr = spice_fitshead2struct(HEADERS_INPUT_DATA, /MULTIVALUE) $
+  IF size(HEADERS_INPUT_DATA, /type) EQ 7 THEN hdr = spice_fitshead2struct(HEADERS_INPUT_DATA, /MULTIVALUE, /silent) $
   ELSE hdr = HEADERS_INPUT_DATA
   wcs_original = fitshead2wcs(hdr)
   wcs_transformed = ana_wcs_transform(wcs_original, ind_xdim1, 0)
