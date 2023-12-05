@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-12-04 14:50 CET $
+; $Id: 2023-12-05 14:34 CET $
 ;-
 
 
@@ -58,9 +58,15 @@ pro spice_xcontrol_l23_cleanup, tlb
   widget_control, tlb, get_uvalue=info
   ptr_free,(*info).winno_l3_official
   ptr_free,(*info).winno_l3_user
-  FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO delete_analysis, (*(*info).ana_l3_official)[i] 
+  FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO BEGIN
+    IF size((*(*info).ana_l3_official)[i], /type) EQ 8 THEN $
+      delete_analysis, (*(*info).ana_l3_official)[i]
+  ENDFOR
   ptr_free,(*info).ana_l3_official
-  FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO delete_analysis, (*(*info).ana_l3_user)[i]
+  FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO BEGIN
+    IF size((*(*info).ana_l3_user)[i], /type) EQ 8 THEN $
+      delete_analysis, (*(*info).ana_l3_user)[i]
+  ENDFOR
   ptr_free,(*info).ana_l3_user
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official)-1 DO ptr_free, (*(*info).hdr_l3_official)[i]
   ptr_free,(*info).hdr_l3_official
