@@ -65,7 +65,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-12-06 11:14 CET $
+; $Id: 2023-12-06 14:39 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -99,11 +99,17 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
 
   fits_util = obj_new('oslo_fits_util')
   
-  IF no_data THEN BEGIN
-    hdr = HEADER_INPUT_DATA
-  ENDIF ELSE BEGIN
-    mkhdr, hdr, data_array, /image
-  ENDELSE
+  IF keyword_set(HEADER_INPUT_DATA) && no_data THEN BEGIN
+    case fxpar(HEADER_INPUT_DATA, 'BITPIX', missing=0) of
+      8: data_array = fix(data_array, type=1)
+      16: data_array = fix(data_array, type=2)
+      32: data_array = fix(data_array, type=3)
+      -32: data_array = fix(data_array, type=4)
+      -64: data_array = fix(data_array, type=5)
+      else: data_array = fix(data_array, type=1)
+    endcase
+  ENDIF
+  mkhdr, hdr, data_array, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
@@ -122,11 +128,14 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
   fits_util->remove_keyword, hdr, 'PCOUNT'
   fits_util->remove_keyword, hdr, 'GCOUNT'
 
-  IF keyword_set(HEADER_INPUT_DATA) && ~no_data THEN BEGIN
+  IF keyword_set(HEADER_INPUT_DATA) THEN BEGIN
 
     hdr_addition = HEADER_INPUT_DATA
 
     fits_util->add, hdr, 'PRGEXT', fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=''), 'Progenitor extension name'
+    fits_util->add, hdr, 'XDIMNA', fxpar(HEADER_INPUT_DATA, 'NAXIS', missing=0), 'Number of data axes in external extension'
+    naxisn = fxpar(HEADER_INPUT_DATA, 'NAXIS*', missing=0)
+    for i=0,N_ELEMENTS(naxisn)-1 do fits_util->add, hdr, 'XDIMNA'+strtrim(i+1,2), naxisn[i]
 
     fits_util->remove_keyword, hdr_addition, 'SIMPLE'
     fits_util->remove_keyword, hdr_addition, 'XTENSION'
@@ -158,7 +167,7 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
       hdr = [hdr, hdr_end]
     endif
     
-  ENDIF ; keyword_set(HEADER_INPUT_DATA) && ~no_data
+  ENDIF ; keyword_set(HEADER_INPUT_DATA)
 
   fits_util->clean_header, hdr
 
