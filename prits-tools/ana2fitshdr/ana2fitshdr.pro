@@ -60,6 +60,9 @@
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
 ;      PROGENITOR_DATA: A data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              along the first dimension. If this data array is provided, it will be saved into the XDIM1 extension instead of INPUT_DATA.
+;      PATH_EXTERNAL_EXTENSION: String. A path, relative to this FITS file, which points to the
+;            progenitor FITS file that contains the original data cube. This will be added as a prefix
+;            to DATAEXT keyword. If this is provided the keyword NO_SAVE_DATA will be set, and PRGDATA is set to True.
 ;      DATA_ID: A string defining the prefix to the names of the 6 extensions, default is WINNO as a string.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
@@ -120,7 +123,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 14:33 CET $
+; $Id: 2023-12-06 15:21 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
@@ -133,6 +136,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
   DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
   PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
+  PATH_EXTERNAL_EXTENSION=PATH_EXTERNAL_EXTENSION, $ ; TODO
   SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
   DATA_ARRAY=DATA_ARRAY
 
