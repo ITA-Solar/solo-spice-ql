@@ -27,6 +27,7 @@
 ;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
 ;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA or
 ;             providing PROGENITOR_DATA as a scalar number.
+;             If PROGENITOR_DATA is not provided, the keyword PRGDATA in the data header will be set to False.
 ;
 ; OPTIONAL INPUTS:
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
@@ -64,7 +65,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-30 16:17 CET $
+; $Id: 2023-12-06 11:14 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
