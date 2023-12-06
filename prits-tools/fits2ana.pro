@@ -20,6 +20,9 @@
 ; INPUTS:
 ;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
 ; 
+; KEYWORDS:
+;     headers_only: If set, then the data is not loaded, only the headers, the function returns a zero.
+; 
 ; OPTIONAL INPUTS:
 ;     windows : A scalar or array of indices of windows to be returned. If not provided all windows will
 ;               be returned.
@@ -27,7 +30,7 @@
 ; OUTPUT:
 ;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
 ;     Output is scalar if there is only one window.
-;     Output is zero if an error occurred.
+;     Output is zero if an error occurred, or if keyword 'headers_only' is set.
 ;
 ; OPTIONAL OUTPUT:
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
@@ -56,18 +59,21 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-12-04 14:16 CET $
+; $Id: 2023-12-06 13:45 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
   headers_results=headers_results, headers_data=headers_data, $
   headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
   headers_include=headers_include, headers_constants=headers_constants, $
+  headers_only=headers_only, $
   debug=debug
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
   prits_tools.parcheck, windows, 0, "windows", 'integers', [0, 1], /optional
 
+  headers_only = keyword_set(headers_only)
+  
   fits_open, fitsfile, fits_content
   fits_close, fits_content
   data_ids = fits2ana_get_data_id(fits_content)
@@ -135,7 +141,12 @@ function fits2ana, fitsfile, windows=windows, $
      continue
     ENDIF
     extension = extension[0]
-    result = readfits(fitsfile, hdr, ext=extension)
+    IF headers_only THEN BEGIN
+      result = 0
+      hdr = headfits(fitsfile, ext=extension)
+    ENDIF ELSE BEGIN
+      result = readfits(fitsfile, hdr, ext=extension)
+    ENDELSE
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
     wcs_result = fitshead2wcs(hdr)
 
@@ -234,30 +245,40 @@ function fits2ana, fitsfile, windows=windows, $
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
-      message, 'Creating dummy data cube', /info
       hdr = ''
-      datasize = wcs_result.naxis
-      datasize[0] = datasize[0]*2
-      data = fltarr(datasize)
       wcs_data_exists = 0
+      IF headers_only THEN BEGIN
+        data = 0
+      ENDIF ELSE BEGIN
+        message, 'Creating dummy data cube', /info
+        datasize = wcs_result.naxis
+        datasize[0] = datasize[0]*2
+        data = fltarr(datasize)
+      ENDELSE
     ENDIF ELSE BEGIN
       extension = extension[0]
-      data = readfits(fitsfile, hdr, ext=extension)
+      IF headers_only THEN BEGIN
+        data = 0
+        hdr = headfits(fitsfile, ext=extension)
+      ENDIF ELSE BEGIN
+        data = readfits(fitsfile, hdr, ext=extension)
+      ENDELSE
       size_data = size(data)
       progenitor_data = fxpar(hdr, 'PRGDATA', missing=0)
-      IF size_data[0] EQ 0 THEN BEGIN
+      IF ~headers_only && size_data[0] EQ 0 THEN BEGIN
         message, 'Loading data cube from external extension', /info
         message, 'TODO', /info
         ; TODO
       ENDIF
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
-      wcs_data_exists = 1
-      IF N_ELEMENTS(wcs_data) EQ 0 THEN BEGIN
-        wcs_data = {naxis: size_data[1:size_data[0]]}
-        wcs_data_exists = 0
-      ENDIF ELSE IF ind_xdim1 NE 0 THEN BEGIN
-        data_dims = ana_wcs_transform_vector(indgen(size_data[0]), ind_xdim1, 0, size_data[0])
-        data = transpose(data, data_dims)
+      wcs_data_exists =  N_ELEMENTS(wcs_data) GT 0
+      IF ~headers_only THEN BEGIN        
+        IF ~wcs_data_exists THEN BEGIN
+          wcs_data = {naxis: size_data[1:size_data[0]]}
+        ENDIF ELSE IF ind_xdim1 NE 0 THEN BEGIN
+          data_dims = ana_wcs_transform_vector(indgen(size_data[0]), ind_xdim1, 0, size_data[0])
+          data = transpose(data, data_dims)
+        ENDIF
       ENDIF
     ENDELSE
     if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
@@ -280,18 +301,27 @@ function fits2ana, fitsfile, windows=windows, $
     extension = where(fits_content.extname EQ extname OR fits_content.extname EQ extname_old, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
-      message, 'Creating xdim1 cube from WCS coordinates given in data extension', /info
-      IF wcs_data_exists THEN BEGIN
-        xdim1 = wcs_get_coord(wcs_data)
-        xdim1 = reform(xdim1[0,*,*,*,*,*,*,*])
+      IF headers_only THEN BEGIN
+        xdim1 = 0
       ENDIF ELSE BEGIN
-        message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube', /info
-        xdim1 = fltarr(wcs_data.naxis)
+        IF wcs_data_exists THEN BEGIN
+          message, 'Creating xdim1 cube from WCS coordinates given in data extension', /info
+          xdim1 = wcs_get_coord(wcs_data)
+          xdim1 = reform(xdim1[0,*,*,*,*,*,*,*])
+        ENDIF ELSE BEGIN
+          message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube', /info
+          xdim1 = fltarr(wcs_data.naxis)
+        ENDELSE
       ENDELSE
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
-      xdim1 = readfits(fitsfile, hdr, ext=extension)
+      IF headers_only THEN BEGIN
+        xdim1 = 0
+        hdr = headfits(fitsfile, ext=extension)
+      ENDIF ELSE BEGIN
+        xdim1 = readfits(fitsfile, hdr, ext=extension)
+      ENDELSE
     ENDELSE
     IF size(xdim1, /type) NE size(data, /type) THEN xdim1 = fix(xdim1, type=size(data, /type))
     if get_headers[2] then headers_xdim1[iwin] = ptr_new(hdr)
@@ -312,12 +342,21 @@ function fits2ana, fitsfile, windows=windows, $
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find weights extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
-      message, 'Creating weights cube with default values', /info
-      weights = make_array(wcs_data.naxis, value=1.0)
+      IF headers_only THEN BEGIN
+        weights = 0
+      ENDIF ELSE BEGIN
+        message, 'Creating weights cube with default values', /info
+        weights = make_array(wcs_data.naxis, value=1.0)
+      ENDELSE
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
-      weights = readfits(fitsfile, hdr, ext=extension)
+      IF headers_only THEN BEGIN
+        weights = 0
+        hdr = headfits(fitsfile, ext=extension)
+      ENDIF ELSE BEGIN
+        weights = readfits(fitsfile, hdr, ext=extension)
+      ENDELSE
     ENDELSE
     if get_headers[3] then headers_weights[iwin] = ptr_new(hdr)
 
@@ -337,14 +376,23 @@ function fits2ana, fitsfile, windows=windows, $
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find includes extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
-      message, 'Creating includes cube with default values', /info
-      datasize = wcs_result.naxis
-      datasize[0] = n_components
-      include = make_array(datasize, value=1b)
+      IF headers_only THEN BEGIN
+        include = 0
+      ENDIF ELSE BEGIN
+        message, 'Creating includes cube with default values', /info
+        datasize = wcs_result.naxis
+        datasize[0] = n_components
+        include = make_array(datasize, value=1b)
+      ENDELSE
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
-      include = readfits(fitsfile, hdr, ext=extension)
+      IF headers_only THEN BEGIN
+        include = 0
+        hdr = headfits(fitsfile, ext=extension)
+      ENDIF ELSE BEGIN
+        include = readfits(fitsfile, hdr, ext=extension)
+      ENDELSE
     ENDELSE
     if get_headers[4] then headers_include[iwin] = ptr_new(hdr)
 
@@ -364,14 +412,23 @@ function fits2ana, fitsfile, windows=windows, $
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find constants extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
-      message, 'Creating constants cube with default values', /info
-      datasize = wcs_result.naxis
-      datasize[0] = datasize[0]-1
-      const = make_array(datasize, value=0b)
+      IF headers_only THEN BEGIN
+        const = 0
+      ENDIF ELSE BEGIN
+        message, 'Creating constants cube with default values', /info
+        datasize = wcs_result.naxis
+        datasize[0] = datasize[0]-1
+        const = make_array(datasize, value=0b)
+      ENDELSE
       hdr = ''
     ENDIF ELSE BEGIN
       extension = extension[0]
-      const = readfits(fitsfile, hdr, ext=extension)
+      IF headers_only THEN BEGIN
+        const = 0
+        hdr = headfits(fitsfile, ext=extension)
+      ENDIF ELSE BEGIN
+        const = readfits(fitsfile, hdr, ext=extension)
+      ENDELSE
     ENDELSE
     if get_headers[5] then headers_constants[iwin] = ptr_new(hdr)
 
@@ -385,30 +442,34 @@ function fits2ana, fitsfile, windows=windows, $
     ENDIF
 
 
-    ana = mk_analysis()
+    IF ~headers_only THEN BEGIN
+      
+      ana = mk_analysis()
+  
+  ;    ana.filename = filename
+      ana.datasource = fitsfile
+  ;    ana.definition = definition
+  ;    ana.missing = missing
+  ;    ana.label = label
+  
+      handle_value,ana.history_h,history,/no_copy,/set
+      handle_value,ana.lambda_h,xdim1,/no_copy,/set
+      handle_value,ana.data_h,data,/no_copy,/set
+      handle_value,ana.weights_h,weights,/no_copy,/set
+      handle_value,ana.fit_h,fit,/no_copy,/set
+      handle_value,ana.result_h,result,/no_copy,/set
+      ;handle_value,ana.residual_h,residual,/no_copy,/set
+      handle_value,ana.include_h,include,/no_copy,/set
+      handle_value,ana.const_h,const,/no_copy,/set
+      handle_value,ana.origin_h,origin,/no_copy,/set
+      handle_value,ana.scale_h,scale,/no_copy,/set
+      handle_value,ana.phys_scale_h,phys_scale,/no_copy,/set
+      handle_value,ana.dimnames_h,dimnames,/no_copy,/set
+  
+      if iwin eq 0 then ana_all = ana $
+      else ana_all = [ana_all, ana]
 
-;    ana.filename = filename
-    ana.datasource = fitsfile
-;    ana.definition = definition
-;    ana.missing = missing
-;    ana.label = label
-
-    handle_value,ana.history_h,history,/no_copy,/set
-    handle_value,ana.lambda_h,xdim1,/no_copy,/set
-    handle_value,ana.data_h,data,/no_copy,/set
-    handle_value,ana.weights_h,weights,/no_copy,/set
-    handle_value,ana.fit_h,fit,/no_copy,/set
-    handle_value,ana.result_h,result,/no_copy,/set
-    ;handle_value,ana.residual_h,residual,/no_copy,/set
-    handle_value,ana.include_h,include,/no_copy,/set
-    handle_value,ana.const_h,const,/no_copy,/set
-    handle_value,ana.origin_h,origin,/no_copy,/set
-    handle_value,ana.scale_h,scale,/no_copy,/set
-    handle_value,ana.phys_scale_h,phys_scale,/no_copy,/set
-    handle_value,ana.dimnames_h,dimnames,/no_copy,/set
-
-    if iwin eq 0 then ana_all = ana $
-    else ana_all = [ana_all, ana]
+    ENDIF ELSE ana_all = 0 ; ~headers_only
 
   endfor ; iwin=0,n_windows-1
 
