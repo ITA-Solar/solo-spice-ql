@@ -39,7 +39,7 @@
 ;      PROGENITOR_DATA: If this is provided, this data array will be saved into the data extension.
 ;            This is used to store the original progenitor data, instead of the possibly transformed
 ;            data array, that xcfit_block requires. I.e. the absorbed dimension (e.g. spectrum) does
-;            not need to be in the first dimension. The keyword 'PRGDATA' will be set to True.
+;            not need to be in the first dimension. The keyword PRGDATA will be set to True.
 ;            FITS2ANA will then transform the data cube when read back into memory, 
 ;            so that it can be used in xcfit_block.
 ;            
@@ -65,7 +65,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-12-06 14:39 CET $
+; $Id: 2023-12-06 15:22 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -115,7 +115,6 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
   fits_util->add, hdr, '', ' '
 
   fits_util->add, hdr, 'EXTNAME', extension_names[1], 'Extension name'
-
   fits_util->add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
   fits_util->add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
   fits_util->add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
@@ -132,7 +131,7 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
 
     hdr_addition = HEADER_INPUT_DATA
 
-    fits_util->add, hdr, 'PRGEXT', fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=''), 'Progenitor extension name'
+    fits_util->add, hdr, 'EXTNAME', fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=''), 'Extension name'
     fits_util->add, hdr, 'XDIMNA', fxpar(HEADER_INPUT_DATA, 'NAXIS', missing=0), 'Number of data axes in external extension'
     naxisn = fxpar(HEADER_INPUT_DATA, 'NAXIS*', missing=0)
     for i=0,N_ELEMENTS(naxisn)-1 do fits_util->add, hdr, 'XDIMNA'+strtrim(i+1,2), naxisn[i]
