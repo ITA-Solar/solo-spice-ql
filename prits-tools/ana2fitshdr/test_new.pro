@@ -1,7 +1,7 @@
 pro test_new
 
   file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
-  file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
+  ;file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
 ;  d0 = readfits(file, h0)
 ;  help,d0
 ;  d1 = readfits(file, h1, ext=1)
@@ -25,12 +25,12 @@ pro test_new
     SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS )
   
   print,l3file
-  
+  stop
   
   
   ana = fits2ana(l3file, /debug)
   
-  spice_xcfit_block, ana=ana
+  spice_xcfit_block, ana=ana[0]
   
   
   
