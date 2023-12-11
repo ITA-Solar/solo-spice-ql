@@ -130,7 +130,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-12-11 13:49 CET $
+; $Id: 2023-12-11 14:30 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
@@ -164,8 +164,13 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
   prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
   prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0
-  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', 0, default=strtrim(winno, 2)
   prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional=1
+  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', 0, result=error
+  IF error[0] NE '' THEN BEGIN
+    data_id = strtrim(winno, 2)
+    IF N_ELEMENTS(HEADER_INPUT_DATA) GT 0 THEN data_id = fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=data_id) $
+    ELSE data_id = data_id + ' data'
+  ENDIF
   prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional
@@ -247,7 +252,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
 
   extension_names = data_id + [ $
     ' results', $
-    ' data', $
+    '', $
     ' xdim1', $
     ' weights', $
     ' includes', $
@@ -277,11 +282,13 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   ; Create data header
   ; ------
 
+  IF keyword_set(EXT_DATA_PATH) THEN NO_SAVE_DATA=1
   hdr = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
     HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA, NO_SAVE_DATA=NO_SAVE_DATA, $
     DATA_ARRAY=DATA_ARRAY)
   all_headers[1] = ptr_new(hdr)
-  if hdr[0] eq '' then EXTENSION_NAMES[1] = ''
+  IF keyword_set(EXT_DATA_PATH) THEN EXTENSION_NAMES[1] = EXT_DATA_PATH+';'+EXTENSION_NAMES[1] $
+  ELSE IF hdr[0] EQ '' THEN EXTENSION_NAMES[1] = ''
 
 
   ; ------
