@@ -4,8 +4,8 @@
 ;
 ; PURPOSE:
 ;      This procedure saves the content of one or more ANA structures into one FITS file.
-;      The FITS file will contain up to 6 extension per ANA, where the first contains the results,
-;      and the fit components as header keywords. The resulting FITS file can be converted
+;      The FITS file will contain up to 6 extension per ANA, where the first contains the results
+;      and the fit components as header keywords. The resulting FITS file can be read and converted
 ;      into one or more ANA structures with the procedure FITS2ANA.
 ;      It is possible to call this procedure multiple times with the same filepath_out,
 ;      if in these cases the EXTENSION keyword is set, the windows will be appended to the
@@ -177,7 +177,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-12-11 13:49 CET $
+; $Id: 2023-12-11 14:21 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -281,8 +281,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   IF error[0] NE '' THEN   prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
   ELSE proj_kwd_ptr = N_ELEMENTS(PROJ_KEYWORDS)
 
-  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=max([1, n_ana]), $
-    default=strtrim(indgen(n_ana), 2)
+  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=n_ana, /optional
 
 
   filename_out = file_basename(filepath_out)
