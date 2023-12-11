@@ -62,14 +62,20 @@
 ;              One string array per ANA provided. Can be a string array, if only one ANA is provided.
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
 ;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
-;              alog the first dimension. If these data arrays are provided, they will be saved into the XDIM1 extensions instead of INPUT_DATA.
-;              One data array per ANA provided. Can be a string array, if only one ANA is provided.
+;              along the first dimension. If these data arrays are provided, they will be saved into the XDIM1 extensions instead of INPUT_DATA.
+;              One data array per ANA provided. Can be a data array, if only one ANA is provided.
 ;      DATA_ID: A string vector of same length as 'ana', or if 'ana' is not provided, same number of windows provided.
 ;              These strings are used to identify the data, i.e. they will
-;              be used in the extension names of the FITS file. Each dataset will get
+;              be used in the extension names of the FITS file. Each dataset will get up to
 ;              6 extensions, which all have the same ID, but the extension name will be
 ;              'data_id'+' '+extension_type (='results', 'data', 'xdim1', 'weights', 'includes', 'constants').
-;              Default is the dataset indices.
+;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
+;              will have this EXTNAME (without 'data') as its extension name.
+;              If this is not provided then default is the dataset indices.
+;      EXT_DATA_PATH: A string array or a string. This contains the relative path to the external extension, which contains
+;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
+;              The header keyword DATAEXT in the headers will get EXT_DATA_PATH as a prefix to point to the external extension.
+;              See also Appendix VII aobut External Extensions in https://arxiv.org/abs/2011.12139
 ;      WINNO: Window number (starting at 0) of the first 'ana' provided within this study in this FITS file.
 ;              If you call this procedure mutliple times with the same filepath_out and
 ;              EXTENSION keyword set, you can define here what the index of the currently provided
@@ -171,12 +177,13 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-11-29 15:00 CET $
+; $Id: 2023-12-11 13:49 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
   DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
+  EXT_DATA_PATH=EXT_DATA_PATH, $
   IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
   PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
   XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
@@ -328,6 +335,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
       headers = ana2fitshdr(ana[iwindow], FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=DATA_ID[iwindow], TYPE_XDIM1=TYPE_XDIM1, $
+        EXT_DATA_PATH=EXT_DATA_PATH, $
         IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
@@ -341,6 +349,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
       headers = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=DATA_ID[iwindow], TYPE_XDIM1=TYPE_XDIM1, $
+        EXT_DATA_PATH=EXT_DATA_PATH, $
         IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $

@@ -63,7 +63,14 @@
 ;      PATH_EXTERNAL_EXTENSION: String. A path, relative to this FITS file, which points to the
 ;            progenitor FITS file that contains the original data cube. This will be added as a prefix
 ;            to DATAEXT keyword. If this is provided the keyword NO_SAVE_DATA will be set, and PRGDATA is set to True.
-;      DATA_ID: A string defining the prefix to the names of the 6 extensions, default is WINNO as a string.
+;      DATA_ID: A string defining the prefix to the names of the 6 extensions.
+;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
+;              will have he this EXTNAME (without 'data') as its extension name.
+;              If this is not provided then default is the dataset indices.
+;      EXT_DATA_PATH: A string array or a string. This contains the relative path to the external extension, which contains
+;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
+;              The header keyword DATAEXT in the headers will get EXT_DATA_PATH as a prefix to point to the external extension.
+;              See also Appendix VII aobut External Extensions in https://arxiv.org/abs/2011.12139
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
@@ -123,12 +130,13 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-12-06 15:21 CET $
+; $Id: 2023-12-11 13:49 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
   DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
+  EXT_DATA_PATH=EXT_DATA_PATH, $
   IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
   PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
   XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
