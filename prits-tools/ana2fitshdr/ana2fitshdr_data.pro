@@ -9,7 +9,7 @@
 ;      provided and not a scalar number, then HEADER_INPUT_DATA first will be stripped of 
 ;      the keywords that mkhdr populates, and then it will be added to the new header.
 ;      These keywords will be added/updated in the header in any case:
-;      DATE, EXTNAME, RESEXT, DATAEXT, XDIMXT1, WGTEXT, INCLEXT, CONSTEXT, PRGDATA
+;      DATE, EXTNAME, RESEXT, DATAEXT, XDIMXT1, WGTEXT, INCLEXT, CONSTEXT
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
@@ -27,7 +27,8 @@
 ;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
 ;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA or
 ;             providing PROGENITOR_DATA as a scalar number.
-;             If PROGENITOR_DATA is not provided, the keyword PRGDATA in the data header will be set to False.
+;             This keyword will also be set if data is linked to an external extension, by having 
+;             set EXT_DATA_PATH in ANA2FITS.
 ;
 ; OPTIONAL INPUTS:
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
@@ -39,7 +40,7 @@
 ;      PROGENITOR_DATA: If this is provided, this data array will be saved into the data extension.
 ;            This is used to store the original progenitor data, instead of the possibly transformed
 ;            data array, that xcfit_block requires. I.e. the absorbed dimension (e.g. spectrum) does
-;            not need to be in the first dimension. The keyword PRGDATA will be set to True.
+;            not need to be in the first dimension.
 ;            FITS2ANA will then transform the data cube when read back into memory, 
 ;            so that it can be used in xcfit_block.
 ;            
@@ -65,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-12-06 15:22 CET $
+; $Id: 2023-12-11 14:21 CET $
 
 
 FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
@@ -80,16 +81,13 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
 
   IF N_ELEMENTS(PROGENITOR_DATA) GT 0 THEN BEGIN
     data_array = PROGENITOR_DATA
-    PRGDATA = 'T'
     IF N_ELEMENTS(PROGENITOR_DATA) EQ 1 THEN no_data = 1 ELSE no_data = 0
   ENDIF ELSE IF N_ELEMENTS(INPUT_DATA) GT 0 THEN BEGIN
     data_array = INPUT_DATA
     no_data = 0
-    PRGDATA = 'F'
   ENDIF ELSE BEGIN
     data_array = 0
     no_data = 1
-    PRGDATA = 'F'
   ENDELSE
   IF keyword_set(NO_SAVE_DATA) THEN BEGIN
     data_array = 0
@@ -121,8 +119,6 @@ FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, I
   fits_util->add, hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
   fits_util->add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
-
-  fits_util->add, hdr, 'PRGDATA', PRGDATA, 'Indicator whether data is in its original form (progenitor)'
 
   fits_util->remove_keyword, hdr, 'PCOUNT'
   fits_util->remove_keyword, hdr, 'GCOUNT'
