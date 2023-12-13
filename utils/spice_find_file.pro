@@ -26,6 +26,10 @@
 ;                 either the time for which the file closest to it is returned,
 ;                 or the start of the time window to be searched, in case 'time_end'
 ;                 is also provided.
+;                 This input can also be a filename of a SPICE file. It may contain a path. The function then tries
+;                 to find this exact file (also considering the file version). Or you may also provide the LEVEL keyword,
+;                 in which case it will return the latest version of this file for the given level.
+;                 It returns then the full path of the file, if it was found.
 ;
 ; OPTIONAL INPUT:
 ;     TIME_END: This can be in any format accepted by the ANYTIM suite of
@@ -95,7 +99,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2023-06-19 11:39 CEST $
+; $Id: 2023-12-13 14:24 CET $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -105,8 +109,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
 
   count_file = 0
   count_seq = 0
-  IF N_ELEMENTS(level) EQ 0 THEN level = 2
-
+  
   IF n_params() LT 1 THEN BEGIN
     print,'Use:  IDL> Result = SPICE_FIND_FILE(time_start [, time_end=time_end, level=level, '
     print,'       top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, '
@@ -122,11 +125,28 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     return,''
   ENDIF
 
+  file_input = 0
+  IF ~valid_time(time_start) THEN BEGIN
+    inputfile_info = spice_file2info(time_start)
+    IF ~inputfile_info.is_spice_file THEN BEGIN
+      print, 'Input is neither a valid time, nor a SPICE file.'
+      return, ''
+    ENDIF
+    time_start_use = inputfile_info.datetime
+    IF N_ELEMENTS(level) EQ 0 THEN BEGIN
+      file_input = 1
+      level = inputfile_info.level
+      remove_duplicates = 0
+    ENDIF
+  ENDIF ELSE BEGIN
+    time_start_use = time_start
+  ENDELSE
+  IF N_ELEMENTS(level) EQ 0 THEN level = 2
 
   IF N_ELEMENTS(top_dir) eq 0 THEN BEGIN
     topdir=getenv('SPICE_DATA')
     IF topdir EQ '' THEN BEGIN
-      print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
+      print,'% SPICE_FIND_FILE:  Please define the environment variable $SPICE_DATA to point to the '
         print,'               top level of your directory structure.'
       print,'               Or specify TOP_DIR. Returning...'
       return,''
@@ -150,8 +170,8 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
 
   IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
   IF ~keyword_set(no_level) THEN topdir = concat_dir(topdir, 'level'+strtrim(string(level), 2))
-
-  time0 = time_start
+  
+  time0 = time_start_use
   IF N_ELEMENTS(time_end) EQ 0 THEN BEGIN
     time1 = time0
     no_endtime = 1
@@ -245,7 +265,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
 
   IF ~keyword_set(ignore_time) || ~keyword_set(no_tree_struct) THEN BEGIN
     ; we do not ignore the provided date/time (window)
-    startdate=utc2tai(time_start)
+    startdate=utc2tai(time_start_use)
     filedates=utc2tai(fileinfo.datetime)
 
     IF no_endtime THEN BEGIN
@@ -260,10 +280,19 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
           fileinfo.rasterno eq fileinfo[min_index].rasterno AND $
           fileinfo.level eq fileinfo[min_index].level, count_file)
         files = files[ind]
+        fileinfo = fileinfo[ind]
       ENDIF ELSE BEGIN ; keyword_set(sequence)
         files = files[min_index]
         count_file = 1
       ENDELSE ; keyword_set(sequence)
+      IF file_input THEN BEGIN
+        ind = where(fileinfo.spiobsid eq inputfile_info.spiobsid AND $
+          fileinfo.rasterno eq inputfile_info.rasterno AND $
+          fileinfo.level eq inputfile_info.level AND $
+          fileinfo.version eq inputfile_info.version, count_version)
+        IF count_version GT 0 THEN files = files[ind] $
+        ELSE files = ''
+      ENDIF
       return, files
     ENDIF ; no_endtime
 
