@@ -76,7 +76,7 @@
 ;
 ; Version     : Version 12, TF, 29 November 2023
 ;
-; $Id: 2023-12-05 14:56 CET $
+; $Id: 2023-12-13 14:44 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -321,7 +321,19 @@ FUNCTION spice_gen_cat::filenames_match
      equal_txt = ( n_files_in_hash EQ n_files_on_disk) ? 'is the same.' : 'do not match!'
      print,'The number of files in hash and on disk '+equal_txt
      FOR i =0,(n_files_on_disk-1) < (n_files_in_hash-1) DO IF files_in_hash[i] NE files_on_disk[i] THEN differs_ix = (differs_ix EQ !NULL) ? i : [differs_ix,i]
-     stop
+     
+     IF ~self.d.quiet THEN BEGIN 
+        FOREACH diskfile, files_on_disk DO BEGIN
+           ix = where(files_in_hash EQ diskfile,/null)
+           IF ix EQ !NULL THEN print,file_basename(diskfile)+' not found in hash!'
+        ENDFOREACH
+        print
+        FOREACH hashfile, files_in_hash DO BEGIN
+           ix = where(files_on_disk EQ hashfile,/null)
+           IF ix EQ !NULL THEN print,file_basename(hashfile)+' not found on disk!'
+        ENDFOREACH
+     ENDIF 
+  
   ENDIF
   
   return,match
