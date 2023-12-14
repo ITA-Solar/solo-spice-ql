@@ -59,7 +59,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-12-14 14:08 CET $
+; $Id: 2023-12-14 14:25 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -247,6 +247,19 @@ function fits2ana, fitsfile, windows=windows, $
 
     ; Data extension
     
+    dataext_split = strsplit(dataext, ';', count=count, /extract)
+    IF count EQ 1 THEN BEGIN
+      EXT_DATA_PATH = ''
+      dataext = dataext_split[0]
+    ENDIF ELSE IF count EQ 2 THEN BEGIN
+      EXT_DATA_PATH = dataext_split[0]
+      dataext = dataext_split[1]
+    ENDIF ELSE BEGIN
+      print, 'Unknown format of external extension: ' + dataext
+      print, 'Only using first and last bit'
+      EXT_DATA_PATH = dataext_split[0]
+      dataext = dataext_split[-1]
+    ENDELSE
     extension = where(fits_content.extname EQ DATAEXT, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATAEXT, /info
