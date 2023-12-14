@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-12-13 14:47 CET $
+; $Id: 2023-12-14 14:08 CET $
 
 
 ;+
@@ -509,7 +509,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         ana2fits, ANA, FILEPATH_OUT=file, $
           N_WINDOWS=N_ELEMENTS(window_index), WINNO=iwindow, $
           DATA_ID=DATA_ID, TYPE_XDIM1='WAVE', $
-          EXT_DATA_PATH='../path/to/l2/file.fits', $
+          EXT_DATA_PATH=filename_l2, $
           IS_EXTENSION=IS_EXTENSION, LEVEL='L3', VERSION=number_version_l3, $
           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
           PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=self->get_header(window_index[iwindow]), $
