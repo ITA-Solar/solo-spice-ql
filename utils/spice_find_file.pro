@@ -97,9 +97,10 @@
 ; MODIFICATION HISTORY:
 ;     Ver.1, 15-Jun-2020, Martin Wiesmann : iris_find_file rewritten for SPICE
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
+;     Ver.3, 13-Dec-2023, Martin Wiesmann : Allows TIME_START to be a SPICE file instead of a time
 ;
 ;-
-; $Id: 2023-12-14 11:52 CET $
+; $Id: 2023-12-14 11:53 CET $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
