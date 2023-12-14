@@ -59,7 +59,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-12-06 13:45 CET $
+; $Id: 2023-12-14 14:08 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -149,7 +149,7 @@ function fits2ana, fitsfile, windows=windows, $
     ENDELSE
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
     wcs_result = fitshead2wcs(hdr)
-
+    
     ;extract info from header
 ;    filename = strtrim(fxpar(hdr, 'ANA_FILE', missing=''), 2)
 ;    datasource = strtrim(fxpar(hdr, 'ANA_SRC', missing=''), 2)
@@ -238,13 +238,18 @@ function fits2ana, fitsfile, windows=windows, $
       help,fit
     ENDIF
 
+    DATAEXT = fxpar(hdr, 'DATAEXT', missing='')
+    XDIMXT1 = fxpar(hdr, 'XDIMXT1', missing='')
+    WGTEXT = fxpar(hdr, 'WGTEXT', missing='')
+    INCLEXT = fxpar(hdr, 'INCLEXT', missing='')
+    CONSTEXT = fxpar(hdr, 'CONSTEXT', missing='')
+
 
     ; Data extension
     
-    extname = data_ids[wind_ind] + ' data'
-    extension = where(fits_content.extname EQ extname, count)
+    extension = where(fits_content.extname EQ DATAEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATAEXT, /info
       hdr = ''
       wcs_data_exists = 0
       IF headers_only THEN BEGIN
@@ -254,6 +259,8 @@ function fits2ana, fitsfile, windows=windows, $
         datasize = wcs_result.naxis
         datasize[0] = datasize[0]*2
         data = fltarr(datasize)
+        size_data = size(data)
+        ind_xdim1 = 0
       ENDELSE
     ENDIF ELSE BEGIN
       extension = extension[0]
@@ -272,15 +279,15 @@ function fits2ana, fitsfile, windows=windows, $
       ENDIF
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
       wcs_data_exists =  N_ELEMENTS(wcs_data) GT 0
-      IF ~headers_only THEN BEGIN        
-        IF ~wcs_data_exists THEN BEGIN
-          wcs_data = {naxis: size_data[1:size_data[0]]}
-        ENDIF ELSE IF ind_xdim1 NE 0 THEN BEGIN
-          data_dims = ana_wcs_transform_vector(indgen(size_data[0]), ind_xdim1, 0, size_data[0])
-          data = transpose(data, data_dims)
-        ENDIF
-      ENDIF
     ENDELSE
+    IF ~headers_only THEN BEGIN
+      IF ~wcs_data_exists THEN BEGIN
+        wcs_data = {naxis: size_data[1:size_data[0]]}
+      ENDIF ELSE IF ind_xdim1 NE 0 THEN BEGIN
+        data_dims = ana_wcs_transform_vector(indgen(size_data[0]), ind_xdim1, 0, size_data[0])
+        data = transpose(data, data_dims)
+      ENDIF
+    ENDIF
     if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
@@ -296,11 +303,9 @@ function fits2ana, fitsfile, windows=windows, $
     
     ; XDIM1 extension
     
-    extname = data_ids[wind_ind] + ' xdim1'
-    extname_old = data_ids[wind_ind] + ' lambda'
-    extension = where(fits_content.extname EQ extname OR fits_content.extname EQ extname_old, count)
+    extension = where(fits_content.extname EQ XDIMXT1, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + XDIMXT1, /info
       IF headers_only THEN BEGIN
         xdim1 = 0
       ENDIF ELSE BEGIN
@@ -338,10 +343,9 @@ function fits2ana, fitsfile, windows=windows, $
 
     ; WEIGHTS
     
-    extname = data_ids[wind_ind] + ' weights'
-    extension = where(fits_content.extname EQ extname, count)
+    extension = where(fits_content.extname EQ WGTEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find weights extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Could not find weights extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + WGTEXT, /info
       IF headers_only THEN BEGIN
         weights = 0
       ENDIF ELSE BEGIN
@@ -372,10 +376,9 @@ function fits2ana, fitsfile, windows=windows, $
 
     ; INCLUDES
 
-    extname = data_ids[wind_ind] + ' includes'
-    extension = where(fits_content.extname EQ extname, count)
+    extension = where(fits_content.extname EQ INCLEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find includes extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Could not find includes extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + INCLEXT, /info
       IF headers_only THEN BEGIN
         include = 0
       ENDIF ELSE BEGIN
@@ -408,10 +411,9 @@ function fits2ana, fitsfile, windows=windows, $
 
     ; CONSTANTS
 
-    extname = data_ids[wind_ind] + ' constants'
-    extension = where(fits_content.extname EQ extname, count)
+    extension = where(fits_content.extname EQ CONSTEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find constants extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Could not find constants extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + CONSTEXT, /info
       IF headers_only THEN BEGIN
         const = 0
       ENDIF ELSE BEGIN
