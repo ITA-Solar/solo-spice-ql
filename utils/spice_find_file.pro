@@ -99,7 +99,7 @@
 ;     Ver.2,  3-Nov-2020, Martin Wiesmann : complete overhaul of the procedure
 ;
 ;-
-; $Id: 2023-12-13 14:24 CET $
+; $Id: 2023-12-14 11:52 CET $
 
 
 FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
@@ -125,7 +125,6 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     return,''
   ENDIF
 
-  file_input = 0
   IF ~valid_time(time_start) THEN BEGIN
     inputfile_info = spice_file2info(time_start)
     IF ~inputfile_info.is_spice_file THEN BEGIN
@@ -133,13 +132,12 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
       return, ''
     ENDIF
     time_start_use = inputfile_info.datetime
-    IF N_ELEMENTS(level) EQ 0 THEN BEGIN
-      file_input = 1
-      level = inputfile_info.level
-      remove_duplicates = 0
-    ENDIF
+    file_input = 1
+    remove_duplicates = 0
+    IF N_ELEMENTS(level) EQ 0 THEN level = inputfile_info.level
   ENDIF ELSE BEGIN
     time_start_use = time_start
+    file_input = 0
   ENDELSE
   IF N_ELEMENTS(level) EQ 0 THEN level = 2
 
@@ -288,7 +286,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
       IF file_input THEN BEGIN
         ind = where(fileinfo.spiobsid eq inputfile_info.spiobsid AND $
           fileinfo.rasterno eq inputfile_info.rasterno AND $
-          fileinfo.level eq inputfile_info.level AND $
+          fileinfo.level eq level AND $
           fileinfo.version eq inputfile_info.version, count_version)
         IF count_version GT 0 THEN files = files[ind] $
         ELSE files = ''
