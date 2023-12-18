@@ -59,7 +59,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-12-14 14:25 CET $
+; $Id: 2023-12-18 13:30 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -288,6 +288,9 @@ function fits2ana, fitsfile, windows=windows, $
       IF ~headers_only && size_data[0] EQ 0 THEN BEGIN
         message, 'Loading data cube from external extension', /info
         message, 'TODO', /info
+        print, ' Read file : ', EXT_DATA_PATH
+        f = spice_find_file(EXT_DATA_PATH)
+        print, ' Read file : ', f
         ; TODO
       ENDIF
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
