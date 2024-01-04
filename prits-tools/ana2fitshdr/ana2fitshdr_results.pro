@@ -74,7 +74,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-12-01 15:01 CET $
+; $Id: 2024-01-04 14:48 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -304,7 +304,7 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
       FOR i=0,N_ELEMENTS(prg_history)-1 DO FXADDPAR, hdr, 'HISTORY', prg_history[i]
     ENDIF
   ENDIF
-  IF history[0] NE '' THEN BEGIN
+  IF N_ELEMENTS(history) GT 0 && history[0] NE '' THEN BEGIN
     FOR i=0,N_ELEMENTS(history)-1 DO FXADDPAR, hdr, 'HISTORY', 'ANA: '+history[i]
   ENDIF
 
