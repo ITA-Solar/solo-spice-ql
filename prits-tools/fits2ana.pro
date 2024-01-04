@@ -22,6 +22,8 @@
 ; 
 ; KEYWORDS:
 ;     headers_only: If set, then the data is not loaded, only the headers, the function returns a zero.
+;     loud: If set, then the function will output messages about non-existing extensions.
+;     quiet: If set, warnings will be suppressed.
 ; 
 ; OPTIONAL INPUTS:
 ;     windows : A scalar or array of indices of windows to be returned. If not provided all windows will
@@ -59,7 +61,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-04 13:41 CET $
+; $Id: 2024-01-04 14:48 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -67,12 +69,15 @@ function fits2ana, fitsfile, windows=windows, $
   headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
   headers_include=headers_include, headers_constants=headers_constants, $
   headers_only=headers_only, $
-  debug=debug
+  loud=loud, quiet=quiet, debug=debug
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
   prits_tools.parcheck, windows, 0, "windows", 'integers', [0, 1], /optional
 
   headers_only = keyword_set(headers_only)
+  loud = keyword_set(loud)
+  quiet = keyword_set(quiet)
+  debug = keyword_set(debug)
   
   fits_open, fitsfile, fits_content
   fits_close, fits_content
@@ -85,18 +90,18 @@ function fits2ana, fitsfile, windows=windows, $
   ENDIF ELSE BEGIN
     ind = where(windows LT n_windows AND windows GE 0, count)
     IF count EQ 0 THEN BEGIN
-      message, 'All provided window indices are outside of the available range. The FITS file contains ' + strtrim(n_windows, 2) + ' windows.', /info
+      IF ~quiet THEN message, 'All provided window indices are outside of the available range. The FITS file contains ' + strtrim(n_windows, 2) + ' windows.', /info
       return, 0
     ENDIF ELSE BEGIN
       windows_process = windows[ind]
       n_windows_process = count
-      IF count NE N_ELEMENTS(windows) THEN BEGIN
-        message, 'Not all provided window indices are within the available range. The FITS file contains ' + strtrim(n_windows, 2) + ' windows.', /info
+      IF count NE N_ELEMENTS(windows) && ~quiet THEN BEGIN
+        IF ~quiet THEN message, 'Not all provided window indices are within the available range. The FITS file contains ' + strtrim(n_windows, 2) + ' windows.', /info
       ENDIF
     ENDELSE
   ENDELSE
-  print, 'Reading file : ' + fitsfile
-  print, 'Reading ' + strtrim(n_windows_process, 2) + ' out of ' +  strtrim(n_windows, 2) + ' windows.'
+  IF ~quiet THEN message, 'Reading file : ' + fitsfile, /info
+  IF ~quiet THEN message, 'Reading ' + strtrim(n_windows_process, 2) + ' out of ' +  strtrim(n_windows, 2) + ' windows.', /info
   get_headers = bytarr(6)
   if arg_present(headers_results) then begin
     headers_results = ptrarr(n_windows_process)
@@ -129,8 +134,8 @@ function fits2ana, fitsfile, windows=windows, $
     extname = data_ids[wind_ind] + ' results'
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find result extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
-      message, 'Ignoring this window', /info
+      IF ~quiet THEN message, 'Could not find result extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + extname, /info
+      IF ~quiet THEN message, 'Ignoring this window', /info
       hdr = ''
       if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
       if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
@@ -227,7 +232,6 @@ function fits2ana, fitsfile, windows=windows, $
 
     fit = fit_components_hash.tostruct(/no_copy)
     
-    debug = keyword_set(debug)
     IF debug THEN BEGIN
       print,''
       print,''
@@ -255,15 +259,15 @@ function fits2ana, fitsfile, windows=windows, $
       EXT_DATA_PATH = dataext_split[0]
       dataext = dataext_split[1]
     ENDIF ELSE BEGIN
-      print, 'Unknown format of external extension: ' + dataext
-      print, 'Only using first and last part'
+      IF loud THEN message, 'Unknown format of external extension: ' + dataext, /info
+      IF loud THEN message, 'Only using first and last part', /info
       EXT_DATA_PATH = dataext_split[0]
       dataext = dataext_split[-1]
     ENDELSE
 
     extension = where(fits_content.extname EQ DATAEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATAEXT, /info
+      IF loud THEN message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATAEXT, /info
       hdr = ''
       wcs_data_exists = 0
       data = 0
@@ -280,11 +284,11 @@ function fits2ana, fitsfile, windows=windows, $
       size_data = size(data)
       progenitor_data = fxpar(hdr, 'PRGDATA', missing=0)
       IF ~headers_only && size_data[0] EQ 0 THEN BEGIN
-        message, 'Loading data cube from external extension', /info
+        IF loud THEN message, 'Loading data cube from external extension', /info
         prg_file = spice_find_file(EXT_DATA_PATH)
         prg_file = prg_file[0]
         IF prg_file NE '' && file_exist(prg_file) THEN BEGIN
-          print, 'Reading file : ', prg_file
+          IF ~quiet THEN message, 'Reading file : '+ prg_file, /info
           fits_open, prg_file, prg_file_content
           fits_close, prg_file_content
           ind = where(prg_file_content.extname EQ dataext, count_prg)
@@ -292,10 +296,10 @@ function fits2ana, fitsfile, windows=windows, $
             data = readfits(prg_file, hdr, ext=ind[0])
             size_data = size(data)
           ENDIF ELSE BEGIN
-            message, 'Did not find external extension "'+dataext+'" in the progenitor file.', /info
+            IF ~quiet THEN message, 'Did not find external extension "'+dataext+'" in the progenitor file.', /info
           ENDELSE
         ENDIF ELSE BEGIN ; prg_file NE ''
-          message, 'Did not find progenitor file: ' + prg_file, /info
+          IF ~quiet THEN message, 'Did not find progenitor file: ' + prg_file, /info
         ENDELSE ; prg_file NE ''
       ENDIF ; ~headers_only && size_data[0] EQ 0
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
@@ -305,7 +309,7 @@ function fits2ana, fitsfile, windows=windows, $
     IF ~headers_only THEN BEGIN
       IF ~wcs_data_exists THEN BEGIN
         IF size_data[0] EQ 0 THEN BEGIN
-          message, 'Creating dummy data cube', /info
+          IF loud THEN message, 'Creating dummy data cube', /info
           datasize = wcs_result.naxis
           datasize[0] = datasize[0]*2
           IF hdr[0] NE '' THEN BEGIN
@@ -341,16 +345,16 @@ function fits2ana, fitsfile, windows=windows, $
     
     extension = where(fits_content.extname EQ XDIMXT1, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + XDIMXT1, /info
+      IF loud THEN message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2), /info
       IF headers_only THEN BEGIN
         xdim1 = 0
       ENDIF ELSE BEGIN
         IF wcs_data_exists THEN BEGIN
-          message, 'Creating xdim1 cube from WCS coordinates given in data extension', /info
+          IF loud THEN message, 'Creating xdim1 cube from WCS coordinates given in data extension', /info
           xdim1 = wcs_get_coord(wcs_data)
           xdim1 = reform(xdim1[0,*,*,*,*,*,*,*])
         ENDIF ELSE BEGIN
-          message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube', /info
+          IF loud THEN message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube', /info
           xdim1 = fltarr(wcs_data.naxis)
         ENDELSE
       ENDELSE
@@ -381,11 +385,11 @@ function fits2ana, fitsfile, windows=windows, $
     
     extension = where(fits_content.extname EQ WGTEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find weights extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + WGTEXT, /info
+      IF loud THEN message, 'Could not find weights extension of window ' + strtrim(wind_ind, 2), /info
       IF headers_only THEN BEGIN
         weights = 0
       ENDIF ELSE BEGIN
-        message, 'Creating weights cube with default values', /info
+        IF loud THEN message, 'Creating weights cube with default values', /info
         weights = make_array(wcs_data.naxis, value=1.0)
       ENDELSE
       hdr = ''
@@ -414,11 +418,11 @@ function fits2ana, fitsfile, windows=windows, $
 
     extension = where(fits_content.extname EQ INCLEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find includes extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + INCLEXT, /info
+      IF loud THEN message, 'Could not find includes extension of window ' + strtrim(wind_ind, 2), /info
       IF headers_only THEN BEGIN
         include = 0
       ENDIF ELSE BEGIN
-        message, 'Creating includes cube with default values', /info
+        IF loud THEN message, 'Creating includes cube with default values', /info
         datasize = wcs_result.naxis
         datasize[0] = n_components
         include = make_array(datasize, value=1b)
@@ -449,11 +453,11 @@ function fits2ana, fitsfile, windows=windows, $
 
     extension = where(fits_content.extname EQ CONSTEXT, count)
     IF count EQ 0 THEN BEGIN
-      message, 'Could not find constants extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + CONSTEXT, /info
+      IF loud THEN message, 'Could not find constants extension of window ' + strtrim(wind_ind, 2), /info
       IF headers_only THEN BEGIN
         const = 0
       ENDIF ELSE BEGIN
-        message, 'Creating constants cube with default values', /info
+        IF loud THEN message, 'Creating constants cube with default values', /info
         datasize = wcs_result.naxis
         datasize[0] = datasize[0]-1
         const = make_array(datasize, value=0b)
