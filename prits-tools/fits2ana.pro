@@ -59,7 +59,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2023-12-18 13:30 CET $
+; $Id: 2024-01-04 11:57 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -260,22 +260,15 @@ function fits2ana, fitsfile, windows=windows, $
       EXT_DATA_PATH = dataext_split[0]
       dataext = dataext_split[-1]
     ENDELSE
+
     extension = where(fits_content.extname EQ DATAEXT, count)
     IF count EQ 0 THEN BEGIN
       message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATAEXT, /info
       hdr = ''
       wcs_data_exists = 0
-      IF headers_only THEN BEGIN
-        data = 0
-      ENDIF ELSE BEGIN
-        message, 'Creating dummy data cube', /info
-        datasize = wcs_result.naxis
-        datasize[0] = datasize[0]*2
-        data = fltarr(datasize)
-        size_data = size(data)
-        ind_xdim1 = 0
-      ENDELSE
-    ENDIF ELSE BEGIN
+      data = 0
+      size_data = size(data)
+    ENDIF ELSE BEGIN ; count EQ 0
       extension = extension[0]
       IF headers_only THEN BEGIN
         data = 0
@@ -287,23 +280,44 @@ function fits2ana, fitsfile, windows=windows, $
       progenitor_data = fxpar(hdr, 'PRGDATA', missing=0)
       IF ~headers_only && size_data[0] EQ 0 THEN BEGIN
         message, 'Loading data cube from external extension', /info
-        message, 'TODO', /info
-        print, ' Read file : ', EXT_DATA_PATH
-        f = spice_find_file(EXT_DATA_PATH)
-        print, ' Read file : ', f
-        ; TODO
-      ENDIF
+        prg_file = spice_find_file(EXT_DATA_PATH)
+        prg_file = prg_file[0]
+        IF prg_file NE '' && file_exist(prg_file) THEN BEGIN
+          print, 'Reading file : ', prg_file
+          fits_open, prg_file, prg_file_content
+          fits_close, prg_file_content
+          ind = where(prg_file_content.extname EQ dataext, count_prg)
+          IF count_prg GT 0 THEN BEGIN
+            data = readfits(prg_file, hdr, ext=ind[0])
+            size_data = size(data)
+          ENDIF ELSE BEGIN
+            message, 'Did not find external extension "'+dataext+'" in the progenitor file.', /info
+          ENDELSE
+        ENDIF ELSE BEGIN ; prg_file NE ''
+          message, 'Did not find progenitor file: ' + prg_file, /info
+        ENDELSE ; prg_file NE ''
+      ENDIF ; ~headers_only && size_data[0] EQ 0
       wcs_data = ana_wcs_get_transform(TYPE_XDIM1, hdr, ind_xdim1=ind_xdim1)
       wcs_data_exists =  N_ELEMENTS(wcs_data) GT 0
-    ENDELSE
+    ENDELSE ; count EQ 0
+
     IF ~headers_only THEN BEGIN
       IF ~wcs_data_exists THEN BEGIN
-        wcs_data = {naxis: size_data[1:size_data[0]]}
-      ENDIF ELSE IF ind_xdim1 NE 0 THEN BEGIN
+        IF size_data[0] EQ 0 THEN BEGIN
+          message, 'Creating dummy data cube', /info
+          datasize = wcs_result.naxis
+          datasize[0] = datasize[0]*2
+          data = fltarr(datasize)
+          ind_xdim1 = 0
+          wcs_data = {naxis: datasize}
+        ENDIF ELSE BEGIN ; size_data[0] EQ 0
+          wcs_data = {naxis: size_data[1:size_data[0]]}
+        ENDELSE ; size_data[0] EQ 0
+      ENDIF ELSE IF ind_xdim1 NE 0 THEN BEGIN ; ~wcs_data_exists
         data_dims = ana_wcs_transform_vector(indgen(size_data[0]), ind_xdim1, 0, size_data[0])
         data = transpose(data, data_dims)
-      ENDIF
-    ENDIF
+      ENDIF ; ~wcs_data_exists
+    ENDIF ; ~headers_only
     if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
