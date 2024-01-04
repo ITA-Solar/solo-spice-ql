@@ -59,7 +59,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-04 11:57 CET $
+; $Id: 2024-01-04 13:41 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -245,7 +245,7 @@ function fits2ana, fitsfile, windows=windows, $
     CONSTEXT = fxpar(hdr, 'CONSTEXT', missing='')
 
 
-    ; Data extension
+    ; DATA extension
     
     dataext_split = strsplit(dataext, ';', count=count, /extract)
     IF count EQ 1 THEN BEGIN
@@ -256,7 +256,7 @@ function fits2ana, fitsfile, windows=windows, $
       dataext = dataext_split[1]
     ENDIF ELSE BEGIN
       print, 'Unknown format of external extension: ' + dataext
-      print, 'Only using first and last bit'
+      print, 'Only using first and last part'
       EXT_DATA_PATH = dataext_split[0]
       dataext = dataext_split[-1]
     ENDELSE
@@ -268,6 +268,7 @@ function fits2ana, fitsfile, windows=windows, $
       wcs_data_exists = 0
       data = 0
       size_data = size(data)
+      ind_xdim1 = 0
     ENDIF ELSE BEGIN ; count EQ 0
       extension = extension[0]
       IF headers_only THEN BEGIN
@@ -307,8 +308,13 @@ function fits2ana, fitsfile, windows=windows, $
           message, 'Creating dummy data cube', /info
           datasize = wcs_result.naxis
           datasize[0] = datasize[0]*2
+          IF hdr[0] NE '' THEN BEGIN
+            prg_naxis = fxpar(hdr, 'XDIMNA*', missing=0)
+            IF prg_naxis[0] GT 0 THEN BEGIN
+              datasize = prg_naxis
+            ENDIF
+          ENDIF
           data = fltarr(datasize)
-          ind_xdim1 = 0
           wcs_data = {naxis: datasize}
         ENDIF ELSE BEGIN ; size_data[0] EQ 0
           wcs_data = {naxis: size_data[1:size_data[0]]}
