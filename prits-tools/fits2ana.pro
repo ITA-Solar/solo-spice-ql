@@ -61,7 +61,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-04 14:48 CET $
+; $Id: 2024-01-09 11:28 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -163,6 +163,7 @@ function fits2ana, fitsfile, windows=windows, $
 ;    label = strtrim(fxpar(hdr, 'ANA_LABL', missing=''), 2)
 ;    history = fxpar(hdr, 'ANA_HIST', missing='')
 ;    history = strtrim(strsplit(history,';',/extract,count=count), 2)
+    history = ''
     type_xdim1 = strtrim(fxpar(hdr, 'XDIMTY1', missing=''), 2)
 
     ; extract fit components
