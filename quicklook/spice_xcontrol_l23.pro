@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-01-09 14:51 CET $
+; $Id: 2024-01-10 11:37 CET $
 ;-
 
 
@@ -121,13 +121,13 @@ pro spice_xcontrol_l23_save_file, event
     answer = dialog_message(['This file already exists.',file_l3,'Do you want to overwrite it?'], $
       /question, /default_no, title='File exists. Overwrite?',/center)
     IF answer EQ 'No' THEN return
-    
+
     ind_read = where(ana_l3_read EQ 0, count_read)
     IF count_read GT 0 THEN BEGIN
       ana = fits2ana(file_l3, windows=ind_read);, /quiet)
       FOR i=0,count_read-1 DO BEGIN
         delete_analysis, ana_l3[ind_read[i]]
-        ana_l3[ind_read[i]] = ana
+        ana_l3[ind_read[i]] = ana[i]
         ana_l3_read[ind_read[i]] = 1
       ENDFOR
     ENDIF
@@ -215,7 +215,6 @@ pro spice_xcontrol_l23_update_state_add, info, result
     IF count_result GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = nwin_l3
       state_l3[iwin].edited = ~result.file_saved
-      stop
       spice_xcontrol_l23_add_window, ana_l3_new, (*result.ana)[ind_result[0]], $
         ana_l3_read_new, (*result.ana_read)[ind_result[0]], $
         hdr_l3_new, *(*result.result_headers)[ind_result[0]], $
