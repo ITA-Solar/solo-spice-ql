@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-01-10 11:37 CET $
+; $Id: 2024-01-11 11:53 CET $
 ;-
 
 
@@ -124,7 +124,13 @@ pro spice_xcontrol_l23_save_file, event
 
     ind_read = where(ana_l3_read EQ 0, count_read)
     IF count_read GT 0 THEN BEGIN
-      ana = fits2ana(file_l3, windows=ind_read);, /quiet)
+      hdr_l3 = *(*info).hdr_l3_user
+      PGEXTNAM = []
+      FOR i=0,count_read-1 DO BEGIN
+        PGEXTNAM = [PGEXTNAM, fxpar(*hdr_l3[ind_read[i]], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')]        
+      ENDFOR
+
+      ana = fits2ana(file_l3, windows=PGEXTNAM);, /quiet)
       FOR i=0,count_read-1 DO BEGIN
         delete_analysis, ana_l3[ind_read[i]]
         ana_l3[ind_read[i]] = ana[i]
@@ -389,7 +395,8 @@ pro spice_xcontrol_l23_open_l3, event
       ana_l3_read = *(*info).ana_l3_official_read
       hdr_l3 = *(*info).hdr_l3_official
       hdr_l3_data = *(*info).hdr_l3_official_data
-      title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      PGEXTNAM = fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      title = 'L3 - official - ' + PGEXTNAM
       state_l3 = (*info).state_l3_official
     END
     2: BEGIN
@@ -398,12 +405,13 @@ pro spice_xcontrol_l23_open_l3, event
       ana_l3_read = *(*info).ana_l3_user_read
       hdr_l3 = *(*info).hdr_l3_user
       hdr_l3_data = *(*info).hdr_l3_user_data
-      title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      PGEXTNAM = fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      title = 'L3 - user - ' + PGEXTNAM
       state_l3 = (*info).state_l3_user
     END
   endcase
   IF ~ana_l3_read[win_info.winno] THEN BEGIN
-    ana = fits2ana(file_l3, windows=win_info.winno, /quiet)
+    ana = fits2ana(file_l3, windows=PGEXTNAM, /quiet)
     delete_analysis, ana_l3[win_info.winno]
     ana_l3[win_info.winno] = ana
     ana_l3_read[win_info.winno] = 1

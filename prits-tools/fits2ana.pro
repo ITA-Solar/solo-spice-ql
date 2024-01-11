@@ -28,6 +28,8 @@
 ; OPTIONAL INPUTS:
 ;     windows : A scalar or array of indices of windows to be returned. If not provided all windows will
 ;               be returned.
+;               This can also be a scalar array of strings. Then it assumed that they are the DATA_ID of
+;               the windows, see documentation of ANA2FITS.
 ;
 ; OUTPUT:
 ;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
@@ -61,7 +63,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-09 11:28 CET $
+; $Id: 2024-01-11 11:53 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -72,7 +74,7 @@ function fits2ana, fitsfile, windows=windows, $
   loud=loud, quiet=quiet, debug=debug
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
-  prits_tools.parcheck, windows, 0, "windows", 'integers', [0, 1], /optional
+  prits_tools.parcheck, windows, 0, "windows", ['integers', 'string'], [0, 1], /optional
 
   headers_only = keyword_set(headers_only)
   loud = keyword_set(loud)
@@ -88,14 +90,31 @@ function fits2ana, fitsfile, windows=windows, $
     windows_process = indgen(n_windows)
     n_windows_process = n_windows
   ENDIF ELSE BEGIN
-    ind = where(windows LT n_windows AND windows GE 0, count)
+    IF size(windows, /type) EQ 7 THEN BEGIN
+      windows_indices = []
+      FOR i=0,N_ELEMENTS(windows)-1 DO BEGIN
+        ind = where(data_ids EQ windows[i], count)
+        IF count GT 0 THEN BEGIN
+          windows_indices = [windows_indices, ind[0]]
+        ENDIF ELSE BEGIN
+          IF ~quiet THEN message, 'Did not find DATA_ID: ' + windows[i], /info
+        ENDELSE
+      ENDFOR
+      IF N_ELEMENTS(windows_indices) EQ 0 THEN BEGIN
+        IF ~quiet THEN message, 'Did not find any of the DATA_IDs', /info
+        return, 0
+      ENDIF
+    ENDIF ELSE BEGIN ; size(windows, /type) EQ 7
+      windows_indices = windows
+    ENDELSE ; size(windows, /type) EQ 7
+    ind = where(windows_indices LT n_windows AND windows_indices GE 0, count)
     IF count EQ 0 THEN BEGIN
       IF ~quiet THEN message, 'All provided window indices are outside of the available range. The FITS file contains ' + strtrim(n_windows, 2) + ' windows.', /info
       return, 0
     ENDIF ELSE BEGIN
-      windows_process = windows[ind]
+      windows_process = windows_indices[ind]
       n_windows_process = count
-      IF count NE N_ELEMENTS(windows) && ~quiet THEN BEGIN
+      IF count NE N_ELEMENTS(windows_indices) && ~quiet THEN BEGIN
         IF ~quiet THEN message, 'Not all provided window indices are within the available range. The FITS file contains ' + strtrim(n_windows, 2) + ' windows.', /info
       ENDIF
     ENDELSE
