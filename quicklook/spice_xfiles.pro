@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2023-12-04 14:49 CET $
+; $Id: 2024-01-12 13:25 CET $
 ;-
 
 
@@ -196,15 +196,25 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
       uniqin = UNIQ(file_info.spiobsid, sort(file_info.spiobsid))
       template={SEQ_BEG:'', SPIOBSID:0L, STUDYTYP:'', STUDYDES:'', PURPOSE:'', SLIT_WID:0, DSUN_AU:0.0, CROTA:0.0, CRVAL1:0.0, CRVAL2:0.0}
       for fit=0,N_ELEMENTS(uniqin)-1 do begin
-        ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count)
-        if count gt 0 then begin
+        ind = where(file_info.spiobsid eq file_info[uniqin[fit]].spiobsid, count_spiobs)
+        if count_spiobs gt 0 then begin
           mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template
           IF hdrtemp.seq_beg EQ '' THEN BEGIN
             fits_open, files[ind[0]], fits_content
             fits_close, fits_content
-            ind_data = where(fits_content.extname.Contains(' data'), count)
-            IF count EQ 0 THEN BEGIN
-              message, 'File does not contain keyword SEQ_BEG in main header and no extension with name "* data". Cannot display it.',/info
+            hdr_load = headfits(files[ind[0]])
+            dataext = fxpar(hdr_load, 'DATAEXT', missing='')
+            dataext_split = strsplit(dataext, ';', count=count_split, /extract)
+            IF count_split EQ 1 THEN BEGIN
+              EXT_DATA_PATH = ''
+              dataext = dataext_split[0]
+            ENDIF ELSE BEGIN
+              EXT_DATA_PATH = dataext_split[0]
+              dataext = dataext_split[-1]
+            ENDELSE
+            ind_data = where(fits_content.extname eq dataext, count_ext)
+            IF count_ext EQ 0 THEN BEGIN
+              message, 'File does not contain keyword SEQ_BEG in main header and no data extension found. Cannot display it.',/info
             ENDIF ELSE BEGIN
               mreadfits_header, files[ind[0]], hdrtemp, only_tags='SEQ_BEG,SPIOBSID,STUDYTYP,STUDYDES,PURPOSE,SLIT_WID,DSUN_AU,CROTA,CRVAL1,CRVAL2', template=template, $
                 ext=ind_data[0]
