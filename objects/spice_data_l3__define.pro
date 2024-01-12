@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2023-11-30 16:17 CET $
+; $Id: 2024-01-12 13:17 CET $
 
 
 ;+
@@ -292,7 +292,7 @@ FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir=user_dir, l3_obj
   file_l2_info = spice_file2info(file_l2)
   file_l3_all = spice_find_file(file_l2_info.datetime, remove_duplicates=0, user_dir=user_dir, level=3, COUNT_FILE=COUNT_FILE)
   count = 0
-  IF count_file eq 0 then return, ''
+  found_l3_file = ''
   FOR ifile=0,count_file-1 DO BEGIN
     file_l3_info = spice_file2info(file_l3_all[ifile])
     IF file_l3_info.spiobsid NE file_l2_info.spiobsid || $
@@ -303,14 +303,14 @@ FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir=user_dir, l3_obj
     l2_version = l2_file_temp.extract('V[0-9]{2}')
     l2_version = fix(l2_version.substring(1,2))
     IF l2_version EQ file_l2_info.version THEN BEGIN
-      count++
-      IF N_ELEMENtS(found_l3_file) EQ 0 THEN BEGIN
+      IF count EQ 0 THEN BEGIN
         found_l3_file = file_l3_all[ifile]
         l3_objects = l3_obj_temp
       ENDIF ELSE BEGIN
         found_l3_file = [found_l3_file, file_l3_all[ifile]]
         l3_objects = [l3_objects, l3_obj_temp]
       ENDELSE
+      count++
     ENDIF
   ENDFOR
 
