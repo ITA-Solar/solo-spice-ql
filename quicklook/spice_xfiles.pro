@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2024-01-12 13:25 CET $
+; $Id: 2024-01-12 13:27 CET $
 ;-
 
 
@@ -204,14 +204,8 @@ pro spice_xfiles_display_results, info, newfiles=newfiles
             fits_close, fits_content
             hdr_load = headfits(files[ind[0]])
             dataext = fxpar(hdr_load, 'DATAEXT', missing='')
-            dataext_split = strsplit(dataext, ';', count=count_split, /extract)
-            IF count_split EQ 1 THEN BEGIN
-              EXT_DATA_PATH = ''
-              dataext = dataext_split[0]
-            ENDIF ELSE BEGIN
-              EXT_DATA_PATH = dataext_split[0]
-              dataext = dataext_split[-1]
-            ENDELSE
+            dataext = strsplit(dataext, ';', /extract)
+            dataext = dataext[-1]
             ind_data = where(fits_content.extname eq dataext, count_ext)
             IF count_ext EQ 0 THEN BEGIN
               message, 'File does not contain keyword SEQ_BEG in main header and no data extension found. Cannot display it.',/info
