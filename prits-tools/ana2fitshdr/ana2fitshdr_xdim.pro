@@ -1,28 +1,30 @@
 ;+
 ; NAME:
-;      ANA2FITSHDR_INCLUDE
+;      ANA2FITSHDR_XDIM
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the INCLUDE cube of an ANA object or file.
-;      It will return an empty string if all values in the INCLUDE cube are one or if
-;      INCLUDE is not provided.
+;      This function returns a fits header made from the XDIM1 cube of an ANA object or file.
+;      It will return an empty string if both XDIM1 and WCS are not provided or if the 
+;      keyword SAVE_XDIM1 is NOT set.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_include(datetime=datetime, data_id=data_id, INCLUDE=INCLUDE, WCS=WCS)
+;      header = ana2fitshdr_xdim(datetime=datetime, data_id=data_id, XDIM1=XDIM1, WCS=WCS, /SAVE_XDIM1)
 ;
 ; INPUTS:
 ;      DATETIME: Date and time string.
 ;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
 ;
 ; KEYWORDS:
+;      SAVE_XDIM1: If set, the XDIM1 will be saved, otherwise not. XDIM1 can usually be
+;             calculated from the WCS parameters from the data array.
 ;
 ; OPTIONAL INPUTS:
-;      INCLUDE: Array to keep the INCLUDE status of each component at each point. If not provided, or if
-;             all values are one, an empty string will be returned.
+;      XDIM1: Array of same size as the input data to xcfit_block. It contains the values of the
+;             absorbed dimension for each point (e.g wavelength).
 ;      WCS: Structure. The structure from which the WCS parameters
 ;             should be taken. If not provided the header won't include any WCS parameters.
 ;
@@ -39,27 +41,28 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 10:09 CET $
+; $Id: 2023-11-22 14:08 CET $
 
 
-FUNCTION ana2fitshdr_include, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INCLUDE=INCLUDE, WCS=WCS
+FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, $
+  SAVE_XDIM1=SAVE_XDIM1
 
   prits_tools.parcheck, DATETIME, 0, 'DATETIME', 'STRING', 0
   prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
-  prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  prits_tools.parcheck, XDIM1, 0, 'XDIM', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
   prits_tools.parcheck, WCS, 0, 'WCS', 8, 0, /optional
 
-  IF N_ELEMENTS(INCLUDE) EQ 0 THEN return, ''
-  min_include = min(INCLUDE, max=max_include)
-  IF min_include EQ 1 && max_include EQ 1 THEN return, ''
+  IF ~keyword_set(SAVE_XDIM1) || (N_ELEMENTS(XDIM1) EQ 0 && N_ELEMENTS(WCS) EQ 0) THEN return, ''
+  IF N_ELEMENTS(XDIM1) EQ 0 THEN xdim_array = fltarr(wcs.naxis, /nozero) $
+  ELSE xdim_array = XDIM1
 
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, INCLUDE, /image
+  mkhdr, hdr, xdim_array, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', extension_names[4], 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', extension_names[2], 'Extension name'
 
   fits_util->add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
   fits_util->add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
@@ -69,10 +72,10 @@ FUNCTION ana2fitshdr_include, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
   fits_util->add, hdr, '', ' '
-  fits_util->add, hdr, 'BTYPE', 'BOOL', 'Type of data'
+  fits_util->add, hdr, 'BTYPE', ' ', 'Type of data'
   fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
 
-  hdr = ana2fitshdr_addwcs(HDR, WCS, /INCLUDE)
+  hdr = ana2fitshdr_addwcs(HDR, WCS, /XDIM1)
 
   fits_util->clean_header, hdr
   return, hdr

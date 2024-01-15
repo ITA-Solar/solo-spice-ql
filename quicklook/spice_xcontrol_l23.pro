@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2024-01-11 11:53 CET $
 ;-
 
 
@@ -58,7 +58,15 @@ pro spice_xcontrol_l23_cleanup, tlb
   widget_control, tlb, get_uvalue=info
   ptr_free,(*info).winno_l3_official
   ptr_free,(*info).winno_l3_user
+  FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO BEGIN
+    IF size((*(*info).ana_l3_official)[i], /type) EQ 8 THEN $
+      delete_analysis, (*(*info).ana_l3_official)[i]
+  ENDFOR
   ptr_free,(*info).ana_l3_official
+  FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO BEGIN
+    IF size((*(*info).ana_l3_user)[i], /type) EQ 8 THEN $
+      delete_analysis, (*(*info).ana_l3_user)[i]
+  ENDFOR
   ptr_free,(*info).ana_l3_user
   FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official)-1 DO ptr_free, (*(*info).hdr_l3_official)[i]
   ptr_free,(*info).hdr_l3_official
@@ -107,14 +115,32 @@ pro spice_xcontrol_l23_save_file, event
   nwin_l3 = (*info).nwin_l3_user
   winno_l3 = *(*info).winno_l3_user
   ana_l3 = *(*info).ana_l3_user
+  ana_l3_read = *(*info).ana_l3_user_read
   file_l3 = (*info).file_l3_user
   IF file_exist(file_l3) THEN BEGIN
     answer = dialog_message(['This file already exists.',file_l3,'Do you want to overwrite it?'], $
       /question, /default_no, title='File exists. Overwrite?',/center)
     IF answer EQ 'No' THEN return
+
+    ind_read = where(ana_l3_read EQ 0, count_read)
+    IF count_read GT 0 THEN BEGIN
+      hdr_l3 = *(*info).hdr_l3_user
+      PGEXTNAM = []
+      FOR i=0,count_read-1 DO BEGIN
+        PGEXTNAM = [PGEXTNAM, fxpar(*hdr_l3[ind_read[i]], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')]        
+      ENDFOR
+
+      ana = fits2ana(file_l3, windows=PGEXTNAM);, /quiet)
+      FOR i=0,count_read-1 DO BEGIN
+        delete_analysis, ana_l3[ind_read[i]]
+        ana_l3[ind_read[i]] = ana[i]
+        ana_l3_read[ind_read[i]] = 1
+      ENDFOR
+    ENDIF
+    
     file_old = 1
     file_move, file_l3, file_l3+'.old', /overwrite
-  ENDIF ELSE file_old = 0
+  ENDIF ELSE file_old = 0 ; file_exist(file_l3)
   IF ~FILE_TEST(file_dirname(file_l3)) THEN FILE_MKDIR, file_dirname(file_l3)
 
   all_result_headers = ptrarr(nwin_l3)
@@ -123,43 +149,41 @@ pro spice_xcontrol_l23_save_file, event
   FOR iwindow=0,nwin_l3-1 DO BEGIN
 
     original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
-    
-    pr_steps = *(*(*info).proc_steps_user)[iwindow]
+
+    PROC_STEPS = *(*(*info).proc_steps_user)[iwindow]
     if (*info).state_l3_user[iwindow].edited then begin
-      pr_steps = [pr_steps, { $
-        step:'LINE-FITTING', $
-        proc:'spice_xcfit_block, spice_xcontrol_l23', $
-        version:0L, $
-        lib:'solarsoft/so/spice/idl/quicklook', $
-        params:'POSSIBLE_MANUAL_EDITING = 1' $
-      } ]
+      proc_step_new =  [ $
+        HASH('name','PRSTEP', 'value','MANUAL-LINE-FITTING', 'comment','Processing step type, step '), $
+        HASH('name','PRPROC', 'value','spice_xcfit_block, spice_xcontrol_l23', 'comment','Name of procedure performing PRSTEP'), $
+        HASH('name','PRLIB' , 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC'), $
+        HASH('name','PRPARA', 'value','POSSIBLE_MANUAL_EDITING = 1', 'comment','Parameters for PRPROC') $
+        ]
+      PROC_STEPS.add, proc_ste_new, /no_copy
     endif
+    
+    if iwindow gt 0 then IS_EXTENSION=1 else IS_EXTENSION=0
+    ana2fits, ana_l3[iwindow], FILEPATH_OUT=file_l3, $
+      N_WINDOWS=nwin_l3, WINNO=iwindow, $
+      DATA_ID=DATA_ID, TYPE_XDIM1='WAVE', $
+      IS_EXTENSION=IS_EXTENSION, LEVEL='L3', VERSION=number_version_l3, $
+      PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+      PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=(*info).object_l2->get_header(winno_l3[iwindow]), $
+      SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+      SAVE_NOT=SAVE_NOT, $
+      headers_results=headers_results, headers_data=headers_data
 
-    if iwindow gt 0 then extension=1 else extension=0
-    headers = ana2fitshdr(ana_l3[iwindow], header_l2=(*info).object_l2->get_header(winno_l3[iwindow]), $
-      extension=extension, filename_out=file_l3, n_windows=nwin_l3, winno=iwindow, $
-      HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-      FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-      CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data, spice=pr_steps)
-
-    writefits, file_l3, RESULT, *headers[0], append=extension
-    writefits, file_l3, original_data, *headers[1], /append
-    writefits, file_l3, LAMBDA, *headers[2], /append
-    writefits, file_l3, RESIDUAL, *headers[3], /append
-    writefits, file_l3, WEIGHTS, *headers[4], /append
-    writefits, file_l3, INCLUDE, *headers[5], /append
-    writefits, file_l3, CONST, *headers[6], /append
-
-    all_result_headers[iwindow] = ptr_new(*headers[0])
-    all_data_headers[iwindow] = ptr_new(*headers[1])
+    all_result_headers[iwindow] = ptr_new(*headers_results[0])
+    all_data_headers[iwindow] = ptr_new(*headers_data[0])
     l3_pr_steps_all[iwindow] = ptr_new(pr_steps)
 
   ENDFOR ; iwin=0,nwin_l3-1
 
   IF file_old THEN file_delete, file_l3+'.old'
 
+  ptr_free, (*info).ana_l3_user
+  (*info).ana_l3_user = ptr_new(ana_l3)
+  ptr_free, (*info).ana_l3_user_read
+  (*info).ana_l3_user_read = ptr_new(ana_l3_read)
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(all_result_headers)
   ptr_free, (*info).hdr_l3_user_data
@@ -175,6 +199,7 @@ end
 ; This happens if the user clicks on one of the '(Re)create window' buttons
 pro spice_xcontrol_l23_update_state_add, info, result
   ana_l3 = *(*info).ana_l3_user
+  ana_l3_read = *(*info).ana_l3_user_read
   hdr_l3 = *(*info).hdr_l3_user
   hdr_data_l3 = *(*info).hdr_l3_user_data
   proc_steps_user = *(*info).proc_steps_user
@@ -184,7 +209,9 @@ pro spice_xcontrol_l23_update_state_add, info, result
   nwin_l3_result = N_ELEMENTS(*result.ana)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1)
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1) ; old result header
+    IF winno_l3_result[iwin] EQ -1 THEN $
+      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing=-1)
   ENDFOR
 
   nwin_l3 = 0
@@ -195,6 +222,7 @@ pro spice_xcontrol_l23_update_state_add, info, result
       state_l3[iwin].l3_winno = nwin_l3
       state_l3[iwin].edited = ~result.file_saved
       spice_xcontrol_l23_add_window, ana_l3_new, (*result.ana)[ind_result[0]], $
+        ana_l3_read_new, (*result.ana_read)[ind_result[0]], $
         hdr_l3_new, *(*result.result_headers)[ind_result[0]], $
         hdr_data_l3_new, *(*result.data_headers)[ind_result[0]], $
         l3_pr_steps_new, *(*result.proc_steps)[ind_result[0]], $
@@ -203,6 +231,7 @@ pro spice_xcontrol_l23_update_state_add, info, result
     ENDIF ELSE IF count_old GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = nwin_l3
       spice_xcontrol_l23_add_window, ana_l3_new, ana_l3[ind_old[0]], $
+        ana_l3_read_new, ana_l3_read[ind_old[0]], $
         hdr_l3_new, *hdr_l3[ind_old[0]], $
         hdr_data_l3_new,  *hdr_data_l3[ind_old[0]], $
         l3_pr_steps_new,  *proc_steps_user[ind_old[0]], $
@@ -217,6 +246,8 @@ pro spice_xcontrol_l23_update_state_add, info, result
   (*info).nwin_l3_user = nwin_l3
   ptr_free, (*info).ana_l3_user
   (*info).ana_l3_user = ptr_new(ana_l3_new)
+  ptr_free, (*info).ana_l3_user_read
+  (*info).ana_l3_user_read = ptr_new(ana_l3_read_new)
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(hdr_l3_new)
   ptr_free, (*info).hdr_l3_user_data
@@ -231,15 +262,18 @@ pro spice_xcontrol_l23_update_state_add, info, result
 end
 
 
-pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, hdr_l3_new, new_hdr, hdr_data_l3_new, new_hdr_data, l3_pr_steps_new, new_pr_step, winno_l3_new, new_winno
+pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, ana_l3_read_new, new_ana_read, hdr_l3_new, new_hdr, hdr_data_l3_new, new_hdr_data, $
+  l3_pr_steps_new, new_pr_step, winno_l3_new, new_winno
   IF N_ELEMENTS(ana_l3_new) EQ 0 THEN BEGIN
     ana_l3_new = new_ana
+    ana_l3_read_new = new_ana_read
     hdr_l3_new = ptr_new(new_hdr)
     hdr_data_l3_new = ptr_new(new_hdr_data)
     l3_pr_steps_new = ptr_new(new_pr_step)
     winno_l3_new = new_winno
   ENDIF ELSE BEGIN
     ana_l3_new = [ana_l3_new, new_ana]
+    ana_l3_read_new = [ana_l3_read_new, new_ana_read]
     hdr_l3_new = [hdr_l3_new, ptr_new(new_hdr)]
     hdr_data_l3_new = [hdr_data_l3_new, ptr_new(new_hdr_data)]
     l3_pr_steps_new = [l3_pr_steps_new, ptr_new(new_pr_step)]
@@ -256,7 +290,9 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', missing=0)
   winno_l3_result = intarr(nwin_l3_result)
   FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1)
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1) ; old result header
+    IF winno_l3_result[iwin] EQ -1 THEN $
+      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing=-1)
   ENDFOR
 
   FOR iwin=0,(*info).nwin-1 DO BEGIN
@@ -276,6 +312,8 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   (*info).nwin_l3_user = nwin_l3_result
   ptr_free, (*info).ana_l3_user
   (*info).ana_l3_user = ptr_new(*result.ana)
+  ptr_free, (*info).ana_l3_user_read
+  (*info).ana_l3_user_read = ptr_new(*result.ana_read)
   ptr_free, (*info).hdr_l3_user
   (*info).hdr_l3_user = ptr_new(*result.result_headers)
   ptr_free, (*info).hdr_l3_user_data
@@ -352,20 +390,32 @@ pro spice_xcontrol_l23_open_l3, event
   widget_control, event.id, get_uvalue=win_info
   case win_info.l3_type of
     1: BEGIN
+      file_l3 = (*info).file_l3_official
       ana_l3 = *(*info).ana_l3_official
+      ana_l3_read = *(*info).ana_l3_official_read
       hdr_l3 = *(*info).hdr_l3_official
       hdr_l3_data = *(*info).hdr_l3_official_data
-      title = 'L3 - official - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      PGEXTNAM = fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      title = 'L3 - official - ' + PGEXTNAM
       state_l3 = (*info).state_l3_official
     END
     2: BEGIN
+      file_l3 = (*info).file_l3_user
       ana_l3 = *(*info).ana_l3_user
+      ana_l3_read = *(*info).ana_l3_user_read
       hdr_l3 = *(*info).hdr_l3_user
       hdr_l3_data = *(*info).hdr_l3_user_data
-      title = 'L3 - user - ' + fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      PGEXTNAM = fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      title = 'L3 - user - ' + PGEXTNAM
       state_l3 = (*info).state_l3_user
     END
   endcase
+  IF ~ana_l3_read[win_info.winno] THEN BEGIN
+    ana = fits2ana(file_l3, windows=PGEXTNAM, /quiet)
+    delete_analysis, ana_l3[win_info.winno]
+    ana_l3[win_info.winno] = ana
+    ana_l3_read[win_info.winno] = 1
+  ENDIF
   ana = ana_l3[win_info.winno]
   origin = [0,0,0]
   scale = [1,1,1]
@@ -384,13 +434,19 @@ pro spice_xcontrol_l23_open_l3, event
 
   CASE win_info.l3_type OF
     1: BEGIN
+      FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO delete_analysis, (*(*info).ana_l3_official)[i]
       ptr_free, (*info).ana_l3_official
       (*info).ana_l3_official = ptr_new(ana_l3)
+      ptr_free, (*info).ana_l3_official_read
+      (*info).ana_l3_official_read = ptr_new(ana_l3_read)
       (*info).state_l3_official = state_l3
     END
     2: BEGIN
+      FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO delete_analysis, (*(*info).ana_l3_user)[i]
       ptr_free, (*info).ana_l3_user
       (*info).ana_l3_user = ptr_new(ana_l3)
+      ptr_free, (*info).ana_l3_user_read
+      (*info).ana_l3_user_read = ptr_new(ana_l3_read)
       (*info).state_l3_user = state_l3
     END
   ENDCASE
@@ -402,7 +458,6 @@ pro spice_xcontrol_l23_create_l3, event
   widget_control, event.top, get_uvalue=info
   widget_control, event.id, get_uvalue=win_info
   IF ~(*info).file_in_user_dir THEN top_dir = (*info).file_top_dir
-
   IF N_ELEMENTS(win_info) GT 1 THEN all_windows=1 ELSE all_windows=0
   result = spice_create_l3_widget( (*info).object_L2, event.top, window_index=win_info, $
     no_widget=all_windows, top_dir=top_dir, save_not=~all_windows, block_save=~all_windows)
@@ -418,6 +473,15 @@ pro spice_xcontrol_l23_copy_window, event
   widget_control, event.id, get_uvalue=win_info
   ana_l3 = *(*info).ana_l3_official
   hdr_l3 = *(*info).hdr_l3_official
+  ana_l3_read = *(*info).ana_l3_official_read
+  IF ana_l3_read[win_info] EQ 0 THEN BEGIN
+    ana = fits2ana((*info).file_l3_official, windows=win_info, /quiet)
+    delete_analysis, ana_l3[win_info]
+    ana_l3[win_info] = ana
+    ana_l3_read[win_info] = 1
+    *(*info).ana_l3_official_read = ana_l3_read
+  ENDIF
+
   hdr_new = ptrarr(1)
   hdr_new[0] = ptr_new(*hdr_l3[win_info])
   hdr_l3_data = *(*info).hdr_l3_official_data
@@ -428,6 +492,7 @@ pro spice_xcontrol_l23_copy_window, event
   pr_step_new[0] = ptr_new(*proc_step_l3[win_info])
   result = {l3_file:'', $
     ana:ptr_new(ana_l3[win_info]), $
+    ana_read:ptr_new(ana_l3_read[win_info]), $
     result_headers:ptr_new(hdr_new), $
     data_headers:ptr_new(hdr_new_data), $
     proc_steps:ptr_new(pr_step_new), $
@@ -458,7 +523,6 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     return
   ENDIF
   file_info = spice_file2info(file_in)
-  help, file_info
   IF ~file_info.is_spice_file THEN BEGIN
     print, 'File is not a SPICE FITS file : ' + file
     return
@@ -480,30 +544,45 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
       IF file_l2 EQ '' THEN file_l2 = l3_obj->find_l2_file(/user_dir)
 
       file_l3_official = ''
-      file_l3_official_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file)
-      FOR ifile=0,count_file-1 DO BEGIN
+      file_l3_official_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file_official)
+      FOR ifile=0,count_file_official-1 DO BEGIN
         IF file_l3_official_all[ifile] EQ file_in THEN BEGIN
           file_l3_official = file_l3_official_all[ifile]
           break
         ENDIF
       ENDFOR
 
-      IF file_l3_official EQ '' THEN BEGIN
-        file_l3_user = file_in
-        spice_ingest, file_l3_user, /user, /dry_run, destination=destination, /quiet
-        IF file_l3_user EQ destination THEN BEGIN
+      file_l3_user = ''
+      file_l3_user_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file_user, /user_dir)
+      FOR ifile=0,count_file_user-1 DO BEGIN
+        IF file_l3_user_all[ifile] EQ file_in THEN BEGIN
+          file_l3_user = file_l3_user_all[ifile]
           file_in_user_dir=1
-        ENDIF ELSE BEGIN
-          file_top_dir = file_dirname(file_l3_user)
-          file_top_dir = file_top_dir.split(path_sep())
-          IF N_ELEMENTS(file_top_dir) GT 6 THEN BEGIN
-            file_top_dir = file_top_dir[0:-5]
-          ENDIF
-          file_top_dir = file_top_dir.join(path_sep())
-        ENDELSE
-      ENDIF ELSE BEGIN
-        file_l3_user = ''
-      ENDELSE
+          break
+        ENDIF
+      ENDFOR
+
+      IF file_l3_official EQ '' && file_l3_user EQ '' THEN BEGIN
+        file_l3_user = file_in
+        file_top_dir = file_dirname(file_l3_user)
+        file_top_dir = file_top_dir.split(path_sep())
+        IF N_ELEMENTS(file_top_dir) GT 6 THEN BEGIN
+          file_top_dir = file_top_dir[0:-5]
+        ENDIF
+        file_top_dir = file_top_dir.join(path_sep())
+      ENDIF
+
+      IF file_l3_user EQ '' && count_file_user GT 0 THEN BEGIN
+        file_info_l3_user = spice_file2info(file_l3_user_all)
+        max_version = max(file_info_l3_user.version, max_ind)
+        file_l3_user = file_l3_user_all[max_ind]
+      ENDIF
+
+      IF file_l3_official EQ '' && count_file_official GT 0 THEN BEGIN
+        file_info_l3_official = spice_file2info(file_l3_official_all)
+        max_version = max(file_info_l3_official.version, max_ind)
+        file_l3_official = file_l3_official_all[max_ind]
+      ENDIF
     ENDCASE
 
     ELSE: BEGIN
@@ -525,13 +604,16 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ENDIF ELSE object_l2=0
 
   IF exist_l3_official THEN BEGIN
-    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official, headers_data=hdr_l3_official_data)
+    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official, headers_data=hdr_l3_official_data, /headers_only)
     nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', missing=0)
-    if nwin eq 0 then nwin = fxpar(*hdr_l3_official[0], 'L2NWIN', missing=0)
+    ana_l3_official = mk_analysis()
+    for i=1,nwin_l3_official-1 do ana_l3_official = [ana_l3_official, mk_analysis()]
+    ana_l3_official_read = intarr(nwin_l3_official)
+    if nwin eq 0 then nwin = fxpar(*hdr_l3_official_data[0], 'NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_official
     winno_l3_official = intarr(nwin_l3_official)
     FOR iwin=0,nwin_l3_official-1 DO BEGIN
-      winno_l3_official[iwin] = fxpar(*hdr_l3_official[iwin], 'L2WINNO', missing=-1)
+      winno_l3_official[iwin] = fxpar(*hdr_l3_official_data[iwin], 'WINNO', missing=-1)
     ENDFOR
     l3_obj = spice_data(file_l3_official)
     proc_steps_official = l3_obj->get_l3_processing_steps()
@@ -543,6 +625,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     ENDIF
     nwin_l3_official = 0
     ana_l3_official = 0
+    ana_l3_official_read = 0
     hdr_l3_official = ptr_new(0)
     hdr_l3_official_data = ptr_new(0)
     winno_l3_official = -1
@@ -550,13 +633,16 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ENDELSE
 
   IF exist_l3_user THEN BEGIN
-    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user, headers_data=hdr_l3_user_data)
+    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user, headers_data=hdr_l3_user_data, /headers_only)
     nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', missing=0)
-    if nwin eq 0 then nwin = fxpar(*hdr_l3_user[0], 'L2NWIN', missing=0)
+    ana_l3_user = mk_analysis()
+    for i=1,nwin_l3_user-1 do ana_l3_user = [ana_l3_user, mk_analysis()]
+    ana_l3_user_read = intarr(nwin_l3_user)
+    if nwin eq 0 then nwin = fxpar(*hdr_l3_user_data[0], 'NWIN', missing=0)
     if nwin eq 0 then nwin = nwin_l3_user
     winno_l3_user = intarr(nwin_l3_user)
     FOR iwin=0,nwin_l3_user-1 DO BEGIN
-      winno_l3_user[iwin] = fxpar(*hdr_l3_user[iwin], 'L2WINNO', missing=-1)
+      winno_l3_user[iwin] = fxpar(*hdr_l3_user_data[iwin], 'WINNO', missing=-1)
     ENDFOR
     l3_obj = spice_data(file_l3_user)
     proc_steps_user = l3_obj->get_l3_processing_steps()
@@ -570,6 +656,7 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     ENDIF
     nwin_l3_user = 0
     ana_l3_user = 0
+    ana_l3_user_read = 0
     hdr_l3_user = ptr_new(0)
     hdr_l3_user_data = ptr_new(0)
     winno_l3_user = -1
@@ -695,6 +782,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     winno_l3_user:ptr_new(winno_l3_user), $
     ana_l3_official:ptr_new(ana_l3_official), $
     ana_l3_user:ptr_new(ana_l3_user), $
+    ana_l3_official_read:ptr_new(ana_l3_official_read), $
+    ana_l3_user_read:ptr_new(ana_l3_user_read), $
     nwin:nwin, $
     nwin_l3_official:nwin_l3_official, $
     nwin_l3_user:nwin_l3_user, $

@@ -76,7 +76,7 @@
 ;
 ; Version     : Version 12, TF, 29 November 2023
 ;
-; $Id: 2024-01-08 16:01 CET $
+; $Id: 2024-01-15 13:39 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -86,7 +86,7 @@ FUNCTION spice_gen_cat::extract_filename, line
 END
 
 
-FUNCTION spice_gen_cat::extract_key,line 
+FUNCTION spice_gen_cat::extract_key,line
   filename = self.extract_filename(line)
   IF filename NE "" THEN BEGIN 
      key = filename.extract('L.')+'_'+filename.extract('[0-9]+-[0-9]{3}')

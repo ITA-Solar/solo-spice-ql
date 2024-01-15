@@ -38,6 +38,7 @@
 ;               will be appended to this directory. If not provided, the path is the same as
 ;               the level 3 file, except that the 'level3' part of the path will be replaced by 'images'.
 ;               This input is ignored, if /CREATE_IMAGES is not set.
+;     pipeline_dir: path to output directory used by the pipeline where L3 file is saved
 ;
 ; KEYWORD PARAMETERS:
 ;     SEQUENCE: If set, then all files of the sequence that the found level 2 files belong to will
@@ -111,7 +112,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2023-06-14 11:25 CEST $
+; $Id: 2024-01-11 15:38 CET $
 
 
 PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
@@ -120,7 +121,7 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
   search_subdir=search_subdir, ignore_time=ignore_time, $
   no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
   no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
-  official_l3dir=official_l3dir, create_images=create_images, images_top_dir=images_top_dir, $
+  pipeline_dir=pipeline_dir, create_images=create_images, images_top_dir=images_top_dir, $
   files_l3=files_l3, search_level3=search_level3, no_overwrite=no_overwrite
 
   prits_tools.parcheck, time_start, 1, "time_start", 'time', 0
@@ -181,7 +182,7 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
 
         l3_file = l2_object->create_l3_file(no_masking=no_masking, approximated_slit=approximated_slit, $
           no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=~keyword_set(show_xcfit_block), position=position, velocity=velocity, $
-          official_l3dir=official_l3dir, top_dir=top_dir, path_index=path_index, progress_widget=progress_widget)
+          pipeline_dir=pipeline_dir, top_dir=top_dir, path_index=path_index, progress_widget=progress_widget)
       ENDIF ELSE BEGIN
         IF ~keyword_set(no_widget) THEN progress_widget->next_file, 1
       ENDELSE
