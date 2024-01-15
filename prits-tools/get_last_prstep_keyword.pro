@@ -40,7 +40,7 @@
 ; HISTORY:
 ;     22-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-27 11:23 CEST $
+; $Id: 2023-11-27 13:42 CET $
 
 
 FUNCTION get_last_prstep_keyword, header, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
@@ -57,6 +57,7 @@ FUNCTION get_last_prstep_keyword, header, count=count, pr_keywords=pr_keywords, 
     pr_version_max = 0
     pr_types = ''
   endif else begin
+    ind_pr_keywords = ind_pr_keywords[sort(ind_pr_keywords)]
     pr_keywords = pr_keywords[ind_pr_keywords]
     pr_versions = fix(pr_keywords.extract('[1-9][0-9]{0,1}'))
     pr_version_max = max(pr_versions)

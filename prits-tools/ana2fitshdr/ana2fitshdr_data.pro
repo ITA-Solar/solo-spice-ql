@@ -3,130 +3,166 @@
 ;      ANA2FITSHDR_DATA
 ;
 ; PURPOSE:
-;      This function returns a fits header made from the data array of an ANA object or file.
+;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
+;      This function returns a fits header made from the data array of an ANA object or file
+;      and the optionally provided header. If either PROGENITOR_DATA is not provided or
+;      provided and not a scalar number, then HEADER_INPUT_DATA first will be stripped of 
+;      the keywords that mkhdr populates, and then it will be added to the new header.
+;      These keywords will be added/updated in the header in any case:
+;      DATE, EXTNAME, RESEXT, DATAEXT, XDIMXT1, WGTEXT, INCLEXT, CONSTEXT
 ;
 ; CATEGORY:
-;      FITS -- utility
+;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_data(datetime=datetime, data_id=data_id, data_array=data_array, $
-;        header_l2=header_l2)
+;      header = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
+;        HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA)
 ;
 ; INPUTS:
-;      datetime: Date and time string.
-;      data_id: A string defining the prefix to the names of the 7 extensions
-;      data_array: Data Array. Up to 7-dimensional data array.
-;            For SPICE this should be original data array from the level 2 FITS file.
-;            Spectra is not in the first dimension.
-;            This data cube will be saved into the FITS file. Thus it cannot be used
-;            directly in the ANA structure when read back in.
-;            fits2ana will rearrange the data array, so that it can be used in xcfit_block.
+;      DATETIME: Date and time string.
+;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
 ;
 ; KEYWORDS:
+;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
+;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
+;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA or
+;             providing PROGENITOR_DATA as a scalar number.
+;             This keyword will also be set if data is linked to an external extension, by having 
+;             set EXT_DATA_PATH in ANA2FITS.
 ;
 ; OPTIONAL INPUTS:
-;      header_l2: The header (string array) of the SPICE level 2 file.
+;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
+;            respectively. If not provided a generic header will be created.
+;      INPUT_DATA: Data Array. Up to 7-dimensional data array.
+;            This is the data array that was used in xcfit_block and comes with the ANA structure or file.
+;            The absorbed dimension (e.g. spectrum) must be in the first dimension.
+;            This input will be ignored if PROGENITOR_DATA is provided.
+;      PROGENITOR_DATA: If this is provided, this data array will be saved into the data extension.
+;            This is used to store the original progenitor data, instead of the possibly transformed
+;            data array, that xcfit_block requires. I.e. the absorbed dimension (e.g. spectrum) does
+;            not need to be in the first dimension.
+;            FITS2ANA will then transform the data cube when read back into memory, 
+;            so that it can be used in xcfit_block.
+;            
+;            PROGENITOR_DATA may also be a scalar number, in that case, it is assumed that HEADER_INPUT_DATA
+;            contains a link to the data (e.g. url). And the program uses HEADER_INPUT_DATA as it is
+;            and won't create a new header. If PROGENITOR_DATA is a scalar number and HEADER_INPUT_DATA
+;            is not provided, the data extension is not saved at all.
+;      If neither INPUT_DATA nor PROGENITOR_DATA is provided or PROGENITOR_DATA is a scalar number, then
+;      HEADER_INPUT_DATA is assumed to include a link to PROGENITOR_DATA, if this is a scalar number, 
+;      or to INPUT_DATA if neither is provided. And only a scalar number will be saved as the data.
+;      In this case the keywords NAXIS and NAXISn will be kept from HEADER_INPUT_DATA.
+;      If none of the optional inputs are provided, the data extension will not be saved.
 ;
 ; OUTPUTS:
-;      a fits header (string array)
+;      a fits header (string array), may be an empty string.
 ;
 ; OPTIONAL OUTPUTS:
+;      DATA_ARRAY: Contains the data array that should be saved into the data extension, if any.
+;
+; CALLS:
+;      prits_tools.parcheck, oslo_fits_util, mkhdr, fxpar
 ;
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2022-11-18 13:40 CET $
+; $Id: 2023-12-11 14:21 CET $
 
 
-FUNCTION ana2fitshdr_data, datetime=datetime, data_id=data_id, data_array=data_array, $
-  header_l2=header_l2
+FUNCTION ana2fitshdr_data, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
+  HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA, NO_SAVE_DATA=NO_SAVE_DATA, $
+  DATA_ARRAY=DATA_ARRAY
 
-  n_dims = size(data_array, /n_dimensions)
+  prits_tools.parcheck, DATETIME, 0, 'DATETIME', 'STRING', 0
+  prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
+  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], /optional
+  prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional
+
+  IF N_ELEMENTS(PROGENITOR_DATA) GT 0 THEN BEGIN
+    data_array = PROGENITOR_DATA
+    IF N_ELEMENTS(PROGENITOR_DATA) EQ 1 THEN no_data = 1 ELSE no_data = 0
+  ENDIF ELSE IF N_ELEMENTS(INPUT_DATA) GT 0 THEN BEGIN
+    data_array = INPUT_DATA
+    no_data = 0
+  ENDIF ELSE BEGIN
+    data_array = 0
+    no_data = 1
+  ENDELSE
+  IF keyword_set(NO_SAVE_DATA) THEN BEGIN
+    data_array = 0
+    no_data = 1
+  ENDIF
+  IF no_data && N_ELEMENTS(HEADER_INPUT_DATA) EQ 0 THEN return, ''
 
   fits_util = obj_new('oslo_fits_util')
+  
+  IF keyword_set(HEADER_INPUT_DATA) && no_data THEN BEGIN
+    case fxpar(HEADER_INPUT_DATA, 'BITPIX', missing=0) of
+      8: data_array = fix(data_array, type=1)
+      16: data_array = fix(data_array, type=2)
+      32: data_array = fix(data_array, type=3)
+      -32: data_array = fix(data_array, type=4)
+      -64: data_array = fix(data_array, type=5)
+      else: data_array = fix(data_array, type=1)
+    endcase
+  ENDIF
   mkhdr, hdr, data_array, /image
 
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', data_id+' data', 'Extension name'
+  fits_util->add, hdr, 'EXTNAME', extension_names[1], 'Extension name'
+  fits_util->add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
+  fits_util->add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
+  fits_util->add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
+  fits_util->add, hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
+  fits_util->add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
+  fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
-  fits_util->add, hdr, 'RESEXT', data_id+' results', 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', data_id+' data', 'Extension name of data'
-  fits_util->add, hdr, 'LAMBDEXT', data_id+' lambda', 'Extension name of lambda'
-  fits_util->add, hdr, 'RESIDEXT', data_id+' residuals', 'Extension name of residuals'
-  fits_util->add, hdr, 'WGTEXT', data_id+' weights', 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', data_id+' includes', 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', data_id+' constants', 'Extension name of constants'
+  fits_util->remove_keyword, hdr, 'PCOUNT'
+  fits_util->remove_keyword, hdr, 'GCOUNT'
 
-  IF keyword_set(header_l2) THEN BEGIN
+  IF keyword_set(HEADER_INPUT_DATA) THEN BEGIN
 
-    ; Add WCS keywords
-    fits_util->add_description, hdr, 'World Coordinate System (WCS) keywords'
-    fits_util->add, hdr, 'CTYPE1', fxpar(header_l2, 'CTYPE1', missing=''), 'Type of 1st coordinate'
-    fits_util->add, hdr, 'CNAME1', fxpar(header_l2, 'CNAME1', missing=''), 'Name of 1st coordinate'
-    fits_util->add, hdr, 'CUNIT1', fxpar(header_l2, 'CUNIT1', missing=''), 'Units for 1st coordinate (for CRVAL1, CDELT1)'
-    fits_util->add, hdr, 'CRVAL1', fxpar(header_l2, 'CRVAL1', missing=0), '[arcsec] 1st coordinate of reference point'
-    fits_util->add, hdr, 'CDELT1', fxpar(header_l2, 'CDELT1', missing=0), '[arcsec] Increment of 1st coord at ref point'
-    fits_util->add, hdr, 'CRPIX1', fxpar(header_l2, 'CRPIX1', missing=0), '[pixel] 1st pixel index of reference point '
-    fits_util->add, hdr, 'PC1_1', fxpar(header_l2, 'PC1_1', missing=0), 'Non-default value due to CROTA degrees S/C roll'
-    fits_util->add, hdr, 'PC1_2', fxpar(header_l2, 'PC1_2', missing=0), 'Contribution of dim 2 to coord 1 due to roll'
-    fits_util->add, hdr, '', ' '
+    hdr_addition = HEADER_INPUT_DATA
 
-    fits_util->add, hdr, 'CTYPE2', fxpar(header_l2, 'CTYPE2', missing=''), 'Type of 2nd coordinate'
-    fits_util->add, hdr, 'CNAME2', fxpar(header_l2, 'CNAME2', missing=''), 'Name of 2nd coordinate'
-    fits_util->add, hdr, 'CUNIT2', fxpar(header_l2, 'CUNIT2', missing=''), 'Units for 2nd coordinate (for CRVAL2, CDELT2)'
-    fits_util->add, hdr, 'CRVAL2', fxpar(header_l2, 'CRVAL2', missing=0), '[arcsec] 2nd coordinate of reference point'
-    fits_util->add, hdr, 'CDELT2', fxpar(header_l2, 'CDELT2', missing=0), '[arcsec] Increment of 2nd coord at ref point'
-    fits_util->add, hdr, 'CRPIX2', fxpar(header_l2, 'CRPIX2', missing=0), '[pixel] 2nd pixel index of reference point '
-    fits_util->add, hdr, 'PC2_1', fxpar(header_l2, 'PC2_1', missing=0), 'Contribution of dim 1 to coord 2 due to roll'
-    fits_util->add, hdr, 'PC2_2', fxpar(header_l2, 'PC2_2', missing=0), 'Non-default value due to CROTA degrees S/C roll'
-    fits_util->add, hdr, '', ' '
+    fits_util->add, hdr, 'EXTNAME', fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=''), 'Extension name'
+    fits_util->add, hdr, 'XDIMNA', fxpar(HEADER_INPUT_DATA, 'NAXIS', missing=0), 'Number of data axes in external extension'
+    naxisn = fxpar(HEADER_INPUT_DATA, 'NAXIS*', missing=0)
+    for i=0,N_ELEMENTS(naxisn)-1 do fits_util->add, hdr, 'XDIMNA'+strtrim(i+1,2), naxisn[i]
 
-    fits_util->add, hdr, 'CTYPE3', fxpar(header_l2, 'CTYPE3', missing=''), 'Type of 3rd coordinate'
-    fits_util->add, hdr, 'CNAME3', fxpar(header_l2, 'CNAME3', missing=''), 'Name of 3rd coordinate'
-    fits_util->add, hdr, 'CUNIT3', fxpar(header_l2, 'CUNIT3', missing=''), 'Units for 3rd coordinate (for CRVAL3, CDELT3)'
-    fits_util->add, hdr, 'CRVAL3', fxpar(header_l2, 'CRVAL3', missing=0), '[nm] 3rd coordinate of reference point'
-    fits_util->add, hdr, 'CDELT3', fxpar(header_l2, 'CDELT3', missing=0), '[nm] Increment of 3rd coord at ref point'
-    fits_util->add, hdr, 'CRPIX3', fxpar(header_l2, 'CRPIX3', missing=0), '[pixel] 3rd pixel index of reference point '
-    fits_util->add, hdr, 'PC3_3', fxpar(header_l2, 'PC3_3', missing=0), 'Default value, no rotation'
-    fits_util->add, hdr, '', ' '
+    fits_util->remove_keyword, hdr_addition, 'SIMPLE'
+    fits_util->remove_keyword, hdr_addition, 'XTENSION'
+    fits_util->remove_keyword, hdr_addition, 'BITPIX'
+    fits_util->remove_keyword, hdr_addition, 'EXTEND'
+    fits_util->remove_keyword, hdr_addition, 'DATE'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS1'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS2'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS3'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS4'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS5'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS6'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS7'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS8'
+    fits_util->remove_keyword, hdr_addition, 'NAXIS9'
+    fits_util->remove_keyword, hdr_addition, 'EXTNAME'
 
-    fits_util->add, hdr, 'CTYPE4', fxpar(header_l2, 'CTYPE4', missing=''), 'Type of 4th coordinate'
-    fits_util->add, hdr, 'CNAME4', fxpar(header_l2, 'CNAME4', missing=''), 'Name of 4th coordinate'
-    fits_util->add, hdr, 'CUNIT4', fxpar(header_l2, 'CUNIT4', missing=''), 'Units for 4th coordinate (for CRVAL4, CDELT4)'
-    fits_util->add, hdr, 'CRVAL4', fxpar(header_l2, 'CRVAL4', missing=0), '[s] 4th coordinate of reference point'
-    fits_util->add, hdr, 'CDELT4', fxpar(header_l2, 'CDELT4', missing=0), '[s] Increment of 4th coord at ref point'
-    fits_util->add, hdr, 'CRPIX4', fxpar(header_l2, 'CRPIX4', missing=0), '[pixel] 4th pixel index of reference point '
-    fits_util->add, hdr, 'PC4_4', fxpar(header_l2, 'PC4_4', missing=0), 'Default value, no rotation'
-    pc4_1 = fxpar(header_l2, 'PC4_1', missing=-9999)
-    if pc4_1 gt -9998 then begin
-      fits_util->add, hdr, 'PC4_1', fxpar(header_l2, 'PC4_1', missing=0), 'Contribution of dim 1 to coord 4 due to roll'
+    ind_end = where(strmatch(hdr, 'END *') eq 1, count_hdr)
+    if count_hdr gt 0 then begin
+      ind_end = ind_end[0]
+      hdr_end = hdr[ind_end:*]
+    endif else begin
+      ind_end = N_ELEMENTS(hdr)
+    endelse
+    hdr = [hdr[0:ind_end-1], hdr_addition]
+    ind_end_addition = where(strmatch(hdr_addition, 'END *') eq 1, count_hdr_addition)
+    if count_hdr_addition eq 0 && count_hdr gt 0 then begin
+      hdr = [hdr, hdr_end]
     endif
-
-    fits_util->add, hdr, '', ' '
-    btype = fxpar(header_l2, 'BTYPE', missing='', comment=comment)
-    fits_util->add, hdr, 'BTYPE', btype, comment
-    ucd = fxpar(header_l2, 'UCD', missing='', comment=comment)
-    fits_util->add, hdr, 'UCD', ucd, comment
-    bunit = fxpar(header_l2, 'BUNIT', missing='', comment=comment)
-    fits_util->add, hdr, 'BUNIT', bunit, comment
-
-  ENDIF ELSE BEGIN ; header_l2
-
-    for idim=0,n_dims-1 do begin
-      idim_str = strtrim(string(idim+1), 2)
-      case idim of
-        0: dim_name = '1st'
-        1: dim_name = '2nd'
-        2: dim_name = '3rd'
-        else: dim_name = idim_str+'th'
-      end
-      fits_util->add, hdr, 'CTYPE'+idim_str, 'Original type of '+dim_name+' coordinate', 'Type of '+dim_name+' coordinate'
-      fits_util->add, hdr, 'CNAME'+idim_str, 'Original name of '+dim_name+' coordinate', 'Name of '+dim_name+' coordinate'
-    endfor ; idim=1,n_dims-1
-
-  ENDELSE ; header_l2
+    
+  ENDIF ; keyword_set(HEADER_INPUT_DATA)
 
   fits_util->clean_header, hdr
 

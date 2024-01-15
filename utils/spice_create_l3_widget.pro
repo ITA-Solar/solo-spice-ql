@@ -87,7 +87,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2024-01-09 14:50 CET $
 ;-
 ;
 ;
@@ -149,6 +149,7 @@ pro spice_create_l3_widget_event, event
         group_leader=info.group_leader)
       (*info.result).l3_file = l3_file
       (*info.result).ana = ptr_new(all_ana)
+      (*info.result).ana_read = ptr_new(make_array(N_ELEMENTS(all_ana), value=1))
       (*info.result).result_headers = ptr_new(all_result_headers)
       (*info.result).data_headers = ptr_new(all_data_headers)
       (*info.result).proc_steps = ptr_new(all_proc_steps)
@@ -318,7 +319,8 @@ function spice_create_l3_widget, l2_object, group_leader, window_index=window_in
   button_cancel = widget_button(button_base, value='Cancel')
 
 
-  result = ptr_new({l3_file:'Cancel', ana:ptr_new(), result_headers:ptr_new(), data_headers:ptr_new(), proc_steps:ptr_new(), file_saved:0b, user_dir:0b, top_dir:''})
+  result = ptr_new({l3_file:'Cancel', ana:ptr_new(), ana_read:ptr_new(), result_headers:ptr_new(), data_headers:ptr_new(), proc_steps:ptr_new(), $
+    file_saved:0b, user_dir:0b, top_dir:''})
   info = { $
     group_leader:group_leader, $
     l2_object:l2_object, $

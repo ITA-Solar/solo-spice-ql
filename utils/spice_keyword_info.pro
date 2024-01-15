@@ -1,4 +1,4 @@
-; $Id: 2023-09-14 09:34 CEST $
+; $Id: 2024-01-15 13:39 CET $
 FUNCTION spice_keyword_info_header
   text = inline_text()
 ;NAXIS1  =                    1 /
@@ -42,11 +42,11 @@ FUNCTION spice_keyword_info_header
 ;PCT_APRX=              0.00000 / NAPRXPIX/NTOTPIX*100  ### MERK PCT_APRX, IKKE PCT_APR!
 ;PCT_CMPL=              50.0000 / Completeness of data set, all windows combined
 ;
-;PXCOV3  = '46-109, 209-240, 626-689, 695-726, 752-783, 914-977, 1137-1168, 171’
+;PXCOV3  = '46-109, 209-240, 626-689, 695-726, 752-783, 914-977, 1137-1168, 171'
 ;
 ;RADCAL  =        3926.48650374 / [DN/(W/m2/sr/nm)] Average calibration factor
 ;
-;WAVECOV = '70.01061-70.790746, 71.580633-72.068218, 75.57883-76.358966, 76.232’
+;WAVECOV = '70.01061-70.790746, 71.580633-72.068218, 75.57883-76.358966, 76.232'
 ;
 ;          END NEW KEYWORDS SENT FROM TERJE 15. DECEMBER 2022 --------------
 ;
@@ -80,12 +80,7 @@ FUNCTION spice_keyword_info_header
 ;PRSTEP12= 'WINDOW-CONCATENATION' / Type of processing, step 12                  
 ;PRPROC12= 'spice_prep.pro'     / Name of procedure, step 12                     
 ;PRPVER12= '3998    '           / Version of procedure, step 12                  
-;PRPARA12= '   WINNOs_of_concatenated_windows=[0,1],                           &'
-;CONTINUE  'WINTABIDs_of_concatenated_windows=[128,135],                       &'
-;CONTINUE  ' MISOWINs_of_concatenated_windows=[3039,3033],                     &'
-;CONTINUE  ' EXTNAMEs_of_concatenated_windows="O III 703 / Mg IX 706 - SH (lamb&'
-;CONTINUE  'da bin 2),O III 703 / Mg IX 706 - LH"                              &'
-;CONTINUE  '       ' / Parameters for PRPROC12                                   
+;PRPARA12= '   WINNOs_of_concatenated_windows=[0,1]'                               
 ;PRLIB12A= 'uio-spice-pipeline' / Software library containing PRPROC12    
 ;    
 ;          END NEW KEYWORDS ADDED BY TERJE 14. SEPTEMBER 2023 -------------

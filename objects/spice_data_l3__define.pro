@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2024-01-12 13:17 CET $
 
 
 ;+
@@ -74,11 +74,24 @@ FUNCTION spice_data_l3::init, file
   hdr = headfits(file, exten=0)
   self.nwin = fxpar(hdr, 'NWIN', missing=0)
   self.l2_filename = fxpar(hdr, 'PGFILENA', missing='')
+  fits_open, file, fits_content
+  fits_close, fits_content
+  data_ids = fits2ana_get_data_id(fits_content)
+  n_windows = N_ELEMENTS(data_ids)
   headers_results = ptrarr(self.nwin)
-  headers_results[0] = ptr_new(hdr)
-  for i=1,self.nwin-1 do begin
-    hdr = headfits(file, exten=7*i)
-    headers_results[i] = ptr_new(hdr)
+  for iwin=0,n_windows-1 do begin
+    extname = data_ids[iwin] + ' results'
+    extension = where(fits_content.extname EQ extname, count)
+    IF count EQ 0 THEN BEGIN
+      message, 'Could not find result extension of window ' + strtrim(iwin, 2) + '. With EXTNAME: ' + extname, /info
+      message, 'Ignoring this window', /info
+      hdr = ''
+      headers_results[iwin] = ptr_new(hdr)
+      continue
+    ENDIF
+    extension = extension[0]
+    hdr = headfits(file, exten=extension)
+    headers_results[iwin] = ptr_new(hdr)
   endfor
   self.headers_results = ptr_new(headers_results)
   return, 1
@@ -279,7 +292,7 @@ FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir=user_dir, l3_obj
   file_l2_info = spice_file2info(file_l2)
   file_l3_all = spice_find_file(file_l2_info.datetime, remove_duplicates=0, user_dir=user_dir, level=3, COUNT_FILE=COUNT_FILE)
   count = 0
-  IF count_file eq 0 then return, ''
+  found_l3_file = ''
   FOR ifile=0,count_file-1 DO BEGIN
     file_l3_info = spice_file2info(file_l3_all[ifile])
     IF file_l3_info.spiobsid NE file_l2_info.spiobsid || $
@@ -290,14 +303,14 @@ FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir=user_dir, l3_obj
     l2_version = l2_file_temp.extract('V[0-9]{2}')
     l2_version = fix(l2_version.substring(1,2))
     IF l2_version EQ file_l2_info.version THEN BEGIN
-      count++
-      IF N_ELEMENtS(found_l3_file) EQ 0 THEN BEGIN
+      IF count EQ 0 THEN BEGIN
         found_l3_file = file_l3_all[ifile]
         l3_objects = l3_obj_temp
       ENDIF ELSE BEGIN
         found_l3_file = [found_l3_file, file_l3_all[ifile]]
         l3_objects = [l3_objects, l3_obj_temp]
       ENDELSE
+      count++
     ENDIF
   ENDFOR
 
@@ -338,30 +351,37 @@ FUNCTION spice_data_l3::get_l3_processing_steps, headers_results
     l3_pr_steps = !NULL
     FOR istep=0,count_step-1 DO BEGIN
       prstep = fxpar(hdr, pr_keywords[ind[istep]], missing='')
-      IF prstep EQ 'LINE-FITTING' || prstep EQ 'PEAK-FINDING' THEN BEGIN
+      IF prstep EQ 'LINE-FITTING' || prstep EQ 'PEAK-FINDING' || prstep EQ 'MANUAL-LINE-FITTING' THEN BEGIN
+        proc_step = [HASH('name','PRSTEP', 'value',prstep, 'comment','Processing step type, step ')]
         
         ind_proc = where(pr_keywords.startswith('PRPROC') AND pr_versions EQ pr_versions[ind[istep]], count_proc)
-        IF count_proc GT 0 THEN proc = fxpar(hdr, pr_keywords[ind_proc[0]], missing='') $
-        ELSE proc = '' 
+        IF count_proc GT 0 THEN BEGIN
+          proc = fxpar(hdr, pr_keywords[ind_proc[0]], missing='')
+          proc_step = [proc_step, HASH('name','PRPROC', 'value',proc, 'comment','Name of procedure performing PRSTEP')]
+        ENDIF
         
         ind_version = where(pr_keywords.startswith('PRPVER') AND pr_versions EQ pr_versions[ind[istep]], count_version)
-        IF count_version GT 0 THEN version = fix(fxpar(hdr, pr_keywords[ind_version[0]], missing=0L), type=3) $
-        ELSE version = 0L
+        IF count_version GT 0 THEN BEGIN
+          version = fix(fxpar(hdr, pr_keywords[ind_version[0]], missing=0L), type=3)
+          proc_step = [proc_step, HASH('name','PRPVER', 'value',version, 'comment','Version of procedure PRPROC')]
+        ENDIF
   
         ind_lib = where(pr_keywords.startswith('PRLIB') AND pr_versions EQ pr_versions[ind[istep]], count_lib)
-        IF count_lib GT 0 THEN lib = fxpar(hdr, pr_keywords[ind_lib[0]], missing='') $
-        ELSE lib = '' 
+        IF count_lib GT 0 THEN BEGIN
+          lib = fxpar(hdr, pr_keywords[ind_lib[0]], missing='')
+          proc_step = [proc_step, HASH('name','PRLIB' , 'value',lib, 'comment','Software library containing PRPROC')]
+        ENDIF
   
         ind_params = where(pr_keywords.startswith('PRPARA') AND pr_versions EQ pr_versions[ind[istep]], count_params)
-        IF count_params GT 0 THEN params = fxpar(hdr, pr_keywords[ind_params[0]], missing='') $
-        ELSE params = ''
-        
-        temp = {step:prstep, proc:proc, version:version, lib:lib, params:params}
+        IF count_params GT 0 THEN BEGIN
+          params = fxpar(hdr, pr_keywords[ind_params[0]], missing='')
+          proc_step = [proc_step, HASH('name','PRPARA', 'value',params, 'comment','Parameters for PRPROC')]
+        ENDIF
         
         IF N_ELEMENTS(l3_pr_steps) EQ 0 THEN BEGIN
-          l3_pr_steps = [temp]
+          l3_pr_steps = list(proc_step, /no_copy)
         ENDIF ELSE BEGIN
-          l3_pr_steps = [l3_pr_steps, temp]
+          l3_pr_steps.add, proc_step, /no_copy
         ENDELSE
       ENDIF
     ENDFOR

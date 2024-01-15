@@ -49,8 +49,10 @@
 ;                                 hdr.nwin, to prevent crash when
 ;                                 processing L2 file with missing HDUs due to 
 ;                                 incomplete telemetry 
+;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
+;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-10-18 15:27 CEST $
+; $Id: 2023-12-14 14:08 CET $
 
 
 ;+
@@ -216,14 +218,15 @@ END
 ; KEYWORD PARAMETERS:
 ;
 ; OPTIONAL OUTPUTS:
-;     existing_l3_files: A list of filenames with the saem SPIOBSID and RASTERNO but different version number
+;     existing_l3_files: A list of filenames with the same SPIOBSID and RASTERNO but different version number
 ;                        that already exist
 ;     l3_dir: The directory in which the level 3 file will be saved.
+;     number_version_l3: The version of the new level 3 file, as a number.
 ;
 ; OUTPUT:
 ;     The version of the new level 3 file, as a string in the format 'V##'.
 ;-
-FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
+FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, number_version_l3=number_version_l3, $
   existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, l3_dir=l3_dir
   ; Returns the version for a new level 3
   compile_opt idl2, static
@@ -236,12 +239,16 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version=force_version, $
   existing_l3_files = file_search(l3_dir, '*'+spiobsid_rasterno+'*', count=n_l3_files)
   existing_l3_files = file_basename(existing_l3_files)
   
-  IF keyword_set(force_version) THEN this_version = 'V'+fns('##',force_version) $
-  ELSE IF n_l3_files EQ 0 THEN this_version = 'V01' ELSE BEGIN 
+  IF keyword_set(force_version) THEN BEGIN
+    number_version_l3 = force_version
+  ENDIF ELSE IF n_l3_files EQ 0 THEN BEGIN
+    number_version_l3 = 1
+  ENDIF ELSE BEGIN
      versions = existing_l3_files.extract('V[0-9]{2}')
      versions = fix(versions.substring(1,2))
-     this_version = 'V'+fns('##',max(versions)+1)
+     number_version_l3 = max(versions)+1
   ENDELSE 
+  this_version = 'V'+fns('##', number_version_l3)
 
   return, this_version
 END
@@ -267,6 +274,7 @@ END
 ;
 ; OPTIONAL OUTPUTS:
 ;     version_l3: The version of the new level 3 file, as a string in the format 'V##'.
+;     number_version_l3: The version of the new level 3 file, as a number.
 ;     existing_l3_files: A list of filenames with the saem SPIOBSID and RASTERNO but different version number
 ;                        that already exist
 ;     l3_dir: The directory in which the level 3 file will be saved.
@@ -274,7 +282,7 @@ END
 ; OUTPUT:
 ;     The new filename of the level 3 file.
 ;-
-FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, $
+FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, number_version_l3=number_version_l3, $
   version_l3=version_l3, existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, l3_dir=l3_dir
   ; Returns L3 filename based on L2 filename, with version number being the highest version number of any existing L3 files incremented by 1.
   compile_opt idl2, static
@@ -282,7 +290,7 @@ FUNCTION spice_data::get_filename_l3, filename_l2, force_version=force_version, 
   version_l2 = filename_l2.extract('V[0-9]{2}')
   filename_l3 = file_basename(filename_l2)
   filename_l3 = filename_l3.replace('_L2_', '_L3_')
-  version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, $
+  version_l3 = spice_data.get_version_l3(filename_l3, force_version=force_version, number_version_l3=number_version_l3, $
                                          existing_l3_files=existing_l3_files, top_dir=top_dir, path_index=path_index, l3_dir=l3_dir)
   
   filename_l3 = filename_l3.replace(version_l2, version_l3)
@@ -292,7 +300,8 @@ END
 
 ;+
 ; Description:
-;     This routine creates a level 3 FITS file for the chosen window(s).
+;     This routine creates a level 3 FITS file for the chosen window(s). If
+;     the window is a Dumbbell or an Intensity-window no fits are made.
 ;     The data is arranged so that cfit_block can read it. The routine estimates
 ;     the positions of the main peaks and fits those to the data by calling cfit_block.
 ;     This may take a while. After that, the xcfit_block routine is called with
@@ -347,6 +356,17 @@ END
 ;                 that using the line list when fitting fails in many cases.
 ;
 ;     pipeline_dir: path to output directory used by the pipeline where L3 file is saved
+;     SAVE_XDIM1: If set, then the XDIM1 cube will be saved into the FITS file. Default is
+;                 not to save it. This cube can be recalculated using the WCS parameters given either
+;                 in HEADER_INPUT_DATA.
+;                 This keyword can also be an array of zeros and ones,
+;                 setting/unsetting this feature separately for each window.
+;     NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
+;                 It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
+;                 This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
+;                 This keyword can also be an array of zeros and ones,
+;                 setting/unsetting this feature separately for each window.
+;     PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
 ;     save_not:   If set, then the FITS file will not be saved. The output is the path and name of the
 ;                 level 3 FITS file, if it would have been saved.
 ;     quiet:      If set, print messages will be suppressed.
@@ -367,11 +387,12 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, all_proc_steps=all_proc_steps, $
   no_line_list=no_line_list, $
+  SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
   progress_widget=progress_widget, group_leader=group_leader, pipeline_dir=pipeline_dir, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  version = 3 ; PLEASE increase this number when editing the code
+  version = 5 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name='spice_create_l3_progress', /optional
   IF N_ELEMENTS(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(1, group_leader=group_leader)
@@ -393,7 +414,8 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     all_proc_steps = ptrarr(N_ELEMENTS(window_index))
     collect_proc_steps=1
   ENDIF ELSE collect_proc_steps=0
-
+  
+  win_type = self.get_header_keyword('WINTYPE', w, '')
   IF ~keyword_set(top_dir) THEN BEGIN 
      spice_data_dir = getenv('SPICE_DATA')
      top_dir = (keyword_set(pipeline_dir)) ? spice_data_dir : spice_data_dir+'/user/'
@@ -402,7 +424,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
 
   filename_l3 = spice_data.get_filename_l3(filename_l2, force_version=force_version, version_l3=version_l3, $
-    top_dir=top_dir, path_index=path_index)
+    number_version_l3=number_version_l3, top_dir=top_dir, path_index=path_index)
 
   file_info_l2 = spice_file2info(filename_l2)
    
@@ -413,101 +435,96 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   IF ~keyword_set(no_widget) THEN $
     progress_widget->next_file, N_ELEMENTS(window_index), filename=filename_l2, halt=halt
 
-  for iwindow=0,N_ELEMENTS(window_index)-1 do begin
+  for iwindow=0,N_ELEMENTS(window_index)-1 do BEGIN
+     dumbbell = self->get_header_keyword('DUMBBELL', iwindow) NE 0
+     intensity_window = self->get_header_keyword('WIN_TYPE', iwindow) EQ 'Intensity-window'
+     IF ~dumbbell AND ~intensity_window THEN BEGIN 
+        IF ~keyword_set(no_widget) THEN BEGIN
+           progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index[iwindow], fns('Window ##', iwindow)), halt=halt
+           if halt then begin
+              print,'Calculation stopped'
+              return, 'Cancelled'
+           endif
+        ENDIF
+        
+        ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
+                                position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
+        IF iwindow EQ 0 THEN version += version_add
+        if size(ana, /type) NE 8 then continue
+        IF collect_ana THEN BEGIN
+           if iwindow eq 0 then all_ana = ana $
+           else all_ana = [all_ana, ana]
+        ENDIF
+        
+        if ~keyword_set(no_fitting) then begin
+           if ~keyword_set(quiet) then begin
+              print, '====================='
+              print, 'fitting data'
+              print, 'this may take a while'
+              print, '====================='
+           endif
+           spice_cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
+        endif
+        
+        if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
+           origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
+           scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
+           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
+        endif
+        
+        ;data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
+        original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+        if iwindow gt 0 then IS_EXTENSION=1 else begin
+           IS_EXTENSION=0
+           IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
+           
+           proc_step_1 =  [ $
+                          HASH('name','PRSTEP', 'value','PEAK-FINDING', 'comment','Processing step type, step '), $
+                          HASH('name','PRPROC', 'value',proc_find_line.proc, 'comment','Name of procedure performing PRSTEP'), $
+                          HASH('name','PRPVER', 'value',fix(proc_find_line.version, type=3), 'comment','Version of procedure PRPROC'), $
+                          HASH('name','PRLIB' , 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC') $
+                          ]
 
-    IF ~keyword_set(no_widget) THEN BEGIN
-      progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index[iwindow], fns('Window ##', iwindow)), halt=halt
-      if halt then begin
-        print,'Calculation stopped'
-        return, 'Cancelled'
-      endif
-    ENDIF
+           proc_step_2 =  [ $
+                          HASH('name','PRSTEP', 'value','LINE-FITTING', 'comment','Processing step type, step '), $
+                          HASH('name','PRPROC', 'value','spice_data::create_l3_file', 'comment','Name of procedure performing PRSTEP'), $
+                          HASH('name','PRPVER', 'value',fix(version, type=3), 'comment','Version of procedure PRPROC'), $
+                          HASH('name','PRLIB' , 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC'), $
+                          HASH('name','PRPARA', 'value',$
+                                  string('LINE_LIST = '+strtrim(fix(~keyword_set(no_line_list)), 2)+',', format='(A-67)') + $
+                                  string('MASKING   = '+strtrim(fix(~keyword_set(no_masking)), 2)+',', format='(A-67)') + $
+                                  string('FITTING   = '+strtrim(fix(~keyword_set(no_fitting)), 2)+',', format='(A-67)') + $
+                                  string('POSITION  = '+strtrim(fix(keyword_set(position)), 2)+',', format='(A-67)') + $
+                                  string('VELOCITY  = '+strtrim(vel, 2)+',', format='(A-67)') + $
+                                  'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2), $
+                                      'comment','Parameters for PRPROC') $
+                          ]
+           
+           PROC_STEPS = LIST(proc_step_1, proc_step_2, /no_copy)
+           
+           file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
+           
+        endelse ; iwindow gt 0
+        
+        ana2fits, ANA, FILEPATH_OUT=file, $
+          N_WINDOWS=N_ELEMENTS(window_index), WINNO=iwindow, $
+          DATA_ID=DATA_ID, TYPE_XDIM1='WAVE', $
+          EXT_DATA_PATH=filename_l2, $
+          IS_EXTENSION=IS_EXTENSION, LEVEL='L3', VERSION=number_version_l3, $
+          PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+          PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=self->get_header(window_index[iwindow]), $
+          SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+          SAVE_NOT=SAVE_NOT, $
+          headers_results=headers_results, headers_data=headers_data
+          
+        delete_analysis, ana
+                
+        IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
+        IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
+        IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
+     endif ;  ~dumbbell AND ~intensity_window
+  endfor                        ; iwindow=0,N_ELEMENTS(window_index)-1
 
-    ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
-      position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
-    IF iwindow EQ 0 THEN version += version_add
-    if size(ana, /type) NE 8 then continue
-    IF collect_ana THEN BEGIN
-      if iwindow eq 0 then all_ana = ana $
-      else all_ana = [all_ana, ana]
-    ENDIF
-
-    if ~keyword_set(no_fitting) then begin
-      if ~keyword_set(quiet) then begin
-        print, '====================='
-        print, 'fitting data'
-        print, 'this may take a while'
-        print, '====================='
-      endif
-      spice_cfit_block, analysis=ana, /quiet, /double, x_face=~keyword_set(no_widget), smart=1
-    endif
-
-    if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-      origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
-      scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
-      SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
-    endif
-
-    data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
-    original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
-    if iwindow gt 0 then extension=1 else begin
-      extension=0
-      IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
-
-      version_and_params_1 = { $
-        step:'PEAK-FINDING', $
-        proc:proc_find_line.proc, $
-        version:fix(proc_find_line.version, type=3), $
-        lib:'solarsoft/so/spice/idl/quicklook', $
-        params:'' $
-      }
-
-      version_and_params_2 = { $
-        step:'LINE-FITTING', $
-        proc:'spice_data::create_l3_file', $
-        version:fix(version, type=3), $
-        lib:'solarsoft/so/spice/idl/quicklook', $
-        params: $
-        string('LINE_LIST = '+strtrim(string(fix(~keyword_set(no_line_list))), 2)+',', format='(A-67)') + $
-        string('MASKING   = '+strtrim(string(fix(~keyword_set(no_masking))), 2)+',', format='(A-67)') + $
-        string('FITTING   = '+strtrim(string(fix(~keyword_set(no_fitting))), 2)+',', format='(A-67)') + $
-        string('POSITION  = '+strtrim(string(fix(keyword_set(position))), 2)+',', format='(A-67)') + $
-        string('VELOCITY  = '+strtrim(string(vel), 2)+',', format='(A-67)') + $
-        'POSSIBLE_MANUAL_EDITING = '+strtrim(string(fix(~keyword_set(no_widget) && ~keyword_set(no_xcfit_block))), 2) $
-      }
-
-      version_and_params = [version_and_params_1, version_and_params_2]
-
-    endelse
-
-    headers = ana2fitshdr(ana, header_l2=self->get_header(window_index[iwindow]), data_id=data_id, $
-      extension=extension, filename_out=filename_l3, n_windows=N_ELEMENTS(window_index), winno=iwindow, $
-      HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-      FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-      CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-      DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-      original_data=original_data, spice=version_and_params)
-    
-    delete_analysis, ana
-    
-    IF iwindow EQ 0 THEN file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
-    
-    IF ~keyword_set(save_not) THEN BEGIN
-      writefits, file, RESULT, *headers[0], append=extension
-      writefits, file, original_data, *headers[1], /append
-      writefits, file, LAMBDA, *headers[2], /append
-      writefits, file, RESIDUAL, *headers[3], /append
-      writefits, file, WEIGHTS, *headers[4], /append
-      writefits, file, INCLUDE, *headers[5], /append
-      writefits, file, CONST, *headers[6], /append
-    ENDIF
-
-    IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers[0])
-    IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers[1])
-    IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(version_and_params)
-
-  endfor ; iwindow=0,N_ELEMENTS(window_index)-1
-  
   IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN 
      spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
                    /user_dir, top_dir=top_dir, path_index=path_index, /force, $
@@ -518,7 +535,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   return, destination
 END
 
-
+  
 ;+
 ; Description:
 ;     This procedure transforms the data of a chosen window, so that it can be used
@@ -1017,7 +1034,7 @@ PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
 
     dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
     intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
-    IF NOT dumbbell AND NOT intensity_window THEN BEGIN
+    IF ~dumbbell AND ~intensity_window THEN BEGIN
       nbin2 = self->get_header_keyword('NBIN2', window_index)
 
       IF nbin2 NE 1 THEN self->debin_y_dimension, data, nbin2
