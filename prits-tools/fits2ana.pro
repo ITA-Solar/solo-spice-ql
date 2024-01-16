@@ -63,7 +63,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-11 11:53 CET $
+; $Id: 2024-01-16 10:43 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -329,7 +329,7 @@ function fits2ana, fitsfile, windows=windows, $
     IF ~headers_only THEN BEGIN
       IF ~wcs_data_exists THEN BEGIN
         IF size_data[0] EQ 0 THEN BEGIN
-          IF loud THEN message, 'Creating dummy data cube', /info
+          box_message, 'No DATA cube found. Creating dummy data cube'
           datasize = wcs_result.naxis
           datasize[0] = datasize[0]*2
           IF hdr[0] NE '' THEN BEGIN
