@@ -63,7 +63,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-16 14:31 CET $
+; $Id: 2024-01-16 14:34 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -508,7 +508,7 @@ function fits2ana, fitsfile, windows=windows, $
     
     IF size_data[0] GT 0 THEN BEGIN
       
-      sfit = make_sfit_stc(fit,values=values,/keep_limits)
+      sfit = make_sfit_stc(fit,/keep_limits)
       compile_sfit,sfit
       
       szd = size(data)
@@ -538,7 +538,7 @@ function fits2ana, fitsfile, windows=windows, $
 
         IF ngood GT 0 THEN BEGIN
           call_procedure,sfit.compiledfunc,lam[ix], aa, yfit
-          residual[ix,j,k,l,m,n,o] = spec[ix]-yfit
+          residual[ix,j,k,l,m,n,o] = spec[ix] - yfit
         ENDIF
       ENDFOR
 
