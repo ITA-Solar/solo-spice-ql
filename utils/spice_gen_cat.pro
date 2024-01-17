@@ -81,7 +81,7 @@
 ;
 ; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-01-17 09:00 CET $
+; $Id: 2024-01-17 13:49 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -170,10 +170,10 @@ PRO spice_gen_cat::write_csv, filename
 END
 
 
-PRO spice_gen_cat::write_hashes_save_file
-  print,'Writing '+self.d.catalog_hashes_save_file
+PRO spice_gen_cat::write_hash_save_file
+  print,'Writing '+self.d.catalog_hash_save_file
   old_hash      = self.d.file_hash
-  save, file=self.d.catalog_hashes_save_file, old_hash
+  save, file=self.d.catalog_hash_save_file, old_hash
 END
 
 
@@ -182,7 +182,7 @@ PRO spice_gen_cat::write
   
   self.write_plaintext, self.d.catalog_basename + '.txt'
   self.write_csv, self.d.catalog_basename + '.csv'
-  self.write_hashes_save_file
+  self.write_hash_save_file
 END
 
 
@@ -268,9 +268,9 @@ PRO spice_gen_cat::set_filelist
   top_level = ~self.d.spice_datadir.contains('level')
 
   spice_search_dirs = (top_level AND self.d.ignore_L0) ? self.d.spice_datadir+'/level'+['1','2','3']+'/' : self.d.spice_datadir
-  ignore_txt        = (top_level AND self.d.ignore_L0) ? ', ignoring /level0. '                          : '. '
+  ignore_txt        = (top_level AND self.d.ignore_L0) ? ', ignoring /level0'                          : ''
   
-  print, "Finding FITS files on disk"+ignore_txt, format='(A,$)'
+  print, "Finding FITS files on disk"+ignore_txt+'... ', format='(A,$)'
    
   self.d.filelist = file_search(spice_search_dirs,"*.{fits,fits.gz}")
  
@@ -295,12 +295,12 @@ END
 
 
 PRO spice_gen_cat::restore_old_cat
-  IF ~ file_exist(self.d.catalog_hashes_save_file) THEN message,'Create hash save files by running spice_gen_cat,dir,use_old_catalog=0'
+  IF ~ file_exist(self.d.catalog_hash_save_file) THEN message,'Create hash save file by running spice_gen_cat,dir,use_old_catalog=0'
   
-  print,'Restoring '+file_basename(self.d.catalog_hashes_save_file)
-  restore,self.d.catalog_hashes_save_file
+  print,'Restoring '+file_basename(self.d.catalog_hash_save_file)
+  restore,self.d.catalog_hash_save_file
   self.d.old_hash = old_hash
-  print,'Done restoring hashes with '+trim(n_elements(old_hash))+' keys'
+  print,'Done restoring hash with '+trim(n_elements(old_hash))+' keys'
 END
 
 
@@ -368,10 +368,10 @@ PRO spice_gen_cat::execute
 END
 
 
-FUNCTION spice_gen_cat::get_catalog_hashes_save_file
+FUNCTION spice_gen_cat::get_catalog_hash_save_file
   level = self.d.spice_datadir.extract('level[0-9]')
   level_dir = (level EQ '') ? '' : '/l'+level.extract('[0-9]')+'/'
-  return, getenv('instr_output')+'/catalog_hashes/'+(level_dir)+'spice_catalog_hashes.save'
+  return, getenv('instr_output')+'/catalog_hashes/'+(level_dir)+'spice_catalog_hash.save'
 END
 
 
@@ -398,7 +398,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   
   self.d.n_modified_files = 0
   
-  self.d.catalog_hashes_save_file = self.get_catalog_hashes_save_file()
+  self.d.catalog_hash_save_file = self.get_catalog_hash_save_file()
   
   self.d.new_files = (new_files NE !NULL) ? new_files : !NULL
   self.d.ingest_new_files = self.d.new_files NE !NULL
