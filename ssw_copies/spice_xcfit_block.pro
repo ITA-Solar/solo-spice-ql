@@ -216,7 +216,7 @@
 ;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
 ;
 ; Version     :
-; $Id: 2023-10-31 13:59 CET $
+; $Id: 2024-01-18 14:25 CET $
 ;-
 
 
@@ -1413,9 +1413,9 @@ PRO spice_xcfit_block_event,ev
   if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $  ; An event from cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'CW_LOADCT' || $    ; An event from an unofficial cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
-    cw_cubeview_force_redraw, info.int.data_id
-    cw_cubeview_force_redraw, info.int.residual_id
-    cw_cubeview_force_redraw, info.int.result_id
+    spice_cw_cubeview_force_redraw, info.int.data_id
+    spice_cw_cubeview_force_redraw, info.int.residual_id
+    spice_cw_cubeview_force_redraw, info.int.result_id
     
     if tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
       handle_value,info.int.a.fit_h,orgfit
@@ -2081,13 +2081,13 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
 ;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
   
-  info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a_display.data_display_h,$
+  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a_display.data_display_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
                                  scale=scale,phys_scale=phys_scale, image_dim=[1,2]) ; image_dim is probably spice-specific
   
-  info.int.residual_id = cw_cubeview(residual_b,hvalue=info.int.a_display.residual_display_h,$
+  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a_display.residual_display_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
@@ -2097,7 +2097,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   IF keyword_set(scale) THEN r_scale = scale(1:*)
   IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale(1:*)
   
-  info.int.result_id = cw_cubeview(result_b,value=this_result,$
+  info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames(1:*),$
                                    title=title, origin=r_origin, $
