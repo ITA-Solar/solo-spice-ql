@@ -63,7 +63,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-16 10:43 CET $
+; $Id: 2024-01-18 11:30 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -502,6 +502,46 @@ function fits2ana, fitsfile, windows=windows, $
       print,hdr
       help,const
     ENDIF
+    
+    
+    ; RESIDUALS
+    
+    residual = data
+    residual[*] = !VALUES.f_nan
+
+    IF size_data[0] GT 0 THEN BEGIN
+      
+      sfit = make_sfit_stc(fit,/keep_limits)
+      compile_sfit,sfit      
+  
+      ;; Convert to 7 dimensions in all cases!
+      szd = size(data)
+      dimen = szd[1:szd[0]]
+      IF szd[0] LT 7 THEN dimen = [dimen,replicate(1L,7-szd[0])]
+  
+      ;;
+      ;; This works for up to 7-dimensional data
+      ;;
+      FOR o=0L,dimen[6]-1 DO $
+        FOR n=0L,dimen[5]-1 DO $
+        FOR m=0L,dimen[4]-1 DO $
+        FOR l=0L,dimen[3]-1 DO $
+        FOR k=0L,dimen[2]-1 DO $
+        FOR j=0L,dimen[1]-1 DO BEGIN
+
+        spec = data[*,j,k,l,m,n,o]
+        ix = where_not_missing(spec, ngood, missing=missing)
+
+        IF ngood GT 0 THEN BEGIN
+          lam = xdim1[*,j,k,l,m,n,o]
+          params = result[0:-2,j,k,l,m,n,o]
+          params = params * sfit.trans_a + sfit.trans_b
+          call_procedure,sfit.compiledfunc,lam[ix], params, yfit
+          residual[ix,j,k,l,m,n,o] = spec[ix] - yfit
+        ENDIF
+      ENDFOR
+
+    ENDIF ; size_data[0] GT 0
 
 
     IF ~headers_only THEN BEGIN
@@ -520,7 +560,7 @@ function fits2ana, fitsfile, windows=windows, $
       handle_value,ana.weights_h,weights,/no_copy,/set
       handle_value,ana.fit_h,fit,/no_copy,/set
       handle_value,ana.result_h,result,/no_copy,/set
-      ;handle_value,ana.residual_h,residual,/no_copy,/set
+      handle_value,ana.residual_h,residual,/no_copy,/set
       handle_value,ana.include_h,include,/no_copy,/set
       handle_value,ana.const_h,const,/no_copy,/set
       handle_value,ana.origin_h,origin,/no_copy,/set
