@@ -72,11 +72,16 @@
 ;                          Simplified and cleaned up code, e.g. removed reading
 ;                          .txt catalog file, removed *_keys arrays and unused
 ;                          methods and lines of code. Ensure that files are not saved to disk 
-;                          more than once when catalog is recreated from scratch. 
+;                          more than once when catalog is recreated from
+;                          scratch.
+;              Version 13, Terje Fredvik, 17 January 2024
+;                          New keyword IGNORE_L0. If set, and input
+;                          spice_data_dir is the top level of the FITS file
+;                          tree, ignore all files in the level0 directory.
 ;
-; Version     : Version 12, TF, 29 November 2023
+; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-01-15 13:39 CET $
+; $Id: 2024-01-18 11:31 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -165,10 +170,10 @@ PRO spice_gen_cat::write_csv, filename
 END
 
 
-PRO spice_gen_cat::write_hashes_save_file
-  print,'Writing '+self.d.catalog_hashes_save_file
+PRO spice_gen_cat::write_hash_save_file
+  print,'Writing '+self.d.catalog_hash_save_file
   old_hash      = self.d.file_hash
-  save, file=self.d.catalog_hashes_save_file, old_hash
+  save, file=self.d.catalog_hash_save_file, old_hash
 END
 
 
@@ -177,7 +182,7 @@ PRO spice_gen_cat::write
   
   self.write_plaintext, self.d.catalog_basename + '.txt'
   self.write_csv, self.d.catalog_basename + '.csv'
-  self.write_hashes_save_file
+  self.write_hash_save_file
 END
 
 
@@ -257,12 +262,18 @@ PRO spice_gen_cat::populate_hash
   print
 END
 
-
+  
 PRO spice_gen_cat::set_filelist
-  print, "Finding FITS files on disk... ", format='(A,$)'
+
+  top_level = ~self.d.spice_datadir.contains('level')
+
+  spice_search_dirs = (top_level AND self.d.ignore_L0) ? self.d.spice_datadir+'/level'+['1','2','3']+'/' : self.d.spice_datadir
+  ignore_txt        = (top_level AND self.d.ignore_L0) ? ', ignoring /level0'                          : ''
   
-  self.d.filelist = file_search(self.d.spice_datadir,"*.{fits,fits.gz}")
-  
+  print, "Finding FITS files on disk"+ignore_txt+'... ', format='(A,$)'
+   
+  self.d.filelist = file_search(spice_search_dirs,"*.{fits,fits.gz}")
+ 
   IF self.d.filelist[0] EQ '' THEN BEGIN
      MESSAGE,"No fits files found, exiting"
      RETURN
@@ -284,12 +295,12 @@ END
 
 
 PRO spice_gen_cat::restore_old_cat
-  IF ~ file_exist(self.d.catalog_hashes_save_file) THEN message,'Create hash save files by running spice_gen_cat,dir,use_old_catalog=0'
+  IF ~ file_exist(self.d.catalog_hash_save_file) THEN message,'Create hash save file by running spice_gen_cat,dir,use_old_catalog=0'
   
-  print,'Restoring '+file_basename(self.d.catalog_hashes_save_file)
-  restore,self.d.catalog_hashes_save_file
+  print,'Restoring '+file_basename(self.d.catalog_hash_save_file)
+  restore,self.d.catalog_hash_save_file
   self.d.old_hash = old_hash
-  print,'Done restoring hashes with '+trim(n_elements(old_hash))+' keys'
+  print,'Done restoring hash with '+trim(n_elements(old_hash))+' keys'
 END
 
 
@@ -357,15 +368,15 @@ PRO spice_gen_cat::execute
 END
 
 
-FUNCTION spice_gen_cat::get_catalog_hashes_save_file
+FUNCTION spice_gen_cat::get_catalog_hash_save_file
   level = self.d.spice_datadir.extract('level[0-9]')
   level_dir = (level EQ '') ? '' : '/l'+level.extract('[0-9]')+'/'
-  return, getenv('instr_output')+'/catalog_hashes/'+(level_dir)+'spice_catalog_hashes.save'
+  return, getenv('instr_output')+'/catalog_hashes/'+(level_dir)+'spice_catalog_hash.save'
 END
 
 
 FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_old_catalog, $
-                              new_files=new_files
+                              new_files=new_files, ignore_L0=ignore_L0
   self.d = dictionary()
   
   spice_default, spice_data_dir,getenv("SPICE_DATA")
@@ -387,10 +398,12 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   
   self.d.n_modified_files = 0
   
-  self.d.catalog_hashes_save_file = self.get_catalog_hashes_save_file()
+  self.d.catalog_hash_save_file = self.get_catalog_hash_save_file()
   
   self.d.new_files = (new_files NE !NULL) ? new_files : !NULL
   self.d.ingest_new_files = self.d.new_files NE !NULL
+  
+  self.d.ignore_L0 = (keyword_set(ignore_L0))
 
   IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
   
