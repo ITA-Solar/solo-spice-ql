@@ -173,6 +173,7 @@ PRO spice_xtvscale_event,ev
   handle_value,stash,info,/no_copy
   
   WIDGET_CONTROL,ev.id,get_uvalue=uval
+  uval = string(uval)
   
   CASE uval OF 
      
@@ -362,6 +363,10 @@ PRO spice_xtvscale_event,ev
      RETURN
      ENDCASE
      
+  ELSE :BEGIN
+     ; Events from color table, we don't need to do anything. 
+     ENDCASE
+
   END
   
   ;; Get ID's of those that wish to be informed.
