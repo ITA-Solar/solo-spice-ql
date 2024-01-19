@@ -63,7 +63,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-18 11:30 CET $
+; $Id: 2024-01-19 10:20 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -329,7 +329,10 @@ function fits2ana, fitsfile, windows=windows, $
     IF ~headers_only THEN BEGIN
       IF ~wcs_data_exists THEN BEGIN
         IF size_data[0] EQ 0 THEN BEGIN
-          box_message, 'No DATA cube found. Creating dummy data cube'
+          box_message, ['No DATA cube found. Neither in this FITS file nor', $
+            'in the progenitor file, or the progenitor file was not found.', $
+            'If this is a SPICE file: LEVEL 2 FILE IS MISSING.', $
+            'Creating dummy data cube.']
           datasize = wcs_result.naxis
           datasize[0] = datasize[0]*2
           IF hdr[0] NE '' THEN BEGIN
