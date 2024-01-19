@@ -37,10 +37,12 @@
 ;      prits_tools.write_image_real_size
 ;
 ; HISTORY:
-;      Ver. 1, 23-Jun-2022, Martin Wiesmann
+;      Ver. 1,   23-Jun-2022, Martin Wiesmann
+;      Ver. 1.1, 19-Jan-2024, Terje Fredvik - extract FITS keyword winno from
+;                             header (instead of l2winno which no longer exists)
 ;
 ;-
-; $Id: 2022-12-09 10:41 CET $
+; $Id: 2024-01-19 10:12 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
@@ -89,7 +91,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
       n_params = N_ELEMENTS(fit_cur.param)
       for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
-        filename_base2 = filename_base+fns('##',hdr.l2winno)+'_'+fns('##',icomp+1)+'_'+param.name
+        filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
 
         ; crop image so that lines with invalid data is not shown
         IF naxis4 GT 1 THEN BEGIN
