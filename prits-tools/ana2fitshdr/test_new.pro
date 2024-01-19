@@ -1,45 +1,228 @@
 pro test_new
 
   file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
-  ;file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
-;  d0 = readfits(file, h0)
-;  help,d0
-;  d1 = readfits(file, h1, ext=1)
-;  help,d1
-;  d2 = readfits(file, h2, ext=2)
-;  help,d2
+  file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
+  ;file = '/Users/mawiesma/data/spice/level2/2023/10/06/solo_L2_spice-n-ras_20231006T142008_V05_218103906-017.fits'
 
-  ol2 = spice_data(file)
+  ;  d0 = readfits(file, h0)
+  ;  help,d0
+  ;  d1 = readfits(file, h1, ext=1)
+  ;  help,d1
+  ;  d2 = readfits(file, h2, ext=2)
+  ;  help,d2
+
+
+  time_start = '2023-10-01 00:00'
+  time_end = '2023-10-10 22:00'
+
+
+
+  if 0 then begin
+
+
+
+
+    ;spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
+    ;  top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
+    ;  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
+    ;  search_subdir=search_subdir, ignore_time=ignore_time, $
+    ;  no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
+    ;  no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
+    ;  pipeline_dir=pipeline_dir, create_images=create_images, images_top_dir=images_top_dir, $
+    ;  files_l3=files_l3, search_level3=search_level3, no_overwrite=no_overwrite
+    ;
+    ;
+    ;return
+
+    !EXCEPT=2
+
+
+    ol2 = spice_data(file)
+
+    no_fitting=0
+    no_widget=0
+    no_xcfit_block=1
+    SAVE_XDIM1=0
+    NO_SAVE_DATA=0
+    PRINT_HEADERS=0
+
+    window_index = 1;[1,3]
+    ;window_index = !NULL
+
+    l3file = ol2->create_l3_file( window_index, $
+      no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, $
+      SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS )
+
+    print,''
+    print,' ---- '
+    print,l3file
+    print,' ---- '
+    print,''
+    ;  stop
+
+    return
+    ;ana = fits2ana(l3file, /debug, /headers_only)
+    ;stop
+    print,'quiet'
+    print,''
+    ana = fits2ana(l3file, /quiet)
+    print,' ---- '
+    print,''
+    print,'loud'
+    print,''
+    ana = fits2ana(l3file, /loud)
+    print,' ---- '
+    print,''
+    print,'quiet + loud'
+    print,''
+    ana = fits2ana(l3file, /loud, /quiet)
+    print,' ---- '
+    print,''
+
+    return
+    ana = fits2ana(l3file, /debug)
+
+    spice_xcfit_block, ana=ana[0]
+
+
+  endif
+
+
+
+
+
+
+  l3file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+  ana = fits2ana(l3file, /loud, headers_results=headers_results)
+  ana = ana[0]
+
+  handle_value,ana.fit_h,fit
+  help,fit
   
-  no_fitting=1
-  no_widget=01
-  no_xcfit_block=0
-  SAVE_XDIM1=0
-  NO_SAVE_DATA=0
-  PRINT_HEADERS=0
-  
-  window_index = [1,3]
-  
-  l3file = ol2->create_l3_file( window_index, $
-    no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, $
-    SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS )
-  
-  print,l3file
-  stop
-  
-  
-  ana = fits2ana(l3file, /debug)
-  
-  spice_xcfit_block, ana=ana[0]
-  
-  
-  
-  
-  
-  
+
+  spice_xcfit_block, ana=ana
+
+  handle_value,ana.fit_h,fit
+  help,fit
+return
+
+
+  print,' --- '
+  print,*(headers_results[0])
+  print,''
+  print,' --- '
+  handle_value, ana.result_h, res
+  help,res
+  handle_value, ana.data_h, data
+  help,data
+  handle_value, ana.lambda_h, lambda
+  help,lambda
+  handle_value, ana.fit_h, fit
+  help,fit
+  sfit = make_sfit_stc(fit,values=values,/keep_limits)
+  help,sfit
+  compile_sfit,sfit
+  help,sfit
+  ;stop
+
+  x = lambda[0,3,370]
+  help,x
+  a = res[0:-2,3,370]
+  print,'a',a
+  print,'sfit.trans_a',sfit.trans_a
+  print,'sfit.trans_b',sfit.trans_b
+  aa = a * sfit.trans_a + sfit.trans_b
+  print,'aa',aa
+  ;stop
+
+  residual = data*0
+  help,residual
+
+
+
+  j=50
+  k=370
+  l=0
+  m=0
+  n=0
+  o=0
+  print,residual[*,j,k,l,m,n,o]
+
+  lam = lambda[*,j,k,l,m,n,o]
+  spec = data[*,j,k,l,m,n,o]
+  ix = where_not_missing(spec, ngood, missing=missing)
+
+  ;;
+  ;; No dice if we have too few good points
+  ;;
+  IF ngood LE 0 THEN BEGIN
+    residual[*,j,k,l,m,n,o] = 0
+    ;result[*,j,k,l,m,n,o] = -9
+  END ELSE BEGIN
+
+    call_procedure,sfit.compiledfunc,lam[ix], aa, yfit
+
+    help,yfit
+    print,yfit
+    residual[ix,j,k,l,m,n,o] = spec[ix]-yfit
+    print,residual[*,j,k,l,m,n,o]
+
+  ENDELSE
+
+
   return
-  
-  
+
+  IF new_lam THEN lam = lambda[*,j,k,l,m,n,o]
+  const_here = const[*,j,k,l,m,n,o]
+  include_here = include[*,j,k,l,m,n,o]
+  a_nom = result[0:npar-2,j,k,l,m,n,o]
+  weights_here = weights[ix,j,k,l,m,n,o]
+  IF NOT make_sigma THEN BEGIN
+    ff = cfit(lam[ix],spec[ix],a_nom,fit,$
+      /noupdate,chi2=chi2,quiet=quiet,$
+      sfit=sfit,const=const_here,include=include_here,$
+      weights=weights_here,failed=failed,fail_type=ftype,$
+      error_only=error_only)
+  END ELSE BEGIN
+    ff = cfit(lam[ix],spec[ix],a_nom,fit,sigma_here,$
+      /noupdate,chi2=chi2,quiet=quiet,$
+      sfit=sfit,const=const_here,include=include_here,$
+      weights=weights_here,failed=failed,fail_type=ftype,$
+      error_only=error_only)
+    sigm[0,j,k,l,m,n,o] = sigma_here
+  END
+
+
+
+
+
+
+
+
+
+
+  call_procedure,sfit.compiledfunc,x,aa,yfit
+
+  help,yfit
+
+  return
+
+
+
+  ix = where_not_missing(spec, ngood, missing=missing)
+
+  ff = cfit(lam[ix],spec[ix],a_nom,fit,$
+    /noupdate,chi2=chi2,quiet=quiet,$
+    sfit=sfit,const=const_here,include=include_here,$
+    weights=weights_here,failed=failed,fail_type=ftype,$
+    error_only=error_only)
+
+
+
+
+
+
+
   ana = ol2->mk_analysis(0, /init_all_cubes)
 
   FILEPATH_OUT = '~/file.fits'
@@ -72,7 +255,7 @@ pro test_new
   ;ana2 = ol2->mk_analysis(2, /init_all_cubes)
   ;ana = [ana0, ana1, ana2]
   ana = ana0
-  
+
 
   ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
@@ -106,76 +289,76 @@ pro test_new
 
   return
 
-  
-;  HEADERS_INPUT_DATA = h
-;  
-;  ; Add time to DATE
-;  caldat, systime(/julian), month, day, year, hour, minute, second
-;  datetime = {CDS_EXT_TIME, $
-;    year:year, $
-;    month:month, $
-;    day:day, $
-;    hour:hour, $
-;    minute:minute, $
-;    second:second, $
-;    millisecond:0}
-;  datetime = anytim(datetime, /ccsds)
-;
-;  data_id = 'data_id'
-;  extension_names = data_id + [ $
-;    ' results', $
-;    ' data', $
-;    ' xdim1', $
-;    ' weights', $
-;    ' includes', $
-;    ' constants']
-;    
-;    XDIM1_TYPE = 'WAVE'
-;    
-;    CONST = d
-;
-;  
-;    wcs = fitshead2wcs(HEADERS_INPUT_DATA)
-;    help,wcs
-;    print,wcs.proj_names
-;    print,wcs.proj_values
-;    help,wcs.time
-;    help,wcs.position
-;    help,wcs.spectrum
-;;    help,wcs.distortion
-;;    help,wcs.distortion.dw1
-;;    print,wcs.distortion.dw1.param
-;;    print,wcs.distortion.dw1.value
-;;    help,wcs.distortion.dw2
-;;    print,wcs.distortion.dw2.param
-;;    print,wcs.distortion.dw2.value
-;;    print,wcs.distortion.associate
-;;    print,wcs.distortion.apply
-;  
-;  
-;  ;print,HEADERS_INPUT_DATA
-;  
-;  
-;  wcs = ana_wcs_get_transform(XDIM1_TYPE, HEADERS_INPUT_DATA)
-;
-;  
-;  
-;  hdr_const = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
-;    
-;    
-;  print, hdr_const
-;  
-;  ;const = !NULL
-  
+
+  ;  HEADERS_INPUT_DATA = h
+  ;
+  ;  ; Add time to DATE
+  ;  caldat, systime(/julian), month, day, year, hour, minute, second
+  ;  datetime = {CDS_EXT_TIME, $
+  ;    year:year, $
+  ;    month:month, $
+  ;    day:day, $
+  ;    hour:hour, $
+  ;    minute:minute, $
+  ;    second:second, $
+  ;    millisecond:0}
+  ;  datetime = anytim(datetime, /ccsds)
+  ;
+  ;  data_id = 'data_id'
+  ;  extension_names = data_id + [ $
+  ;    ' results', $
+  ;    ' data', $
+  ;    ' xdim1', $
+  ;    ' weights', $
+  ;    ' includes', $
+  ;    ' constants']
+  ;
+  ;    XDIM1_TYPE = 'WAVE'
+  ;
+  ;    CONST = d
+  ;
+  ;
+  ;    wcs = fitshead2wcs(HEADERS_INPUT_DATA)
+  ;    help,wcs
+  ;    print,wcs.proj_names
+  ;    print,wcs.proj_values
+  ;    help,wcs.time
+  ;    help,wcs.position
+  ;    help,wcs.spectrum
+  ;;    help,wcs.distortion
+  ;;    help,wcs.distortion.dw1
+  ;;    print,wcs.distortion.dw1.param
+  ;;    print,wcs.distortion.dw1.value
+  ;;    help,wcs.distortion.dw2
+  ;;    print,wcs.distortion.dw2.param
+  ;;    print,wcs.distortion.dw2.value
+  ;;    print,wcs.distortion.associate
+  ;;    print,wcs.distortion.apply
+  ;
+  ;
+  ;  ;print,HEADERS_INPUT_DATA
+  ;
+  ;
+  ;  wcs = ana_wcs_get_transform(XDIM1_TYPE, HEADERS_INPUT_DATA)
+  ;
+  ;
+  ;
+  ;  hdr_const = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
+  ;
+  ;
+  ;  print, hdr_const
+  ;
+  ;  ;const = !NULL
+
   print, ''
   print, ''
   print, '-----------------'
   print, ' ana2fitshdr   TEST'
   print ,''
-  
+
   ol2 = spice_data(file)
   ana = ol2->mk_analysis(0, /init_all_cubes)
-  
+
   handle_value,ana.history_h,history
   handle_value,ana.lambda_h,xdim1
   handle_value,ana.data_h,input_data
@@ -209,36 +392,36 @@ pro test_new
   ;FIT = {a:0}
   ;PROC_STEPS
   ;PROJ_KEYWORDS
-  
+
   ;INPUT_DATA = d
   ;XDIM1 = d
   CONST[0] = 3
   INCLUDE[0] = 3
   WEIGHTS[0] = 3
-  
+
   SAVE_XDIM1 = 0
   NO_SAVE_DATA = 0
   PRINT_HEADERS = 1
 
   hdrs = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
-  N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
-  DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
-  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
-  PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-  XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
-  RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
-  CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-  DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-  PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
-  SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
-  DATA_ARRAY=DATA_ARRAY)
-  
+    N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
+    DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
+    IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+    PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
+    XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
+    RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
+    CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
+    DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
+    PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
+    SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+    DATA_ARRAY=DATA_ARRAY)
+
   print,''
   print,'  without ANA '
   help,hdrs
   help,data_array
   return
-  
+
 
   SAVE_XDIM1 = 1
   NO_SAVE_DATA = 1
@@ -264,10 +447,10 @@ pro test_new
   help,data_array
 
   return
-  
-  
-  
-  
+
+
+
+
   mkhdr, hdr, indgen(3,3)
   ;result = ana2fitshdr_wcshdr(HDR, HEADERS_INPUT_DATA, XDIM1_TYPE='WAVE')
 
@@ -287,9 +470,9 @@ pro test_new
   help,a4
   print,a4
   print,count
-  
+
   print,result
-  
+
   wcs = fitshead2wcs(HEADERS_INPUT_DATA)
   help,wcs
   print,wcs.proj_names
@@ -297,7 +480,7 @@ pro test_new
   help,wcs.time
   help,wcs.position
   help,wcs.spectrum
-  
+
   print,''
   print,'OLD'
   print,wcs.pc
@@ -317,14 +500,14 @@ pro test_new
   print,''
   print,'NEW NEW'
   print,new_new_pc
-  
+
   wcs.pc = new_new_pc
-  
+
   new_hdr = wcs2fitshead(wcs)
   help,new_hdr
   print,new_hdr
-  
-  
+
+
   a = indgen(5)
   print, a
   print,''
