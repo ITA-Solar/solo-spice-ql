@@ -167,7 +167,7 @@
 ;
 ; EVENT handling
 ;
-PRO xtvscale_event,ev
+PRO spice_xtvscale_event,ev
   
   WIDGET_CONTROL,ev.top,get_uvalue=stash
   handle_value,stash,info,/no_copy
@@ -374,7 +374,7 @@ PRO xtvscale_event,ev
   handle_value,stash,info,/no_copy,/set
   
   IF N_ELEMENTS(eventarr) gt 0 THEN BEGIN
-     event = {XTVSCALE_EVENT,ID:0L,TOP:0L,HANDLER:0L,XTVSCALE_ID:stash}
+     event = {spice_xtvscale_EVENT,ID:0L,TOP:0L,HANDLER:0L,XTVSCALE_ID:stash}
      FOR call = 0L,N_ELEMENTS(eventarr)-1 DO BEGIN
         event.id = eventarr[call]
         WIDGET_CONTROL,event.id,send_event = event,bad_id = bad
@@ -388,7 +388,7 @@ END
 ; Encapsulating the execute statements so they don't do any damage
 ; to local variables
 ;
-PRO xtvscale_scale_capsule,xsc_sc_program,data
+PRO spice_xtvscale_scale_capsule,xsc_sc_program,data
   
   a=0 & b=0 & c=0 & d=0 & e=0 & f=0 & g=0 & h=0 & i=0 & j=0
   
@@ -401,7 +401,7 @@ END
 
 
 
-FUNCTION xtvscale_novice,info,idata
+FUNCTION spice_xtvscale_novice,info,idata
   data = idata
   
   sz = SIZE(data)
@@ -514,12 +514,12 @@ END
 ;
 ; Perform a scaling
 ;
-FUNCTION xtvscale_scale,info,idata
+FUNCTION spice_xtvscale_scale,info,idata
   
   ;;
   ;; Check for NOVICE mode
   ;;
-  IF NOT info.ext.expert THEN RETURN,xtvscale_novice(info,idata)
+  IF NOT info.ext.expert THEN RETURN,spice_xtvscale_novice(info,idata)
   
   handle_value,info.ext.Hprogram,program ;; /no-copy not advisable
   
@@ -527,7 +527,7 @@ FUNCTION xtvscale_scale,info,idata
   ;;
   IF info.ext.auto_missing EQ 0 THEN BEGIN
      data = idata
-     xtvscale_scale_capsule,program,data
+     spice_xtvscale_scale_capsule,program,data
      RETURN,data
   END
   
@@ -548,7 +548,7 @@ FUNCTION xtvscale_scale,info,idata
      ;; All idata ok
      data = idata
      ;; PRINT,"All data good"
-     xtvscale_scale_capsule,program,data
+     spice_xtvscale_scale_capsule,program,data
      RETURN,data
   END
   
@@ -564,7 +564,7 @@ FUNCTION xtvscale_scale,info,idata
   
   image = idata
   data = idata[good]
-  xtvscale_scale_capsule,program,data
+  spice_xtvscale_scale_capsule,program,data
   image[good] = data
   image[bad] = info.ext.color_missing
   RETURN,image
@@ -575,7 +575,7 @@ END
 ; Explanatory text
 ;
 
-FUNCTION xtvscale_text
+FUNCTION spice_xtvscale_text
   
   text = ['A widget application is using XTVSCALE() to scale images ',$
           'before TV''ing them.', $
@@ -609,7 +609,7 @@ END
 ;
 ; EXPERT BASE:
 ;
-PRO xtvscale_xpertbase,info,onbase
+PRO spice_xtvscale_xpertbase,info,onbase
   
   xbase = WIDGET_BASE(onbase,map = info.ext.expert, $
                       /column,xpad=0,ypad=0,space=0)
@@ -617,7 +617,7 @@ PRO xtvscale_xpertbase,info,onbase
   ;;
   ;; HELP text
   ;;
-  helptext = xtvscale_text()
+  helptext = spice_xtvscale_text()
   dummy = WIDGET_TEXT(xbase,xsize = MAX(STRLEN(helptext)),  $
                       ysize = 10,/scroll)
   WIDGET_CONTROL,dummy,set_value=helptext
@@ -635,7 +635,7 @@ END
 ;
 ; NOVICE BASE:
 ;
-PRO xtvscale_novicebase,info,onbase
+PRO spice_xtvscale_novicebase,info,onbase
   
   tight = {xpad:0,ypad:0,space:0}
   
@@ -808,7 +808,7 @@ END
 ;
 ; Main program
 ;
-FUNCTION xtvscale,SCALE_ID,DATA, title=title,$
+FUNCTION spice_xtvscale,SCALE_ID,DATA, title=title,$
                   expert=expert,$
                   missing=missing,comp_missing=comp_missing, $
                   color_missing=color_missing, $
@@ -930,7 +930,7 @@ FUNCTION xtvscale,SCALE_ID,DATA, title=title,$
         ;;
         ;; Two parameters -- do a scaling and  return
         ;;
-        image = xtvscale_scale(info,data)
+        image = spice_xtvscale_scale(info,data)
         missing = info.ext.missing
         color_missing = info.ext.color_missing
         handle_value,SCALE_ID,info,/set,/no_copy
@@ -1092,7 +1092,7 @@ NEW_WIDGET:
   IF xalive(info.int.group) THEN group_leader = info.int.group $
   ELSE group_leader = 0L
   
-  base = WIDGET_BASE(/column,title='XTVSCALE',uvalue=SCALE_ID, $
+  base = WIDGET_BASE(/column,title='spice_xtvscale',uvalue=SCALE_ID, $
                      xoffset=xoffset,yoffset=yoffset, $
                      group_leader=group_leader)
   info.int.wid = base
@@ -1174,8 +1174,8 @@ NEW_WIDGET:
   modebase = WIDGET_BASE(base)
   
   ;; 
-  xtvscale_xpertbase,info,modebase
-  xtvscale_novicebase,info,modebase
+  spice_xtvscale_xpertbase,info,modebase
+  spice_xtvscale_novicebase,info,modebase
   
   cw_loader = cw_loadct(base)
   
@@ -1208,7 +1208,7 @@ NEW_WIDGET:
   WIDGET_CONTROL,base,show=show
   WIDGET_CONTROL,base,map=map
   
-  XMANAGER,'XTVSCALE',base,/just_reg
+  XMANAGER,'spice_xtvscale',base,/just_reg
   
 DONT_REGISTER:
   
