@@ -63,7 +63,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-19 10:21 CET $
+; $Id: 2024-01-19 15:10 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
