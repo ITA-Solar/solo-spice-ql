@@ -1066,7 +1066,7 @@ FUNCTION spice_xtvscale,SCALE_ID,DATA, title=title,$
      handle_value,info.int.signals,eventarr,/no_copy
      IF N_ELEMENTS(eventarr) EQ 0 THEN eventarr = [signal] $
      ELSE                              eventarr = [eventarr,signal]
-     handle_value,info.int.events,eventarr,/set,/no_copy
+     handle_value,info.int.signals,eventarr,/set,/no_copy
   END
   
   ;; We have created the scaling object. If the widget is supposed to be
