@@ -109,9 +109,12 @@
 ;                       Implemented method cw_cubeview_force_redraw
 ;               Version 8, Martin Wiesmann, 7 June 2023
 ;                       Extended cw_cubeview_force_redraw to redraw also plot
+;               Version 9, Martin Wiesmann, 19. Januar 2024
+;                       Adds keyword signal to call to (spice_)xtvscale
+;                       Adds 'else' to case in event procedure
 ;
-; Version     : 8, 7 June 2023
-; $Id: 2024-01-19 14:48 CET $
+; Version     : 9, 19 January 2024
+; $Id: 2024-01-19 14:56 CET $
 ;-
 
 ;;
