@@ -111,7 +111,7 @@
 ;                       Extended cw_cubeview_force_redraw to redraw also plot
 ;
 ; Version     : 8, 7 June 2023
-; $Id: 2024-01-18 14:23 CET $
+; $Id: 2024-01-19 10:00 CET $
 ;-
 
 ;;
@@ -392,6 +392,8 @@ END
 ;; 
 FUNCTION spice_cw_cubeview_event,ev
   
+  help,ev
+  
   stash = widget_info(ev.handler,/child)
   widget_control,stash,get_uvalue=info,/no_copy
   
@@ -431,7 +433,7 @@ FUNCTION spice_cw_cubeview_event,ev
      ENDCASE
      
   'XTVSCALER':BEGIN
-     dummy = xtvscale(info.int.xtvscaler,/map,iconify=0,/show)
+     dummy = spice_xtvscale(info.int.xtvscaler,/map,iconify=0,/show)
      GOTO,skip_event
      ENDCASE
      
@@ -727,7 +729,7 @@ FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   ;;
   im_base = widget_base(ibase,/column,/frame,_extra=tight,map=nmulti GT 1)
   
-  info.int.xtvscaler = xtvscale(group=mybase,map=0,missing=missing,$
+  info.int.xtvscaler = spice_xtvscale(group=mybase,map=0,missing=missing,$
                                 sigrange=0)
   dummy = cw_flipswitch(im_base,value='Adjust color scaling'+["",""],$
                         uvalue='XTVSCALER'+["",""])
