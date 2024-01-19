@@ -111,7 +111,7 @@
 ;                       Extended cw_cubeview_force_redraw to redraw also plot
 ;
 ; Version     : 8, 7 June 2023
-; $Id: 2024-01-19 14:07 CET $
+; $Id: 2024-01-19 14:48 CET $
 ;-
 
 ;;
@@ -533,7 +533,9 @@ FUNCTION spice_cw_cubeview_event,ev
      IF NOT info.ext.all_events THEN GOTO,skip_event
      ENDCASE
      
-     'DATA': print,'Do something with the image, this is a signal from xtvscale.'
+     else: BEGIN
+        ; Event from XTVScale, we don't have to do anything.
+      ENDCASE
   END
   
   event = {id:ev.handler,$ ;; cw_cubeview_EVENT - Must have fixed number of
