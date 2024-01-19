@@ -216,7 +216,7 @@
 ;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
 ;
 ; Version     :
-; $Id: 2024-01-18 14:25 CET $
+; $Id: 2024-01-19 15:05 CET $
 ;-
 
 
@@ -2112,7 +2112,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   widget_control,base,set_uvalue=info
   
-  xmanager,"spice_xcfit_block",base,/modal
+  xmanager,"spice_xcfit_block",base;,/modal
   
   ;; Make sure changes (like RESTORE operations) are reflected.
   
