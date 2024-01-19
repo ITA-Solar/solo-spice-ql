@@ -214,9 +214,11 @@
 ;                       New keyword DISPLAY_THRESHOLD. SPICE_HISTO_OPT is applied to all 
 ;                       data being displayed (data, result, residual) without altering the 
 ;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
+;               Version 13, Martin Wiesmann, 19. Januar 2024
+;                       Does no longer set the keyword 'modal' when calling xmanager
 ;
-; Version     :
-; $Id: 2024-01-19 15:05 CET $
+; Version     : 13
+; $Id: 2024-01-19 15:06 CET $
 ;-
 
 
