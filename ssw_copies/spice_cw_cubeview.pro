@@ -114,7 +114,7 @@
 ;                       Adds 'else' to case in event procedure
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2024-01-19 14:56 CET $
+; $Id: 2024-01-19 15:00 CET $
 ;-
 
 ;;
@@ -394,8 +394,6 @@ END
 ;; Event handling
 ;; 
 FUNCTION spice_cw_cubeview_event,ev
-  
-  help,ev
   
   stash = widget_info(ev.handler,/child)
   widget_control,stash,get_uvalue=info,/no_copy
