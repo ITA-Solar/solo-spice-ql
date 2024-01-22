@@ -39,13 +39,18 @@
 ; HISTORY:
 ;      Ver. 1,   23-Jun-2022, Martin Wiesmann
 ;      Ver. 1.1, 19-Jan-2024, Terje Fredvik - extract FITS keyword winno from
-;                             header (instead of l2winno which no longer exists)
+;                             header (instead of l2winno which no longer
+;                             exists)
+;      Ver. 1.2, 22-Jan-2024, Terje Fredvik - New keyword show_plot handed over
+;      to prits_tools__write_image_real_size. Set colortable keyword to 100
+;      for velocity images to signal that special eis_colors,/velocity color
+;      table should be restored. Added "ql" in the filename. 
 ;
 ;-
-; $Id: 2024-01-19 10:12 CET $
+; $Id: 2024-01-22 09:46 CET $
 
 
-PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
+PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
@@ -92,7 +97,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
       for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
         filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
-
+        filename_base2 = filename_base2.replace('spice','spice-ql')
         ; crop image so that lines with invalid data is not shown
         IF naxis4 GT 1 THEN BEGIN
           image_data = reform(result[ipartotal,*,*, *])
@@ -136,8 +141,13 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
             ;reverse_colortable = 0
 
             ; Option B
-            colortable = 72
-            reverse_colortable = 1
+            ;colortable = 72
+            ;reverse_colortable = 1
+            
+            ; Option C - triggers call to eis_colors
+            colortable = 100
+            reverse_colortable = 0
+            background_color = 0
           end
           'width' : begin
             colortable = 4
@@ -163,13 +173,13 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT
           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
-          reverse_colortable=reverse_colortable
+          reverse_colortable=reverse_colortable, show_plot=show_plot
 
         filename = filename_base2 + '_64.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
           height=64, border=0, reverse_colortable=reverse_colortable, $
-          cutoff_threshold=cutoff_threshold, color_center_value=color_center_value
+          cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
 
         ipartotal++
 
