@@ -32,7 +32,11 @@
 ;
 ; OPTIONAL INPUT:
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
-;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html
+;                 https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword 
+;                 to 100 (a color table that doesn't exist) signals that the 
+;                 input image_data is a velocity image that needs special
+;                 treatment, among other things using the eis_colors,/velocity
+;                 red-blue color table.
 ;     FORMAT:   A string, indicating the file format in which the image should be saved to.
 ;               Possible values: BMP, GIF, JPEG, PNG, PPM, SRF, TIFF, JPEG2000 (=JP2). Default is JPEG.
 ;     XRANGE1:  A 2-element numeric vector, indicating the data range displayed on the lower axis.
@@ -86,17 +90,17 @@
 ; See prits_tools::write_image_real_size_test
 ;
 ; CALLS:
-; PIH
+; PIH, EIS_COLORS
 ;
 ; RESTRICTIONS:
 ; Setting TITLE plus upper axis XTITLE2 and/or XRANGE2 results in a messy output!
 ;
 ; MODIFICATION HISTORY:
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
+;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity images
 ;
 ;-
-; $Id: 2022-11-11 13:32 CET $
-
+; $Id: 2024-01-22 09:35 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
@@ -141,18 +145,30 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   ; Get the current colortable to restore it at the end
   TVLCT, Red_old, Green_old, Blue_old, /GET
 
-  ; Install the new colortable and set the background and text color
-  loadct, colortable
+                                ; Install the new colortable and set the background and text color
+  cutoff_threshold_old = cutoff_threshold
+  velocity = colortable EQ 100
+  IF velocity THEN BEGIN 
+     eis_colors, /velocity
+     cutoff_threshold = 0
+     maxvel = 50
+  ENDIF ELSE loadct, colortable
+  
   tvlct,r,g,b,/get
+  
   IF keyword_set(reverse_colortable) THEN BEGIN
     r = reverse(r)
     g = reverse(g)
     b = reverse(b)
-  ENDIF
+ ENDIF
+  
   ;background color
+ 
   r[0]=background_color[0]
   g[0]=background_color[1]
   b[0]=background_color[2]
+
+     
   ;text color
   r[255]=text_color[0]
   g[255]=text_color[1]
@@ -236,13 +252,35 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     set_plot, 'z'
     device, set_res=WINsize
   endelse
-
+  
+  IF 
   IF cutoff_threshold GT 0 THEN BEGIN
-    image_data_use = HISTO_OPT(image_data, cutoff_threshold)
+     image_data_use = HISTO_OPT(image_data, cutoff_threshold)
   ENDIF ELSE BEGIN
-    image_data_use = image_data
-  ENDELSE
-  IF N_ELEMENTS(color_center_value) EQ 1 THEN BEGIN
+    IF velocity THEN BEGIN 
+       sz = size(image_data)
+       vim = fltarr(sz[1],sz[2])
+
+       ;; Remove horisontal velocity trend
+       v_median_x = median(image_data,dimension=2)
+       FOR y=0,sz[2]-1 DO vim[*,y] = v_median_x
+       image_data -= vim
+       
+       ;; Remove vertical velocity trend
+       v_median_y = median(image_data,dimension=1)
+       FOR x=0,sz[1]-1 DO vim[x,*] = v_median_y
+       image_data -= vim
+       
+       nanix = where(image_data NE image_data)
+       
+       ; histo_opt doesn't work well for velocities
+       image_data_use = image_data > (-maxvel) < maxvel
+       
+       image_data_use[nanix] = 0
+    ENDIF ELSE image_data_use = image_data
+ ENDELSE
+ 
+ IF N_ELEMENTS(color_center_value) EQ 1 THEN BEGIN
     max_image = max(abs(image_data_use-color_center_value))
     min_image = -1 * max_image + color_center_value
     max_image += color_center_value
@@ -314,6 +352,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
 
   ; Set previous colortable again
   TVLCT, Red_old, Green_old, Blue_old
+  cutoff_threshold = cutoff_threshold_old
   set_plot, 'x'
 END
 
