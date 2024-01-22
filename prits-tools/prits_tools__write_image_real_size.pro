@@ -100,7 +100,7 @@
 ;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity images
 ;
 ;-
-; $Id: 2024-01-22 09:35 CET $
+; $Id: 2024-01-22 10:56 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
@@ -253,7 +253,6 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     device, set_res=WINsize
   endelse
   
-  IF 
   IF cutoff_threshold GT 0 THEN BEGIN
      image_data_use = HISTO_OPT(image_data, cutoff_threshold)
   ENDIF ELSE BEGIN
