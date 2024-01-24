@@ -60,7 +60,8 @@
 ;     BORDER:   An integer giving the number of pixels that should be added around the image.
 ;               Default is 5. If this is set to zero and none of the TITLE and RANGE inputs are provided,
 ;               then the image is plotted with suppressed axis.
-;     SCALE_FACTOR: A number. The data size is expanded by this factor. Default is 1.0.
+;     SCALE_FACTOR: A number. The data size is expanded by this factor. Default is 1.0. This is ignored
+;               if SCALE_TO_RANGE is set.
 ;     HEIGHT:   An integer giving the desired height of the data image. WIDTH is calculated if not provided.
 ;               This is ignored if SCALE_FACTOR is provided.
 ;     WIDTH:    An integer giving the desired width of the data image. HEIGHT is calculated if not provided.
@@ -77,6 +78,9 @@
 ;               WRITE_BMP, WRITE_GIF, WRITE_JPEG, WRITE_PNG, WRITE_PPM, WRITE_SRF, WRITE_TIFF and WRITE_JPEG2000.
 ;
 ; KEYWORD PARAMETERS:
+;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
+;               XRANGE1 and YRANGE1. This is ignored if these two inputs are not provided, or if both HEIGHT and WIDTH
+;               are provided.
 ;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
 ;     REVERSE_COLORTABLE: If set, then the colors of the given colortable are reversed. Useful for e.g.
 ;               ColorBrewer Schemes.
@@ -100,14 +104,14 @@
 ;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity images
 ;
 ;-
-; $Id: 2024-01-22 10:56 CET $
+; $Id: 2024-01-24 14:55 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
   title=title, $
   background_color=background_color, text_color=text_color, $
-  border=border, scale_factor=scale_factor, height=height, width=width, $
+  border=border, scale_factor=scale_factor, height=height, width=width, SCALE_TO_RANGE=SCALE_TO_RANGE, $
   cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
   jpeg_quality=jpeg_quality, $
   show_plot=show_plot, reverse_colortable=reverse_colortable, $
@@ -224,7 +228,21 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   size_image = size(image_data)
   xs = size_image[1]
   ys = size_image[2]
-  IF keyword_set(scale_factor) THEN BEGIN
+  IF keyword_set(SCALE_TO_RANGE) && keyword_set(xrange1) && keyword_set(yrange1) && $
+    ~(keyword_set(HEIGHT) && keyword_set(WIDTH)) THEN BEGIN
+    
+    xyratio = (yrange1[1] - yrange1[0]) / (xrange1[1] - xrange1[0])
+    IF keyword_set(height) THEN BEGIN
+      ys = height
+      xs = height / xyratio
+    ENDIF ELSE IF keyword_set(width) THEN BEGIN
+      xs = width
+      ys = width * xyratio
+    ENDIF ELSE BEGIN
+      xs = ys / xyratio
+    ENDELSE
+
+  ENDIF ELSE IF keyword_set(scale_factor) THEN BEGIN
     xs = round(double(xs)*scale_factor)
     ys = round(double(ys)*scale_factor)
   ENDIF ELSE BEGIN
