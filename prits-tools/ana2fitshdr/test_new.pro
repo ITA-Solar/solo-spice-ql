@@ -92,7 +92,16 @@ pro test_new
 
 
 
-  l3file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+  l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+  l3_file = '/Users/mawiesma/data/spice/user/level3/2023/04/05/solo_L3_spice-n-ras_20230405T165232_V01_184549674-000.fits'
+  out_dir = '/Users/mawiesma/data/spice/user/images'
+  
+  spice_create_l3_images, l3_file, out_dir, /NO_TREE_STRUCT
+  
+  
+  return
+  
+  
   ana = fits2ana(l3file, /loud, headers_results=headers_results)
   ana = ana[0]
 
