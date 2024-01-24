@@ -50,7 +50,7 @@
 ;      "original' from full size jpgs.
 ;
 ;-
-; $Id: 2024-01-24 12:51 CET $
+; $Id: 2024-01-24 14:56 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version
@@ -180,6 +180,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
+          /SCALE_TO_RANGE, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
           reverse_colortable=reverse_colortable, show_plot=show_plot
 
@@ -187,6 +188,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
           height=64, border=0, reverse_colortable=reverse_colortable, $
+          xrange1=xrange1, yrange1=yrange1, /SCALE_TO_RANGE, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
 
         ipartotal++
