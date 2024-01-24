@@ -50,7 +50,7 @@
 ;      "original' from full size jpgs.
 ;
 ;-
-; $Id: 2024-01-24 10:15 CET $
+; $Id: 2024-01-24 12:51 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version
@@ -115,16 +115,16 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
         size_image = size(image_data)
         startrow = 0
         for i=0,size_image[2]/2-1 do begin
-          ind = where(image_data[*,i] lt -999.9 AND image_data[*,i] gt -1000.1, count, ncomplement=ncomplement)
-          if ncomplement gt 0 then begin
+          ind = where(image_data[*,i] EQ image_data[*,i], count)
+          if count gt 0 then begin
             startrow = i
             break
           endif
         endfor
         endrow = size_image[2]-1
         for i=size_image[2]-1,size_image[2]/2,-1 do begin
-          ind = where(image_data[*,i] lt -999.9 AND image_data[*,i] gt -1000.1, count, ncomplement=ncomplement)
-          if ncomplement gt 0 then begin
+          ind = where(image_data[*,i] EQ image_data[*,i], count)
+          if count gt 0 then begin
             endrow = i
             break
           endif
