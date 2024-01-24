@@ -45,17 +45,23 @@
 ;      to prits_tools__write_image_real_size. Set colortable keyword to 100
 ;      for velocity images to signal that special eis_colors,/velocity color
 ;      table should be restored. Added "ql" in the filename. 
+;      Ver. 2, 24-Jan-2024, TF - New keyword VERSION, to set the version
+;      number of L3ql files. If not set, the version will be 'V01'. Removed
+;      "original' from full size jpgs.
 ;
 ;-
-; $Id: 2024-01-22 09:46 CET $
+; $Id: 2024-01-24 10:15 CET $
 
 
-PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
+PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
+  
+  default, version, '01'
 
   l3_filename = file_basename(l3_file)
+ 
   l3_filename = strsplit(l3_filename, '.', /extract)
   l3_filename = l3_filename[0]
   base_dir = out_dir
@@ -64,8 +70,11 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
     date_dirs = strsplit(date_dirs, path_sep(), /extract)
     date_dirs = strjoin(date_dirs[-3:-1], path_sep())
     base_dir += date_dirs
-  endif
-  filename_base = base_dir + path_sep() + l3_filename + '_'
+  ENDIF
+  l3ql_filename = l3_filename.replace('spice','spice-ql')
+  IF version THEN l3ql_filename = l3ql_filename.replace(l3ql_filename.extract('V[0-9]{2}'), 'V'+version)
+  
+  filename_base = base_dir + path_sep() + l3ql_filename + '_'
   if ~file_test(base_dir, /directory) then file_mkdir, base_dir
 
   ana = fits2ana(l3_file, headers_results=headers_results)
@@ -97,7 +106,6 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
       for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
         filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
-        filename_base2 = filename_base2.replace('spice','spice-ql')
         ; crop image so that lines with invalid data is not shown
         IF naxis4 GT 1 THEN BEGIN
           image_data = reform(result[ipartotal,*,*, *])
@@ -167,7 +175,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
           end
         endcase
 
-        filename = filename_base2 + '_original.jpg'
+        filename = filename_base2 + '.jpg'
         format = 'JPEG'
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
