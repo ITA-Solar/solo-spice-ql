@@ -37,8 +37,9 @@
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
+;      Ver. 2, 25-Jan-2023, Terje Fredvik - update wcs.ix and wcs.iy if needed
 ;-
-; $Id: 2023-11-30 15:21 CET $
+; $Id: 2024-01-25 15:40 CET $
 
 
 FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
@@ -70,6 +71,9 @@ FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
     new_wcs.PC = ana_wcs_transform_array(wcs.PC, move_dim, dest_dim, naxis)
   IF tag_exist(wcs, 'CD') THEN $
     new_wcs.CD = ana_wcs_transform_array(wcs.CD, move_dim, dest_dim, naxis)
+  
+  IF move_dim GE wcs.ix AND dest_dim LE wcs.ix THEN wcs.ix++
+  IF move_dim GE wcs.iy AND dest_dim LE wcs.iy THEN wcs.iy++
 
   return, new_wcs
 END
