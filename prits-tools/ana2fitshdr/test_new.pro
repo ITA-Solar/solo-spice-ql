@@ -106,6 +106,7 @@ pro test_new
     l3_file = '/Users/mawiesma/data/spice/user/level3/2023/04/05/solo_L3_spice-n-ras_20230405T165232_V01_184549674-000.fits'
   endif else begin ; office
     l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+    l3_file = '/Users/mawiesma/data/spice/level3/2024/01/01/solo_L3_spice-n-ras_20240101T181922_V01_234881026-000.fits'
   endelse
   
   out_dir = '/Users/mawiesma/data/spice/images'

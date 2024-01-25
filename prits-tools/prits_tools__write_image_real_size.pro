@@ -80,7 +80,9 @@
 ;
 ; KEYWORD PARAMETERS:
 ;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
-;               XRANGE1 and YRANGE1. This is ignored if these two inputs are not provided, or if both HEIGHT and WIDTH
+;               XRANGE1 and YRANGE1. If neither HEIGHT nor WIDTH is provided, then the width of the 
+;               image will be adjusted. 
+;               This keyword is ignored if XRANGE1 and YRANGE1 are not provided, or if both HEIGHT and WIDTH
 ;               are provided.
 ;     NO_AXIS: If set, then no axis will be plotted, eventhough XRANGEn and/or YRANGEn is provided.
 ;               Useful if you want to provide XRANGE1 and YRANGE1 to be able to set SCALE_TO_RANGE.
@@ -107,7 +109,7 @@
 ;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity images
 ;
 ;-
-; $Id: 2024-01-24 21:58 CET $
+; $Id: 2024-01-25 15:13 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
