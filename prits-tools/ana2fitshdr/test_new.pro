@@ -90,14 +90,27 @@ pro test_new
 
 
 
+  l2file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
+  d=readfits(l2file,h)
+  print,''
+  print,' L 2'
+  print,''
+  print,h
+  print,''
+  print,' L 2 fertig '
+  print,''
 
 
-  l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
-  l3_file = '/Users/mawiesma/data/spice/user/level3/2023/04/05/solo_L3_spice-n-ras_20230405T165232_V01_184549674-000.fits'
-  out_dir = '/Users/mawiesma/data/spice/user/images'
+  if 0 then begin ; laptop
+    l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+    l3_file = '/Users/mawiesma/data/spice/user/level3/2023/04/05/solo_L3_spice-n-ras_20230405T165232_V01_184549674-000.fits'
+  endif else begin ; office
+    l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+  endelse
   
-  spice_create_l3_images, l3_file, out_dir, /NO_TREE_STRUCT
+  out_dir = '/Users/mawiesma/data/spice/images'
   
+  spice_create_l3_images, l3_file, out_dir, /No_tree_struct
   
   return
   
