@@ -50,7 +50,7 @@
 ;      "original' from full size jpgs.
 ;
 ;-
-; $Id: 2024-01-24 21:59 CET $
+; $Id: 2024-01-26 11:28 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version
@@ -184,7 +184,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
           reverse_colortable=reverse_colortable, show_plot=show_plot
 
-        filename = filename_base2 + '_64.png'
+        filename = filename_base2 + '_thumb.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
           height=64, border=0, reverse_colortable=reverse_colortable, $
