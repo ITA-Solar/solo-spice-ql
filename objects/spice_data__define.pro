@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-12-14 14:08 CET $
+; $Id: 2024-01-26 14:52 CET $
 
 
 ;+
@@ -451,10 +451,31 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
                                 position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
         IF iwindow EQ 0 THEN version += version_add
         if size(ana, /type) NE 8 then continue
-        IF collect_ana THEN BEGIN
-           if iwindow eq 0 then all_ana = ana $
-           else all_ana = [all_ana, ana]
-        ENDIF
+
+        history = ['Created '+!stime, '       (']
+        help,calls=calls
+        hind = 1
+        hlen = strlen(history[hind])
+        for i=N_ELEMENTS(calls)-1,0,-1 do begin
+          caller = strtrim(strsplit(calls[i], '<', /extract), 2)
+          caller = caller[0]
+          if caller eq '$MAIN$' then continue
+          new_hlen = strlen(caller) + 3
+          if hlen+new_hlen gt 68 then begin
+            history = [history, '       ']
+            hind += 1
+          endif
+          history[hind] = history[hind] + ' > ' + caller
+          hlen = strlen(history[hind])
+        endfor
+        if hlen lt 68 then history[hind] = history[hind] + ')'
+        user = getenv("USER")
+        new_hlen = strlen(user) + 5
+        if hlen+new_hlen gt 68 then begin
+          history = [history, '       ']
+          hind += 1
+        endif
+        history[hind] = history[hind] + ' for ' + user
         
         if ~keyword_set(no_fitting) then begin
            if ~keyword_set(quiet) then begin
@@ -517,6 +538,11 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
           SAVE_NOT=SAVE_NOT, $
           headers_results=headers_results, headers_data=headers_data
           
+        IF collect_ana THEN BEGIN
+          if iwindow eq 0 then all_ana = ana $
+          else all_ana = [all_ana, ana]
+        ENDIF
+
         delete_analysis, ana
                 
         IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
