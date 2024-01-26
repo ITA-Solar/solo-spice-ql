@@ -1,9 +1,20 @@
 pro test_new
 
-  file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
-  file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
-  ;file = '/Users/mawiesma/data/spice/level2/2023/10/06/solo_L2_spice-n-ras_20231006T142008_V05_218103906-017.fits'
+  laptop = 0
 
+  if laptop then begin
+
+    ; laptop
+    file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
+    file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
+  endif else begin
+
+  ; office
+    file = '/Users/mawiesma/data/spice/level2/2023/10/06/solo_L2_spice-n-ras_20231006T142008_V05_218103906-017.fits'
+
+  endelse
+  
+  
   ;  d0 = readfits(file, h0)
   ;  help,d0
   ;  d1 = readfits(file, h1, ext=1)
@@ -17,7 +28,7 @@ pro test_new
 
 
 
-  if 0 then begin
+  if 1 then begin
 
 
 
@@ -46,7 +57,7 @@ pro test_new
     NO_SAVE_DATA=0
     PRINT_HEADERS=0
 
-    window_index = 1;[1,3]
+    window_index = 0;[1,3]
     ;window_index = !NULL
 
     l3file = ol2->create_l3_file( window_index, $
@@ -101,10 +112,14 @@ pro test_new
   print,''
 
 
-  if 0 then begin ; laptop
+  if laptop then begin 
+    
+    ; laptop
     l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
     l3_file = '/Users/mawiesma/data/spice/user/level3/2023/04/05/solo_L3_spice-n-ras_20230405T165232_V01_184549674-000.fits'
-  endif else begin ; office
+  endif else begin 
+    
+    ; office
     l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
     l3_file = '/Users/mawiesma/data/spice/level3/2024/01/01/solo_L3_spice-n-ras_20240101T181922_V01_234881026-000.fits'
   endelse
