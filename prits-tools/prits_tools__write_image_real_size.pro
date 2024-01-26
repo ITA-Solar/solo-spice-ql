@@ -109,7 +109,7 @@
 ;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity images
 ;
 ;-
-; $Id: 2024-01-26 09:59 CET $
+; $Id: 2024-01-26 10:26 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
@@ -149,8 +149,10 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval=0, maxval=1, default=0.02
   prits_tools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
   prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval=0, maxval=100, default=75
-
- ; DEVICE, DECOMPOSED = 0  
+  
+  IF ~ keyword_set(show_plot) THEN set_plot,'z'
+  
+  DEVICE, DECOMPOSED = 0  
 
   ; Get the current colortable to restore it at the end
   TVLCT, Red_old, Green_old, Blue_old, /GET
