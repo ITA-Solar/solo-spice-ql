@@ -16,24 +16,16 @@ pro test_new
 
   !EXCEPT=2
 
-  ;  d0 = readfits(file, h0)
-  ;  help,d0
-  ;  d1 = readfits(file, h1, ext=1)
-  ;  help,d1
-  ;  d2 = readfits(file, h2, ext=2)
-  ;  help,d2
-
-
-  time_start = '2023-10-06 00:00'
-  time_end = '2023-10-06 22:00'
-
 
 
   if 1 then begin
 
 
 
-    if 1 then begin
+    if 0 then begin
+
+      time_start = '2023-10-06 00:00'
+      time_end = '2023-10-06 22:00'
 
       spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
         top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
