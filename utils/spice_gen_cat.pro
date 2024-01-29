@@ -81,7 +81,7 @@
 ;
 ; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-01-29 15:22 CET $
+; $Id: 2024-01-29 15:31 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -211,7 +211,7 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
      END
      value_list.add, value[0]
   END
-  value_array = value_list.toString()
+  value_array = value_list.toArray(/no_copy)
   RETURN,strjoin(value_array,string(9b))
 END
 
