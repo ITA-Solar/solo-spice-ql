@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2024-01-29 11:34 CET $
+; $Id: 2024-01-29 12:37 CET $
 
 
 ;+
@@ -461,7 +461,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
           caller = caller[0]
           if caller eq '$MAIN$' then continue
           new_hlen = strlen(caller) + 3
-          if hlen+new_hlen gt 68 then begin
+          if hlen+new_hlen gt 63 then begin
             history = [history, '']
             hind += 1
           endif
