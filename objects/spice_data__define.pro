@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2024-01-26 14:52 CET $
+; $Id: 2024-01-29 11:34 CET $
 
 
 ;+
@@ -452,9 +452,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         IF iwindow EQ 0 THEN version += version_add
         if size(ana, /type) NE 8 then continue
 
-        history = ['Created '+!stime, '       (']
+        history = ['']
         help,calls=calls
-        hind = 1
+        hind = 0
         hlen = strlen(history[hind])
         for i=N_ELEMENTS(calls)-1,0,-1 do begin
           caller = strtrim(strsplit(calls[i], '<', /extract), 2)
@@ -462,20 +462,13 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
           if caller eq '$MAIN$' then continue
           new_hlen = strlen(caller) + 3
           if hlen+new_hlen gt 68 then begin
-            history = [history, '       ']
+            history = [history, '']
             hind += 1
           endif
           history[hind] = history[hind] + ' > ' + caller
           hlen = strlen(history[hind])
         endfor
-        if hlen lt 68 then history[hind] = history[hind] + ')'
-        user = getenv("USER")
-        new_hlen = strlen(user) + 5
-        if hlen+new_hlen gt 68 then begin
-          history = [history, '       ']
-          hind += 1
-        endif
-        history[hind] = history[hind] + ' for ' + user
+        handle_value, ana.history_h,history, /set, /no_copy
         
         if ~keyword_set(no_fitting) then begin
            if ~keyword_set(quiet) then begin
