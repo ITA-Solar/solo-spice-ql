@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2024-01-29 11:17 CET $
+; $Id: 2023-06-23 13:35 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -169,7 +169,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
 
   bg = mk_comp_poly([0.5*median(meanprofile)], max_arr=[30000],min_arr=[0],trans_a=[1],$
     trans_b=[0],const=[0b])
-  bg.name = 'background'
+  bg.name = 'Background'
 
   IF npeaks EQ 0 THEN adef = {bg:bg}
   IF npeaks EQ 1 THEN adef = {igauss2:gaussians[0], bg:bg}
