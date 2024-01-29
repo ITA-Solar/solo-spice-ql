@@ -74,7 +74,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-01-29 11:45 CET $
+; $Id: 2024-01-29 11:59 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -206,8 +206,6 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
       param = fit_cur.param[ipar]
       parnr = string(byte(ipar+97))
       fits_util->add, hdr, 'PNAME'+fitnr+parnr, param.name, 'Name of parameter '+parnr+' for component '+fitnr
-      print,param.name
-      stop
       IF param.name EQ 'intensity' || strtrim(param.name,2) EQ 'c0' THEN BEGIN
         punit = bunit
       ENDIF ELSE BEGIN
