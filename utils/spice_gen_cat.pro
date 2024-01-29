@@ -81,7 +81,7 @@
 ;
 ; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-01-17 13:49 CET $
+; $Id: 2024-01-29 15:22 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -201,7 +201,7 @@ END
 
 
 FUNCTION spice_gen_cat::line_from_header, header, relative_path
-  value_array = []
+  value_list = list()
   foreach keyword,self.d.keyword_array DO BEGIN
      keyword_type = self.d.keyword_info[keyword].type
      missing = keyword_type EQ 't' ? 'MISSING' : 999999
@@ -209,8 +209,9 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
      IF keyword EQ "FILE_PATH" OR keyword EQ "ICON_PATH" THEN BEGIN
         value = relative_path
      END
-     value_array =  [value_array, value[0]]
+     value_list.add, value[0]
   END
+  value_array = value_list.toString()
   RETURN,strjoin(value_array,string(9b))
 END
 
@@ -227,6 +228,7 @@ FUNCTION spice_gen_cat::add_file, fits_filename
   relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
   relative_path = file_dirname(relative_filename)
   self.d.file_hash[key] = self.line_from_header(header, relative_path)
+
   return, key
 END
 
@@ -252,15 +254,18 @@ PRO spice_gen_cat::populate_hash
   print,' Modifying '+trim(n_modified)+' existing files'
   
   modno = n_files/10 - (n_files/10 MOD 10) > 10
+
   FOREACH fits_filename, filelist, index DO BEGIN
      key = self.add_file(fits_filename)
      IF (index + 1) MOD modno EQ 0 THEN BEGIN 
         PRINT, "Files done : " + (index+1).toString("(i6)") + "    (key: "+key+")"
      END
   ENDFOREACH
-  
+
   print
 END
+
+
 
   
 PRO spice_gen_cat::set_filelist
