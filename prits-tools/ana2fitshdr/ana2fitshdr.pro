@@ -73,6 +73,7 @@
 ;              See also Appendix VII aobut External Extensions in https://arxiv.org/abs/2011.12139
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
+;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
 ;              where, xxx123 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
@@ -130,14 +131,14 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2023-12-11 14:30 CET $
+; $Id: 2024-01-30 11:22 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
   DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
   EXT_DATA_PATH=EXT_DATA_PATH, $
-  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
   PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
   XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
   RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
@@ -173,6 +174,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   ENDIF
   prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, CREATOR, 0, 'CREATOR', 'STRING', 0, /optional
   prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional
   prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
 
@@ -271,7 +273,7 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
     filename_out=file_basename(FILENAME_OUT), n_windows=n_windows, winno=winno, $
     EXTENSION_NAMES=EXTENSION_NAMES, IS_EXTENSION=IS_EXTENSION, $
     HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
-    LEVEL=LEVEL, VERSION=VERSION, $
+    LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
     PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
     HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
     DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)

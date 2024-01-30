@@ -84,6 +84,7 @@
 ;              with FITS2ANA. Default is the dataset indices.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
+;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
 ;              where, xxx123 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
@@ -177,14 +178,14 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2023-12-13 14:24 CET $
+; $Id: 2024-01-30 11:22 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
   DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
   EXT_DATA_PATH=EXT_DATA_PATH, $
-  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
+  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
   PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
   XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
   RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
@@ -337,7 +338,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1, $
         EXT_DATA_PATH=EXT_DATA_PATH, $
-        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, $
+        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
         RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $
@@ -351,7 +352,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1, $
         EXT_DATA_PATH=EXT_DATA_PATH, $
-        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, $
+        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
         RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $

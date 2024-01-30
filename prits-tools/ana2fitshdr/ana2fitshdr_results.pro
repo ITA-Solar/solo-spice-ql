@@ -18,7 +18,7 @@
 ;           filename_out=filename_out, n_windows=n_windows, winno=winno, EXTENSION_NAMES=EXTENSION_NAMES, $
 ;           /IS_EXTENSION, $
 ;           HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
-;           LEVEL=LEVEL, VERSION=VERSION, $
+;           LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
 ;           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
 ;           HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
 ;           DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
@@ -44,6 +44,7 @@
 ;             should be taken. If not provided the header won't include any WCS parameters.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
+;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
 ;              where, xxx123 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
@@ -74,14 +75,14 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-01-29 11:59 CET $
+; $Id: 2024-01-30 11:22 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   filename_out=filename_out, n_windows=n_windows, winno=winno, EXTENSION_NAMES=EXTENSION_NAMES, $
   IS_EXTENSION=IS_EXTENSION, $
   HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
-  LEVEL=LEVEL, VERSION=VERSION, $
+  LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
   PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
   HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
   DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL
@@ -119,6 +120,10 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util->add, hdr, '', ' '
 
+  fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
+  fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'
+  fits_util->add, hdr, '', ' '
+
   fits_util->add, hdr, 'EXTNAME', extension_names[0], 'Extension name'
   fits_util->add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
 
@@ -148,9 +153,6 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
     fits_util->add, hdr, 'XDIMTY1', 'Original type of absorbed dimension', 'Type of 1st dim absorbed by analysis'
   ENDELSE
 
-  fits_util->add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
-  fits_util->add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'   ; TODO: comment?
-
   fits_util->add, hdr, 'NWIN', n_windows, 'Number of windows'
   fits_util->add, hdr, 'WINNO', winno, 'Win no (starting at 0) within this study in this FITS file'
 
@@ -158,6 +160,19 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
     fits_util->add, hdr, 'LEVEL', LEVEL, 'Data processing level'
   IF keyword_set(VERSION) THEN $
     fits_util->add, hdr, 'VERSION', VERSION, 'File version number'
+
+  IF header_exists THEN BEGIN
+    fits_util->add, hdr, 'DATE-BEG', fxpar(HEADER_INPUT_DATA, 'DATE-BEG', missing=''), 'Beginning of data acquisition'
+    instrume = fxpar(HEADER_INPUT_DATA, 'INSTRUME', missing='')
+    IF instrume NE '' THEN fits_util->add, hdr, 'INSTRUME', instrume, 'Instrument name'
+    OBSRVTRY = fxpar(HEADER_INPUT_DATA, 'OBSRVTRY', missing='')
+    IF OBSRVTRY NE '' THEN fits_util->add, hdr, 'OBSRVTRY', OBSRVTRY, 'Observatory name'
+  ENDIF ELSE BEGIN
+    fits_util->add, hdr, 'DATE-BEG', '', 'Beginning of data acquisition'
+  ENDELSE
+
+  IF keyword_set(CREATOR) THEN $
+    fits_util->add, hdr, 'CREATOR', CREATOR, 'Name of creator'
 
   ; Add keywords valid for whole ANA
   fits_util->add_description, hdr, 'Keywords describing the whole ANA'
