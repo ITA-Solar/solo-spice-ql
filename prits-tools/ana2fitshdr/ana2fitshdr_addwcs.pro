@@ -46,7 +46,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 14:08 CET $
+; $Id: 2024-01-30 11:59 CET $
 
 
 FUNCTION ana2fitshdr_addwcs, HDR, WCS, $
@@ -75,7 +75,7 @@ FUNCTION ana2fitshdr_addwcs, HDR, WCS, $
 
   ; Add WCS keywords
   fits_util->add_description, new_hdr, 'World Coordinate System (WCS) keywords'
-  fits_util->add, new_hdr, 'WCSNAME', wcs.WCSNAME
+  fits_util->add, new_hdr, 'WCSNAME', wcs.WCSNAME, 'Name of coordinate system'
   IF tag_exist(wcs, 'PROJ_NAMES') && tag_exist(wcs, 'PROJ_VALUES') THEN BEGIN
     FOR i=0,min([N_ELEMENTS(wcs.PROJ_NAMES),N_ELEMENTS(wcs.PROJ_VALUES)])-1 DO BEGIN
       fits_util->add, new_hdr, wcs.PROJ_NAMES[i], wcs.PROJ_VALUES[i]
@@ -83,9 +83,9 @@ FUNCTION ana2fitshdr_addwcs, HDR, WCS, $
   ENDIF
   IF tag_exist(wcs, 'spectrum') THEN BEGIN
     IF tag_exist(wcs.spectrum, 'SPECSYS') THEN $
-      fits_util->add, new_hdr, 'SPECSYS', wcs.spectrum.SPECSYS
+      fits_util->add, new_hdr, 'SPECSYS', wcs.spectrum.SPECSYS, 'Spectral coord. not corrected for S/C velocity'
     IF tag_exist(wcs.spectrum, 'VELOSYS') THEN $
-      fits_util->add, new_hdr, 'VELOSYS', wcs.spectrum.VELOSYS
+      fits_util->add, new_hdr, 'VELOSYS', wcs.spectrum.VELOSYS, "[m/s] Default for SPECSYS='TOPOCENT'"
   ENDIF
   fits_util->add, new_hdr, '', ' '
 
