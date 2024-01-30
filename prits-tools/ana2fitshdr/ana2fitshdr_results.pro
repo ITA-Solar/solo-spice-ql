@@ -75,7 +75,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-01-30 11:22 CET $
+; $Id: 2024-01-30 11:30 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -256,12 +256,11 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   parnr = string(byte(ipar+97))
   fits_util->add, hdr, 'PNAME'+fitnr+parnr, 'Chi^2', 'Name of parameter '+parnr+' for component '+fitnr
   
+  hdr = ana2fitshdr_addwcs(HDR, WCS, /RESULT)
+
   fits_util->add, hdr, ' ', ' '
   fits_util->add, hdr, 'BTYPE', ' '
   fits_util->add, hdr, 'BUNIT', ' '
-
-  hdr = ana2fitshdr_addwcs(HDR, WCS, /RESULT)
-
 
   ; Add additional project-related keywords to the header
   IF N_ELEMENTS(PROJ_KEYWORDS) GT 0 THEN BEGIN
