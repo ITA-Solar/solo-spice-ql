@@ -81,7 +81,7 @@
 ;
 ; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-01-29 15:31 CET $
+; $Id: 2024-01-30 10:08 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -250,24 +250,22 @@ PRO spice_gen_cat::populate_hash
   n_modified = self.d.n_modified_files
   n_new =  n_files - n_modified
   
-  print,' Adding    '+trim(n_new)+' new files'
-  print,' Modifying '+trim(n_modified)+' existing files'
-  
+  print,'  Adding    '+(n_new).toString('(i6)')+' new files'
+  print,'  Modifying '+(n_modified).toString('(i6)')+' existing files'
+  print
   modno = n_files/10 - (n_files/10 MOD 10) > 10
-
+  
   FOREACH fits_filename, filelist, index DO BEGIN
      key = self.add_file(fits_filename)
      IF (index + 1) MOD modno EQ 0 THEN BEGIN 
-        PRINT, "Files done : " + (index+1).toString("(i6)") + "    (key: "+key+")"
+        PRINT, "Files done: " + (index+1).toString("(i6)") + "    (key: "+key+")"
      END
   ENDFOREACH
-
+  
   print
 END
 
 
-
-  
 PRO spice_gen_cat::set_filelist
 
   top_level = ~self.d.spice_datadir.contains('level')
