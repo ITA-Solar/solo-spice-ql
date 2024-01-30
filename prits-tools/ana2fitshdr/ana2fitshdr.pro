@@ -131,7 +131,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-01-30 11:22 CET $
+; $Id: 2024-01-30 14:25 CET $
 
 
 FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
@@ -297,7 +297,8 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
   ; Create xdim header
   ; ------
 
-  hdr = ana2fitshdr_xdim(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, SAVE_XDIM1=SAVE_XDIM1)
+  hdr = ana2fitshdr_xdim(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, $
+    SAVE_XDIM1=SAVE_XDIM1, TYPE_XDIM1=TYPE_XDIM1)
   all_headers[2] = ptr_new(hdr)
   if hdr[0] eq '' then EXTENSION_NAMES[2] = ''
 
