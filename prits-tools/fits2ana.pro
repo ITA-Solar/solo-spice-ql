@@ -63,7 +63,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-19 10:20 CET $
+; $Id: 2024-01-30 13:39 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -377,7 +377,7 @@ function fits2ana, fitsfile, windows=windows, $
           xdim1 = wcs_get_coord(wcs_data)
           xdim1 = reform(xdim1[0,*,*,*,*,*,*,*])
         ENDIF ELSE BEGIN
-          IF loud THEN message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube', /info
+          box_message, 'No WCS parameters from data extension. Creating dummy XDIM1 cube'
           xdim1 = fltarr(wcs_data.naxis)
         ENDELSE
       ENDELSE
