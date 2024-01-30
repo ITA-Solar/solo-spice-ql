@@ -75,7 +75,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-01-30 11:59 CET $
+; $Id: 2024-01-30 13:19 CET $
 
 
 FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
@@ -259,7 +259,8 @@ FUNCTION ana2fitshdr_results, RESULT=RESULT, FIT=FIT, datetime=datetime, $
   hdr = ana2fitshdr_addwcs(HDR, WCS, /RESULT)
 
   fits_util->add, hdr, ' ', ' '
-  fits_util->add, hdr, 'BTYPE', 'stat.fit.param', 'Type of data'
+  fits_util->add, hdr, 'BTYPE', 'Fit Parameter', 'Type of data'
+  fits_util->add, hdr, 'UCD', 'stat.fit.param', 'Unified Content Descriptors v1.23'
   fits_util->add, hdr, 'BUNIT', ' ', 'Units of the data'
 
   ; Add additional project-related keywords to the header
