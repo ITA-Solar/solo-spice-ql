@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2024-01-29 12:37 CET $
+; $Id: 2024-01-31 14:33 CET $
 
 
 ;+
@@ -446,7 +446,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
               return, 'Cancelled'
            endif
         ENDIF
-        
+        print,trim(n_elements(window_index)-window_index[iwindow])+' windows remaining...'
         ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
                                 position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
         IF iwindow EQ 0 THEN version += version_add
