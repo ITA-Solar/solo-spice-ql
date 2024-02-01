@@ -3,19 +3,28 @@
 ;     FITS2ANA
 ;
 ; PURPOSE:
-;     fits2ana reads a FITS file and returns ana structure(s). The input FITS file must contain all the necessary
-;     extensions and keywords. ANA2FITS creates the correct FITS files. An ana structure is used by e.g. xcfit_block,
-;     it is created by e.g. mk_analysis.
-;     If the FITS file is a SPICE level 3 file, the data array will be rearranged, so that XCFIT_BLOCK can use it.
-;     Since the data block is stored as the original data block from level 2.
+;     FITS2ANA reads a FITS file and returns one or more ANA structure(s). The input FITS file should be
+;     a product of ANA2FITS. It must contain at least one RESULTS extension per window. 
+;     The DATA extension may be an external extension, else it should be present in the input file.
+;     The DATA is automatically transformed so that the absorbed dimension is the first dimension,
+;     if this is not the case already.
+;     XDIM1, WEIGHTS, INCLUDE and CONSTANTS extensions are optional.
+;     If not present:
+;       - a dummy DATA cube will be created.
+;       - XDIM1 will be created using the WCS parameters given in the data header.
+;       - WEIGHTS, INCLUDE and CONSTANTS will be created with default values.
+;       - RESIDUALS is created using the fits components and the DATA cube.
+;     An ANA structure is used by e.g. XCFIT_BLOCK, it is created by e.g. MK_ANALYSIS.
 ;
 ; CATEGORY:
 ;     FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;     anas = fits2ana(fitsfile [ ,headers_results=headers_results, headers_data=headers_data, $
+;     anas = FITS2ANA(fitsfile [, windows=windows , $
+;       headers_results=headers_results, headers_data=headers_data, $
 ;       headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
-;       headers_include=headers_include, headers_constants=headers_constants])
+;       headers_include=headers_include, headers_constants=headers_constants, $
+;       /headers_only, /loud, /quiet])
 ;
 ; INPUTS:
 ;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
@@ -63,7 +72,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-01-30 13:39 CET $
+; $Id: 2024-02-01 10:16 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
