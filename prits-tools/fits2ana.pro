@@ -6,7 +6,7 @@
 ;     FITS2ANA reads a FITS file and returns one or more ANA structure(s). The input FITS file should be
 ;     a product of ANA2FITS. It must contain at least one RESULTS extension per window. 
 ;     The DATA extension may be an external extension, else it should be present in the input file.
-;     The DATA is automatically transformed so that the absorbed dimension is the first dimension,
+;     The DATA is automatically transformed so that the absorbed dimension is the first dimension
 ;     if this is not the case already.
 ;     XDIM1, WEIGHTS, INCLUDE and CONSTANTS extensions are optional.
 ;     If not present:
@@ -72,7 +72,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-02-01 10:16 CET $
+; $Id: 2024-02-02 15:11 CET $
 
 
 function fits2ana, fitsfile, windows=windows, $
