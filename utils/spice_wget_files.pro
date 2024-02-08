@@ -33,6 +33,9 @@
 ;               required.
 ;
 ; History     :	Version 1, 11-Apr-2022, William Thompson, GSFC
+;               Version 2,  8-Feb-2024, Martin Wiesmann, ITA, UIO
+;                   The routine mirrors files from the public archive if 
+;                   the environment variable SPICE_PWD is not set.
 ;
 ; Contact     :	WTHOMPSON
 ;-
@@ -47,26 +50,38 @@ level = ntrim(level)
 ;  First, get the top catalog file.
 ;
 spice_data = getenv('SPICE_DATA')
-remote_dir = 'http://astro-sdc-db.uio.no/vol/spice/fits/'
 pwd = getenv('SPICE_PWD')
-command0 = 'wget -nH -L -m -erobots=off --user=spice --password=' + pwd + $
-           ' --no-check-certificate --cut-dirs=3 -P ' + spice_data + ' '
-command = command0 + remote_dir + 'spice_catalog.txt'
-print, command
-spawn, command
-command = command0 + remote_dir + 'spice_catalog.csv'
+public = pwd eq ''
+if public then begin
+  ourl = OBJ_NEW('IDLnetUrl')
+  release = ourl->get(url='https://spice.osups.universite-paris-saclay.fr/spice-data/metadata/latest-release.txt', /string_array)
+  remote_dir = 'https://spice.osups.universite-paris-saclay.fr/spice-data/release-'+release[0]+'/'
+  command0 = 'wget -nH -L -m -erobots=off' + $
+    ' --no-check-certificate --cut-dirs=2 -P ' + spice_data + ' '
+  command = command0 + remote_dir + 'catalog.csv'
+endif else begin
+  remote_dir = 'http://astro-sdc-db.uio.no/vol/spice/fits/'
+  command0 = 'wget -nH -L -m -erobots=off --user=spice --password=' + pwd + $
+    ' --no-check-certificate --cut-dirs=3 -P ' + spice_data + ' '  
+  command = command0 + remote_dir + 'spice_catalog.txt'
+  print, command
+  spawn, command
+  command = command0 + remote_dir + 'spice_catalog.csv'
+endelse
 print, command
 spawn, command
 ;
 ;  Next get the catalog file for the current level.
 ;
 remote_dir = remote_dir + 'level' + level + '/'
-command = command0 + remote_dir + 'spice_catalog.txt'
-print, command
-spawn, command
-command = command0 + remote_dir + 'spice_catalog.csv'
-print, command
-spawn, command
+if ~public then begin
+  command = command0 + remote_dir + 'spice_catalog.txt'
+  print, command
+  spawn, command
+  command = command0 + remote_dir + 'spice_catalog.csv'
+  print, command
+  spawn, command
+endif
 ;
 ;  Get a list of currently held FITS files.
 ;
@@ -80,6 +95,7 @@ remote_dir = remote_dir + subpath
 command = command0 + remote_dir
 if strmid(command, strlen(command)-1, 1) ne '/' then command = command + '/'
 print, command
+box_message,'This may take a while'
 spawn, command
 ssw_wget_cleanup2, local_dir, remote_dir
 ;
