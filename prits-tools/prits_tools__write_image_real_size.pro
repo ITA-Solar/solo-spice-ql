@@ -14,7 +14,8 @@
 ;      IMAGES -- writing image files.
 ;
 ; CALLING SEQUENCE:
-;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
+;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME]
+;     [,REMOVE_TRENDS=REMOVE_TRENDS] [,SMOOTH=SMOOTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
 ;       [, XRANGE1=XRANGE1] [, XRANGE2=XRANGE2] [, YRANGE1=YRANGE1] [, YRANGE2=YRANGE2] $
 ;       [, XTITLE1=XTITLE1] [, XTITLE2=XTITLE2] [, YTITLE1=YTITLE1] [, YTITLE2=YTITLE2] $
 ;       [, TITLE=TITLE] $
@@ -32,6 +33,8 @@
 ;               Default is 'image.xxx' (where xxx is the chosen file format) in the current directory.
 ;
 ; OPTIONAL INPUT:
+;     SMOOTH: An integer. The width of the boxcar used when smoothing the
+;             image using the smooth function. If not set not smoothing is performed.
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
 ;                 https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword 
 ;                 to 100 (a color table that doesn't exist) signals that the 
@@ -79,6 +82,8 @@
 ;               WRITE_BMP, WRITE_GIF, WRITE_JPEG, WRITE_PNG, WRITE_PPM, WRITE_SRF, WRITE_TIFF and WRITE_JPEG2000.
 ;
 ; KEYWORD PARAMETERS:
+;     REMOVE_TRENDS: If set, remove horizontal and vertical trends in the
+;                    image
 ;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
 ;               XRANGE1 and YRANGE1. If neither HEIGHT nor WIDTH is provided, then the width of the 
 ;               image will be adjusted. 
@@ -106,12 +111,19 @@
 ;
 ; MODIFICATION HISTORY:
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
-;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity images
+;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity
+;     images
+;     Ver.3, 08-Feb-2024, Terje Fredvik - added keyword remove_trend, if set
+;     remove horizontal and vertical trends in the image. Added keyword
+;     smooth, can be set to the width of the boxcar used by smooth
 ;
 ;-
-; $Id: 2024-01-26 10:47 CET $
+; $Id: 2024-02-08 12:02 CET $
 
-PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
+
+
+PRO prits_tools::write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
+  colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
   title=title, $
@@ -165,7 +177,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   IF velocity THEN BEGIN 
      eis_colors, /velocity
      cutoff_threshold = 0
-     maxvel = 50
+     value_max = 50             
+     value_min = -50
   ENDIF ELSE loadct, colortable
   
   tvlct,r,g,b,/get
@@ -279,32 +292,11 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     device, set_res=WINsize
   endelse
   
-  IF cutoff_threshold GT 0 THEN BEGIN
-     image_data_use = HISTO_OPT(image_data, cutoff_threshold)
-  ENDIF ELSE BEGIN
-    IF velocity THEN BEGIN 
-       sz = size(image_data)
-       vim = fltarr(sz[1],sz[2])
+  IF keyword_set(smooth)        THEN image_data = smooth(image_data, smooth)
+  IF keyword_set(remove_trends) THEN image_data = prits_tools.remove_trends(image_data, value_min=value_min, value_max=value_max)
+     
+  image_data_use = (cutoff_threshold GT 0) ? HISTO_OPT(image_data, cutoff_threshold) : image_data
 
-       ;; Remove horisontal velocity trend
-       v_median_x = median(image_data,dimension=2)
-       FOR y=0,sz[2]-1 DO vim[*,y] = v_median_x
-       image_data -= vim
-       
-       ;; Remove vertical velocity trend
-       v_median_y = median(image_data,dimension=1)
-       FOR x=0,sz[1]-1 DO vim[x,*] = v_median_y
-       image_data -= vim
-       
-       nanix = where(image_data NE image_data)
-       
-       ; histo_opt doesn't work well for velocities
-       image_data_use = image_data > (-maxvel) < maxvel
-       
-       image_data_use[nanix] = 0
-    ENDIF ELSE image_data_use = image_data
- ENDELSE
- 
  IF N_ELEMENTS(color_center_value) EQ 1 THEN BEGIN
     max_image = max(abs(image_data_use-color_center_value))
     min_image = -1 * max_image + color_center_value
