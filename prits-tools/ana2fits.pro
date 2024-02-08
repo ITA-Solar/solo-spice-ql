@@ -4,7 +4,7 @@
 ;
 ; PURPOSE:
 ;      This procedure saves the content of one or more ANA structures into one FITS file.
-;      The FITS file will contain up to 6 extension per ANA, where the first contains the results
+;      The FITS file will contain up to 6 extensions per ANA, where the first contains the results
 ;      and the fit components as header keywords. The resulting FITS file can be read and converted
 ;      into one or more ANA structures with the procedure FITS2ANA.
 ;      It is possible to call this procedure multiple times with the same filepath_out,
@@ -25,18 +25,11 @@
 ;         EXTENSION=EXTENSION]
 ;
 ; INPUTS:
-;      ANA: The name and path of an ANA file or an ANA object.
-;              If this is not provided, then all of the optional inputs
+;      ANA: An ANA object.
+;              If this is not provided, then at the least RESULTS and FIT
 ;              must be provided. If more than one ANA should be saved into one FITS file,
 ;              then 'ana' must be provided as an array of either file paths or objects.
 ;      FILEPATH_OUT: Full path and filename of the resulting FITS file.
-;      N_WINDOWS: Total number of windows that will be included in this FITS file.
-;              By default, this will be the number of 'ana' structures provided, or 1
-;              in case ana is not provided. But if you call this procedure mutliple times
-;              with the same filepath_out and EXTENSION keyword set, the procedure can not know
-;              what the final total number of windows will be, and thus the header keyword 'NWIN' in the result extension
-;              may have the wrong number. This will NOT cause any problems when reading the FITS file
-;              with FITS2ANA.
 ;      TYPE_XDIM1: CTYPE of the absorbed dimension (e.g. 'WAVE'). A string array, or a scalar, in which case
 ;              the same value will be used for all windows.
 ;
@@ -58,6 +51,19 @@
 ;      SAVE_NOT: If set, then the FITS file will not be saved. The optional outputs are created though.
 ;
 ; OPTIONAL INPUTS:
+;      N_WINDOWS: Total number of windows that will be included in this FITS file.
+;              By default, this will be the number of 'ana' structures provided, or 1
+;              in case ana is not provided. But if you call this procedure mutliple times
+;              with the same filepath_out and EXTENSION keyword set, the procedure can not know
+;              what the final total number of windows will be, and thus the header keyword 'NWIN' in the result extension
+;              may have the wrong number. This will NOT cause any problems when reading the FITS file
+;              with FITS2ANA.
+;      WINNO: Window number (starting at 0) of the first 'ana' provided within this study in this FITS file.
+;              If you call this procedure mutliple times with the same filepath_out and
+;              EXTENSION keyword set, you can define here what the index of the currently provided
+;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
+;              A wrong number in this keyword won't create any problems when reading the FITS file
+;              with FITS2ANA. Default is the dataset indices.
 ;      HEADER_INPUT_DATA: A pointer array or string array, containing the headers of the data extensions as string arrays.
 ;              One string array per ANA provided. Can be a string array, if only one ANA is provided.
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
@@ -76,23 +82,17 @@
 ;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
 ;              The header keyword DATAEXT in the headers will get EXT_DATA_PATH as a prefix to point to the external extension.
 ;              See also Appendix VII aobut External Extensions in https://arxiv.org/abs/2011.12139
-;      WINNO: Window number (starting at 0) of the first 'ana' provided within this study in this FITS file.
-;              If you call this procedure mutliple times with the same filepath_out and
-;              EXTENSION keyword set, you can define here what the index of the currently provided
-;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
-;              A wrong number in this keyword won't create any problems when reading the FITS file
-;              with FITS2ANA. Default is the dataset indices.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
-;              where, xxx123 can be a string or a number. These are additional project-related
+;              where, xxx2 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
 ;              This can also be a pointer array, if each window should get their own sets of keywords.
 ;              It must then be of the same size as the RESULT pointer array or the ANA array.
 ;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
 ;              Each processing step consists of an array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
-;              where, xxx123 can be a string or a number.
+;              where, xxx2 can be a string or a number.
 ;              The name can be any of the following:
 ;              PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
 ;              PRSTEP should be included. The name and the comment will get the processing step number added.
@@ -109,7 +109,7 @@
 ;              This may also be a pointer array, if more than one window should be saved at a time.
 ;              It must then be of the same size as the RESULT pointer array.
 ;
-;      All of the following optional inputs can be provided if 'ANA' is not provided. If not
+;      All of the following optional inputs may be provided if 'ANA' is not provided. If not
 ;      provided, it is assumed they contain only default values.
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
 ;
@@ -148,7 +148,7 @@
 ; OUTPUTS:
 ; This procedure saves one or more ANA structures into a FITS file.
 ;
-; OPTIONAL OUTPUT:
+; OPTIONAL OUTPUTS:
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
 ;              One string array per ANA provided.
 ;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
@@ -166,19 +166,10 @@
 ;     SPICE library: prits_tools.parcheck, ana2fitshdr
 ;     GEN library: writefits
 ;
-; RESTRICTIONS:
-; It is possible to call this procedure multiple times with the same filepath_out,
-; if in these cases the EXTENSION keyword is set, the windows will be appended to the
-; existing FITS file. However, one needs to
-;
-; MAKE SURE THAT THE HEADER KEYWORD "NWIN" IS CORRECTLY SET.
-;
-; See description of N_WINDOWS for more details.
-;
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2024-01-30 11:22 CET $
+; $Id: 2024-02-08 11:34 CET $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -200,9 +191,9 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
 
   prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
   n_ana = N_ELEMENTS(ANA)
-  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0
+  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', [0, 1]
   prits_tools.parcheck, FILEPATH_OUT, 0, 'FILEPATH_OUT', 'STRING', 0
-  prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
+  prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0, default=max([n_ana, 1])
   prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0, default=0
   prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
@@ -330,14 +321,19 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
     IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *PROJ_KEYWORDS[iwindow] ELSE IF N_ELEMENTS(PROJ_KEYWORDS) GT 0 THEN PROJ_KEYWORDS_use = PROJ_KEYWORDS
     
     IF keyword_set(data_id) THEN data_id_use = data_id[iwindow]
+    IF N_ELEMENTS(TYPE_XDIM1) GT 1 THEN TYPE_XDIM1_use = TYPE_XDIM1[iwindow] ELSE TYPE_XDIM1_use = TYPE_XDIM1
+    IF N_ELEMENTS(NO_SAVE_DATA) GT 1 THEN NO_SAVE_DATA_use = NO_SAVE_DATA[iwindow] ELSE $
+      IF N_ELEMENTS(NO_SAVE_DATA) EQ 1 THEN NO_SAVE_DATA_use = NO_SAVE_DATA
+    IF N_ELEMENTS(SAVE_XDIM1) GT 1 THEN SAVE_XDIM1_use = SAVE_XDIM1[iwindow] ELSE $
+      IF N_ELEMENTS(SAVE_XDIM1) EQ 1 THEN SAVE_XDIM1_use = SAVE_XDIM1
 
     extension = keyword_set(IS_EXTENSION) || iwindow GT 0
     
     if N_ELEMENTS(ana) then begin
       headers = ana2fitshdr(ana[iwindow], FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
-        DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1, $
-        EXT_DATA_PATH=EXT_DATA_PATH, $
+        DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1_use, $
+        EXT_DATA_PATH=EXT_DATA_PATH[iwindow], $
         IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
@@ -345,13 +341,13 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
         CONST=const_use, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
         PROGENITOR_DATA=PROGENITOR_DATA_use, HEADER_INPUT_DATA=HEADER_INPUT_DATA_use, $
-        SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+        SAVE_XDIM1=SAVE_XDIM1_use, NO_SAVE_DATA=NO_SAVE_DATA_use, PRINT_HEADERS=PRINT_HEADERS, $
         DATA_ARRAY=DATA_ARRAY)
     endif else begin
       headers = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
-        DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1, $
-        EXT_DATA_PATH=EXT_DATA_PATH, $
+        DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1_use, $
+        EXT_DATA_PATH=EXT_DATA_PATH[iwindow], $
         IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
@@ -359,7 +355,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
         CONST=const_use, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
         PROGENITOR_DATA=PROGENITOR_DATA_use, HEADER_INPUT_DATA=HEADER_INPUT_DATA_use, $
-        SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+        SAVE_XDIM1=SAVE_XDIM1_use, NO_SAVE_DATA=NO_SAVE_DATA_use, PRINT_HEADERS=PRINT_HEADERS, $
         DATA_ARRAY=DATA_ARRAY)
     endelse
 
