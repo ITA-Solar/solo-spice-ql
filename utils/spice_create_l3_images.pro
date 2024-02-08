@@ -50,10 +50,11 @@
 ;      "original' from full size jpgs.
 ;
 ;-
-; $Id: 2024-01-26 11:28 CET $
+; $Id: 2024-02-08 12:00 CET $
 
 
-PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version
+PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version, remove_trends = remove_trends, smooth = smooth, $
+                            no_background_images=no_background_images
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
@@ -103,7 +104,8 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
       ;for icomp=0,0 do begin
       fit_cur = fit.(icomp)
       n_params = N_ELEMENTS(fit_cur.param)
-      for ipar=0,n_params-1 do begin
+      include_component = (keyword_set(no_background_images)) ? fit_cur.name NE 'Background' : 1
+      IF include_component THEN for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
         filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
         ; crop image so that lines with invalid data is not shown
@@ -177,7 +179,8 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
 
         filename = filename_base2 + '.jpg'
         format = 'JPEG'
-        prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
+        prits_tools.write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
+          colortable=colortable, format=format, $
           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
           /SCALE_TO_RANGE, $
@@ -186,7 +189,8 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
 
         filename = filename_base2 + '_thumb.png'
         format = 'PNG'
-        prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
+        prits_tools.write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
+          colortable=colortable, format=format, $
           height=64, border=0, reverse_colortable=reverse_colortable, $
           xrange1=xrange1, yrange1=yrange1, /SCALE_TO_RANGE, /no_axis, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
