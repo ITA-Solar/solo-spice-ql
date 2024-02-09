@@ -30,7 +30,7 @@
 ;                               '2021/10'       Month
 ;                               '2021'          Year
 ;
-; Keywords    :	LEVEL   = Data level, either 1 or 2.  Default=2.
+; Keywords    :	LEVEL   = Data level, either 1, 2 or 3.  Default=2.
 ;
 ; Env. Vars.  : SPICE_DATA = Location of top of SPICE data tree.  Below this
 ;                            are the "level*" directories.
