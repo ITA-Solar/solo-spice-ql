@@ -3,14 +3,22 @@
 ;
 ; Name        :	SPICE_WGET_FILES
 ;
-; Purpose     :	Mirror SPICE FITS files from Oslo
+; Purpose     :	Mirror SPICE FITS files from Oslo or Paris
 ;
-; Explanation : This routine mirrors SPICE FITS files from Oslo.  Files are
+; Explanation : This routine mirrors SPICE FITS files either from Oslo or Paris.  Files are
 ;               written to either a "level1" or "level2" subdirectory of the
 ;               $SPICE_DATA directory.  Below each directory, the files are
 ;               organized by date, e.g. "level2/2021/10/20".  Files no longer
-;               on the server are removed from the local copy.  The
-;               spice_catalog.txt and spice_catalog.csv files are also mirrored.
+;               on the server are removed from the local copy. 
+;               
+;               If the environment variable SPICE_PWD is set, then the files are mirrored
+;               from Oslo. All SPICE FITS files are avaible from this server.
+;               The spice_catalog.txt and spice_catalog.csv files are also mirrored.
+;               
+;               If the environment variable SPICE_PWD is not set, then the routine
+;               mirrors SPICE FITS files from the University Paris-Saclay, where
+;               the publicly available files reside. Note that not all SPICE
+;               FITS files are publicly available. The catalog.csv is also mirrored.
 ;
 ; Examples    :	spice_wget_files, '2021/10/20', level=2
 ;
@@ -29,8 +37,9 @@
 ;
 ;               SPICE_PWD  = Password for the SPICE website.
 ;
-; Restrictions:	The environment variables SPICE_DATA and SPICE_PWD are
-;               required.
+; Restrictions:	The environment variable SPICE_DATA is required.
+;               The environment variable SPICE_PWD is required to mirror the files
+;               from Oslo and thus get access to the complete set of SPICE FITS files.
 ;
 ; History     :	Version 1, 11-Apr-2022, William Thompson, GSFC
 ;               Version 2,  8-Feb-2024, Martin Wiesmann, ITA, UIO
