@@ -31,7 +31,7 @@ or send an email to prits-group@astro.uio.no
 
 ## Setup
 In your shell startup configuration file or in IDL_STARTUP, include SPICE in the `SSW_INSTR` environment variable
-and define the `SPICE_DATA` environment variable, and to be able to download SPICE FITS files you need to define
+and define the `SPICE_DATA` environment variable, and to be able to download all SPICE FITS files you need to define
 `SPICE_PWD` environment variable:
 ```
 setenv SSW_INSTR "gen so spice"
@@ -204,7 +204,7 @@ There are several useful tools to manage SPICE files:
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
 date and time. The line with this format will be edited:
 ```
-; $Id: 2024-02-09 14:07 CET $
+; $Id: 2024-02-09 14:12 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
 description at the beginning of the file. 
