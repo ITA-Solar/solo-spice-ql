@@ -39,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 10:09 CET $
+; $Id: 2024-02-09 14:36 CET $
 
 
 FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS
@@ -68,11 +68,12 @@ FUNCTION ana2fitshdr_const, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, 
   fits_util->add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
-  fits_util->add, hdr, '', ' '
-  fits_util->add, hdr, 'BTYPE', 'BOOL', 'Type of data'
-  fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
-
   hdr = ana2fitshdr_addwcs(HDR, WCS, /CONST)
+
+  fits_util->add, hdr, ' ', ' '
+  fits_util->add, hdr, 'BTYPE', 'BOOL', 'Type of data'
+  fits_util->add, hdr, 'UCD', ' ', 'Unified Content Descriptors v1.23'
+  fits_util->add, hdr, 'BUNIT', ' ', 'Units of the data'
 
   fits_util->clean_header, hdr
   return, hdr

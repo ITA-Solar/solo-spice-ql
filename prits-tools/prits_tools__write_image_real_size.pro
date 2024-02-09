@@ -14,12 +14,14 @@
 ;      IMAGES -- writing image files.
 ;
 ; CALLING SEQUENCE:
-;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
+;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME]
+;     [,REMOVE_TRENDS=REMOVE_TRENDS] [,SMOOTH=SMOOTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
 ;       [, XRANGE1=XRANGE1] [, XRANGE2=XRANGE2] [, YRANGE1=YRANGE1] [, YRANGE2=YRANGE2] $
 ;       [, XTITLE1=XTITLE1] [, XTITLE2=XTITLE2] [, YTITLE1=YTITLE1] [, YTITLE2=YTITLE2] $
 ;       [, TITLE=TITLE] $
 ;       [, BACKGROUND_COLOR=BACKGROUND_COLOR] [, TEXT_COLOR=TEXT_COLOR] $
 ;       [, BORDER=BORDER] [, SCALE_FACTOR=SCALE_FACTOR] [, HEIGHT=HEIGHT] [, WIDTH=WIDTH] $
+;       [, /SCALE_TO_RANGE] [, /NO_AXIS] $
 ;       [, CUTOFF_THRESHOLD=CUTOFF_THRESHOLD] [, COLOR_CENTER_VALUE=COLOR_CENTER_VALUE] $
 ;       [, JPEG_QUALITY=JPEG_QUALITY] $
 ;       [, /SHOW_PLOT] [, /REVERSE_COLORTABLE] $
@@ -31,8 +33,14 @@
 ;               Default is 'image.xxx' (where xxx is the chosen file format) in the current directory.
 ;
 ; OPTIONAL INPUT:
+;     SMOOTH: An integer. The width of the boxcar used when smoothing the
+;             image using the smooth function. If not set not smoothing is performed.
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
-;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html
+;                 https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword 
+;                 to 100 (a color table that doesn't exist) signals that the 
+;                 input image_data is a velocity image that needs special
+;                 treatment, among other things using the eis_colors,/velocity
+;                 red-blue color table.
 ;     FORMAT:   A string, indicating the file format in which the image should be saved to.
 ;               Possible values: BMP, GIF, JPEG, PNG, PPM, SRF, TIFF, JPEG2000 (=JP2). Default is JPEG.
 ;     XRANGE1:  A 2-element numeric vector, indicating the data range displayed on the lower axis.
@@ -56,7 +64,8 @@
 ;     BORDER:   An integer giving the number of pixels that should be added around the image.
 ;               Default is 5. If this is set to zero and none of the TITLE and RANGE inputs are provided,
 ;               then the image is plotted with suppressed axis.
-;     SCALE_FACTOR: A number. The data size is expanded by this factor. Default is 1.0.
+;     SCALE_FACTOR: A number. The data size is expanded by this factor. Default is 1.0. This is ignored
+;               if SCALE_TO_RANGE is set.
 ;     HEIGHT:   An integer giving the desired height of the data image. WIDTH is calculated if not provided.
 ;               This is ignored if SCALE_FACTOR is provided.
 ;     WIDTH:    An integer giving the desired width of the data image. HEIGHT is calculated if not provided.
@@ -73,6 +82,15 @@
 ;               WRITE_BMP, WRITE_GIF, WRITE_JPEG, WRITE_PNG, WRITE_PPM, WRITE_SRF, WRITE_TIFF and WRITE_JPEG2000.
 ;
 ; KEYWORD PARAMETERS:
+;     REMOVE_TRENDS: If set, remove horizontal and vertical trends in the
+;                    image
+;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
+;               XRANGE1 and YRANGE1. If neither HEIGHT nor WIDTH is provided, then the width of the 
+;               image will be adjusted. 
+;               This keyword is ignored if XRANGE1 and YRANGE1 are not provided, or if both HEIGHT and WIDTH
+;               are provided.
+;     NO_AXIS: If set, then no axis will be plotted, eventhough XRANGEn and/or YRANGEn is provided.
+;               Useful if you want to provide XRANGE1 and YRANGE1 to be able to set SCALE_TO_RANGE.
 ;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
 ;     REVERSE_COLORTABLE: If set, then the colors of the given colortable are reversed. Useful for e.g.
 ;               ColorBrewer Schemes.
@@ -86,24 +104,32 @@
 ; See prits_tools::write_image_real_size_test
 ;
 ; CALLS:
-; PIH
+; PIH, EIS_COLORS
 ;
 ; RESTRICTIONS:
 ; Setting TITLE plus upper axis XTITLE2 and/or XRANGE2 results in a messy output!
 ;
 ; MODIFICATION HISTORY:
 ;     Ver.1, 18-Oct-2022, Martin Wiesmann
+;     Ver.2, 22-Jan-2023, Terje Fredvik - added special treatment of velocity
+;     images
+;     Ver.3, 08-Feb-2024, Terje Fredvik - added keyword remove_trend, if set
+;     remove horizontal and vertical trends in the image. Added keyword
+;     smooth, can be set to the width of the boxcar used by smooth
 ;
 ;-
-; $Id: 2022-11-11 13:32 CET $
+; $Id: 2024-02-09 14:36 CET $
 
 
-PRO prits_tools::write_image_real_size, image_data, filename, colortable=colortable, format=format, $
+
+PRO prits_tools::write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
+  colortable=colortable, format=format, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
   title=title, $
   background_color=background_color, text_color=text_color, $
-  border=border, scale_factor=scale_factor, height=height, width=width, $
+  border=border, scale_factor=scale_factor, height=height, width=width, $ 
+  SCALE_TO_RANGE=SCALE_TO_RANGE, no_axis=no_axis, $
   cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
   jpeg_quality=jpeg_quality, $
   show_plot=show_plot, reverse_colortable=reverse_colortable, $
@@ -135,31 +161,48 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
   prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval=0, maxval=1, default=0.02
   prits_tools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
   prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval=0, maxval=100, default=75
-
-  DEVICE, DECOMPOSED = 0
+  
+  show_plot = keyword_set(show_plot)
+  
+  IF show_plot THEN set_plot,'x' ELSE set_plot,'z'
+  
+  DEVICE, DECOMPOSED = 0  
 
   ; Get the current colortable to restore it at the end
   TVLCT, Red_old, Green_old, Blue_old, /GET
 
-  ; Install the new colortable and set the background and text color
-  loadct, colortable
+                                ; Install the new colortable and set the background and text color
+  cutoff_threshold_old = cutoff_threshold
+  velocity = colortable EQ 100
+  IF velocity THEN BEGIN 
+     eis_colors, /velocity
+     cutoff_threshold = 0
+     value_max = 50             
+     value_min = -50
+  ENDIF ELSE loadct, colortable
+  
   tvlct,r,g,b,/get
+  
   IF keyword_set(reverse_colortable) THEN BEGIN
     r = reverse(r)
     g = reverse(g)
     b = reverse(b)
-  ENDIF
+ ENDIF
+  
   ;background color
+ 
   r[0]=background_color[0]
   g[0]=background_color[1]
   b[0]=background_color[2]
+
+     
   ;text color
   r[255]=text_color[0]
   g[255]=text_color[1]
   b[255]=text_color[2]
   tvlct,r,g,b
 
-  show_plot = keyword_set(show_plot)
+  
   IF ~show_plot && filename EQ '' THEN BEGIN
     filename = 'image.'+format
     message, 'No filename provided. Saving image in '+filename+' in current directory', /info
@@ -167,7 +210,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
 
   margin_left = border
   IF keyword_set(ytitle1) THEN margin_left += 30
-  IF keyword_set(yrange1) THEN BEGIN
+  IF keyword_set(yrange1) && ~keyword_set(no_axis) THEN BEGIN
     n_digits_y1 = max(strlen(trim(string(ceil(yrange1)))))
     margin_left += 7
     margin_left += 8 * n_digits_y1
@@ -175,40 +218,54 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
 
   margin_right = border
   IF keyword_set(ytitle2) THEN margin_right += 30
-  IF keyword_set(yrange2) THEN BEGIN
+  IF keyword_set(yrange2) && ~keyword_set(no_axis) THEN BEGIN
     n_digits_y2 = max(strlen(trim(string(ceil(yrange2)))))
     margin_right += 7
     margin_right += 8 * n_digits_y2
   ENDIF
 
   margin_bottom = border
-  IF keyword_set(xtitle1) && keyword_set(xrange1) THEN BEGIN
+  IF keyword_set(xtitle1) && keyword_set(xrange1) && ~keyword_set(no_axis) THEN BEGIN
     margin_bottom += 40
   ENDIF ELSE IF keyword_set(xtitle1) THEN BEGIN
     margin_bottom += 35
-  ENDIF ELSE IF keyword_set(xrange1) THEN BEGIN
+  ENDIF ELSE IF keyword_set(xrange1) && ~keyword_set(no_axis) THEN BEGIN
     margin_bottom += 20
   ENDIF
 
   margin_top = border
   IF keyword_set(title) THEN BEGIN
     margin_top += 20
-    IF keyword_set(xtitle2) || keyword_set(xrange2) THEN BEGIN
+    IF keyword_set(xtitle2) || (keyword_set(xrange2) && ~keyword_set(no_axis)) THEN BEGIN
       message, 'Setting TITLE plus upper axis XTITLE2 and/or XRANGE2 results in a messy output!', /info
     ENDIF
   ENDIF
-  IF keyword_set(xtitle2) && keyword_set(xrange2) THEN BEGIN
+  IF keyword_set(xtitle2) && keyword_set(xrange2) && ~keyword_set(no_axis) THEN BEGIN
     margin_top += 30
   ENDIF ELSE IF keyword_set(xtitle2) THEN BEGIN
     margin_top += 30
-  ENDIF ELSE IF keyword_set(xrange2) THEN BEGIN
+  ENDIF ELSE IF keyword_set(xrange2) && ~keyword_set(no_axis) THEN BEGIN
     margin_top += 18
   ENDIF
 
   size_image = size(image_data)
   xs = size_image[1]
   ys = size_image[2]
-  IF keyword_set(scale_factor) THEN BEGIN
+  IF keyword_set(SCALE_TO_RANGE) && keyword_set(xrange1) && keyword_set(yrange1) && $
+    ~(keyword_set(HEIGHT) && keyword_set(WIDTH)) THEN BEGIN
+    
+    xyratio = (yrange1[1] - yrange1[0]) / (xrange1[1] - xrange1[0])
+    IF keyword_set(height) THEN BEGIN
+      ys = height
+      xs = height / xyratio
+    ENDIF ELSE IF keyword_set(width) THEN BEGIN
+      xs = width
+      ys = width * xyratio
+    ENDIF ELSE BEGIN
+      xs = ys / xyratio
+    ENDELSE
+
+  ENDIF ELSE IF keyword_set(scale_factor) THEN BEGIN
     xs = round(double(xs)*scale_factor)
     ys = round(double(ys)*scale_factor)
   ENDIF ELSE BEGIN
@@ -230,19 +287,17 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     (double(xs+margin_left))/WINsize[0], (double(ys+margin_bottom))/WINsize[1]]
 
   if show_plot then begin
-    set_plot, 'x'
     window, 16, xs=WINsize[0], ys=WINsize[1]
   endif else begin
-    set_plot, 'z'
     device, set_res=WINsize
   endelse
+  
+  IF keyword_set(smooth)        THEN image_data = smooth(image_data, smooth)
+  IF keyword_set(remove_trends) THEN image_data = prits_tools.remove_trends(image_data, value_min=value_min, value_max=value_max)
+     
+  image_data_use = (cutoff_threshold GT 0) ? HISTO_OPT(image_data, cutoff_threshold) : image_data
 
-  IF cutoff_threshold GT 0 THEN BEGIN
-    image_data_use = HISTO_OPT(image_data, cutoff_threshold)
-  ENDIF ELSE BEGIN
-    image_data_use = image_data
-  ENDELSE
-  IF N_ELEMENTS(color_center_value) EQ 1 THEN BEGIN
+ IF N_ELEMENTS(color_center_value) EQ 1 THEN BEGIN
     max_image = max(abs(image_data_use-color_center_value))
     min_image = -1 * max_image + color_center_value
     max_image += color_center_value
@@ -262,7 +317,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     keyword_set(ytitle1) || keyword_set(yrange1) || $
     keyword_set(ytitle2) || keyword_set(yrange2) THEN BEGIN
 
-    IF keyword_set(xrange1) THEN BEGIN
+    IF keyword_set(xrange1) && ~keyword_set(no_axis) THEN BEGIN
       n_digits_x1 = max(strlen(trim(string(ceil(xrange1)))))
       xticks = floor(double(xs) / 15.0d / n_digits_x1)
       IF xticks EQ 0 THEN xticks=1
@@ -275,7 +330,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     axis, xaxis=0, xrange=xrange1, xtitle=xtitle1, xstyle=1, color=255, charsize=charsize, $
       xticks=xticks, xtickname=xtickname, xtickformat='(I)'
 
-    IF keyword_set(xrange2) THEN BEGIN
+    IF keyword_set(xrange2) && ~keyword_set(no_axis) THEN BEGIN
       n_digits_x2 = max(strlen(trim(string(ceil(xrange2)))))
       xticks = floor(double(xs) / 15.0d / n_digits_x2)
       IF xticks EQ 0 THEN xticks=1
@@ -288,7 +343,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     axis, xaxis=1, xrange=xrange2, xtitle=xtitle2, xstyle=1, color=255, charsize=charsize, $
       xticks=xticks, xtickname=xtickname, xtickformat='(I)'
 
-    IF keyword_set(yrange1) THEN BEGIN
+    IF keyword_set(yrange1) && ~keyword_set(no_axis) THEN BEGIN
       yticks=0
       ytickname=''
     ENDIF ELSE BEGIN
@@ -298,7 +353,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
     axis, yaxis=0, yrange=yrange1, ytitle=ytitle1, ystyle=1, color=255, charsize=charsize, $
       yticks=yticks, ytickname=ytickname, ytickformat='(I)'
 
-    IF keyword_set(yrange2) THEN BEGIN
+    IF keyword_set(yrange2) && ~keyword_set(no_axis) THEN BEGIN
       yticks=0
       ytickname=''
     ENDIF ELSE BEGIN
@@ -314,6 +369,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, colortable=colorta
 
   ; Set previous colortable again
   TVLCT, Red_old, Green_old, Blue_old
+  cutoff_threshold = cutoff_threshold_old
   set_plot, 'x'
 END
 

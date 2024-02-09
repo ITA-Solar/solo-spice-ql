@@ -1,6 +1,12 @@
 # SPICE Quicklook and Data Analysis Software
 
-For more detailed information, see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/).
+See [Data analysis user's manual](https://spice-wiki.ias.u-psud.fr/doku.php/data:data_analysis_manual)
+for a general description of the SPICE data and its use. 
+You'll also find a link to the Data Products Description Document (DPDD).
+
+For more detailed information on the software described within this README, 
+see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/).
+
 If you find any bugs, please (preferably) [raise a new issue](https://github.com/ITA-Solar/solo-spice-ql/issues/new/choose)
 or send an email to prits-group@astro.uio.no
 
@@ -25,7 +31,7 @@ or send an email to prits-group@astro.uio.no
 
 ## Setup
 In your shell startup configuration file or in IDL_STARTUP, include SPICE in the `SSW_INSTR` environment variable
-and define the `SPICE_DATA` environment variable, and to be able to download SPICE FITS files you need to define
+and define the `SPICE_DATA` environment variable, and to be able to download all SPICE FITS files you need to define
 `SPICE_PWD` environment variable:
 ```
 setenv SSW_INSTR "gen so spice"
@@ -52,8 +58,10 @@ SUBPATH = Subdirectory path to mirror.  If not passed, the entire directory tree
 - '2021/10'       Month
 - '2021'          Year
 
-This first tool is very user-friendly, but it requires the environment variables SPICE_DATA and SPICE_PWD
+This first tool is very user-friendly, but it requires the environment variable SPICE_DATA 
 to be set. It also requires that 'wget' is installed on the computer.
+If the environment variable SPICE_PWD is set, then this tool will allow the download of all
+SPICE FITS files, otherwise only publicly available files can be downloaded.
 
 The second tool is more general:
 ```
@@ -65,6 +73,10 @@ See 'rget_fetch_files.pro' for more details.
 
 Third, the files can also be downloaded manually from this website:
 http://astro-sdc-db.uio.no/vol/spice/fits/
+
+Fourth, the publicly available files can also be downloaded manually from the 
+Solar Orbiter Archive:
+https://soar.esac.esa.int/soar/#home
 
 
 ## Quicklook Software
@@ -192,7 +204,7 @@ There are several useful tools to manage SPICE files:
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
 date and time. The line with this format will be edited:
 ```
-; $Id: 2022-11-07 14:02 CET $
+; $Id: 2024-02-09 14:36 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
 description at the beginning of the file. 

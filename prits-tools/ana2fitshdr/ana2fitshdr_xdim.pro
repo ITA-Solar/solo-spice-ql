@@ -41,16 +41,17 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2023-11-22 14:08 CET $
+; $Id: 2024-02-09 14:36 CET $
 
 
 FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, $
-  SAVE_XDIM1=SAVE_XDIM1
+  SAVE_XDIM1=SAVE_XDIM1, TYPE_XDIM1=TYPE_XDIM1
 
   prits_tools.parcheck, DATETIME, 0, 'DATETIME', 'STRING', 0
   prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
   prits_tools.parcheck, XDIM1, 0, 'XDIM', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
   prits_tools.parcheck, WCS, 0, 'WCS', 8, 0, /optional
+  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0. /optional
 
   IF ~keyword_set(SAVE_XDIM1) || (N_ELEMENTS(XDIM1) EQ 0 && N_ELEMENTS(WCS) EQ 0) THEN return, ''
   IF N_ELEMENTS(XDIM1) EQ 0 THEN xdim_array = fltarr(wcs.naxis, /nozero) $
@@ -71,11 +72,12 @@ FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, X
   fits_util->add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
   fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
-  fits_util->add, hdr, '', ' '
-  fits_util->add, hdr, 'BTYPE', ' ', 'Type of data'
-  fits_util->add, hdr, 'BUNIT', ' ', 'Physical units of data'
-
   hdr = ana2fitshdr_addwcs(HDR, WCS, /XDIM1)
+
+  fits_util->add, hdr, ' ', ' '
+  fits_util->add, hdr, 'BTYPE', keyword_set(TYPE_XDIM1) ? TYPE_XDIM1 : ' ', 'Type of data'
+  fits_util->add, hdr, 'UCD', ' ', 'Unified Content Descriptors v1.23'
+  fits_util->add, hdr, 'BUNIT', ' ', 'Units of the data'
 
   fits_util->clean_header, hdr
   return, hdr

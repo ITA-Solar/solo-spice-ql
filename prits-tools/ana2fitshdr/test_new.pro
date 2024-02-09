@@ -1,40 +1,46 @@
 pro test_new
 
-  file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
-  file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
-  ;file = '/Users/mawiesma/data/spice/level2/2023/10/06/solo_L2_spice-n-ras_20231006T142008_V05_218103906-017.fits'
+  laptop = 0
 
-  ;  d0 = readfits(file, h0)
-  ;  help,d0
-  ;  d1 = readfits(file, h1, ext=1)
-  ;  help,d1
-  ;  d2 = readfits(file, h2, ext=2)
-  ;  help,d2
+  if laptop then begin
 
+    ; laptop
+    file = '/Users/mawiesma/data/spice/level2/2023/04/05/solo_L2_spice-n-ras_20230405T165232_V02_184549674-000.fits'
+    file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
+  endif else begin
 
-  time_start = '2023-10-01 00:00'
-  time_end = '2023-10-10 22:00'
+    ; office
+    file = '/Users/mawiesma/data/spice/level2/2023/10/06/solo_L2_spice-n-ras_20231006T142008_V05_218103906-017.fits'
 
+  endelse
 
-
-  if 0 then begin
+  !EXCEPT=2
 
 
 
+  if 1 then begin
 
-    ;spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
-    ;  top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-    ;  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
-    ;  search_subdir=search_subdir, ignore_time=ignore_time, $
-    ;  no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
-    ;  no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
-    ;  pipeline_dir=pipeline_dir, create_images=create_images, images_top_dir=images_top_dir, $
-    ;  files_l3=files_l3, search_level3=search_level3, no_overwrite=no_overwrite
-    ;
-    ;
-    ;return
 
-    !EXCEPT=2
+
+    if 0 then begin
+
+      time_start = '2023-10-06 00:00'
+      time_end = '2023-10-06 22:00'
+
+      spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
+        top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
+        all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
+        search_subdir=search_subdir, ignore_time=ignore_time, $
+        no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
+        no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
+        pipeline_dir=pipeline_dir, create_images=create_images, images_top_dir=images_top_dir, $
+        files_l3=files_l3, search_level3=search_level3, no_overwrite=no_overwrite
+
+
+      return
+
+    endif
+
 
 
     ol2 = spice_data(file)
@@ -46,7 +52,7 @@ pro test_new
     NO_SAVE_DATA=0
     PRINT_HEADERS=0
 
-    window_index = 1;[1,3]
+    window_index = 0;[1,3]
     ;window_index = !NULL
 
     l3file = ol2->create_l3_file( window_index, $
@@ -90,21 +96,48 @@ pro test_new
 
 
 
+  l2file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
+  d=readfits(l2file,h)
+  print,''
+  print,' L 2'
+  print,''
+  print,h
+  print,''
+  print,' L 2 fertig '
+  print,''
 
 
-  l3file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+  if laptop then begin
+
+    ; laptop
+    l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+    l3_file = '/Users/mawiesma/data/spice/user/level3/2023/04/05/solo_L3_spice-n-ras_20230405T165232_V01_184549674-000.fits'
+  endif else begin
+
+    ; office
+    l3_file = '/Users/mawiesma/data/spice/user/level3/2023/10/05/solo_L3_spice-n-ras_20231005T011034_V08_218103890-000.fits'
+    l3_file = '/Users/mawiesma/data/spice/level3/2024/01/01/solo_L3_spice-n-ras_20240101T181922_V01_234881026-000.fits'
+  endelse
+
+  out_dir = '/Users/mawiesma/data/spice/images'
+
+  spice_create_l3_images, l3_file, out_dir, /No_tree_struct
+
+  return
+
+
   ana = fits2ana(l3file, /loud, headers_results=headers_results)
   ana = ana[0]
 
   handle_value,ana.fit_h,fit
   help,fit
-  
+
 
   spice_xcfit_block, ana=ana
 
   handle_value,ana.fit_h,fit
   help,fit
-return
+  return
 
 
   print,' --- '

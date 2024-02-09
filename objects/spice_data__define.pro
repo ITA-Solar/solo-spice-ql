@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2023-12-14 14:08 CET $
+; $Id: 2024-02-09 14:36 CET $
 
 
 ;+
@@ -302,13 +302,17 @@ END
 ; Description:
 ;     This routine creates a level 3 FITS file for the chosen window(s). If
 ;     the window is a Dumbbell or an Intensity-window no fits are made.
-;     The data is arranged so that cfit_block can read it. The routine estimates
-;     the positions of the main peaks and fits those to the data by calling cfit_block.
+;     The data is arranged so that cfit_block can read it. The routine either estimates
+;     the positions of the main peaks or uses a line list to define the peaks and fits those 
+;     to the data by calling cfit_block.
 ;     This may take a while. After that, the xcfit_block routine is called with
 ;     the data and the fit, where one can view the result and make adjustments to the fit.
 ;     After exiting xcfit_block by using the 'Exit' button, the routine saves the fits
 ;     into a level 3 FITS file and moves this file into the $SPICE_DATA/user/ directory.
-;     The data cube will be saved in its original untransformed configuration.
+;     The resulting file will by default contain only one extension per window, the RESULTS extension.
+;     The DATA is linked to the level 2 file as an external extension. RESIDUALS and LAMBDA can be
+;     reconstructed when reading the file, and WEIGHTS, INCLUDE and CONSTANT are only saved
+;     if they contain non-default values.
 ;
 ; OPTIONAL INPUTS:
 ;     window_index : The index of the desired window(s), default is all windows.
@@ -327,6 +331,7 @@ END
 ;     progress_widget: An object of type SPICE_CREATE_L3_PROGRESS, to display the progress of the creation.
 ;     group_leader: Widget ID of parent widget.
 ;     force_version : The version number (integer) the level 3 file must have.
+;     pipeline_dir: path to output directory used by the pipeline where L3 file is saved
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -355,15 +360,9 @@ END
 ;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
 ;                 that using the line list when fitting fails in many cases.
 ;
-;     pipeline_dir: path to output directory used by the pipeline where L3 file is saved
 ;     SAVE_XDIM1: If set, then the XDIM1 cube will be saved into the FITS file. Default is
 ;                 not to save it. This cube can be recalculated using the WCS parameters given either
 ;                 in HEADER_INPUT_DATA.
-;                 This keyword can also be an array of zeros and ones,
-;                 setting/unsetting this feature separately for each window.
-;     NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
-;                 It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
-;                 This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
 ;                 This keyword can also be an array of zeros and ones,
 ;                 setting/unsetting this feature separately for each window.
 ;     PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
@@ -387,7 +386,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
   force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, all_proc_steps=all_proc_steps, $
   no_line_list=no_line_list, $
-  SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+  SAVE_XDIM1=SAVE_XDIM1, PRINT_HEADERS=PRINT_HEADERS, $
   progress_widget=progress_widget, group_leader=group_leader, pipeline_dir=pipeline_dir, quiet=quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
@@ -446,15 +445,29 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
               return, 'Cancelled'
            endif
         ENDIF
-        
+        print,trim(n_elements(window_index)-window_index[iwindow])+' windows remaining...'
         ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
                                 position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
         IF iwindow EQ 0 THEN version += version_add
         if size(ana, /type) NE 8 then continue
-        IF collect_ana THEN BEGIN
-           if iwindow eq 0 then all_ana = ana $
-           else all_ana = [all_ana, ana]
-        ENDIF
+
+        history = ['']
+        help,calls=calls
+        hind = 0
+        hlen = strlen(history[hind])
+        for i=N_ELEMENTS(calls)-1,0,-1 do begin
+          caller = strtrim(strsplit(calls[i], '<', /extract), 2)
+          caller = caller[0]
+          if caller eq '$MAIN$' then continue
+          new_hlen = strlen(caller) + 3
+          if hlen+new_hlen gt 63 then begin
+            history = [history, '']
+            hind += 1
+          endif
+          history[hind] = history[hind] + ' > ' + caller
+          hlen = strlen(history[hind])
+        endfor
+        handle_value, ana.history_h,history, /set, /no_copy
         
         if ~keyword_set(no_fitting) then begin
            if ~keyword_set(quiet) then begin
@@ -505,7 +518,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
            file = (keyword_set(pipeline_dir)) ? pipeline_dir+'/'+filename_l3 : filepath(filename_l3, /tmp)
            
         endelse ; iwindow gt 0
-        
+
+        CREATOR = keyword_set(pipeline_dir) ? self.get_header_keyword('CREATOR', window_index[iwindow], '') : getenv("USER")
+
         ana2fits, ANA, FILEPATH_OUT=file, $
           N_WINDOWS=N_ELEMENTS(window_index), WINNO=iwindow, $
           DATA_ID=DATA_ID, TYPE_XDIM1='WAVE', $
@@ -513,10 +528,15 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
           IS_EXTENSION=IS_EXTENSION, LEVEL='L3', VERSION=number_version_l3, $
           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
           PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=self->get_header(window_index[iwindow]), $
-          SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+          SAVE_XDIM1=SAVE_XDIM1, PRINT_HEADERS=PRINT_HEADERS, $
           SAVE_NOT=SAVE_NOT, $
           headers_results=headers_results, headers_data=headers_data
           
+        IF collect_ana THEN BEGIN
+          if iwindow eq 0 then all_ana = ana $
+          else all_ana = [all_ana, ana]
+        ENDIF
+
         delete_analysis, ana
                 
         IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
