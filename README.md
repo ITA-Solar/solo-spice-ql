@@ -52,8 +52,10 @@ SUBPATH = Subdirectory path to mirror.  If not passed, the entire directory tree
 - '2021/10'       Month
 - '2021'          Year
 
-This first tool is very user-friendly, but it requires the environment variables SPICE_DATA and SPICE_PWD
+This first tool is very user-friendly, but it requires the environment variable SPICE_DATA 
 to be set. It also requires that 'wget' is installed on the computer.
+If the environment variable SPICE_PWD is set, then this tool will allow the download of all
+SPICE FITS files, otherwise only publicly available files can be downloaded.
 
 The second tool is more general:
 ```
@@ -65,6 +67,10 @@ See 'rget_fetch_files.pro' for more details.
 
 Third, the files can also be downloaded manually from this website:
 http://astro-sdc-db.uio.no/vol/spice/fits/
+
+Fourth, the publicly available files can also be downloaded manually from the 
+Solar Orbiter Archive:
+https://soar.esac.esa.int/soar/#home
 
 
 ## Quicklook Software
@@ -192,7 +198,7 @@ There are several useful tools to manage SPICE files:
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
 date and time. The line with this format will be edited:
 ```
-; $Id: 2022-11-07 14:02 CET $
+; $Id: 2024-02-09 14:03 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
 description at the beginning of the file. 
