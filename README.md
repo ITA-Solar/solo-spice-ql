@@ -1,6 +1,12 @@
 # SPICE Quicklook and Data Analysis Software
 
-For more detailed information, see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/).
+See [Data analysis user's manual](https://spice-wiki.ias.u-psud.fr/doku.php/data:data_analysis_manual)
+for a general description of the SPICE data and its use. 
+You'll also find a link to the Data Products Description Document (DPDD).
+
+For more detailed information on the software described within this README, 
+see [our wiki page](https://github.com/ITA-Solar/solo-spice-ql/wiki/).
+
 If you find any bugs, please (preferably) [raise a new issue](https://github.com/ITA-Solar/solo-spice-ql/issues/new/choose)
 or send an email to prits-group@astro.uio.no
 
@@ -198,7 +204,7 @@ There are several useful tools to manage SPICE files:
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
 date and time. The line with this format will be edited:
 ```
-; $Id: 2024-02-09 14:03 CET $
+; $Id: 2024-02-09 14:07 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
 description at the beginning of the file. 
