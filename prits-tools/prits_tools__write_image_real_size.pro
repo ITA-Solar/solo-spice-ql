@@ -82,6 +82,8 @@
 ;               WRITE_BMP, WRITE_GIF, WRITE_JPEG, WRITE_PNG, WRITE_PPM, WRITE_SRF, WRITE_TIFF and WRITE_JPEG2000.
 ;
 ; KEYWORD PARAMETERS:
+;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
+;               This keyword should not be set, if SMOOTH input is provided.
 ;     REMOVE_TRENDS: If set, remove horizontal and vertical trends in the
 ;                    image
 ;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
@@ -118,12 +120,12 @@
 ;     smooth, can be set to the width of the boxcar used by smooth
 ;
 ;-
-; $Id: 2024-02-08 12:02 CET $
+; $Id: 2024-02-12 13:45 CET $
 
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
-  colortable=colortable, format=format, $
+  colortable=colortable, format=format, interpolation=interpolation, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
   title=title, $
@@ -306,7 +308,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, remove_trends = re
   pih, image_data_use, position=Win_position, $
     xstyle=5, ystyle=5, top=254, bottom=1, $
     background=0, color=255, title=title, $
-    min=min_image, max=max_image, $
+    min=min_image, max=max_image, smooth=interpolation, $
     _extra=_extra
 
   if show_plot then charsize=1.15 else charsize=1
