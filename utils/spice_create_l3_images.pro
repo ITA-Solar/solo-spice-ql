@@ -24,6 +24,8 @@
 ; OPTIONAL INPUTS:
 ;
 ; KEYWORDS:
+;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
+;               This keyword should not be set, if SMOOTH input is provided.
 ;     NO_TREE_STRUCT: If set, then the date tree structure won't be appended to OUT_DIR
 ;               (e.g. OUT_DIR/ instead of OUT_DIR/2020/06/21/)
 ;
@@ -51,11 +53,11 @@
 ;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
 ;
 ;-
-; $Id: 2024-02-12 11:46 CET $
+; $Id: 2024-02-12 13:47 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version, remove_trends = remove_trends, smooth = smooth, $
-                            no_background_images=no_background_images
+                            no_background_images=no_background_images, interpolation=interpolation
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
@@ -184,7 +186,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
         filename = filename_base2 + '.jpg'
         format = 'JPEG'
         prits_tools.write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
-          colortable=colortable, format=format, $
+          colortable=colortable, format=format, interpolation=interpolation, $
           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
           /SCALE_TO_RANGE, $
@@ -194,7 +196,7 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
         filename = filename_base2 + '_thumb.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
-          colortable=colortable, format=format, $
+          colortable=colortable, format=format, interpolation=interpolation, $
           height=64, border=0, reverse_colortable=reverse_colortable, $
           xrange1=xrange1, yrange1=yrange1, /SCALE_TO_RANGE, /no_axis, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
