@@ -48,9 +48,10 @@
 ;      Ver. 2, 24-Jan-2024, TF - New keyword VERSION, to set the version
 ;      number of L3ql files. If not set, the version will be 'V01'. Removed
 ;      "original' from full size jpgs.
+;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
 ;
 ;-
-; $Id: 2024-02-08 12:00 CET $
+; $Id: 2024-02-12 11:46 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version, remove_trends = remove_trends, smooth = smooth, $
@@ -79,13 +80,16 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
   if ~file_test(base_dir, /directory) then file_mkdir, base_dir
 
   ana = fits2ana(l3_file, headers_results=headers_results)
+
   for iana=0,N_ELEMENTS(ana)-1 do begin
 
     handle_value,ana[iana].result_h,result;,/no_copy
     handle_value,ana[iana].fit_h,fit;,/no_copy
-
+    
+    delete_analysis, ana[iana]
+    
     hdr = fitshead2struct(*headers_results[iana])
-
+   
     ; check that there is more than one exposures
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing=1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing=1)
