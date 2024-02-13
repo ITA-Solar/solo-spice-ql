@@ -34,7 +34,7 @@
 ;
 ; OPTIONAL INPUT:
 ;     SMOOTH: An integer. The width of the boxcar used when smoothing the
-;             image using the smooth function. If not set not smoothing is performed.
+;             image using the smooth function. If not set no smoothing is performed.
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
 ;                 https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword 
 ;                 to 100 (a color table that doesn't exist) signals that the 
@@ -84,8 +84,7 @@
 ; KEYWORD PARAMETERS:
 ;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
 ;               This keyword should not be set, if SMOOTH input is provided.
-;     REMOVE_TRENDS: If set, remove horizontal and vertical trends in the
-;                    image
+;     REMOVE_TRENDS: If set, remove horizontal and vertical trends in the image
 ;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
 ;               XRANGE1 and YRANGE1. If neither HEIGHT nor WIDTH is provided, then the width of the 
 ;               image will be adjusted. 
@@ -120,7 +119,7 @@
 ;     smooth, can be set to the width of the boxcar used by smooth
 ;
 ;-
-; $Id: 2024-02-12 13:45 CET $
+; $Id: 2024-02-13 12:57 CET $
 
 
 
@@ -163,6 +162,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, remove_trends = re
   prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval=0, maxval=1, default=0.02
   prits_tools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
   prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval=0, maxval=100, default=75
+  prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval=0, /optional
   
   show_plot = keyword_set(show_plot)
   
