@@ -12,7 +12,7 @@
 ;               
 ;               YOU MAY BE BETTER SERVED BY USING THE FUNCTIONS:
 ;               WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING, IS_NOT_MISSING
-;               because those are already in the 'gen' branch of solarsoft.
+;               because those are already in the 'gen' branch of solarsoft. But those are less flexible.
 ;
 ; Use         : result = PRITS_TOOLS.CHECK_EQUALITY( VARIABLE, REFERENCE_VALUE [, /NANorINF] [, /SIGN] $
 ;                             [, TOLERANCE=TOLERANCE] )
@@ -48,7 +48,7 @@
 ;
 ; Modified    : Never
 ;
-; $Id: 2023-05-25 13:39 CEST $
+; $Id: 2024-02-13 14:29 CET $
 ;-
 
 FUNCTION PRITS_TOOLS::CHECK_EQUALITY, VARIABLE, REFERENCE_VALUE, TOLERANCE=TOLERANCE, NANorINF=NANorINF, SIGN=SIGN
