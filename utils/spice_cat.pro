@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2024-02-13 10:58 CET $
+; $Id: 2024-02-13 13:50 CET $
 ;-            
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
@@ -1045,7 +1045,7 @@ PRO spice_cat::build_widget
   self.build_table
   
   widget_control,w.top_base, /realize
-  spice_center_window, w.top_base
+  prits_tools.center_window, w.top_base
   
   ;; Make table fill available space despite /scroll
   widget_control,w.top_base, tlb_get_size=tlb_size

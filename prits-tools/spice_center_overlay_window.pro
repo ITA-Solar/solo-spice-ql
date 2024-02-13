@@ -8,7 +8,7 @@
 ;       Widgets
 ;
 ;  MODIFICATION HISTORY:
-;       2020-08-28  SVHH Adapted from spice_center_window
+;       2020-08-28  SVHH Adapted from prits_tools.center_window
 ;
 ;-
 ; -----------------------------------------------------------------------------
@@ -17,7 +17,7 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2020-11-25 21:19 CET $
+; $Id: 2024-02-13 13:50 CET $
 ;-
 
 PRO spice_center_overlay_window, new_window, old_window
