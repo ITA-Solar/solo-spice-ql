@@ -26,10 +26,11 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2024-02-13 13:47 CET $
+; $Id: 2024-02-13 13:59 CET $
 ;-
 
 PRO prits_tools::center_window, top_base
+  compile_opt idl2, static
   screen_size = spice_get_screen_size()
   
   ;; Left edge offset from left edge of screen is...

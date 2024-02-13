@@ -17,10 +17,11 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2024-02-13 13:52 CET $
+; $Id: 2024-02-13 13:59 CET $
 ;-
 
 PRO prits_tools::center_overlay_window, new_window, old_window
+  compile_opt idl2, static
   widget_control, new_window, tlb_get_size=new_window_tlb_size
   widget_control, old_window, tlb_get_size=old_window_tlb_size
   widget_control, old_window, tlb_get_offset=old_window_offset
