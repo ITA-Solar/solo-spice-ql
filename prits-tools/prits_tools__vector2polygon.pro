@@ -10,7 +10,7 @@
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      polygon = VECTOR2POLYGON(x [, y, xpolygon=xpolygon, ypolygon=ypoligon] )
+;      polygon = PRITS_TOOLS.VECTOR2POLYGON(x [, y, xpolygon=xpolygon, ypolygon=ypoligon] )
 ;
 ; INPUTS:
 ;      x: Either a 1-dimensional vector giving the x-coordinates of all points that should be in the polygon.
@@ -32,7 +32,7 @@
 ; 
 ; EXAMPLE USAGE:
 ;      points = fix(99*randomu(seed, 2, 33))
-;      vector = vector2polygon(points, xpolygon=xpolygon, ypolygon=ypolygon)
+;      vector = prits_tools.vector2polygon(points, xpolygon=xpolygon, ypolygon=ypolygon)
 ;      
 ;      ; Plot method A, plotting each line
 ;      window, 0
@@ -61,10 +61,11 @@
 ; HISTORY:
 ;      Ver. 1, 10-Mar-2022, Martin Wiesmann
 ;-
-; $Id: 2022-03-15 15:03 CET $
+; $Id: 2024-02-13 14:06 CET $
 
 
-FUNCTION vector2polygon, x_in, y_in, xpolygon=xpolygon, ypolygon=ypolygon
+FUNCTION prits_tools::vector2polygon, x_in, y_in, xpolygon=xpolygon, ypolygon=ypolygon
+  compile_opt idl2, static
 
   size_x = size(x_in)
   size_y = size(y_in)
