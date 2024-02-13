@@ -4,12 +4,13 @@
 ;
 ; PURPOSE:
 ;      This procedure creates images from level 3 data. The filename is constructed with this formula:
-;      filename = l3_filename + '_' + fns('##',hdr.l2winno) + '_' + fns('##',icomp+1) + '_' + param.name + $
+;      filename = l3_filename(but replace 'spice' with 'spice-ql' and the l3 fileversionnumber with the new fileversionnumber) + 
+;        '_' + fns('##',hdr.winno) + '_' + fns('##',icomp+1) + '_' + param.name + $
 ;        '_' + image_type(see list below) + file-suffix
 ;
 ;      It will create these images per fit parameter of each fit component for each window:
-;        - 1 JPG image where data area has the original size (i.e. 1 pixel of data is 1 pixel in the image). (image_type='original')
-;        - 1 PNG image without any axis of height 64 pixels. (image_type='64')
+;        - 1 JPG image where data area has the original size (i.e. 1 pixel of data is 1 pixel in the image). (image_type='')
+;        - 1 PNG image without any axis of height 64 pixels. (image_type='thumb')
 ;
 ; CATEGORY:
 ;      Solar Orbiter - SPICE; Utility.
@@ -22,12 +23,19 @@
 ;      out_dir: The directory in which the images should be saved to.
 ;
 ; OPTIONAL INPUTS:
+;     SMOOTH: An integer. The width of the boxcar used when smoothing the
+;             image using the smooth function. If not set no smoothing is performed.
+;     VERSION: A string giving the version number of the file. Default is '01'.
 ;
 ; KEYWORDS:
 ;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
 ;               This keyword should not be set, if SMOOTH input is provided.
 ;     NO_TREE_STRUCT: If set, then the date tree structure won't be appended to OUT_DIR
 ;               (e.g. OUT_DIR/ instead of OUT_DIR/2020/06/21/)
+;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
+;     REMOVE_TRENDS: If set, remove horizontal and vertical trends in the image
+;     no_background_images: If set, then the images for the background component will not 
+;               be created.
 ;
 ; OUTPUTS:
 ;      Writes jpeg and png files with images into out_dir.
@@ -53,7 +61,7 @@
 ;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
 ;
 ;-
-; $Id: 2024-02-12 13:47 CET $
+; $Id: 2024-02-13 12:55 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version, remove_trends = remove_trends, smooth = smooth, $
@@ -61,8 +69,8 @@ PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, sho
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
-  
-  default, version, '01'
+  prits_tools.parcheck, version, 0, "version", 'STRing', 0, default='01'
+  prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval=0, /optional
 
   l3_filename = file_basename(l3_file)
  
