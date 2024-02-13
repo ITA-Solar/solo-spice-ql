@@ -14,11 +14,11 @@ pro test_new
 
   endelse
 
-  !EXCEPT=2
+  !EXCEPT=0
 
 
 
-  if 1 then begin
+  if 0 then begin
 
 
 
@@ -96,6 +96,7 @@ pro test_new
 
 
 
+
   l2file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
   d=readfits(l2file,h)
   print,''
@@ -121,7 +122,7 @@ pro test_new
 
   out_dir = '/Users/mawiesma/data/spice/images'
 
-  spice_create_l3_images, l3_file, out_dir, /No_tree_struct
+  spice_create_l3_images, l3_file, out_dir, /No_tree_struct, /interpolation
 
   return
 
