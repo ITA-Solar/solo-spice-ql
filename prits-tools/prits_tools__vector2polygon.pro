@@ -10,7 +10,7 @@
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      polygon = PRITS_TOOLS.VECTOR2POLYGON(x [, y, xpolygon=xpolygon, ypolygon=ypoligon] )
+;      polygon = PRITS_TOOLS.VECTOR2POLYGON(x [, y] [, xpolygon=xpolygon] [, ypolygon=ypoligon] )
 ;
 ; INPUTS:
 ;      x: Either a 1-dimensional vector giving the x-coordinates of all points that should be in the polygon.
@@ -61,7 +61,7 @@
 ; HISTORY:
 ;      Ver. 1, 10-Mar-2022, Martin Wiesmann
 ;-
-; $Id: 2024-02-13 14:06 CET $
+; $Id: 2024-02-13 14:42 CET $
 
 
 FUNCTION prits_tools::vector2polygon, x_in, y_in, xpolygon=xpolygon, ypolygon=ypolygon
