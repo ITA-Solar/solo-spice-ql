@@ -16,7 +16,9 @@
 ;      Solar Orbiter - SPICE; Utility.
 ;
 ; CALLING SEQUENCE:
-;      spice_create_l3_images, l3_file, out_dir
+;      spice_create_l3_images, l3_file, out_dir [, smooth=smooth] [, /interpolation] $
+;        [, version=version] [, /remove_trends] [, /no_background_images] $
+;        [, /NO_TREE_STRUCT] [, /show_plot]
 ;
 ; INPUTS:
 ;      l3_file: The full path to the level 3 SPICE FITS file.
@@ -61,11 +63,12 @@
 ;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
 ;
 ;-
-; $Id: 2024-02-13 12:55 CET $
+; $Id: 2024-02-13 13:28 CET $
 
 
-PRO spice_create_l3_images, l3_file, out_dir, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, version=version, remove_trends = remove_trends, smooth = smooth, $
-                            no_background_images=no_background_images, interpolation=interpolation
+PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
+  version=version, remove_trends=remove_trends, no_background_images=no_background_images, $
+  NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0

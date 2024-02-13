@@ -14,8 +14,8 @@
 ;      IMAGES -- writing image files.
 ;
 ; CALLING SEQUENCE:
-;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME]
-;     [,REMOVE_TRENDS=REMOVE_TRENDS] [,SMOOTH=SMOOTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
+;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME] $
+;       [, /REMOVE_TRENDS] [,SMOOTH=SMOOTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
 ;       [, XRANGE1=XRANGE1] [, XRANGE2=XRANGE2] [, YRANGE1=YRANGE1] [, YRANGE2=YRANGE2] $
 ;       [, XTITLE1=XTITLE1] [, XTITLE2=XTITLE2] [, YTITLE1=YTITLE1] [, YTITLE2=YTITLE2] $
 ;       [, TITLE=TITLE] $
@@ -33,14 +33,14 @@
 ;               Default is 'image.xxx' (where xxx is the chosen file format) in the current directory.
 ;
 ; OPTIONAL INPUT:
-;     SMOOTH: An integer. The width of the boxcar used when smoothing the
-;             image using the smooth function. If not set no smoothing is performed.
+;     SMOOTH:   An integer. The width of the boxcar used when smoothing the
+;               image using the smooth function. If not set no smoothing is performed.
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
-;                 https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword 
-;                 to 100 (a color table that doesn't exist) signals that the 
-;                 input image_data is a velocity image that needs special
-;                 treatment, among other things using the eis_colors,/velocity
-;                 red-blue color table.
+;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword 
+;               to 100 (a color table that doesn't exist) signals that the 
+;               input image_data is a velocity image that needs special
+;               treatment, among other things using the eis_colors,/velocity
+;               red-blue color table.
 ;     FORMAT:   A string, indicating the file format in which the image should be saved to.
 ;               Possible values: BMP, GIF, JPEG, PNG, PPM, SRF, TIFF, JPEG2000 (=JP2). Default is JPEG.
 ;     XRANGE1:  A 2-element numeric vector, indicating the data range displayed on the lower axis.
@@ -90,7 +90,7 @@
 ;               image will be adjusted. 
 ;               This keyword is ignored if XRANGE1 and YRANGE1 are not provided, or if both HEIGHT and WIDTH
 ;               are provided.
-;     NO_AXIS: If set, then no axis will be plotted, eventhough XRANGEn and/or YRANGEn is provided.
+;     NO_AXIS:  If set, then no axis will be plotted, eventhough XRANGEn and/or YRANGEn is provided.
 ;               Useful if you want to provide XRANGE1 and YRANGE1 to be able to set SCALE_TO_RANGE.
 ;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
 ;     REVERSE_COLORTABLE: If set, then the colors of the given colortable are reversed. Useful for e.g.
@@ -119,7 +119,7 @@
 ;     smooth, can be set to the width of the boxcar used by smooth
 ;
 ;-
-; $Id: 2024-02-13 12:57 CET $
+; $Id: 2024-02-13 13:28 CET $
 
 
 
