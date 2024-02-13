@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2022-08-11 15:08 CEST $
+; $Id: 2024-02-13 10:58 CET $
 ;-            
 ;;
 PRO spice_cat::_____________UTILITY_FUNCTIONS & END
@@ -280,7 +280,7 @@ END
 
 
 PRO spice_cat::update_current_filters, keywords
-  spice_default, keywords, self.curr.column_names
+  prits_tools.default, keywords, self.curr.column_names
   
   IF self.curr.haskey("filters_as_text") THEN BEGIN
      inited_current_filters_as_text = self.curr.filters_as_text
