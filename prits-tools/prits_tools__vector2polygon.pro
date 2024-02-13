@@ -4,7 +4,7 @@
 ;
 ; PURPOSE:
 ;      This function computes the convex hull, a polygon, that encloses all input points.
-;      The QHULL procedure is used for this purpose (https://www.l3harrisgeospatial.com/docs/qhull.html).
+;      The QHULL procedure is used for this purpose (https://www.nv5geospatialsoftware.com/docs/qhull.html).
 ;
 ; CATEGORY:
 ;      SPICE -- utility
@@ -61,7 +61,7 @@
 ; HISTORY:
 ;      Ver. 1, 10-Mar-2022, Martin Wiesmann
 ;-
-; $Id: 2024-02-13 14:42 CET $
+; $Id: 2024-02-13 14:45 CET $
 
 
 FUNCTION prits_tools::vector2polygon, x_in, y_in, xpolygon=xpolygon, ypolygon=ypolygon
