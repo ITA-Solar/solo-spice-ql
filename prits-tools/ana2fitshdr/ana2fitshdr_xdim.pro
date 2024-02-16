@@ -40,8 +40,9 @@
 ;
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
+;      Ver. 1.1, 9-Feb-2024, Terje Fredvik - fixed typo in TYPE_XDIM1 parcheck
 ;-
-; $Id: 2024-02-09 14:36 CET $
+; $Id: 2024-02-16 13:09 CET $
 
 
 FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, $
@@ -51,7 +52,7 @@ FUNCTION ana2fitshdr_xdim, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, X
   prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
   prits_tools.parcheck, XDIM1, 0, 'XDIM', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
   prits_tools.parcheck, WCS, 0, 'WCS', 8, 0, /optional
-  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0. /optional
+  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0, /optional
 
   IF ~keyword_set(SAVE_XDIM1) || (N_ELEMENTS(XDIM1) EQ 0 && N_ELEMENTS(WCS) EQ 0) THEN return, ''
   IF N_ELEMENTS(XDIM1) EQ 0 THEN xdim_array = fltarr(wcs.naxis, /nozero) $

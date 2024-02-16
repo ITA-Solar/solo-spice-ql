@@ -1,5 +1,5 @@
 ;+
-;  FILE: spice_center_window
+;  FILE: prits_tools__center_window
 ;
 ;  PURPOSE:
 ;       Center a top-level base on the screen
@@ -8,7 +8,7 @@
 ;       Widgets
 ;
 ;  CONTENTS:
-;       spice_center_window
+;       prits_tools::center_window
 ;
 ;  NAMED STRUCTURES:
 ;       none.
@@ -26,10 +26,11 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2020-11-25 21:19 CET $
+; $Id: 2024-02-13 13:59 CET $
 ;-
 
-PRO spice_center_window, top_base
+PRO prits_tools::center_window, top_base
+  compile_opt idl2, static
   screen_size = spice_get_screen_size()
   
   ;; Left edge offset from left edge of screen is...

@@ -1,5 +1,5 @@
 ;+
-;  FILE: spice_center_overlay_window
+;  FILE: prits_tools__center_overlay_window
 ;
 ;  PURPOSE:
 ;       Center a top-level base relative to another one
@@ -8,7 +8,7 @@
 ;       Widgets
 ;
 ;  MODIFICATION HISTORY:
-;       2020-08-28  SVHH Adapted from spice_center_window
+;       2020-08-28  SVHH Adapted from prits_tools.center_window
 ;
 ;-
 ; -----------------------------------------------------------------------------
@@ -17,10 +17,11 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2020-11-25 21:19 CET $
+; $Id: 2024-02-13 13:59 CET $
 ;-
 
-PRO spice_center_overlay_window, new_window, old_window
+PRO prits_tools::center_overlay_window, new_window, old_window
+  compile_opt idl2, static
   widget_control, new_window, tlb_get_size=new_window_tlb_size
   widget_control, old_window, tlb_get_size=old_window_tlb_size
   widget_control, old_window, tlb_get_offset=old_window_offset

@@ -81,8 +81,8 @@
 ;
 ; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-02-09 14:36 CET $
-;-
+; $Id: 2024-02-16 13:09 CET $
+;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
   pattern = "solo_L._spice[^.]+" 
@@ -382,9 +382,9 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
                               new_files=new_files, ignore_L0=ignore_L0
   self.d = dictionary()
   
-  spice_default, spice_data_dir,getenv("SPICE_DATA")
+  prits_tools.default, spice_data_dir,getenv("SPICE_DATA")
   
-  spice_default, use_old_catalog, 1
+  prits_tools.default, use_old_catalog, 1
   
   self.d.quiet = keyword_set(quiet)
   self.d.use_old_catalog = use_old_catalog

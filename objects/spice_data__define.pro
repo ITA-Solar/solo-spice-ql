@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2024-02-09 14:36 CET $
+; $Id: 2024-02-16 13:09 CET $
 
 
 ;+
@@ -538,7 +538,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         ENDIF
 
         delete_analysis, ana
-                
+
         IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
         IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
         IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
