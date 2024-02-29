@@ -69,7 +69,7 @@ if public then begin
     ' --no-check-certificate --cut-dirs=2 -P ' + spice_data + ' '
   command = command0 + remote_dir + 'catalog.csv'
 endif else begin
-  remote_dir = 'http://astro-sdc-db.uio.no/vol/spice/fits/'
+  remote_dir = 'https://sdc-db.uio.no/vol/spice/fits/'
   command0 = 'wget -nH -L -m -erobots=off --user=spice --password=' + pwd + $
     ' --no-check-certificate --cut-dirs=3 -P ' + spice_data + ' '  
   command = command0 + remote_dir + 'spice_catalog.txt'
