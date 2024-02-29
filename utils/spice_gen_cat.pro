@@ -81,7 +81,7 @@
 ;
 ; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-02-13 10:58 CET $
+; $Id: 2024-02-29 10:19 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -227,6 +227,7 @@ FUNCTION spice_gen_cat::add_file, fits_filename
   header = self.get_header(fits_filename)
   relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
   relative_path = file_dirname(relative_filename)
+  IF RELATIVE_PATH.CONTAINS('~') THEN STOP
   self.d.file_hash[key] = self.line_from_header(header, relative_path)
 
   return, key
