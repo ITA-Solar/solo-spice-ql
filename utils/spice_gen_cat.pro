@@ -81,7 +81,7 @@
 ;
 ; Version     : Version 13, TF, 17 January 2024
 ;
-; $Id: 2024-02-29 10:19 CET $
+; $Id: 2024-02-29 10:37 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -208,6 +208,7 @@ FUNCTION spice_gen_cat::line_from_header, header, relative_path
      value = trim(fxpar(header,keyword, missing=missing,/multivalue))
      IF keyword EQ "FILE_PATH" OR keyword EQ "ICON_PATH" THEN BEGIN
         value = relative_path
+        IF value.contains('spice_home') THEN stop
      END
      value_list.add, value[0]
   END
