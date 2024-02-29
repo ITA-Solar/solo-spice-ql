@@ -78,10 +78,12 @@
 ;                          New keyword IGNORE_L0. If set, and input
 ;                          spice_data_dir is the top level of the FITS file
 ;                          tree, ignore all files in the level0 directory.
+;              Version 14, TF, 29.02.2024
+;                          ::add_file: Expand fits filename path
 ;
-; Version     : Version 13, TF, 17 January 2024
+; Version     : Version 14, TF, 29 February 2024
 ;
-; $Id: 2024-02-13 10:58 CET $
+; $Id: 2024-02-29 12:57 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -225,7 +227,8 @@ FUNCTION spice_gen_cat::add_file, fits_filename
   END
  
   header = self.get_header(fits_filename)
-  relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
+  fits_filename_expanded = expand_path(fits_filename)
+  relative_filename = fits_filename_expanded.replace(self.d.spice_datadir + "/", "")
   relative_path = file_dirname(relative_filename)
   self.d.file_hash[key] = self.line_from_header(header, relative_path)
 
@@ -245,7 +248,6 @@ PRO spice_gen_cat::populate_hash
      filelist = self.d.filelist
      print,' on disk:'
   ENDELSE
-  
   n_files = n_elements(filelist)
   n_modified = self.d.n_modified_files
   n_new =  n_files - n_modified
