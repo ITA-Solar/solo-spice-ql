@@ -80,10 +80,14 @@
 ;                          tree, ignore all files in the level0 directory.
 ;              Version 14, TF, 29.02.2024
 ;                          ::add_file: Expand fits filename path
+;              Version 15, TF, 05.03.2024
+;                          New method ::copy_file_to_sdc_fs. Use file_copy to
+;                          copy the newly generated astro-sdc-fs keyword_info_file/catalog
+;                          file/hash save file to sdc-fs.
 ;
-; Version     : Version 14, TF, 29 February 2024
+; Version     : Version 15, TF, 5 March 2024
 ;
-; $Id: 2024-02-29 12:57 CET $
+; $Id: 2024-03-05 14:57 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -113,6 +117,14 @@ END
 ;;
 ;; WRITING:
 ;;
+
+PRO spice_gen_cat::copy_file_to_sdc_fs, filename
+  IF ~self.d.running_as_pipeline THEN return
+  sdc_fs_filename = (filename).replace('astro-sdc-fs','sdc-fs')
+  file_copy, filename, sdc_fs_filename, /overwrite
+END
+
+
 PRO spice_gen_cat::write_keyword_info_file, filename
   IF ~self.d.quiet THEN print
   IF ~self.d.quiet THEN print, "Converting keyword info to json"
@@ -123,6 +135,7 @@ PRO spice_gen_cat::write_keyword_info_file, filename
   printf, lun, json
   free_lun, lun
   file_move, filename + '.tmp', filename, /overwrite
+  self.copy_file_to_sdc_fs, filename
 END
 
 
@@ -130,7 +143,7 @@ PRO spice_gen_cat::write_plaintext, filename
   print
   print, "Writing " + filename
   tmp_filename = filename + '.tmp'
-  OPENW,lun, tmp_filename, /get_lun
+  openw,lun, tmp_filename, /get_lun
   
   comma_separated_keywords = self.d.keyword_array.join(",")
   printf,lun,comma_separated_keywords
@@ -142,6 +155,7 @@ PRO spice_gen_cat::write_plaintext, filename
   
   FREE_LUN,lun
   file_move, tmp_filename, filename,/overwrite  
+  self.copy_file_to_sdc_fs, filename
 END
 
 
@@ -168,14 +182,16 @@ PRO spice_gen_cat::write_csv, filename
   IF ~self.d.quiet THEN print
   print, "Writing " + filename
   write_csv, filename + '.tmp', lines, header=self.d.keyword_array
-  file_move, filename + '.tmp', filename, /overwrite
-END
+  file_move, filename + '.tmp', filename, /overwrite  
+  self.copy_file_to_sdc_fs, filename
+  END
 
 
 PRO spice_gen_cat::write_hash_save_file
   print,'Writing '+self.d.catalog_hash_save_file
   old_hash      = self.d.file_hash
   save, file=self.d.catalog_hash_save_file, old_hash
+  self.copy_file_to_sdc_fs, self.d.catalog_hash_save_file
 END
 
 
@@ -409,6 +425,8 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   self.d.ingest_new_files = self.d.new_files NE !NULL
   
   self.d.ignore_L0 = (keyword_set(ignore_L0))
+  
+  self.d.running_as_pipeline = getenv('USER') EQ 'osdcapps'
 
   IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
   
