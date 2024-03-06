@@ -90,7 +90,7 @@
 ;
 ; Version     : Version 16, TF, 6 March 2024
 ;
-; $Id: 2024-03-06 15:09 CET $
+; $Id: 2024-03-06 15:24 CET $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -124,7 +124,7 @@ END
 PRO spice_gen_cat::rsync_file_to_sdc_fs, filename
   IF ~self.d.running_as_pipeline THEN return
   sdc_fs_filename = (filename).replace('astro-sdc-fs','sdc-fs')
-  rsync_command = 'rsync -av '+filename+' '+sdc_fs_filenam
+  rsync_command = 'rsync -av '+filename+' '+sdc_fs_filename
   stop
   spawn, rsync_command, rsync_output
 END
