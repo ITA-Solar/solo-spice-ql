@@ -555,6 +555,14 @@ function fits2ana, fitsfile, windows=windows, $
 
     ENDIF ; size_data[0] GT 0
 
+    IF debug THEN BEGIN
+      print,''
+      print,''
+      print,' - RESIDUALS -'
+      print,''
+      help,residual
+    ENDIF
+
 
     IF ~headers_only THEN BEGIN
       
