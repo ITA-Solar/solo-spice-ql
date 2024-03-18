@@ -63,7 +63,7 @@
 ;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
 ;
 ;-
-; $Id: 2024-02-13 13:28 CET $
+; $Id: 2024-03-18 14:15 CET $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
@@ -96,6 +96,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
 
   for iana=0,N_ELEMENTS(ana)-1 do begin
 
+    handle_value,ana[iana].data_h,data;,/no_copy
     handle_value,ana[iana].result_h,result;,/no_copy
     handle_value,ana[iana].fit_h,fit;,/no_copy
     
@@ -115,6 +116,24 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
 
+    size_data = size(data)
+    startrow = 0
+    for i=0,size_data[3]/2-1 do begin
+      ind = where(data[*,*,i,*] EQ data[*,*,i,*], count)
+      if count gt 0 then begin
+        startrow = i
+        break
+      endif
+    endfor
+    endrow = size_data[3]-1
+    for i=size_data[3]-1,size_data[3]/2,-1 do begin
+      ind = where(data[*,*,i,*] EQ data[*,*,i,*], count)
+      if count gt 0 then begin
+        endrow = i
+        break
+      endif
+    endfor
+
     n_components = N_TAGS(fit)
     ipartotal = 0
     for icomp=0,n_components-1 do begin
@@ -126,38 +145,28 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         param = fit_cur.param[ipar]
         filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
         ; crop image so that lines with invalid data is not shown
+        image_data = reform(result[ipartotal,*,startrow:endrow,*])
+        help,image_data
+
         IF naxis4 GT 1 THEN BEGIN
-          image_data = reform(result[ipartotal,*,*, *])
+          ; sit-and-stare
+          xtitle1 = 'Time [sec]'
+          xrange1 = [coords[3,0,0,startrow,0], coords[3,0,0,startrow,-1]]
+          xrange2 = [coords[3,0,0,endrow,0], coords[3,0,0,endrow,-1]]
+          yrange1 = [coords[2,0,0,startrow,0], coords[2,0,0,endrow,0]]
+          yrange2 = [coords[2,0,0,startrow,-1], coords[2,0,0,endrow,-1]]
+          SCALE_TO_RANGE = 0
+          image_data = transpose(image_data)
         ENDIF ELSE BEGIN
-          image_data = reform(result[ipartotal,*,*])
+          ; raster
+          xtitle1 = 'Solar X [arcsec]'
+          xrange1 = [coords[1,0,0,startrow], coords[1,0,-1,startrow]]
+          xrange2 = [coords[1,0,0,endrow], coords[1,0,-1,endrow]]
+          yrange1 = [coords[2,0,0,startrow], coords[2,0,0,endrow]]
+          yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,endrow]]
+          SCALE_TO_RANGE = 1
         ENDELSE
-        size_image = size(image_data)
-        startrow = 0
-        for i=0,size_image[2]/2-1 do begin
-          ind = where(image_data[*,i] EQ image_data[*,i], count)
-          if count gt 0 then begin
-            startrow = i
-            break
-          endif
-        endfor
-        endrow = size_image[2]-1
-        for i=size_image[2]-1,size_image[2]/2,-1 do begin
-          ind = where(image_data[*,i] EQ image_data[*,i], count)
-          if count gt 0 then begin
-            endrow = i
-            break
-          endif
-        endfor
-        image_data = image_data[*,startrow:endrow]
-
-
-        xrange1 = [coords[1,0,0,startrow], coords[1,0,-1,startrow]]
-        xrange2 = [coords[1,0,0,endrow], coords[1,0,-1,endrow]]
-        yrange1 = [coords[2,0,0,startrow], coords[2,0,0,endrow]]
-        yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,endrow]]
-
-        xtitle1='Solar X [arcsec]'
-        ytitle1='Solar Y [arcsec]'
+        ytitle1 = 'Solar Y [arcsec]'
 
         case param.name of
           'velocity': begin
@@ -200,7 +209,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
           colortable=colortable, format=format, interpolation=interpolation, $
           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
-          /SCALE_TO_RANGE, $
+          SCALE_TO_RANGE=SCALE_TO_RANGE, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
           reverse_colortable=reverse_colortable, show_plot=show_plot
 
@@ -209,7 +218,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         prits_tools.write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
           colortable=colortable, format=format, interpolation=interpolation, $
           height=64, border=0, reverse_colortable=reverse_colortable, $
-          xrange1=xrange1, yrange1=yrange1, /SCALE_TO_RANGE, /no_axis, $
+          xrange1=xrange1, yrange1=yrange1, SCALE_TO_RANGE=SCALE_TO_RANGE, /no_axis, $
           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
 
         ipartotal++
