@@ -10,7 +10,9 @@ pro test_new
   endif else begin
 
     ; office
-    file = '/Users/mawiesma/data/spice/level2/2023/10/06/solo_L2_spice-n-ras_20231006T142008_V05_218103906-017.fits'
+    file = '/Users/mawiesma/data/spice/level2/2023/10/06/solo_L2_spice-n-ras_20231006T142008_V05_218103906-017.fits' ; raster
+
+    file_sit = '/Users/mawiesma/data/spice/level2/2023/11/03/solo_L2_spice-n-sit_20231103T213253_V01_218104424-000.fits' ; sit-and-stare
 
   endelse
 
@@ -95,6 +97,61 @@ pro test_new
 
 
 
+
+
+  ; test creation of level 3 and images
+  
+  if 1 then begin
+    
+
+    no_fitting=1
+    no_widget=1
+    no_xcfit_block=1
+    SAVE_XDIM1=0
+    PRINT_HEADERS=0
+
+    box_message,'testing raster'
+
+    ol2 = spice_data(file)
+    ;window_index = 0;[1,3]
+    window_index = !NULL
+
+    l3_file = ol2->create_l3_file( window_index, $
+      no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, $
+      SAVE_XDIM1=SAVE_XDIM1, PRINT_HEADERS=PRINT_HEADERS )
+
+    spice_ingest, l3_file, destination=destination, /force, $
+      user_dir=~keyword_set(official_l3dir), top_dir=images_top_dir, path_index=path_index, /dry_run, /quiet
+    out_dir = file_dirname(destination[0], /mark_directory)
+    out_dir = out_dir.replace('level3', 'images')
+    spice_create_l3_images, l3_file, out_dir, /NO_TREE_STRUCT
+  
+    
+    box_message,'testing sit-and-stare'
+    
+    ol2 = spice_data(file_sit)
+    ;window_index = 0;[1,3]
+    window_index = !NULL
+    
+    box_message, 'create l3'
+
+    l3_file = ol2->create_l3_file( window_index, $
+      no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, $
+      SAVE_XDIM1=SAVE_XDIM1, PRINT_HEADERS=PRINT_HEADERS )
+
+    box_message, 'create images'
+    
+    spice_ingest, l3_file, destination=destination, /force, $
+      user_dir=~keyword_set(official_l3dir), top_dir=images_top_dir, path_index=path_index, /dry_run, /quiet
+    out_dir = file_dirname(destination[0], /mark_directory)
+    out_dir = out_dir.replace('level3', 'images')
+    spice_create_l3_images, l3_file, out_dir, /NO_TREE_STRUCT
+
+
+    return
+    
+  endif
+  
 
 
   l2file = '/Users/mawiesma/data/spice/level2/2023/10/05/solo_L2_spice-n-ras_20231005T011034_V01_218103890-000.fits'
