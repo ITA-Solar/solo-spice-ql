@@ -94,7 +94,7 @@
 ;
 ; Version    : Version 17, TF, 17 April 2024
 ;
-; $Id: 2024-04-17 11:28 CEST $
+; $Id: 2024-04-17 14:05 CEST $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -128,7 +128,8 @@ END
 PRO spice_gen_cat::rsync_file_to_other_servers, filename
   IF ~self.d.running_as_pipeline THEN return
   
-  FOREACH other_server, self.d.other_servers, ix DO BEGIN 
+  FOREACH other_server, self.d.other_servers, ix DO BEGIN
+     print,'rsyncing '+file_basename(filename) +' on '+self.d.host + ' to '+other_server
      rsync_command = 'rsync -av '+filename+' osdcapps@'+other_server+':'+filename
      spawn, rsync_command, rsync_output
      print,rsync_output
@@ -403,7 +404,7 @@ END
 FUNCTION spice_gen_cat::get_catalog_hash_save_file
   level = self.d.spice_datadir.extract('level[0-9]')
   level_dir = (level EQ '') ? '' : '/l'+level.extract('[0-9]')+'/'
-  return, getenv('instr_output')+'/catalog_hashes/'+(level_dir)+'spice_catalog_hash.save'
+  return, getenv('SPICE')+'/pipeline_output/catalog_hashes/'+(level_dir)+'spice_catalog_hash.save'
 END
 
 
@@ -439,7 +440,8 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   
   self.d.running_as_pipeline = getenv('USER') EQ 'osdcapps'
   
-  self.d.other_servers = spice_get_other_servers()
+  self.d.other_servers = spice_get_other_servers(host=host)
+  self.d.host = host
 
   IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
   
