@@ -86,11 +86,15 @@
 ;                          file/hash save file to sdc-fs.
 ;              Version 16, TF, 06.03.2024
 ;                          Renamed ::copy_file_to_sdc_fs to
-;                          rsync_file_to_sdc_fs, use rsync instead of file_copy
+;                          rsync_file_to_sdc_fs, use rsync instead of
+;                          file_copy
+;              Version 17, TF, 17.04.2024. New method
+;                          ::rsync_file_to_other_servers, rsyncs file to any
+;                          server returned by spice_get_other_servers()
 ;
-; Version     : Version 16, TF, 6 March 2024
+; Version    : Version 17, TF, 17 April 2024
 ;
-; $Id: 2024-03-06 15:32 CET $
+; $Id: 2024-04-17 10:27 CEST $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -121,11 +125,15 @@ END
 ;; WRITING:
 ;;
 
-PRO spice_gen_cat::rsync_file_to_sdc_fs, filename
+PRO spice_gen_cat::rsync_file_to_other_servers, filename
   IF ~self.d.running_as_pipeline THEN return
-  sdc_fs_filename = 'osdcapps@sdc-fs:'+(expand_path(filename)).replace('astro-sdc-fs','sdc-fs')
-  rsync_command = 'rsync -av '+filename+' '+sdc_fs_filename
-  spawn, rsync_command, rsync_output
+  
+  FOREACH other_server, self.d.other_servers, ix DO BEGIN 
+     rsync_command = 'rsync -av '+getenv('HOME')+'/'+filename+' osdcapps@'+other_server+':'+filename
+     stop
+     spawn, rsync_command, rsync_output
+     print,rsync_output
+  ENDFOREACH
 END
 
 
@@ -139,7 +147,7 @@ PRO spice_gen_cat::write_keyword_info_file, filename
   printf, lun, json
   free_lun, lun
   file_move, filename + '.tmp', filename, /overwrite
-  self.rsync_file_to_sdc_fs, filename
+  self.rsync_file_to_other_servers, filename
 END
 
 
@@ -159,7 +167,7 @@ PRO spice_gen_cat::write_plaintext, filename
   
   FREE_LUN,lun
   file_move, tmp_filename, filename,/overwrite  
-  self.rsync_file_to_sdc_fs, filename
+  self.rsync_file_to_other_servers, filename
 END
 
 
@@ -187,7 +195,7 @@ PRO spice_gen_cat::write_csv, filename
   print, "Writing " + filename
   write_csv, filename + '.tmp', lines, header=self.d.keyword_array
   file_move, filename + '.tmp', filename, /overwrite  
-  self.rsync_file_to_sdc_fs, filename
+  self.rsync_file_to_other_servers, filename
   END
 
 
@@ -195,7 +203,7 @@ PRO spice_gen_cat::write_hash_save_file
   print,'Writing '+self.d.catalog_hash_save_file
   old_hash      = self.d.file_hash
   save, file=self.d.catalog_hash_save_file, old_hash
-  self.rsync_file_to_sdc_fs, self.d.catalog_hash_save_file
+  self.rsync_file_to_other_servers, self.d.catalog_hash_save_file
 END
 
 
@@ -431,6 +439,8 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   self.d.ignore_L0 = (keyword_set(ignore_L0))
   
   self.d.running_as_pipeline = getenv('USER') EQ 'osdcapps'
+  
+  self.d.other_servers = spice_get_other_servers()
 
   IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
   
