@@ -94,7 +94,7 @@
 ;
 ; Version    : Version 17, TF, 17 April 2024
 ;
-; $Id: 2024-04-17 10:27 CEST $
+; $Id: 2024-04-17 11:28 CEST $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -129,8 +129,7 @@ PRO spice_gen_cat::rsync_file_to_other_servers, filename
   IF ~self.d.running_as_pipeline THEN return
   
   FOREACH other_server, self.d.other_servers, ix DO BEGIN 
-     rsync_command = 'rsync -av '+getenv('HOME')+'/'+filename+' osdcapps@'+other_server+':'+filename
-     stop
+     rsync_command = 'rsync -av '+filename+' osdcapps@'+other_server+':'+filename
      spawn, rsync_command, rsync_output
      print,rsync_output
   ENDFOREACH
