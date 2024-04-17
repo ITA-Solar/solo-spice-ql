@@ -94,7 +94,7 @@
 ;
 ; Version    : Version 17, TF, 17 April 2024
 ;
-; $Id: 2024-04-17 14:31 CEST $
+; $Id: 2024-04-17 14:51 CEST $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -404,8 +404,9 @@ END
 FUNCTION spice_gen_cat::get_catalog_hash_save_file
   level = self.d.spice_datadir.extract('level[0-9]')
   level_dir = (level EQ '') ? '' : '/l'+level.extract('[0-9]')+'/'
-  return, getenv('SPICE_DATA')+'/../pipeline_output/catalog_hashes/'+(level_dir)+'spice_catalog_hash.save'
+  return, getenv('instr_output')+'/catalog_hashes/'+(level_dir)+'spice_catalog_hash.save'
 END
+
 
 
 FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_old_catalog, $
