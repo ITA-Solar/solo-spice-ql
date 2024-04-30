@@ -104,8 +104,8 @@ pro test_new
   if 1 then begin
     
 
-    no_fitting=1
-    no_widget=1
+    no_fitting=0
+    no_widget=0
     no_xcfit_block=1
     SAVE_XDIM1=0
     PRINT_HEADERS=0
