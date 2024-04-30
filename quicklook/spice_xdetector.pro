@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2023-06-13 14:55 CEST $
+; $Id: 2024-04-30 14:45 CEST $
 
 
 ; save as postscript file
@@ -949,8 +949,8 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ; x and y titles for axis plots:
   xdim = 2   ; wavelength
   ydim = 1   ; slit pos
-  xtitle = data->get_axis_title(xdim, /pixels) ; wavelength
-  ytitle = data->get_axis_title(ydim, /pixels) ; slit position
+  xtitle = data->get_axis_title(xdim) ; wavelength
+  ytitle = data->get_axis_title(ydim) ; slit position
   wnames=data->get_window_id(lindx)
 
   ; initialize size of draw window (ccd display):
@@ -983,8 +983,9 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   endif
 
   ;build the initial image
+  no_masking = 0
   for i=0,nwin-1 do begin
-    window_image = data->get_one_image(lindx[i], current_exp_ind, /debin, /no_masking)
+    window_image = data->get_one_image(lindx[i], current_exp_ind, /debin, no_masking=no_masking)
     if data->has_dumbbells(lindx[i]) then window_image = rotate(window_image, 5)
     size_image = size(window_image)
     detector[win_positions[i,0]:win_positions[i,1], win_positions[i,2]:win_positions[i,3]] = $
@@ -1034,7 +1035,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   dwoption_title = widget_label(dwoption, value = '(click and hold to draw rectangle)', /align_left)
   dwoption_names=['Zoom','Average along wavelength', 'Average along slit']
   dwoption_menu = cw_bgroup(dwoption, dwoption_names, /return_index, $
-    /exclusive, set_value = 0, $
+    /exclusive, set_value = 2, $
     event_func = 'spice_xdetector_dwoption')
 
   titletext = widget_label(lcol,value = data->get_start_time()+' '+data->get_obs_id(),/align_center)
@@ -1115,13 +1116,13 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   wlbase = widget_base(lsubpix, /column, /frame)
   wl_names = [data->get_axis_title(xdim, /pixels), data->get_axis_title(xdim)]
   wlbutton = cw_bgroup(wlbase, wl_names, /return_index, $
-    /exclusive, set_value = 0, $
+    /exclusive, set_value = 1, $
     event_func = 'spice_xdetector_wloption')
 
   slbase = widget_base(lsubpix, /column, /frame)
   sl_names = ['Pixels', 'arcsec']
   slbutton = cw_bgroup(slbase, sl_names, /return_index, $
-    /exclusive, set_value = 0, $
+    /exclusive, set_value = 1, $
     event_func = 'spice_xdetector_sloption')
 
   lsubcol2 = widget_base(lcol, /row)
@@ -1139,6 +1140,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   maskbutton = widget_button(maskfield, $
     value = 'Mask regions outside slit', $
     event_pro = 'spice_xdetector_mask')
+  widget_control, maskbutton, set_button= ~no_masking
 
   realsizefield = widget_base(lcol, /column, /nonexclusive)
   realsizebutton = widget_button(realsizefield, $
@@ -1203,8 +1205,8 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     xscale_physical:xscale_physical, $
     yscale_pixels:yscale_pixels, $
     yscale_physical:yscale_physical, $
-    lambda:float(xscale_pixels), $
-    spatial:float(yscale_pixels), $
+    lambda:float(xscale_physical), $
+    spatial:float(yscale_physical), $
 
     ; Widgets
     exposuretext:exposuretext, $
@@ -1224,7 +1226,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
 
     ; Options
     log:0, $
-    no_masking:1, $
+    no_masking:no_masking, $
     lineplot:0, $
     realsize:0, $
     ;x_axis_physical_unit:0, $

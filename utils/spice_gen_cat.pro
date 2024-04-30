@@ -78,11 +78,24 @@
 ;                          New keyword IGNORE_L0. If set, and input
 ;                          spice_data_dir is the top level of the FITS file
 ;                          tree, ignore all files in the level0 directory.
+;              Version 14, TF, 29.02.2024
+;                          ::add_file: Expand fits filename path
+;              Version 15, TF, 05.03.2024
+;                          New method ::copy_file_to_sdc_fs. Use file_copy to
+;                          copy the newly generated astro-sdc-fs keyword_info_file/catalog
+;                          file/hash save file to sdc-fs.
+;              Version 16, TF, 06.03.2024
+;                          Renamed ::copy_file_to_sdc_fs to
+;                          rsync_file_to_sdc_fs, use rsync instead of
+;                          file_copy
+;              Version 17, TF, 17.04.2024. New method
+;                          ::rsync_file_to_other_servers, rsyncs file to any
+;                          server returned by spice_get_other_servers()
 ;
-; Version     : Version 13, TF, 17 January 2024
+; Version    : Version 17, TF, 17 April 2024
 ;
-; $Id: 2024-02-16 13:09 CET $
-;-      
+; $Id: 2024-04-30 14:45 CEST $
+;-
 
 FUNCTION spice_gen_cat::extract_filename, line
   pattern = "solo_L._spice[^.]+" 
@@ -111,6 +124,19 @@ END
 ;;
 ;; WRITING:
 ;;
+
+PRO spice_gen_cat::rsync_file_to_other_servers, filename
+  IF ~self.d.running_as_pipeline THEN return
+  
+  FOREACH other_server, self.d.other_servers, ix DO BEGIN
+     print,'rsyncing '+file_basename(filename) +' on '+self.d.host + ' to '+other_server
+     rsync_command = 'rsync -av '+filename+' osdcapps@'+other_server+':'+filename
+     spawn, rsync_command, rsync_output
+     print,rsync_output
+  ENDFOREACH
+END
+
+
 PRO spice_gen_cat::write_keyword_info_file, filename
   IF ~self.d.quiet THEN print
   IF ~self.d.quiet THEN print, "Converting keyword info to json"
@@ -121,6 +147,7 @@ PRO spice_gen_cat::write_keyword_info_file, filename
   printf, lun, json
   free_lun, lun
   file_move, filename + '.tmp', filename, /overwrite
+  self.rsync_file_to_other_servers, filename
 END
 
 
@@ -128,7 +155,7 @@ PRO spice_gen_cat::write_plaintext, filename
   print
   print, "Writing " + filename
   tmp_filename = filename + '.tmp'
-  OPENW,lun, tmp_filename, /get_lun
+  openw,lun, tmp_filename, /get_lun
   
   comma_separated_keywords = self.d.keyword_array.join(",")
   printf,lun,comma_separated_keywords
@@ -140,6 +167,7 @@ PRO spice_gen_cat::write_plaintext, filename
   
   FREE_LUN,lun
   file_move, tmp_filename, filename,/overwrite  
+  self.rsync_file_to_other_servers, filename
 END
 
 
@@ -166,14 +194,16 @@ PRO spice_gen_cat::write_csv, filename
   IF ~self.d.quiet THEN print
   print, "Writing " + filename
   write_csv, filename + '.tmp', lines, header=self.d.keyword_array
-  file_move, filename + '.tmp', filename, /overwrite
-END
+  file_move, filename + '.tmp', filename, /overwrite  
+  self.rsync_file_to_other_servers, filename
+  END
 
 
 PRO spice_gen_cat::write_hash_save_file
   print,'Writing '+self.d.catalog_hash_save_file
   old_hash      = self.d.file_hash
   save, file=self.d.catalog_hash_save_file, old_hash
+  self.rsync_file_to_other_servers, self.d.catalog_hash_save_file
 END
 
 
@@ -225,7 +255,8 @@ FUNCTION spice_gen_cat::add_file, fits_filename
   END
  
   header = self.get_header(fits_filename)
-  relative_filename = fits_filename.replace(self.d.spice_datadir + "/", "")
+  fits_filename_expanded = expand_path(fits_filename)
+  relative_filename = fits_filename_expanded.replace(self.d.spice_datadir + "/", "")
   relative_path = file_dirname(relative_filename)
   self.d.file_hash[key] = self.line_from_header(header, relative_path)
 
@@ -245,7 +276,6 @@ PRO spice_gen_cat::populate_hash
      filelist = self.d.filelist
      print,' on disk:'
   ENDELSE
-  
   n_files = n_elements(filelist)
   n_modified = self.d.n_modified_files
   n_new =  n_files - n_modified
@@ -378,6 +408,7 @@ FUNCTION spice_gen_cat::get_catalog_hash_save_file
 END
 
 
+
 FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_old_catalog, $
                               new_files=new_files, ignore_L0=ignore_L0
   self.d = dictionary()
@@ -407,6 +438,11 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   self.d.ingest_new_files = self.d.new_files NE !NULL
   
   self.d.ignore_L0 = (keyword_set(ignore_L0))
+  
+  self.d.running_as_pipeline = getenv('USER') EQ 'osdcapps'
+  
+  self.d.other_servers = spice_get_other_servers(host=host)
+  self.d.host = host
 
   IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
   
