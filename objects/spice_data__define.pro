@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2024-02-12 11:46 CET $
+; $Id: 2024-04-30 14:33 CEST $
 
 
 ;+
@@ -2138,7 +2138,7 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   crpix = self.get_header_keyword('crpix3', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
     PXBEG3 = self.get_header_keyword('PXBEG3', window_index)
-    cripx = crpix + PXBEG3
+    crpix = crpix + PXBEG3
     naxis = (self.get_ccd_size())[0]
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis3', window_index)
