@@ -53,7 +53,7 @@
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
 
-; $Id: 2024-04-30 14:42 CEST $
+; $Id: 2024-04-30 15:17 CEST $
 
 
 ;+
@@ -988,7 +988,11 @@ FUNCTION spice_data::check_if_already_included, window_index, included_winnos
   IF prsteps[-1] NE 'WINDOW-CONCATENATION' THEN return,0
 
   prrefn = self->get_header_keyword('PRREF'+trim(n_elements(prsteps)),window_index)
-   concatenated_winnos = prrefn.extract('([0-9],*)+')
+  ;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  PRINT,'TEMPORARY DIRTY HACK. REMOVE WHEN ALL L2 FILES HAVE BEEN RECREATED'
+  IF prrefn EQ !NULL THEN prrefn = self->get_header_keyword('PRPARA'+trim(n_elements(prsteps)),window_index)
+  ;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  concatenated_winnos = prrefn.extract('([0-9],*)+')
   FOR included_ct=0,n_elements(included_winnos)-1 DO IF concatenated_winnos.contains(trim(included_winnos[included_ct])) THEN already_included =  1
 
   return, already_included
