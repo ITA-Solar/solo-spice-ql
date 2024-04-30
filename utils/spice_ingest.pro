@@ -11,12 +11,13 @@
 ;      SPICE -- file management.
 ;
 ; CALLING SEQUENCE:
-;	     SPICE_INGEST, Filename [, path_index=path_index, /force, /nolevel, /search_subdir, /help, $
+;	     SPICE_INGEST [, Filename, path_index=path_index, /force, /nolevel, /search_subdir, /help, $
 ;	                   destination=destination, file_moved=file_moved, files_found=files_found]
 ;
 ; INPUTS:
 ;      Filename: The name and path of a SPICE file. Can be an array of names.
 ;                Or a directory (scalar), then all spice files in this directory will be moved.
+;                If not provided, all files from the current directory will be moved.
 ;
 ; OPTIONAL INPUTS:
 ;      PATH_INDEX: If $SPICE_DATA contains multiple paths, then this
@@ -57,6 +58,7 @@
 ;      The environment variable SPICE_DATA must be defined.
 ;
 ; EXAMPLES:
+;      spice_ingest        ; This moves all files from the current directory
 ;      spice_ingest, './'  ; This moves all files from the current directory
 ;
 ; HISTORY:
@@ -71,7 +73,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2023-05-31 14:47 CEST $
+; $Id: 2024-04-30 11:25 CEST $
 
 
 PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel, $
@@ -81,12 +83,7 @@ PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel,
   help=help, debug=debug, quiet=quiet
 
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
-    print,''
-    print,'Use:  IDL> spice_ingest, filename [, /force ]'
-    print,'  - filename can be an array'
-    print,'  - make sure tar files are unpacked before running'
-    print,''
-    return
+    filename = './'
   ENDIF
 
   IF keyword_set(top_dir) THEN BEGIN
