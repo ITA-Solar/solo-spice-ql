@@ -63,7 +63,7 @@
 ;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
 ;
 ;-
-; $Id: 2024-03-18 14:15 CET $
+; $Id: 2024-05-10 09:09 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
@@ -115,24 +115,14 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     ENDIF
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
-
-    size_data = size(data)
-    startrow = 0
-    for i=0,size_data[3]/2-1 do begin
-      ind = where(data[*,*,i,*] EQ data[*,*,i,*], count)
-      if count gt 0 then begin
-        startrow = i
-        break
-      endif
-    endfor
-    endrow = size_data[3]-1
-    for i=size_data[3]-1,size_data[3]/2,-1 do begin
-      ind = where(data[*,*,i,*] EQ data[*,*,i,*], count)
-      if count gt 0 then begin
-        endrow = i
-        break
-      endif
-    endfor
+    
+    sz = size(result)
+    result_along_x = reform(result[0,*,sz[3]/2.])
+    goodx = where(result_along_x EQ result_along_x)
+    result_along_y = reform(result[0, goodx[0], *])
+    ok_result_along_y = where(result_along_y EQ result_along_y)
+    startrow = ok_result_along_y[0]
+    endrow   = ok_result_along_y[-1]
 
     n_components = N_TAGS(fit)
     ipartotal = 0
@@ -143,7 +133,12 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
       include_component = (keyword_set(no_background_images)) ? fit_cur.name NE 'Background' : 1
       IF include_component THEN for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
-        filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
+        name = (fit_cur.name.compress()).toLower()
+        ion = name.extract('[a-z]+')
+        lam = name.extract('[0-9]+.[0-9]+')
+        lam = lam.replace('.','nm')
+        filename_base2 = filename_base.replace('ql','ql-'+ion+'-'+lam+'-'+param.name)+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name.substring(0,2)
+;        filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal,*,startrow:endrow,*])
         help,image_data

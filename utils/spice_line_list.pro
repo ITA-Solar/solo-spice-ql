@@ -24,7 +24,7 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2023-06-23 13:35 CEST $
+; $Id: 2024-05-10 09:09 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -38,7 +38,7 @@ function spice_line_list, version=version
 
     ; Short Wavelength Channel
     70.03, 'Ar VII + S III', $ ; from Fig. 1
-    70.23, 'O III', $
+    70.28, 'O III', $ ; from Chianti, the 70.23 line in Fludra is a much weaker line
     70.38, 'O III', $
     70.60, 'Mg IX', $
     71.09, 'S III', $ ; from Fig. 1

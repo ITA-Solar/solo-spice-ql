@@ -122,7 +122,8 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
                        max_intens=max_intens,min_intens=min_intens,$
                        max_vel=max_vel,min_vel=min_vel,$
                        max_lam=max_lam,min_lam=min_lam,$
-                       max_fwhm=max_fwhm,min_fwhm=min_fwhm
+                       max_fwhm=max_fwhm,min_fwhm=min_fwhm, $
+                       use_list=use_list
   
   c = 3.0e5
   
@@ -214,9 +215,12 @@ FUNCTION spice_mk_comp_gauss,int_pos_fwhm,const=const,$
   implied_velocity = abs(abs(trans_b(1)/c) - abs(trans_a(1))) LT 0.001
   
   IF implied_velocity THEN BEGIN
+     lab_lam_txt = (keyword_set(use_list)) ? $
+                    'rest wavelength of this line taken from the SPICE line list' : $
+                    'wavelength of the mean line profile of this particular observation (the line could not be identified using the SPICE line list)'
      positiontx = $
         ['The line position is described as a velocity shift in km/s ',$
-         'relative to the "lab wavelength" (~'+trim(trans_b(1))+').',$
+         'relative to the '+lab_lam_txt+ ' (~'+trim(trans_b(1))+').',$
          '',$
          'NOTE: Having a positive linear transformation A coefficient', $
          'means that redshifts correspond to a positive velocity, and',$
