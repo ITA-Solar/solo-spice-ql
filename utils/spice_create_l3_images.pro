@@ -60,10 +60,13 @@
 ;      Ver. 2, 24-Jan-2024, TF - New keyword VERSION, to set the version
 ;      number of L3ql files. If not set, the version will be 'V01'. Removed
 ;      "original' from full size jpgs.
-;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
+;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to
+;      handle_value 
+;      Ver. 3., 10-May-2024, TF - use result array to determine startrow and
+;      endrow. Modified filename to adher to the Metadata standard. Added
 ;
 ;-
-; $Id: 2024-05-10 09:09 CEST $
+; $Id: 2024-05-10 09:18 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
