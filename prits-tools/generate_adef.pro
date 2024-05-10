@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2024-05-10 09:09 CEST $
+; $Id: 2024-05-10 09:14 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -131,7 +131,7 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     ELSE lam0 = meanlambda[peakinds]
     wid0 = lam0 - meanlambda[peakinds-fwhm]
 
-    v = 250.                       ; Max shift in km/s
+    v = 150.                       ; Max shift in km/s
     dlam = v*lam0/3.e5            ; Max shift in Aangstrom
 
     intmin = fltarr(npeaks)          ; minimum intensity is 0
