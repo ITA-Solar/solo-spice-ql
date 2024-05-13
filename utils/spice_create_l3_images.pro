@@ -62,11 +62,11 @@
 ;      "original' from full size jpgs.
 ;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to
 ;      handle_value 
-;      Ver. 3., 10-May-2024, TF - use result array to determine startrow and
-;      endrow. Modified filename to adher to the Metadata standard. Added
+;      Ver. 4., 10-May-2024, TF - use result array to determine startrow and
+;      endrow. Modified filename to adher to the Metadata standard.
 ;
 ;-
-; $Id: 2024-05-10 09:18 CEST $
+; $Id: 2024-05-13 09:24 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
@@ -119,10 +119,11 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
     
+    raster = l3_file.contains('ras')
     sz = size(result)
-    result_along_x = reform(result[0,*,sz[3]/2.])
+    result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
     goodx = where(result_along_x EQ result_along_x)
-    result_along_y = reform(result[0, goodx[0], *])
+    result_along_y = (raster) ? reform(result[0, goodx[0], *]) : reform(result[0, *, *,goodx[0]])
     ok_result_along_y = where(result_along_y EQ result_along_y)
     startrow = ok_result_along_y[0]
     endrow   = ok_result_along_y[-1]
@@ -130,7 +131,6 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     n_components = N_TAGS(fit)
     ipartotal = 0
     for icomp=0,n_components-1 do begin
-      ;for icomp=0,0 do begin
       fit_cur = fit.(icomp)
       n_params = N_ELEMENTS(fit_cur.param)
       include_component = (keyword_set(no_background_images)) ? fit_cur.name NE 'Background' : 1
