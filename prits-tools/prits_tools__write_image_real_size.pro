@@ -84,7 +84,8 @@
 ; KEYWORD PARAMETERS:
 ;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
 ;               This keyword should not be set, if SMOOTH input is provided.
-;     REMOVE_TRENDS: If set, remove horizontal and vertical trends in the image
+;     REMOVE_HORIZONTAL_TREND: If set, remove horizontal trend in the image
+;     REMOVE_VERTICAL_TREND: If set, remove vertical trend in the image
 ;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
 ;               XRANGE1 and YRANGE1. If neither HEIGHT nor WIDTH is provided, then the width of the 
 ;               image will be adjusted. 
@@ -117,13 +118,16 @@
 ;     Ver.3, 08-Feb-2024, Terje Fredvik - added keyword remove_trend, if set
 ;     remove horizontal and vertical trends in the image. Added keyword
 ;     smooth, can be set to the width of the boxcar used by smooth
+;     Ver. 4, 14-May-2024, Terje Fredvik - replaced remove_trend keyword with
+;     remove_vertical_trend and remove_horizontal_trend
 ;
 ;-
-; $Id: 2024-02-13 13:28 CET $
+; $Id: 2024-05-14 15:39 CEST $
 
 
 
-PRO prits_tools::write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
+PRO prits_tools::write_image_real_size, image_data, filename, $
+  remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, smooth = smooth, $
   colortable=colortable, format=format, interpolation=interpolation, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
@@ -295,7 +299,10 @@ PRO prits_tools::write_image_real_size, image_data, filename, remove_trends = re
   endelse
   
   IF keyword_set(smooth)        THEN image_data = smooth(image_data, smooth)
-  IF keyword_set(remove_trends) THEN image_data = prits_tools.remove_trends(image_data, value_min=value_min, value_max=value_max)
+
+  IF keyword_set(remove_horizontal_trend) OR keyword_set(remove_vertical_trend) THEN $
+     image_data = prits_tools.remove_trends(image_data, value_min=value_min, value_max=value_max, $
+                                            remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend)
      
   image_data_use = (cutoff_threshold GT 0) ? HISTO_OPT(image_data, cutoff_threshold) : image_data
 
