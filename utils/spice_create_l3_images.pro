@@ -69,11 +69,10 @@
 ;
 ;
 ;-
-; $Id: 2024-05-14 15:39 CEST $
+; $Id: 2024-05-15 13:02 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
-;                            version=version, remove_trends=remove_trends, no_background_images=no_background_images, $
   version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, no_background_images=no_background_images, $
   NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
