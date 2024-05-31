@@ -218,7 +218,7 @@
 ;                       Does no longer set the keyword 'modal' when calling xmanager
 ;
 ; Version     : 13
-; $Id: 2024-01-19 15:09 CET $
+; $Id: 2024-05-31 11:51 CEST $
 ;-
 
 
@@ -1905,12 +1905,12 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   ;; File menu
   ;;
   file_m = widget_button(buttons1,value='File/exit',menu=2)
-  save_b = widget_button(file_m,value='Save',uvalue='SAVE')
-  save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
-  restore_last = widget_button(file_m,value='Restore last saved',$
-                               uvalue='RESTORE')
-  restore_other = widget_button(file_m,value='Restore other',$
-                                uvalue='RESTORE:OTHER')
+  ; save_b = widget_button(file_m,value='Save',uvalue='SAVE')
+  ; save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
+  ; restore_last = widget_button(file_m,value='Restore last saved',$
+  ;                              uvalue='RESTORE')
+  ; restore_other = widget_button(file_m,value='Restore other',$
+  ;                               uvalue='RESTORE:OTHER')
   edit_hist = widget_button(file_m,value='View/edit History',$
                             uvalue='EDIT_HISTORY')
   dummy = widget_button(file_m,value='Exit',uvalue='EXIT')
