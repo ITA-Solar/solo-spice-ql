@@ -65,22 +65,29 @@
 ;      Ver. 4., 10-May-2024, TF - use result array to determine startrow and
 ;      endrow. Modified filename to adher to the Metadata standard.
 ;      Ver. 5., 14-May-2024, TF - replaced remove_trend keyword with
-;     remove_vertical_trend and remove_horizontal_trend
+;      remove_vertical_trend and remove_horizontal_trend
+;      Ver. 6., 03-Jun-2024, TF - Modified filename to adhere to the SoLO
+;      Metadata standard. Ensure that trends are only removed for velocity
+;      images (provided that one or more of the remove_*_trend keywords are
+;      set). New keyword fit_trend, if set together with one or both
+;      remove_*_trend, remove a linear fit of the velocity trend instead of
+;      removing the mean of each row and/or column.   
 ;
 ;
 ;-
-; $Id: 2024-05-15 13:02 CEST $
+; $Id: 2024-06-03 09:48 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
-  version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, no_background_images=no_background_images, $
-  NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
+                            version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $ 
+                            no_background_images=no_background_images, $
+                            NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
   prits_tools.parcheck, version, 0, "version", 'STRing', 0, default='01'
   prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval=0, /optional
-
+     
   l3_filename = file_basename(l3_file)
  
   l3_filename = strsplit(l3_filename, '.', /extract)
@@ -141,10 +148,11 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         param = fit_cur.param[ipar]
         name = (fit_cur.name.compress()).toLower()
         ion = name.extract('[a-z]+')
+        ion = string(ion+'--------', format='(A-8)')
         lam = name.extract('[0-9]+.[0-9]+')
-        lam = lam.replace('.','nm')
-        filename_base2 = filename_base.replace('ql','ql-'+ion+'-'+lam+'-'+param.name)+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name.substring(0,2)
-;        filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
+        lam = lam.replace('.','nm')  
+        
+        filename_base2 = filename_base.replace('ql','ql-'+ion+'-'+lam+'-'+param.name.substring(0,2))+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name.substring(0,2)
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal,*,startrow:endrow,*])
         help,image_data
@@ -197,17 +205,20 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
             ; Option A
             colortable = 3
             reverse_colortable = 0
-
+            
             ; Option B
             ;colortable = 56
             ;reverse_colortable = 1
           end
         endcase
-
+        
+        this_remove_horizontal_trend = (param.name EQ 'velocity') ? remove_horizontal_trend : 0
+        this_remove_vertical_trend   = (param.name EQ 'velocity') ? remove_vertical_trend   : 0   
+        
         filename = filename_base2 + '.jpg'
         format = 'JPEG'
         prits_tools.write_image_real_size, image_data, filename, $
-           remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, smooth = smooth, $
+           remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
            colortable=colortable, format=format, interpolation=interpolation, $
            xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
            xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
@@ -218,12 +229,12 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         filename = filename_base2 + '_thumb.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, $
-           remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, smooth = smooth, $
+           remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
            colortable=colortable, format=format, interpolation=interpolation, $
            height=64, border=0, reverse_colortable=reverse_colortable, $
            xrange1=xrange1, yrange1=yrange1, SCALE_TO_RANGE=SCALE_TO_RANGE, /no_axis, $
            cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
-
+        
         ipartotal++
 
       endfor ; ipar0,n_params-1
