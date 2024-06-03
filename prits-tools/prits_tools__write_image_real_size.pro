@@ -120,14 +120,16 @@
 ;     smooth, can be set to the width of the boxcar used by smooth
 ;     Ver. 4, 14-May-2024, Terje Fredvik - replaced remove_trend keyword with
 ;     remove_vertical_trend and remove_horizontal_trend
+;     Ver. 5, 03-Jun-2024, Terje Fredvik - New keyword fit_trend. Remove min value from line width
+;     images. 
 ;
 ;-
-; $Id: 2024-05-14 15:39 CEST $
+; $Id: 2024-06-03 09:52 CEST $
 
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, $
-  remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, smooth = smooth, $
+  remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $smooth = smooth, $
   colortable=colortable, format=format, interpolation=interpolation, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
@@ -179,8 +181,12 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
 
                                 ; Install the new colortable and set the background and text color
   cutoff_threshold_old = cutoff_threshold
-  velocity = colortable EQ 100
-  IF velocity THEN BEGIN 
+  
+  line_vel = filename.contains('vel')
+  line_wid = filename.contains('wid')
+  line_int = filename.contains('int')
+  
+  IF line_vel THEN BEGIN 
      eis_colors, /velocity
      cutoff_threshold = 0
      value_max = 50             
@@ -299,10 +305,12 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   endelse
   
   IF keyword_set(smooth)        THEN image_data = smooth(image_data, smooth)
-
-  IF keyword_set(remove_horizontal_trend) OR keyword_set(remove_vertical_trend) THEN $
-     image_data = prits_tools.remove_trends(image_data, value_min=value_min, value_max=value_max, $
-                                            remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend)
+  
+  IF line_vel THEN image_data -= median(image_data)
+  IF line_wid THEN image_data -= min(image_data)
+  
+  image_data = prits_tools.remove_trends(image_data, value_min=value_min, value_max=value_max, $
+                                         remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend = fit_trend)
      
   image_data_use = (cutoff_threshold GT 0) ? HISTO_OPT(image_data, cutoff_threshold) : image_data
 
