@@ -170,6 +170,9 @@
 ;                                   provided, the different values will be used as following:
 ;                                   [data, result, residual]. Default is 0.02 for all views.
 ;
+;               NO_SAVE_OOPTION : If set, then all menu options to save or restore a file
+;                                 are deactivated.
+;
 ; Calls       : cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(),
 ;               cw_pselect(), cwf_status(), default, exist(),
 ;               handle_killer_hookup, mk_analysis(), mk_comp_poly(),
@@ -218,9 +221,10 @@
 ;                       Does no longer set the keyword 'modal' when calling xmanager
 ;               Version 14, Martin Wiesmann, 4. Juni 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
+;                       Added keyword no_save_option
 ;
 ; Version     : 14
-; $Id: 2024-06-04 12:01 CEST $
+; $Id: 2024-06-04 13:26 CEST $
 ;-
 
 
@@ -228,7 +232,7 @@
 
 PRO spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
                       data_display, result_display, residual_display, $
-                      set=set,copy=copy
+                      set=set,copy=copy,no_save_option=no_save_option
   set = keyword_set(set)
   no_copy = 1-keyword_set(copy)
   
@@ -1926,12 +1930,14 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   ;; File menu
   ;;
   file_m = widget_button(buttons1,value='File/exit',menu=2)
-  ; save_b = widget_button(file_m,value='Save',uvalue='SAVE')
-  ; save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
-  ; restore_last = widget_button(file_m,value='Restore last saved',$
-  ;                              uvalue='RESTORE')
-  ; restore_other = widget_button(file_m,value='Restore other',$
-  ;                               uvalue='RESTORE:OTHER')
+  IF ~keyword_set(no_save_option) THEN BEGIN
+    save_b = widget_button(file_m,value='Save',uvalue='SAVE')
+    save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
+    restore_last = widget_button(file_m,value='Restore last saved',$
+                                 uvalue='RESTORE')
+    restore_other = widget_button(file_m,value='Restore other',$
+                                  uvalue='RESTORE:OTHER')
+  ENDIF
   edit_hist = widget_button(file_m,value='View/edit History',$
                             uvalue='EDIT_HISTORY')
   dummy = widget_button(file_m,value='Exit',uvalue='EXIT')
