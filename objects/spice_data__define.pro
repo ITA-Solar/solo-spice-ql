@@ -53,7 +53,7 @@
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
 
-; $Id: 2024-06-04 10:12 CEST $
+; $Id: 2024-06-04 14:20 CEST $
 
 
 ;+
@@ -483,7 +483,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
            origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
            scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
-           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
+           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader, /no_save_option
         endif
         
         ;data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))

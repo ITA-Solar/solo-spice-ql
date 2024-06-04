@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-01-11 11:53 CET $
+; $Id: 2024-06-04 14:20 CEST $
 ;-
 
 
@@ -421,7 +421,7 @@ pro spice_xcontrol_l23_open_l3, event
   scale = [1,1,1]
   phys_scale = [0,0,0]
   spice_data_l3.get_plot_variables, *hdr_l3_data[win_info.winno], origin=origin, scale=scale, phys_scale=phys_scale
-  spice_xcfit_block, ana=ana, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb
+  spice_xcfit_block, ana=ana, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb, /no_save_option
   ana_l3[win_info.winno] = ana
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)

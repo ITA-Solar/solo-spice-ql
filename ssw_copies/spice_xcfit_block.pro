@@ -170,7 +170,7 @@
 ;                                   provided, the different values will be used as following:
 ;                                   [data, result, residual]. Default is 0.02 for all views.
 ;
-;               NO_SAVE_OOPTION : If set, then all menu options to save or restore a file
+;               NO_SAVE_OPTION : If set, then all menu options to save or restore a file
 ;                                 are deactivated.
 ;
 ; Calls       : cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(),
@@ -224,7 +224,7 @@
 ;                       Added keyword no_save_option
 ;
 ; Version     : 14
-; $Id: 2024-06-04 13:26 CEST $
+; $Id: 2024-06-04 14:20 CEST $
 ;-
 
 
@@ -232,7 +232,7 @@
 
 PRO spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
                       data_display, result_display, residual_display, $
-                      set=set,copy=copy,no_save_option=no_save_option
+                      set=set,copy=copy
   set = keyword_set(set)
   no_copy = 1-keyword_set(copy)
   
@@ -1687,7 +1687,7 @@ END
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
-                display_treshold=display_threshold
+                display_treshold=display_threshold, no_save_option=no_save_option
   
   ;on_error,2
   
