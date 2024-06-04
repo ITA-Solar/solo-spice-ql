@@ -72,7 +72,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-03-15 12:05 CET $
+; $Id: 2024-06-04 13:00 CEST $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -588,7 +588,7 @@ function fits2ana, fitsfile, windows=windows, $
       handle_value,ana.phys_scale_h,phys_scale,/no_copy,/set
       handle_value,ana.dimnames_h,dimnames,/no_copy,/set
   
-      if iwin eq 0 then ana_all = ana $
+      if N_ELEMENTS(ana_all) eq 0 then ana_all = ana $
       else ana_all = [ana_all, ana]
 
     ENDIF ELSE ana_all = 0 ; ~headers_only
