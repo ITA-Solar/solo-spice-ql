@@ -216,9 +216,11 @@
 ;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
 ;               Version 13, Martin Wiesmann, 19. Januar 2024
 ;                       Does no longer set the keyword 'modal' when calling xmanager
+;               Version 14, Martin Wiesmann, 4. Juni 2024
+;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;
-; Version     : 13
-; $Id: 2024-05-31 11:51 CEST $
+; Version     : 14
+; $Id: 2024-06-04 12:01 CEST $
 ;-
 
 
@@ -1755,6 +1757,25 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   parcheck,weights,3,typ(/rea),[szd(0)],      "WEIGHTS"
   parcheck,fit,    4,typ(/stc),1,             "FIT"
   parcheck,missing,5,typ(/rea),0,             "MISSING"
+  size_temp = size(result)
+  ind = where(size_temp[2:size_temp[0]] GT 1, count)
+  IF count EQ 1 THEN BEGIN
+    box_message, ['Result is 1-dimensional, cannot display this, returning.', $
+      'Do you need another fix for this?', $
+      'Contact: prits-group@astro.uio.no']
+    IF keyword_set(ana) THEN BEGIN
+      handle_value,ana.lambda_h,lambda,/set,/no_copy
+      handle_value,ana.data_h,data,/set,/no_copy
+      handle_value,ana.weights_h,weights,/set,/no_copy
+      handle_value,ana.result_h,result,/set,/no_copy
+      handle_value,ana.residual_h,residual,/set,/no_copy
+      handle_value,ana.include_h,include,/set,/no_copy
+      handle_value,ana.const_h,const,/set,/no_copy      
+    ENDIF ELSE BEGIN
+      delete_analysis, iana
+    ENDELSE
+    return
+  ENDIF
   
   
   ;; Make sure we're not taking things for granted here (Thanks to
