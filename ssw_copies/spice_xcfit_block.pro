@@ -173,10 +173,16 @@
 ;               NO_SAVE_OPTION : If set, then all menu options to save or restore a file
 ;                                 are deactivated.
 ;
-; Calls       : cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(),
-;               cw_pselect(), cwf_status(), default, exist(),
-;               handle_killer_hookup, mk_analysis(), mk_comp_poly(),
-;               ndim_indices(), parcheck, typ(), spice_histo_opt()
+; Calls       : spice_cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(), cw_pselect(), cwf_status(), 
+;               default, exist(), dimreform(), dimrebin(), delvarx
+;               handle_killer_hookup, mk_analysis(), mk_comp_poly(), make_sfit_stc()
+;               update_cfit, eval_cfit, cfit_bpatch, cfit(), xcfit
+;               ndim_indices(), parcheck, typ(), match_struct(), bigpickfile(), break_file
+;               oploterr
+;               restore_analysis, delete_analysis, save_analysis
+;               since_version(), xack, xtextedit, average()
+;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
+;               spice_histo_opt(), spice_cfit_block, spice_get_screen_size()
 ;
 ; Common      : None.
 ;               
@@ -222,9 +228,10 @@
 ;               Version 14, Martin Wiesmann, 4. Juni 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;                       Added keyword no_save_option
+;                       Sets keyword 'modal' in widget_base if group_leader is provided.
 ;
 ; Version     : 14
-; $Id: 2024-06-06 11:46 CEST $
+; $Id: 2024-06-06 12:50 CEST $
 ;-
 
 
