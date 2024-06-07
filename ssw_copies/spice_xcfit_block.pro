@@ -170,10 +170,19 @@
 ;                                   provided, the different values will be used as following:
 ;                                   [data, result, residual]. Default is 0.02 for all views.
 ;
-; Calls       : cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(),
-;               cw_pselect(), cwf_status(), default, exist(),
-;               handle_killer_hookup, mk_analysis(), mk_comp_poly(),
-;               ndim_indices(), parcheck, typ(), spice_histo_opt()
+;               NO_SAVE_OPTION : If set, then all menu options to save or restore a file
+;                                 are deactivated.
+;
+; Calls       : spice_cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(), cw_pselect(), cwf_status(), 
+;               default, exist(), dimreform(), dimrebin(), delvarx
+;               handle_killer_hookup, mk_analysis(), mk_comp_poly(), make_sfit_stc()
+;               update_cfit, eval_cfit, cfit_bpatch, cfit(), xcfit
+;               ndim_indices(), parcheck, typ(), match_struct(), bigpickfile(), break_file
+;               oploterr
+;               restore_analysis, delete_analysis, save_analysis
+;               since_version(), xack, xtextedit, average()
+;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
+;               spice_histo_opt(), spice_cfit_block, spice_get_screen_size()
 ;
 ; Common      : None.
 ;               
@@ -218,9 +227,11 @@
 ;                       Does no longer set the keyword 'modal' when calling xmanager
 ;               Version 14, Martin Wiesmann, 4. Juni 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
+;                       Added keyword no_save_option
+;                       Sets keyword 'modal' in widget_base if group_leader is provided.
 ;
 ; Version     : 14
-; $Id: 2024-06-04 12:01 CEST $
+; $Id: 2024-06-06 12:50 CEST $
 ;-
 
 
@@ -1683,7 +1694,7 @@ END
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
-                display_treshold=display_threshold
+                display_treshold=display_threshold, no_save_option=no_save_option
   
   ;on_error,2
   
@@ -1802,9 +1813,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   screen = spice_get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
     base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
-      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]))
+      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(group_leader))
   ENDIF ELSE BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader)
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(group_leader))
   ENDELSE
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
@@ -1926,12 +1937,14 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   ;; File menu
   ;;
   file_m = widget_button(buttons1,value='File/exit',menu=2)
-  ; save_b = widget_button(file_m,value='Save',uvalue='SAVE')
-  ; save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
-  ; restore_last = widget_button(file_m,value='Restore last saved',$
-  ;                              uvalue='RESTORE')
-  ; restore_other = widget_button(file_m,value='Restore other',$
-  ;                               uvalue='RESTORE:OTHER')
+  IF ~keyword_set(no_save_option) THEN BEGIN
+    save_b = widget_button(file_m,value='Save',uvalue='SAVE')
+    save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
+    restore_last = widget_button(file_m,value='Restore last saved',$
+                                 uvalue='RESTORE')
+    restore_other = widget_button(file_m,value='Restore other',$
+                                  uvalue='RESTORE:OTHER')
+  ENDIF
   edit_hist = widget_button(file_m,value='View/edit History',$
                             uvalue='EDIT_HISTORY')
   dummy = widget_button(file_m,value='Exit',uvalue='EXIT')
