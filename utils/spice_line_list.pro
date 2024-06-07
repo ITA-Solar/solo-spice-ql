@@ -24,7 +24,7 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2024-05-10 09:09 CEST $
+; $Id: 2024-06-07 09:45 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -62,7 +62,7 @@ function spice_line_list, version=version
     79.01, 'O IV', $ ; from Fig. 1
 
     ; Long Wavelength Channel
-    97.25, 'H Ly alpha', $
+    97.25, 'H Ly gamma', $
     97.70, 'C III', $
     98.14, 'Fe III', $ ; from Fig. 1
     98.87, 'O I + Na VI', $ ; from Fig. 1
