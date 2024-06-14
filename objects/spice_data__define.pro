@@ -53,7 +53,7 @@
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
 
-; $Id: 2024-06-04 14:20 CEST $
+; $Id: 2024-06-11 11:33 CEST $
 
 
 ;+
@@ -536,9 +536,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         IF collect_ana THEN BEGIN
           if iwindow eq 0 then all_ana = ana $
           else all_ana = [all_ana, ana]
-        ENDIF
-
-        delete_analysis, ana
+        ENDIF ELSE BEGIN
+          delete_analysis, ana          
+        ENDELSE
 
         IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
         IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
