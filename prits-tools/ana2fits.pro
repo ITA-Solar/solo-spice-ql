@@ -169,7 +169,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2024-02-09 14:36 CET $
+; $Id: 2024-06-14 11:43 CEST $
 
 
 PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
@@ -326,6 +326,8 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
       IF N_ELEMENTS(NO_SAVE_DATA) EQ 1 THEN NO_SAVE_DATA_use = NO_SAVE_DATA
     IF N_ELEMENTS(SAVE_XDIM1) GT 1 THEN SAVE_XDIM1_use = SAVE_XDIM1[iwindow] ELSE $
       IF N_ELEMENTS(SAVE_XDIM1) EQ 1 THEN SAVE_XDIM1_use = SAVE_XDIM1
+    IF N_ELEMENTS(EXT_DATA_PATH) GT 1 THEN EXT_DATA_PATH_use = EXT_DATA_PATH[iwindow] ELSE $
+      IF N_ELEMENTS(EXT_DATA_PATH) EQ 1 THEN EXT_DATA_PATH_use = EXT_DATA_PATH
 
     extension = keyword_set(IS_EXTENSION) || iwindow GT 0
     
@@ -333,7 +335,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
       headers = ana2fitshdr(ana[iwindow], FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1_use, $
-        EXT_DATA_PATH=EXT_DATA_PATH[iwindow], $
+        EXT_DATA_PATH=EXT_DATA_PATH_use, $
         IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
@@ -347,7 +349,7 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
       headers = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
         N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
         DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1_use, $
-        EXT_DATA_PATH=EXT_DATA_PATH[iwindow], $
+        EXT_DATA_PATH=EXT_DATA_PATH_use, $
         IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
         PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
         XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $

@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-01-11 11:53 CET $
+; $Id: 2024-06-14 11:43 CEST $
 ;-
 
 
@@ -421,7 +421,7 @@ pro spice_xcontrol_l23_open_l3, event
   scale = [1,1,1]
   phys_scale = [0,0,0]
   spice_data_l3.get_plot_variables, *hdr_l3_data[win_info.winno], origin=origin, scale=scale, phys_scale=phys_scale
-  spice_xcfit_block, ana=ana, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb
+  spice_xcfit_block, ana=ana, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb, /no_save_option
   ana_l3[win_info.winno] = ana
 
   ind = where(state_l3.l3_winno eq win_info.winno, count)
@@ -669,9 +669,21 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
   dir_labels = lonarr(4)
   file_labels = lonarr(4)
-
-  tlb = widget_base(/column, mbar=menubar, $
-    title='SPICE_Xcontrol_L23 - '+file, group_leader=group_leader, /tlb_kill_request_events)
+  
+  screen = spice_get_screen_size()
+  y_screen_no_use = 150
+  need_x_size = 1110
+  need_y_size = 210+100*nwin+y_screen_no_use
+  IF screen[0] LT need_x_size || screen[1] LT need_y_size THEN BEGIN
+    x_scroll_size = min([screen[0]-10, need_x_size])
+    y_scroll_size = min([screen[1]-y_screen_no_use, need_y_size])
+    tlb = widget_base(/column, mbar=menubar, $
+      title='SPICE_Xcontrol_L23 - '+file, group_leader=group_leader, /tlb_kill_request_events, $
+      /scroll, x_scroll_size=x_scroll_size, y_scroll_size=y_scroll_size)
+  ENDIF ELSE BEGIN
+    tlb = widget_base(/column, mbar=menubar, $
+      title='SPICE_Xcontrol_L23 - '+file, group_leader=group_leader, /tlb_kill_request_events)    
+  ENDELSE
 
   win_base = widget_base(tlb, /grid_layout, column=3, /frame)
 

@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2023-06-23 13:35 CEST $
+; $Id: 2024-06-14 11:43 CEST $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -152,16 +152,16 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
         max_lam=lammax[i], min_lam=lammin[i],$
         min_fwhm = widmin, max_fwhm = widmax[i],$
         min_intens=intmin[i], $
-        velocity=vel)
+        velocity=vel, use_list=use_list)
       IF ~keyword_set(position) AND keyword_set(blue_means_negative_velocity) THEN BEGIN
          gauss.param[1].trans_a = -gauss.param[1].trans_a
          max_vel = -gauss.param[1].min_val
          gauss.param[1].min_val = -gauss.param[1].max_val
          gauss.param[1].max_val = max_vel
       ENDIF
-      lam0txt = trim(lam0[i],'(F6.2)')
-      gauss.name = 'AutoGauss ' + lam0txt
-      IF use_list THEN gauss.name = gauss.name + 'nm, ' + line_list[lam0[i]]
+      iontxt = (use_list) ? line_list[lam0[i]] : 'AutoGauss'
+      lam0txt = trim(lam0[i],'(F6.2)') + ' nm'
+      gauss.name = iontxt + ' ' + lam0txt
       gaussians[i] = gauss
     ENDFOR
 

@@ -52,7 +52,7 @@
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
-; $Id: 2024-05-02 13:45 CEST $
+; $Id: 2024-06-14 11:43 CEST $
 
 
 ;+
@@ -482,7 +482,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
            origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
            scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
-           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader
+           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader, /no_save_option
         endif
         
         ;data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
@@ -535,9 +535,9 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         IF collect_ana THEN BEGIN
           if iwindow eq 0 then all_ana = ana $
           else all_ana = [all_ana, ana]
-        ENDIF
-
-        delete_analysis, ana
+        ENDIF ELSE BEGIN
+          delete_analysis, ana          
+        ENDELSE
 
         IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
         IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
@@ -2107,8 +2107,8 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG3 = (self.get_window_position(window_index, /reverse_y))[2]
-    cripx = crpix + PXBEG3
+    PXBEG2 = (self.get_window_position(window_index, /reverse_y))[2]
+    cripx = crpix + PXBEG2
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis2', window_index)
@@ -2141,8 +2141,8 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt3', window_index)
   crpix = self.get_header_keyword('crpix3', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG3 = self.get_header_keyword('PXBEG3', window_index)
-    crpix = crpix + PXBEG3
+    PXBEG1 = self.get_header_keyword('PXBEG1', window_index)
+    crpix = crpix + PXBEG1
     naxis = (self.get_ccd_size())[0]
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis3', window_index)

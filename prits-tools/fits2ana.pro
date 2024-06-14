@@ -10,7 +10,7 @@
 ;     if this is not the case already.
 ;     XDIM1, WEIGHTS, INCLUDE and CONSTANTS extensions are optional.
 ;     If not present:
-;       - a dummy DATA cube will be created.
+;       - a dummy DATA cube will be created, but only if create_dummy_data keyword is set.
 ;       - XDIM1 will be created using the WCS parameters given in the data header.
 ;       - WEIGHTS, INCLUDE and CONSTANTS will be created with default values.
 ;       - RESIDUALS is created using the fits components and the DATA cube.
@@ -24,13 +24,14 @@
 ;       headers_results=headers_results, headers_data=headers_data, $
 ;       headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
 ;       headers_include=headers_include, headers_constants=headers_constants, $
-;       /headers_only, /loud, /quiet])
+;       /headers_only, /create_dummy_data, /loud, /quiet])
 ;
 ; INPUTS:
 ;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
 ; 
 ; KEYWORDS:
 ;     headers_only: If set, then the data is not loaded, only the headers, the function returns a zero.
+;     create_dummy_data: If set, then a dummy data cube will be created in case the original data is not found.
 ;     loud: If set, then the function will output messages about non-existing extensions.
 ;     quiet: If set, warnings will be suppressed.
 ; 
@@ -72,14 +73,14 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-04-30 14:45 CEST $
+; $Id: 2024-06-14 11:43 CEST $
 
 
 function fits2ana, fitsfile, windows=windows, $
   headers_results=headers_results, headers_data=headers_data, $
   headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
   headers_include=headers_include, headers_constants=headers_constants, $
-  headers_only=headers_only, $
+  headers_only=headers_only, create_dummy_data=create_dummy_data, $
   loud=loud, quiet=quiet, debug=debug
 
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
@@ -340,18 +341,30 @@ function fits2ana, fitsfile, windows=windows, $
         IF size_data[0] EQ 0 THEN BEGIN
           box_message, ['No DATA cube found. Neither in this FITS file nor', $
             'in the progenitor file, or the progenitor file was not found.', $
-            'If this is a SPICE file: LEVEL 2 FILE IS MISSING.', $
-            'Creating dummy data cube.']
-          datasize = wcs_result.naxis
-          datasize[0] = datasize[0]*2
-          IF hdr[0] NE '' THEN BEGIN
-            prg_naxis = fxpar(hdr, 'XDIMNA*', missing=0)
-            IF prg_naxis[0] GT 0 THEN BEGIN
-              datasize = prg_naxis
+            'If this is a SPICE file: LEVEL 2 FILE IS MISSING.']
+          IF keyword_set(create_dummy_data) THEN BEGIN
+            box_message, 'Creating dummy data cube.'
+            datasize = wcs_result.naxis
+            datasize[0] = datasize[0]*2
+            IF hdr[0] NE '' THEN BEGIN
+              prg_naxis = fxpar(hdr, 'XDIMNA*', missing=0)
+              IF prg_naxis[0] GT 0 THEN BEGIN
+                datasize = prg_naxis
+              ENDIF
             ENDIF
-          ENDIF
-          data = fltarr(datasize)
-          wcs_data = {naxis: datasize}
+            data = fltarr(datasize)
+            wcs_data = {naxis: datasize}
+          ENDIF ELSE BEGIN
+            IF ~quiet THEN message, 'Ignoring this window', /info
+            hdr = ''
+            if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
+            if get_headers[1] then headers_data[iwin] = ptr_new(hdr)
+            if get_headers[2] then headers_xdim1[iwin] = ptr_new(hdr)
+            if get_headers[3] then headers_weights[iwin] = ptr_new(hdr)
+            if get_headers[4] then headers_include[iwin] = ptr_new(hdr)
+            if get_headers[5] then headers_constants[iwin] = ptr_new(hdr)
+           continue
+          ENDELSE
         ENDIF ELSE BEGIN ; size_data[0] EQ 0
           wcs_data = {naxis: size_data[1:size_data[0]]}
         ENDELSE ; size_data[0] EQ 0
@@ -588,7 +601,7 @@ function fits2ana, fitsfile, windows=windows, $
       handle_value,ana.phys_scale_h,phys_scale,/no_copy,/set
       handle_value,ana.dimnames_h,dimnames,/no_copy,/set
   
-      if iwin eq 0 then ana_all = ana $
+      if N_ELEMENTS(ana_all) eq 0 then ana_all = ana $
       else ana_all = [ana_all, ana]
 
     ENDIF ELSE ana_all = 0 ; ~headers_only

@@ -60,21 +60,34 @@
 ;      Ver. 2, 24-Jan-2024, TF - New keyword VERSION, to set the version
 ;      number of L3ql files. If not set, the version will be 'V01'. Removed
 ;      "original' from full size jpgs.
-;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to handle_value 
+;      Ver. 3, 12-Feb-2024, TF - call delete_analysis when done with calls to
+;      handle_value 
+;      Ver. 4., 10-May-2024, TF - use result array to determine startrow and
+;      endrow. Modified filename to adher to the Metadata standard.
+;      Ver. 5., 14-May-2024, TF - replaced remove_trend keyword with
+;      remove_vertical_trend and remove_horizontal_trend
+;      Ver. 6., 03-Jun-2024, TF - Modified filename to adhere to the SoLO
+;      Metadata standard. Ensure that trends are only removed for velocity
+;      images (provided that one or more of the remove_*_trend keywords are
+;      set). New keyword fit_trend, if set together with one or both
+;      remove_*_trend, remove a linear fit of the velocity trend instead of
+;      removing the mean of each row and/or column.   
+;
 ;
 ;-
-; $Id: 2024-04-30 14:45 CEST $
+; $Id: 2024-06-14 11:43 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
-  version=version, remove_trends=remove_trends, no_background_images=no_background_images, $
-  NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
+                            version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $ 
+                            no_background_images=no_background_images, $
+                            NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
   prits_tools.parcheck, version, 0, "version", 'STRing', 0, default='01'
   prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval=0, /optional
-
+     
   l3_filename = file_basename(l3_file)
  
   l3_filename = strsplit(l3_filename, '.', /extract)
@@ -115,35 +128,31 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     ENDIF
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
-
-    size_data = size(data)
-    startrow = 0
-    for i=0,size_data[3]/2-1 do begin
-      ind = where(data[*,*,i,*] EQ data[*,*,i,*], count)
-      if count gt 0 then begin
-        startrow = i
-        break
-      endif
-    endfor
-    endrow = size_data[3]-1
-    for i=size_data[3]-1,size_data[3]/2,-1 do begin
-      ind = where(data[*,*,i,*] EQ data[*,*,i,*], count)
-      if count gt 0 then begin
-        endrow = i
-        break
-      endif
-    endfor
+    
+    raster = l3_file.contains('ras')
+    sz = size(result)
+    result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
+    goodx = where(result_along_x EQ result_along_x)
+    result_along_y = (raster) ? reform(result[0, goodx[0], *]) : reform(result[0, *, *,goodx[0]])
+    ok_result_along_y = where(result_along_y EQ result_along_y)
+    startrow = ok_result_along_y[0]
+    endrow   = ok_result_along_y[-1]
 
     n_components = N_TAGS(fit)
     ipartotal = 0
     for icomp=0,n_components-1 do begin
-      ;for icomp=0,0 do begin
       fit_cur = fit.(icomp)
       n_params = N_ELEMENTS(fit_cur.param)
       include_component = (keyword_set(no_background_images)) ? fit_cur.name NE 'Background' : 1
       IF include_component THEN for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
-        filename_base2 = filename_base+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name
+        name = (fit_cur.name.compress()).toLower()
+        ion = name.extract('[a-z]+')
+        ion = string(ion+'--------', format='(A-8)')
+        lam = name.extract('[0-9]+.[0-9]+')
+        lam = lam.replace('.','nm')  
+        
+        filename_base2 = filename_base.replace('ql','ql-'+ion+'-'+lam+'-'+param.name.substring(0,2))+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name.substring(0,2)
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal,*,startrow:endrow,*])
         help,image_data
@@ -196,31 +205,36 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
             ; Option A
             colortable = 3
             reverse_colortable = 0
-
+            
             ; Option B
             ;colortable = 56
             ;reverse_colortable = 1
           end
         endcase
-
+        
+        this_remove_horizontal_trend = (param.name EQ 'velocity') ? remove_horizontal_trend : 0
+        this_remove_vertical_trend   = (param.name EQ 'velocity') ? remove_vertical_trend   : 0   
+        
         filename = filename_base2 + '.jpg'
         format = 'JPEG'
-        prits_tools.write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
-          colortable=colortable, format=format, interpolation=interpolation, $
-          xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
-          xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
-          SCALE_TO_RANGE=SCALE_TO_RANGE, $
-          cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
-          reverse_colortable=reverse_colortable, show_plot=show_plot
+        prits_tools.write_image_real_size, image_data, filename, $
+           remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
+           colortable=colortable, format=format, interpolation=interpolation, $
+           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
+           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
+           SCALE_TO_RANGE=SCALE_TO_RANGE, $
+           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
+           reverse_colortable=reverse_colortable, show_plot=show_plot
 
         filename = filename_base2 + '_thumb.png'
         format = 'PNG'
-        prits_tools.write_image_real_size, image_data, filename, remove_trends = remove_trends, smooth = smooth, $
-          colortable=colortable, format=format, interpolation=interpolation, $
-          height=64, border=0, reverse_colortable=reverse_colortable, $
-          xrange1=xrange1, yrange1=yrange1, SCALE_TO_RANGE=SCALE_TO_RANGE, /no_axis, $
-          cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
-
+        prits_tools.write_image_real_size, image_data, filename, $
+           remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
+           colortable=colortable, format=format, interpolation=interpolation, $
+           height=64, border=0, reverse_colortable=reverse_colortable, $
+           xrange1=xrange1, yrange1=yrange1, SCALE_TO_RANGE=SCALE_TO_RANGE, /no_axis, $
+           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
+        
         ipartotal++
 
       endfor ; ipar0,n_params-1
