@@ -53,7 +53,7 @@
 ;                                 fitting for Dumbbells or Intensity-windows
 ;-
 
-; $Id: 2024-06-11 11:33 CEST $
+; $Id: 2024-06-19 10:55 CEST $
 
 
 ;+
@@ -415,7 +415,6 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     collect_proc_steps=1
   ENDIF ELSE collect_proc_steps=0
   
-  win_type = self.get_header_keyword('WINTYPE', w, '')
   IF ~keyword_set(top_dir) THEN BEGIN 
      spice_data_dir = getenv('SPICE_DATA')
      top_dir = (keyword_set(pipeline_dir)) ? spice_data_dir : spice_data_dir+'/user/'
