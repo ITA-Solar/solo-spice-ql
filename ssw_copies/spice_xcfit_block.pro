@@ -231,7 +231,7 @@
 ;                       Sets keyword 'modal' in widget_base if group_leader is provided.
 ;
 ; Version     : 14
-; $Id: 2024-06-06 12:50 CEST $
+; $Id: 2024-06-19 14:26 CEST $
 ;-
 
 
@@ -2148,19 +2148,23 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   widget_control,base,set_uvalue=info
   
-  xmanager,"spice_xcfit_block",base;,/modal
+  xmanager,"spice_xcfit_block",base
   
-  ;; Make sure changes (like RESTORE operations) are reflected.
-  
-  handle_value,info.int.store_info_h,info
-  handle_free,info.int.store_info_h
-  
-  IF NOT keyword_set(ana) THEN BEGIN
-     spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
-     
-     FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
-  END ELSE ana = info.int.a
-  
+  IF keyword_set(group_leader) THEN BEGIN
+
+    ;; Make sure changes (like RESTORE operations) are reflected.
+
+    handle_value,info.int.store_info_h,info
+    handle_free,info.int.store_info_h
+
+    IF NOT keyword_set(ana) THEN BEGIN
+       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+
+       FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
+    END ELSE ana = info.int.a
+
+  ENDIF
+
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
