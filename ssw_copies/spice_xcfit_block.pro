@@ -230,9 +230,11 @@
 ;                       Added keyword no_save_option
 ;                       Sets keyword 'modal' in widget_base if group_leader is provided. And does not
 ;                       reset ANA when widget is NOT modal.
+;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
+;                       error is correct.
 ;
 ; Version     : 14
-; $Id: 2024-06-20 11:34 CEST $
+; $Id: 2024-06-20 11:49 CEST $
 ;-
 
 
@@ -1806,7 +1808,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   focus = szd(1:szd(0))/2
   
   ext = { result_no : result_no,$
-          plot_err : 1b,$
+          plot_err : 0b,$
           focus : focus}
   
   sml = {xpad:1,ypad:1,space:1}
@@ -2056,7 +2058,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   info.int.pix_reset1_id = oni(1:*)
   
-  onoff = ["ON","OFF"]
+  onoff = ["OFF","ON"]
   
   ;; Second row of buttons (Find-buttons,View/tweak,Refit,Fail)
   ;;
