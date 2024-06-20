@@ -228,10 +228,11 @@
 ;               Version 14, Martin Wiesmann, 4. Juni 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;                       Added keyword no_save_option
-;                       Sets keyword 'modal' in widget_base if group_leader is provided.
+;                       Sets keyword 'modal' in widget_base if group_leader is provided. And does not
+;                       reset ANA when widget is NOT modal.
 ;
 ; Version     : 14
-; $Id: 2024-06-19 14:26 CEST $
+; $Id: 2024-06-20 11:34 CEST $
 ;-
 
 
