@@ -228,10 +228,13 @@
 ;               Version 14, Martin Wiesmann, 4. Juni 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;                       Added keyword no_save_option
-;                       Sets keyword 'modal' in widget_base if group_leader is provided.
+;                       Sets keyword 'modal' in widget_base if group_leader is provided. And does not
+;                       reset ANA when widget is NOT modal.
+;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
+;                       error is correct.
 ;
 ; Version     : 14
-; $Id: 2024-06-06 12:50 CEST $
+; $Id: 2024-06-24 09:38 CEST $
 ;-
 
 
@@ -1805,7 +1808,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   focus = szd(1:szd(0))/2
   
   ext = { result_no : result_no,$
-          plot_err : 1b,$
+          plot_err : 0b,$
           focus : focus}
   
   sml = {xpad:1,ypad:1,space:1}
@@ -2055,7 +2058,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   info.int.pix_reset1_id = oni(1:*)
   
-  onoff = ["ON","OFF"]
+  onoff = ["OFF","ON"]
   
   ;; Second row of buttons (Find-buttons,View/tweak,Refit,Fail)
   ;;
@@ -2148,19 +2151,23 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   widget_control,base,set_uvalue=info
   
-  xmanager,"spice_xcfit_block",base;,/modal
+  xmanager,"spice_xcfit_block",base
   
-  ;; Make sure changes (like RESTORE operations) are reflected.
-  
-  handle_value,info.int.store_info_h,info
-  handle_free,info.int.store_info_h
-  
-  IF NOT keyword_set(ana) THEN BEGIN
-     spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
-     
-     FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
-  END ELSE ana = info.int.a
-  
+  IF keyword_set(group_leader) THEN BEGIN
+
+    ;; Make sure changes (like RESTORE operations) are reflected.
+
+    handle_value,info.int.store_info_h,info
+    handle_free,info.int.store_info_h
+
+    IF NOT keyword_set(ana) THEN BEGIN
+       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+
+       FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
+    END ELSE ana = info.int.a
+
+  ENDIF
+
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
