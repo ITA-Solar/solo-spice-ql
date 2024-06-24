@@ -182,7 +182,8 @@
 ;               restore_analysis, delete_analysis, save_analysis
 ;               since_version(), xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
-;               spice_histo_opt(), spice_cfit_block, spice_get_screen_size()
+;               spice_histo_opt(), spice_cfit_block, spice_get_screen_size(),
+;               widget_positioner
 ;
 ; Common      : None.
 ;               
@@ -232,9 +233,11 @@
 ;                       reset ANA when widget is NOT modal.
 ;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
 ;                       error is correct.
+;                       Added new toggle button 'Show/Hide fit', which shows/hides a new window that shows
+;                       the microplot in a bigger version 
 ;
 ; Version     : 14
-; $Id: 2024-06-20 11:49 CEST $
+; $Id: 2024-06-24 13:07 CEST $
 ;-
 
 
@@ -435,6 +438,14 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
   IF exist(errp) AND info.ext.plot_err THEN $
      oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
   
+  ;; Plot the same again in the bigger window, if it is shown
+  IF info.ext.fit_plot_show THEN BEGIN
+    widget_control,info.int.fit_plot_id,set_value=val
+    IF NOT failed THEN oplot,finegrid,finefunc
+    IF exist(errp) AND info.ext.plot_err THEN $
+      oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+  ENDIF
+
   ;; Update local status display according to the values at this point
   widget_control,info.int.status2_id,set_value=fit
   widget_control,info.int.status2_id,$
@@ -1449,6 +1460,15 @@ PRO spice_xcfit_block_event,ev
       handle_value,info.int.errplot_h,errp
       IF exist(errp) AND info.ext.plot_err THEN $
         oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+
+      ;; Replot bigger microplot if shown
+      IF info.ext.fit_plot_show THEN BEGIN
+        widget_control,info.int.fit_plot_id,set_value={replot:1}  
+        ;; Overplot
+        IF exist(microfine) THEN oplot,microfine(*,0),microfine(*,1)
+        IF exist(errp) AND info.ext.plot_err THEN $
+          oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+      ENDIF
     endif
 
     widget_control,ev.top,set_uvalue=info,/no_copy
@@ -1463,6 +1483,7 @@ PRO spice_xcfit_block_event,ev
 
   CASE uvalue(0) OF
   'EXIT':BEGIN
+     widget_control, info.ext.fit_plot_widget, /destroy
      handle_value,info.int.store_info_h,info,/set,/no_copy
      widget_control,ev.top,/destroy
      return
@@ -1587,9 +1608,26 @@ PRO spice_xcfit_block_event,ev
      handle_value,info.int.errplot_h,errp
      IF exist(errp) AND info.ext.plot_err THEN $
         oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
-     ENDCASE
+        
+      ;; Replot bigger microplot if shown
+      IF info.ext.fit_plot_show THEN BEGIN
+        widget_control,info.int.fit_plot_id,set_value={replot:1}
+        ;; Overplot
+        IF exist(microfine) THEN oplot,microfine(*,0),microfine(*,1)
+        IF exist(errp) AND info.ext.plot_err THEN $
+          oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+      ENDIF
+   ENDCASE
      
   
+   'FITWINDOW':BEGIN
+     info.ext.fit_plot_show = (uvalue(1) EQ 'Hide')     
+     widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
+     ;; Replot bigger microplot if shown
+     IF info.ext.fit_plot_show THEN spice_xcfit_block_visitp,info
+   ENDCASE
+
+
   'FAILFIT':BEGIN
      handle_value,info.int.a.fit_h,orgfit
      spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
@@ -1809,6 +1847,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   ext = { result_no : result_no,$
           plot_err : 0b,$
+          fit_plot_widget: 0L,$
+          fit_plot_show : 0b,$
           focus : focus}
   
   sml = {xpad:1,ypad:1,space:1}
@@ -1859,6 +1899,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
           status1_id   : 0L,$
           status2_id   : 0L,$
           microplot_id : 0L,$
+          fit_plot_id  : 0L,$
           microfine_h  : handle_create(),$ 
           errplot_h    : handle_create(),$
           changed      : 0b,$                    ;; Change flag
@@ -2058,11 +2099,14 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   info.int.pix_reset1_id = oni(1:*)
   
+  show_fit = ["Show","Hide"]
   onoff = ["OFF","ON"]
   
   ;; Second row of buttons (Find-buttons,View/tweak,Refit,Fail)
   ;;
   viewtweak = buttons3 ;; widget_base(buttons3,/column,_extra=sml)
+  dummy = cw_flipswitch(viewtweak,value=show_fit+' fit',$
+                        uvalue='FITWINDOW:'+show_fit)
   dummy = cw_flipswitch(viewtweak,value='Errplot:'+onoff,$
                         uvalue='ERRPLOT:'+onoff)
   dummy = cw_flipswitch(viewtweak,value='View/tweak',uvalue='VIEWFIT')
@@ -2092,11 +2136,15 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   microplot_id = cw_plotz(microplot_base,uvalue='MICROPLOT',$
                           xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
                           origo=[0,0],psym=10)
-;  microplot_id = cw_plotz(widget_base(upper_right_c),uvalue='MICROPLOT',$
-;                          xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
-;                          origo=[0,0],psym=10)
   info.int.microplot_id = microplot_id
-  
+
+  fit_plot_widget = widget_base(/row, title='FIT plot', map=0)
+  fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
+    xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
+    origo=[0,0],psym=10)
+  info.int.fit_plot_id = fit_plot_id
+  info.ext.fit_plot_widget = fit_plot_widget
+    
   data_b = widget_base(disp_b,/column,_extra=sml)
   result_b = widget_base(disp_b,/column,_extra=sml)
   residual_b = widget_base(disp_b,/column,_extra=sml)
@@ -2146,6 +2194,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   spice_xcfit_block_sensitize,info,title
   
   xrealize, base, group=group_leader, /center
+  wp = widget_positioner(fit_plot_widget, parent=base)
+  wp->position, /left_align
+  widget_control, fit_plot_widget, map=0
   
   spice_xcfit_block_visitp,info
   
@@ -2154,6 +2205,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   xmanager,"spice_xcfit_block",base
   
   IF keyword_set(group_leader) THEN BEGIN
+    ; This part will crash if xcfit_block is NOT modal, so only run it if it is modal, i.e. there is a group_leader
 
     ;; Make sure changes (like RESTORE operations) are reflected.
 
