@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2024-01-12 13:17 CET $
+; $Id: 2024-06-25 13:19 CEST $
 
 
 ;+
@@ -146,22 +146,21 @@ END
 ; OPTIONAL OUTPUT:
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
 ;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
-;     headers_lambda: A pointer array, containing the headers of the lambda extensions as string arrays.
-;     headers_residuals: A pointer array, containing the headers of the residuals extensions as string arrays.
+;     headers_xdim1: A pointer array, containing the headers of the xdim1 extensions as string arrays.
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
 ;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
 ;-
 function spice_data_l3::xcfit_block, window_index, $
   headers_results=headers_results, headers_data=headers_data, $
-  headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+  headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
   headers_include=headers_include, headers_constants=headers_constants
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
   ana = fits2ana(self.file, windows=window_index, $
     headers_results=headers_results, headers_data=headers_data, $
-    headers_lambda=headers_lambda, headers_residuals=headers_residuals, headers_weights=headers_weights, $
+    headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
     headers_include=headers_include, headers_constants=headers_constants)
   
   if size(ana, /type) EQ 8 then begin
