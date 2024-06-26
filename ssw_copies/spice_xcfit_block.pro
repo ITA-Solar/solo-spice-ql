@@ -237,8 +237,6 @@
 ;               Version 14, Martin Wiesmann, 4. Juni 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;                       Added keyword no_save_option
-;                       Sets keyword 'modal' in widget_base if group_leader is provided. And does not
-;                       reset ANA when widget is NOT modal.
 ;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
 ;                       error is correct.
 ;                       Added new toggle button 'Show/Hide fit', which shows/hides a new window that shows
@@ -248,7 +246,7 @@
 ;                       All necessary restoration of the data is now done in the event loop, when clicks on exit.
 ;
 ; Version     : 14
-; $Id: 2024-06-26 13:25 CEST $
+; $Id: 2024-06-26 13:27 CEST $
 ;-
 
 
