@@ -147,6 +147,11 @@
 ;
 ;                      
 ; Opt. Inputs : INCLUDE, CONST, TITLE, ANALYSIS
+;               SIGNAL_ID : A long int number that identifies the current instance of xcfit_block
+;                           when sending an event back to group_leader. An event is sent when the
+;                           user closes this instance. The event structure will contain these fields:
+;                           ID, TOP, HANDLER, SIGNAL_ID
+;                           
 ;               
 ; Outputs     : FIT, RESULT, RESID, INCLUDE, CONST
 ;               
@@ -237,7 +242,7 @@
 ;                       the microplot in a bigger version 
 ;
 ; Version     : 14
-; $Id: 2024-06-24 13:07 CEST $
+; $Id: 2024-06-26 13:19 CEST $
 ;-
 
 
@@ -1483,6 +1488,20 @@ PRO spice_xcfit_block_event,ev
 
   CASE uvalue(0) OF
   'EXIT':BEGIN
+     ;; Make sure changes (like RESTORE operations) are reflected.
+
+     IF ~info.int.ana_set THEN BEGIN
+       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+       FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
+     END ELSE BEGIN
+      IF info.ext.signals GT 0 THEN BEGIN
+        event = {spice_xcfit_block_event,ID:0L,TOP:0L,HANDLER:0L,SIGNAL_ID:info.ext.signal_id}
+        event.id = info.ext.signals
+        WIDGET_CONTROL, event.id, send_event=event, bad_id=bad
+        IF bad NE 0 THEN MESSAGE,"BAD widget ID encountered",/continue
+      ENDIF
+     ENDELSE
+
      widget_control, info.ext.fit_plot_widget, /destroy
      handle_value,info.int.store_info_h,info,/set,/no_copy
      widget_control,ev.top,/destroy
@@ -1735,7 +1754,8 @@ END
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
-                display_treshold=display_threshold, no_save_option=no_save_option
+                display_treshold=display_threshold, no_save_option=no_save_option,$
+                signal_id=signal_id
   
   ;on_error,2
   
@@ -1845,20 +1865,25 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   focus = szd(1:szd(0))/2
   
+  IF keyword_set(group_leader) THEN signals=group_leader ELSE signals=0L
+  IF ~keyword_set(signal_id) THEN signal_id=0L
+  
   ext = { result_no : result_no,$
           plot_err : 0b,$
           fit_plot_widget: 0L,$
           fit_plot_show : 0b,$
-          focus : focus}
+          focus : focus,$
+          signals : signals,$
+          signal_id : signal_id}
   
   sml = {xpad:1,ypad:1,space:1}
   
   screen = spice_get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
     base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
-      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(group_leader))
+      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]))
   ENDIF ELSE BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(group_leader))
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader)
   ENDELSE
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
@@ -1895,6 +1920,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   int = { top_id       : base,$
           a            : iana,$
+          ana_set      : keyword_set(ana),$
           a_display    : display_handles,$
           status1_id   : 0L,$
           status2_id   : 0L,$
@@ -2204,22 +2230,6 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   xmanager,"spice_xcfit_block",base
   
-  IF keyword_set(group_leader) THEN BEGIN
-    ; This part will crash if xcfit_block is NOT modal, so only run it if it is modal, i.e. there is a group_leader
-
-    ;; Make sure changes (like RESTORE operations) are reflected.
-
-    handle_value,info.int.store_info_h,info
-    handle_free,info.int.store_info_h
-
-    IF NOT keyword_set(ana) THEN BEGIN
-       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
-
-       FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
-    END ELSE ana = info.int.a
-
-  ENDIF
-
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
