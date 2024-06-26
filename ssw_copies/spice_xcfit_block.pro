@@ -151,6 +151,9 @@
 ;                           when sending an event back to group_leader. An event is sent when the
 ;                           user closes this instance. The event structure will contain these fields:
 ;                           ID, TOP, HANDLER, SIGNAL_ID
+;               
+;               IMAGE_DIM : A 2-element vector of numbers giving the initial dimensions that the data
+;                           and residual graph should show.
 ;                           
 ;               
 ; Outputs     : FIT, RESULT, RESID, INCLUDE, CONST
@@ -244,9 +247,10 @@
 ;                       New keyword MODAL, which if set, makes widget modal, requires group_leader.
 ;                       New keyword SIGNAL_ID. A number to be sent back to the caller, when exits XCFIT_BLOCK.
 ;                       All necessary restoration of the data is now done in the event loop, when clicks on exit.
+;                       New keyword IMAGE_DIM.
 ;
 ; Version     : 14
-; $Id: 2024-06-26 13:27 CEST $
+; $Id: 2024-06-26 14:55 CEST $
 ;-
 
 
@@ -1759,7 +1763,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
                 display_treshold=display_threshold, no_save_option=no_save_option,$
-                signal_id=signal_id, modal=modal
+                signal_id=signal_id, modal=modal, image_dim=image_dim
   
   ;on_error,2
   
@@ -2202,13 +2206,13 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
-                                 scale=scale,phys_scale=phys_scale, image_dim=[1,2]) ; image_dim is probably spice-specific
   
+                                 scale=scale,phys_scale=phys_scale, image_dim=image_dim)
   info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a_display.residual_display_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
-                                     scale=scale,phys_scale=phys_scale, image_dim=[1,2]) ; image_dim is probably spice-specific
+                                     scale=scale,phys_scale=phys_scale, image_dim=image_dim)
   
   IF keyword_set(origin) THEN r_origin = origin(1:*)
   IF keyword_set(scale) THEN r_scale = scale(1:*)
