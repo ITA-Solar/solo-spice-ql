@@ -250,7 +250,7 @@
 ;                       New keyword IMAGE_DIM.
 ;
 ; Version     : 14
-; $Id: 2024-06-26 14:55 CEST $
+; $Id: 2024-06-26 15:24 CEST $
 ;-
 
 
@@ -497,7 +497,7 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
   ;;
   IF NOT keyword_set(nochange) THEN BEGIN 
      spice_xcfit_block_get_result,info,showres
-     widget_control,info.int.result_id,set_value=showres
+     IF info.int.show_result THEN widget_control,info.int.result_id,set_value=showres
   END
 END
 
@@ -827,6 +827,7 @@ END
 
 PRO spice_xcfit_block_pix_flicker,info
   
+  IF ~info.int.show_result THEN return
   spice_xcfit_block_pix_getmask,info,mask
   
   ix = where(mask)
@@ -1089,7 +1090,7 @@ PRO spice_xcfit_block_calculate,info,smart=smart
   ;; Display new results
   ;;
   spice_xcfit_block_get_result,info,showres
-  widget_control,info.int.result_id,set_value=showres
+  IF info.int.show_result THEN widget_control,info.int.result_id,set_value=showres
 END
 
 ;
@@ -1220,7 +1221,7 @@ PRO spice_xcfit_block_adjustfit,info
   
   spice_xcfit_block_register,info
   spice_xcfit_block_get_result,info,this_result,title
-  widget_control,info.int.result_id,set_value={title:title}
+  IF info.int.show_result THEN widget_control,info.int.result_id,set_value={title:title}
   widget_control,info.int.initval_id,set_value=title
   spice_xcfit_block_sensitize,info,title
 END
@@ -1248,8 +1249,10 @@ PRO spice_xcfit_block_alterfit,info
      spice_xcfit_block_visitp,info
      ;; Extract new result "image" and show it
      spice_xcfit_block_get_result,info,this_result,title
-     widget_control,info.int.result_id,set_value=this_result
-     widget_control,info.int.result_id,set_value={title:title}
+     IF info.int.show_result THEN BEGIN
+      widget_control,info.int.result_id,set_value=this_result
+      widget_control,info.int.result_id,set_value={title:title}
+     ENDIF
      widget_control,info.int.initval_id,set_value=title
      ;; Make residual display aware that a change has occurred
      widget_control,info.int.residual_id,set_value=info.int.a.residual_h
@@ -1348,8 +1351,10 @@ PRO spice_xcfit_block_restore,info,other=other
                 scale:scale(1:*),$
                 title:title}
   
-  widget_control,info.int.result_id,set_value=this_result
-  widget_control,info.int.result_id,set_value=set_result
+  IF info.int.show_result THEN BEGIN
+    widget_control,info.int.result_id,set_value=this_result
+    widget_control,info.int.result_id,set_value=set_result
+  ENDIF
   widget_control,info.int.initval_id,set_value=title
   spice_xcfit_block_sensitize,info,title
 END
@@ -1396,7 +1401,7 @@ PRO spice_xcfit_block_findspot,info,what_to_find
      info.ext.focus = ndim_indices(thisresult,ix(info.int.find_ix))
 
      widget_control,info.int.data_id,set_value={focus:info.ext.focus}
-     widget_control,info.int.result_id,set_value={focus:info.ext.focus(1:*)}
+     IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:info.ext.focus(1:*)}
      widget_control,info.int.residual_id,set_value={focus:info.ext.focus}
   END
   
@@ -1457,7 +1462,7 @@ PRO spice_xcfit_block_event,ev
     tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
     spice_cw_cubeview_force_redraw, info.int.data_id
     spice_cw_cubeview_force_redraw, info.int.residual_id
-    spice_cw_cubeview_force_redraw, info.int.result_id
+    IF info.int.show_result THEN spice_cw_cubeview_force_redraw, info.int.result_id
     
     if tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
       handle_value,info.int.a.fit_h,orgfit
@@ -1541,7 +1546,7 @@ PRO spice_xcfit_block_event,ev
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN 
         info.ext.focus = ev.focus
         widget_control,info.int.residual_id,set_value={focus:ev.focus}
-        widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
+        IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
         spice_xcfit_block_visitp,info
      END
      ENDCASE
@@ -1549,7 +1554,7 @@ PRO spice_xcfit_block_event,ev
   'RESIDUAL':BEGIN
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN 
         info.ext.focus = ev.focus
-        widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
+        IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
         widget_control,info.int.data_id,set_value={focus:ev.focus}
         spice_xcfit_block_visitp,info
      END
@@ -1579,8 +1584,10 @@ PRO spice_xcfit_block_event,ev
   'RESULT#':BEGIN
      info.ext.result_no = fix(uvalue(1))
      spice_xcfit_block_get_result,info,this_result,title
-     widget_control,info.int.result_id,set_value=this_result
-     widget_control,info.int.result_id,set_value={title:title}
+     IF info.int.show_result THEN BEGIN
+      widget_control,info.int.result_id,set_value=this_result
+      widget_control,info.int.result_id,set_value={title:title}
+     ENDIF
      widget_control,info.int.initval_id,set_value=title
      spice_xcfit_block_sensitize,info,title
      handle_value,info.int.find_h,dummy,/no_copy
@@ -1838,11 +1845,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   parcheck,fit,    4,typ(/stc),1,             "FIT"
   parcheck,missing,5,typ(/rea),0,             "MISSING"
   size_temp = size(result)
-  ind = where(size_temp[2:size_temp[0]] GT 1, count)
-  IF count EQ 1 THEN BEGIN
-    box_message, ['Result is 1-dimensional, cannot display this, returning.', $
-      'Do you need another fix for this?', $
-      'Contact: prits-group@astro.uio.no']
+  ind = where(size_temp[1:size_temp[0]] GT 1, count)
+  IF count LT 2 THEN BEGIN
+    box_message, 'Result has too few dimensions, cannot display this, returning.'
     IF keyword_set(ana) THEN BEGIN
       handle_value,ana.lambda_h,lambda,/set,/no_copy
       handle_value,ana.data_h,data,/set,/no_copy
@@ -1850,12 +1855,16 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
       handle_value,ana.result_h,result,/set,/no_copy
       handle_value,ana.residual_h,residual,/set,/no_copy
       handle_value,ana.include_h,include,/set,/no_copy
-      handle_value,ana.const_h,const,/set,/no_copy      
+      handle_value,ana.const_h,const,/set,/no_copy
     ENDIF ELSE BEGIN
       delete_analysis, iana
     ENDELSE
     return
-  ENDIF
+  ENDIF ELSE IF count eq 2 THEN BEGIN
+    ; one exposure only
+    image_dim = ind
+    show_result = 0
+  ENDIF ELSE show_result = 1
   
   
   ;; Make sure we're not taking things for granted here (Thanks to
@@ -1950,7 +1959,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
           residual_id  : 0L,$
           result_pdb   : 0L,$
           initval_id   : 0L,$
-          result_id    : 0L}
+          result_id    : 0L,$
+          show_result  : show_result}
   
   handle_killer_hookup,int.store_info_h   ;; Note: Don't kill when base dies
   
@@ -2218,7 +2228,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   IF keyword_set(scale) THEN r_scale = scale(1:*)
   IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale(1:*)
   
-  info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
+  IF show_result THEN info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames(1:*),$
                                    title=title, origin=r_origin, $
