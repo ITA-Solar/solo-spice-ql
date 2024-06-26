@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2024-06-25 13:19 CEST $
+; $Id: 2024-06-26 14:59 CEST $
 
 
 ;+
@@ -168,7 +168,7 @@ function spice_data_l3::xcfit_block, window_index, $
     scale = [1,1,1]
     phys_scale = [0,0,0]
     spice_data_l3.get_plot_variables, *headers_data[0], origin=origin, scale=scale, phys_scale=phys_scale
-    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale=phys_scale
+    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale=phys_scale, image_dim=[1,2]
   endif else begin
     print, 'Something went wrong when trying to reproduce an ANA structure.'
   endelse

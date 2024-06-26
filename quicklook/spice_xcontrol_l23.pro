@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-06-26 13:20 CEST $
+; $Id: 2024-06-26 14:59 CEST $
 ;-
 
 
@@ -462,7 +462,7 @@ pro spice_xcontrol_l23_open_l3, event
   phys_scale = [0,0,0]
   spice_data_l3.get_plot_variables, *hdr_l3_data, origin=origin, scale=scale, phys_scale=phys_scale
   spice_xcfit_block, ana=ana_l3, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb, $
-    signal_id=signal_id, /no_save_option
+    signal_id=signal_id, /no_save_option, image_dim=[1,2]
 end
 
 
