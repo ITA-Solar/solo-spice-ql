@@ -177,6 +177,9 @@
 ;
 ;               NO_SAVE_OPTION : If set, then all menu options to save or restore a file
 ;                                 are deactivated.
+;               
+;               MODAL : If set, XCFIT_BLOCK will be called as a modal widget, i.e. blocks the parent widget.
+;                       This requires a group_leader.
 ;
 ; Calls       : spice_cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(), cw_pselect(), cwf_status(), 
 ;               default, exist(), dimreform(), dimrebin(), delvarx
@@ -240,9 +243,12 @@
 ;                       error is correct.
 ;                       Added new toggle button 'Show/Hide fit', which shows/hides a new window that shows
 ;                       the microplot in a bigger version 
+;                       New keyword MODAL, which if set, makes widget modal, requires group_leader.
+;                       New keyword SIGNAL_ID. A number to be sent back to the caller, when exits XCFIT_BLOCK.
+;                       All necessary restoration of the data is now done in the event loop, when clicks on exit.
 ;
 ; Version     : 14
-; $Id: 2024-06-26 13:19 CEST $
+; $Id: 2024-06-26 13:25 CEST $
 ;-
 
 
@@ -1755,7 +1761,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
                 display_treshold=display_threshold, no_save_option=no_save_option,$
-                signal_id=signal_id
+                signal_id=signal_id, modal=modal
   
   ;on_error,2
   
@@ -1881,9 +1887,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   screen = spice_get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
     base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
-      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]))
+      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(modal))
   ENDIF ELSE BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader)
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(modal))
   ENDELSE
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
