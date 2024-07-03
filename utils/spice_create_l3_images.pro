@@ -72,15 +72,16 @@
 ;      set). New keyword fit_trend, if set together with one or both
 ;      remove_*_trend, remove a linear fit of the velocity trend instead of
 ;      removing the mean of each row and/or column.   
+;      Ver. 7., 03-Jul-2024, TF - New keywords value_max and value_min
 ;
 ;
 ;-
-; $Id: 2024-06-03 09:48 CEST $
+; $Id: 2024-07-03 15:41 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
                             version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $ 
-                            no_background_images=no_background_images, $
+                            value_max=value_max, value_min=value_min, no_background_images=no_background_images, $
                             NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
@@ -219,7 +220,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         format = 'JPEG'
         prits_tools.write_image_real_size, image_data, filename, $
            remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
-           colortable=colortable, format=format, interpolation=interpolation, $
+           value_max=value_max, value_min=value_min, colortable=colortable, format=format, interpolation=interpolation, $
            xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
            xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
            SCALE_TO_RANGE=SCALE_TO_RANGE, $
@@ -230,7 +231,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, $
            remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
-           colortable=colortable, format=format, interpolation=interpolation, $
+           value_max=value_max, value_min=value_min, colortable=colortable, format=format, interpolation=interpolation, $
            height=64, border=0, reverse_colortable=reverse_colortable, $
            xrange1=xrange1, yrange1=yrange1, SCALE_TO_RANGE=SCALE_TO_RANGE, /no_axis, $
            cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, show_plot=show_plot
