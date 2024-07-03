@@ -122,14 +122,17 @@
 ;     remove_vertical_trend and remove_horizontal_trend
 ;     Ver. 5, 03-Jun-2024, Terje Fredvik - New keyword fit_trend. Remove min value from line width
 ;     images. 
+;     Ver. 6, 03-Jul-2024, Terje Fredvik - New keywords value_max and
+;     value_min. Currently only used as upper and lower limits for velocity images
 ;
 ;-
-; $Id: 2024-06-03 09:52 CEST $
+; $Id: 2024-07-03 15:43 CEST $
 
 
 
 PRO prits_tools::write_image_real_size, image_data, filename, $
   remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $smooth = smooth, $
+  value_max=value_max, value_min=value_min, $
   colortable=colortable, format=format, interpolation=interpolation, $
   xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
   xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
@@ -189,8 +192,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   IF line_vel THEN BEGIN 
      eis_colors, /velocity
      cutoff_threshold = 0
-     value_max = 50             
-     value_min = -50
+     default, value_max, 50             
+     default, value_min, -50
   ENDIF ELSE loadct, colortable
   
   tvlct,r,g,b,/get
