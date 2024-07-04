@@ -33,7 +33,7 @@
 ; RESTRICTIONS:
 ;
 ; HISTORY:
-;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
+;     26-Nov-2019: Martin Wiesmann (based on IRIS_uDATA__DEFINE)
 ;     31-Jan-2022: Terje Fredvik - New method ::mask_region_outside_slit with
 ;                  a little army of help methods is now called when the
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
@@ -54,13 +54,13 @@
 ;     03-Jul-2024: Terje Fredvik: ::get_window_data: New keyword max_saturation_fraction.
 ;                                 Default is 0, i.e. all pixels with
 ;                                 contribution from saturated L1 pixels are
-;                                 set to NaN. By increasing this the returned
-;                                 array contains estimated values for pixels
-;                                 with some contribution from saturated. New
-;                                 methods to support the new funcitonallity. 
+;                                 set to NaN. By increasing this threshold the 
+;                                 returned array contains estimated values for
+;                                 pixels with some contribution from saturated. 
+;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-07-03 15:43 CEST $
+; $Id: 2024-07-04 13:56 CEST $
 
 
 ;+
