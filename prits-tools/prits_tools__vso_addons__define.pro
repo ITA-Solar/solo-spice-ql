@@ -1,7 +1,10 @@
-FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=quiet, $
+FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=quiet, ignore_cached_days=ignore_days, $
                                          instrument=instrument, wave_str=wave_str_in, sample=sample, urls=urls
   wave_str = wave_str_in
   quiet = keyword_set(quiet)
+  
+  self.default, ignore_days, 0
+  ignore_searches_since = systime(/seconds) - ignore_days*24*3600
   
   IF instrument EQ 'eit' THEN BEGIN
      IF wave_str EQ '193' THEN wave_str = '195'
@@ -22,7 +25,10 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=
   search_string += urls.tostring()  
   savefile = self.vso.cache_dir + "/" + search_string + ".sav"
   
-  IF file_test(savefile) THEN BEGIN
+  fileinfo = file_info(savefile)
+  use_savefile = fileinfo.exists AND fileinfo.ctime GT ignore_searches_since
+  
+  IF use_savefile THEN BEGIN
      IF NOT quiet THEN message, /info, "Found cached vso search in " + savefile
      restore, savefile
      IF size(results, /tname) EQ 'STRUCT' THEN return, results
@@ -52,12 +58,12 @@ FUNCTION prits_tools::vso_cached_get, result, quiet=quiet
   ; exists already
   
   fileid = file_basename(result.fileid) ;; AIA fileid isn't a file name, but does not hurt
-  fileid_link = self.vso.cache_dir + "/" + fileid + ".lnk"
-  link_status = file_info(fileid_link)
+  fileid_link_name = self.vso.cache_dir + "/" + fileid + ".lnk"
+  link_status = file_info(fileid_link_name)
   have_file = link_status.symlink AND NOT link_status.dangling_symlink
   IF have_file THEN BEGIN
-     IF NOT quiet THEN box_message, "Already have " + fileid_link
-     return, fileid_link
+     IF NOT quiet THEN box_message, "Already have " + fileid_link_name
+     return, fileid_link_name
   END
   status = vso_get(result, out_dir=self.vso.cache_dir, filename=file, /use_network)
   IF status.info NE '' OR file EQ '' THEN BEGIN
@@ -65,9 +71,10 @@ FUNCTION prits_tools::vso_cached_get, result, quiet=quiet
      return, ""
   END
   
-  IF NOT quiet THEN box_message, "Linking " + file + " -> " + fileid_link
-  file_link, file, fileid_link
-  return, fileid_link
+  shortened_destination = self->shorten_symlink(file, fileid_link_name)
+  IF NOT quiet THEN box_message, "Linking " + fileid_link_name + " -> " + shortened_destination
+  file_link, shortened_destination, fileid_link_name
+  return, fileid_link_name
 END
 
 PRO prits_tools::rename_cache_entries_ad_hoc
