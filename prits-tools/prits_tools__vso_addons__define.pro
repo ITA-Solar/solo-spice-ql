@@ -23,6 +23,19 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=
   search_string += wave_str + "-"
   search_string += sample.tostring() + '-' 
   search_string += urls.tostring()  
+  IF NOT file_test(self.vso.cache_dir, /directory) THEN BEGIN
+     print
+     m = ['', $
+          'Could not find VSO cache directory ' + self.vso.cache_dir, $
+          'Set VSO_CACHE_DIR to point to it, or have it in $HOME/vso-cache', $
+          '', $
+          'To change this object''s VSO cache directory use "self->vso.cache_dir = <path>"', $
+          'at the prompt below', '' $
+         ]
+     box_message, m
+     message, "See box above"
+  END
+  
   savefile = self.vso.cache_dir + "/" + search_string + ".sav"
   
   fileinfo = file_info(savefile)
@@ -204,18 +217,14 @@ END
 
 
 PRO prits_tools::vso_addons_init
-  self.vso.search_strings = ptr_new([""])
-  self.vso.search_results = ptr_new([ptr_new()])
-  ; TODO: Stein Vidar 
-  ;IF NOT file_test("$HOME/vso-cache") THEN message, "You must create a VSO cache: mkdir $HOME/vso-cache"
-  self.vso.cache_dir = expand_path("$HOME/vso-cache")
+  vso_cache_dir = getenv("VSO_CACHE_DIR")
+  IF vso_cache_dir EQ "" THEN vso_cache_dir = "$HOME/vso-cache"
+  self.vso.cache_dir = expand_path(vso_cache_dir)
 END
 
 PRO prits_tools__vso_addons__define
   compile_opt static
   vso = {prits_tools__vso_addons, $
-         search_strings:ptr_new(), $
-         search_results:ptr_new(), $
          cache_dir:"" $
         }
 END
