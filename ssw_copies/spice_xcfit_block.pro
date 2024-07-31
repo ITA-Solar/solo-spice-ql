@@ -234,7 +234,7 @@
 ;                       error is correct.
 ;
 ; Version     : 14
-; $Id: 2024-07-03 15:43 CEST $
+; $Id: 2024-07-31 13:30 CEST $
 ;-
 
 
@@ -2092,9 +2092,6 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   microplot_id = cw_plotz(microplot_base,uvalue='MICROPLOT',$
                           xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
                           origo=[0,0],psym=10)
-;  microplot_id = cw_plotz(widget_base(upper_right_c),uvalue='MICROPLOT',$
-;                          xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
-;                          origo=[0,0],psym=10)
   info.int.microplot_id = microplot_id
   
   data_b = widget_base(disp_b,/column,_extra=sml)
