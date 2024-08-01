@@ -250,7 +250,7 @@
 ;                       New keyword IMAGE_DIM.
 ;
 ; Version     : 14
-; $Id: 2024-07-31 15:26 CEST $
+; $Id: 2024-08-01 14:44 CEST $
 ;-
 
 
@@ -1453,6 +1453,22 @@ PRO spice_xcfit_block_set_initial,info,average=average_flag
   handle_value,info.int.a.fit_h,globfit,/set,/no_copy
 END
 
+PRO spice_xcfit_block_event_fit_widget, ev
+  widget_control,ev.top,get_uvalue=base
+  widget_control,base,get_uvalue=info
+  if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then begin
+    info.ext.fit_plot_show = 0
+    widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
+    widget_control, info.int.fit_window_button, SET_VALUE='FITWINDOW:Show'
+  endif else begin
+    ; This doesn't work like this. I think the event should be sent to
+    ; info.int.draw widget within cw_plotz, but I don't know how to do that.
+    ; TODO
+    ; WIDGET_CONTROL, info.int.fit_plot_id, send_event=ev, bad_id=bad
+  endelse
+
+END
+
 PRO spice_xcfit_block_event,ev
   widget_control,/hourglass
   widget_control,ev.top,get_uvalue=info,/no_copy
@@ -1943,6 +1959,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
           status2_id   : 0L,$
           microplot_id : 0L,$
           fit_plot_id  : 0L,$
+          fit_window_button: 0L,$
           microfine_h  : handle_create(),$ 
           errplot_h    : handle_create(),$
           changed      : 0b,$                    ;; Change flag
@@ -2149,8 +2166,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   ;; Second row of buttons (Find-buttons,View/tweak,Refit,Fail)
   ;;
   viewtweak = buttons3 ;; widget_base(buttons3,/column,_extra=sml)
-  dummy = cw_flipswitch(viewtweak,value=show_fit+' fit',$
+  fit_window_button = cw_flipswitch(viewtweak,value=show_fit+' fit',$
     uvalue='FITWINDOW:'+show_fit)
+  info.int.fit_window_button = fit_window_button
   dummy = cw_flipswitch(viewtweak,value='Errplot:'+onoff,$
                         uvalue='ERRPLOT:'+onoff)
   dummy = cw_flipswitch(viewtweak,value='View/tweak',uvalue='VIEWFIT')
@@ -2182,7 +2200,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                           origo=[0,0],psym=10)
   info.int.microplot_id = microplot_id
 
-  fit_plot_widget = widget_base(/row, title='FIT plot', map=0)
+  fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
+    uvalue=base, event_pro='spice_xcfit_block_event_fit_widget')
   fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
     xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
     origo=[0,0],psym=10)
