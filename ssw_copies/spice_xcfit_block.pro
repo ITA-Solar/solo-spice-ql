@@ -243,14 +243,15 @@
 ;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
 ;                       error is correct.
 ;                       Added new toggle button 'Show/Hide fit', which shows/hides a new window that shows
-;                       the microplot in a bigger version
+;                       the microplot in a bigger version. Kill events are handled from this new window,
+;                       but not other events (yet).
 ;                       New keyword MODAL, which if set, makes widget modal, requires group_leader.
 ;                       New keyword SIGNAL_ID. A number to be sent back to the caller, when exits XCFIT_BLOCK.
 ;                       All necessary restoration of the data is now done in the event loop, when clicks on exit.
 ;                       New keyword IMAGE_DIM.
 ;
 ; Version     : 14
-; $Id: 2024-08-01 14:44 CEST $
+; $Id: 2024-08-01 14:47 CEST $
 ;-
 
 
