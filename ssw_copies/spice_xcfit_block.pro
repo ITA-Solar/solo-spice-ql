@@ -169,14 +169,15 @@
 ;                            the image size).
 ;               
 ;               DISPLAY_THRESHOLD : This is the threshold in percent to be used
-;                                   in histo_opt. The displayed image with the CUTOFF 
+;                                   in sigrange. The displayed image with the CUTOFF 
 ;                                   fraction lowest and highest values set to the value of 
 ;                                   the next highest/lowest point.
 ;                                   This threshold can be separately defined for the 3 different
-;                                   views (data, result, residual). I a scalar is provided
+;                                   views (data, result, residual). If a scalar is provided
 ;                                   all views have the same threshold, if a 3-element array is
 ;                                   provided, the different values will be used as following:
 ;                                   [data, result, residual]. Default is 0.02 for all views.
+;                                   If this keyword is set to zero, sigrange won't be called.
 ;
 ;               NO_SAVE_OPTION : If set, then all menu options to save or restore a file
 ;                                 are deactivated.
@@ -249,9 +250,11 @@
 ;                       New keyword SIGNAL_ID. A number to be sent back to the caller, when exits XCFIT_BLOCK.
 ;                       All necessary restoration of the data is now done in the event loop, when clicks on exit.
 ;                       New keyword IMAGE_DIM.
+;                       Use DISPLAY_THRESHOLD for sigrange in xtvscale (called from cw_cubeview) instead of histo_opt. 
+;                       Calls sigrange() if DISPLAY_THRESHOLD is greater than zero, and uses 1.0-DISPLAY_THRESHOLD as fraction.
 ;
 ; Version     : 14
-; $Id: 2024-08-01 14:47 CEST $
+; $Id: 2024-08-02 14:32 CEST $
 ;-
 
 
@@ -2236,13 +2239,15 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
-                                 scale=scale,phys_scale=phys_scale, image_dim=image_dim)
+                                 scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
+                                 sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
   
   info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a_display.residual_display_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
-                                     scale=scale,phys_scale=phys_scale, image_dim=image_dim)
+                                     scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
+                                     sigrange=threshold[1] GT 0, fraction=1.0-threshold[1])
   
   IF keyword_set(origin) THEN r_origin = origin(1:*)
   IF keyword_set(scale) THEN r_scale = scale(1:*)
@@ -2252,8 +2257,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames(1:*),$
                                    title=title, origin=r_origin, $
-                                   scale=r_scale,phys_scale=r_phys_scale)
-  
+                                   scale=r_scale,phys_scale=r_phys_scale,$
+                                   sigrange=threshold[2] GT 0, fraction=1.0-threshold[2])
+
   widget_control,info.int.initval_id,set_value=title
   spice_xcfit_block_sensitize,info,title
   
