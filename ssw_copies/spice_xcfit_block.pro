@@ -252,16 +252,16 @@
 ;                       New keyword IMAGE_DIM.
 ;                       Use DISPLAY_THRESHOLD for sigrange in xtvscale (called from cw_cubeview) instead of histo_opt. 
 ;                       Calls sigrange() if DISPLAY_THRESHOLD is greater than zero, and uses 1.0-DISPLAY_THRESHOLD as fraction.
+;                       Undid most changes in Version 12. SPICE_HISTO_OPT is no longer used. display_xxx cubes removed again.
 ;
 ; Version     : 14
-; $Id: 2024-08-02 14:32 CEST $
+; $Id: 2024-08-05 11:44 CEST $
 ;-
 
 
 ;; Getting/setting all data blocks
 
 PRO spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
-                      data_display, result_display, residual_display, $
                       set=set,copy=copy
   set = keyword_set(set)
   no_copy = 1-keyword_set(copy)
@@ -274,10 +274,6 @@ PRO spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
   handle_value,info.int.a.residual_h,residual,no_copy=no_copy,set=set
   handle_value,info.int.a.include_h,include,no_copy=no_copy,set=set
   handle_value,info.int.a.const_h,const,no_copy=no_copy,set=set
-
-  handle_value,info.int.a_display.data_display_h,data_display,no_copy=no_copy,set=set
-  handle_value,info.int.a_display.result_display_h,result_display,no_copy=no_copy,set=set
-  handle_value,info.int.a_display.residual_display_h,residual_display,no_copy=no_copy,set=set
 END
 
 
@@ -285,14 +281,14 @@ END
 ; Extracting the current result "image"
 ;
 PRO spice_xcfit_block_get_result,info,showres,title
-  handle_value,info.int.a_display.result_display_h,result_display,/no_copy
+  handle_value,info.int.a.result_h,result,/no_copy
   handle_value,info.int.titles_h,titles,/no_copy
   
-  showres = result_display(info.ext.result_no,*,*,*,*,*,*)
+  showres = result(info.ext.result_no,*,*,*,*,*,*)
   szres = size(showres)
   showres = dimreform(showres,szres(2:szres(0)),/overwrite)
   
-  ;; showres = reform(result_display(info.ext.result_no,*,*,*,*,*,*))
+  ;; showres = reform(result(info.ext.result_no,*,*,*,*,*,*))
   title = titles(info.ext.result_no)
   
   mx = 25
@@ -303,7 +299,7 @@ PRO spice_xcfit_block_get_result,info,showres,title
   widget_control,info.int.status2_id,$
      set_value={SET_HILIT,hilit:info.ext.result_no}
   
-  handle_value,info.int.a_display.result_display_h,result_display,/set,/no_copy
+  handle_value,info.int.a.result_h,result,/set,/no_copy
   handle_value,info.int.titles_h,titles,/set,/no_copy
 END
 
@@ -313,7 +309,7 @@ END
 ; global values, which will be conserved by spice_xcfit_block_set_fit!
 ;
 PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display 
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const 
   
   orgf = fit  ;; *COPY*
   
@@ -347,7 +343,7 @@ PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
   update_cfit,fit,this_result,inc=inc,const=cons
   
   ;; *COPY* of original fit put back..
-  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,$
      /set
 END
 
@@ -361,7 +357,7 @@ END
 ;
 PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochange
   
-  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const
   
   ;; Set the change flag
   info.int.changed = 1b
@@ -467,15 +463,11 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
   widget_control,info.int.status2_id,set_value=fit
   widget_control,info.int.status2_id,$
      set_value={SET_HILIT,hilit:info.ext.result_no}
-  
-  ;; Recalculate the display cubes
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
   ;;
   ;; Put data blocks back
   ;;
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
   
   ;; Leave the original fit intact (if present)
@@ -513,7 +505,7 @@ END
 ; arrays when necessary, rebuild result choice menu
 ;
 PRO spice_xcfit_block_register,info
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
   ;; Get the initial values etc.
   sfit = make_sfit_stc(fit)
@@ -632,11 +624,7 @@ PRO spice_xcfit_block_register,info
   ;; Update status (const/include)
   ;;widget_control,info.int.status2_id,set_value=fit
   
-  ;; Recalculate the display cubes
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
-
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
   
 END
@@ -784,7 +772,7 @@ PRO spice_xcfit_block_pix_getmask,info,mask,recalculate=recalculate
   IF NOT exist(mask) OR keyword_set(recalculate) THEN BEGIN 
      handle_value,info.int.pix_prog_h,prog
      
-     spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/copy
+     spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/copy
      
      missing = info.int.a.missing
      
@@ -914,7 +902,7 @@ END
 PRO spice_xcfit_block_exclude_patch,info
   ;; Make sure parameter values for non-included components are set to
   ;; missing
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
   
   sfit = make_sfit_stc(fit)
   
@@ -929,9 +917,7 @@ PRO spice_xcfit_block_exclude_patch,info
         END
      END
   END
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/set
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
 END
 
 PRO spice_xcfit_block_pix_setinclude,info,mask=mask,novisit=novisit,one=one
@@ -1029,7 +1015,7 @@ PRO spice_xcfit_block_pix_fail,info,restore=restore
   sfit = make_sfit_stc(globfit)
   handle_value,info.int.a.fit_h,globfit,/set,/no_copy
   
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
   
   IF restore THEN BEGIN
      resultv = [sfit.a_nom,0.0]
@@ -1049,11 +1035,8 @@ PRO spice_xcfit_block_pix_fail,info,restore=restore
   
   FOR j = 0,(size(da))(1)-1 DO $
      cfit_bpatch,residual,ix,j,info.int.a.missing
-  
- result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
- residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/set
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
   
   spice_xcfit_block_visitp,info
   
@@ -1071,18 +1054,15 @@ END
 ;; Calculate results for the whole block
 ;;
 PRO spice_xcfit_block_calculate,info,smart=smart
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
   spice_cfit_block,lambda,data,weights,fit,info.int.a.missing,result,residual,$
      include,const,/double,/x_face,smart=smart
   
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
-
   ;;
   ;; Put back data.
   ;;
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
   
   ;;
@@ -1524,7 +1504,7 @@ PRO spice_xcfit_block_event,ev
     ;; Make sure changes (like RESTORE operations) are reflected.
 
      IF ~info.int.ana_set THEN BEGIN
-       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
        FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
      END ELSE BEGIN
        IF info.ext.signals GT 0 THEN BEGIN
@@ -1936,29 +1916,18 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
     ELSE: threshold = display_threshold[0:2]
   ENDCASE
   
-  display_handles = { $
-    data_display_h : handle_create(), $
-    data_threshold : threshold[0], $
-    result_display_h : handle_create(), $
-    result_threshold : threshold[1], $
-    residual_display_h : handle_create(), $
-    residual_threshold : threshold[2] $
-    }
-
   
   titles_h = handle_create()
   handle_killer_hookup,titles_h,group_leader=base
   
   IF NOT keyword_set(ana) THEN BEGIN
      h_to_kill = [iana.lambda_h,iana.data_h,iana.weights_h,iana.fit_h,$
-                  iana.result_h,iana.residual_h,iana.include_h,iana.const_h,$
-                  display_handles.data_display_h,display_handles.result_display_h,display_handles.residual_display_h]
+                  iana.result_h,iana.residual_h,iana.include_h,iana.const_h]
   END
   
   int = { top_id       : base,$
           a            : iana,$
           ana_set      : keyword_set(ana),$
-          a_display    : display_handles,$
           status1_id   : 0L,$
           status2_id   : 0L,$
           microplot_id : 0L,$
@@ -2220,29 +2189,23 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   no_copy = 0
   
-  data_display = spice_histo_opt(data, int.a_display.data_threshold)
-  result_display = spice_histo_opt(result, int.a_display.result_threshold)
-  IF N_ELEMENTS(residual) GT 0 THEN $
-    residual_display = spice_histo_opt(residual, int.a_display.residual_threshold)
-  
-  ;; Put data blocks into their handles
-  
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  ;; Put data blocks into their handles  
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set,/copy
 
   spice_xcfit_block_register,info
   spice_xcfit_block_get_result,info,this_result,title
   
-;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
   
-  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a_display.data_display_h,$
+  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
                                  scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                  sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
   
-  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a_display.residual_display_h,$
+  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
