@@ -194,7 +194,7 @@
 ;               restore_analysis, delete_analysis, save_analysis
 ;               since_version(), xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
-;               spice_histo_opt(), spice_cfit_block, spice_get_screen_size(),
+;               spice_cfit_block, spice_get_screen_size(),
 ;               widget_positioner
 ;
 ; Common      : None.
@@ -255,7 +255,7 @@
 ;                       Undid most changes in Version 12. SPICE_HISTO_OPT is no longer used. display_xxx cubes removed again.
 ;
 ; Version     : 14
-; $Id: 2024-08-05 11:44 CEST $
+; $Id: 2024-08-05 11:55 CEST $
 ;-
 
 
