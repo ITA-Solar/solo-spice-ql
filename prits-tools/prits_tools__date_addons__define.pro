@@ -1,6 +1,6 @@
 FUNCTION prits_tools::julday2iso, juldays, time_zone=time_zone, decimals=decimals, delimiter=delimiter
   compile_opt static
-  COMMON prits_tools, pt
+  pt = prits_tools.singleton_instance()
   pt.default, time_zone, 'Z'
   pt.default, decimals, 0
   pt.default, delimiter, '-'
@@ -57,14 +57,3 @@ PRO prits_tools__date_addons__define
          dummy:0b $
         }
 END
-
-IF getenv("USER") EQ 'steinhh' THEN BEGIN
-   COMMON prits_tools, date_addons_pt
-   IF n_elements(date_addons_pt) EQ 0 THEN date_addons_pt = prits_tools()
-   pt = date_addons_pt
-END
-END
-
-;; /
-;; /a/b/c/d
-;; 0

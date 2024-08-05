@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-04-30 14:45 CEST $
+; $Id: 2024-08-05 13:25 CEST $
 
 
 ; save as postscript file
@@ -1270,7 +1270,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
     sx:0, $
     sy:0, $
     linelist:wnames, $
-    dwoption:0, $
+    dwoption:2, $
     drawcolor:drawcolor, $
     mainpixid:pixid, $
     pixid:pixid, $

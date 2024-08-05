@@ -7,7 +7,7 @@
 ;     or relative to the screen. This also works with multiple screens. The widget
 ;     is positioned and realised by this object.
 ;     
-;     Note, this is similar to the xrealize procedure, but slightly more sophisticated.
+;     Note, this is similar to the xrealize procedure, but more sophisticated.
 ;
 ; CATEGORY:
 ;     PRITS - Tools.
@@ -32,7 +32,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2023-06-13 11:50 CEST $
+; $Id: 2024-08-05 13:25 CEST $
 
 
 ;+

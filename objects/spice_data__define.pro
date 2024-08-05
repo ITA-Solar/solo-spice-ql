@@ -33,7 +33,7 @@
 ; RESTRICTIONS:
 ;
 ; HISTORY:
-;     26-Nov-2019: Martin Wiesmann (based on IRIS_DATA__DEFINE)
+;     26-Nov-2019: Martin Wiesmann (based on IRIS_uDATA__DEFINE)
 ;     31-Jan-2022: Terje Fredvik - New method ::mask_region_outside_slit with
 ;                  a little army of help methods is now called when the
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
@@ -51,8 +51,16 @@
 ;                                 incomplete telemetry 
 ;     03-Nov-2023: Terje Fredvik: ::create_l3_file: do not attempt line
 ;                                 fitting for Dumbbells or Intensity-windows
+;     03-Jul-2024: Terje Fredvik: ::get_window_data: New keyword max_saturation_fraction.
+;                                 Default is 0, i.e. all pixels with
+;                                 contribution from saturated L1 pixels are
+;                                 set to NaN. By increasing this threshold the 
+;                                 returned array contains estimated values for
+;                                 pixels with some contribution from saturated. 
+;                                 Added new methods to support the new funcitonallity. 
 ;-
-; $Id: 2024-06-19 10:58 CEST $
+
+; $Id: 2024-08-05 13:25 CEST $
 
 
 ;+
@@ -103,6 +111,7 @@ pro spice_data::close
   ptr_free, self.window_headers_string
   ptr_free, self.window_wcs
   ptr_free, self.window_descaled
+  ptr_free, self.window_max_sat
   ptr_free, self.window_data
   ptr_free, self.slit_y_range
   for i=0,self.n_bintable_columns-1 do begin
@@ -480,7 +489,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         
         if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
            origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
-           scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
+           scale = [ self->get_resolution(window_index[iwindow], /lambda), self->get_resolution(window_index[iwindow], /x), self->get_resolution(window_index[iwindow], /y) ]
            SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader, /no_save_option
         endif
         
@@ -1030,6 +1039,127 @@ PRO spice_data::add_window, all_data, data, window_index, included_winnos
   ENDELSE
 END
 
+FUNCTION spice_data::get_extno, extname
+  filename = self.get_filename()
+  fits_open, filename, fcb 
+  fits_close,fcb
+  
+  extno = where(fcb.extname EQ extname,/NULL)
+  return, extno
+END
+
+
+FUNCTION spice_data::read_satpixlist, extno
+
+  fxbopen, lun, self.get_filename(), extno, satpixlist_header
+  
+  n_columns = fxpar(satpixlist_header,'TFIELDS')
+  n_rows    = fxpar(satpixlist_header,'NAXIS2')
+  saturated = fltarr(n_columns,n_rows)
+  
+  FOR colct=0,n_columns-1 DO FOR rowct = 0,n_rows-1 DO BEGIN 
+     fxbread, lun, data, colct+1, rowct+1
+     saturated[colct,rowct] = data
+  ENDFOR
+  
+  fxbclose,lun
+
+  return, saturated
+  
+END
+
+FUNCTION spice_data::get_satpixlist, window_index
+  referring_extname = self->get_header_keyword('EXTNAME', window_index)
+  pixlists =  self->get_header_keyword('PIXLISTS', window_index)
+  
+  IF pixlists EQ !NULL THEN return, !NULL
+  
+  n_entries = n_elements(pixlists.indexOf(';'))
+  IF n_entries NE 1 THEN message,'A L2 file may contain only a single entry in the PIXLISTS keyword, i.e. SATPIXLIST'
+  
+  IF ~pixlists.contains('SATPIXLIST') THEN message,'No SATPIXLIST present in PIXLISTS'
+  
+  return, pixlists
+END
+
+
+PRO spice_data::print_info_on_saturated_pixels, window_index, quiet=quiet
+  IF keyword_set(quiet) THEN return
+  
+  satpixlist = self->get_satpixlist(window_index)
+  IF satpixlist NE !NULL THEN BEGIN
+
+     saturated = self->get_saturated(window_index)
+     n_saturated = trim((size(saturated))[2])
+
+     box_message,['','This window contains '+n_saturated+' pixels set to NaN due to contribution from saturated pixels.', $
+                  'Set keyword MAX_SATURATION_FRACTION to a value between 0 and 1 to include pixels', $
+                  'up to the given fractional contribution from saturated pixels.', $
+                  'The value of filled in pixels will be corrected for the "filling factor" by upscaling',$
+                  'the pixel value to value=value/(1-fractional_contribution_from_saturated_pixels)', $
+                  'Setting MAX_SATURATION_FRACTION to 1 will set all fully saturated pixels to max(data)','']
+  ENDIF
+  
+  
+END
+
+FUNCTION spice_data::get_saturated, window_index, satpixlist_attributes=satpixlist_attributes
+  
+  satpixlist = self->get_satpixlist(window_index)
+  IF satpixlist EQ !NULL THEN return, !NULL
+  
+  satpixlist_split = satpixlist.split(';')
+
+  satpixlist_extname = satpixlist_split[0]
+  satpixlist_attributes = (satpixlist_split[1]).split(',')
+  
+  satpixlist_extno = self->get_extno(satpixlist_extname)
+  saturated = self->read_satpixlist(satpixlist_extno)
+  
+  return, saturated
+END
+
+
+
+
+FUNCTION spice_data::restore_saturated_pixels, data, window_index,max_saturation_fraction
+ 
+  saturated = self->get_saturated(window_index, satpixlist_attributes=satpixlist_attributes)
+  IF saturated EQ !NULL THEN BEGIN
+     box_message,['','Data does not contain any saturated pixels.','Returning untouched data array','']
+     return, data
+  ENDIF
+  
+  ix = saturated[0:3, *]-1
+  original = saturated[4, *]
+  saturation_fraction = saturated[5, *]
+  
+  n_rows = n_elements(original)
+  
+  max_saturation_fraction_orig = max_saturation_fraction
+  
+  n_restored = 0
+  FOR rowct=0,n_rows-1 DO IF saturation_fraction[rowct] LT max_saturation_fraction THEN BEGIN 
+     data[ix[0,rowct],ix[1,rowct],ix[2,rowct],ix[3,rowct]] = original[rowct]
+     n_restored++
+
+  ENDIF
+  
+  IF n_restored GT 0 THEN box_message,['',trim(n_restored)+' partially saturated pixels filled in','']
+  
+  IF max_saturation_fraction_orig EQ 1 THEN BEGIN
+     fully_saturated_ix = where(saturation_fraction EQ 1)
+     data[ix[0,fully_saturated_ix],ix[1,fully_saturated_ix],ix[2,fully_saturated_ix],ix[3,fully_saturated_ix]]=max(data) 
+     box_message,['',trim(n_elements(fully_saturated_ix))+' fully saturated pixels set to max(data)','']
+  ENDIF
+  
+  max_saturation_fraction = max_saturation_fraction_orig
+  
+  return, data
+  
+END
+
+
 
 PRO spice_data::debin_y_dimension, data, nbin2
   sz = size(data)
@@ -1053,7 +1183,7 @@ PRO spice_data::get_all_data_both_detectors, all_data_SW, all_data_LW
   ;;-
   n_windows = self->get_number_windows()
   FOR window_index = 0,n_windows-1 DO BEGIN
-    data = self->get_window_data(window_index, /no_masking)
+    data = self->get_window_data(window_index, /no_masking, /quiet)
 
     dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
     intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
@@ -1267,7 +1397,15 @@ END
 ;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
 ;                 This keyword is ignored if NO_MASKING is set.
 ;     load : Obsolete and ignored. This is here for backwards-compatibility.
-;     slit_only : Obsolete and ignored. This is here for backwards-compatibility.
+;     slit_only : Obsolete and ignored. This is here for
+;                 backwards-compatibility.
+;     max_saturation_fraction: pixels with a contribution fraction from saturated L1 pixels above this limit 
+;                     are set to nan. Default is 0, i.e. all pixels influenced by saturated pixels are nan. 
+;                     Pixels with a saturation fraction below this limit are set to the value calculated by 
+;                     spice_prep when setting saturated L1 pixels to 0 before the geometrical correction, 
+;                     and then correcting for the filling factor by upscaling the L2 pixel value to 
+;                     value /= (1-fraction). The coordinates of pixels influenced by saturated and the
+;                     corresponding upscaled values are stored in a pixel list binary table extension SATPIXLIST(...) 
 ;     nodescale : Obsolete. If set, then NOSCALE is set. This is here for backwards-compatibility.
 ;
 ; OUTPUT:
@@ -1275,10 +1413,14 @@ END
 ;-
 FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
   no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot, $
-  load=load, slit_only=slit_only, nodescale=nodescale
+  load=load, slit_only=slit_only, nodescale=nodescale,max_saturation_fraction=max_saturation_fraction, quiet=quiet
   ;Returns the data of a window
   COMPILE_OPT IDL2
-
+  
+  default, max_saturation_fraction, 0
+  
+  IF max_saturation_fraction GT 1 THEN message,'MAX_SATURATION_FRACTION must be between 0 and 1'
+  
   IF N_PARAMS() LT 1 THEN BEGIN
     message, 'missing input, usage: get_window_data, window_index [, load=load, noscale=noscale]', /info
     return, !NULL
@@ -1288,16 +1430,23 @@ FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
   IF keyword_set(no_masking) THEN masked=0 ELSE $
     IF keyword_set(approximated_slit) THEN masked=2 ELSE masked=1
   IF (*self.window_descaled)[window_index] EQ descaled && $
-    (*self.window_masked)[window_index] EQ masked THEN BEGIN
-    data = *(*self.window_data)[window_index]
+    (*self.window_masked)[window_index] EQ masked && (*self.window_max_sat)[window_index] EQ max_saturation_fraction THEN BEGIN
+     data = *(*self.window_data)[window_index]
   ENDIF ELSE BEGIN
     data = readfits(self.get_filename(), hdr, noscale=noscale, ext=window_index)
+    
+    IF keyword_set(max_saturation_fraction) THEN BEGIN 
+       data = self.restore_saturated_pixels(data, window_index,max_saturation_fraction)
+    ENDIF ELSE self->print_info_on_saturated_pixels, window_index, quiet=quiet
+    
     IF ~keyword_set(no_masking) THEN BEGIN
-      data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
+       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
     ENDIF
+              
     IF ptr_valid((*self.window_data)[window_index]) THEN ptr_free, (*self.window_data)[window_index]
     (*self.window_data)[window_index] = ptr_new(data)
     (*self.window_descaled)[window_index] = descaled
+    (*self.window_max_sat)[window_index] = max_saturation_fraction
     (*self.window_masked)[window_index] = masked
   ENDELSE
   return, data
@@ -2715,6 +2864,7 @@ PRO spice_data::read_file, file
 
   self.window_data = ptr_new(ptrarr(self.next))
   self.window_descaled = ptr_new(bytarr(self.next))
+  self.window_max_sat = ptr_new(fltarr(self.next))
   self.window_masked = ptr_new(bytarr(self.next))
   self.window_headers = ptr_new(headers)
   self.window_headers_string = ptr_new(headers_string)
@@ -2801,7 +2951,8 @@ PRO spice_data__define
     nwin: 0, $                  ; number of windows
     next: 0, $                  ; number of extensions
     window_data: ptr_new(), $   ; loaded window data (ptrarr)
-    window_descaled: ptr_new(), $; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
+    window_descaled: ptr_new(), $ ; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
+    window_max_sat: ptr_new(), $  ; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan  
     window_masked: ptr_new(), $; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one extension
     window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one extension

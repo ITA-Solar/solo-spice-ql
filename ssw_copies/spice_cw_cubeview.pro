@@ -68,6 +68,12 @@
 ;               PLOT_DIM : Which dimension should be plotted initially
 ;
 ;               TITLE : The title of the data column.
+;               
+;               SIGRANGE : If set then the sigrange function is run on data before display.
+;                          Used in spice_xtvscale. This keyword is set by default.
+;               
+;               FRACTION : Fraction of data to consider most significant.
+;                          Used in spice_xtvscale. Default is 0.9. Ignored if SIGRANGE is unset.
 ;
 ; Calls       : cw_flipswitch(), cw_plotz(), cw_pzoom(), default,
 ;               handle_create(), since_version(), trim(), xplotscale(),
@@ -112,9 +118,9 @@
 ;               Version 9, Martin Wiesmann, 19. Januar 2024
 ;                       Adds keyword signal to call to (spice_)xtvscale
 ;                       Adds 'else' to case in event procedure
+;                       New keywords SIGRANGE and FRACTION, which are passed to spice_xtvscale.
 ;
-; Version     : 9, 19 January 2024
-; $Id: 2024-01-19 15:10 CET $
+; $Id: 2024-08-05 13:25 CEST $
 ;-
 
 ;;
@@ -570,6 +576,7 @@ END
 FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
                      dimnames=dimnames,origin=origin,scale=scale,$
                      phys_scale=phys_scale,missing=missing,$
+                     sigrange=sigrange,fraction=fraction,$
                      uvalue=uvalue,image_dim=image_dim,plot_dim=plot_dim,$
                      title=title,hvalue=hvalue,row=row,all_events=all_events
   
@@ -735,7 +742,8 @@ FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   im_base = widget_base(ibase,/column,/frame,_extra=tight,map=nmulti GT 1)
   
   info.int.xtvscaler = spice_xtvscale(group=mybase,map=0,missing=missing,$
-                                sigrange=0, signal=mybase)
+                                sigrange=sigrange, fraction=fraction,$
+                                signal=mybase)
   dummy = cw_flipswitch(im_base,value='Adjust color scaling'+["",""],$
                         uvalue='XTVSCALER'+["",""])
   

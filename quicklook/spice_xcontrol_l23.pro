@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-06-14 11:43 CEST $
+; $Id: 2024-08-05 13:25 CEST $
 ;-
 
 
@@ -85,19 +85,50 @@ end
 
 
 pro spice_xcontrol_l23_event, event
-  if tag_names(event, /structure_name) eq 'WIDGET_KILL_REQUEST' then begin
-    widget_control, event.top, get_uvalue=info
-    IF total((*info).state_l3_user.edited) GT 0 THEN BEGIN
-      answer = dialog_message(['WARNING: Possibly UNSAVED changes.', $
-        'This warning also shows up, even if you only looked at level 3 data',$
-        'without changing anything.', $
-        'Do you really want to exit?'], $
-        /question, /default_no, title='WARNING: Possibly UNSAVED changes.', $
-        /center, dialog_parent=event.top)
-      IF answer EQ 'No' THEN return
-    ENDIF
+  widget_control, event.top, get_uvalue=info
+  case tag_names(event, /structure_name) of
+    
+    'WIDGET_KILL_REQUEST': BEGIN
+      IF total((*info).state_l3_user.edited) GT 0 THEN BEGIN
+        answer = dialog_message(['WARNING: Possibly UNSAVED changes.', $
+          'This warning also shows up, even if you only looked at level 3 data',$
+          'without changing anything.', $
+          'Do you really want to exit?'], $
+          /question, /default_no, title='WARNING: Possibly UNSAVED changes.', $
+          /center, dialog_parent=event.top)
+        IF answer EQ 'No' THEN return
+      ENDIF
     widget_control, event.top, /destroy
-  endif
+    END
+    
+    'SPICE_XCFIT_BLOCK_EVENT': BEGIN
+      IF event.signal_id ge 100 THEN BEGIN
+        winno = event.signal_id - 100
+        state_l3 = (*info).state_l3_official
+      ENDIF ELSE BEGIN
+        winno = event.signal_id
+        state_l3 = (*info).state_l3_user
+      ENDELSE
+      ind = where(state_l3.l3_winno eq winno, count)
+      if count NE 1 then begin
+        print, 'This should not happen. Contact prits-group@astro.uio.no'
+        stop
+        return
+      endif
+      
+      state_l3[ind[0]].edited = 1
+      
+      IF event.signal_id ge 100 THEN BEGIN
+        (*info).state_l3_official = state_l3
+      ENDIF ELSE BEGIN
+        (*info).state_l3_user = state_l3
+      ENDELSE
+
+      spice_xcontrol_l23_update_state_display, info      
+    END
+    
+    ELSE:
+  endcase
 end
 
 
@@ -174,7 +205,7 @@ pro spice_xcontrol_l23_save_file, event
 
     all_result_headers[iwindow] = ptr_new(*headers_results[0])
     all_data_headers[iwindow] = ptr_new(*headers_data[0])
-    l3_pr_steps_all[iwindow] = ptr_new(pr_steps)
+    l3_pr_steps_all[iwindow] = ptr_new(PROC_STEPS)
 
   ENDFOR ; iwin=0,nwin_l3-1
 
@@ -388,69 +419,50 @@ end
 pro spice_xcontrol_l23_open_l3, event
   widget_control, event.top, get_uvalue=info
   widget_control, event.id, get_uvalue=win_info
+  signal_id = win_info.winno
   case win_info.l3_type of
     1: BEGIN
+      signal_id += 100
       file_l3 = (*info).file_l3_official
-      ana_l3 = *(*info).ana_l3_official
-      ana_l3_read = *(*info).ana_l3_official_read
-      hdr_l3 = *(*info).hdr_l3_official
-      hdr_l3_data = *(*info).hdr_l3_official_data
-      PGEXTNAM = fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      ana_l3 = (*(*info).ana_l3_official)[win_info.winno]
+      ana_l3_read = (*(*info).ana_l3_official_read)[win_info.winno]
+      hdr_l3 = (*(*info).hdr_l3_official)[win_info.winno]
+      hdr_l3_data = (*(*info).hdr_l3_official_data)[win_info.winno]
+      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       title = 'L3 - official - ' + PGEXTNAM
-      state_l3 = (*info).state_l3_official
     END
     2: BEGIN
       file_l3 = (*info).file_l3_user
-      ana_l3 = *(*info).ana_l3_user
-      ana_l3_read = *(*info).ana_l3_user_read
-      hdr_l3 = *(*info).hdr_l3_user
-      hdr_l3_data = *(*info).hdr_l3_user_data
-      PGEXTNAM = fxpar(*hdr_l3[win_info.winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      ana_l3 = (*(*info).ana_l3_user)[win_info.winno]
+      ana_l3_read = (*(*info).ana_l3_user_read)[win_info.winno]
+      hdr_l3 = (*(*info).hdr_l3_user)[win_info.winno]
+      hdr_l3_data = (*(*info).hdr_l3_user_data)[win_info.winno]
+      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
       title = 'L3 - user - ' + PGEXTNAM
-      state_l3 = (*info).state_l3_user
     END
   endcase
-  IF ~ana_l3_read[win_info.winno] THEN BEGIN
-    ana = fits2ana(file_l3, windows=PGEXTNAM, /quiet)
-    delete_analysis, ana_l3[win_info.winno]
-    ana_l3[win_info.winno] = ana
-    ana_l3_read[win_info.winno] = 1
+
+  IF ~ana_l3_read THEN BEGIN
+    delete_analysis, ana_l3
+    ana_l3 = fits2ana(file_l3, windows=PGEXTNAM, /quiet)
+    case win_info.l3_type of
+      1: BEGIN
+        (*(*info).ana_l3_official)[win_info.winno] = ana_l3
+        (*(*info).ana_l3_official_read)[win_info.winno] = 1
+      END
+      2: BEGIN
+        (*(*info).ana_l3_user)[win_info.winno] = ana_l3
+        (*(*info).ana_l3_user_read)[win_info.winno] = 1
+      END
+    endcase
   ENDIF
-  ana = ana_l3[win_info.winno]
+
   origin = [0,0,0]
   scale = [1,1,1]
   phys_scale = [0,0,0]
-  spice_data_l3.get_plot_variables, *hdr_l3_data[win_info.winno], origin=origin, scale=scale, phys_scale=phys_scale
-  spice_xcfit_block, ana=ana, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb, /no_save_option
-  ana_l3[win_info.winno] = ana
-
-  ind = where(state_l3.l3_winno eq win_info.winno, count)
-  if count NE 1 then begin
-    print, 'This should not happen. Contact prits-group@astro.uio.no'
-    stop
-    return
-  endif
-  state_l3[ind[0]].edited = 1
-
-  CASE win_info.l3_type OF
-    1: BEGIN
-      FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO delete_analysis, (*(*info).ana_l3_official)[i]
-      ptr_free, (*info).ana_l3_official
-      (*info).ana_l3_official = ptr_new(ana_l3)
-      ptr_free, (*info).ana_l3_official_read
-      (*info).ana_l3_official_read = ptr_new(ana_l3_read)
-      (*info).state_l3_official = state_l3
-    END
-    2: BEGIN
-      FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO delete_analysis, (*(*info).ana_l3_user)[i]
-      ptr_free, (*info).ana_l3_user
-      (*info).ana_l3_user = ptr_new(ana_l3)
-      ptr_free, (*info).ana_l3_user_read
-      (*info).ana_l3_user_read = ptr_new(ana_l3_read)
-      (*info).state_l3_user = state_l3
-    END
-  ENDCASE
-  spice_xcontrol_l23_update_state_display, info
+  spice_data_l3.get_plot_variables, *hdr_l3_data, origin=origin, scale=scale, phys_scale=phys_scale
+  spice_xcfit_block, ana=ana_l3, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb, $
+    signal_id=signal_id, /no_save_option, image_dim=[1,2]
 end
 
 

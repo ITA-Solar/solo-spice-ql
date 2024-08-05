@@ -147,6 +147,14 @@
 ;
 ;                      
 ; Opt. Inputs : INCLUDE, CONST, TITLE, ANALYSIS
+;               SIGNAL_ID : A long int number that identifies the current instance of xcfit_block
+;                           when sending an event back to group_leader. An event is sent when the
+;                           user closes this instance. The event structure will contain these fields:
+;                           ID, TOP, HANDLER, SIGNAL_ID
+;
+;               IMAGE_DIM : A 2-element vector of numbers giving the initial dimensions that the data
+;                           and residual graph should show.
+;
 ;               
 ; Outputs     : FIT, RESULT, RESID, INCLUDE, CONST
 ;               
@@ -161,17 +169,21 @@
 ;                            the image size).
 ;               
 ;               DISPLAY_THRESHOLD : This is the threshold in percent to be used
-;                                   in histo_opt. The displayed image with the CUTOFF 
+;                                   in sigrange. The displayed image with the CUTOFF 
 ;                                   fraction lowest and highest values set to the value of 
 ;                                   the next highest/lowest point.
 ;                                   This threshold can be separately defined for the 3 different
-;                                   views (data, result, residual). I a scalar is provided
+;                                   views (data, result, residual). If a scalar is provided
 ;                                   all views have the same threshold, if a 3-element array is
 ;                                   provided, the different values will be used as following:
 ;                                   [data, result, residual]. Default is 0.02 for all views.
+;                                   If this keyword is set to zero, sigrange won't be called.
 ;
 ;               NO_SAVE_OPTION : If set, then all menu options to save or restore a file
 ;                                 are deactivated.
+;
+;               MODAL : If set, XCFIT_BLOCK will be called as a modal widget, i.e. blocks the parent widget.
+;                       This requires a group_leader.
 ;
 ; Calls       : spice_cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(), cw_pselect(), cwf_status(), 
 ;               default, exist(), dimreform(), dimrebin(), delvarx
@@ -182,7 +194,8 @@
 ;               restore_analysis, delete_analysis, save_analysis
 ;               since_version(), xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
-;               spice_histo_opt(), spice_cfit_block, spice_get_screen_size()
+;               spice_cfit_block, spice_get_screen_size(),
+;               widget_positioner
 ;
 ; Common      : None.
 ;               
@@ -228,17 +241,27 @@
 ;               Version 14, Martin Wiesmann, 4. Juni 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;                       Added keyword no_save_option
-;                       Sets keyword 'modal' in widget_base if group_leader is provided.
+;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
+;                       error is correct.
+;                       Added new toggle button 'Show/Hide fit', which shows/hides a new window that shows
+;                       the microplot in a bigger version. Kill events are handled from this new window,
+;                       but not other events (yet).
+;                       New keyword MODAL, which if set, makes widget modal, requires group_leader.
+;                       New keyword SIGNAL_ID. A number to be sent back to the caller, when exits XCFIT_BLOCK.
+;                       All necessary restoration of the data is now done in the event loop, when clicks on exit.
+;                       New keyword IMAGE_DIM.
+;                       Use DISPLAY_THRESHOLD for sigrange in xtvscale (called from cw_cubeview) instead of histo_opt. 
+;                       Calls sigrange() if DISPLAY_THRESHOLD is greater than zero, and uses 1.0-DISPLAY_THRESHOLD as fraction.
+;                       Undid most changes in Version 12. SPICE_HISTO_OPT is no longer used. display_xxx cubes removed again.
 ;
 ; Version     : 14
-; $Id: 2024-06-14 11:43 CEST $
+; $Id: 2024-08-05 13:25 CEST $
 ;-
 
 
 ;; Getting/setting all data blocks
 
 PRO spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
-                      data_display, result_display, residual_display, $
                       set=set,copy=copy
   set = keyword_set(set)
   no_copy = 1-keyword_set(copy)
@@ -251,10 +274,6 @@ PRO spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
   handle_value,info.int.a.residual_h,residual,no_copy=no_copy,set=set
   handle_value,info.int.a.include_h,include,no_copy=no_copy,set=set
   handle_value,info.int.a.const_h,const,no_copy=no_copy,set=set
-
-  handle_value,info.int.a_display.data_display_h,data_display,no_copy=no_copy,set=set
-  handle_value,info.int.a_display.result_display_h,result_display,no_copy=no_copy,set=set
-  handle_value,info.int.a_display.residual_display_h,residual_display,no_copy=no_copy,set=set
 END
 
 
@@ -262,14 +281,14 @@ END
 ; Extracting the current result "image"
 ;
 PRO spice_xcfit_block_get_result,info,showres,title
-  handle_value,info.int.a_display.result_display_h,result_display,/no_copy
+  handle_value,info.int.a.result_h,result,/no_copy
   handle_value,info.int.titles_h,titles,/no_copy
   
-  showres = result_display(info.ext.result_no,*,*,*,*,*,*)
+  showres = result(info.ext.result_no,*,*,*,*,*,*)
   szres = size(showres)
   showres = dimreform(showres,szres(2:szres(0)),/overwrite)
   
-  ;; showres = reform(result_display(info.ext.result_no,*,*,*,*,*,*))
+  ;; showres = reform(result(info.ext.result_no,*,*,*,*,*,*))
   title = titles(info.ext.result_no)
   
   mx = 25
@@ -280,7 +299,7 @@ PRO spice_xcfit_block_get_result,info,showres,title
   widget_control,info.int.status2_id,$
      set_value={SET_HILIT,hilit:info.ext.result_no}
   
-  handle_value,info.int.a_display.result_display_h,result_display,/set,/no_copy
+  handle_value,info.int.a.result_h,result,/set,/no_copy
   handle_value,info.int.titles_h,titles,/set,/no_copy
 END
 
@@ -290,7 +309,7 @@ END
 ; global values, which will be conserved by spice_xcfit_block_set_fit!
 ;
 PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display 
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const 
   
   orgf = fit  ;; *COPY*
   
@@ -324,7 +343,7 @@ PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
   update_cfit,fit,this_result,inc=inc,const=cons
   
   ;; *COPY* of original fit put back..
-  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,$
      /set
 END
 
@@ -338,7 +357,7 @@ END
 ;
 PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochange
   
-  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const
   
   ;; Set the change flag
   info.int.changed = 1b
@@ -432,19 +451,23 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
   IF exist(errp) AND info.ext.plot_err THEN $
      oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
   
+  ;; Plot the same again in the bigger window, if it is shown
+  IF info.ext.fit_plot_show THEN BEGIN
+    widget_control,info.int.fit_plot_id,set_value=val
+    IF NOT failed THEN oplot,finegrid,finefunc
+    IF exist(errp) AND info.ext.plot_err THEN $
+      oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+  ENDIF
+
   ;; Update local status display according to the values at this point
   widget_control,info.int.status2_id,set_value=fit
   widget_control,info.int.status2_id,$
      set_value={SET_HILIT,hilit:info.ext.result_no}
-  
-  ;; Recalculate the display cubes
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
   ;;
   ;; Put data blocks back
   ;;
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
   
   ;; Leave the original fit intact (if present)
@@ -470,7 +493,7 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
   ;;
   IF NOT keyword_set(nochange) THEN BEGIN 
      spice_xcfit_block_get_result,info,showres
-     widget_control,info.int.result_id,set_value=showres
+     IF info.int.show_result THEN widget_control,info.int.result_id,set_value=showres
   END
 END
 
@@ -482,7 +505,7 @@ END
 ; arrays when necessary, rebuild result choice menu
 ;
 PRO spice_xcfit_block_register,info
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
   ;; Get the initial values etc.
   sfit = make_sfit_stc(fit)
@@ -601,11 +624,7 @@ PRO spice_xcfit_block_register,info
   ;; Update status (const/include)
   ;;widget_control,info.int.status2_id,set_value=fit
   
-  ;; Recalculate the display cubes
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
-
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
   
 END
@@ -753,7 +772,7 @@ PRO spice_xcfit_block_pix_getmask,info,mask,recalculate=recalculate
   IF NOT exist(mask) OR keyword_set(recalculate) THEN BEGIN 
      handle_value,info.int.pix_prog_h,prog
      
-     spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/copy
+     spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/copy
      
      missing = info.int.a.missing
      
@@ -800,6 +819,7 @@ END
 
 PRO spice_xcfit_block_pix_flicker,info
   
+  IF ~info.int.show_result THEN return
   spice_xcfit_block_pix_getmask,info,mask
   
   ix = where(mask)
@@ -882,7 +902,7 @@ END
 PRO spice_xcfit_block_exclude_patch,info
   ;; Make sure parameter values for non-included components are set to
   ;; missing
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
   
   sfit = make_sfit_stc(fit)
   
@@ -897,9 +917,7 @@ PRO spice_xcfit_block_exclude_patch,info
         END
      END
   END
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/set
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
 END
 
 PRO spice_xcfit_block_pix_setinclude,info,mask=mask,novisit=novisit,one=one
@@ -997,7 +1015,7 @@ PRO spice_xcfit_block_pix_fail,info,restore=restore
   sfit = make_sfit_stc(globfit)
   handle_value,info.int.a.fit_h,globfit,/set,/no_copy
   
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
   
   IF restore THEN BEGIN
      resultv = [sfit.a_nom,0.0]
@@ -1017,11 +1035,8 @@ PRO spice_xcfit_block_pix_fail,info,restore=restore
   
   FOR j = 0,(size(da))(1)-1 DO $
      cfit_bpatch,residual,ix,j,info.int.a.missing
-  
- result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
- residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
 
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,data_display,result_display,residual_display,/set
+  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
   
   spice_xcfit_block_visitp,info
   
@@ -1039,18 +1054,15 @@ END
 ;; Calculate results for the whole block
 ;;
 PRO spice_xcfit_block_calculate,info,smart=smart
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
   
   spice_cfit_block,lambda,data,weights,fit,info.int.a.missing,result,residual,$
      include,const,/double,/x_face,smart=smart
   
-  result_display = spice_histo_opt(result, info.int.a_display.result_threshold)
-  residual_display = spice_histo_opt(residual, info.int.a_display.residual_threshold)
-
   ;;
   ;; Put back data.
   ;;
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
   
   ;;
@@ -1062,7 +1074,7 @@ PRO spice_xcfit_block_calculate,info,smart=smart
   ;; Display new results
   ;;
   spice_xcfit_block_get_result,info,showres
-  widget_control,info.int.result_id,set_value=showres
+  IF info.int.show_result THEN widget_control,info.int.result_id,set_value=showres
 END
 
 ;
@@ -1193,7 +1205,7 @@ PRO spice_xcfit_block_adjustfit,info
   
   spice_xcfit_block_register,info
   spice_xcfit_block_get_result,info,this_result,title
-  widget_control,info.int.result_id,set_value={title:title}
+  IF info.int.show_result THEN widget_control,info.int.result_id,set_value={title:title}
   widget_control,info.int.initval_id,set_value=title
   spice_xcfit_block_sensitize,info,title
 END
@@ -1221,8 +1233,10 @@ PRO spice_xcfit_block_alterfit,info
      spice_xcfit_block_visitp,info
      ;; Extract new result "image" and show it
      spice_xcfit_block_get_result,info,this_result,title
-     widget_control,info.int.result_id,set_value=this_result
-     widget_control,info.int.result_id,set_value={title:title}
+     IF info.int.show_result THEN BEGIN
+      widget_control,info.int.result_id,set_value=this_result
+      widget_control,info.int.result_id,set_value={title:title}
+     ENDIF
      widget_control,info.int.initval_id,set_value=title
      ;; Make residual display aware that a change has occurred
      widget_control,info.int.residual_id,set_value=info.int.a.residual_h
@@ -1321,8 +1335,10 @@ PRO spice_xcfit_block_restore,info,other=other
                 scale:scale(1:*),$
                 title:title}
   
-  widget_control,info.int.result_id,set_value=this_result
-  widget_control,info.int.result_id,set_value=set_result
+  IF info.int.show_result THEN BEGIN
+    widget_control,info.int.result_id,set_value=this_result
+    widget_control,info.int.result_id,set_value=set_result
+  ENDIF
   widget_control,info.int.initval_id,set_value=title
   spice_xcfit_block_sensitize,info,title
 END
@@ -1369,7 +1385,7 @@ PRO spice_xcfit_block_findspot,info,what_to_find
      info.ext.focus = ndim_indices(thisresult,ix(info.int.find_ix))
 
      widget_control,info.int.data_id,set_value={focus:info.ext.focus}
-     widget_control,info.int.result_id,set_value={focus:info.ext.focus(1:*)}
+     IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:info.ext.focus(1:*)}
      widget_control,info.int.residual_id,set_value={focus:info.ext.focus}
   END
   
@@ -1421,6 +1437,22 @@ PRO spice_xcfit_block_set_initial,info,average=average_flag
   handle_value,info.int.a.fit_h,globfit,/set,/no_copy
 END
 
+PRO spice_xcfit_block_event_fit_widget, ev
+  widget_control,ev.top,get_uvalue=base
+  widget_control,base,get_uvalue=info
+  if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then begin
+    info.ext.fit_plot_show = 0
+    widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
+    widget_control, info.int.fit_window_button, SET_VALUE='FITWINDOW:Show'
+  endif else begin
+    ; This doesn't work like this. I think the event should be sent to
+    ; info.int.draw widget within cw_plotz, but I don't know how to do that.
+    ; TODO
+    ; WIDGET_CONTROL, info.int.fit_plot_id, send_event=ev, bad_id=bad
+  endelse
+
+END
+
 PRO spice_xcfit_block_event,ev
   widget_control,/hourglass
   widget_control,ev.top,get_uvalue=info,/no_copy
@@ -1430,7 +1462,7 @@ PRO spice_xcfit_block_event,ev
     tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
     spice_cw_cubeview_force_redraw, info.int.data_id
     spice_cw_cubeview_force_redraw, info.int.residual_id
-    spice_cw_cubeview_force_redraw, info.int.result_id
+    IF info.int.show_result THEN spice_cw_cubeview_force_redraw, info.int.result_id
     
     if tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
       handle_value,info.int.a.fit_h,orgfit
@@ -1446,6 +1478,15 @@ PRO spice_xcfit_block_event,ev
       handle_value,info.int.errplot_h,errp
       IF exist(errp) AND info.ext.plot_err THEN $
         oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+
+      ;; Replot bigger microplot if shown
+      IF info.ext.fit_plot_show THEN BEGIN
+        widget_control,info.int.fit_plot_id,set_value={replot:1}
+        ;; Overplot
+        IF exist(microfine) THEN oplot,microfine(*,0),microfine(*,1)
+        IF exist(errp) AND info.ext.plot_err THEN $
+          oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+      ENDIF
     endif
 
     widget_control,ev.top,set_uvalue=info,/no_copy
@@ -1460,6 +1501,21 @@ PRO spice_xcfit_block_event,ev
 
   CASE uvalue(0) OF
   'EXIT':BEGIN
+    ;; Make sure changes (like RESTORE operations) are reflected.
+
+     IF ~info.int.ana_set THEN BEGIN
+       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
+       FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
+     END ELSE BEGIN
+       IF info.ext.signals GT 0 THEN BEGIN
+         event = {spice_xcfit_block_event,ID:0L,TOP:0L,HANDLER:0L,SIGNAL_ID:info.ext.signal_id}
+         event.id = info.ext.signals
+         WIDGET_CONTROL, event.id, send_event=event, bad_id=bad
+         IF bad NE 0 THEN MESSAGE,"BAD widget ID encountered",/continue
+       ENDIF
+     ENDELSE
+
+     widget_control, info.ext.fit_plot_widget, /destroy
      handle_value,info.int.store_info_h,info,/set,/no_copy
      widget_control,ev.top,/destroy
      return
@@ -1490,7 +1546,7 @@ PRO spice_xcfit_block_event,ev
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN 
         info.ext.focus = ev.focus
         widget_control,info.int.residual_id,set_value={focus:ev.focus}
-        widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
+        IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
         spice_xcfit_block_visitp,info
      END
      ENDCASE
@@ -1498,7 +1554,7 @@ PRO spice_xcfit_block_event,ev
   'RESIDUAL':BEGIN
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN 
         info.ext.focus = ev.focus
-        widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
+        IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:ev.focus(1:*)}
         widget_control,info.int.data_id,set_value={focus:ev.focus}
         spice_xcfit_block_visitp,info
      END
@@ -1528,8 +1584,10 @@ PRO spice_xcfit_block_event,ev
   'RESULT#':BEGIN
      info.ext.result_no = fix(uvalue(1))
      spice_xcfit_block_get_result,info,this_result,title
-     widget_control,info.int.result_id,set_value=this_result
-     widget_control,info.int.result_id,set_value={title:title}
+     IF info.int.show_result THEN BEGIN
+      widget_control,info.int.result_id,set_value=this_result
+      widget_control,info.int.result_id,set_value={title:title}
+     ENDIF
      widget_control,info.int.initval_id,set_value=title
      spice_xcfit_block_sensitize,info,title
      handle_value,info.int.find_h,dummy,/no_copy
@@ -1584,7 +1642,24 @@ PRO spice_xcfit_block_event,ev
      handle_value,info.int.errplot_h,errp
      IF exist(errp) AND info.ext.plot_err THEN $
         oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
-     ENDCASE
+       
+      ;; Replot bigger microplot if shown
+      IF info.ext.fit_plot_show THEN BEGIN
+        widget_control,info.int.fit_plot_id,set_value={replot:1}
+        ;; Overplot
+        IF exist(microfine) THEN oplot,microfine(*,0),microfine(*,1)
+        IF exist(errp) AND info.ext.plot_err THEN $
+          oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+      ENDIF
+   ENDCASE
+     
+  
+   'FITWINDOW':BEGIN
+     info.ext.fit_plot_show = (uvalue(1) EQ 'Hide')     
+     widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
+     ;; Replot bigger microplot if shown
+     IF info.ext.fit_plot_show THEN spice_xcfit_block_visitp,info
+   ENDCASE
      
   
   'FAILFIT':BEGIN
@@ -1694,7 +1769,8 @@ END
 PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
-                display_treshold=display_threshold, no_save_option=no_save_option
+                display_treshold=display_threshold, no_save_option=no_save_option,$
+                signal_id=signal_id, modal=modal, image_dim=image_dim
   
   ;on_error,2
   
@@ -1769,11 +1845,9 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   parcheck,fit,    4,typ(/stc),1,             "FIT"
   parcheck,missing,5,typ(/rea),0,             "MISSING"
   size_temp = size(result)
-  ind = where(size_temp[2:size_temp[0]] GT 1, count)
-  IF count EQ 1 THEN BEGIN
-    box_message, ['Result is 1-dimensional, cannot display this, returning.', $
-      'Do you need another fix for this?', $
-      'Contact: prits-group@astro.uio.no']
+  ind = where(size_temp[1:size_temp[0]] GT 1, count)
+  IF count LT 2 THEN BEGIN
+    box_message, 'Result has too few dimensions, cannot display this, returning.'
     IF keyword_set(ana) THEN BEGIN
       handle_value,ana.lambda_h,lambda,/set,/no_copy
       handle_value,ana.data_h,data,/set,/no_copy
@@ -1781,12 +1855,16 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
       handle_value,ana.result_h,result,/set,/no_copy
       handle_value,ana.residual_h,residual,/set,/no_copy
       handle_value,ana.include_h,include,/set,/no_copy
-      handle_value,ana.const_h,const,/set,/no_copy      
+      handle_value,ana.const_h,const,/set,/no_copy
     ENDIF ELSE BEGIN
       delete_analysis, iana
     ENDELSE
     return
-  ENDIF
+  ENDIF ELSE IF count eq 2 THEN BEGIN
+    ; one exposure only
+    image_dim = ind
+    show_result = 0
+  ENDIF ELSE show_result = 1
   
   
   ;; Make sure we're not taking things for granted here (Thanks to
@@ -1804,18 +1882,25 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   focus = szd(1:szd(0))/2
   
+  IF keyword_set(group_leader) THEN signals=group_leader ELSE signals=0L
+  IF ~keyword_set(signal_id) THEN signal_id=0L
+
   ext = { result_no : result_no,$
-          plot_err : 1b,$
-          focus : focus}
+          plot_err : 0b,$
+          fit_plot_widget: 0L,$
+          fit_plot_show : 0b,$
+          focus : focus,$
+          signals : signals,$
+          signal_id : signal_id}
   
   sml = {xpad:1,ypad:1,space:1}
   
   screen = spice_get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
     base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
-      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(group_leader))
+      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(modal))
   ENDIF ELSE BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(group_leader))
+    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(modal))
   ENDELSE
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
@@ -1831,31 +1916,23 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
     ELSE: threshold = display_threshold[0:2]
   ENDCASE
   
-  display_handles = { $
-    data_display_h : handle_create(), $
-    data_threshold : threshold[0], $
-    result_display_h : handle_create(), $
-    result_threshold : threshold[1], $
-    residual_display_h : handle_create(), $
-    residual_threshold : threshold[2] $
-    }
-
   
   titles_h = handle_create()
   handle_killer_hookup,titles_h,group_leader=base
   
   IF NOT keyword_set(ana) THEN BEGIN
      h_to_kill = [iana.lambda_h,iana.data_h,iana.weights_h,iana.fit_h,$
-                  iana.result_h,iana.residual_h,iana.include_h,iana.const_h,$
-                  display_handles.data_display_h,display_handles.result_display_h,display_handles.residual_display_h]
+                  iana.result_h,iana.residual_h,iana.include_h,iana.const_h]
   END
   
   int = { top_id       : base,$
           a            : iana,$
-          a_display    : display_handles,$
+          ana_set      : keyword_set(ana),$
           status1_id   : 0L,$
           status2_id   : 0L,$
           microplot_id : 0L,$
+          fit_plot_id  : 0L,$
+          fit_window_button: 0L,$
           microfine_h  : handle_create(),$ 
           errplot_h    : handle_create(),$
           changed      : 0b,$                    ;; Change flag
@@ -1872,7 +1949,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
           residual_id  : 0L,$
           result_pdb   : 0L,$
           initval_id   : 0L,$
-          result_id    : 0L}
+          result_id    : 0L,$
+          show_result  : show_result}
   
   handle_killer_hookup,int.store_info_h   ;; Note: Don't kill when base dies
   
@@ -2055,11 +2133,15 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   info.int.pix_reset1_id = oni(1:*)
   
-  onoff = ["ON","OFF"]
+  show_fit = ["Show","Hide"]
+  onoff = ["OFF","ON"]
   
   ;; Second row of buttons (Find-buttons,View/tweak,Refit,Fail)
   ;;
   viewtweak = buttons3 ;; widget_base(buttons3,/column,_extra=sml)
+  fit_window_button = cw_flipswitch(viewtweak,value=show_fit+' fit',$
+    uvalue='FITWINDOW:'+show_fit)
+  info.int.fit_window_button = fit_window_button
   dummy = cw_flipswitch(viewtweak,value='Errplot:'+onoff,$
                         uvalue='ERRPLOT:'+onoff)
   dummy = cw_flipswitch(viewtweak,value='View/tweak',uvalue='VIEWFIT')
@@ -2089,10 +2171,15 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   microplot_id = cw_plotz(microplot_base,uvalue='MICROPLOT',$
                           xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
                           origo=[0,0],psym=10)
-;  microplot_id = cw_plotz(widget_base(upper_right_c),uvalue='MICROPLOT',$
-;                          xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
-;                          origo=[0,0],psym=10)
   info.int.microplot_id = microplot_id
+
+  fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
+    uvalue=base, event_pro='spice_xcfit_block_event_fit_widget')
+  fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
+    xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
+    origo=[0,0],psym=10)
+  info.int.fit_plot_id = fit_plot_id
+  info.ext.fit_plot_widget = fit_plot_widget
   
   data_b = widget_base(disp_b,/column,_extra=sml)
   result_b = widget_base(disp_b,/column,_extra=sml)
@@ -2102,65 +2189,54 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   
   no_copy = 0
   
-  data_display = spice_histo_opt(data, int.a_display.data_threshold)
-  result_display = spice_histo_opt(result, int.a_display.result_threshold)
-  IF N_ELEMENTS(residual) GT 0 THEN $
-    residual_display = spice_histo_opt(residual, int.a_display.residual_threshold)
-  
-  ;; Put data blocks into their handles
-  
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display,$
+  ;; Put data blocks into their handles  
+  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set,/copy
 
   spice_xcfit_block_register,info
   spice_xcfit_block_get_result,info,this_result,title
   
-;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
+;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
   
-  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a_display.data_display_h,$
+  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
-                                 scale=scale,phys_scale=phys_scale, image_dim=[1,2]) ; image_dim is probably spice-specific
+                                 scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
+                                 sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
   
-  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a_display.residual_display_h,$
+  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
-                                     scale=scale,phys_scale=phys_scale, image_dim=[1,2]) ; image_dim is probably spice-specific
+                                     scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
+                                     sigrange=threshold[1] GT 0, fraction=1.0-threshold[1])
   
   IF keyword_set(origin) THEN r_origin = origin(1:*)
   IF keyword_set(scale) THEN r_scale = scale(1:*)
   IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale(1:*)
   
-  info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
+  IF show_result THEN info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames(1:*),$
                                    title=title, origin=r_origin, $
-                                   scale=r_scale,phys_scale=r_phys_scale)
-  
+                                   scale=r_scale,phys_scale=r_phys_scale,$
+                                   sigrange=threshold[2] GT 0, fraction=1.0-threshold[2])
+
   widget_control,info.int.initval_id,set_value=title
   spice_xcfit_block_sensitize,info,title
   
   xrealize, base, group=group_leader, /center
-  
+  wp = widget_positioner(fit_plot_widget, parent=base)
+  wp->position, /left_align
+  widget_control, fit_plot_widget, map=0
+
   spice_xcfit_block_visitp,info
   
   widget_control,base,set_uvalue=info
   
-  xmanager,"spice_xcfit_block",base;,/modal
-  
-  ;; Make sure changes (like RESTORE operations) are reflected.
-  
-  handle_value,info.int.store_info_h,info
-  handle_free,info.int.store_info_h
-  
-  IF NOT keyword_set(ana) THEN BEGIN
-     spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,data_display,result_display,residual_display
-     
-     FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill(h)
-  END ELSE ana = info.int.a
-  
+  xmanager,"spice_xcfit_block",base
+
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
