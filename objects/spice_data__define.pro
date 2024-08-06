@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-06 13:41 CEST $
+; $Id: 2024-08-06 14:18 CEST $
 
 
 ;+
@@ -195,7 +195,8 @@ function spice_data::xcfit_block, window_index, no_masking=no_masking, approxima
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, no_line_list=no_line_list)
+  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, $
+    no_line_list=no_line_list, /init_all_cubes)
   if size(ana, /type) EQ 8 then begin
     origin = [ (self->get_lambda_vector(window_index))[0], (self->get_instr_x_vector(window_index))[0], (self->get_instr_y_vector(window_index))[0] ]
     scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
