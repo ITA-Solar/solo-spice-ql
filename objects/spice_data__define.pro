@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-06 13:28 CEST $
+; $Id: 2024-08-06 13:41 CEST $
 
 
 ;+
@@ -2973,6 +2973,7 @@ END
 PRO spice_data::get_bintable_info
   COMPILE_OPT IDL2
 
+  ; This temp_column must be the same as the one in spice_data::get_bintable_data
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
     tag:'', bin_extension_name:'', data_extension_name:'', data_extension_index:-1, values:ptr_new()}
 
