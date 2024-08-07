@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-06 14:18 CEST $
+; $Id: 2024-08-07 11:02 CEST $
 
 
 ;+
@@ -3044,6 +3044,6 @@ PRO spice_data__define
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    bintable_columns: ptr_new(), $; Pointer to string array which contains all columns in the binary extension table
+    bintable_columns: ptr_new(), $; Pointer to structure array which contains all columns in the binary extension table
     n_bintable_columns: 0}     ; Number of columns in the binary extension table
 END
