@@ -255,7 +255,7 @@
 ;                       Undid most changes in Version 12. SPICE_HISTO_OPT is no longer used. display_xxx cubes removed again.
 ;
 ; Version     : 14
-; $Id: 2024-08-05 11:55 CEST $
+; $Id: 2024-08-14 12:07 CEST $
 ;-
 
 
@@ -1515,7 +1515,6 @@ PRO spice_xcfit_block_event,ev
        ENDIF
      ENDELSE
 
-     widget_control, info.ext.fit_plot_widget, /destroy
      handle_value,info.int.store_info_h,info,/set,/no_copy
      widget_control,ev.top,/destroy
      return
@@ -2174,7 +2173,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   info.int.microplot_id = microplot_id
 
   fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
-    uvalue=base, event_pro='spice_xcfit_block_event_fit_widget')
+    uvalue=base, event_pro='spice_xcfit_block_event_fit_widget', group_leader=base)
   fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
     xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
     origo=[0,0],psym=10)
