@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2023-05-16 11:46 CEST $
+; $Id: 2024-08-20 15:44 CEST $
 ;-
 ;
 ;
@@ -303,19 +303,14 @@ pro spice_xcontrol_detnuv, event
   widget_control, event.top, get_uvalue = info
   case event.release of
     0: begin
-      bin_sp=*(*info).d->binning_spectral()
-      ccd=['NUV']
-      for i = 0,n_elements(ccd)-1 do begin
-        lindx=where(*(*info).d->getregion() eq strmid(ccd[i],0,3))
-        case strmid(ccd[i],3,1) of
-          '1': lindx=lindx[where((*(*info).d->getxs(lindx)-1)*bin_sp[lindx]+1 lt 2072)]
-          '2': lindx=lindx[where((*(*info).d->getxs(lindx)-1)*bin_sp[lindx]+1 ge 2072)]
-          else:
-        endcase
-        if lindx[0] lt 0 then goto, continue
-        iris_xdetector,*(*info).d,lindx, group_leader = (*info).tlb
-        continue:
+      nwin = *(*info).d->get_number_windows()
+      win_positions = intarr(nwin)
+      for iwin=0,nwin-1 do begin
+        temp = *(*info).d->get_window_position(iwin, detector=detectornr)
+        win_positions[iwin] = detectornr
       endfor
+      ind = where(win_positions eq 1, count)
+      if count gt 0 then spice_xdetector, *(*info).d, ind, group_leader=(*info).tlb
     end
     else:
   endcase
@@ -325,60 +320,15 @@ pro spice_xcontrol_detfuv, event
   widget_control, event.top, get_uvalue = info
   case event.release of
     0: begin
-      bin_sp=*(*info).d->binning_spectral()
-      ccd=['FUV1','FUV2']
-      for i = 0,n_elements(ccd)-1 do begin
-        lindx=where(*(*info).d->getregion() eq strmid(ccd[i],0,3))
-        case strmid(ccd[i],3,1) of
-          '1': lindx=lindx[where((*(*info).d->getxs(lindx)-1)*bin_sp[lindx]+1 lt 2072)]
-          '2': lindx=lindx[where((*(*info).d->getxs(lindx)-1)*bin_sp[lindx]+1 ge 2072)]
-          else:
-        endcase
-        if lindx[0] lt 0 then goto, continue
-        iris_xdetector,*(*info).d,lindx, group_leader = (*info).tlb
-        continue:
+      nwin = *(*info).d->get_number_windows()
+      win_positions = intarr(nwin)
+      for iwin=0,nwin-1 do begin
+        temp = *(*info).d->get_window_position(iwin, detector=detectornr)
+        win_positions[iwin] = detectornr
       endfor
+      ind = where(win_positions eq 2, count)
+      if count gt 0 then spice_xdetector, *(*info).d, ind, group_leader=(*info).tlb
     end
-    else:
-  endcase
-end
-
-pro spice_xcontrol_shownuv1, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(2,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,2
-    1:
-    else:
-  endcase
-end
-
-pro spice_xcontrol_shownuv2, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(3,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,3
-    1:
-    else:
-  endcase
-end
-
-pro spice_xcontrol_showfuv1, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(0,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,0
-    1:
-    else:
-  endcase
-end
-
-pro spice_xcontrol_showfuv2, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(1,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,1
-    1:
     else:
   endcase
 end

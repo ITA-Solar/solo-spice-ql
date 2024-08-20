@@ -4,11 +4,17 @@
 ;
 ; Purpose     :
 ; This function return a list of predefined lines that should be
-; fitted in the spectrum data. The line list has been taken from
+; fitted in the spectrum data. The line list (spice_get_lines_all) has 
+; been taken from
 ; 
 ; A. Fludra et al., A&A 656, A38 (2021)
 ; https://doi.org/10.1051/0004-6361/202141221
 ; Table 1, except where stated differently
+;
+;
+; The updated and much shorter line list (spice_get_lines_strongest) has been made
+; from a selection of lines based on actual fitted lines and Alessandra's "Lines observable
+; with SPICE in different solar conditions" presentation in Goettingen 2024.
 ;
 ; Use         :
 ;       line_list = spice_line_list()
@@ -24,13 +30,13 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2024-06-14 11:43 CEST $
+; $Id: 2024-08-20 15:44 CEST $
 ;-
 ;
 ;----------------------------------------------------------
 
 
-function spice_line_list, version=version
+function spice_get_lines_all, version=version
 
   version = 1 ; PLEASE increase this number when editing the code
 
@@ -82,5 +88,48 @@ function spice_line_list, version=version
     104.09, 'O I' $ ; from Fig. 1
     )
 
+  return, line_list
+end
+
+
+FUNCTION spice_get_lines_strongest, version=version
+  
+  version = 20                   ; PLEASE increase this number when editing the code
+  
+  
+  line_list = HASH( $
+              ; Short Wavelength Channel
+              70.38, 'O III',   $
+              70.60, 'Mg IX',   $
+              75.02, 'S IV',    $
+              76.04, 'O V',     $
+              76.52, 'N IV',    $
+              77.04, 'Ne VIII', $
+              78.65, 'S V',     $
+              78.77, 'O IV',    $
+              
+              
+              ; Long Wavelength Channel
+              97.25,  'H Ly gamma',  $
+              97.70,  'C III',       $
+              98.98,  'N III',       $
+              101.03, 'Ne VI',       $
+              102.57, 'H Ly beta',   $
+              103.19, 'O VI',        $
+              103.76, 'O VI',        $
+              104.09, 'O I'          $ 
+    )
+
+  return, line_list
+  
+END
+
+
+FUNCTION spice_line_list, version=version, strongest_lines=strongest_lines
+
+  default, strongest_lines, 0
+  
+  line_list = (strongest_lines) ? spice_get_lines_strongest(version=version) : spice_get_lines_all(version=version)
+  
   return, line_list
 end

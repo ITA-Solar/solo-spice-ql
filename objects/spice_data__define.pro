@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-05 13:25 CEST $
+; $Id: 2024-08-20 15:44 CEST $
 
 
 ;+
@@ -118,6 +118,7 @@ pro spice_data::close
     if ptr_valid((*self.bintable_columns)[i].values) then ptr_free, (*self.bintable_columns)[i].values
   endfor
   ptr_free, self.bintable_columns
+  self.n_bintable_columns = 0
   self.dumbbells = [-1, -1]
   self.nwin = 0
 END
@@ -194,11 +195,12 @@ function spice_data::xcfit_block, window_index, no_masking=no_masking, approxima
   COMPILE_OPT IDL2
 
   if N_ELEMENTS(window_index) eq 0 then window_index = 0
-  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, no_line_list=no_line_list)
+  ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, $
+    no_line_list=no_line_list, /init_all_cubes)
   if size(ana, /type) EQ 8 then begin
     origin = [ (self->get_lambda_vector(window_index))[0], (self->get_instr_x_vector(window_index))[0], (self->get_instr_y_vector(window_index))[0] ]
     scale = [ self->get_resolution(/lambda), self->get_resolution(/x), self->get_resolution(/y) ]
-    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1]
+    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale=[0,1,1], image_dim=[1,2]
   endif else begin
     print, 'Something went wrong when trying to produce an ANA structure.'
   endelse
@@ -490,7 +492,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
            origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
            scale = [ self->get_resolution(window_index[iwindow], /lambda), self->get_resolution(window_index[iwindow], /x), self->get_resolution(window_index[iwindow], /y) ]
-           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale = [0,1,1], group_leader=group_leader, /no_save_option
+           SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale=[0,1,1], image_dim=[1,2], group_leader=group_leader, /no_save_option
         endif
         
         ;data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
@@ -1753,7 +1755,7 @@ FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value
   ;IF count GT 1 THEN keyword = strjoin(temp, '_D$')
 
   IF ARG_PRESENT(variable_values) THEN BEGIN
-    variable_values = self.get_bintable_data(keyword, values_only=values_only)
+    variable_values = self.get_bintable_data(keyword, values_only=values_only, extension_index=extension_index)
   ENDIF
 
   result = fxpar(*(*self.window_headers_string)[extension_index], keyword, missing=missing_value, count=count)
@@ -2695,27 +2697,137 @@ END
 ; Description:
 ;     This method returns a list of column tags that can be found in the binary extension table.
 ;
+; KEYWORD PARAMETERS:
+;     include_window_tag : If set, then the ttypes will have the window tag included
+;                          (e.g. 'RADCAL[NE VIII 770 (MERGED)]' instead of just 'RADCAL').
+;                          This will return one ttype per tag found.
+;
+; OPTIONAL INPUTS:
+;     extension_index : An integer, giving the index of the desired extension.
+;
 ; OUTPUT:
 ;     string array
+;
+; OPTIONAL OUTPUTS:
+;     column_indices : An array of long integers, giving the indices of the output ttypes.
 ;-
-FUNCTION spice_data::get_bintable_ttypes
+FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag, column_indices=column_indices, extension_index=extension_index
   ;Returns a list of column tags that can be found in the binary extension table.
   COMPILE_OPT IDL2
+  
+  ; TODO : There is a bug here
 
-  return, (*self.bintable_columns).ttype
+  ttypes = (*self.bintable_columns).ttype
+  column_indices = lindgen(N_ELEMENTS(ttypes))
+  IF keyword_set(include_window_tag) THEN BEGIN
+    ttypes = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
+  ENDIF ELSE BEGIN
+    IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
+      ind_ext = []
+      FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
+        icol = column_indices[i]
+        ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
+        IF count GT 0 THEN ind_ext = [ind_ext, icol]
+      ENDFOR
+      IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
+        column_indices = column_indices[ind_ext]
+        ttypes = ttypes[ind_ext]
+      ENDIF ELSE BEGIN
+        ttypes = []
+        column_indices = []
+      ENDELSE
+    ENDIF    
+  ENDELSE
+  return, ttypes
+END
+
+
+;+
+; Description:
+;     This method returns the given list of TTYPES with the window tag added, where there exists one.
+;     A TTYPE that has more than one tag can be multiple times in the input list, but does not have to be.
+;     TTYPES that are not in the binary table will be excluded.
+;
+; INPUT:
+;     ttypes : A string array, giving the ttypes that should be expanded.
+;
+; OPTIONAL INPUTS:
+;     extension_index : An integer, giving the index of the desired extension.
+;
+; OUTPUT:
+;     string array
+; 
+; OPTIONAL OUTPUTS:
+;     column_indices : An array of long integers, giving the indices of the output ttypes.
+;-
+FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices, extension_index=extension_index
+  ;Returns a list of ttypes with the added window tag, where necessary
+  COMPILE_OPT IDL2
+
+  ttypes_result = []
+  column_indices = []
+  ttypes_up = strup(strtrim(ttypes, 2))
+  ttypes_up = ttypes_up[UNIQ(ttypes_up, SORT(ttypes_up))]
+  FOR itype=0,N_ELEMENTS(ttypes_up)-1 DO BEGIN
+
+    column = strsplit(ttypes_up[itype], '[', count=count1, /extract)
+    if count1 eq 2 then begin
+      tag = strsplit(column[1], ']', /extract)
+      tag = strup(strtrim(tag[0], 2))
+      ttype = strup(strtrim(column[0], 2))
+      ind = where((*self.bintable_columns).ttype eq ttype AND (*self.bintable_columns).tag eq tag, count2)
+      IF count2 GT 0 THEN BEGIN
+        ttypes_result = [ttypes_result, ttype+'['+tag+']']
+        column_indices = [column_indices, ind[0]]
+      ENDIF
+    endif else begin ; count1 eq 2
+
+      ind = where((*self.bintable_columns).ttype eq ttypes_up[itype], count3)
+      IF count3 GT 0 && self.n_bintable_columns GT 0 THEN BEGIN
+        FOR icol=0,count3-1 DO BEGIN
+          ttype = ttypes_up[itype]
+          IF (*self.bintable_columns)[ind[icol]].tag NE '' THEN ttype += '['+(*self.bintable_columns)[ind[icol]].tag+']'
+          ttypes_result = [ttypes_result, ttype]
+          column_indices = [column_indices, ind[icol]]
+          ENDFOR ; icol=0,count3-1
+        ENDIF ; count3 GT 0 && self.n_bintable_columns GT 0
+    endelse ;  ; count1 eq 2
+
+  ENDFOR ; itype=0,N_ELEMENTS(ttypes_up)-1
+
+  IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
+    ind_ext = []
+    FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
+      icol = column_indices[i]
+      ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
+      IF count GT 0 THEN ind_ext = [ind_ext, icol]
+    ENDFOR
+    IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
+      column_indices = ind_ext
+      ttypes_result = ttypes_result[ind_ext]
+    ENDIF ELSE BEGIN
+      ttypes_result = []
+      column_indices = []
+    ENDELSE
+  ENDIF
+
+  return, ttypes_result
 END
 
 
 ;+
 ; Description:
 ;     This method returns the content of one or more columns found in the binary extension table.
-;     If the given tag does not exist, the same structure is returned with empty fields, except the
-;     tag 'TTYPE' is populated with the provided ttype. When requesting the data of only one TTYPE,
+;     The provided TTYPES are expanded, i.e. all instances of a TTYPE are returned, except if
+;     the window tag is included in the TTYPE.
+;     TTYPES that are not in the binary table are silently ignored.
+;     When requesting the data of only one TTYPE,
 ;     one can set the keyword VALUES_ONLY to receive the data only as an array, instead of the structure.
 ;
 ; OPTIONAL INPUTS:
 ;     ttypes : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
 ;            be returned.
+;     extension_index : An integer, giving the index of the desired extension.
 ;
 ; OUTPUT:
 ;     array of structure of type:
@@ -2728,9 +2840,13 @@ END
 ;                  instead of the default output structure with metadata. This keyword is ignored if more than
 ;                  one TTYPES have been provided. If the desired TTYPE does not exist, a !NULL is returned.
 ;-
-FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
+FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only, extension_index=extension_index
   ;Returns the content of one or more columns found in the binary extension table.
   COMPILE_OPT IDL2
+
+  ; This temp_column must be the same as the one in spice_data::get_bintable_info
+  temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
+    tag:'', bin_extension_name:'', data_extension_name:ptr_new(), data_extension_index:ptr_new(), values:ptr_new()}
 
   IF self.n_bintable_columns EQ 0 THEN BEGIN
     print, 'No binary table extension with variable keywords in this FITS file.'
@@ -2738,58 +2854,60 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
   IF N_ELEMENTS(ttypes) eq 0 THEN BEGIN
     ttypes = self.get_bintable_ttypes()
   ENDIF
-  ttypes_up = strup(strtrim(ttypes, 2))
-  temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
-    extension:'', values:ptr_new()}
-  result = make_array(N_ELEMENTS(ttypes_up), value=temp_column)
+  ttypes_use = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
+
+  result = make_array(N_ELEMENTS(ttypes_use), value=temp_column)
   file_open = 0
-  FOR i=0,N_ELEMENTS(ttypes_up)-1 DO BEGIN
-    ind = where((*self.bintable_columns).ttype eq ttypes_up[i], count)
-    IF count GT 0 && self.n_bintable_columns GT 0 THEN BEGIN
-      ind=ind[0]
-
-      IF ~ptr_valid((*self.bintable_columns)[ind].values) THEN BEGIN
-        ;load column values
-        IF ~file_open THEN BEGIN
-          FXBOPEN, unit, self.get_filename(), (*self.bintable_columns)[ind].extension
-          file_open = 1
-        ENDIF ; ~file_open
-        data = !NULL
-        FXBREAD, unit, data, ttypes_up[i]
-        (*self.bintable_columns)[ind].values = ptr_new(data)
-
+  FOR i=0,N_ELEMENTS(ttypes_use)-1 DO BEGIN
+    ind=column_indices[i]
+    IF ~ptr_valid((*self.bintable_columns)[ind].values) THEN BEGIN
+      ;load column values
+      IF ~file_open THEN BEGIN
+        FXBOPEN, unit, self.get_filename(), (*self.bintable_columns)[ind].bin_extension_name
+        file_open = 1
         hdr = fxbheader(unit)
-        col_num = strtrim(string(fxbcolnum(unit, ttypes_up[i])), 2)
-        (*self.bintable_columns)[ind].wcsn = strtrim(fxpar(hdr, 'WCSN'+col_num, missing=''), 2)
-        (*self.bintable_columns)[ind].tform = strtrim(fxpar(hdr, 'TFORM'+col_num, missing=''), 2)
-        (*self.bintable_columns)[ind].ttype = strup(strtrim(fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment), 2))
-        comment = strtrim(strcompress(comment), 2)
-        (*self.bintable_columns)[ind].tdim = strtrim(fxpar(hdr, 'TDIM'+col_num, missing=''), 2)
-        (*self.bintable_columns)[ind].tdmin = strtrim(fxpar(hdr, 'TDMIN'+col_num, missing=''), 2)
-        (*self.bintable_columns)[ind].tdmax = strtrim(fxpar(hdr, 'TDMAX'+col_num, missing=''), 2)
-        (*self.bintable_columns)[ind].tdesc = strtrim(fxpar(hdr, 'TDESC'+col_num, missing=''), 2)
-        tunit = strtrim(fxpar(hdr, 'TUNIT'+col_num, missing=''), 2)
-        tunit_comment = stregex(comment, '\[.*\]', /extract)
-        IF strlen(tunit_comment) GE 2 THEN BEGIN
-          tunit_temp = strtrim(strmid(tunit_comment, 1, strlen(tunit_comment)-2), 2)
-          tunit_desc = strtrim(strmid(comment, strlen(tunit_comment)+1), 2)
-        ENDIF ELSE BEGIN
-          tunit_temp = ''
-          tunit_desc = comment
-        ENDELSE
-        IF TUNIT EQ '' THEN BEGIN
-          tunit = tunit_temp
-        ENDIF
-        (*self.bintable_columns)[ind].tunit = tunit
-        (*self.bintable_columns)[ind].tunit_desc = tunit_desc
+      ENDIF ; ~file_open
+      data = !NULL
+      FXBREAD, unit, data, ttypes_use[i]
+      (*self.bintable_columns)[ind].values = ptr_new(data)
 
-      ENDIF ; ~ptr_valid((*self.bintable_columns)[ind].values)
-      result[i] = (*self.bintable_columns)[ind]
+      col_num = strtrim(string(fxbcolnum(unit, ttypes_use[i])), 2)
+      (*self.bintable_columns)[ind].wcsn = strtrim(fxpar(hdr, 'WCSN'+col_num, missing=''), 2)
+      (*self.bintable_columns)[ind].tform = strtrim(fxpar(hdr, 'TFORM'+col_num, missing=''), 2)
+      column = strup(strtrim(fxpar(hdr, 'TTYPE'+col_num, missing='', comment=comment), 2))
+      column = strsplit(column, '[', count=count2, /extract)
+      if count2 eq 2 then begin
+        tag = strsplit(column[1], ']', /extract)
+        tag = strtrim(tag[0], 2)
+      endif else begin
+        tag = ''
+      endelse
+      ttype = strtrim(column[0], 2)
+      (*self.bintable_columns)[ind].ttype = ttype
+      (*self.bintable_columns)[ind].tag = tag
+      comment = strtrim(strcompress(comment), 2)
+      (*self.bintable_columns)[ind].tdim = strtrim(fxpar(hdr, 'TDIM'+col_num, missing=''), 2)
+      (*self.bintable_columns)[ind].tdmin = strtrim(fxpar(hdr, 'TDMIN'+col_num, missing=''), 2)
+      (*self.bintable_columns)[ind].tdmax = strtrim(fxpar(hdr, 'TDMAX'+col_num, missing=''), 2)
+      (*self.bintable_columns)[ind].tdesc = strtrim(fxpar(hdr, 'TDESC'+col_num, missing=''), 2)
+      tunit = strtrim(fxpar(hdr, 'TUNIT'+col_num, missing=''), 2)
+      tunit_comment = stregex(comment, '\[.*\]', /extract)
+      IF strlen(tunit_comment) GE 2 THEN BEGIN
+        tunit_temp = strtrim(strmid(tunit_comment, 1, strlen(tunit_comment)-2), 2)
+        tunit_desc = strtrim(strmid(comment, strlen(tunit_comment)+1), 2)
+      ENDIF ELSE BEGIN
+        tunit_temp = ''
+        tunit_desc = comment
+      ENDELSE
+      IF TUNIT EQ '' THEN BEGIN
+        tunit = tunit_temp
+      ENDIF
+      (*self.bintable_columns)[ind].tunit = tunit
+      (*self.bintable_columns)[ind].tunit_desc = tunit_desc
 
-    ENDIF ELSE BEGIN ; count GT 0 && self.n_bintable_columns GT 0
-      result[i].ttype = ttypes[i]
+    ENDIF ; ~ptr_valid((*self.bintable_columns)[ind].values)
+    result[i] = (*self.bintable_columns)[ind]
 
-    ENDELSE ; count GT 0 && self.n_bintable_columns GT 0
   ENDFOR ; i=0,N_ELEMENTS(ttypes_up)-1
 
   IF file_open THEN FXBCLOSE, unit
@@ -2899,37 +3017,53 @@ END
 PRO spice_data::get_bintable_info
   COMPILE_OPT IDL2
 
+  ; This temp_column must be the same as the one in spice_data::get_bintable_data
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
-    tag:'', bin_extension_name:'', data_extension_name:'', data_extension_index:-1, values:ptr_new()}
+    tag:'', bin_extension_name:'', data_extension_name:ptr_new(), data_extension_index:ptr_new(), values:ptr_new()}
 
   self.n_bintable_columns = 0
   bintable_columns = []
   FOR iwin=0,self.get_number_windows()-1 DO BEGIN
     var_keys = self.get_header_keyword('VAR_KEYS', iwin, '')
-    var_keys = strsplit(var_keys, ',', count=count, /extract)
+    var_keys = strsplit(var_keys, ',', /extract)
     bin_extension_name = ''
-    self.n_bintable_columns += count
     foreach column, var_keys, index do begin
-      entry = strsplit(column, ';', count=count, /extract)
-      if count eq 2 then begin
+      entry = strsplit(column, ';', count=count1, /extract)
+      if count1 eq 2 then begin
         bin_extension_name = strtrim(entry[0], 2)
         column = entry[1]
       endif
-      column = strsplit(column, '[', count=count, /extract)
-      if count eq 2 then begin
-        tag = strsplit(column[1], ']', count=count, /extract)
-        tag = tag[0]
+      column = strsplit(column, '[', count=count2, /extract)
+      if count2 eq 2 then begin
+        tag = strsplit(column[1], ']', /extract)
+        tag = strup(strtrim(tag[0], 2))
       endif else begin
         tag = ''
       endelse
-      ttype = column[0]
-      column_current = temp_column
-      column_current.ttype = strup(strtrim(ttype, 2))
-      column_current.tag = strup(strtrim(tag, 2))
-      column_current.bin_extension_name = bin_extension_name
-      column_current.data_extension_name = self.get_header_keyword('EXTNAME', iwin, '')
-      column_current.data_extension_index = iwin
-      bintable_columns = [bintable_columns, column_current]
+      ttype = strup(strtrim(column[0], 2))
+      IF iwin GT 0 THEN BEGIN
+        ind = where(bintable_columns.bin_extension_name EQ bin_extension_name AND $
+          bintable_columns.ttype EQ ttype AND $
+          bintable_columns.tag EQ tag, count3)
+      ENDIF ELSE count3=0
+      IF count3 EQ 0 THEN BEGIN
+        column_current = temp_column
+        column_current.ttype = ttype
+        column_current.tag = tag
+        column_current.bin_extension_name = bin_extension_name
+        column_current.data_extension_name = ptr_new([self.get_header_keyword('EXTNAME', iwin, '')])
+        column_current.data_extension_index = ptr_new([iwin])
+        bintable_columns = [bintable_columns, column_current]
+        self.n_bintable_columns += 1
+      ENDIF ELSE BEGIN
+        ; TODO, make data_extension_name and data_extension_index a pointer of a list?
+        new_name_list = [*bintable_columns[ind[0]].data_extension_name, self.get_header_keyword('EXTNAME', iwin, '')]
+        ptr_free, bintable_columns[ind[0]].data_extension_name
+        bintable_columns[ind[0]].data_extension_name = ptr_new(new_name_list)
+        new_index_list = [*bintable_columns[ind[0]].data_extension_index, iwin]
+        ptr_free, bintable_columns[ind[0]].data_extension_index
+        bintable_columns[ind[0]].data_extension_index = ptr_new(new_index_list)
+      ENDELSE
     endforeach
   ENDFOR ; iwin=0,self.get_number_windows()-1
   if N_ELEMENTS(bintable_columns) eq 0 then bintable_columns = make_array(1, value=temp_column)
@@ -2959,6 +3093,6 @@ PRO spice_data__define
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    bintable_columns: ptr_new(), $; Pointer to string array which contains all columns in the binary extension table
+    bintable_columns: ptr_new(), $; Pointer to structure array which contains all columns in the binary extension table
     n_bintable_columns: 0}     ; Number of columns in the binary extension table
 END
