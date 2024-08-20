@@ -30,7 +30,7 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2024-08-20 10:39 CEST $
+; $Id: 2024-08-20 11:10 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -130,7 +130,7 @@ FUNCTION spice_line_list, version=version, strongest_lines=strongest_lines
 
   default, strongest_lines, 1
   
-  line_list = (strongest_lines) ? spice_get_lines_strongest() : spice_get_lines_all()
+  line_list = (strongest_lines) ? spice_get_lines_strongest(version=version) : spice_get_lines_all(version=version)
   
   return, line_list
 end
