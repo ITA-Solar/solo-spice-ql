@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-20 15:43 CEST $
+; $Id: 2024-08-20 15:59 CEST $
 
 
 ;+
@@ -2714,8 +2714,6 @@ END
 FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag, column_indices=column_indices, extension_index=extension_index
   ;Returns a list of column tags that can be found in the binary extension table.
   COMPILE_OPT IDL2
-  
-  ; TODO : There is a bug here
 
   ttypes = (*self.bintable_columns).ttype
   column_indices = lindgen(N_ELEMENTS(ttypes))
@@ -2723,19 +2721,18 @@ FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag,
     ttypes = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
   ENDIF ELSE BEGIN
     IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
-      ind_ext = []
+      ttypes_new = []
+      column_indices_new = []
       FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
         icol = column_indices[i]
         ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
-        IF count GT 0 THEN ind_ext = [ind_ext, icol]
+        IF count GT 0 THEN BEGIN
+          ttypes_new = [ttypes_new, ttypes[i]]
+          column_indices_new = [column_indices_new, icol]
+        ENDIF
       ENDFOR
-      IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
-        column_indices = column_indices[ind_ext]
-        ttypes = ttypes[ind_ext]
-      ENDIF ELSE BEGIN
-        ttypes = []
-        column_indices = []
-      ENDELSE
+      ttypes = ttypes_new
+      column_indices = column_indices_new
     ENDIF    
   ENDELSE
   return, ttypes
@@ -2796,19 +2793,18 @@ FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices, exten
   ENDFOR ; itype=0,N_ELEMENTS(ttypes_up)-1
 
   IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
-    ind_ext = []
+    ttypes_new = []
+    column_indices_new = []
     FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
       icol = column_indices[i]
       ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
-      IF count GT 0 THEN ind_ext = [ind_ext, icol]
+      IF count GT 0 THEN BEGIN
+        ttypes_new = [ttypes_new, ttypes_result[i]]
+        column_indices_new = [column_indices_new, icol]
+      ENDIF
     ENDFOR
-    IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
-      column_indices = ind_ext
-      ttypes_result = ttypes_result[ind_ext]
-    ENDIF ELSE BEGIN
-      ttypes_result = []
-      column_indices = []
-    ENDELSE
+    ttypes_result = ttypes_new
+    column_indices = column_indices_new
   ENDIF
 
   return, ttypes_result
