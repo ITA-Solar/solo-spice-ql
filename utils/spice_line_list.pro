@@ -30,7 +30,7 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2024-08-20 11:10 CEST $
+; $Id: 2024-08-20 11:43 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -110,10 +110,9 @@ FUNCTION spice_get_lines_strongest, version=version
               
               
               ; Long Wavelength Channel
-              97.25, 'H Ly gamma',   $
-              97.70, 'C III',        $
-              98.98, 'N III',        $
-              99.94, 'Fe III + O I', $ 
+              97.25,  'H Ly gamma',  $
+              97.70,  'C III',       $
+              98.98,  'N III',       $
               101.03, 'Ne VI',       $
               102.57, 'H Ly beta',   $
               103.19, 'O VI',        $
@@ -128,7 +127,7 @@ END
 
 FUNCTION spice_line_list, version=version, strongest_lines=strongest_lines
 
-  default, strongest_lines, 1
+  default, strongest_lines, 0
   
   line_list = (strongest_lines) ? spice_get_lines_strongest(version=version) : spice_get_lines_all(version=version)
   
