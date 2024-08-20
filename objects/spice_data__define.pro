@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-14 11:47 CEST $
+; $Id: 2024-08-20 15:43 CEST $
 
 
 ;+
@@ -1755,7 +1755,7 @@ FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value
   ;IF count GT 1 THEN keyword = strjoin(temp, '_D$')
 
   IF ARG_PRESENT(variable_values) THEN BEGIN
-    variable_values = self.get_bintable_data(keyword, values_only=values_only)
+    variable_values = self.get_bintable_data(keyword, values_only=values_only, extension_index=extension_index)
   ENDIF
 
   result = fxpar(*(*self.window_headers_string)[extension_index], keyword, missing=missing_value, count=count)
@@ -2702,19 +2702,42 @@ END
 ;                          (e.g. 'RADCAL[NE VIII 770 (MERGED)]' instead of just 'RADCAL').
 ;                          This will return one ttype per tag found.
 ;
+; OPTIONAL INPUTS:
+;     extension_index : An integer, giving the index of the desired extension.
+;
 ; OUTPUT:
 ;     string array
 ;
 ; OPTIONAL OUTPUTS:
 ;     column_indices : An array of long integers, giving the indices of the output ttypes.
 ;-
-FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag, column_indices=column_indices
+FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag, column_indices=column_indices, extension_index=extension_index
   ;Returns a list of column tags that can be found in the binary extension table.
   COMPILE_OPT IDL2
+  
+  ; TODO : There is a bug here
 
   ttypes = (*self.bintable_columns).ttype
   column_indices = lindgen(N_ELEMENTS(ttypes))
-  IF keyword_set(include_window_tag) THEN ttypes = self.expand_ttypes(ttypes, column_indices=column_indices)
+  IF keyword_set(include_window_tag) THEN BEGIN
+    ttypes = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
+  ENDIF ELSE BEGIN
+    IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
+      ind_ext = []
+      FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
+        icol = column_indices[i]
+        ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
+        IF count GT 0 THEN ind_ext = [ind_ext, icol]
+      ENDFOR
+      IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
+        column_indices = column_indices[ind_ext]
+        ttypes = ttypes[ind_ext]
+      ENDIF ELSE BEGIN
+        ttypes = []
+        column_indices = []
+      ENDELSE
+    ENDIF    
+  ENDELSE
   return, ttypes
 END
 
@@ -2728,13 +2751,16 @@ END
 ; INPUT:
 ;     ttypes : A string array, giving the ttypes that should be expanded.
 ;
+; OPTIONAL INPUTS:
+;     extension_index : An integer, giving the index of the desired extension.
+;
 ; OUTPUT:
 ;     string array
 ; 
 ; OPTIONAL OUTPUTS:
 ;     column_indices : An array of long integers, giving the indices of the output ttypes.
 ;-
-FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices
+FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices, extension_index=extension_index
   ;Returns a list of ttypes with the added window tag, where necessary
   COMPILE_OPT IDL2
 
@@ -2769,6 +2795,22 @@ FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices
 
   ENDFOR ; itype=0,N_ELEMENTS(ttypes_up)-1
 
+  IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
+    ind_ext = []
+    FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
+      icol = column_indices[i]
+      ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
+      IF count GT 0 THEN ind_ext = [ind_ext, icol]
+    ENDFOR
+    IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
+      column_indices = ind_ext
+      ttypes_result = ttypes_result[ind_ext]
+    ENDIF ELSE BEGIN
+      ttypes_result = []
+      column_indices = []
+    ENDELSE
+  ENDIF
+
   return, ttypes_result
 END
 
@@ -2785,6 +2827,7 @@ END
 ; OPTIONAL INPUTS:
 ;     ttypes : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
 ;            be returned.
+;     extension_index : An integer, giving the index of the desired extension.
 ;
 ; OUTPUT:
 ;     array of structure of type:
@@ -2797,13 +2840,13 @@ END
 ;                  instead of the default output structure with metadata. This keyword is ignored if more than
 ;                  one TTYPES have been provided. If the desired TTYPE does not exist, a !NULL is returned.
 ;-
-FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
+FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only, extension_index=extension_index
   ;Returns the content of one or more columns found in the binary extension table.
   COMPILE_OPT IDL2
 
   ; This temp_column must be the same as the one in spice_data::get_bintable_info
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
-    tag:'', bin_extension_name:'', data_extension_name:'', data_extension_index:-1, values:ptr_new()}
+    tag:'', bin_extension_name:'', data_extension_name:ptr_new(), data_extension_index:ptr_new(), values:ptr_new()}
 
   IF self.n_bintable_columns EQ 0 THEN BEGIN
     print, 'No binary table extension with variable keywords in this FITS file.'
@@ -2811,7 +2854,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only
   IF N_ELEMENTS(ttypes) eq 0 THEN BEGIN
     ttypes = self.get_bintable_ttypes()
   ENDIF
-  ttypes_use = self.expand_ttypes(ttypes, column_indices=column_indices)
+  ttypes_use = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
 
   result = make_array(N_ELEMENTS(ttypes_use), value=temp_column)
   file_open = 0
@@ -2976,7 +3019,7 @@ PRO spice_data::get_bintable_info
 
   ; This temp_column must be the same as the one in spice_data::get_bintable_data
   temp_column = {wcsn:'', tform:'', ttype:'', tdim:'', tunit:'', tunit_desc:'', tdmin:'', tdmax:'', tdesc:'', $
-    tag:'', bin_extension_name:'', data_extension_name:'', data_extension_index:-1, values:ptr_new()}
+    tag:'', bin_extension_name:'', data_extension_name:ptr_new(), data_extension_index:ptr_new(), values:ptr_new()}
 
   self.n_bintable_columns = 0
   bintable_columns = []
@@ -3008,12 +3051,18 @@ PRO spice_data::get_bintable_info
         column_current.ttype = ttype
         column_current.tag = tag
         column_current.bin_extension_name = bin_extension_name
-        column_current.data_extension_name = self.get_header_keyword('EXTNAME', iwin, '')
-        column_current.data_extension_index = iwin
+        column_current.data_extension_name = ptr_new([self.get_header_keyword('EXTNAME', iwin, '')])
+        column_current.data_extension_index = ptr_new([iwin])
         bintable_columns = [bintable_columns, column_current]
         self.n_bintable_columns += 1
       ENDIF ELSE BEGIN
         ; TODO, make data_extension_name and data_extension_index a pointer of a list?
+        new_name_list = [*bintable_columns[ind[0]].data_extension_name, self.get_header_keyword('EXTNAME', iwin, '')]
+        ptr_free, bintable_columns[ind[0]].data_extension_name
+        bintable_columns[ind[0]].data_extension_name = ptr_new(new_name_list)
+        new_index_list = [*bintable_columns[ind[0]].data_extension_index, iwin]
+        ptr_free, bintable_columns[ind[0]].data_extension_index
+        bintable_columns[ind[0]].data_extension_index = ptr_new(new_index_list)
       ENDELSE
     endforeach
   ENDFOR ; iwin=0,self.get_number_windows()-1
