@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-08-20 11:57 CEST $
+; $Id: 2024-08-20 13:18 CEST $
 ;-
 ;
 ;
@@ -329,46 +329,6 @@ pro spice_xcontrol_detfuv, event
       ind = where(win_positions eq 2, count)
       if count gt 0 then spice_xdetector, *(*info).d, ind, group_leader=(*info).tlb
     end
-    else:
-  endcase
-end
-
-pro spice_xcontrol_shownuv1, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(2,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,2
-    1:
-    else:
-  endcase
-end
-
-pro spice_xcontrol_shownuv2, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(3,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,3
-    1:
-    else:
-  endcase
-end
-
-pro spice_xcontrol_showfuv1, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(0,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,0
-    1:
-    else:
-  endcase
-end
-
-pro spice_xcontrol_showfuv2, event
-  widget_control, event.top, get_uvalue = info
-  if ((*(*info).d->getsji(1,/noload))[0])[0] eq -1 then return
-  case event.release of
-    0: xsji_image,*(*info).d,1
-    1:
     else:
   endcase
 end
