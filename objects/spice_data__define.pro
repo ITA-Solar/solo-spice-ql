@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-21 11:59 CEST $
+; $Id: 2024-08-21 15:01 CEST $
 
 
 ;+
@@ -2631,6 +2631,51 @@ FUNCTION spice_data::check_extension_index, extension_index
 END
 
 
+;+
+; Description:
+;     Checks whether a given extension index or extension name is valid, and returns the
+;     extension index. If it is invalid -1 is returned.
+;
+; INPUTS:
+;     extension : the index or the name of the extension to be checked
+;
+; KEYWORD PARAMETERS:
+;     check_window_index : If set, then the given index or name is only correct if it 
+;             belongs to an OBS_HDU.
+;
+; OUTPUT:
+;     integer, -1 if index or name is invalid, the index if input is valid.
+;-
+FUNCTION spice_data::return_extension_index, extension, check_window_index=check_window_index
+  COMPILE_OPT IDL2
+
+  prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0
+  
+  IF size(extension, /type) EQ 7 THEN BEGIN
+    extension_index = where(strcmp(*self.extnames, extension, /fold_case) EQ 1, count)
+    extension_index = extension_index[0]
+    IF count EQ 0 THEN BEGIN
+      message, 'No extension with name "' + extension + '" found.', /info
+    ENDIF ELSE IF count GT 1 THEN BEGIN
+      message, 'More than one extension with name "' + extension + '" found. Returning the first one.', /info
+    ENDIF
+  ENDIF ELSE BEGIN
+    extension_index = extension
+    IF ~keyword_set(check_window_index) && (extension_index LT 0 || extension_index GE self.next) THEN BEGIN
+      message, 'The given extension is not a valid index.', /info
+      extension_index = -1
+    ENDIF    
+  ENDELSE
+
+  IF keyword_set(check_window_index) && (extension_index LT 0 || extension_index GE self.nwin) THEN BEGIN
+    message, 'The given extension is not an OBS_HDU index.', /info
+    extension_index = -1
+  ENDIF
+  return, extension_index
+
+END
+
+
 
 ;---------------------------------------------------------
 ; dumbbell info
@@ -2952,14 +2997,23 @@ PRO spice_data::read_file, file
   self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
   
+  self.next = fcb.nextend + 1
+  self.extnames = ptr_new(fcb.extname)
+
   image_hdu_ix = where(fcb.xtension NE 'BINTABLE')
-  n_obs_hdu = n_elements(where(fcb.extname[image_hdu_ix] NE 'WCSDVARR'))
+  obs_hdu_ix = where(fcb.extname[image_hdu_ix] NE 'WCSDVARR', n_obs_hdu)
+  obs_hdu = bytarr(self.next)
   IF self.nwin GT n_obs_hdu THEN BEGIN 
      message,'Image extensions are missing due to incomplete telemetry. Ignoring missing HDUs.',/info
      self.nwin = n_obs_hdu
   ENDIF
+  IF n_obs_hdu EQ 0 THEN BEGIN
+    message, 'No image extensions found.',/info
+  ENDIF ELSE BEGIN
+    obs_hdu[obs_hdu_ix] = 1
+  ENDELSE
+  self.obs_hdu = ptr_new(obs_hdu)
   
-  self.next = fcb.nextend + 1
   fits_close, fcb
 
   headers = ptrarr(self.next)
@@ -3083,15 +3137,17 @@ PRO spice_data__define
     ccd_size: [0,0], $          ; size of the detector, set in init
     nwin: 0, $                  ; number of windows
     next: 0, $                  ; number of extensions
+    extnames: ptr_new(), $      ; The names of the extensions (strarr)
+    obs_hdu: ptr_new(), $       ; indicates for each extension whether it is an OBS_HDU, 0:no, 1:yes (bytarr)
     window_data: ptr_new(), $   ; loaded window data (ptrarr)
     window_descaled: ptr_new(), $ ; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
-    window_max_sat: ptr_new(), $  ; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan  
-    window_masked: ptr_new(), $; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
+    window_max_sat: ptr_new(), $; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan  
+    window_masked: ptr_new(), $ ; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one extension
-    window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one extension
+    window_headers_string: ptr_new(), $ ; a pointer array, each pointing to a header string array of one extension
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    bintable_columns: ptr_new(), $; Pointer to structure array which contains all columns in the binary extension table
-    n_bintable_columns: 0}     ; Number of columns in the binary extension table
+    bintable_columns: ptr_new(), $ ; Pointer to structure array which contains all columns in the binary extension table
+    n_bintable_columns: 0}      ; Number of columns in the binary extension table
 END
