@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-20 15:59 CEST $
+; $Id: 2024-08-21 11:27 CEST $
 
 
 ;+
@@ -2695,7 +2695,9 @@ END
 
 ;+
 ; Description:
-;     This method returns a list of column tags that can be found in the binary extension table.
+;     This method returns a list of column names, i.e. TTYPES that can be found in the binary extension table.
+;     If EXTENSION_INDEX is given then only TTYPES that are referred to within the header of the corresponing 
+;     extension are included.
 ;
 ; KEYWORD PARAMETERS:
 ;     include_window_tag : If set, then the ttypes will have the window tag included
@@ -2703,7 +2705,7 @@ END
 ;                          This will return one ttype per tag found.
 ;
 ; OPTIONAL INPUTS:
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension_index : An integer, giving the index of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     string array
@@ -2741,15 +2743,16 @@ END
 
 ;+
 ; Description:
-;     This method returns the given list of TTYPES with the window tag added, where there exists one.
+;     This method returns the input list of TTYPES with the window tag added, where there exists one.
 ;     A TTYPE that has more than one tag can be multiple times in the input list, but does not have to be.
-;     TTYPES that are not in the binary table will be excluded.
+;     TTYPES that are not in the binary table will be excluded. If EXTENSION_INDEX is given then only
+;     TTYPES that are referred to within the header of the corresponing extension are included.
 ;
 ; INPUT:
 ;     ttypes : A string array, giving the ttypes that should be expanded.
 ;
 ; OPTIONAL INPUTS:
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension_index : An integer, giving the index of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     string array
@@ -2815,7 +2818,7 @@ END
 ; Description:
 ;     This method returns the content of one or more columns found in the binary extension table.
 ;     The provided TTYPES are expanded, i.e. all instances of a TTYPE are returned, except if
-;     the window tag is included in the TTYPE.
+;     the window tag is included in the TTYPE. Or if EXTENSION_INDEX is provided.
 ;     TTYPES that are not in the binary table are silently ignored.
 ;     When requesting the data of only one TTYPE,
 ;     one can set the keyword VALUES_ONLY to receive the data only as an array, instead of the structure.
@@ -2823,7 +2826,7 @@ END
 ; OPTIONAL INPUTS:
 ;     ttypes : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
 ;            be returned.
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension_index : An integer, giving the index of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     array of structure of type:
