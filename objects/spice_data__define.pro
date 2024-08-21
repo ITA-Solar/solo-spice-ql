@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-21 15:01 CEST $
+; $Id: 2024-08-21 15:29 CEST $
 
 
 ;+
@@ -2649,7 +2649,11 @@ END
 FUNCTION spice_data::return_extension_index, extension, check_window_index=check_window_index
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0
+  prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result=result
+  IF result NE '' THEN BEGIN
+    message, 'Extension must be a scalar integer or string'
+    return, -1
+  ENDIF
   
   IF size(extension, /type) EQ 7 THEN BEGIN
     extension_index = where(strcmp(*self.extnames, extension, /fold_case) EQ 1, count)
