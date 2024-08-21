@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-21 11:27 CEST $
+; $Id: 2024-08-21 11:59 CEST $
 
 
 ;+
@@ -2696,7 +2696,7 @@ END
 ;+
 ; Description:
 ;     This method returns a list of column names, i.e. TTYPES that can be found in the binary extension table.
-;     If EXTENSION_INDEX is given then only TTYPES that are referred to within the header of the corresponing 
+;     If EXTENSION_INDEX is given then only TTYPES that are referred to within the header of the corresponding 
 ;     extension are included.
 ;
 ; KEYWORD PARAMETERS:
@@ -2746,7 +2746,7 @@ END
 ;     This method returns the input list of TTYPES with the window tag added, where there exists one.
 ;     A TTYPE that has more than one tag can be multiple times in the input list, but does not have to be.
 ;     TTYPES that are not in the binary table will be excluded. If EXTENSION_INDEX is given then only
-;     TTYPES that are referred to within the header of the corresponing extension are included.
+;     TTYPES that are referred to within the header of the corresponding extension are included.
 ;
 ; INPUT:
 ;     ttypes : A string array, giving the ttypes that should be expanded.
