@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-22 10:53 CEST $
+; $Id: 2024-08-22 11:08 CEST $
 
 
 ;+
@@ -2504,7 +2504,7 @@ END
 ;     scalar number representing the resolution of one dimension.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; KEYWORD PARAMETERS:
 ;     x : only resolution in x-direction is returned (i.e. 'YLIF-TAN')
@@ -2517,10 +2517,12 @@ END
 ; OUTPUT:
 ;     float array or float
 ;-
-FUNCTION spice_data::get_resolution, window_index, x=x, y=y, lambda=lambda, time=time
+FUNCTION spice_data::get_resolution, window, x=x, y=y, lambda=lambda, time=time
   ;Returns a vector containing the resolution of each dimension, or a scalar if a keyword is set
   COMPILE_OPT IDL2
 
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   cdelt1 = self.get_header_keyword('cdelt1', window_index)
   IF keyword_set(x) then return, cdelt1
   cdelt2 = self.get_header_keyword('cdelt2', window_index)
@@ -2536,23 +2538,25 @@ END
 ;+
 ; Description:
 ;     Returns the binning factor in spatial y-direction.
-;     If window_index is not provided a vector with binning factors for all
+;     If window is not provided a vector with binning factors for all
 ;     windows is returned.
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window (can be a list of indices)
+;     window : the index or name of the window (can be a list of indices or names)
 ;
 ; OUTPUT:
 ;     int array
 ;-
-FUNCTION spice_data::get_spatial_binning, window_index
-  ;Returns the binning factor in spatial y-direction (vector if window_index not provided)
+FUNCTION spice_data::get_spatial_binning, window
+  ;Returns the binning factor in spatial y-direction (vector if window not provided)
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
-  bin2 = intarr(N_ELEMENTS(window_index))
-  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    bin2[i] = self.get_header_keyword('NBIN2', window_index[i])
+  IF N_ELEMENTS(window) eq 0 THEN window = indgen(self.get_number_windows())
+  bin2 = intarr(N_ELEMENTS(window))
+  FOR i=0,N_ELEMENTS(window)-1 DO BEGIN
+    window_index = self.return_extension_index(window[i], /check_window_index) 
+    IF window_index GE 0 THEN $
+      bin2[i] = self.get_header_keyword('NBIN2', window_index)
   ENDFOR
   return, bin2
 END
@@ -2561,23 +2565,26 @@ END
 ;+
 ; Description:
 ;     Returns the binning factor in spectral direction.
-;     If window_index is not provided a vector with binning factors for all
+;     If window is not provided a vector with binning factors for all
 ;     windows is returned.
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window (can be a list of indices)
+;     window : the index or name of the window (can be a list of indices or names)
 ;
 ; OUTPUT:
 ;     int array
 ;-
-FUNCTION spice_data::get_spectral_binning, window_index
-  ;Returns the binning factor in the spectral direction (vector if window_index not provided)
+FUNCTION spice_data::get_spectral_binning, window
+  ;Returns the binning factor in the spectral direction (vector if window not provided)
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
-  bin3 = intarr(N_ELEMENTS(window_index))
-  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    bin3[i] = self.get_header_keyword('NBIN3', window_index[i])
+  IF N_ELEMENTS(window) eq 0 THEN window = indgen(self.get_number_windows())
+  bin3 = intarr(N_ELEMENTS(window))
+  FOR i=0,N_ELEMENTS(window)-1 DO BEGIN
+    
+    window_index = self.return_extension_index(window[i], /check_window_index) 
+    IF window_index GE 0 THEN $
+      bin3[i] = self.get_header_keyword('NBIN3', window_index)
   ENDFOR
   return, bin3
 END
@@ -2588,17 +2595,17 @@ END
 ;     Checks whether a given window index or name is valid
 ;
 ; INPUTS:
-;     window_index : the index or name of the window to be checked
+;     window : the index or name of the window to be checked
 ;
 ; OUTPUT:
 ;     boolean, True if input is a valid window index or name
 ;-
-FUNCTION spice_data::check_window_index, window_index
+FUNCTION spice_data::check_window_index, window
   ;Returns 1 if input is a valid window index or name
   COMPILE_OPT IDL2
 
-  IF self.return_extension_index(window_index, /check_window_index) LT 0 THEN BEGIN
-    message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2) + ', or a valid window name', /info
+  IF self.return_extension_index(window, /check_window) LT 0 THEN BEGIN
+    message, 'window needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2) + ', or a valid window name', /info
     return, 0
   ENDIF ELSE return, 1
 END
@@ -2609,17 +2616,17 @@ END
 ;     Checks whether a given extension index or name is valid
 ;
 ; INPUTS:
-;     extension_index : the index or name of the extension to be checked
+;     extension : the index or name of the extension to be checked
 ;
 ; OUTPUT:
 ;     boolean, True if input is a valid extension index or name
 ;-
-FUNCTION spice_data::check_extension_index, extension_index
+FUNCTION spice_data::check_extension_index, extension
   ;Returns 1 if input is a valid extension index or name
   COMPILE_OPT IDL2
 
-  IF self.return_extension_index(extension_index) LT 0 THEN BEGIN
-    message, 'extension_index needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2) + ', or a valid extension name', /info
+  IF self.return_extension_index(extension) LT 0 THEN BEGIN
+    message, 'extension needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2) + ', or a valid extension name', /info
     return, 0
   ENDIF ELSE return, 1
 END
