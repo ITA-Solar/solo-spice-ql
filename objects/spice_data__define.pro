@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-22 11:08 CEST $
+; $Id: 2024-08-22 14:16 CEST $
 
 
 ;+
@@ -2966,7 +2966,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only, extensi
 
   IF file_open THEN FXBCLOSE, unit
 
-  IF keyword_set(values_only) && N_ELEMENTS(ttypes) EQ 1 THEN BEGIN
+  IF keyword_set(values_only) && N_ELEMENTS(ttypes_use) EQ 1 THEN BEGIN
     IF ptr_valid(result.values) THEN BEGIN
       result = *result.values
     ENDIF ELSE BEGIN
