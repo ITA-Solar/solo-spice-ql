@@ -1,10 +1,66 @@
-; $Id: 2024-08-22 14:38 CEST $
+; $Id: 2024-08-22 15:26 CEST $
+
+PRO check_window_index_test, spice_object
+  result = spice_object->check_window_index(0)
+  IF ~result THEN message, 'something is wrong here'
+
+  result = spice_object->check_window_index('FLT02_TWO WINDOW_OB_ID_253_')
+  IF ~result THEN message, 'something is wrong here'
+
+  result = spice_object->check_window_index('VARIABLE_KEYWORDS')
+  IF result THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO check_extension_index_test, spice_object
+  result = spice_object->check_extension_index(0)
+  IF ~result THEN message, 'something is wrong here'
+
+  result = spice_object->check_extension_index('FLT02_TWO WINDOW_OB_ID_253_')
+  IF ~result THEN message, 'something is wrong here'
+
+  result = spice_object->check_extension_index('VARIABLE_KEYWORDS')
+  IF ~result THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO return_extension_index_test, spice_object
+  result = spice_object->return_extension_index(0)
+  IF result NE 0 THEN message, 'something is wrong here'
+
+  result = spice_object->return_extension_index(2)
+  IF result NE 2 THEN message, 'something is wrong here'
+
+  result = spice_object->return_extension_index(2, /check_window)
+  IF result NE -1 THEN message, 'something is wrong here'
+
+  result = spice_object->return_extension_index(5)
+  IF result NE -1 THEN message, 'something is wrong here'
+
+  result = spice_object->return_extension_index('FLT02_TWO WINDOW_OB_ID_253_')
+  IF result NE 0 THEN message, 'something is wrong here'
+
+  result = spice_object->return_extension_index('asdfa')
+  IF result NE -1 THEN message, 'something is wrong here'
+
+  result = spice_object->return_extension_index('VARIABLE_KEYWORDS')
+  IF result NE 2 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
 
 PRO has_dumbbells_test, spice_object
+  message, 'No tests defined yet', /info
 END
 
 
 PRO get_dumbbells_index_test, spice_object
+  message, 'No tests defined yet', /info
 END
 
 
@@ -84,10 +140,14 @@ PRO spice_data_test
   print, ' --- Start of tests ---'
   print, ''
 
+  check_window_index_test, spice_object
+  check_extension_index_test, spice_object
+  return_extension_index_test, spice_object
+  has_dumbbells_test, spice_object
+  get_dumbbells_index_test, spice_object
   get_bintable_ttypes_test, spice_object
   expand_ttypes_test, spice_object
   get_bintable_data_test, spice_object
-  get_dumbbells_index_test, spice_object
 
   print, ''
   print, ' --- End of tests ---'
