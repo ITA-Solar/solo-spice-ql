@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-21 15:29 CEST $
+; $Id: 2024-08-22 10:53 CEST $
 
 
 ;+
@@ -2585,49 +2585,43 @@ END
 
 ;+
 ; Description:
-;     Checks whether a given window index is valid
+;     Checks whether a given window index or name is valid
 ;
 ; INPUTS:
-;     window_index : the index of the window to be checked
+;     window_index : the index or name of the window to be checked
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid window index
+;     boolean, True if input is a valid window index or name
 ;-
 FUNCTION spice_data::check_window_index, window_index
+  ;Returns 1 if input is a valid window index or name
   COMPILE_OPT IDL2
 
-  input_type = size(window_index, /type)
-  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
-  IF N_ELEMENTS(window_index) NE 1 || input_index EQ -1 || $
-    window_index LT 0 || window_index GE self.nwin THEN BEGIN
-    message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2), /info
+  IF self.return_extension_index(window_index, /check_window_index) LT 0 THEN BEGIN
+    message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2) + ', or a valid window name', /info
     return, 0
   ENDIF ELSE return, 1
-
 END
 
 
 ;+
 ; Description:
-;     Checks whether a given extension index is valid
+;     Checks whether a given extension index or name is valid
 ;
 ; INPUTS:
-;     extension_index : the index of the extension to be checked
+;     extension_index : the index or name of the extension to be checked
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid extension index
+;     boolean, True if input is a valid extension index or name
 ;-
 FUNCTION spice_data::check_extension_index, extension_index
+  ;Returns 1 if input is a valid extension index or name
   COMPILE_OPT IDL2
 
-  input_type = size(extension_index, /type)
-  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
-  IF N_ELEMENTS(extension_index) NE 1 || input_index EQ -1 || $
-    extension_index LT 0 || extension_index GE self.next THEN BEGIN
-    message, 'extension_index needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2), /info
+  IF self.return_extension_index(extension_index) LT 0 THEN BEGIN
+    message, 'extension_index needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2) + ', or a valid extension name', /info
     return, 0
   ENDIF ELSE return, 1
-
 END
 
 
@@ -2647,6 +2641,7 @@ END
 ;     integer, -1 if index or name is invalid, the index if input is valid.
 ;-
 FUNCTION spice_data::return_extension_index, extension, check_window_index=check_window_index
+  ;Returns the index of the extension if input is a valid extension index or name, -1 otherwise
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result=result
@@ -2690,23 +2685,27 @@ END
 ; Description:
 ;     Returns 1 if data object contains one or two dumbbells.
 ;     If window_index is provided, 1 is returned if the given
-;     given window contains a dumbbell
+;     given window contains a dumbbell.
 ;
 ; OPTIONAL INPUT:
 ;     window_index : if provided, the method checks whether
 ;                    this specific window or these specific
-;                    windows contain a dumbbell
+;                    windows contain a dumbbell.
+;                    WINDOW_INDEX can either be scalar or an array of
+;                    indices or names of OBS_HDU extension.
 ;
 ; OUTPUT:
 ;     boolean
 ;-
 FUNCTION spice_data::has_dumbbells, window_index
-  ;Returns 1 if data object contains one or two dumbbells, or if window_index is dumbbell
+  ;Returns 1 if data object contains one or two dumbbells, or if window_index is a dumbbell
   COMPILE_OPT IDL2
 
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
-      return, 1
+    IF self.return_extension_index(window_index[i], /check_window_index) GE 0 THEN BEGIN
+      IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
+        return, 1
+      ENDIF
     ENDIF
   ENDFOR
   IF N_ELEMENTS(window_index) GT 0 THEN return, 0
