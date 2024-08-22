@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-20 15:43 CEST $
+; $Id: 2024-08-22 10:53 CEST $
 
 
 ;+
@@ -2585,48 +2585,92 @@ END
 
 ;+
 ; Description:
-;     Checks whether a given window index is valid
+;     Checks whether a given window index or name is valid
 ;
 ; INPUTS:
-;     window_index : the index of the window to be checked
+;     window_index : the index or name of the window to be checked
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid window index
+;     boolean, True if input is a valid window index or name
 ;-
 FUNCTION spice_data::check_window_index, window_index
+  ;Returns 1 if input is a valid window index or name
   COMPILE_OPT IDL2
 
-  input_type = size(window_index, /type)
-  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
-  IF N_ELEMENTS(window_index) NE 1 || input_index EQ -1 || $
-    window_index LT 0 || window_index GE self.nwin THEN BEGIN
-    message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2), /info
+  IF self.return_extension_index(window_index, /check_window_index) LT 0 THEN BEGIN
+    message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2) + ', or a valid window name', /info
     return, 0
   ENDIF ELSE return, 1
-
 END
 
 
 ;+
 ; Description:
-;     Checks whether a given extension index is valid
+;     Checks whether a given extension index or name is valid
 ;
 ; INPUTS:
-;     extension_index : the index of the extension to be checked
+;     extension_index : the index or name of the extension to be checked
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid extension index
+;     boolean, True if input is a valid extension index or name
 ;-
 FUNCTION spice_data::check_extension_index, extension_index
+  ;Returns 1 if input is a valid extension index or name
   COMPILE_OPT IDL2
 
-  input_type = size(extension_index, /type)
-  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
-  IF N_ELEMENTS(extension_index) NE 1 || input_index EQ -1 || $
-    extension_index LT 0 || extension_index GE self.next THEN BEGIN
-    message, 'extension_index needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2), /info
+  IF self.return_extension_index(extension_index) LT 0 THEN BEGIN
+    message, 'extension_index needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2) + ', or a valid extension name', /info
     return, 0
   ENDIF ELSE return, 1
+END
+
+
+;+
+; Description:
+;     Checks whether a given extension index or extension name is valid, and returns the
+;     extension index. If it is invalid -1 is returned.
+;
+; INPUTS:
+;     extension : the index or the name of the extension to be checked
+;
+; KEYWORD PARAMETERS:
+;     check_window_index : If set, then the given index or name is only correct if it 
+;             belongs to an OBS_HDU.
+;
+; OUTPUT:
+;     integer, -1 if index or name is invalid, the index if input is valid.
+;-
+FUNCTION spice_data::return_extension_index, extension, check_window_index=check_window_index
+  ;Returns the index of the extension if input is a valid extension index or name, -1 otherwise
+  COMPILE_OPT IDL2
+
+  prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result=result
+  IF result NE '' THEN BEGIN
+    message, 'Extension must be a scalar integer or string'
+    return, -1
+  ENDIF
+  
+  IF size(extension, /type) EQ 7 THEN BEGIN
+    extension_index = where(strcmp(*self.extnames, extension, /fold_case) EQ 1, count)
+    extension_index = extension_index[0]
+    IF count EQ 0 THEN BEGIN
+      message, 'No extension with name "' + extension + '" found.', /info
+    ENDIF ELSE IF count GT 1 THEN BEGIN
+      message, 'More than one extension with name "' + extension + '" found. Returning the first one.', /info
+    ENDIF
+  ENDIF ELSE BEGIN
+    extension_index = extension
+    IF ~keyword_set(check_window_index) && (extension_index LT 0 || extension_index GE self.next) THEN BEGIN
+      message, 'The given extension is not a valid index.', /info
+      extension_index = -1
+    ENDIF    
+  ENDELSE
+
+  IF keyword_set(check_window_index) && (extension_index LT 0 || extension_index GE self.nwin) THEN BEGIN
+    message, 'The given extension is not an OBS_HDU index.', /info
+    extension_index = -1
+  ENDIF
+  return, extension_index
 
 END
 
@@ -2641,23 +2685,27 @@ END
 ; Description:
 ;     Returns 1 if data object contains one or two dumbbells.
 ;     If window_index is provided, 1 is returned if the given
-;     given window contains a dumbbell
+;     given window contains a dumbbell.
 ;
 ; OPTIONAL INPUT:
 ;     window_index : if provided, the method checks whether
 ;                    this specific window or these specific
-;                    windows contain a dumbbell
+;                    windows contain a dumbbell.
+;                    WINDOW_INDEX can either be scalar or an array of
+;                    indices or names of OBS_HDU extension.
 ;
 ; OUTPUT:
 ;     boolean
 ;-
 FUNCTION spice_data::has_dumbbells, window_index
-  ;Returns 1 if data object contains one or two dumbbells, or if window_index is dumbbell
+  ;Returns 1 if data object contains one or two dumbbells, or if window_index is a dumbbell
   COMPILE_OPT IDL2
 
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
-      return, 1
+    IF self.return_extension_index(window_index[i], /check_window_index) GE 0 THEN BEGIN
+      IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
+        return, 1
+      ENDIF
     ENDIF
   ENDFOR
   IF N_ELEMENTS(window_index) GT 0 THEN return, 0
@@ -2695,7 +2743,9 @@ END
 
 ;+
 ; Description:
-;     This method returns a list of column tags that can be found in the binary extension table.
+;     This method returns a list of column names, i.e. TTYPES that can be found in the binary extension table.
+;     If EXTENSION_INDEX is given then only TTYPES that are referred to within the header of the corresponding 
+;     extension are included.
 ;
 ; KEYWORD PARAMETERS:
 ;     include_window_tag : If set, then the ttypes will have the window tag included
@@ -2703,7 +2753,7 @@ END
 ;                          This will return one ttype per tag found.
 ;
 ; OPTIONAL INPUTS:
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension_index : An integer, giving the index of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     string array
@@ -2714,8 +2764,6 @@ END
 FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag, column_indices=column_indices, extension_index=extension_index
   ;Returns a list of column tags that can be found in the binary extension table.
   COMPILE_OPT IDL2
-  
-  ; TODO : There is a bug here
 
   ttypes = (*self.bintable_columns).ttype
   column_indices = lindgen(N_ELEMENTS(ttypes))
@@ -2723,19 +2771,18 @@ FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag,
     ttypes = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
   ENDIF ELSE BEGIN
     IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
-      ind_ext = []
+      ttypes_new = []
+      column_indices_new = []
       FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
         icol = column_indices[i]
         ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
-        IF count GT 0 THEN ind_ext = [ind_ext, icol]
+        IF count GT 0 THEN BEGIN
+          ttypes_new = [ttypes_new, ttypes[i]]
+          column_indices_new = [column_indices_new, icol]
+        ENDIF
       ENDFOR
-      IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
-        column_indices = column_indices[ind_ext]
-        ttypes = ttypes[ind_ext]
-      ENDIF ELSE BEGIN
-        ttypes = []
-        column_indices = []
-      ENDELSE
+      ttypes = ttypes_new
+      column_indices = column_indices_new
     ENDIF    
   ENDELSE
   return, ttypes
@@ -2744,15 +2791,16 @@ END
 
 ;+
 ; Description:
-;     This method returns the given list of TTYPES with the window tag added, where there exists one.
+;     This method returns the input list of TTYPES with the window tag added, where there exists one.
 ;     A TTYPE that has more than one tag can be multiple times in the input list, but does not have to be.
-;     TTYPES that are not in the binary table will be excluded.
+;     TTYPES that are not in the binary table will be excluded. If EXTENSION_INDEX is given then only
+;     TTYPES that are referred to within the header of the corresponding extension are included.
 ;
 ; INPUT:
 ;     ttypes : A string array, giving the ttypes that should be expanded.
 ;
 ; OPTIONAL INPUTS:
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension_index : An integer, giving the index of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     string array
@@ -2796,19 +2844,18 @@ FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices, exten
   ENDFOR ; itype=0,N_ELEMENTS(ttypes_up)-1
 
   IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
-    ind_ext = []
+    ttypes_new = []
+    column_indices_new = []
     FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
       icol = column_indices[i]
       ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
-      IF count GT 0 THEN ind_ext = [ind_ext, icol]
+      IF count GT 0 THEN BEGIN
+        ttypes_new = [ttypes_new, ttypes_result[i]]
+        column_indices_new = [column_indices_new, icol]
+      ENDIF
     ENDFOR
-    IF N_ELEMENTS(ind_ext) GT 0 THEN BEGIN
-      column_indices = ind_ext
-      ttypes_result = ttypes_result[ind_ext]
-    ENDIF ELSE BEGIN
-      ttypes_result = []
-      column_indices = []
-    ENDELSE
+    ttypes_result = ttypes_new
+    column_indices = column_indices_new
   ENDIF
 
   return, ttypes_result
@@ -2819,7 +2866,7 @@ END
 ; Description:
 ;     This method returns the content of one or more columns found in the binary extension table.
 ;     The provided TTYPES are expanded, i.e. all instances of a TTYPE are returned, except if
-;     the window tag is included in the TTYPE.
+;     the window tag is included in the TTYPE. Or if EXTENSION_INDEX is provided.
 ;     TTYPES that are not in the binary table are silently ignored.
 ;     When requesting the data of only one TTYPE,
 ;     one can set the keyword VALUES_ONLY to receive the data only as an array, instead of the structure.
@@ -2827,7 +2874,7 @@ END
 ; OPTIONAL INPUTS:
 ;     ttypes : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
 ;            be returned.
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension_index : An integer, giving the index of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     array of structure of type:
@@ -2953,14 +3000,23 @@ PRO spice_data::read_file, file
   self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
   
+  self.next = fcb.nextend + 1
+  self.extnames = ptr_new(fcb.extname)
+
   image_hdu_ix = where(fcb.xtension NE 'BINTABLE')
-  n_obs_hdu = n_elements(where(fcb.extname[image_hdu_ix] NE 'WCSDVARR'))
+  obs_hdu_ix = where(fcb.extname[image_hdu_ix] NE 'WCSDVARR', n_obs_hdu)
+  obs_hdu = bytarr(self.next)
   IF self.nwin GT n_obs_hdu THEN BEGIN 
      message,'Image extensions are missing due to incomplete telemetry. Ignoring missing HDUs.',/info
      self.nwin = n_obs_hdu
   ENDIF
+  IF n_obs_hdu EQ 0 THEN BEGIN
+    message, 'No image extensions found.',/info
+  ENDIF ELSE BEGIN
+    obs_hdu[obs_hdu_ix] = 1
+  ENDELSE
+  self.obs_hdu = ptr_new(obs_hdu)
   
-  self.next = fcb.nextend + 1
   fits_close, fcb
 
   headers = ptrarr(self.next)
@@ -3084,15 +3140,17 @@ PRO spice_data__define
     ccd_size: [0,0], $          ; size of the detector, set in init
     nwin: 0, $                  ; number of windows
     next: 0, $                  ; number of extensions
+    extnames: ptr_new(), $      ; The names of the extensions (strarr)
+    obs_hdu: ptr_new(), $       ; indicates for each extension whether it is an OBS_HDU, 0:no, 1:yes (bytarr)
     window_data: ptr_new(), $   ; loaded window data (ptrarr)
     window_descaled: ptr_new(), $ ; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
-    window_max_sat: ptr_new(), $  ; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan  
-    window_masked: ptr_new(), $; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
+    window_max_sat: ptr_new(), $; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan  
+    window_masked: ptr_new(), $ ; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one extension
-    window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one extension
+    window_headers_string: ptr_new(), $ ; a pointer array, each pointing to a header string array of one extension
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    bintable_columns: ptr_new(), $; Pointer to structure array which contains all columns in the binary extension table
-    n_bintable_columns: 0}     ; Number of columns in the binary extension table
+    bintable_columns: ptr_new(), $ ; Pointer to structure array which contains all columns in the binary extension table
+    n_bintable_columns: 0}      ; Number of columns in the binary extension table
 END
