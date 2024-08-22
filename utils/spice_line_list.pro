@@ -8,13 +8,20 @@
 ; been taken from
 ; 
 ; A. Fludra et al., A&A 656, A38 (2021)
-; https://doi.org/10.1051/0004-6361/202141221
-; Table 1, except where stated differently
+; https://doi.org/10.1051/0004-6361/202141221 :
+;
+; and
+;
+; A. Giunta  "Lines observable
+; with SPICE in different solar conditions" presentation in Goettingen 2024.
+;
+; Where the wavelength differ I use Giunta's values most of the time, after
+; checking with actual observations
 ;
 ;
 ; The updated and much shorter line list (spice_get_lines_strongest) has been made
-; from a selection of lines based on actual fitted lines and Alessandra's "Lines observable
-; with SPICE in different solar conditions" presentation in Goettingen 2024.
+; from a selection of lines based on actual fitted lines and Alessandra's line
+; list.
 ;
 ; Use         :
 ;       line_list = spice_line_list()
@@ -30,7 +37,7 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2024-08-20 11:43 CEST $
+; $Id: 2024-08-22 11:08 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -43,49 +50,44 @@ function spice_get_lines_all, version=version
   line_list = HASH( $
 
     ; Short Wavelength Channel
-    70.03, 'Ar VII + S III', $ ; from Fig. 1
-    70.28, 'O III', $ ; from Chianti, the 70.23 line in Fludra is a much weaker line
-    70.38, 'O III', $
-    70.60, 'Mg IX', $
-    71.09, 'S III', $ ; from Fig. 1
-    71.27, 'S VI', $ ; from Fig. 1
-    71.38, 'Ar VIII', $ ; from Fig. 1
-    71.85, 'O II', $
-    74.49, 'S IV', $ ; from Fig. 1
-    74.84, 'S IV', $ ; from Fig. 1
-    75.02, 'S IV', $
-    75.37, 'S IV', $ ; form Fig. 1
-    76.04, 'O V', $
-    76.52, 'N IV', $
-    77.04, 'Ne VIII', $
-    77.27, 'Mg VIII', $
-    77.45, 'O V', $ ; from Fig. 1
-    77.61, 'N II + S X', $ ; from Fig. 1
-    78.03, 'Ne VIII', $
-    78.23, 'Mg VIII', $ ; from Fig. 1
-    78.65, 'S V', $
-    78.77, 'O IV', $
-    79.01, 'O IV', $ ; from Fig. 1
+    70.03, 'Ar VII + S III', $ 
+    70.28, 'O III',          $ ; Giunta
+    70.38, 'O III',          $ 
+    70.60, 'Mg IX',          $ 
+    71.85, 'O II',           $ 
+    74.84, 'S IV',           $ 
+    75.02, 'S IV',           $ 
+    75.87, 'O V',            $ 
+    76.03, 'O V',            $ 
+    76.20, 'O V',            $ ; Giunta          
+    76.51, 'N IV',           $ 
+    77.04, 'Ne VIII',        $ 
+    77.23, 'Mg VIII',        $ 
+    77.45, 'O V',            $ 
+    77.61, 'N II + S X',     $ 
+    78.03, 'Ne VIII',        $ 
+    78.23, 'Mg VIII',        $ 
+    78.65, 'S V',            $ 
+    78.77, 'O IV',           $ 
 
     ; Long Wavelength Channel
-    97.25, 'H Ly gamma', $
-    97.70, 'C III', $
-    98.14, 'Fe III', $ ; from Fig. 1
-    98.87, 'O I + Na VI', $ ; from Fig. 1
-    98.98, 'N III', $
-    99.16, 'N III', $
-    99.74, 'Si III', $ ; from Fig. 1
-    99.94, 'Fe III + O I', $ ; from Fig. 1
-    101.03, 'Ne VI', $
-    101.77, 'Fe III', $ ; from Fig. 1
-    102.57, 'H Ly beta', $
-    102.74, 'O I', $
-    103.19, 'O VI', $
-    103.60, 'C II', $
-    103.70, 'C II', $
-    103.76, 'O VI', $
-    103.92, 'O I', $ ; from Fig. 1
-    104.09, 'O I' $ ; from Fig. 1
+    97.25, 'H Ly gamma',   $  
+    97.70, 'C III',        $  
+    98.87, 'O I + Na VI',  $  
+    98.98, 'N III',        $
+    99.16, 'N III',        $
+  ;;99.48, 'Si III',       $ ; Chianti. Too weak to include, but it's there!      
+    99.74, 'Si III',       $ 
+    99.94, 'Fe III + O I', $ 
+    101.03, 'Ne VI',       $
+    102.57, 'H Ly beta',   $
+    102.74, 'O I',         $
+    103.19, 'O VI',        $
+    103.60, 'C II',        $
+    103.70, 'C II',        $
+    103.76, 'O VI',        $
+    103.92, 'O I',         $ 
+    104.09, 'O I'          $ 
     )
 
   return, line_list
