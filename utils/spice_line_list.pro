@@ -37,7 +37,7 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
 ;
-; $Id: 2024-08-22 11:08 CEST $
+; $Id: 2024-08-22 13:15 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -45,7 +45,7 @@
 
 function spice_get_lines_all, version=version
 
-  version = 1 ; PLEASE increase this number when editing the code
+  version = 2 ; PLEASE increase this number when editing the code
 
   line_list = HASH( $
 
