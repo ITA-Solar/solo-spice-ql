@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-22 14:38 CEST $
+; $Id: 2024-08-23 15:13 CEST $
 
 
 ;+
@@ -2437,7 +2437,7 @@ END
 ;     for all dimensions or just the one specified.
 ;
 ; INPUTS:
-;     window_index : The index of the window.
+;     window : the index or name of the window
 ;
 ; OPTIONAL INPUTS:
 ;     pixels : The pixel for which the coordinates should be returned. Values can be
@@ -2460,11 +2460,12 @@ END
 ;         4D: No pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;         5D: No pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;-
-FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambda, time=time
+FUNCTION spice_data::get_wcs_coord, window, pixels, x=x, y=y, lambda=lambda, time=time
   ;Returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
   COMPILE_OPT IDL2
 
-  IF ~self.check_window_index(window_index) THEN return, !NULL
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   size_pixels = size(pixels)
   IF (size_pixels[0] GT 0 && size_pixels[1] NE 4) || size_pixels[0] GT 2 THEN BEGIN
     message, 'pixels must have size (4,x) where x=any natural number', /info

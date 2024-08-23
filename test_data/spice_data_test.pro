@@ -1,4 +1,30 @@
-; $Id: 2024-08-23 14:09 CEST $
+; $Id: 2024-08-23 15:13 CEST $
+
+
+PRO get_wcs_coord_test, spice_object
+  result = spice_object->get_wcs_coord('FLT02_TWO WINDOW_OB_ID_253_')
+  size_result = size(result)
+  IF ~size_result.equals([5, 4, 1, 1024, 50, 1, 5, 204800]) THEN message, 'something is wrong here'
+
+  result = spice_object->get_wcs_coord(1, [0,0,0,0])
+  IF N_ELEMENTS(result) NE 4 THEN message, 'something is wrong here'
+
+  result = spice_object->get_wcs_coord(1, [0,0,0,0], /lambda)
+  IF N_ELEMENTS(result) NE 1 THEN message, 'something is wrong here'
+
+  result = spice_object->get_wcs_coord(1, [[0,0,0,0], [3,6,4,7]])
+  size_result = size(result)
+  IF ~size_result.equals([2, 4, 2, 5, 8]) THEN message, 'something is wrong here'
+
+  result = spice_object->get_wcs_coord(1, [[0,0,0,0], [3,6,4,7]], /y)
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+
+  result = spice_object->get_wcs_coord(1, /time)
+  size_result = size(result)
+  IF ~size_result.equals([4, 1, 1024, 36, 1, 5, 36864]) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
 
 
 PRO get_resolution_test, spice_object
@@ -196,6 +222,7 @@ PRO spice_data_test
   print, ' --- Start of tests ---'
   print, ''
 
+  get_wcs_coord_test, spice_object
   get_resolution_test, spice_object
   get_spatial_binning_test, spice_object
   get_spectral_binning_test, spice_object
