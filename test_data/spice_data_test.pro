@@ -1,4 +1,60 @@
-; $Id: 2024-08-22 15:26 CEST $
+; $Id: 2024-08-23 14:09 CEST $
+
+
+PRO get_resolution_test, spice_object
+  result = spice_object->get_resolution(0)
+  IF N_ELEMENTS(result) NE 4 THEN message, 'something is wrong here'
+  IF ~result.equals([1.0000000, 1.0980000, 0.0097517000, 1.0000000], tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_resolution('FLT02_TWO WINDOW_OB_ID_253_', /x)
+  IF N_ELEMENTS(result) NE 1 THEN message, 'something is wrong here'
+  IF ~result.equals([1.0000000], tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_resolution('FLT02_TWO WINDOW_OB_ID_253_', /y)
+  IF N_ELEMENTS(result) NE 1 THEN message, 'something is wrong here'
+  IF ~result.equals([1.0980000], tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_resolution('FLT02_TWO WINDOW_OB_ID_253_', /lambda)
+  IF N_ELEMENTS(result) NE 1 THEN message, 'something is wrong here'
+  IF ~result.equals([0.0097517000], tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_resolution('FLT02_TWO WINDOW_OB_ID_253_', /time)
+  IF N_ELEMENTS(result) NE 1 THEN message, 'something is wrong here'
+  IF ~result.equals([1.0000000], tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_spatial_binning_test, spice_object
+  result = spice_object->get_spatial_binning()
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+  IF result[0] NE 1 || result[1] NE 1 THEN message, 'something is wrong here'
+
+  result = spice_object->get_spatial_binning(0)
+  IF result[0] NE 1 THEN message, 'something is wrong here'
+
+  result = spice_object->get_spatial_binning('FLT02_TWO WINDOW_OB_ID_253_')
+  IF result[0] NE 1 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_spectral_binning_test, spice_object
+  result = spice_object->get_spectral_binning()
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+  IF result[0] NE 1 || result[1] NE 1 THEN message, 'something is wrong here'
+
+  result = spice_object->get_spectral_binning(0)
+  IF result[0] NE 1 THEN message, 'something is wrong here'
+
+  result = spice_object->get_spectral_binning('FLT02_TWO WINDOW_OB_ID_253_')
+  IF result[0] NE 1 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
 
 PRO check_window_index_test, spice_object
   result = spice_object->check_window_index(0)
@@ -140,6 +196,9 @@ PRO spice_data_test
   print, ' --- Start of tests ---'
   print, ''
 
+  get_resolution_test, spice_object
+  get_spatial_binning_test, spice_object
+  get_spectral_binning_test, spice_object
   check_window_index_test, spice_object
   check_extension_index_test, spice_object
   return_extension_index_test, spice_object
