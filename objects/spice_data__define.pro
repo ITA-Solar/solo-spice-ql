@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-26 14:40 CEST $
+; $Id: 2024-08-26 15:31 CEST $
 
 
 ;+
@@ -1644,9 +1644,12 @@ END
 ;
 ; KEYWORD PARAMETERS:
 ;     idl_coord : If set, the coordinates start with zero, instead of with 1.
+;     debin     : If set, then the coordinates are debinned (1-1024)
 ;     reverse_y : Y-coordinates are given as (CCD-size +1 - (original y-coords)).
+;                 Only used for level 1 files. ???? ; TODO : find out
 ;     reverse_x : For dumbbells x-coordinates are flipped. If this keyword is set, the coordinates will
 ;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped.
+;                 Only used for level 1 files.
 ;     loud      : If set, warnings will be printed.
 ;
 ; OUTPUT:
@@ -1656,7 +1659,7 @@ END
 ;     detector : int, 1 or 2 to indicate on which detector the window is.
 ;-
 FUNCTION spice_data::get_window_position, window_index, detector=detector, $
-  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
+  idl_coord=idl_coord, debin=debin, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
   
@@ -1670,6 +1673,11 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
 
   PXPOS3 = self.get_header_keyword('PXPOS3', window_index)
   NAXIS3 = self.get_header_keyword('NAXIS3', window_index)
+  IF keyword_set(debin) THEN BEGIN
+    naxis3 = naxis3 * self.get_spectral_binning(window_index)
+  ENDIF ELSE BEGIN
+    pxpos3 = pxpos3 / self.get_spectral_binning(window_index)
+  ENDELSE
   lambda_pos_0 =  ceil(PXPOS3 - NAXIS3/2.0)
   IF lambda_pos_0 LT 1 THEN BEGIN
     message, 'Window starts outside of detector. lambda_pos_0 < 1: '+strtrim(string(lambda_pos_0))+' < 1', /info
@@ -1680,20 +1688,16 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
 
   lambda_pos_1 =  fix(PXPOS3 + NAXIS3/2.0)
   IF lambda_pos_1 LT 1 THEN message, 'Window ends outside of detector. lambda_pos_1 < 1: '+strtrim(string(lambda_pos_1))+' < 1', /info
-  IF lambda_pos_1 LT lambda_pos_0 THEN BEGIN
-    IF self.has_dumbbells(window_index) && keyword_set(reverse_x) THEN BEGIN
-      beg_temp = lambda_pos_1
-      lambda_pos_1 = lambda_pos_0
-      lambda_pos_0 = beg_temp
-    ENDIF ELSE BEGIN
-      IF keyword_set(loud) THEN message, 'Window ends before it starts. lambda_pos_1 < lambda_pos_0: '+strtrim(string(lambda_pos_1))+' < '+strtrim(string(lambda_pos_0)), /info
-    ENDELSE
-  ENDIF
   IF lambda_pos_1 GT 2*ccd_size[0]+1 THEN $
     message, 'Window ends outside of detector. lambda_pos_1 > 2 * CCD-size +1: '+strtrim(string(lambda_pos_1))+' > '+strtrim(string(2*ccd_size[0]+1)), /info
 
   PXPOS2 = self.get_header_keyword('PXPOS2', window_index)
   NAXIS2 = self.get_header_keyword('NAXIS2', window_index)
+  IF keyword_set(debin) THEN BEGIN
+    naxis2 = naxis2 * self.get_spatial_binning(window_index)
+  ENDIF ELSE BEGIN
+    pxpos2 = pxpos2 / self.get_spatial_binning(window_index)
+  ENDELSE
   y_pos_0 =  ceil(PXPOS2 - NAXIS2/2.0)
   IF y_pos_0 LT 0 THEN message, 'y_pos_0 < 0: '+strtrim(string(y_pos_0))+' < 0', /info
   IF y_pos_0 GT ccd_size[1] THEN $
@@ -1844,6 +1848,7 @@ FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value
 
   exists = count gt 0
   IF exists THEN BEGIN
+    IF N_ELEMENTS(result) EQ 1 THEN result=result[0]
     return, result
   ENDIF ELSE BEGIN
     IF N_ELEMENTS(missing_value) EQ 0 THEN return, !NULL $
@@ -2338,7 +2343,7 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    y_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord))[2]
+    y_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord, /debin))[2]
     crpix = crpix + y_coord_start
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
@@ -2371,12 +2376,13 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   crval = self.get_header_keyword('crval3', window_index)
   cdelt = self.get_header_keyword('cdelt3', window_index)
   crpix = self.get_header_keyword('crpix3', window_index)
-
+  nbin = self.get_spectral_binning(window_index)
+stop
   IF keyword_set(full_ccd) THEN BEGIN
-    lambda_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord, detector=detector))[0]
+    lambda_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord, /debin, detector=detector))[0]
     IF detector EQ 2 THEN lambda_coord_start -= (self.get_ccd_size())[0]
-    crpix = crpix + lambda_coord_start
-    naxis = (self.get_ccd_size())[0]
+    crpix = crpix + lambda_coord_start / nbin
+    naxis = (self.get_ccd_size())[0] / nbin
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis3', window_index)
   ENDELSE
@@ -2670,6 +2676,7 @@ FUNCTION spice_data::get_spectral_binning, window
     IF window_index GE 0 THEN $
       bin3[i] = self.get_header_keyword('NBIN3', window_index)
   ENDFOR
+  IF N_ELEMENTS(bin3) EQ 1 THEN bin3=bin3[0]
   return, bin3
 END
 
