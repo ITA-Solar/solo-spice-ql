@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-23 15:13 CEST $
+; $Id: 2024-08-26 10:57 CEST $
 
 
 ;+
@@ -2258,7 +2258,7 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
     PXBEG2 = (self.get_window_position(window_index, /reverse_y))[2]
-    cripx = crpix + PXBEG2
+    crpix = crpix + PXBEG2
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis2', window_index)
@@ -2291,8 +2291,8 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt3', window_index)
   crpix = self.get_header_keyword('crpix3', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG1 = self.get_header_keyword('PXBEG1', window_index)
-    crpix = crpix + PXBEG1
+    PXBEG3 = self.get_header_keyword('PXBEG3', window_index)
+    crpix = crpix + PXBEG3
     naxis = (self.get_ccd_size())[0]
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis3', window_index)
