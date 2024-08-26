@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-26 10:57 CEST $
+; $Id: 2024-08-26 12:50 CEST $
 
 
 ;+
@@ -1659,6 +1659,92 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
   idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
+  
+  level = 2 ; At the moment this object only accepts level 2 files, contact prits-group@astro.uio.no if you need this changed.
+  
+  IF level EQ 1 THEN return, $
+    self.get_window_position_level_1(window_index, detector=detector, $
+    idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud)
+
+  ccd_size = self.get_ccd_size()
+
+  PXPOS3 = self.get_header_keyword('PXPOS3', window_index)
+  NAXIS3 = self.get_header_keyword('NAXIS3', window_index)
+  lambda_pos_0 =  fix(PXPOS3 - NAXIS3/2.0)
+  IF lambda_pos_0 LT 0 THEN BEGIN
+    message, 'lambda_pos_0 < 0: '+strtrim(string(lambda_pos_0))+' < 0', /info
+    detector = 1
+  ENDIF ELSE IF lambda_pos_0 GT 2*ccd_size[0] THEN BEGIN
+    message, 'lambda_pos_0 > 2 * CCD-size: '+strtrim(string(lambda_pos_0))+' > '+strtrim(string(2*ccd_size[0])), /info
+    detector = 2
+  ENDIF ELSE IF lambda_pos_0 GT ccd_size[0] THEN BEGIN
+    detector = 2
+  ENDIF ELSE BEGIN
+    detector = 1
+  ENDELSE
+
+  lambda_pos_1 =  ceil(PXPOS3 + NAXIS3/2.0)
+  IF lambda_pos_1 LT 0 THEN message, 'lambda_pos_1 < 0: '+strtrim(string(lambda_pos_1))+' < 0', /info
+  IF lambda_pos_1 LT lambda_pos_0 THEN BEGIN
+    IF self.has_dumbbells(window_index) && keyword_set(reverse_x) THEN BEGIN
+      beg_temp = lambda_pos_1
+      lambda_pos_1 = lambda_pos_0
+      lambda_pos_0 = beg_temp
+    ENDIF ELSE BEGIN
+      IF keyword_set(loud) THEN message, 'lambda_pos_1 < lambda_pos_0: '+strtrim(string(lambda_pos_1))+' < '+strtrim(string(lambda_pos_0)), /info
+    ENDELSE
+  ENDIF
+  IF lambda_pos_1 GT 2*ccd_size[0] THEN $
+    message, 'lambda_pos_1 > 2 * CCD-size: '+strtrim(string(lambda_pos_1))+' > '+strtrim(string(2*ccd_size[0])), /info
+
+  PXPOS2 = self.get_header_keyword('PXPOS2', window_index)
+  NAXIS2 = self.get_header_keyword('NAXIS2', window_index)
+  y_pos_0 =  fix(PXPOS2 - NAXIS2/2.0)
+  IF y_pos_0 LT 0 THEN message, 'y_pos_0 < 0: '+strtrim(string(y_pos_0))+' < 0', /info
+  IF y_pos_0 GT ccd_size[1] THEN $
+    message, 'y_pos_0 > CCD-size: '+strtrim(string(y_pos_0))+' > '+strtrim(string(ccd_size[1])), /info
+
+  y_pos_1 =  ceil(PXPOS2 + NAXIS2/2.0)
+  IF y_pos_1 LT 0 THEN message, 'y_pos_1 < 0: '+strtrim(string(y_pos_1))+' < 0', /info
+  IF keyword_set(loud) && y_pos_1 GT y_pos_0 THEN $
+    message, 'y_pos_1 > y_pos_0: '+strtrim(string(y_pos_1))+' > '+strtrim(string(y_pos_0)), /info
+  IF y_pos_1 GT ccd_size[1] THEN $
+    message, 'y_pos_1 > CCD-size: '+strtrim(string(y_pos_1))+' > '+strtrim(string(ccd_size[1])), /info
+
+  position = [lambda_pos_0, lambda_pos_1, y_pos_0, y_pos_1]
+  IF keyword_set(reverse_y) THEN position[2:3] = ccd_size[1] + 1 - position[2:3]
+  IF keyword_set(idl_coord) THEN position = position - 1
+  return, position
+END
+
+
+;+
+; Description:
+;     This function returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise.
+;     The position is given as a 4-element vector, with [lambda0, lambda1, y0, y1].
+;     Note: y0 > y1, but lambda0 < lambda1.
+;     This function works on level 1 SPICE FITS files.
+;
+; INPUTS:
+;     window_index : The index of the window.
+;
+; KEYWORD PARAMETERS:
+;     idl_coord : If set, the coordinates start with zero, instead of with 1.
+;     reverse_y : Y-coordinates are given as (CCD-size +1 - (original y-coords)).
+;     reverse_x : For dumbbells x-coordinates are flipped. If this keyword is set, the coordinates will
+;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped.
+;     loud      : If set, warnings will be printed.
+;
+; OUTPUT:
+;     Integer array with 4 elements [lambda0, lambda1, y0, y1].
+;
+; OPTIONAL OUTPUT:
+;     detector : int, 1 or 2 to indicate on which detector the window is.
+;-
+FUNCTION spice_data::get_window_position_level_1, window_index, detector=detector, $
+  idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
+  ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
+  COMPILE_OPT IDL2
 
   ccd_size = self.get_ccd_size()
 
@@ -2257,8 +2343,8 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG2 = (self.get_window_position(window_index, /reverse_y))[2]
-    crpix = crpix + PXBEG2
+    y_coord_start = (self.get_window_position(window_index, /reverse_y))[2]
+    crpix = crpix + y_coord_start
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis2', window_index)
@@ -2290,9 +2376,10 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   crval = self.get_header_keyword('crval3', window_index)
   cdelt = self.get_header_keyword('cdelt3', window_index)
   crpix = self.get_header_keyword('crpix3', window_index)
+  stop
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG3 = self.get_header_keyword('PXBEG3', window_index)
-    crpix = crpix + PXBEG3
+    lambda_coord_start = (self.get_window_position(window_index, /reverse_y))[0]
+    crpix = crpix + lambda_coord_start
     naxis = (self.get_ccd_size())[0]
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis3', window_index)
