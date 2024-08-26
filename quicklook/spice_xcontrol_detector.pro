@@ -45,7 +45,7 @@
 ; MODIFICATION HISTORY:
 ;     17-Nov-2020: Martin Wiesmann, First version
 ;
-; $Id: 2022-09-20 14:35 CEST $
+; $Id: 2024-08-26 15:31 CEST $
 ;-
 ;
 
@@ -58,7 +58,7 @@ FUNCTION spice_xcontrol_detector, data, detector2=detector2, xsize=xsize, ysize=
   clip_image = intarr(nwin,4)
   detector_nr = intarr(nwin)
   for i=0,nwin-1 do begin
-    win_positions[i,*] = data->get_window_position(i, detector=detectornr, /idl_coord);, /reverse_y, /reverse_x)
+    win_positions[i,*] = data->get_window_position(i, detector=detectornr, /idl_coord, /debin);, /reverse_y, /reverse_x)
     detector_nr[i] = detectornr
     if detectornr eq 2 then begin
       win_positions[i,0:1] = win_positions[i,0:1] - ccd_size[0]
