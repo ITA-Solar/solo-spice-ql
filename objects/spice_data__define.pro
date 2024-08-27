@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-20 15:58 CEST $
+; $Id: 2024-08-27 14:05 CEST $
 
 
 ;+
@@ -1640,6 +1640,94 @@ END
 ;     Note: y0 > y1, but lambda0 < lambda1.
 ;
 ; INPUTS:
+;     window : The index or name of the window.
+;
+; KEYWORD PARAMETERS:
+;     idl_coord : If set, the coordinates start with zero, instead of with 1.
+;     debin     : If set, then the coordinates are debinned (1-1024)
+;     reverse_y : Y-coordinates are given as (CCD-size +1 - (original y-coords)).
+;                 Only used for level 1 files. ???? ; TODO : find out
+;     reverse_x : For dumbbells x-coordinates are flipped. If this keyword is set, the coordinates will
+;                 be flipped again, i.e. values of PXBEG3 and PXEND3 will be swapped.
+;                 Only used for level 1 files.
+;     loud      : If set, warnings will be printed.
+;
+; OUTPUT:
+;     Integer array with 4 elements [lambda0, lambda1, y0, y1].
+;
+; OPTIONAL OUTPUT:
+;     detector : int, 1 or 2 to indicate on which detector the window is.
+;-
+FUNCTION spice_data::get_window_position, window, detector=detector, $
+  idl_coord=idl_coord, debin=debin, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
+  ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
+  COMPILE_OPT IDL2
+  
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, [-999, -999, -999, -999]
+
+  level = 2 ; At the moment this object only accepts level 2 files, contact prits-group@astro.uio.no if you need this changed.
+  
+  IF level EQ 1 THEN return, $
+    self.get_window_position_level_1(window_index, detector=detector, $
+    idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud)
+
+  ccd_size = self.get_ccd_size()
+
+  PXPOS3 = self.get_header_keyword('PXPOS3', window_index)
+  NAXIS3 = self.get_header_keyword('NAXIS3', window_index)
+  IF PXPOS3 GT ccd_size[0] THEN detector=2 ELSE detector=1
+  IF keyword_set(debin) THEN BEGIN
+    naxis3 = naxis3 * self.get_spectral_binning(window_index)
+  ENDIF ELSE BEGIN
+    pxpos3 = pxpos3 / self.get_spectral_binning(window_index)
+  ENDELSE
+  lambda_pos_0 =  ceil(PXPOS3 - NAXIS3/2.0)
+  IF lambda_pos_0 LT 1 THEN BEGIN
+    message, 'Window starts outside of detector. lambda_pos_0 < 1: '+strtrim(string(lambda_pos_0))+' < 1', /info
+  ENDIF ELSE IF lambda_pos_0 GT 2*ccd_size[0]+1 THEN BEGIN
+    message, 'Window starts outside of detector. lambda_pos_0 > 2 * CCD-size +1: '+strtrim(string(lambda_pos_0))+' > '+strtrim(string(2*ccd_size[0]+1)), /info
+  ENDIF
+
+  lambda_pos_1 =  fix(PXPOS3 + NAXIS3/2.0)
+  IF lambda_pos_1 LT 1 THEN message, 'Window ends outside of detector. lambda_pos_1 < 1: '+strtrim(string(lambda_pos_1))+' < 1', /info
+  IF lambda_pos_1 GT 2*ccd_size[0]+1 THEN $
+    message, 'Window ends outside of detector. lambda_pos_1 > 2 * CCD-size +1: '+strtrim(string(lambda_pos_1))+' > '+strtrim(string(2*ccd_size[0]+1)), /info
+
+  PXPOS2 = self.get_header_keyword('PXPOS2', window_index)
+  NAXIS2 = self.get_header_keyword('NAXIS2', window_index)
+  IF keyword_set(debin) THEN BEGIN
+    naxis2 = naxis2 * self.get_spatial_binning(window_index)
+  ENDIF ELSE BEGIN
+    pxpos2 = pxpos2 / self.get_spatial_binning(window_index)
+  ENDELSE
+  y_pos_0 =  ceil(PXPOS2 - NAXIS2/2.0)
+  IF y_pos_0 LT 0 THEN message, 'y_pos_0 < 0: '+strtrim(string(y_pos_0))+' < 0', /info
+  IF y_pos_0 GT ccd_size[1] THEN $
+    message, 'Window starts outside of detector. y_pos_0 > CCD-size: '+strtrim(string(y_pos_0))+' > '+strtrim(string(ccd_size[1])), /info
+
+  y_pos_1 =  fix(PXPOS2 + NAXIS2/2.0)
+  IF y_pos_1 LT 0 THEN message, 'Window ends outside of detector. y_pos_1 < 0: '+strtrim(string(y_pos_1))+' < 0', /info
+  IF keyword_set(loud) && y_pos_1 GT y_pos_0 THEN $
+    message, 'Window ends before it starts. y_pos_1 > y_pos_0: '+strtrim(string(y_pos_1))+' > '+strtrim(string(y_pos_0)), /info
+  IF y_pos_1 GT ccd_size[1] THEN $
+    message, 'Window ends outside of detector. y_pos_1 > CCD-size: '+strtrim(string(y_pos_1))+' > '+strtrim(string(ccd_size[1])), /info
+
+  position = [lambda_pos_0, lambda_pos_1, y_pos_0, y_pos_1]
+  IF keyword_set(reverse_y) THEN position[2:3] = ccd_size[1] + 1 - position[2:3]
+  IF keyword_set(idl_coord) THEN position = position - 1
+  return, position
+END
+
+
+;+
+; Description:
+;     This function returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise.
+;     The position is given as a 4-element vector, with [lambda0, lambda1, y0, y1].
+;     Note: y0 > y1, but lambda0 < lambda1.
+;     This function works on level 1 SPICE FITS files.
+;
+; INPUTS:
 ;     window_index : The index of the window.
 ;
 ; KEYWORD PARAMETERS:
@@ -1655,7 +1743,7 @@ END
 ; OPTIONAL OUTPUT:
 ;     detector : int, 1 or 2 to indicate on which detector the window is.
 ;-
-FUNCTION spice_data::get_window_position, window_index, detector=detector, $
+FUNCTION spice_data::get_window_position_level_1, window_index, detector=detector, $
   idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
@@ -1763,6 +1851,7 @@ FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value
 
   exists = count gt 0
   IF exists THEN BEGIN
+    IF N_ELEMENTS(result) EQ 1 THEN result=result[0]
     return, result
   ENDIF ELSE BEGIN
     IF N_ELEMENTS(missing_value) EQ 0 THEN return, !NULL $
@@ -2256,10 +2345,13 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   crpix = self.get_header_keyword('crpix2', window_index)
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
+  nbin = self.get_spatial_binning(window_index)
+
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG2 = (self.get_window_position(window_index, /reverse_y))[2]
-    cripx = crpix + PXBEG2
+    y_coord_start = (self.get_window_position(window_index, /idl_coord, /debin))[2]
+    crpix = crpix * nbin + y_coord_start
     naxis = (self.get_ccd_size())[1]
+    cdelt = cdelt / nbin
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis2', window_index)
   ENDELSE
@@ -2290,10 +2382,14 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   crval = self.get_header_keyword('crval3', window_index)
   cdelt = self.get_header_keyword('cdelt3', window_index)
   crpix = self.get_header_keyword('crpix3', window_index)
+  nbin = self.get_spectral_binning(window_index)
+
   IF keyword_set(full_ccd) THEN BEGIN
-    PXBEG1 = self.get_header_keyword('PXBEG1', window_index)
-    crpix = crpix + PXBEG1
+    lambda_coord_start = (self.get_window_position(window_index, /idl_coord, /debin, detector=detector))[0]
+    IF detector EQ 2 THEN lambda_coord_start -= (self.get_ccd_size())[0]
+    crpix = crpix * nbin + lambda_coord_start
     naxis = (self.get_ccd_size())[0]
+    cdelt = cdelt / nbin
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis3', window_index)
   ENDELSE
@@ -2437,7 +2533,7 @@ END
 ;     for all dimensions or just the one specified.
 ;
 ; INPUTS:
-;     window_index : The index of the window.
+;     window : the index or name of the window
 ;
 ; OPTIONAL INPUTS:
 ;     pixels : The pixel for which the coordinates should be returned. Values can be
@@ -2460,11 +2556,12 @@ END
 ;         4D: No pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;         5D: No pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;-
-FUNCTION spice_data::get_wcs_coord, window_index, pixels, x=x, y=y, lambda=lambda, time=time
+FUNCTION spice_data::get_wcs_coord, window, pixels, x=x, y=y, lambda=lambda, time=time
   ;Returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
   COMPILE_OPT IDL2
 
-  IF ~self.check_window_index(window_index) THEN return, !NULL
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   size_pixels = size(pixels)
   IF (size_pixels[0] GT 0 && size_pixels[1] NE 4) || size_pixels[0] GT 2 THEN BEGIN
     message, 'pixels must have size (4,x) where x=any natural number', /info
@@ -2504,7 +2601,7 @@ END
 ;     scalar number representing the resolution of one dimension.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; KEYWORD PARAMETERS:
 ;     x : only resolution in x-direction is returned (i.e. 'YLIF-TAN')
@@ -2517,10 +2614,12 @@ END
 ; OUTPUT:
 ;     float array or float
 ;-
-FUNCTION spice_data::get_resolution, window_index, x=x, y=y, lambda=lambda, time=time
+FUNCTION spice_data::get_resolution, window, x=x, y=y, lambda=lambda, time=time
   ;Returns a vector containing the resolution of each dimension, or a scalar if a keyword is set
   COMPILE_OPT IDL2
 
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   cdelt1 = self.get_header_keyword('cdelt1', window_index)
   IF keyword_set(x) then return, cdelt1
   cdelt2 = self.get_header_keyword('cdelt2', window_index)
@@ -2536,24 +2635,27 @@ END
 ;+
 ; Description:
 ;     Returns the binning factor in spatial y-direction.
-;     If window_index is not provided a vector with binning factors for all
+;     If window is not provided a vector with binning factors for all
 ;     windows is returned.
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window (can be a list of indices)
+;     window : the index or name of the window (can be a list of indices or names)
 ;
 ; OUTPUT:
 ;     int array
 ;-
-FUNCTION spice_data::get_spatial_binning, window_index
-  ;Returns the binning factor in spatial y-direction (vector if window_index not provided)
+FUNCTION spice_data::get_spatial_binning, window
+  ;Returns the binning factor in spatial y-direction (vector if window not provided)
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
-  bin2 = intarr(N_ELEMENTS(window_index))
-  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    bin2[i] = self.get_header_keyword('NBIN2', window_index[i])
+  IF N_ELEMENTS(window) eq 0 THEN window = indgen(self.get_number_windows())
+  bin2 = intarr(N_ELEMENTS(window))
+  FOR i=0,N_ELEMENTS(window)-1 DO BEGIN
+    window_index = self.return_extension_index(window[i], /check_window_index) 
+    IF window_index GE 0 THEN $
+      bin2[i] = self.get_header_keyword('NBIN2', window_index)
   ENDFOR
+  IF N_ELEMENTS(bin2) EQ 1 THEN bin2=bin2[0]
   return, bin2
 END
 
@@ -2561,72 +2663,120 @@ END
 ;+
 ; Description:
 ;     Returns the binning factor in spectral direction.
-;     If window_index is not provided a vector with binning factors for all
+;     If window is not provided a vector with binning factors for all
 ;     windows is returned.
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window (can be a list of indices)
+;     window : the index or name of the window (can be a list of indices or names)
 ;
 ; OUTPUT:
 ;     int array
 ;-
-FUNCTION spice_data::get_spectral_binning, window_index
-  ;Returns the binning factor in the spectral direction (vector if window_index not provided)
+FUNCTION spice_data::get_spectral_binning, window
+  ;Returns the binning factor in the spectral direction (vector if window not provided)
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) eq 0 THEN window_index = indgen(self.get_number_windows())
-  bin3 = intarr(N_ELEMENTS(window_index))
-  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    bin3[i] = self.get_header_keyword('NBIN3', window_index[i])
+  IF N_ELEMENTS(window) eq 0 THEN window = indgen(self.get_number_windows())
+  bin3 = intarr(N_ELEMENTS(window))
+  FOR i=0,N_ELEMENTS(window)-1 DO BEGIN
+    
+    window_index = self.return_extension_index(window[i], /check_window_index) 
+    IF window_index GE 0 THEN $
+      bin3[i] = self.get_header_keyword('NBIN3', window_index)
   ENDFOR
+  IF N_ELEMENTS(bin3) EQ 1 THEN bin3=bin3[0]
   return, bin3
 END
 
 
 ;+
 ; Description:
-;     Checks whether a given window index is valid
+;     Checks whether a given window index or name is valid
 ;
 ; INPUTS:
-;     window_index : the index of the window to be checked
+;     window : the index or name of the window to be checked
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid window index
+;     boolean, True if input is a valid window index or name
 ;-
-FUNCTION spice_data::check_window_index, window_index
+FUNCTION spice_data::check_window_index, window
+  ;Returns 1 if input is a valid window index or name
   COMPILE_OPT IDL2
 
-  input_type = size(window_index, /type)
-  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
-  IF N_ELEMENTS(window_index) NE 1 || input_index EQ -1 || $
-    window_index LT 0 || window_index GE self.nwin THEN BEGIN
-    message, 'window_index needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2), /info
+  IF self.return_extension_index(window, /check_window) LT 0 THEN BEGIN
+    message, 'window needs to be a scalar number between 0 and ' + strtrim(string(self.nwin-1),2) + ', or a valid window name', /info
     return, 0
   ENDIF ELSE return, 1
-
 END
 
 
 ;+
 ; Description:
-;     Checks whether a given extension index is valid
+;     Checks whether a given extension index or name is valid
 ;
 ; INPUTS:
-;     extension_index : the index of the extension to be checked
+;     extension : the index or name of the extension to be checked
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid extension index
+;     boolean, True if input is a valid extension index or name
 ;-
-FUNCTION spice_data::check_extension_index, extension_index
+FUNCTION spice_data::check_extension_index, extension
+  ;Returns 1 if input is a valid extension index or name
   COMPILE_OPT IDL2
 
-  input_type = size(extension_index, /type)
-  input_index = where([1, 2, 3, 12, 13, 14, 15] EQ input_type)
-  IF N_ELEMENTS(extension_index) NE 1 || input_index EQ -1 || $
-    extension_index LT 0 || extension_index GE self.next THEN BEGIN
-    message, 'extension_index needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2), /info
+  IF self.return_extension_index(extension) LT 0 THEN BEGIN
+    message, 'extension needs to be a scalar number between 0 and ' + strtrim(string(self.next-1),2) + ', or a valid extension name', /info
     return, 0
   ENDIF ELSE return, 1
+END
+
+
+;+
+; Description:
+;     Checks whether a given extension index or extension name is valid, and returns the
+;     extension index. If it is invalid -1 is returned.
+;
+; INPUTS:
+;     extension : the index or the name of the extension to be checked
+;
+; KEYWORD PARAMETERS:
+;     check_window_index : If set, then the given index or name is only correct if it 
+;             belongs to an OBS_HDU.
+;
+; OUTPUT:
+;     integer, -1 if index or name is invalid, the index if input is valid.
+;-
+FUNCTION spice_data::return_extension_index, extension, check_window_index=check_window_index
+  ;Returns the index of the extension if input is a valid extension index or name, -1 otherwise
+  COMPILE_OPT IDL2
+
+  prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result=result
+  IF N_ELEMENTS(result) GT 1 || result NE '' THEN BEGIN
+    message, result, /info
+    return, -1
+  ENDIF
+  
+  IF size(extension, /type) EQ 7 THEN BEGIN
+    extension_index = where(strcmp(*self.extnames, extension, /fold_case) EQ 1, count)
+    extension_index = extension_index[0]
+    IF count EQ 0 THEN BEGIN
+      message, 'No extension with name "' + extension + '" found.', /info
+    ENDIF ELSE IF count GT 1 THEN BEGIN
+      message, 'More than one extension with name "' + extension + '" found. Returning the first one.', /info
+    ENDIF
+  ENDIF ELSE BEGIN
+    extension_index = extension
+    IF ~keyword_set(check_window_index) && (extension_index LT 0 || extension_index GE self.next) THEN BEGIN
+      message, 'The given extension is not a valid index.', /info
+      extension_index = -1
+    ENDIF    
+  ENDELSE
+
+  IF keyword_set(check_window_index) && (extension_index LT 0 || extension_index GE self.nwin) THEN BEGIN
+    message, 'The given extension is not an OBS_HDU index.', /info
+    extension_index = -1
+  ENDIF
+  return, extension_index
 
 END
 
@@ -2641,23 +2791,27 @@ END
 ; Description:
 ;     Returns 1 if data object contains one or two dumbbells.
 ;     If window_index is provided, 1 is returned if the given
-;     given window contains a dumbbell
+;     given window contains a dumbbell.
 ;
 ; OPTIONAL INPUT:
 ;     window_index : if provided, the method checks whether
 ;                    this specific window or these specific
-;                    windows contain a dumbbell
+;                    windows contain a dumbbell.
+;                    WINDOW_INDEX can either be scalar or an array of
+;                    indices or names of OBS_HDU extension.
 ;
 ; OUTPUT:
 ;     boolean
 ;-
 FUNCTION spice_data::has_dumbbells, window_index
-  ;Returns 1 if data object contains one or two dumbbells, or if window_index is dumbbell
+  ;Returns 1 if data object contains one or two dumbbells, or if window_index is a dumbbell
   COMPILE_OPT IDL2
 
   FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
-      return, 1
+    IF self.return_extension_index(window_index[i], /check_window_index) GE 0 THEN BEGIN
+      IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
+        return, 1
+      ENDIF
     ENDIF
   ENDFOR
   IF N_ELEMENTS(window_index) GT 0 THEN return, 0
@@ -2695,7 +2849,9 @@ END
 
 ;+
 ; Description:
-;     This method returns a list of column tags that can be found in the binary extension table.
+;     This method returns a list of column names, i.e. TTYPES that can be found in the binary extension table.
+;     If EXTENSION_INDEX is given then only TTYPES that are referred to within the header of the corresponding 
+;     extension are included.
 ;
 ; KEYWORD PARAMETERS:
 ;     include_window_tag : If set, then the ttypes will have the window tag included
@@ -2703,7 +2859,7 @@ END
 ;                          This will return one ttype per tag found.
 ;
 ; OPTIONAL INPUTS:
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension : An integer or string, giving the index or name of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     string array
@@ -2711,18 +2867,19 @@ END
 ; OPTIONAL OUTPUTS:
 ;     column_indices : An array of long integers, giving the indices of the output ttypes.
 ;-
-FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag, column_indices=column_indices, extension_index=extension_index
+FUNCTION spice_data::get_bintable_ttypes, include_window_tag=include_window_tag, column_indices=column_indices, extension=extension
   ;Returns a list of column tags that can be found in the binary extension table.
   COMPILE_OPT IDL2
 
   ttypes = (*self.bintable_columns).ttype
   column_indices = lindgen(N_ELEMENTS(ttypes))
   IF keyword_set(include_window_tag) THEN BEGIN
-    ttypes = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
+    ttypes = self.expand_ttypes(ttypes, column_indices=column_indices, extension=extension)
   ENDIF ELSE BEGIN
-    IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
+    IF N_ELEMENTS(extension) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
       ttypes_new = []
       column_indices_new = []
+      extension_index = self.return_extension_index(extension)
       FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
         icol = column_indices[i]
         ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
@@ -2741,15 +2898,16 @@ END
 
 ;+
 ; Description:
-;     This method returns the given list of TTYPES with the window tag added, where there exists one.
+;     This method returns the input list of TTYPES with the window tag added, where there exists one.
 ;     A TTYPE that has more than one tag can be multiple times in the input list, but does not have to be.
-;     TTYPES that are not in the binary table will be excluded.
+;     TTYPES that are not in the binary table will be excluded. If EXTENSION_INDEX is given then only
+;     TTYPES that are referred to within the header of the corresponding extension are included.
 ;
 ; INPUT:
 ;     ttypes : A string array, giving the ttypes that should be expanded.
 ;
 ; OPTIONAL INPUTS:
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension : An integer or string, giving the index or name of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     string array
@@ -2757,7 +2915,7 @@ END
 ; OPTIONAL OUTPUTS:
 ;     column_indices : An array of long integers, giving the indices of the output ttypes.
 ;-
-FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices, extension_index=extension_index
+FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices, extension=extension
   ;Returns a list of ttypes with the added window tag, where necessary
   COMPILE_OPT IDL2
 
@@ -2792,9 +2950,10 @@ FUNCTION spice_data::expand_ttypes, ttypes, column_indices=column_indices, exten
 
   ENDFOR ; itype=0,N_ELEMENTS(ttypes_up)-1
 
-  IF N_ELEMENTS(extension_index) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
+  IF N_ELEMENTS(extension) GT 0 && N_ELEMENTS(column_indices) GT 0 THEN BEGIN
     ttypes_new = []
     column_indices_new = []
+    extension_index = self.return_extension_index(extension)
     FOR i=0,N_ELEMENTS(column_indices)-1 DO BEGIN
       icol = column_indices[i]
       ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
@@ -2815,7 +2974,7 @@ END
 ; Description:
 ;     This method returns the content of one or more columns found in the binary extension table.
 ;     The provided TTYPES are expanded, i.e. all instances of a TTYPE are returned, except if
-;     the window tag is included in the TTYPE.
+;     the window tag is included in the TTYPE. Or if EXTENSION_INDEX is provided.
 ;     TTYPES that are not in the binary table are silently ignored.
 ;     When requesting the data of only one TTYPE,
 ;     one can set the keyword VALUES_ONLY to receive the data only as an array, instead of the structure.
@@ -2823,7 +2982,7 @@ END
 ; OPTIONAL INPUTS:
 ;     ttypes : one or more column tags to be returned (e.g. 'MIRRPOS'). If not provided, all columns will
 ;            be returned.
-;     extension_index : An integer, giving the index of the desired extension.
+;     extension : An integer or string, giving the index or name of the extension that the resulting TTYPES must belong to.
 ;
 ; OUTPUT:
 ;     array of structure of type:
@@ -2836,7 +2995,7 @@ END
 ;                  instead of the default output structure with metadata. This keyword is ignored if more than
 ;                  one TTYPES have been provided. If the desired TTYPE does not exist, a !NULL is returned.
 ;-
-FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only, extension_index=extension_index
+FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only, extension=extension
   ;Returns the content of one or more columns found in the binary extension table.
   COMPILE_OPT IDL2
 
@@ -2850,7 +3009,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only, extensi
   IF N_ELEMENTS(ttypes) eq 0 THEN BEGIN
     ttypes = self.get_bintable_ttypes()
   ENDIF
-  ttypes_use = self.expand_ttypes(ttypes, column_indices=column_indices, extension_index=extension_index)
+  ttypes_use = self.expand_ttypes(ttypes, column_indices=column_indices, extension=extension)
 
   result = make_array(N_ELEMENTS(ttypes_use), value=temp_column)
   file_open = 0
@@ -2908,7 +3067,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only=values_only, extensi
 
   IF file_open THEN FXBCLOSE, unit
 
-  IF keyword_set(values_only) && N_ELEMENTS(ttypes) EQ 1 THEN BEGIN
+  IF keyword_set(values_only) && N_ELEMENTS(ttypes_use) EQ 1 THEN BEGIN
     IF ptr_valid(result.values) THEN BEGIN
       result = *result.values
     ENDIF ELSE BEGIN
@@ -2949,14 +3108,23 @@ PRO spice_data::read_file, file
   self.nwin = fxpar(hdr, 'NWIN')
   fits_open, file, fcb
   
+  self.next = fcb.nextend + 1
+  self.extnames = ptr_new(fcb.extname)
+
   image_hdu_ix = where(fcb.xtension NE 'BINTABLE')
-  n_obs_hdu = n_elements(where(fcb.extname[image_hdu_ix] NE 'WCSDVARR'))
+  obs_hdu_ix = where(fcb.extname[image_hdu_ix] NE 'WCSDVARR', n_obs_hdu)
+  obs_hdu = bytarr(self.next)
   IF self.nwin GT n_obs_hdu THEN BEGIN 
      message,'Image extensions are missing due to incomplete telemetry. Ignoring missing HDUs.',/info
      self.nwin = n_obs_hdu
   ENDIF
+  IF n_obs_hdu EQ 0 THEN BEGIN
+    message, 'No image extensions found.',/info
+  ENDIF ELSE BEGIN
+    obs_hdu[obs_hdu_ix] = 1
+  ENDELSE
+  self.obs_hdu = ptr_new(obs_hdu)
   
-  self.next = fcb.nextend + 1
   fits_close, fcb
 
   headers = ptrarr(self.next)
@@ -3080,15 +3248,17 @@ PRO spice_data__define
     ccd_size: [0,0], $          ; size of the detector, set in init
     nwin: 0, $                  ; number of windows
     next: 0, $                  ; number of extensions
+    extnames: ptr_new(), $      ; The names of the extensions (strarr)
+    obs_hdu: ptr_new(), $       ; indicates for each extension whether it is an OBS_HDU, 0:no, 1:yes (bytarr)
     window_data: ptr_new(), $   ; loaded window data (ptrarr)
     window_descaled: ptr_new(), $ ; indicates for each window, whether data was loaded, 0:no, 1:yes, descaled, 2: yes, not descaled (bytarr)
-    window_max_sat: ptr_new(), $  ; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan  
-    window_masked: ptr_new(), $; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
+    window_max_sat: ptr_new(), $; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan  
+    window_masked: ptr_new(), $ ; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
     window_headers: ptr_new(), $; a pointer array, each pointing to a header structure of one extension
-    window_headers_string: ptr_new(), $; a pointer array, each pointing to a header string array of one extension
+    window_headers_string: ptr_new(), $ ; a pointer array, each pointing to a header string array of one extension
     window_wcs: ptr_new(), $    ; pointers to wcs structure for each window
     dumbbells: [-1, -1], $      ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range:ptr_new(), $   ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
-    bintable_columns: ptr_new(), $; Pointer to structure array which contains all columns in the binary extension table
-    n_bintable_columns: 0}     ; Number of columns in the binary extension table
+    bintable_columns: ptr_new(), $ ; Pointer to structure array which contains all columns in the binary extension table
+    n_bintable_columns: 0}      ; Number of columns in the binary extension table
 END

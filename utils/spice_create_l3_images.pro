@@ -73,15 +73,17 @@
 ;      remove_*_trend, remove a linear fit of the velocity trend instead of
 ;      removing the mean of each row and/or column.   
 ;      Ver. 7., 03-Jul-2024, TF - New keywords value_max and value_min
+;      Ver. 8., 20-Aug-2024, TF - New keyword strongest_lines. If set, only
+;      make images of the lines returned by spice_line_list(/strongest_lines).
 ;
 ;
 ;-
-; $Id: 2024-08-05 13:25 CEST $
+; $Id: 2024-08-27 14:05 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
                             version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $ 
-                            value_max=value_max, value_min=value_min, no_background_images=no_background_images, $
+                            value_max=value_max, value_min=value_min, no_background_images=no_background_images, strongest_lines=strongest_lines, $
                             NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
@@ -138,22 +140,29 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     ok_result_along_y = where(result_along_y EQ result_along_y)
     startrow = ok_result_along_y[0]
     endrow   = ok_result_along_y[-1]
-
+    
+    IF keyword_set(strongest_lines) THEN lLines = spice_line_list(/strongest_lines)
+   
     n_components = N_TAGS(fit)
     ipartotal = 0
     for icomp=0,n_components-1 do begin
       fit_cur = fit.(icomp)
       n_params = N_ELEMENTS(fit_cur.param)
       include_component = (keyword_set(no_background_images)) ? fit_cur.name NE 'Background' : 1
+      
+      lam = (fit_cur.name).extract('[0-9]+.[0-9]+')
+      
+      IF keyword_set(strongest_lines) THEN include_component = lLines.hasKey(float(lam))
+      
       IF include_component THEN for ipar=0,n_params-1 do begin
         param = fit_cur.param[ipar]
         name = (fit_cur.name.compress()).toLower()
         ion = name.extract('[a-z]+')
         ion = string(ion+'--------', format='(A-8)')
-        lam = name.extract('[0-9]+.[0-9]+')
-        lam = lam.replace('.','nm')  
+        lam = lam.replace('.','nm') 
+        IF lam.strlen() EQ 6 THEN lam = '-'+lam
         
-        filename_base2 = filename_base.replace('ql','ql-'+ion+'-'+lam+'-'+param.name.substring(0,2))+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name.substring(0,2)
+        filename_base2 = filename_base.replace('ql','ql-'+ion+lam+'-'+param.name.substring(0,2))+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name.substring(0,2)
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal,*,startrow:endrow,*])
         help,image_data
