@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-26 15:31 CEST $
+; $Id: 2024-08-27 10:50 CEST $
 
 
 ;+
@@ -1673,6 +1673,7 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
 
   PXPOS3 = self.get_header_keyword('PXPOS3', window_index)
   NAXIS3 = self.get_header_keyword('NAXIS3', window_index)
+  IF PXPOS3 GT ccd_size[0] THEN detector=2 ELSE detector=1
   IF keyword_set(debin) THEN BEGIN
     naxis3 = naxis3 * self.get_spectral_binning(window_index)
   ENDIF ELSE BEGIN
@@ -1684,7 +1685,6 @@ FUNCTION spice_data::get_window_position, window_index, detector=detector, $
   ENDIF ELSE IF lambda_pos_0 GT 2*ccd_size[0]+1 THEN BEGIN
     message, 'Window starts outside of detector. lambda_pos_0 > 2 * CCD-size +1: '+strtrim(string(lambda_pos_0))+' > '+strtrim(string(2*ccd_size[0]+1)), /info
   ENDIF
-  IF PXPOS3 GT ccd_size[0] THEN detector=2 ELSE detector=1
 
   lambda_pos_1 =  fix(PXPOS3 + NAXIS3/2.0)
   IF lambda_pos_1 LT 1 THEN message, 'Window ends outside of detector. lambda_pos_1 < 1: '+strtrim(string(lambda_pos_1))+' < 1', /info
@@ -2382,7 +2382,8 @@ stop
     lambda_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord, /debin, detector=detector))[0]
     IF detector EQ 2 THEN lambda_coord_start -= (self.get_ccd_size())[0]
     crpix = crpix + lambda_coord_start / nbin
-    naxis = (self.get_ccd_size())[0] / nbin
+    naxis = (self.get_ccd_size())[0]
+    cdelt = cdelt / nbin
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis3', window_index)
   ENDELSE
