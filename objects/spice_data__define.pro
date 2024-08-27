@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-27 10:52 CEST $
+; $Id: 2024-08-27 13:18 CEST $
 
 
 ;+
@@ -1640,7 +1640,7 @@ END
 ;     Note: y0 > y1, but lambda0 < lambda1.
 ;
 ; INPUTS:
-;     window_index : The index of the window.
+;     window : The index or name of the window.
 ;
 ; KEYWORD PARAMETERS:
 ;     idl_coord : If set, the coordinates start with zero, instead of with 1.
@@ -1658,11 +1658,14 @@ END
 ; OPTIONAL OUTPUT:
 ;     detector : int, 1 or 2 to indicate on which detector the window is.
 ;-
-FUNCTION spice_data::get_window_position, window_index, detector=detector, $
+FUNCTION spice_data::get_window_position, window, detector=detector, $
   idl_coord=idl_coord, debin=debin, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud
   ;Returns the position of the window on the CCD, starting with 0 if idl_coord is set, 1 otherwise
   COMPILE_OPT IDL2
   
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, [-999, -999, -999, -999]
+
   level = 2 ; At the moment this object only accepts level 2 files, contact prits-group@astro.uio.no if you need this changed.
   
   IF level EQ 1 THEN return, $
@@ -2343,7 +2346,7 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
   IF keyword_set(full_ccd) THEN BEGIN
-    y_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord, /debin))[2]
+    y_coord_start = (self.get_window_position(window_index, /idl_coord, /debin))[2]
     crpix = crpix + y_coord_start
     naxis = (self.get_ccd_size())[1]
   ENDIF ELSE BEGIN
@@ -2379,9 +2382,9 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   nbin = self.get_spectral_binning(window_index)
 
   IF keyword_set(full_ccd) THEN BEGIN
-    lambda_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord, /debin, detector=detector))[0]
+    lambda_coord_start = (self.get_window_position(window_index, /idl_coord, /debin, detector=detector))[0]
     IF detector EQ 2 THEN lambda_coord_start -= (self.get_ccd_size())[0]
-    crpix = crpix + lambda_coord_start / nbin
+    crpix = crpix + lambda_coord_start
     naxis = (self.get_ccd_size())[0]
     cdelt = cdelt / nbin
   ENDIF ELSE BEGIN
@@ -2744,8 +2747,8 @@ FUNCTION spice_data::return_extension_index, extension, check_window_index=check
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result=result
-  IF result NE '' THEN BEGIN
-    message, 'Extension must be a scalar integer or string'
+  IF N_ELEMENTS(result) GT 1 || result NE '' THEN BEGIN
+    message, result, /info
     return, -1
   ENDIF
   
