@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-27 10:50 CEST $
+; $Id: 2024-08-27 10:52 CEST $
 
 
 ;+
@@ -2377,7 +2377,7 @@ FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
   cdelt = self.get_header_keyword('cdelt3', window_index)
   crpix = self.get_header_keyword('crpix3', window_index)
   nbin = self.get_spectral_binning(window_index)
-stop
+
   IF keyword_set(full_ccd) THEN BEGIN
     lambda_coord_start = (self.get_window_position(window_index, /reverse_y, /idl_coord, /debin, detector=detector))[0]
     IF detector EQ 2 THEN lambda_coord_start -= (self.get_ccd_size())[0]
