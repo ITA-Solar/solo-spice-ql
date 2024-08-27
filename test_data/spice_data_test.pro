@@ -1,7 +1,21 @@
-; $Id: 2024-08-27 15:30 CEST $
+; $Id: 2024-08-27 15:49 CEST $
 PRO get_window_position_test, spice_object
-  message, 'No tests defined yet', /info
+  result = spice_object->get_window_position('adf')
+  IF ~result.equals([-999, -999, -999, -999], tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_window_position(0, detector=detector)
+  IF ~result.equals([6, 55, 1, 1024], tolerance=0.001) THEN message, 'something is wrong here'
+  IF detector NE 1 THEN message, 'something is wrong here'
+
+  result = spice_object->get_window_position(1, detector=detector, /idl_coord)
+  IF ~result.equals([1093, 1128, 0, 1023], tolerance=0.001) THEN message, 'something is wrong here'
+  IF detector NE 2 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
 END
+
+
+
 
 
 PRO get_xcen_test, spice_object
