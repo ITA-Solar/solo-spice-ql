@@ -1,4 +1,39 @@
-; $Id: 2024-08-23 15:13 CEST $
+; $Id: 2024-08-27 15:30 CEST $
+PRO get_window_position_test, spice_object
+  message, 'No tests defined yet', /info
+END
+
+
+PRO get_xcen_test, spice_object
+  result = spice_object->get_xcen(0)
+  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_ycen_test, spice_object
+  result = spice_object->get_ycen(0)
+  IF ~result.equals(-61.333639, tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_fovx_test, spice_object
+  result = spice_object->get_fovx(0)
+  IF ~result.equals(143.05261, tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_fovy_test, spice_object
+  result = spice_object->get_fovy(0)
+  IF ~result.equals(1114.1075, tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
 
 
 PRO get_wcs_coord_test, spice_object
@@ -222,6 +257,13 @@ PRO spice_data_test
   print, ' --- Start of tests ---'
   print, ''
 
+  get_window_position_test, spice_object
+  
+  
+  get_xcen_test, spice_object
+  get_ycen_test, spice_object
+  get_fovx_test, spice_object
+  get_fovy_test, spice_object
   get_wcs_coord_test, spice_object
   get_resolution_test, spice_object
   get_spatial_binning_test, spice_object

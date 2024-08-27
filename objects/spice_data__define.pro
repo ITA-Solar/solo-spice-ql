@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-27 13:50 CEST $
+; $Id: 2024-08-27 15:30 CEST $
 
 
 ;+
@@ -2433,20 +2433,17 @@ END
 ;     Returns XCEN in arcsec.
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : xcen in arcseconds
 ;-
-FUNCTION spice_data::get_xcen, window_index
+FUNCTION spice_data::get_xcen, window
   ;Returns XCEN in archsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   crval = self.get_header_keyword('crval1', window_index)
   return, crval
 END
@@ -2457,20 +2454,17 @@ END
 ;     Returns YCEN in archsec
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : ycen in arcseconds
 ;-
-FUNCTION spice_data::get_ycen, window_index
+FUNCTION spice_data::get_ycen, wjndow
   ;Returns YCEN in archsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   crval = self.get_header_keyword('crval2', window_index)
   return, crval
 END
@@ -2481,20 +2475,17 @@ END
 ;     Returns FOV in solar x direction, in arcsec
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : fovx in arcseconds
 ;-
-FUNCTION spice_data::get_fovx, window_index
+FUNCTION spice_data::get_fovx, window
   ;Returns FOV in solar x direction, in arcsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   x_coords = self.get_wcs_coord(window_index, /x)
   minx = min(x_coords, max=maxx)
   return, maxx-minx
@@ -2506,23 +2497,20 @@ END
 ;     Returns FOV in solar y direction, in arcsec
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : fovy in arcseconds
 ;-
-FUNCTION spice_data::get_fovy, window_index
+FUNCTION spice_data::get_fovy, window
   ;Returns FOV in solar y direction, in arcsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
-  x_coords = self.get_wcs_coord(window_index, /y)
-  minx = min(x_coords, max=maxx)
-  return, maxx-minx
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
+  y_coords = self.get_wcs_coord(window_index, /y)
+  miny = min(y_coords, max=maxy)
+  return, maxy-miny
 END
 
 
@@ -2794,27 +2782,28 @@ END
 ;     given window contains a dumbbell.
 ;
 ; OPTIONAL INPUT:
-;     window_index : if provided, the method checks whether
+;     window : if provided, the method checks whether
 ;                    this specific window or these specific
 ;                    windows contain a dumbbell.
-;                    WINDOW_INDEX can either be scalar or an array of
+;                    WINDOW can either be scalar or an array of
 ;                    indices or names of OBS_HDU extension.
 ;
 ; OUTPUT:
 ;     boolean
 ;-
-FUNCTION spice_data::has_dumbbells, window_index
+FUNCTION spice_data::has_dumbbells, window
   ;Returns 1 if data object contains one or two dumbbells, or if window_index is a dumbbell
   COMPILE_OPT IDL2
 
-  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    IF self.return_extension_index(window_index[i], /check_window_index) GE 0 THEN BEGIN
-      IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
+  FOR i=0,N_ELEMENTS(window)-1 DO BEGIN
+    window_index = self.return_extension_index(window[i], /check_window_index) 
+    IF window_index GE 0 THEN BEGIN
+      IF self.dumbbells[0] EQ window_index || self.dumbbells[1] EQ window_index THEN BEGIN
         return, 1
       ENDIF
     ENDIF
   ENDFOR
-  IF N_ELEMENTS(window_index) GT 0 THEN return, 0
+  IF N_ELEMENTS(window) GT 0 THEN return, 0
   return, self.dumbbells[0] GE 0 || self.dumbbells[1] GE 0
 END
 
