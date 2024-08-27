@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-08-27 13:41 CEST $
+; $Id: 2024-08-27 13:42 CEST $
 
 
 ; save as postscript file
@@ -869,7 +869,7 @@ pro spice_xdetector, input_data, lindx, group_leader = group_leader, $
   clip_image = intarr(nwin,4)
   open_new_window = 0
   for i=0,nwin-1 do begin
-    win_positions[i,*] = data->get_window_position(lindx[i], detector=detectornr, /idl_coord);, /reverse_y, /reverse_x)
+    win_positions[i,*] = data->get_window_position(lindx[i], detector=detectornr, /idl_coord, /debin)
     if i eq 0 then begin
       detector_shown = detectornr
     endif
