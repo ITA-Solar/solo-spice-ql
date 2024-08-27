@@ -45,7 +45,7 @@
 ; MODIFICATION HISTORY:
 ;     17-Nov-2020: Martin Wiesmann, First version
 ;
-; $Id: 2024-08-27 13:18 CEST $
+; $Id: 2024-08-27 13:41 CEST $
 ;-
 ;
 
@@ -65,44 +65,46 @@ FUNCTION spice_xcontrol_detector, data, detector2=detector2, xsize=xsize, ysize=
     endif
   endfor
 
-  ; data window size in level 2 does not correspond to
-  ; win_positions due to transformations
-  if data->get_level() eq 2 then begin
-    for i=0,nwin-1 do begin
-      sizey = data->get_header_keyword('NAXIS2', i) * data->get_spatial_binning(i)
-      dy = sizey - (win_positions[i,3]-win_positions[i,2]+1)
-      if dy ne 0 then begin
-        dy1 = fix(dy/2.0)
-        dy2 = dy-dy1
-        win_positions[i,2] = win_positions[i,2] - dy1
-        if win_positions[i,2] lt 0 then begin
-          clip_image[i,2] = -1 * win_positions[i,2]
-          win_positions[i,2] = 0
-        endif
-        win_positions[i,3] = win_positions[i,3] + dy2
-        if win_positions[i,3] ge ccd_size[1] then begin
-          clip_image[i,3] = win_positions[i,2] - (ccd_size[1]-1)
-          win_positions[i,3] = ccd_size[1]-1
-        endif
-      endif
-      sizel = data->get_header_keyword('NAXIS3', i) * data->get_spectral_binning(i)
-      dl = sizel - (win_positions[i,1]-win_positions[i,0]+1)
-      if dl ne 0 then begin
-        dl1 = fix(dl/2.0)
-        dl2 = dl-dl1
-        win_positions[i,0] = win_positions[i,0] - dl1
-        if win_positions[i,0] lt 0 then begin
-          clip_image[i,0] = -1 * win_positions[i,0]
-          win_positions[i,0] = 0
-        endif
-        win_positions[i,1] = win_positions[i,1] + dl2
-        if win_positions[i,1] ge ccd_size[0] then begin
-          clip_image[i,1] = win_positions[i,1] - (ccd_size[0]-1)
-          win_positions[i,1] = ccd_size[0]-1
-        endif
-      endif
-    endfor
-  endif
+;  ; data window size in level 2 does not correspond to
+;  ; win_positions due to transformations
+;  ; -> this 'fitting' should no longer be necessary, since we PXPOS
+;  ;    to find correct position on detector for level 2
+;  if data->get_level() eq 2 then begin
+;    for i=0,nwin-1 do begin
+;      sizey = data->get_header_keyword('NAXIS2', i) * data->get_spatial_binning(i)
+;      dy = sizey - (win_positions[i,3]-win_positions[i,2]+1)
+;      if dy ne 0 then begin
+;        dy1 = fix(dy/2.0)
+;        dy2 = dy-dy1
+;        win_positions[i,2] = win_positions[i,2] - dy1
+;        if win_positions[i,2] lt 0 then begin
+;          clip_image[i,2] = -1 * win_positions[i,2]
+;          win_positions[i,2] = 0
+;        endif
+;        win_positions[i,3] = win_positions[i,3] + dy2
+;        if win_positions[i,3] ge ccd_size[1] then begin
+;          clip_image[i,3] = win_positions[i,2] - (ccd_size[1]-1)
+;          win_positions[i,3] = ccd_size[1]-1
+;        endif
+;      endif
+;      sizel = data->get_header_keyword('NAXIS3', i) * data->get_spectral_binning(i)
+;      dl = sizel - (win_positions[i,1]-win_positions[i,0]+1)
+;      if dl ne 0 then begin
+;        dl1 = fix(dl/2.0)
+;        dl2 = dl-dl1
+;        win_positions[i,0] = win_positions[i,0] - dl1
+;        if win_positions[i,0] lt 0 then begin
+;          clip_image[i,0] = -1 * win_positions[i,0]
+;          win_positions[i,0] = 0
+;        endif
+;        win_positions[i,1] = win_positions[i,1] + dl2
+;        if win_positions[i,1] ge ccd_size[0] then begin
+;          clip_image[i,1] = win_positions[i,1] - (ccd_size[0]-1)
+;          win_positions[i,1] = ccd_size[0]-1
+;        endif
+;      endif
+;    endfor
+;  endif
 
   ; initialize size of draw window (ccd display):
   detector = fltarr(ccd_size)
