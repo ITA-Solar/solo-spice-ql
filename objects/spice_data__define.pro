@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-27 13:37 CEST $
+; $Id: 2024-08-27 13:50 CEST $
 
 
 ;+
@@ -2655,6 +2655,7 @@ FUNCTION spice_data::get_spatial_binning, window
     IF window_index GE 0 THEN $
       bin2[i] = self.get_header_keyword('NBIN2', window_index)
   ENDFOR
+  IF N_ELEMENTS(bin2) EQ 1 THEN bin2=bin2[0]
   return, bin2
 END
 
