@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-27 13:35 CEST $
+; $Id: 2024-08-27 13:37 CEST $
 
 
 ;+
@@ -2345,10 +2345,13 @@ FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
   crpix = self.get_header_keyword('crpix2', window_index)
   cdelt = self.get_header_keyword('cdelt2', window_index)
   pc2_2 = self.get_header_keyword('PC2_2', window_index)
+  nbin = self.get_spatial_binning(window_index)
+
   IF keyword_set(full_ccd) THEN BEGIN
     y_coord_start = (self.get_window_position(window_index, /idl_coord, /debin))[2]
-    crpix = crpix + y_coord_start
+    crpix = crpix * nbin + y_coord_start
     naxis = (self.get_ccd_size())[1]
+    cdelt = cdelt / nbin
   ENDIF ELSE BEGIN
     naxis = self.get_header_keyword('naxis2', window_index)
   ENDELSE
