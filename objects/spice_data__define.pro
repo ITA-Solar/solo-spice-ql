@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-28 12:00 CEST $
+; $Id: 2024-08-28 15:22 CEST $
 
 
 ;+
@@ -1666,9 +1666,9 @@ FUNCTION spice_data::get_window_position, window, detector=detector, $
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, [-999, -999, -999, -999]
 
-  level = 2 ; At the moment this object only accepts level 2 files, contact prits-group@astro.uio.no if you need this changed.
-  
-  IF level EQ 1 THEN return, $
+  ; At the moment this object only accepts level 2 files (in init)
+  ; Contact prits-group@astro.uio.no if you need this changed.
+  IF self.get_level() EQ 1 THEN return, $
     self.get_window_position_level_1(window_index, detector=detector, $
     idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud)
 
@@ -1805,7 +1805,7 @@ END
 ;
 ; INPUTS:
 ;     keyword : string, The header keyword for which the value should be returned.
-;     extension_index : The index of the extension this keyword belongs to.
+;     extension : The index or name of the extension this keyword belongs to.
 ;
 ; OPTIONAL INPUTS:
 ;     missing_value : the value that should be returned, if the keyword does not exist
@@ -1824,26 +1824,28 @@ END
 ; OUTPUT:
 ;     Returns either the keyword value, the MISSING_VALUE or !NULL.
 ;-
-FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value, exists=exists, $
+FUNCTION spice_data::get_header_keyword, keyword, extension, missing_value, exists=exists, $
   variable_values=variable_values, values_only=values_only
   ;Returns the specified keyword from the extension, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 2 THEN BEGIN
-    message, 'missing input, usage: get_header_keyword, keyword, extension_index [, missing_value, exists=exists, variable_values=variable_values, values_only=values_only]', /info
+    message, 'missing input, usage: get_header_keyword, keyword, extension [, missing_value, exists=exists, variable_values=variable_values, values_only=values_only]', /info
     return, !NULL
   ENDIF ELSE IF N_ELEMENTS(keyword) NE 1 || SIZE(keyword, /TYPE) NE 7 THEN BEGIN
     message, 'keyword needs to be a scalar string', /info
     return, !NULL
-  ENDIF ELSE IF ~self.check_extension_index(extension_index) THEN return, !NULL
-
+  ENDIF
+  extension_index = self.return_extension_index(extension)
+  IF extension_index LT 0 THEN return, -1
+  
   ; keywords with a '-' in the name, will be renamed when they are transformed into structures (in fitshead2struct),
   ; '-' becomes '_D$'
   ;temp = strsplit(keyword, '-', count=count, /extract)
   ;IF count GT 1 THEN keyword = strjoin(temp, '_D$')
 
   IF ARG_PRESENT(variable_values) THEN BEGIN
-    variable_values = self.get_bintable_data(keyword, values_only=values_only, extension_index=extension_index)
+    variable_values = self.get_bintable_data(keyword, values_only=values_only, extension=extension_index)
   ENDIF
 
   result = fxpar(*(*self.window_headers_string)[extension_index], keyword, missing=missing_value, count=count)
@@ -1866,9 +1868,9 @@ END
 ;     This method is deprecated, but still available for compatibility reasons.
 ;     get_header_keyword instead replaces this method. See there for documentation
 ;-
-FUNCTION spice_data::get_header_info, keyword, extension_index, missing_value, exists=exists
+FUNCTION spice_data::get_header_info, keyword, extension, missing_value, exists=exists
   message, 'This function is deprecated. Use SPICE_DATA::get_header_keyword instead', /informational
-  return, self.get_header_keyword(keyword, extension_index, missing_value, exists=exists)
+  return, self.get_header_keyword(keyword, extension, missing_value, exists=exists)
 END
 
 
@@ -1877,8 +1879,8 @@ END
 ;     Returns the header of the given extension, either as a string array or as a structure.
 ;
 ; INPUTS:
-;     extension_index : The index of the extension for which the header should be returned.
-;                    This index will be ignored if either LOWER_DUMBBELL or UPPER_DUMBBELL is set.
+;     extension : The index or name of the extension for which the header should be returned.
+;                    This input will be ignored if either LOWER_DUMBBELL or UPPER_DUMBBELL is set.
 ;
 ; KEYWORD PARAMETERS:
 ;     lower_dumbbell : If set, the header of the lower dumbbell will be returned.
@@ -1888,14 +1890,15 @@ END
 ; OUTPUT:
 ;     Returns the header as a string array or a structure.
 ;-
-FUNCTION spice_data::get_header, extension_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
+FUNCTION spice_data::get_header, extension, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
   structure=structure
   ;Returns the header of the given extension as a string array or a structure
   COMPILE_OPT IDL2
 
-  IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower)
-  IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper)
-  IF ~self.check_extension_index(extension_index) THEN return, !NULL
+  IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower) $
+  ELSE IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper) $
+  ELSE extension_index = self.return_extension_index(extension)
+  IF extension_index LT 0 THEN return, !NULL
   IF keyword_set(structure) then return, *(*self.window_headers)[extension_index] $
   ELSE return, *(*self.window_headers_string)[extension_index]
 END
@@ -2134,7 +2137,7 @@ END
 ;     an array, the result will be a string array of same size.
 ;
 ; INPUTS:
-;     window_index : the index of the window the ID is asked for
+;     window_index : the index of the window the ID/name is asked for
 ;                    scalar or 1D-int-array. Default is all windows.
 ;
 ; OUTPUT:
@@ -2181,27 +2184,31 @@ END
 
 ;+
 ; Description:
-;     Returns the number of exposures in the window, or if window_index
+;     Returns the number of exposures in the window, or if WINDOW
 ;     is not provided, a vector containing the numbers of exposures
 ;     for each window
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window(s). Default all windows.
+;     window : the index or name of the window. Default all windows.
 ;
 ; OUTPUT:
 ;     int or int-array
 ;-
-FUNCTION spice_data::get_number_exposures, window_index
+FUNCTION spice_data::get_number_exposures, window
   ;Returns the number of exposures in the window
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
+  IF N_ELEMENTS(window) EQ 0 THEN BEGIN
     n_exp = intarr(self.get_number_windows())
     FOR iwin=0,self.get_number_windows()-1 DO BEGIN
-      IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_keyword('NAXIS4', iwin) $
-      ELSE n_exp[iwin] = self.get_header_keyword('NAXIS1', iwin)
+      window_index = self.return_extension_index(iwin, /check_window_index)
+      IF window_index GE 0 THEN $
+        IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_keyword('NAXIS4', iwin) $
+        ELSE n_exp[iwin] = self.get_header_keyword('NAXIS1', iwin)
     ENDFOR
   ENDIF ELSE BEGIN
+    window_index = self.return_extension_index(window, /check_window_index)
+    IF window_index LT 0 THEN return, -1
     IF self.get_sit_and_stare() THEN n_exp = self.get_header_keyword('NAXIS4', window_index) $
     ELSE n_exp = self.get_header_keyword('NAXIS1', window_index)
   ENDELSE
@@ -2211,28 +2218,33 @@ END
 
 ;+
 ; Description:
-;     Returns the number of pixels in y in the window, or if window_index
-;     is not provided, a vector containing the numbers of pixels in y
+;     Returns the number of pixels in y in the window, or if WINDOW
+;     is not provided, a vector containing the numbers of pixels in y direction
 ;     for each window
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     int or int-array
 ;-
-FUNCTION spice_data::get_number_y_pixels, window_index
+FUNCTION spice_data::get_number_y_pixels, window
   ;Returns the number of pixels in y in the window
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
-    n_slit = intarr(self.get_number_windows)
-    FOR iwin=0,self.get_number_windows-1 DO BEGIN
-      n_slit[iwin] = self.get_header_keyword('NAXIS2', iwin)
+  IF N_ELEMENTS(window) EQ 0 THEN BEGIN
+    n_slit = intarr(self.get_number_windows())
+    FOR iwin=0,self.get_number_windows()-1 DO BEGIN
+      window_index = self.return_extension_index(iwin, /check_window_index)
+      IF window_index GE 0 THEN $
+        n_slit[iwin] = self.get_header_keyword('NAXIS2', iwin)
     ENDFOR
   ENDIF ELSE BEGIN
+    window_index = self.return_extension_index(window, /check_window_index)
+    IF window_index LT 0 THEN return, -1
     n_slit = self.get_header_keyword('NAXIS2', window_index)
   ENDELSE
+  IF N_ELEMENTS(n_slit) EQ 1 THEN n_slit = n_slit[0]
   return, n_slit
 END
 
@@ -2242,14 +2254,17 @@ END
 ;     Returns the exposure time of the given window per exposure.
 ;
 ; INPUTS:
-;     window_index : The index of the window.
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float
 ;-
-FUNCTION spice_data::get_exposure_time, window_index
+FUNCTION spice_data::get_exposure_time, window
   ;Returns the exposure time of the given window per exposure
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   exptime = self.get_header_keyword('XPOSURE', window_index)
   return, exptime
