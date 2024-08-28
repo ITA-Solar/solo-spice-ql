@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-27 15:30 CEST $
+; $Id: 2024-08-28 12:00 CEST $
 
 
 ;+
@@ -2299,14 +2299,17 @@ END
 ;     Returns a vector containing the coordinate (instrument x-direction) for each pixel in the first dimension.
 ;
 ; INPUTS:
-;     window_index : The index of the window.
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_x_vector, window_index
+FUNCTION spice_data::get_instr_x_vector, window
   ;Returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval1', window_index)
   naxis = self.get_header_keyword('naxis1', window_index)
@@ -2325,10 +2328,10 @@ END
 ;+
 ; Description:
 ;     Returns a vector containing the coordinate for each pixel in the second dimension, instrument y-direction
-;     for the selected window, or the full CCD this window belongs to
+;     for the selected window, or the full CCD this window belongs to.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OPTIONAL KEYWORDS:
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
@@ -2337,9 +2340,12 @@ END
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
+FUNCTION spice_data::get_instr_y_vector, window, full_ccd=full_ccd
   ;Returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval2', window_index)
   crpix = self.get_header_keyword('crpix2', window_index)
@@ -2363,10 +2369,10 @@ END
 ;+
 ; Description:
 ;     Returns a vector containing the wavelength for each pixel in third dimension for
-;     the selected window, or the full CCD this window belongs to
+;     the selected window, or the full CCD this window belongs to.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OPTIONAL KEYWORDS:
 ;     full_ccd : if set, a vector of size CCD-size[0] is returned with lamda values
@@ -2375,9 +2381,12 @@ END
 ; OUTPUT:
 ;     float array, wavelength in nm
 ;-
-FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
+FUNCTION spice_data::get_lambda_vector, window, full_ccd=full_ccd
   ;Returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval3', window_index)
   cdelt = self.get_header_keyword('cdelt3', window_index)
@@ -2400,17 +2409,20 @@ END
 
 ;+
 ; Description:
-;     Returns a vector containing the time for each pixel in fourth dimension
+;     Returns a vector containing the time for each pixel in fourth dimension.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float array, time in seconds
 ;-
-FUNCTION spice_data::get_time_vector, window_index
+FUNCTION spice_data::get_time_vector, window
   ;Returns a vector containing the time for each pixel in fourth dimension
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval4', window_index)
   naxis = self.get_header_keyword('naxis4', window_index)
@@ -2459,7 +2471,7 @@ END
 ; OUTPUT:
 ;     float : ycen in arcseconds
 ;-
-FUNCTION spice_data::get_ycen, wjndow
+FUNCTION spice_data::get_ycen, window
   ;Returns YCEN in archsec
   COMPILE_OPT IDL2
 
