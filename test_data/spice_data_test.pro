@@ -1,4 +1,4 @@
-; $Id: 2024-08-27 15:49 CEST $
+; $Id: 2024-08-28 12:00 CEST $
 PRO get_window_position_test, spice_object
   result = spice_object->get_window_position('adf')
   IF ~result.equals([-999, -999, -999, -999], tolerance=0.001) THEN message, 'something is wrong here'
@@ -16,6 +16,72 @@ END
 
 
 
+
+
+;PRO get_xcen_test, spice_object
+;  result = spice_object->get_xcen(0)
+;  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
+;
+;  message, ' passed the tests', /info
+;END
+;
+;
+;PRO get_xcen_test, spice_object
+;  result = spice_object->get_xcen(0)
+;  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
+;
+;  message, ' passed the tests', /info
+;END
+;
+;
+;PRO get_xcen_test, spice_object
+;  result = spice_object->get_xcen(0)
+;  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
+;
+;  message, ' passed the tests', /info
+;END
+;
+;
+PRO get_instr_x_vector_test, spice_object
+  result = spice_object->get_instr_x_vector(0)
+  IF ~result.equals([-90.665861], tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_instr_y_vector_test, spice_object
+  result = spice_object->get_instr_y_vector(0)
+  IF N_ELEMENTS(result) NE 1024 THEN message, 'something is wrong here'
+  IF ~result[0:1].equals([-618.38738,  -617.29833], tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_instr_y_vector(0, /full_ccd)
+  IF N_ELEMENTS(result) NE 1024 THEN message, 'something is wrong here'
+  IF ~result[0:1].equals([-618.38738,  -617.29833], tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_lambda_vector_test, spice_object
+  result = spice_object->get_lambda_vector(0)
+  IF N_ELEMENTS(result) NE 50 THEN message, 'something is wrong here'
+  IF ~result[0:1].equals([69.576659, 69.586411], tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_lambda_vector(0, /full_ccd)
+  IF N_ELEMENTS(result) NE 1024 THEN message, 'something is wrong here'
+  IF ~result[0:1].equals([69.527900, 69.537652], tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_time_vector_test, spice_object
+  result = spice_object->get_time_vector(0)
+  IF ~result.equals([0.25], tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
 
 
 PRO get_xcen_test, spice_object
@@ -273,7 +339,10 @@ PRO spice_data_test
 
   get_window_position_test, spice_object
   
-  
+  get_instr_x_vector_test, spice_object
+  get_instr_y_vector_test, spice_object
+  get_lambda_vector_test, spice_object
+  get_time_vector_test, spice_object
   get_xcen_test, spice_object
   get_ycen_test, spice_object
   get_fovx_test, spice_object
