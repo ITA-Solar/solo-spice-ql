@@ -1,4 +1,4 @@
-; $Id: 2024-08-28 15:22 CEST $
+; $Id: 2024-08-28 15:41 CEST $
 PRO get_window_position_test, spice_object
   result = spice_object->get_window_position('adf')
   IF ~result.equals([-999, -999, -999, -999], tolerance=0.001) THEN message, 'something is wrong here'
@@ -18,22 +18,22 @@ END
 
 
 
-;PRO get_xcen_test, spice_object
-;  result = spice_object->get_xcen(0)
-;  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
-;
-;  message, ' passed the tests', /info
-;END
-;
-;
-;PRO get_xcen_test, spice_object
-;  result = spice_object->get_xcen(0)
-;  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
-;
-;  message, ' passed the tests', /info
-;END
-;
-;
+PRO get_header_keyword_test, spice_object
+  result = spice_object->get_header_keyword(0, 'radcal')
+  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_header_test, spice_object
+  result = spice_object->get_header(0)
+  IF N_ELEMENTS(result) NE 400 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
 PRO get_number_windows_test, spice_object
   result = spice_object->get_number_windows()
   IF result NE 2 THEN message, 'something is wrong here'
@@ -520,6 +520,8 @@ PRO spice_data_test
 
   get_window_position_test, spice_object
   
+  get_header_keyword_test, spice_object
+  get_header_test, spice_object
   get_number_windows_test, spice_object
   get_number_extensions_test, spice_object
   get_title_test, spice_object
