@@ -1,4 +1,4 @@
-; $Id: 2024-08-28 12:00 CEST $
+; $Id: 2024-08-28 15:22 CEST $
 PRO get_window_position_test, spice_object
   result = spice_object->get_window_position('adf')
   IF ~result.equals([-999, -999, -999, -999], tolerance=0.001) THEN message, 'something is wrong here'
@@ -34,14 +34,179 @@ END
 ;END
 ;
 ;
-;PRO get_xcen_test, spice_object
-;  result = spice_object->get_xcen(0)
-;  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
-;
-;  message, ' passed the tests', /info
-;END
-;
-;
+PRO get_number_windows_test, spice_object
+  result = spice_object->get_number_windows()
+  IF result NE 2 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_number_extensions_test, spice_object
+  result = spice_object->get_number_extensions()
+  IF result NE 3 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_title_test, spice_object
+  result = spice_object->get_title()
+  IF result NE 'SPICE' THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_obs_id_test, spice_object
+  result = spice_object->get_obs_id()
+  IF result NE 234881027 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_start_time_test, spice_object
+  result = spice_object->get_start_time()
+  IF result NE '2024-01-01T21:33:46.579' THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_end_time_test, spice_object
+  result = spice_object->get_end_time()
+  IF result NE '2024-01-01T21:33:47.079' THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_sit_and_stare_test, spice_object
+  result = spice_object->get_sit_and_stare()
+  IF result NE 0 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_level_test, spice_object
+  result = spice_object->get_level()
+  IF result NE 2 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_variable_unit_test, spice_object
+  result = spice_object->get_variable_unit()
+  IF result NE 'W/m2/sr/nm' THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_variable_type_test, spice_object
+  result = spice_object->get_variable_type()
+  IF result NE 'Spectral Radiance' THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_satellite_rotation_test, spice_object
+  result = spice_object->get_satellite_rotation()
+  IF ~result.equals(-7.3168050, tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_missing_value_test, spice_object
+  result = spice_object->get_missing_value()
+  IF result EQ result THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_ccd_size_test, spice_object
+  result = spice_object->get_ccd_size()
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+  IF ~result[0:1].equals([1024, 1024], tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_window_id_test, spice_object
+  result = spice_object->get_window_id()
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+  IF result[0] NE 'FLT02_Two Window_OB_ID_253_' || result[1] NE 'FLT02_Two Window_OB_ID_254_' THEN message, 'something is wrong here'
+
+  result = spice_object->get_window_id(1)
+  IF N_ELEMENTS(result) NE 1 THEN message, 'something is wrong here'
+  IF result[0] NE 'FLT02_Two Window_OB_ID_254_' THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO show_lines_test, spice_object
+  spice_object->show_lines
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_number_exposures_test, spice_object
+  result = spice_object->get_number_exposures()
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+
+  result = spice_object->get_number_exposures(0)
+  IF result NE 1 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_number_y_pixels_test, spice_object
+  result = spice_object->get_number_y_pixels()
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+
+  result = spice_object->get_number_y_pixels(0)
+  IF result NE 1024 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_exposure_time_test, spice_object
+  result = spice_object->get_exposure_time(0)
+  IF result NE 0.5 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_axis_title_test, spice_object
+  result = spice_object->get_axis_title()
+  IF N_ELEMENTS(result) NE 4 THEN message, 'something is wrong here'
+
+  result = spice_object->get_axis_title(0)
+  IF result NE 'Solar X [arcsec]' THEN message, 'something is wrong here'
+
+  result = spice_object->get_axis_title([1,2], /pixels)
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+  IF result[0] NE 'Solar Y [pixels]' THEN message, 'something is wrong here'
+
+  result = spice_object->get_axis_title(3, /no_unit)
+  IF result NE 'Time' THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
 PRO get_instr_x_vector_test, spice_object
   result = spice_object->get_instr_x_vector(0)
   IF ~result.equals([-90.665861], tolerance=0.001) THEN message, 'something is wrong here'
@@ -252,12 +417,28 @@ END
 
 
 PRO has_dumbbells_test, spice_object
-  message, 'No tests defined yet', /info
+  result = spice_object->has_dumbbells()
+  IF result NE 0 THEN message, 'something is wrong here'
+
+  result = spice_object->has_dumbbells(0)
+  IF result NE 0 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
 END
 
 
 PRO get_dumbbells_index_test, spice_object
-  message, 'No tests defined yet', /info
+  result = spice_object->get_dumbbells_index()
+  IF N_ELEMENTS(result) NE 2 THEN message, 'something is wrong here'
+  IF ~result.equals([-1, -1]) THEN message, 'something is wrong here'
+
+  result = spice_object->get_dumbbells_index(/lower)
+  IF result NE -1 THEN message, 'something is wrong here'
+
+  result = spice_object->get_dumbbells_index(/upper)
+  IF result NE -1 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
 END
 
 
@@ -339,6 +520,25 @@ PRO spice_data_test
 
   get_window_position_test, spice_object
   
+  get_number_windows_test, spice_object
+  get_number_extensions_test, spice_object
+  get_title_test, spice_object
+  get_obs_id_test, spice_object
+  get_start_time_test, spice_object
+  get_end_time_test, spice_object
+  get_sit_and_stare_test, spice_object
+  get_level_test, spice_object
+  get_variable_unit_test, spice_object
+  get_variable_type_test, spice_object
+  get_satellite_rotation_test, spice_object
+  get_missing_value_test, spice_object
+  get_ccd_size_test, spice_object
+  get_window_id_test, spice_object
+  show_lines_test, spice_object
+  get_number_exposures_test, spice_object
+  get_number_y_pixels_test, spice_object
+  get_exposure_time_test, spice_object
+  get_axis_title_test, spice_object
   get_instr_x_vector_test, spice_object
   get_instr_y_vector_test, spice_object
   get_lambda_vector_test, spice_object
