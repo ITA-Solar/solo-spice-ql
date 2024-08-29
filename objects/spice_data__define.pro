@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-27 14:05 CEST $
+; $Id: 2024-08-29 13:09 CEST $
 
 
 ;+
@@ -164,7 +164,7 @@ END
 ;     by using the 'Exit' button, the routine returns the analysis structure.
 ;
 ; OPTIONAL INPUTS:
-;     window_index : The index of the desired window, default is 0.
+;     window   : The index or name of the desired window.
 ;     VELOCITY : Set this equal to the initial velocity if you want
 ;                 the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength
@@ -180,7 +180,7 @@ END
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
-;                 observations or if window_index corresponds to a regular
+;                 observations or if window corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
@@ -189,12 +189,14 @@ END
 ;                 relative to a lab wavelength, but as the wavelength.
 ;
 ;-
-function spice_data::xcfit_block, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+function spice_data::xcfit_block, window, no_masking=no_masking, approximated_slit=approximated_slit, $
   position=position, velocity=velocity, no_line_list=no_line_list
   ;Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then window_index = 0
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
+
   ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, position=position, velocity=velocity, $
     no_line_list=no_line_list, /init_all_cubes)
   if size(ana, /type) EQ 8 then begin
@@ -326,7 +328,7 @@ END
 ;     if they contain non-default values.
 ;
 ; OPTIONAL INPUTS:
-;     window_index : The index of the desired window(s), default is all windows.
+;     window   : The index or name of the desired window(s), default is all windows.
 ;     VELOCITY : Set this equal to the initial velocity if you want
 ;                 the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength
@@ -351,7 +353,7 @@ END
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
-;                 observations or if window_index corresponds to a regular
+;                 observations or if window corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
@@ -392,7 +394,7 @@ END
 ;     Level 3 FITS file saved to directory $SPICE_DATA/user/level3, or to pipeline_dir if that keyword is set.
 ;-
 
-FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+FUNCTION spice_data::create_l3_file, window, no_masking=no_masking, approximated_slit=approximated_slit, $
   no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, $
   force_version=force_version, top_dir=top_dir, path_index=path_index, save_not=save_not, $
   all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, all_proc_steps=all_proc_steps, $
@@ -410,18 +412,18 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
 
   IF N_ELEMENTS(no_line_list) EQ 0 THEN no_line_list=1 ; See note for this keyword in documentation
   
-  if N_ELEMENTS(window_index) eq 0 then window_index = indgen(self->get_number_windows())
+  if N_ELEMENTS(window) eq 0 then window = indgen(self->get_number_windows())
   IF ARG_PRESENT(all_ana) THEN collect_ana=1 ELSE collect_ana=0
   IF ARG_PRESENT(all_result_headers) THEN BEGIN
-    all_result_headers = ptrarr(N_ELEMENTS(window_index))
+    all_result_headers = ptrarr(N_ELEMENTS(window))
     collect_hdr=1
   ENDIF ELSE collect_hdr=0
   IF ARG_PRESENT(all_data_headers) THEN BEGIN
-    all_data_headers = ptrarr(N_ELEMENTS(window_index))
+    all_data_headers = ptrarr(N_ELEMENTS(window))
     collect_hdr_data=1
   ENDIF ELSE collect_hdr_data=0
   IF ARG_PRESENT(all_proc_steps) THEN BEGIN
-    all_proc_steps = ptrarr(N_ELEMENTS(window_index))
+    all_proc_steps = ptrarr(N_ELEMENTS(window))
     collect_proc_steps=1
   ENDIF ELSE collect_proc_steps=0
   
@@ -442,21 +444,24 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
     fns('-###', file_info_l2.rasterno)
 
   IF ~keyword_set(no_widget) THEN $
-    progress_widget->next_file, N_ELEMENTS(window_index), filename=filename_l2, halt=halt
+    progress_widget->next_file, N_ELEMENTS(window), filename=filename_l2, halt=halt
 
-  for iwindow=0,N_ELEMENTS(window_index)-1 do BEGIN
-     dumbbell = self->get_header_keyword('DUMBBELL', iwindow) NE 0
-     intensity_window = self->get_header_keyword('WIN_TYPE', iwindow) EQ 'Intensity-window'
+  for iwindow=0,N_ELEMENTS(window)-1 do BEGIN
+    window_index = self.return_extension_index(window[iwindow], /check_window_index)
+    IF window_index LT 0 THEN return, !NULL
+
+     dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
+     intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
      IF ~dumbbell AND ~intensity_window THEN BEGIN 
         IF ~keyword_set(no_widget) THEN BEGIN
-           progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index[iwindow], fns('Window ##', iwindow)), halt=halt
+           progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index, fns('Window ##', iwindow)), halt=halt
            if halt then begin
               print,'Calculation stopped'
               return, 'Cancelled'
            endif
         ENDIF
-        print,trim(n_elements(window_index)-window_index[iwindow])+' windows remaining...'
-        ana = self->mk_analysis(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit, $
+        print,trim(n_elements(window)-iwindow)+' windows remaining...'
+        ana = self->mk_analysis(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
                                 position=position, velocity=velocity, /init_all_cubes, no_line_list=no_line_list, version=version_add, proc_find_line=proc_find_line)
         IF iwindow EQ 0 THEN version += version_add
         if size(ana, /type) NE 8 then continue
@@ -490,13 +495,13 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         endif
         
         if ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) then begin
-           origin = [ (self->get_lambda_vector(window_index[iwindow]))[0], (self->get_instr_x_vector(window_index[iwindow]))[0], (self->get_instr_y_vector(window_index[iwindow]))[0] ]
-           scale = [ self->get_resolution(window_index[iwindow], /lambda), self->get_resolution(window_index[iwindow], /x), self->get_resolution(window_index[iwindow], /y) ]
+           origin = [ (self->get_lambda_vector(window_index))[0], (self->get_instr_x_vector(window_index))[0], (self->get_instr_y_vector(window_index))[0] ]
+           scale = [ self->get_resolution(window_index, /lambda), self->get_resolution(window_index, /x), self->get_resolution(window_index, /y) ]
            SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale=[0,1,1], image_dim=[1,2], group_leader=group_leader, /no_save_option
         endif
         
-        ;data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index[iwindow], 99))
-        original_data = self->get_window_data(window_index[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+        ;data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index, 99))
+        original_data = self->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit)
         if iwindow gt 0 then IS_EXTENSION=1 else begin
            IS_EXTENSION=0
            IF N_ELEMENTS(velocity) EQ 0 THEN vel=-999 ELSE vel=velocity
@@ -529,15 +534,15 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
            
         endelse ; iwindow gt 0
 
-        CREATOR = keyword_set(pipeline_dir) ? self.get_header_keyword('CREATOR', window_index[iwindow], '') : getenv("USER")
+        CREATOR = keyword_set(pipeline_dir) ? self.get_header_keyword('CREATOR', window_index, '') : getenv("USER")
 
         ana2fits, ANA, FILEPATH_OUT=file, $
-          N_WINDOWS=N_ELEMENTS(window_index), WINNO=iwindow, $
+          N_WINDOWS=N_ELEMENTS(window), WINNO=iwindow, $
           DATA_ID=DATA_ID, TYPE_XDIM1='WAVE', $
           EXT_DATA_PATH=filename_l2, $
           IS_EXTENSION=IS_EXTENSION, LEVEL='L3', VERSION=number_version_l3, $
           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-          PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=self->get_header(window_index[iwindow]), $
+          PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=self->get_header(window_index), $
           SAVE_XDIM1=SAVE_XDIM1, PRINT_HEADERS=PRINT_HEADERS, $
           SAVE_NOT=SAVE_NOT, $
           headers_results=headers_results, headers_data=headers_data
@@ -553,7 +558,7 @@ FUNCTION spice_data::create_l3_file, window_index, no_masking=no_masking, approx
         IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
         IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
      endif ;  ~dumbbell AND ~intensity_window
-  endfor                        ; iwindow=0,N_ELEMENTS(window_index)-1
+  endfor                        ; iwindow=0,N_ELEMENTS(window)-1
 
   IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN 
      spice_ingest, file, destination=destination, file_moved=file_moved, files_found=files_found, $
@@ -571,8 +576,8 @@ END
 ;     This procedure transforms the data of a chosen window, so that it can be used
 ;     in CFIT_BLOCK and XCFIT_BLOCK.
 ;
-; OPTIONAL INPUTS:
-;     window_index : The index of the desired window, default is 0.
+; INPUTS:
+;     window   : The index or name of the desired window.
 ;
 ; KEYWORD PARAMETERS:
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -581,7 +586,7 @@ END
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
-;                 observations or if window_index corresponds to a regular
+;                 observations or if window corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
@@ -599,7 +604,7 @@ END
 ;     version :   Returns the version number of this software.
 ;
 ;-
-PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+PRO spice_data::transform_data_for_ana, window, no_masking=no_masking, approximated_slit=approximated_slit, $
   debug_plot=debug_plot, $
   DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING, version=version
   ;Transforms data so that it can be used with cfit_block and xcfit_block.
@@ -607,7 +612,8 @@ PRO spice_data::transform_data_for_ana, window_index, no_masking=no_masking, app
 
   version = 1 ; PLEASE increase this number when editing the code
 
-  if N_ELEMENTS(window_index) eq 0 then window_index = 0
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return
 
   data = self->get_window_data(window_index, no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot)
   ;; Only do fit on the spectral part of the window!
@@ -639,8 +645,11 @@ END
 ;     in CFIT_BLOCK and XCFIT_BLOCK. Fit components are estimated and added to ANA.
 ;     Calls TRANSFORM_DATA_FOR_ANA.
 ;
+; INPUTS:
+;     window   : The index or name of the desired window.
+;
 ; OPTIONAL INPUTS:
-;     window_index : The index of the desired window, default is 0.
+;     window   : The index or name of the desired window.
 ;     VELOCITY : Set this equal to the initial velocity if you want
 ;                 the line position represented by the velocity
 ;                 relative to a lab wavelength - the lab wavelength
@@ -660,7 +669,7 @@ END
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
-;                 observations or if window_index corresponds to a regular
+;                 observations or if window corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
@@ -679,7 +688,7 @@ END
 ;     Returns an ANA structure.
 ;
 ;-
-FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
+FUNCTION spice_data::mk_analysis, window, no_masking=no_masking, approximated_slit=approximated_slit, $
   init_all_cubes=init_all_cubes, debug_plot=debug_plot, position=position, velocity=velocity, $
   no_line_list=no_line_list, version=version, proc_find_line=proc_find_line
   ;Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
@@ -687,7 +696,8 @@ FUNCTION spice_data::mk_analysis, window_index, no_masking=no_masking, approxima
   
   version = 1 ; PLEASE increase this number when editing the code
 
-  if N_ELEMENTS(window_index) eq 0 then window_index = 0
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
 
   self->transform_data_for_ana, window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
     debug_plot=debug_plot, $
@@ -1379,7 +1389,7 @@ END
 ;     'no_masking' is set.
 ;
 ; INPUTS:
-;     window_index : The index of the desired window
+;     window : The index or name of the desired window
 ;
 ; KEYWORD PARAMETERS:
 ;     noscale : If present and non-zero, then the output data will not be
@@ -1391,16 +1401,11 @@ END
 ;                 detector that lie above/below the dumbbells,
 ;                 in the gap between the slit ends and the dumbbells, and the
 ;                 dumbbell regions themselves. The masking procedure is not called for wide-slit
-;                 observations or if window_index corresponds to a regular
+;                 observations or if window corresponds to a regular
 ;                 dumbbell extension.
 ;     approximated_slit: If set, routine uses a fixed (conservative) value for the slit
 ;                 range, i.e. does not estimate the slit length based on the position of the dumbbells.
 ;                 The keyword is ignored if NO_MASKING is set.
-;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
-;                 This keyword is ignored if NO_MASKING is set.
-;     load : Obsolete and ignored. This is here for backwards-compatibility.
-;     slit_only : Obsolete and ignored. This is here for
-;                 backwards-compatibility.
 ;     max_saturation_fraction: pixels with a contribution fraction from saturated L1 pixels above this limit 
 ;                     are set to nan. Default is 0, i.e. all pixels influenced by saturated pixels are nan. 
 ;                     Pixels with a saturation fraction below this limit are set to the value calculated by 
@@ -1408,14 +1413,18 @@ END
 ;                     and then correcting for the filling factor by upscaling the L2 pixel value to 
 ;                     value /= (1-fraction). The coordinates of pixels influenced by saturated and the
 ;                     corresponding upscaled values are stored in a pixel list binary table extension SATPIXLIST(...) 
+;     debug_plot: If set, make plots to illustrate which part of the window is being masked.
+;                 This keyword is ignored if NO_MASKING is set.
 ;     nodescale : Obsolete. If set, then NOSCALE is set. This is here for backwards-compatibility.
+;     load : Obsolete and ignored. This is here for backwards-compatibility.
+;     slit_only : Obsolete and ignored. This is here for backwards-compatibility.
 ;
 ; OUTPUT:
-;     Returns either the data of the window as an array or a link to the data.
+;     Returns the data of the window as an array.
 ;-
-FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
+FUNCTION spice_data::get_window_data, window, noscale=noscale, $
   no_masking=no_masking, approximated_slit=approximated_slit, debug_plot=debug_plot, $
-  load=load, slit_only=slit_only, nodescale=nodescale,max_saturation_fraction=max_saturation_fraction, quiet=quiet
+  load=load, slit_only=slit_only, nodescale=nodescale, max_saturation_fraction=max_saturation_fraction, quiet=quiet
   ;Returns the data of a window
   COMPILE_OPT IDL2
   
@@ -1424,9 +1433,11 @@ FUNCTION spice_data::get_window_data, window_index, noscale=noscale, $
   IF max_saturation_fraction GT 1 THEN message,'MAX_SATURATION_FRACTION must be between 0 and 1'
   
   IF N_PARAMS() LT 1 THEN BEGIN
-    message, 'missing input, usage: get_window_data, window_index [, load=load, noscale=noscale]', /info
+    message, 'missing input, usage: get_window_data, window [, noscale=noscale, no_masking=no_masking]', /info
     return, !NULL
-  ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
+  ENDIF
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
 
   IF keyword_set(noscale) || keyword_set(nodescale) THEN descaled=2 ELSE descaled=1
   IF keyword_set(no_masking) THEN masked=0 ELSE $
@@ -1466,13 +1477,13 @@ END
 ;     array = [lambda, instrument-Y].
 ;
 ; INPUTS:
-;     window_index : The index of the desired window.
+;     window : The index or name of the desired window.
 ;     exposure_index : The index of the desired exposure.
 ;
 ; KEYWORD PARAMETERS:
 ;     noscale : If present and non-zero, then the output data will not be
 ;                 scaled using the optional BSCALE and BZERO keywords in the
-;                 FITS header.   Default is to scale.
+;                 FITS header. Default is to scale.
 ;     debin : If set, the image will be expanded if binning is GT 1, and data values
 ;             will be divided by the binning value.
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
@@ -1491,16 +1502,19 @@ END
 ; OUTPUT:
 ;     Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y]).
 ;-
-FUNCTION spice_data::get_one_image, window_index, exposure_index, debin=debin, noscale=noscale, $
+FUNCTION spice_data::get_one_image, window, exposure_index, debin=debin, noscale=noscale, $
   no_masking=no_masking, approximated_slit=approximated_slit, $
   nodescale=nodescale
   ;Returns a transposed 2D subset of the data from the specified window and exposure (array = [lambda, instrument-Y])
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 2 THEN BEGIN
-    message, 'missing input, usage: get_one_image, window_index, exposure_index [, noscale=noscale]', /info
+    message, 'missing input, usage: get_one_image, window, exposure_index [, noscale=noscale]', /info
     return, !NULL
-  ENDIF ELSE IF ~self.check_window_index(window_index) THEN return, !NULL
+  ENDIF
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
+  
   IF self.get_sit_and_stare() THEN naxis = self.get_header_keyword('NAXIS4', window_index) $
   ELSE naxis = self.get_header_keyword('NAXIS1', window_index)
   IF exposure_index LT 0 || exposure_index GE naxis  THEN BEGIN
@@ -1557,12 +1571,12 @@ END
 ;
 ; INPUTS:
 ;     array : A numeric array, which is returned by SPICE_DATA::get_window_data.
-;     window_index : The index of the window this array belongs to.
+;     window_index : The index or name of the window this array belongs to.
 ;
 ; OUTPUT:
 ;     Returns the descaled array (=array * bscale + bzero)
 ;-
-FUNCTION spice_data::descale_array, array, window_index
+FUNCTION spice_data::descale_array, array, window
   ;Descales the array, using BSCALE and BZERO keywords in the header
   COMPILE_OPT IDL2
 
@@ -1570,6 +1584,9 @@ FUNCTION spice_data::descale_array, array, window_index
     message, 'missing input, usage: descale_array, array, window_index', /info
     return, !NULL
   ENDIF
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
 
   bscale = self.get_header_keyword('BSCALE', window_index, 1)
   bzero = self.get_header_keyword('BZERO', window_index, 0)
@@ -1666,9 +1683,9 @@ FUNCTION spice_data::get_window_position, window, detector=detector, $
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, [-999, -999, -999, -999]
 
-  level = 2 ; At the moment this object only accepts level 2 files, contact prits-group@astro.uio.no if you need this changed.
-  
-  IF level EQ 1 THEN return, $
+  ; At the moment this object only accepts level 2 files (in init)
+  ; Contact prits-group@astro.uio.no if you need this changed.
+  IF self.get_level() EQ 1 THEN return, $
     self.get_window_position_level_1(window_index, detector=detector, $
     idl_coord=idl_coord, reverse_y=reverse_y, reverse_x=reverse_x, loud=loud)
 
@@ -1805,7 +1822,7 @@ END
 ;
 ; INPUTS:
 ;     keyword : string, The header keyword for which the value should be returned.
-;     extension_index : The index of the extension this keyword belongs to.
+;     extension : The index or name of the extension this keyword belongs to.
 ;
 ; OPTIONAL INPUTS:
 ;     missing_value : the value that should be returned, if the keyword does not exist
@@ -1824,26 +1841,28 @@ END
 ; OUTPUT:
 ;     Returns either the keyword value, the MISSING_VALUE or !NULL.
 ;-
-FUNCTION spice_data::get_header_keyword, keyword, extension_index, missing_value, exists=exists, $
+FUNCTION spice_data::get_header_keyword, keyword, extension, missing_value, exists=exists, $
   variable_values=variable_values, values_only=values_only
   ;Returns the specified keyword from the extension, or 'missing_value' if provided, !NULL otherwise
   COMPILE_OPT IDL2
 
   IF N_PARAMS() LT 2 THEN BEGIN
-    message, 'missing input, usage: get_header_keyword, keyword, extension_index [, missing_value, exists=exists, variable_values=variable_values, values_only=values_only]', /info
+    message, 'missing input, usage: get_header_keyword, keyword, extension [, missing_value, exists=exists, variable_values=variable_values, values_only=values_only]', /info
     return, !NULL
   ENDIF ELSE IF N_ELEMENTS(keyword) NE 1 || SIZE(keyword, /TYPE) NE 7 THEN BEGIN
     message, 'keyword needs to be a scalar string', /info
     return, !NULL
-  ENDIF ELSE IF ~self.check_extension_index(extension_index) THEN return, !NULL
-
+  ENDIF
+  extension_index = self.return_extension_index(extension)
+  IF extension_index LT 0 THEN return, -1
+  
   ; keywords with a '-' in the name, will be renamed when they are transformed into structures (in fitshead2struct),
   ; '-' becomes '_D$'
   ;temp = strsplit(keyword, '-', count=count, /extract)
   ;IF count GT 1 THEN keyword = strjoin(temp, '_D$')
 
   IF ARG_PRESENT(variable_values) THEN BEGIN
-    variable_values = self.get_bintable_data(keyword, values_only=values_only, extension_index=extension_index)
+    variable_values = self.get_bintable_data(keyword, values_only=values_only, extension=extension_index)
   ENDIF
 
   result = fxpar(*(*self.window_headers_string)[extension_index], keyword, missing=missing_value, count=count)
@@ -1866,9 +1885,9 @@ END
 ;     This method is deprecated, but still available for compatibility reasons.
 ;     get_header_keyword instead replaces this method. See there for documentation
 ;-
-FUNCTION spice_data::get_header_info, keyword, extension_index, missing_value, exists=exists
+FUNCTION spice_data::get_header_info, keyword, extension, missing_value, exists=exists
   message, 'This function is deprecated. Use SPICE_DATA::get_header_keyword instead', /informational
-  return, self.get_header_keyword(keyword, extension_index, missing_value, exists=exists)
+  return, self.get_header_keyword(keyword, extension, missing_value, exists=exists)
 END
 
 
@@ -1877,8 +1896,8 @@ END
 ;     Returns the header of the given extension, either as a string array or as a structure.
 ;
 ; INPUTS:
-;     extension_index : The index of the extension for which the header should be returned.
-;                    This index will be ignored if either LOWER_DUMBBELL or UPPER_DUMBBELL is set.
+;     extension : The index or name of the extension for which the header should be returned.
+;                    This input will be ignored if either LOWER_DUMBBELL or UPPER_DUMBBELL is set.
 ;
 ; KEYWORD PARAMETERS:
 ;     lower_dumbbell : If set, the header of the lower dumbbell will be returned.
@@ -1888,14 +1907,15 @@ END
 ; OUTPUT:
 ;     Returns the header as a string array or a structure.
 ;-
-FUNCTION spice_data::get_header, extension_index, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
+FUNCTION spice_data::get_header, extension, lower_dumbbell=lower_dumbbell, upper_dumbbell=upper_dumbbell, $
   structure=structure
   ;Returns the header of the given extension as a string array or a structure
   COMPILE_OPT IDL2
 
-  IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower)
-  IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper)
-  IF ~self.check_extension_index(extension_index) THEN return, !NULL
+  IF keyword_set(lower_dumbbell) THEN extension_index=self.get_dumbbells_index(/lower) $
+  ELSE IF keyword_set(upper_dumbbell) THEN extension_index=self.get_dumbbells_index(/upper) $
+  ELSE extension_index = self.return_extension_index(extension)
+  IF extension_index LT 0 THEN return, !NULL
   IF keyword_set(structure) then return, *(*self.window_headers)[extension_index] $
   ELSE return, *(*self.window_headers_string)[extension_index]
 END
@@ -2134,7 +2154,7 @@ END
 ;     an array, the result will be a string array of same size.
 ;
 ; INPUTS:
-;     window_index : the index of the window the ID is asked for
+;     window_index : the index of the window the ID/name is asked for
 ;                    scalar or 1D-int-array. Default is all windows.
 ;
 ; OUTPUT:
@@ -2181,27 +2201,31 @@ END
 
 ;+
 ; Description:
-;     Returns the number of exposures in the window, or if window_index
+;     Returns the number of exposures in the window, or if WINDOW
 ;     is not provided, a vector containing the numbers of exposures
 ;     for each window
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window(s). Default all windows.
+;     window : the index or name of the window. Default all windows.
 ;
 ; OUTPUT:
 ;     int or int-array
 ;-
-FUNCTION spice_data::get_number_exposures, window_index
+FUNCTION spice_data::get_number_exposures, window
   ;Returns the number of exposures in the window
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
+  IF N_ELEMENTS(window) EQ 0 THEN BEGIN
     n_exp = intarr(self.get_number_windows())
     FOR iwin=0,self.get_number_windows()-1 DO BEGIN
-      IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_keyword('NAXIS4', iwin) $
-      ELSE n_exp[iwin] = self.get_header_keyword('NAXIS1', iwin)
+      window_index = self.return_extension_index(iwin, /check_window_index)
+      IF window_index GE 0 THEN $
+        IF self.get_sit_and_stare() THEN n_exp[iwin] = self.get_header_keyword('NAXIS4', iwin) $
+        ELSE n_exp[iwin] = self.get_header_keyword('NAXIS1', iwin)
     ENDFOR
   ENDIF ELSE BEGIN
+    window_index = self.return_extension_index(window, /check_window_index)
+    IF window_index LT 0 THEN return, -1
     IF self.get_sit_and_stare() THEN n_exp = self.get_header_keyword('NAXIS4', window_index) $
     ELSE n_exp = self.get_header_keyword('NAXIS1', window_index)
   ENDELSE
@@ -2211,28 +2235,33 @@ END
 
 ;+
 ; Description:
-;     Returns the number of pixels in y in the window, or if window_index
-;     is not provided, a vector containing the numbers of pixels in y
+;     Returns the number of pixels in y in the window, or if WINDOW
+;     is not provided, a vector containing the numbers of pixels in y direction
 ;     for each window
 ;
 ; OPTIONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     int or int-array
 ;-
-FUNCTION spice_data::get_number_y_pixels, window_index
+FUNCTION spice_data::get_number_y_pixels, window
   ;Returns the number of pixels in y in the window
   COMPILE_OPT IDL2
 
-  IF N_ELEMENTS(window_index) EQ 0 THEN BEGIN
-    n_slit = intarr(self.get_number_windows)
-    FOR iwin=0,self.get_number_windows-1 DO BEGIN
-      n_slit[iwin] = self.get_header_keyword('NAXIS2', iwin)
+  IF N_ELEMENTS(window) EQ 0 THEN BEGIN
+    n_slit = intarr(self.get_number_windows())
+    FOR iwin=0,self.get_number_windows()-1 DO BEGIN
+      window_index = self.return_extension_index(iwin, /check_window_index)
+      IF window_index GE 0 THEN $
+        n_slit[iwin] = self.get_header_keyword('NAXIS2', iwin)
     ENDFOR
   ENDIF ELSE BEGIN
+    window_index = self.return_extension_index(window, /check_window_index)
+    IF window_index LT 0 THEN return, -1
     n_slit = self.get_header_keyword('NAXIS2', window_index)
   ENDELSE
+  IF N_ELEMENTS(n_slit) EQ 1 THEN n_slit = n_slit[0]
   return, n_slit
 END
 
@@ -2242,14 +2271,17 @@ END
 ;     Returns the exposure time of the given window per exposure.
 ;
 ; INPUTS:
-;     window_index : The index of the window.
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float
 ;-
-FUNCTION spice_data::get_exposure_time, window_index
+FUNCTION spice_data::get_exposure_time, window
   ;Returns the exposure time of the given window per exposure
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   exptime = self.get_header_keyword('XPOSURE', window_index)
   return, exptime
@@ -2299,14 +2331,17 @@ END
 ;     Returns a vector containing the coordinate (instrument x-direction) for each pixel in the first dimension.
 ;
 ; INPUTS:
-;     window_index : The index of the window.
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_x_vector, window_index
+FUNCTION spice_data::get_instr_x_vector, window
   ;Returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval1', window_index)
   naxis = self.get_header_keyword('naxis1', window_index)
@@ -2325,10 +2360,10 @@ END
 ;+
 ; Description:
 ;     Returns a vector containing the coordinate for each pixel in the second dimension, instrument y-direction
-;     for the selected window, or the full CCD this window belongs to
+;     for the selected window, or the full CCD this window belongs to.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OPTIONAL KEYWORDS:
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
@@ -2337,9 +2372,12 @@ END
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_y_vector, window_index, full_ccd=full_ccd
+FUNCTION spice_data::get_instr_y_vector, window, full_ccd=full_ccd
   ;Returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval2', window_index)
   crpix = self.get_header_keyword('crpix2', window_index)
@@ -2363,10 +2401,10 @@ END
 ;+
 ; Description:
 ;     Returns a vector containing the wavelength for each pixel in third dimension for
-;     the selected window, or the full CCD this window belongs to
+;     the selected window, or the full CCD this window belongs to.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OPTIONAL KEYWORDS:
 ;     full_ccd : if set, a vector of size CCD-size[0] is returned with lamda values
@@ -2375,9 +2413,12 @@ END
 ; OUTPUT:
 ;     float array, wavelength in nm
 ;-
-FUNCTION spice_data::get_lambda_vector, window_index, full_ccd=full_ccd
+FUNCTION spice_data::get_lambda_vector, window, full_ccd=full_ccd
   ;Returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval3', window_index)
   cdelt = self.get_header_keyword('cdelt3', window_index)
@@ -2400,17 +2441,20 @@ END
 
 ;+
 ; Description:
-;     Returns a vector containing the time for each pixel in fourth dimension
+;     Returns a vector containing the time for each pixel in fourth dimension.
 ;
 ; INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float array, time in seconds
 ;-
-FUNCTION spice_data::get_time_vector, window_index
+FUNCTION spice_data::get_time_vector, window
   ;Returns a vector containing the time for each pixel in fourth dimension
   COMPILE_OPT IDL2
+
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
 
   crval = self.get_header_keyword('crval4', window_index)
   naxis = self.get_header_keyword('naxis4', window_index)
@@ -2433,20 +2477,17 @@ END
 ;     Returns XCEN in arcsec.
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : xcen in arcseconds
 ;-
-FUNCTION spice_data::get_xcen, window_index
+FUNCTION spice_data::get_xcen, window
   ;Returns XCEN in archsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   crval = self.get_header_keyword('crval1', window_index)
   return, crval
 END
@@ -2457,20 +2498,17 @@ END
 ;     Returns YCEN in archsec
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : ycen in arcseconds
 ;-
-FUNCTION spice_data::get_ycen, window_index
+FUNCTION spice_data::get_ycen, window
   ;Returns YCEN in archsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   crval = self.get_header_keyword('crval2', window_index)
   return, crval
 END
@@ -2481,20 +2519,17 @@ END
 ;     Returns FOV in solar x direction, in arcsec
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : fovx in arcseconds
 ;-
-FUNCTION spice_data::get_fovx, window_index
+FUNCTION spice_data::get_fovx, window
   ;Returns FOV in solar x direction, in arcsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
   x_coords = self.get_wcs_coord(window_index, /x)
   minx = min(x_coords, max=maxx)
   return, maxx-minx
@@ -2506,23 +2541,20 @@ END
 ;     Returns FOV in solar y direction, in arcsec
 ;
 ; OPTONAL INPUTS:
-;     window_index : the index of the window
+;     window : the index or name of the window
 ;
 ; OUTPUT:
 ;     float : fovy in arcseconds
 ;-
-FUNCTION spice_data::get_fovy, window_index
+FUNCTION spice_data::get_fovy, window
   ;Returns FOV in solar y direction, in arcsec
   COMPILE_OPT IDL2
 
-  if N_ELEMENTS(window_index) eq 0 then begin
-    window_index = 0
-  endif else begin
-    IF ~self.check_window_index(window_index) THEN return, !NULL
-  endelse
-  x_coords = self.get_wcs_coord(window_index, /y)
-  minx = min(x_coords, max=maxx)
-  return, maxx-minx
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, -1
+  y_coords = self.get_wcs_coord(window_index, /y)
+  miny = min(y_coords, max=maxy)
+  return, maxy-miny
 END
 
 
@@ -2794,27 +2826,28 @@ END
 ;     given window contains a dumbbell.
 ;
 ; OPTIONAL INPUT:
-;     window_index : if provided, the method checks whether
+;     window : if provided, the method checks whether
 ;                    this specific window or these specific
 ;                    windows contain a dumbbell.
-;                    WINDOW_INDEX can either be scalar or an array of
+;                    WINDOW can either be scalar or an array of
 ;                    indices or names of OBS_HDU extension.
 ;
 ; OUTPUT:
 ;     boolean
 ;-
-FUNCTION spice_data::has_dumbbells, window_index
+FUNCTION spice_data::has_dumbbells, window
   ;Returns 1 if data object contains one or two dumbbells, or if window_index is a dumbbell
   COMPILE_OPT IDL2
 
-  FOR i=0,N_ELEMENTS(window_index)-1 DO BEGIN
-    IF self.return_extension_index(window_index[i], /check_window_index) GE 0 THEN BEGIN
-      IF self.dumbbells[0] EQ window_index[i] || self.dumbbells[1] EQ window_index[i] THEN BEGIN
+  FOR i=0,N_ELEMENTS(window)-1 DO BEGIN
+    window_index = self.return_extension_index(window[i], /check_window_index) 
+    IF window_index GE 0 THEN BEGIN
+      IF self.dumbbells[0] EQ window_index || self.dumbbells[1] EQ window_index THEN BEGIN
         return, 1
       ENDIF
     ENDIF
   ENDFOR
-  IF N_ELEMENTS(window_index) GT 0 THEN return, 0
+  IF N_ELEMENTS(window) GT 0 THEN return, 0
   return, self.dumbbells[0] GE 0 || self.dumbbells[1] GE 0
 END
 
