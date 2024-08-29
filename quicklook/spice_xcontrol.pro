@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-08-20 13:18 CEST $
+; $Id: 2024-08-29 14:06 CEST $
 ;-
 ;
 ;
@@ -642,13 +642,13 @@ pro spice_xcontrol, input_data, group_leader = group_leader
   endif
   if not showim then begin
     widget_control, pointing_icon , sensitive=0
-    xcen=data->get_xcen()
-    ycen=data->get_ycen()
+    xcen=data->get_xcen(0)
+    ycen=data->get_ycen(0)
     solar_radius=960.
-    dx=data->get_fovx()
-    dy=data->get_fovy()
-    xraster=xcen[0]
-    yraster=ycen[0]
+    dx=data->get_fovx(0)
+    dy=data->get_fovy(0)
+    xraster=xcen
+    yraster=ycen
     theta=data->get_satellite_rotation()/360.0*!pi
     coord={x1:xraster-dx*cos(theta)/2.-dy*sin(theta)/2., $
       x2:xraster+dx*cos(theta)/2.-dy*sin(theta)/2., $
