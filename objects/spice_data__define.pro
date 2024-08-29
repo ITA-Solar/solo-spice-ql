@@ -60,7 +60,7 @@
 ;                                 Added new methods to support the new funcitonallity. 
 ;-
 
-; $Id: 2024-08-29 12:51 CEST $
+; $Id: 2024-08-29 14:06 CEST $
 
 
 ;+
@@ -448,7 +448,10 @@ FUNCTION spice_data::create_l3_file, window, no_masking=no_masking, approximated
 
   for iwindow=0,N_ELEMENTS(window)-1 do BEGIN
     window_index = self.return_extension_index(window[iwindow], /check_window_index)
-    IF window_index LT 0 THEN return, !NULL
+    IF window_index LT 0 THEN BEGIN
+      print, 'Cancelling level 3 creation due to wrong window input: '+window[iwindow]
+      return, 'Cancelled'
+    ENDIF
 
      dumbbell = self->get_header_keyword('DUMBBELL', window_index) NE 0
      intensity_window = self->get_header_keyword('WIN_TYPE', window_index) EQ 'Intensity-window'
@@ -456,7 +459,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking=no_masking, approximated
         IF ~keyword_set(no_widget) THEN BEGIN
            progress_widget->next_window, window_name=self.get_header_keyword('EXTNAME', window_index, fns('Window ##', iwindow)), halt=halt
            if halt then begin
-              print,'Calculation stopped'
+              print,'Calculation stopped by user. Level 3 file is not created.'
               return, 'Cancelled'
            endif
         ENDIF
@@ -2785,6 +2788,24 @@ FUNCTION spice_data::return_extension_index, extension, check_window_index=check
   prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result=result
   IF N_ELEMENTS(result) GT 1 || result NE '' THEN BEGIN
     message, result, /info
+    print, 'Call comes from:'
+    help,calls=calls
+    history = ['']
+    hind = 0
+    hlen = strlen(history[hind])
+    for i=N_ELEMENTS(calls)-1,0,-1 do begin
+      caller = strtrim(strsplit(calls[i], '<', /extract), 2)
+      caller = caller[0]
+      if caller eq '$MAIN$' then continue
+      new_hlen = strlen(caller) + 3
+      if hlen+new_hlen gt 63 then begin
+        history = [history, '']
+        hind += 1
+      endif
+      history[hind] = history[hind] + ' > ' + caller
+      hlen = strlen(history[hind])
+    endfor
+    for i=0,hind do print,history[i]
     return, -1
   ENDIF
   
