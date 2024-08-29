@@ -1,4 +1,32 @@
-; $Id: 2024-08-29 10:15 CEST $
+; $Id: 2024-08-29 12:51 CEST $
+
+PRO get_window_data_test, spice_object
+  result = spice_object->get_window_data(0)
+  size_result = size(result)
+  IF total(size_result EQ [3, 1, 1024, 50, 4, 51200]) NE 6 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO get_one_image_test, spice_object
+  result = spice_object->get_one_image(0, 0)
+  size_result = size(result)
+  IF total(size_result EQ [2, 50, 1024, 4, 51200]) NE 5 THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
+PRO descale_array_test, spice_object
+  a = [0, 1, 11]
+  result = spice_object->descale_array(a, 0)
+  IF ~result.equals(a, tolerance=0.001) THEN message, 'something is wrong here'
+
+  message, ' passed the tests', /info
+END
+
+
 PRO get_window_position_test, spice_object
   result = spice_object->get_window_position('adf')
   IF ~result.equals([-999, -999, -999, -999], tolerance=0.001) THEN message, 'something is wrong here'
@@ -13,9 +41,6 @@ PRO get_window_position_test, spice_object
 
   message, ' passed the tests', /info
 END
-
-
-
 
 
 PRO get_header_keyword_test, spice_object
@@ -526,8 +551,10 @@ PRO spice_data_test
   print, ' --- Start of tests ---'
   print, ''
 
+  get_window_data_test, spice_object
+  get_one_image_test, spice_object
+  descale_array_test, spice_object
   get_window_position_test, spice_object
-  
   get_header_keyword_test, spice_object
   get_header_test, spice_object
   get_number_windows_test, spice_object
