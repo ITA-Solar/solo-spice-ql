@@ -1,4 +1,4 @@
-; $Id: 2024-08-28 15:41 CEST $
+; $Id: 2024-08-29 10:15 CEST $
 PRO get_window_position_test, spice_object
   result = spice_object->get_window_position('adf')
   IF ~result.equals([-999, -999, -999, -999], tolerance=0.001) THEN message, 'something is wrong here'
@@ -19,8 +19,16 @@ END
 
 
 PRO get_header_keyword_test, spice_object
-  result = spice_object->get_header_keyword(0, 'radcal')
-  IF ~result.equals(-90.665861, tolerance=0.001) THEN message, 'something is wrong here'
+  result = spice_object->get_header_keyword('radcal', 0)
+  IF ~result.equals(7.3495726, tolerance=0.001) THEN message, 'something is wrong here'
+
+  result = spice_object->get_header_keyword('radcal', 1, variable_values=variable_values)
+  IF N_ELEMENTS(variable_values) NE 1 THEN message, 'something is wrong here'
+  IF (*variable_values[0].data_extension_name)[0] NE 'FLT02_Two Window_OB_ID_254_' THEN message, 'something is wrong here'
+
+  result = spice_object->get_header_keyword('radcal', 1, variable_values=variable_values, /values_only)
+  size_result = size(variable_values)
+  IF total(size_result EQ [3,1,1,36,5,36]) NE 6 THEN message, 'something is wrong here'
 
   message, ' passed the tests', /info
 END
