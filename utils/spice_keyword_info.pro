@@ -1,4 +1,4 @@
-; $Id: 2024-09-04 15:27 CEST $
+; $Id: 2024-09-04 15:41 CEST $
 FUNCTION spice_keyword_info_header
   text = inline_text()
 ;NAXIS1  =                    1 /
@@ -77,7 +77,8 @@ FUNCTION spice_keyword_info_header
 ;VERS_SW = '2101    '           / UiO SVN revision number of L2 pipeline         
 ;VERS_CAL= '2097    '           / UiO SVN revision number of calibration software
 ;VERSION = '01      '           / Incremental version number                     
-;COMPLETE= 'C       '           / Complete data set                              
+;COMPLETE= 'C       '           / Complete data set   
+;PCT_CMPL=              100.000 / Completeness of data set, all windows combined 
 ;
 ;SLIT_ID =                    2 / Slit ID (0-3)                                  
 ;SLIT_WID=                    4 / [arcsec] Slit width                            
