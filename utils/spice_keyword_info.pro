@@ -1,16 +1,14 @@
-; $Id: 2024-01-15 13:39 CET $
+; $Id: 2024-09-04 15:31 CEST $
 FUNCTION spice_keyword_info_header
   text = inline_text()
 ;NAXIS1  =                    1 /
 ;NAXIS2  =                    1 /
 ;NAXIS3  =                    1 /
 ;NAXIS4  =                    1 /
-;OBT_BEG =        646012990.301 /
 ;LEVEL   = 'L2      '           / Data processing level                          
 ;FILENAME= 'solo_L2_spice-n-exp_20200621T000329_V01_16777432-000.fits' / FI      '
 ;DATE-BEG= '2020-06-21T00:05:39.083' / [UTC] Beginning of data acquisition  
 ;SPIOBSID=             16777434 / SPICE Observation ID 
-;RASTERNO=                    0 / Raster number (starting at 0)                    
 ;STUDYTYP= 'Single Exposure'    / Sit-and-stare, Raster or Single Exposure
 ;MISOSTUD=                 1785 / Ground study ID used in MISO planning tool     
 ;STUDYDES= 'Standard dark for cruise phase' / Description of the study           
@@ -31,69 +29,24 @@ FUNCTION spice_keyword_info_header
 ;CUNIT2  = '            '       / 
 ;CTYPE2  = '            '       /
 ;  
-;          ADD NEW KEYWORDS SENT FROM TERJE 15. DECEMBER 2022 -------------
 ;
 ;CRDER1  =       0.163271873730 / [arcsec] Mean stddev of Solar X
 ;CRDER2  =       0.182844822694 / [arcsec] Mean stddev of Solar Y
 ;CWERR1  =        6.99129430802 / [arcsec] Max absolute distortion, Solar X
 ;CWERR2  =       0.467100419833 / [arcsec] Max absolute distortion, Solar Y
-;NAPRXPIX=                    0 / Number of approx. pix. b.f. geo. corr., now NaN
-;NWIN_ORG=                   12 / Number of windows before merging adjacent win.
-;PCT_APRX=              0.00000 / NAPRXPIX/NTOTPIX*100  ### MERK PCT_APRX, IKKE PCT_APR!
-;PCT_CMPL=              50.0000 / Completeness of data set, all windows combined
-;
-;PXCOV3  = '46-109, 209-240, 626-689, 695-726, 752-783, 914-977, 1137-1168, 171'
-;
-;RADCAL  =        3926.48650374 / [DN/(W/m2/sr/nm)] Average calibration factor
+
 ;
 ;WAVECOV = '70.01061-70.790746, 71.580633-72.068218, 75.57883-76.358966, 76.232'
-;
-;          END NEW KEYWORDS SENT FROM TERJE 15. DECEMBER 2022 --------------
-;
-;
-;  
-;          NEW KEYWORDS ADDED BY TERJE 14. SEPTEMBER 2023 -------------
-;  
-;  
-;POINT_ID= '00001730'           / SVO pointing ID                                
-;MOSAICID= '        '           / Blank when study is not a mosaic               
-;SVO_GRP = '00001730'           / SVO file group ID, =POINT_ID when not in a SOOP
-;
-;PRSTEP9 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
-;PRPROC9 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
-;PRPVER9 = '1.1     '           / Version of procedure, step 9                   
-;PRPARA9 = 'burn-in correction data version: 2023-06-15' / Parameters for PRPROC9
-;PRLIB9A = 'uio-spice-pipeline' / Software library containing PRPROC9            
-;                                                                                
-;PRSTEP10= 'SPATIAL-SPECTRAL-DISTORTION-CORRECTION' / Type of processing, step 10
-;PRPROC10= 'spice_prep_distortion_correction.pro' / Name of procedure, step 10   
-;PRPVER10= '2.2     '           / Version of procedure, step 10                  
-;PRPARA10= 'distortion correction matrix version: 2021-09-08' / Parameters for PR
-;PRLIB10A= 'uio-spice-pipeline' / Software library containing PRPROC10           
-;                                                                                
-;PRSTEP11= 'RADIOMETRIC-CALIBRATION' / Type of processing, step 11               
-;PRPROC11= 'spice_prep_radiometric_calibration.pro' / Name of procedure, step 11 
-;PRPVER11= '1.6     '           / Version of procedure, step 11                  
-;PRPARA11= 'based on comparison to QS SUMER spectrum' / Parameters for PRPROC11  
-;PRLIB11A= 'uio-spice-pipeline' / Software library containing PRPROC11           
-;                                                                                
-;PRSTEP12= 'WINDOW-CONCATENATION' / Type of processing, step 12                  
-;PRPROC12= 'spice_prep.pro'     / Name of procedure, step 12                     
-;PRPVER12= '3998    '           / Version of procedure, step 12                  
-;PRPARA12= '   WINNOs_of_concatenated_windows=[0,1]'                               
-;PRLIB12A= 'uio-spice-pipeline' / Software library containing PRPROC12    
-;    
-;          END NEW KEYWORDS ADDED BY TERJE 14. SEPTEMBER 2023 -------------
-;
-;
-;
+;PXCOV3  = '46-109, 209-240, 626-689, 695-726, 752-783, 914-977, 1137-1168, 171'
 ;
 ;AUTHOR  = 'Tim Grundy'         / Author of study  
 ;STP     =                  122 / SoLO Short-Term Plan number   
 ;DSUN_AU =       0.521442615073 / [AU] S/C distance from Sun    
 ;CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
 ;OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID                     
-;READMODE= 'Destructive'        / Destructive or non-destructive                                         
+;READMODE= 'Destructive'        / Destructive or non-destructive               
+;OBJECT  = 'Sun     '           / Type of object observed  
+;TARGET  = 'on disk, disc centre' / Course human interpretable pointing info 
 ;SOOPNAME= 'None    '           / SOOP Campaign name(s)                          
 ;SOOPTYPE= '000     '           / SOOP Campaign name code(s)                     
 ;NRASTERS=                    1 / Number of planned rasters for this SPIOBSID    
@@ -103,9 +56,12 @@ FUNCTION spice_keyword_info_header
 ;NWIN    =                    2 / Total number of windows (incl. any dumbbells)  
 ;NWIN_PRF=                    2 / Number of windows not dumbbell or Intensity    
 ;NWIN_DUM=                    0 / Number of dumbbell windows                     
-;NWIN_INT=                    0 / Number of Intensity-windows                    
+;NWIN_INT=                    0 / Number of Intensity-windows  
+;NWIN_ORG=                   12 / Number of windows before merging adjacent win.
 ;                                                                                
-;
+;DATE-AVG= '2024-08-16T15:37:11.520' / [UTC] Data acquisition midpoint           
+;DATE-END= '2024-08-16T15:37:41.320' / [UTC] End of data acquisition  
+;  
 ;STUDYFLG=                    0 / Study flags                                    
 ;NOSPECTR=                    0 / Applies only to dumbbells    
 ;DBLEXP  =                    0 / If set, double exposure is enabled             
@@ -131,19 +87,75 @@ FUNCTION spice_keyword_info_header
 ;           ------------------------------------------------------               
 ;           | Other keywords valid for all Obs-HDUs in this file |               
 ;           ------------------------------------------------------               
-;TELAPSE =       0.599999904633 / [s] Elapsed time between beg. and end of acqu. 
-;CREATOR = 'SDP-SPICE'          / Name of pipeline                               
+;TELAPSE =       0.599999904633 / [s] Elapsed time between beg. and end of acqu.                             
+;                                                                                                                                                 
+;           ----------------------------------------------                       
+;           | SOLARNET keywords, and additional keywords |                       
+;           ----------------------------------------------                       
+;PARENT  = 'solo_L1_spice-n-exp_20200621T000539_V01_16777434-000.fits' / L1 filen
+;FILE_RAW= 'sc_2020_06_20.xml;sc_2020_06_21.xml' / Telemetry file                
 ;                                                                                
-;                                                                              
-;           -----------------------------------------------                      
-;           | Keywords valid for this HDU (WINDOW0_74.73) |                      
-;           -----------------------------------------------                      
-; 
-; 
-;COMPTYPE=                    4 / Compression type (0-7)                         
-;COMPPARA=                    0 / Applies only to JPEG-compressed data           
-;SHCFFTID=                    0 / Applies only to SHC-compressed data            
+;                                     
+;                 
+;SOLAR_B0=        6.53806062476 / [deg] Tilt angle of Solar North toward S/C     
+;SOLAR_P0=        22.3339674130 / [deg] S/C Celestial North to Solar North angle 
+;HGLT_OBS=        6.53806062476 / [deg] S/C Heliographic latitude (B0 angle)     
+;HGLN_OBS=        73.8479461044 / [deg] S/C Heliographic longitude               
 ;  
+;OBS_VR  =        3365.57054359 / [m/s] Radial velocity of S/C away from the Sun 
+;  
+;  
+;WIN_TYPE= 'Narrow-slit Spectral' / Description of window type                   
+;DATAPROD= 'Narrow-slit Spectral Raster' / WIN_TYPE+STUDYTYP                                               
+;WINSHIFT=                   -7 / [pixel] Win redshift rel to win 3228 base pos.                                                                             
+;                                                                                
+;BTYPE   = 'Spectral Radiance'  / Type of data                                           
+;BUNIT   = 'W/m2/sr/nm'         / Physical units of calibrated data              
+;RADCAL  =        580.340433669 / [DN/(W m-2 sr-1 nm-1)] Average calibration
+;NTOTPIX =               970160 / Number of potentially usable pixels excl padded
+;NDATAPIX=               970156 / Number of usable pixels excl padded/NaN/NSATPIX
+;NSATPIX =                    4 / Number of pixels set to NaN due to saturation  
+;NLOSTPIX=                    0 / Number of NaN pix excl. padded and saturated   
+;NAPRXPIX=                    0 / Number of approx. pix. b.f. geo. corr., now NaN
+;                                                                                
+;PCT_DATA=              99.9996 / NDATAPIX/NTOTPIX*100                           
+;PCT_SATP=          0.000412303 / NSATPIX/ NTOTPIX*100                           
+;PCT_LOST=              0.00000 / NLOSTPIX/NTOTPIX*100                           
+;PCT_APRX=              0.00000 / NAPRXPIX/NTOTPIX*100   
+;  
+;DATAMIN =             0.100467 / [W/m2/sr/nm] Minimum data value                
+;DATAMAX =              9.02325 / [W/m2/sr/nm] Maximum data value                
+;DATAMEAN=             0.299003 / [W/m2/sr/nm] Mean    data value                
+;DATAMEDN=             0.302962 / [W/m2/sr/nm] Median  data value                
+;DATAP01 =             0.220780 / [W/m2/sr/nm] 1st  percentile of data values    
+;DATAP10 =             0.251163 / [W/m2/sr/nm] 10th percentile of data values    
+;DATAP25 =             0.280052 / [W/m2/sr/nm] 25th percentile of data values    
+;DATAP75 =             0.317071 / [W/m2/sr/nm] 75th percentile of data values    
+;DATAP90 =             0.331278 / [W/m2/sr/nm] 90th percentile of data values    
+;DATAP95 =             0.344359 / [W/m2/sr/nm] 95th percentile of data values    
+;DATAP98 =             0.369050 / [W/m2/sr/nm] 98th percentile of data values    
+;DATAP99 =             0.399471 / [W/m2/sr/nm] 99th percentile of data values    
+;DATARMS =            0.0387133 / [W/m2/sr/nm] sqrt(sum((data-DATAMEAN)^2)/N)    
+;DATANRMS=             0.129474 / Normalised RMS dev: DATARMS/DATAMEAN           
+;DATAMAD =            0.0252133 / [W/m2/sr/nm] MeanAbsDev sum(abs(data-DATAMEAN))
+;DATASKEW=              19.2785 / Data skewness                                  
+;DATAKURT=              3206.85 / Data kurtosis                                  '                                                                                       
+;
+;OBT_BEG =        646012990.301 /
+;RASTERNO=                    0 / Raster number (starting at 0)  
+;POINT_ID= '00001730'           / SVO pointing ID                                
+;MOSAICID= '        '           / Blank when study is not a mosaic               
+;SVO_GRP = '00001730'           / SVO file group ID, =POINT_ID when not in a SOOP  
+; 
+;PXBEG2  =                  101 / [pixel] First read-out pixel in Y dimension    
+;PXEND2  =                  868 / [pixel] Last  read-out pixel in Y dimension    
+;PXBEG3  =                   82 / [pixel] First read-out pixel in dispersion dim.
+;PXEND3  =                  113 / [pixel] Last  read-out pixel in dispersion dim.                           
+;                                                                                                
+;NBIN2   =                    1 / Binning factor in Y dimension                  
+;NBIN3   =                    2 / Binning factor in dispersion dimension                       
+;NBIN    =                    2 / Total binning factor  
+;
 ;           ------------------                                                   
 ;           | Auxiliary data |                                                   
 ;           ------------------                                                   
@@ -166,148 +178,112 @@ FUNCTION spice_keyword_info_header
 ;V_MCPSW =              17.5079 / [V]   MCP SW voltage                           
 ;V_MCPLW =              16.6819 / [V]   MCP LW voltage                           
 ;V_GAPSW =              58.7131 / [V]   GAP SW voltage                           
-;V_GAPLW =              55.2639 / [V]   GAP LW voltage                           
-;                                                                                
-;                                                                                
-;           ----------------------------------------------                       
-;           | SOLARNET keywords, and additional keywords |                       
-;           ----------------------------------------------                       
-;PARENT  = 'solo_L1_spice-n-exp_20200621T000539_V01_16777434-000.fits' / L1 filen
-;FILE_RAW= 'sc_2020_06_20.xml;sc_2020_06_21.xml' / Telemetry file                
-;                                                                                
-;           ----------------------------                                         
-;           | Solar Ephemeris Keywords |                                         
-;           ----------------------------                                         
-                 
-;SOLAR_B0=        6.53806062476 / [deg] Tilt angle of Solar North toward S/C     
-;SOLAR_P0=        22.3339674130 / [deg] S/C Celestial North to Solar North angle 
-;HGLT_OBS=        6.53806062476 / [deg] S/C Heliographic latitude (B0 angle)     
-;HGLN_OBS=        73.8479461044 / [deg] S/C Heliographic longitude               
+;V_GAPLW =              55.2639 / [V]   GAP LW voltage  
+;
+;PRSTEP1 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC1 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER1 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA1 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF1  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB1A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER1A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;   
+;PRSTEP2 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC2 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER2 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA2 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF2  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB2A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER2A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP3 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC3 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER3 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA3 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF3  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB3A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER3A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP4 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC4 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER4 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA4 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF4  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB4A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER4A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP5 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC5 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER5 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA5 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF5  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB5A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER5A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP6 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC6 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER6 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA6 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF6  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB6A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER6A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP7 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC7 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER7 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA7 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF7  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB7A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER7A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP8 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC8 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER8 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA8 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF8  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB8A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER8A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP9 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC9 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER9 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA9 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF9  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB9A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER9A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP10 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC10 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER10 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA10 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF10  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB10A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER10A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP11 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC11 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER11 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA11 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF11  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB11A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER11A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP12 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC12 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER12 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA12 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF12  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB12A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER12A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
+;
+;PRSTEP13 = 'BURN-IN-CORRECTION' / Type of processing, step 9                     
+;PRPROC13 = 'spice_prep_burnin_correction.pro' / Name of procedure, step 9        
+;PRPVER13 = '1.1     '           / Version of procedure, step 9                   
+;PRPARA13 = 'burn-in correction data version: 2023-06-15' / Parameters for
+;PRREF13  = 'burn_in_correction_data_version = "2023-11-09",                    '
+;PRLIB13A = 'uio-spice-pipeline' / Software library containing PRPROC9      
+;PRVER13A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21) 
 ;  
-;OBS_VR  =        3365.57054359 / [m/s] Radial velocity of S/C away from the Sun 
-;  
-;PRSTEP1 = 'DARK-SUBTRACTION'   / Type of processing, step 4                     
-;PRPROC1 = 'spice_prep_dark_offset_correction.pro' / Name of procedure, step 4   
-;PRPVER1 = '1.2     '           / Version of procedure, step 4                   
-;PRPARA1 = 'dark_spiobsid=33554603' / Parameters for PRPROC4                     
-;PRLIB1A = 'uio-spice-pipeline' / Software library containing PRPROC4 
-;  
-;PRSTEP2 = 'Y-BINNING'  / XML decoding, decompression if applicable, etc 
-;PRPROC2 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
-;PRPVER2 = '02.01.01'           / Version of procedure, step 1      
-;PRPARA2 = 'asdfasdfdsfdasf' / Parameters for PRPROC1 
-;PRLIB2A = 'uio_spice_pipeline' / Software library containing PRPROC1
-; 
-;PRSTEP3 = 'LAMBDA-BINNING'  / XML decoding, decompression if applicable, etc 
-;PRPROC3 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
-;PRPVER3 = '02.01.01'           / Version of procedure, step 1      
-;PRPARA3 = 'asdfasdfdsfdasf' / Parameters for PRPROC1 
-;PRLIB3A = 'uio_spice_pipeline' / Software library containing PRPROC1
-;  
-;PRSTEP4 = 'COMPRESSION'  / XML decoding, decompression if applicable, etc 
-;PRPROC4 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
-;PRPVER4 = '02.01.01'           / Version of procedure, step 1 
-;PRPARA4 = 'asdfasdfdsfdasf' / Parameters for PRPROC2 
-;PRLIB4A = 'uio_spice_pipeline' / Software library containing PRPROC1
-;  
-;PRSTEP5 = 'TELEMETRY-PARSING'  / XML decoding, decompression if applicable, etc 
-;PRPROC5 = 'spice_process_telemetry.pro' / Name of procedure, step 1             
-;PRPVER5 = '02.01.01'           / Version of procedure, step 1 
-;PRPARA5 = 'asdfasdfdsfdasf' / Parameters for PRPROC2 
-;PRLIB5A = 'uio_spice_pipeline' / Software library containing PRPROC1                
-;                                                                                
-;PRSTEP6 = 'FLATFIELDING'       / Type of processing, step 5                     
-;PRPROC6 = 'spice_prep_flat_field_correction.pro' / Name of procedure, step 5    
-;PRPVER6 = '1.2     '           / Version of procedure, step 5                   
-;PRPARA6 = 'ground-calibration flat field' / Parameters for PRPROC5              
-;PRLIB6A = 'uio-spice-pipeline' / Software library containing PRPROC5            
-;                                                                                
-;PRSTEP7 = 'SPATIAL-SPECTRAL-DISTORTION-CORRECTION' / Type of processing, step 6 
-;PRPROC7 = 'spice_prep_distortion_correction.pro' / Name of procedure, step 6    
-;PRPVER7 = '2.1     '           / Version of procedure, step 6                   
-;PRPARA7 = 'distortion correction matrix version: 2021-04-12' / Parameters for PR
-;PRLIB7A = 'uio-spice-pipeline' / Software library containing PRPROC6            
-;                                                                                
-;PRSTEP8 = 'RADIOMETRIC-CALIBRATION' / Type of processing, step 7                
-;PRPROC8 = 'spice_prep_radiometric_calibration.pro' / Name of procedure, step 7  
-;PRPVER8 = '1.2     '           / Version of procedure, step 7                   
-;PRPARA8 = 'based on comparison to QS SUMER spectrum' / Parameters for PRPROC7   
-;PRLIB8A = 'uio-spice-pipeline' / Software library containing 
-;  
-;MIRRDELT=              0.00000 / Slope of linear fit to MIRRPOS                 
-;SMIRRDEL=              0.00000 / Sigma of slope of linear fit to MIRRPOS 
-  
-;WIN_TYPE= 'Narrow-slit Spectral' / Description of window type                   
-;DATAPROD= 'Narrow-slit Spectral Raster' / WIN_TYPE+STUDYTYP                     
-;TELESCOP= 'SOLO/SPICE/SW'      / Telescope/Sensor name/Detector array name      
-;DETECTOR= 'SW      '           / Detector array name                            
-;WINNO   =                    0 / Window number (starting at 0) within this study
-;WINTABID=                   95 / Index in on-board window data table (0-255)    
-;MISOWIN =                 3228 / Ground window ID used in MISO planning tool    
-;WINSHIFT=                   -7 / [pixel] Win redshift rel to win 3228 base pos. 
-;DUMBBELL=                    0 / 0/1/2: not a dumbbell/lower dumbbel/upper dumbb
-;                                                                                
-;WAVEUNIT=                   -9 / Power of 10 by which the metre is multiplied   
-;WAVEREF = 'vacuum  '           / Wavelengths are given in vacuum                
-;WAVEMIN =        70.3519191000 / [nm] Left edge of first read detector pixel    
-;WAVEMAX =        70.8395041000 / [nm] Right edge of last read detector pixel    
-;WINWIDTH=       0.487585000000 / [nm] Window width                              
-;                                                                                
-;BTYPE   = 'Spectral Radiance'  / Type of data                                   
-;UCD     = 'phot.radiance;em.line' / Unified Content Descriptors v1.23           
-;BUNIT   = 'W/m2/sr/nm'         / Physical units of calibrated data              
-;RCALAVG =        1537.89114455 / [DN/(W/m2/sr/nm)] Avg detector calib factor    
-;NTOTPIX =              2270400 / Number of potentially usable pixels excl padded
-;NSATPIX =                    0 / Number of fully saturated pixels               
-;NDATAPIX=              2270400 / Number of usable pixels excl padded/NaN/NSATPIX
-;DATAMIN =             0.100467 / [W/m2/sr/nm] Minimum data value                
-;DATAMAX =              9.02325 / [W/m2/sr/nm] Maximum data value                
-;DATAMEAN=             0.299003 / [W/m2/sr/nm] Mean    data value                
-;DATAMEDN=             0.302962 / [W/m2/sr/nm] Median  data value                
-;DATAP01 =             0.220780 / [W/m2/sr/nm] 1st  percentile of data values    
-;DATAP10 =             0.251163 / [W/m2/sr/nm] 10th percentile of data values    
-;DATAP25 =             0.280052 / [W/m2/sr/nm] 25th percentile of data values    
-;DATAP75 =             0.317071 / [W/m2/sr/nm] 75th percentile of data values    
-;DATAP90 =             0.331278 / [W/m2/sr/nm] 90th percentile of data values    
-;DATAP95 =             0.344359 / [W/m2/sr/nm] 95th percentile of data values    
-;DATAP98 =             0.369050 / [W/m2/sr/nm] 98th percentile of data values    
-;DATAP99 =             0.399471 / [W/m2/sr/nm] 99th percentile of data values    
-;DATARMS =            0.0387133 / [W/m2/sr/nm] sqrt(sum((data-DATAMEAN)^2)/N)    
-;DATANRMS=             0.129474 / Normalised RMS dev: DATARMS/DATAMEAN           
-;DATAMAD =            0.0252133 / [W/m2/sr/nm] MeanAbsDev sum(abs(data-DATAMEAN))
-;DATASKEW=              19.2785 / Data skewness                                  
-;DATAKURT=              3206.85 / Data kurtosis                                  '
-;                                                                                
-;NPACKETS=                  288 / Number of packets with observational data      
-;                                                                                
-;LOSTPKTS=                    0 / Number of lost packets w/data, variable keyword
-;LOSTBINS=                    0 / Applies only to SHC-compressed data            
-;                                                                                
-;PCT_DATA=              100.000 / NDATAPIX/NTOTPIX*100                           
-;PCT_LOST=              0.00000 / NLOSTPIX/NTOTPIX*100                           
-;PCT_SATP=              0.00000 / NSATPIX/ NTOTPIX*100                           
-;                                                                                
-;NLOSTCHK=                    0 / Number of lost checksum packets                
-;NFAILCHK=                    0 / Number of checksums failed                     
-;NLOSTPIX=                    0 / Number of lost pixels                          
-;NAPRXPLN=                    0 / Number of approximated X-Y plane sections      
-;NLOSTPLN=                    0 / Number of lost X-Y plane sections              
-;                                                                                
-;PXBEG1  =                  192 / [pixel] First read-out pixel in X dimension    
-;PXEND1  =                    1 / [pixel] Last  read-out pixel in X dimension    
-;PXBEG2  =                  101 / [pixel] First read-out pixel in Y dimension    
-;PXEND2  =                  868 / [pixel] Last  read-out pixel in Y dimension    
-;PXBEG3  =                   82 / [pixel] First read-out pixel in dispersion dim.
-;PXEND3  =                  113 / [pixel] Last  read-out pixel in dispersion dim.
-;PXBEG4  =                    1 / [pixel] First read-out pixel in time dimension 
-;PXEND4  =                    1 / [pixel] Last  read-out pixel in time dimension 
-;PXOFFSET=                  200 / Pixel level offset                             
-;                                                                                
-;NBIN1   =                    1 / Binning factor in X dimension                  
-;NBIN2   =                    1 / Binning factor in Y dimension                  
-;NBIN3   =                    2 / Binning factor in dispersion dimension         
-;NBIN4   =                    1 / Binning factor in time dimension               
-;NBIN    =                    2 / Total binning factor                           
 ;-
   text = text[0 : -2]
   text = strmid(text, 1, 1000)
@@ -381,5 +357,8 @@ END
 IF getenv("USER") EQ "steinhh" THEN BEGIN 
    a = spice_keyword_info()
    b = spice_keyword_info_as_json()
+   print
+   box_message, ['spice_keyword_info.json goes in sdc/roslo/vol/spice/fits/', $
+                 'and is auto-generated by spice_gen_cat.pro']
 END 
 END
