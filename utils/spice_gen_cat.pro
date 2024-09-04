@@ -91,10 +91,11 @@
 ;              Version 17, TF, 17.04.2024. New method
 ;                          ::rsync_file_to_other_servers, rsyncs file to any
 ;                          server returned by spice_get_other_servers()
+;              VErsion 18, SH, 04.09.2024. Change keyword_info.json -> spice_keyword_info.json
 ;
-; Version    : Version 17, TF, 17 April 2024
+; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2024-04-17 14:51 CEST $
+; $Id: 2024-09-04 15:08 CEST $
 ;-      
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -423,7 +424,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet=quiet, use_old_catalog=use_o
   
   self.d.spice_datadir = expand_path(spice_data_dir) ; Must have explicit path to find relative paths
   self.d.catalog_basename = concat_dir(spice_data_dir,'spice_catalog')
-  self.d.keyword_info_filename = concat_dir(spice_data_dir, 'keyword_info.json')
+  self.d.keyword_info_filename = concat_dir(spice_data_dir, 'spice_keyword_info.json')
   self.d.keyword_info = spice_keyword_info(/all)
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
   
