@@ -1,4 +1,4 @@
-; $Id: 2024-09-04 15:00 CEST $
+; $Id: 2024-09-04 15:27 CEST $
 FUNCTION spice_keyword_info_header
   text = inline_text()
 ;NAXIS1  =                    1 /
@@ -45,7 +45,8 @@ FUNCTION spice_keyword_info_header
 ;CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
 ;OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID                     
 ;READMODE= 'Destructive'        / Destructive or non-destructive               
-;OBJECT  = 'Sun     '           / Type of object observed        
+;OBJECT  = 'Sun     '           / Type of object observed  
+;TARGET  = 'on disk, disc centre' / Course human interpretable pointing info 
 ;SOOPNAME= 'None    '           / SOOP Campaign name(s)                          
 ;SOOPTYPE= '000     '           / SOOP Campaign name code(s)                     
 ;NRASTERS=                    1 / Number of planned rasters for this SPIOBSID    
