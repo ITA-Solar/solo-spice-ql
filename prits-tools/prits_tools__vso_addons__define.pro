@@ -1,10 +1,30 @@
-FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=quiet, ignore_cached_days=ignore_days, $
-                                         instrument=instrument, wave_str=wave_str_in, sample=sample, urls=urls
-  wave_str = wave_str_in
-  quiet = keyword_set(quiet)
+FUNCTION prits_tools::vso_cached_search_use_savefile_or_not, date_beg, savefile, redo_recent_days
+  file_info = file_info(savefile)
+  IF NOT file_info.exists THEN return, 0
   
-  self.default, ignore_days, 0
-  ignore_searches_since = systime(/seconds) - ignore_days*24*3600
+  file_utc = unixtai2utc(file_info.ctime)
+  get_utc, current_utc
+  
+  file_age_days = current_utc.mjd - file_utc.mjd
+  
+  file_is_old_enough = file_age_days GT redo_recent_days - 1
+  
+  return, file_is_old_enough
+END
+
+FUNCTION prits_tools::vso_cached_search, date_beg, date_end, instrument, wave_str_in, sample, include_urls, $
+                                         accept_failure=accept_failure, $
+                                         redo_recent_days=redo_recent_days, $
+                                         quiet=quiet
+  IF n_params() LT 6 THEN BEGIN
+     message, "Must have six arguments!"
+  END
+  
+  wave_str = wave_str_in
+  quiet = keyword_set(quiet) 
+  
+  self.default, redo_recent_days, 5
+  self.default, accept_failure, 0
   
   IF instrument EQ 'eit' THEN BEGIN
      IF wave_str EQ '193' THEN wave_str = '195'
@@ -17,12 +37,12 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=
   
   IF instrument EQ 'aia' AND date_end LT '2010' THEN return, !null
   
-  search_string = date_beg + "--"
-  search_string += date_end + "--" 
-  search_string += instrument + "-"
-  search_string += wave_str + "-"
-  search_string += sample.tostring() + '-' 
-  search_string += urls.tostring()  
+  savefile_name = date_beg + "--"
+  savefile_name += date_end + "--" 
+  savefile_name += instrument + "-"
+  savefile_name += wave_str + "-"
+  savefile_name += sample.tostring() + '-' 
+  savefile_name += include_urls.tostring()  
   IF NOT file_test(self.vso.cache_dir, /directory) THEN BEGIN
      print
      m = ['', $
@@ -36,22 +56,22 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, retry=retry, quiet=
      message, "See box above"
   END
   
-  savefile = self.vso.cache_dir + "/" + search_string + ".sav"
+  savefile = self.vso.cache_dir + "/" + savefile_name + ".sav"
   
-  fileinfo = file_info(savefile)
-  use_savefile = fileinfo.exists AND fileinfo.ctime GT ignore_searches_since
-  
+  use_savefile = self.vso_cached_search_use_savefile_or_not(date_beg, savefile, redo_recent_days)
+  print, "redo_recent_days/use_savefile:", redo_recent_days, use_savefile
   IF use_savefile THEN BEGIN
-     IF NOT quiet THEN message, /info, "Found cached vso search in " + savefile
+     IF NOT quiet THEN message, /info, "Using cached vso search in " + savefile
      restore, savefile
      IF size(results, /tname) EQ 'STRUCT' THEN return, results
      IF NOT keyword_set(retry) THEN return, !null
      IF quiet THEN message, /info, "Retrying: " + savefile
   END
   
-  results = vso_search(date_beg, date_end, instrument=instrument, wave=wave_str, urls=urls, sample=sample)
+  box_message, "Calling vso_search(), may take some time"
+  results = vso_search(date_beg, date_end, instrument=instrument, wave=wave_str, urls=inclulde_urls, sample=sample)
   IF size(results, /tname) NE 'STRUCT' THEN BEGIN
-     IF NOT quiet THEN box_message, "VSO_SEARCH did not work: " + search_string
+     IF NOT quiet THEN box_message, "VSO_SEARCH did not work: " + savefile_name
      results = 0
      save, results, filename=savefile
      return, !null
@@ -90,7 +110,7 @@ FUNCTION prits_tools::vso_cached_get, result, quiet=quiet
   return, fileid_link_name
 END
 
-PRO prits_tools::rename_cache_entries_ad_hoc
+PRO prits_tools::vso_rename_cache_entries_ad_hoc
   
   f = file_search(self.vso.cache_dir, '*-aia-195-*.sav')
   IF f[0] NE '' THEN BEGIN 
@@ -219,7 +239,13 @@ END
 PRO prits_tools::vso_addons_init
   vso_cache_dir = getenv("VSO_CACHE_DIR")
   IF vso_cache_dir EQ "" THEN vso_cache_dir = "$HOME/vso-cache"
-  self.vso.cache_dir = expand_path(vso_cache_dir)
+  
+  ;; Make sure we have a fully qualified PHYSICAL path i.e., no symlinks
+  cd, vso_cache_dir, current=cwd
+  cd, cwd, current=vso_cache_dir
+  
+  self.vso.cache_dir = vso_cache_dir
+  box_message, 'VSO CACHE DIRECTORY: ' + self.vso.cache_dir
 END
 
 PRO prits_tools__vso_addons__define
