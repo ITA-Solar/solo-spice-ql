@@ -239,7 +239,12 @@ END
 PRO prits_tools::vso_addons_init
   vso_cache_dir = getenv("VSO_CACHE_DIR")
   IF vso_cache_dir EQ "" THEN vso_cache_dir = "$HOME/vso-cache"
-  
+  IF NOT file_test(vso_cache_dir, /directory) THEN BEGIN
+     box_message, ['VSO CACHE DIRECTORY ' + self.vso.cache_dir + ' does not exist', $
+                   'No VSO searches possible']
+     return
+  END
+     
   ;; Make sure we have a fully qualified PHYSICAL path i.e., no symlinks
   cd, vso_cache_dir, current=cwd
   cd, cwd, current=vso_cache_dir
