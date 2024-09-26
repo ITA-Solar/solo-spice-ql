@@ -78,7 +78,7 @@
 ;
 ;
 ;-
-; $Id: 2024-08-20 15:55 CEST $
+; $Id: 2024-09-26 16:00 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
@@ -109,7 +109,9 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
   if ~file_test(base_dir, /directory) then file_mkdir, base_dir
 
   ana = fits2ana(l3_file, headers_results=headers_results)
-
+  
+  oJpg = obj_new('spice_jpg')
+  
   for iana=0,N_ELEMENTS(ana)-1 do begin
 
     handle_value,ana[iana].data_h,data;,/no_copy
@@ -119,7 +121,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     delete_analysis, ana[iana]
     
     hdr = fitshead2struct(*headers_results[iana])
-   
+    dummy = readfits(l3_file,l2_header, ext=iana*2+1)
     ; check that there is more than one exposures
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing=1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing=1)
@@ -131,7 +133,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     ENDIF
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
-    
+     
     raster = l3_file.contains('ras')
     sz = size(result)
     result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
@@ -169,7 +171,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
 
         IF naxis4 GT 1 THEN BEGIN
           ; sit-and-stare
-          xtitle1 = 'Time [sec]'
+          xtitle1 = 'Time [s]'
           xrange1 = [coords[3,0,0,startrow,0], coords[3,0,0,startrow,-1]]
           xrange2 = [coords[3,0,0,endrow,0], coords[3,0,0,endrow,-1]]
           yrange1 = [coords[2,0,0,startrow,0], coords[2,0,0,endrow,0]]
@@ -183,6 +185,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
           xrange2 = [coords[1,0,0,endrow], coords[1,0,-1,endrow]]
           yrange1 = [coords[2,0,0,startrow], coords[2,0,0,endrow]]
           yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,endrow]]
+          
           SCALE_TO_RANGE = 1
         ENDELSE
         ytitle1 = 'Solar Y [arcsec]'
@@ -205,7 +208,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
             background_color = 0
           end
           'width' : begin
-            colortable = 4
+            colortable = 68;4
             reverse_colortable = 0
             color_center_value = !NULL
           end
@@ -225,17 +228,24 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         this_remove_horizontal_trend = (param.name EQ 'velocity') ? remove_horizontal_trend : 0
         this_remove_vertical_trend   = (param.name EQ 'velocity') ? remove_vertical_trend   : 0   
         
+   
         filename = filename_base2 + '.jpg'
-        format = 'JPEG'
-        prits_tools.write_image_real_size, image_data, filename, $
-           remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
-           value_max=value_max, value_min=value_min, colortable=colortable, format=format, interpolation=interpolation, $
-           xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
-           xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
-           SCALE_TO_RANGE=SCALE_TO_RANGE, $
-           cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
-           reverse_colortable=reverse_colortable, show_plot=show_plot
-
+    
+        oJpg->update, filename, image_data, remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend,  $
+                      fit_trend = fit_trend, value_max=value_max, value_min=value_min, colortable=colortable, reverse_colortable=reverse_colortable, $
+                      xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
+                      xtitle=xtitle1, ytitle=ytitle1, $
+                      startrow=startrow, endrow=endrow, l2_header=l2_header, l3_header=*headers_results[iana], show_plot=show_plot
+        oJpg->plot
+        oJpg->save
+  
+        ;spice_write_jpg, image_data, filename, $
+        ;   remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, $
+        ;   value_max=value_max, value_min=value_min, colortable=colortable, xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
+        ;   xtitle=xtitle1, ytitle=ytitle1, $
+        ;   reverse_colortable=reverse_colortable, startrow=startrow, endrow=endrow, l2_header=l2_header, l3_header=*headers_results[iana], show_plot=show_plot
+   
+        
         filename = filename_base2 + '_thumb.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, $
@@ -251,5 +261,10 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     endfor ; icomp=0,n_components-1
 
   endfor ; iana=0,N_ELEMENTS(ana)-1 do begin
-
+  
+  jpg_window_name = (filename.extract('([0-9]+)-[0-9]+',/subexp))[1]
+  win = getwindows(jpg_window_name)
+  win_exists = obj_valid(win)
+  IF win_exists THEN win.close
+ 
 END
