@@ -123,10 +123,13 @@
 ;     Ver. 5, 03-Jun-2024, Terje Fredvik - New keyword fit_trend. Remove min value from line width
 ;     images. 
 ;     Ver. 6, 03-Jul-2024, Terje Fredvik - New keywords value_max and
-;     value_min. Currently only used as upper and lower limits for velocity images
+;     value_min. Currently only used as upper and lower limits for velocity
+;     images
+;     Ver. 7, 27-Sep-2024, Terje Fredvik - ensure that winsize[0] is at least
+;     2 pixels to prevent crash
 ;
 ;-
-; $Id: 2024-07-03 15:43 CEST $
+; $Id: 2024-09-27 07:26 CEST $
 
 
 
@@ -297,7 +300,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
       xs = width
     ENDIF
   ENDELSE
-  WINsize = [xs+margin_left+margin_right, ys+margin_top+margin_bottom]
+  WINsize = [xs+margin_left+margin_right > 2, ys+margin_top+margin_bottom]
   Win_position = [double(margin_left)/WINsize[0], double(margin_bottom)/WINsize[1], $
     (double(xs+margin_left))/WINsize[0], (double(ys+margin_bottom))/WINsize[1]]
 
