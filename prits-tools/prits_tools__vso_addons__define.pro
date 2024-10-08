@@ -236,11 +236,11 @@ PRO prits_tools::vso_fill_cache, start, final, reverse=reverse, waves_str=waves_
 END
 
 
-PRO prits_tools::vso_addons_init
+PRO prits_tools::vso_addons_init, quiet=quiet
   vso_cache_dir = getenv("VSO_CACHE_DIR")
   IF vso_cache_dir EQ "" THEN vso_cache_dir = "$HOME/vso-cache"
   IF NOT file_test(vso_cache_dir, /directory) THEN BEGIN
-     box_message, ['VSO CACHE DIRECTORY ' + self.vso.cache_dir + ' does not exist', $
+     IF ~keyword_set(quiet) THEN box_message, ['VSO CACHE DIRECTORY ' + self.vso.cache_dir + ' does not exist', $
                    'No VSO searches possible']
      return
   END
@@ -250,7 +250,7 @@ PRO prits_tools::vso_addons_init
   cd, cwd, current=vso_cache_dir
   
   self.vso.cache_dir = vso_cache_dir
-  box_message, 'VSO CACHE DIRECTORY: ' + self.vso.cache_dir
+  IF ~keyword_set(quiet) THEN box_message, 'VSO CACHE DIRECTORY: ' + self.vso.cache_dir
 END
 
 PRO prits_tools__vso_addons__define

@@ -136,10 +136,12 @@
 ;                 allows checking if input is a valid time format or
 ;                 has correct number of elements (new keyword VALID_NELEMENTS),
 ;                 improved documentation
+;               Version 4, Terje Fredvik, set keyword quiet when creating
+;                the prits_tools object to prevent a flood of VSO cache directory messages
 ;
-; Version     :	Version 3, September 2022
+; Version     :	Version 4, October 2024
 ;
-; $Id: 2022-11-24 14:52 CET $
+; $Id: 2024-10-08 09:26 CEST $
 ;-
 ;
 ;----------------------------------------------------------
@@ -316,7 +318,7 @@ PRO prits_tools::parcheck, parameter, parnum, name, types, valid_ndims, default=
   result=result
   compile_opt idl2, static
 
-  pt = prits_tools()
+  pt = prits_tools(/quiet)
   noerror = arg_present(result)
   result = ''
   errors = []

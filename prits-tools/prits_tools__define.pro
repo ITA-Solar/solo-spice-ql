@@ -1,8 +1,8 @@
-FUNCTION prits_tools::init
+FUNCTION prits_tools::init, quiet=quiet
   COMMON prits_tools, first_pt
   IF n_elements(first_pt) EQ 0 THEN first_pt = self
   dummy = self.IDL_Object::init()
-  self.vso_addons_init
+  self.vso_addons_init, quiet = quiet
   self.gen_addons_init
   self.date_addons_init
   return, 1
