@@ -1,4 +1,4 @@
-; $Id: 2024-08-29 12:51 CEST $
+; $Id: 2024-10-09 15:26 CEST $
 
 PRO get_window_data_test, spice_object
   result = spice_object->get_window_data(0)
@@ -544,7 +544,7 @@ END
 PRO spice_data_test
 
   dir = ROUTINE_DIR()
-  l2file = filepath('solo_L2_spice-n-exp_20240101T213346_V02_234881027-000.fits', root_dir=dir)
+  l2file = filepath('solo_L2_spice-n-exp_20240101T213346_V02_234881027-000.fits', root_dir=dir, subdir=['..', 'test_data'])
   spice_object = spice_data(l2file)
   
   print, ''
