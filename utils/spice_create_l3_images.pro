@@ -78,7 +78,7 @@
 ;
 ;
 ;-
-; $Id: 2024-09-26 16:00 CEST $
+; $Id: 2024-10-14 10:18 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
@@ -90,7 +90,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
   prits_tools.parcheck, version, 0, "version", 'STRing', 0, default='01'
   prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval=0, /optional
-     
+  
   l3_filename = file_basename(l3_file)
  
   l3_filename = strsplit(l3_filename, '.', /extract)
@@ -236,16 +236,9 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
                       xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
                       xtitle=xtitle1, ytitle=ytitle1, $
                       startrow=startrow, endrow=endrow, l2_header=l2_header, l3_header=*headers_results[iana], show_plot=show_plot
-        oJpg->plot
+        oJpg->plot,/clock
         oJpg->save
-  
-        ;spice_write_jpg, image_data, filename, $
-        ;   remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, $
-        ;   value_max=value_max, value_min=value_min, colortable=colortable, xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
-        ;   xtitle=xtitle1, ytitle=ytitle1, $
-        ;   reverse_colortable=reverse_colortable, startrow=startrow, endrow=endrow, l2_header=l2_header, l3_header=*headers_results[iana], show_plot=show_plot
-   
-        
+          
         filename = filename_base2 + '_thumb.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, $
