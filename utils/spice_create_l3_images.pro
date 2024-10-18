@@ -75,21 +75,23 @@
 ;      Ver. 7., 03-Jul-2024, TF - New keywords value_max and value_min
 ;      Ver. 8., 20-Aug-2024, TF - New keyword strongest_lines. If set, only
 ;      make images of the lines returned by spice_line_list(/strongest_lines).
+;      Ver. 9., 18-Oct-2024, TF - use spice_jpg object to plot jpg images
 ;
 ;
 ;-
-; $Id: 2024-10-14 10:18 CEST $
+; $Id: 2024-10-18 15:21 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
                             version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $ 
                             value_max=value_max, value_min=value_min, no_background_images=no_background_images, strongest_lines=strongest_lines, $
-                            NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
+                            reverse_colortable=reverse_colortable, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
   prits_tools.parcheck, version, 0, "version", 'STRing', 0, default='01'
   prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval=0, /optional
+  prits_tools.parcheck, reverse_colortable, 0, 'reverse_colortable', 'int', 0, default = 0
   
   l3_filename = file_basename(l3_file)
  
@@ -132,8 +134,9 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
       continue
     ENDIF
     wcs = fitshead2wcs(hdr)
+
     coords = wcs_get_coord(wcs)
-     
+  
     raster = l3_file.contains('ras')
     sz = size(result)
     result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
@@ -185,7 +188,6 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
           xrange2 = [coords[1,0,0,endrow], coords[1,0,-1,endrow]]
           yrange1 = [coords[2,0,0,startrow], coords[2,0,0,endrow]]
           yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,endrow]]
-          
           SCALE_TO_RANGE = 1
         ENDELSE
         ytitle1 = 'Solar Y [arcsec]'
@@ -194,34 +196,17 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
           'velocity': begin
             color_center_value = 0
 
-            ; Option A
-            ;colortable = 33
-            ;reverse_colortable = 0
-
-            ; Option B
-            ;colortable = 72
-            ;reverse_colortable = 1
-            
-            ; Option C - triggers call to eis_colors
+            ; triggers call to eis_colors
             colortable = 100
-            reverse_colortable = 0
             background_color = 0
           end
           'width' : begin
             colortable = 68;4
-            reverse_colortable = 0
             color_center_value = !NULL
           end
           else: begin
             color_center_value = !NULL
-
-            ; Option A
             colortable = 3
-            reverse_colortable = 0
-            
-            ; Option B
-            ;colortable = 56
-            ;reverse_colortable = 1
           end
         endcase
         
@@ -231,11 +216,10 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
    
         filename = filename_base2 + '.jpg'
     
-        oJpg->update, filename, image_data, remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend,  $
+        oJpg->update, filename, image_data, wcs, remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend,  $
                       fit_trend = fit_trend, value_max=value_max, value_min=value_min, colortable=colortable, reverse_colortable=reverse_colortable, $
-                      xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
                       xtitle=xtitle1, ytitle=ytitle1, $
-                      startrow=startrow, endrow=endrow, l2_header=l2_header, l3_header=*headers_results[iana], show_plot=show_plot
+                      startrow=startrow, endrow=endrow, l2_header=l2_header, l3_header=*headers_results[iana], show_plot=show_plot 
         oJpg->plot,/clock
         oJpg->save
           
