@@ -79,7 +79,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-25 12:43 CEST $
+; $Id: 2024-10-25 12:45 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
@@ -222,7 +222,6 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
                       startrow=startrow, endrow=endrow, l2_header=l2_header, l3_header=*headers_results[iana], show_plot=show_plot 
         oJpg->plot,/clock
         oJpg->save
-        stop
           
         filename = filename_base2 + '-thumb.png'
         format = 'PNG'
