@@ -73,7 +73,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-06-04 13:05 CEST $
+; $Id: 2024-10-25 12:02 CEST $
 
 
 function fits2ana, fitsfile, windows=windows, $
@@ -179,7 +179,7 @@ function fits2ana, fitsfile, windows=windows, $
       result = 0
       hdr = headfits(fitsfile, ext=extension)
     ENDIF ELSE BEGIN
-      result = readfits(fitsfile, hdr, ext=extension)
+      result = readfits(fitsfile, hdr, ext=extension, silent=quiet)
     ENDELSE
     if get_headers[0] then headers_results[iwin] = ptr_new(hdr)
     wcs_result = fitshead2wcs(hdr)
@@ -309,7 +309,7 @@ function fits2ana, fitsfile, windows=windows, $
         data = 0
         hdr = headfits(fitsfile, ext=extension)
       ENDIF ELSE BEGIN
-        data = readfits(fitsfile, hdr, ext=extension)
+        data = readfits(fitsfile, hdr, ext=extension, silent=quiet)
       ENDELSE
       size_data = size(data)
       progenitor_data = fxpar(hdr, 'PRGDATA', missing=0)
@@ -323,7 +323,7 @@ function fits2ana, fitsfile, windows=windows, $
           fits_close, prg_file_content
           ind = where(prg_file_content.extname EQ dataext, count_prg)
           IF count_prg GT 0 THEN BEGIN
-            data = readfits(prg_file, hdr, ext=ind[0])
+            data = readfits(prg_file, hdr, ext=ind[0], silent=quiet)
             size_data = size(data)
           ENDIF ELSE BEGIN
             IF ~quiet THEN message, 'Did not find external extension "'+dataext+'" in the progenitor file.', /info
@@ -410,7 +410,7 @@ function fits2ana, fitsfile, windows=windows, $
         xdim1 = 0
         hdr = headfits(fitsfile, ext=extension)
       ENDIF ELSE BEGIN
-        xdim1 = readfits(fitsfile, hdr, ext=extension)
+        xdim1 = readfits(fitsfile, hdr, ext=extension, silent=quiet)
       ENDELSE
     ENDELSE
     IF size(xdim1, /type) NE size(data, /type) THEN xdim1 = fix(xdim1, type=size(data, /type))
@@ -444,7 +444,7 @@ function fits2ana, fitsfile, windows=windows, $
         weights = 0
         hdr = headfits(fitsfile, ext=extension)
       ENDIF ELSE BEGIN
-        weights = readfits(fitsfile, hdr, ext=extension)
+        weights = readfits(fitsfile, hdr, ext=extension, silent=quiet)
       ENDELSE
     ENDELSE
     if get_headers[3] then headers_weights[iwin] = ptr_new(hdr)
@@ -479,7 +479,7 @@ function fits2ana, fitsfile, windows=windows, $
         include = 0
         hdr = headfits(fitsfile, ext=extension)
       ENDIF ELSE BEGIN
-        include = readfits(fitsfile, hdr, ext=extension)
+        include = readfits(fitsfile, hdr, ext=extension,silent=quiet)
       ENDELSE
     ENDELSE
     if get_headers[4] then headers_include[iwin] = ptr_new(hdr)
@@ -514,7 +514,7 @@ function fits2ana, fitsfile, windows=windows, $
         const = 0
         hdr = headfits(fitsfile, ext=extension)
       ENDIF ELSE BEGIN
-        const = readfits(fitsfile, hdr, ext=extension)
+        const = readfits(fitsfile, hdr, ext=extension,silent=quiet)
       ENDELSE
     ENDELSE
     if get_headers[5] then headers_constants[iwin] = ptr_new(hdr)

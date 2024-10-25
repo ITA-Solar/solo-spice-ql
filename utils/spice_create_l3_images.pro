@@ -79,13 +79,13 @@
 ;
 ;
 ;-
-; $Id: 2024-10-18 15:21 CEST $
+; $Id: 2024-10-25 12:02 CEST $
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
                             version=version, remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $ 
                             value_max=value_max, value_min=value_min, no_background_images=no_background_images, strongest_lines=strongest_lines, $
-                            reverse_colortable=reverse_colortable, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot
+                            reverse_colortable=reverse_colortable, NO_TREE_STRUCT=NO_TREE_STRUCT, show_plot=show_plot, quiet=quiet
 
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
@@ -107,10 +107,10 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
   l3ql_filename = l3_filename.replace('spice','spice-ql')
   IF version THEN l3ql_filename = l3ql_filename.replace(l3ql_filename.extract('V[0-9]{2}'), 'V'+version)
   
-  filename_base = base_dir + path_sep() + l3ql_filename + '_'
+  filename_base = base_dir + path_sep() + l3ql_filename + '-'
   if ~file_test(base_dir, /directory) then file_mkdir, base_dir
 
-  ana = fits2ana(l3_file, headers_results=headers_results)
+  ana = fits2ana(l3_file, headers_results=headers_results, quiet=quiet)
   
   oJpg = obj_new('spice_jpg')
   
@@ -123,7 +123,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     delete_analysis, ana[iana]
     
     hdr = fitshead2struct(*headers_results[iana])
-    dummy = readfits(l3_file,l2_header, ext=iana*2+1)
+    dummy = readfits(l3_file,l2_header, ext=iana*2+1, silent=quiet)
     ; check that there is more than one exposures
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing=1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing=1)
@@ -167,7 +167,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         lam = lam.replace('.','nm') 
         IF lam.strlen() EQ 6 THEN lam = '-'+lam
         
-        filename_base2 = filename_base.replace('ql','ql-'+ion+lam+'-'+param.name.substring(0,2))+fns('##',hdr.winno)+'_'+fns('##',icomp+1)+'_'+param.name.substring(0,2)
+        filename_base2 = filename_base.replace('ql','ql-'+ion+lam+'-'+param.name.substring(0,2))+fns('#',hdr.winno)+'-'+fns('#',icomp+1)+'-'+param.name.substring(0,2)
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal,*,startrow:endrow,*])
         help,image_data
@@ -223,7 +223,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         oJpg->plot,/clock
         oJpg->save
           
-        filename = filename_base2 + '_thumb.png'
+        filename = filename_base2 + '-thumb.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, $
            remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
