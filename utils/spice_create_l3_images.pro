@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-28 12:59 CET $
+; $Id: 2024-10-28 13:09 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -119,7 +119,7 @@ END
 PRO spice_read_or_write_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
   archive_dir = spice_get_archive_dir(l3_filename)
   date = (archive_dir.extract('level3/(.+)',/subexp))[1]
-  slit_region_dir = getenv('instr_output') + '/l3_startrow_endrow/'+date
+  slit_region_dir = getenv('SPICE')+'/pipeline_output/l3_startrow_endrow/'+date
  
   spiobsid = (l3_filename.extract('([0-9]+)-',/subexp))[1]
   
