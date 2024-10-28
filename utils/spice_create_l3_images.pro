@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-28 15:43 CET $
+; $Id: 2024-10-28 16:17 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -127,12 +127,17 @@ PRO spice_read_or_write_slit_region, l3_filename, result, startrow=startrow, end
   
   slit_region_file = slit_region_dir+'slit_region_'+string(spiobsid)+'.txt'
   write_file = ~file_test(slit_region_file)
-
- IF write_file THEN BEGIN 
-     spice_lock,'slit_region',/get,/try_once, lock_obtained=lock_obtained
-     IF lock_obtained THEN spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow ELSE BEGIN 
-        spice_lock,'slit_region',/get
-        spice_lock,'slit_region',/release
+  
+  lock = 'slit_region_'+trim(spiobsid)
+  
+  IF write_file THEN BEGIN 
+     spice_lock,lock,/get,/try_once, lock_obtained=lock_obtained
+     IF lock_obtained THEN BEGIN
+        spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow 
+        spice_lock,lock,/release
+     ENDIF ELSE BEGIN 
+        spice_lock,lock,/get
+        spice_lock,lock,/release
         write_file = 0
      ENDELSE 
   ENDIF 
