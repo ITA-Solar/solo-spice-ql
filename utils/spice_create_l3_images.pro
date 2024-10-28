@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-28 15:41 CET $
+; $Id: 2024-10-28 15:43 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -97,8 +97,7 @@ END
 
 
 PRO spice_read_slit_region, slit_region_file, startrow=startrow, endrow=endrow
-  print,'Reading '+slit_region_file
-  stop
+  print,'  -  Reading '+slit_region_file
   openr, lun, slit_region_file,/get_lun
   readf, lun, startrow, endrow
   free_lun, lun
@@ -106,8 +105,7 @@ END
 
 
 PRO spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow
-  print, 'Writing '+slit_region_file
-  stop
+  print, '  -  Writing '+slit_region_file
   spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   file_mkdir, slit_region_dir
   
