@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-28 15:27 CET $
+; $Id: 2024-10-28 15:32 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -211,21 +211,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     coords = wcs_get_coord(wcs)
     
     spice_get_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
-    
-    raster = l3_file.contains('ras')
-    sz = size(result)
-    result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
-    goodx = where(result_along_x EQ result_along_x)
-    
-    
-    result_along_y = (raster) ? reform(result[0, goodx[0], *]) : reform(result[0, *, *,goodx[0]])
-    ok_result_along_y = where(result_along_y EQ result_along_y)
-    startrow = ok_result_along_y[0]
-    endrow   = ok_result_along_y[-1]
-    
-  
-    
-    
+   
     IF keyword_set(strongest_lines) THEN lLines = spice_line_list(/strongest_lines)
    
     n_components = N_TAGS(fit)
