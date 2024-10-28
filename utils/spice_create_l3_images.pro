@@ -76,10 +76,79 @@
 ;      Ver. 8., 20-Aug-2024, TF - New keyword strongest_lines. If set, only
 ;      make images of the lines returned by spice_line_list(/strongest_lines).
 ;      Ver. 9., 18-Oct-2024, TF - use spice_jpg object to plot jpg images
+;      Ver. 10., 28-Oct-2024, TF - ensure that the same startrow/endrow values
+;      are used for all RASTERNO of an SPIOOBSID by writing/reading the values
+;      to file
 ;
 ;
 ;-
-; $Id: 2024-10-25 12:45 CEST $
+; $Id: 2024-10-28 12:54 CET $
+PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
+  raster = l3_filename.contains('ras')
+  sz = size(result)
+  result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
+  goodx = where(result_along_x EQ result_along_x)
+  
+  result_along_y = (raster) ? reform(result[0, goodx[0], *]) : reform(result[0, *, *,goodx[0]])
+  ok_result_along_y = where(result_along_y EQ result_along_y)
+  startrow = ok_result_along_y[0]
+  endrow   = ok_result_along_y[-1]
+END
+
+
+PRO spice_read_slit_region, slit_region_file, startrow=startrow, endrow=endrow
+  openr, lun, slit_region_file,/get_lun
+  readf, lun, startrow, endrow
+  free_lun, lun
+END
+
+
+PRO spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow
+  spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
+  file_mkdir, slit_region_dir
+  
+  openw, lun, slit_region_file,/get_lun
+  printf, lun, startrow
+  printf, lun, endrow
+  free_lun, lun
+  
+  spice_lock,'slit_region',/release
+END
+
+
+PRO spice_read_or_write_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
+  archive_dir = spice_get_archive_dir(l3_filename)
+  date = (archive_dir.extract('level3/(.+)',/subexp))[1]
+  slit_region_dir = getenv('instr_output') + '/l3_startrow_endrow/'+date
+ 
+  spiobsid = (l3_filename.extract('([0-9]+)-',/subexp))[1]
+  
+  slit_region_file = slit_region_dir+'slit_region_'+string(spiobsid)+'.txt'
+  write_file = ~file_test(slit_region_file)
+ 
+  IF write_file THEN BEGIN 
+     spice_lock,'slit_region',/get,/try_once, lock_obtained=lock_obtained
+     IF lock_obtained THEN spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow ELSE BEGIN 
+        spice_lock,'slit_region',/get
+        spice_lock,'slit_region',/release
+        write_file = 0
+     ENDELSE 
+  ENDIF 
+  
+  IF ~write_file THEN spice_read_slit_region, slit_region_file, startrow=startrow, endrow=endrow
+  
+END
+
+
+PRO spice_get_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
+  IF getenv('instr_output') NE '' THEN BEGIN 
+     spice_read_or_write_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
+  ENDIF ELSE BEGIN 
+     spice_calculate_slit_region,     l3_filename, result, startrow=startrow, endrow=endrow 
+  ENDELSE 
+  
+END
+
 
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=interpolation, $
@@ -136,15 +205,22 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     wcs = fitshead2wcs(hdr)
 
     coords = wcs_get_coord(wcs)
-  
+    
+    spice_get_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
+    
     raster = l3_file.contains('ras')
     sz = size(result)
     result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
     goodx = where(result_along_x EQ result_along_x)
+    
+    
     result_along_y = (raster) ? reform(result[0, goodx[0], *]) : reform(result[0, *, *,goodx[0]])
     ok_result_along_y = where(result_along_y EQ result_along_y)
     startrow = ok_result_along_y[0]
     endrow   = ok_result_along_y[-1]
+    
+  
+    
     
     IF keyword_set(strongest_lines) THEN lLines = spice_line_list(/strongest_lines)
    
