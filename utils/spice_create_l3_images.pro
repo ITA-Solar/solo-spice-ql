@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-28 12:54 CET $
+; $Id: 2024-10-28 12:59 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -141,7 +141,9 @@ END
 
 
 PRO spice_get_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
-  IF getenv('instr_output') NE '' THEN BEGIN 
+  running_as_pipeline = getenv('USER') EQ 'osdcapps'
+  
+  IF running_as_pipeline THEN BEGIN 
      spice_read_or_write_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   ENDIF ELSE BEGIN 
      spice_calculate_slit_region,     l3_filename, result, startrow=startrow, endrow=endrow 
