@@ -64,7 +64,7 @@
 ;                                 warning only when reading an old file
 ;-
 
-; $Id: 2024-10-18 18:38 CEST $
+; $Id: 2024-10-30 14:35 CET $
 
 
 ;+
@@ -713,9 +713,13 @@ FUNCTION spice_data::mk_analysis, window, no_masking=no_masking, approximated_sl
 
   detector = self->get_header_keyword('DETECTOR', window_index)
   widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
-  slitwid_factor = 2./self->get_header_keyword('SLIT_WID', window_index)
-  widmin_pixels = widmin_pixels_2_arcsec_slit * slitwid_factor
-  widmin = widmin_pixels * self->get_header_keyword('CDELT3', window_index)
+  ;; Very little difference between the spatial resolution of 2" and 4", we
+  ;; can use the 2" min widths for 4" as well. And until I get other numbers
+  ;; for the 6" slit we use the 2" for all slits. One caveat: Andrzej's
+  ;; numbers are L1 pixels, so not exactly the same size as L2 pixels. For the
+  ;; time begin , all we do is to take spectral binning into account: 
+  widmin_pixels_all_narrow_slits = widmin_pixels_2_arcsec_slit/self->get_header_keyword('NBIN3', window_index)
+  widmin = widmin_pixels_all_narrow_slits * self->get_header_keyword('CDELT3', window_index)
 
   IF ~keyword_set(no_line_list) THEN BEGIN
     line_list=spice_line_list(version=version_line_list)
