@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2024-05-10 09:14 CEST $
+; $Id: 2024-10-30 14:36 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -129,18 +129,21 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     int0 = meanprofile[peakinds]
     IF use_list THEN lam0 = lines[ind_lines] $
     ELSE lam0 = meanlambda[peakinds]
-    wid0 = lam0 - meanlambda[peakinds-fwhm]
+    wid0 = lam0 - meanlambda[peakinds-fwhm] >  widmin
 
     v = 150.                       ; Max shift in km/s
     dlam = v*lam0/3.e5            ; Max shift in Aangstrom
 
-    intmin = fltarr(npeaks)          ; minimum intensity is 0
-    lammin = (lam0 - dlam) > min(lam); v0 - v
-    IF NOT keyword_set(widmin) THEN widmin = min((wid0 - 0.04) >  0.02)  ; random guess...
-
-    intmax = int0*100;30000                 ; More random guessing
-    lammax = (lam0 + dlam) < max(lam) ; v0 + v
-    widmax = wid0 + 0.04              ; A final shot in the dark
+    min_intens = fltarr(npeaks)     ; minimum intensity is 0
+    negative_int0_ix = where(int0 LT 0,/NULL)
+    IF negative_int0_ix NE !NULL THEN min_intens[*] = min(int0[negative_int0_ix])*5.
+    
+    min_lam = (lam0 - dlam) > min(lam); v0 - v
+    min_fwhm =  (keyword_set(widmin)) ? widmin : min((wid0 - 0.04) >  0.02) ; random guess...
+    
+    max_intens = abs(int0)*100;30000      ; More random guessing
+    max_lam  = (lam0 + dlam) < max(lam) ; v0 + v
+    max_fwhm = wid0 + 0.04              ; A final shot in the dark
 
     IF ~keyword_set(position) THEN BEGIN
       IF N_ELEMENTS(velocity) EQ 0 THEN vel=0.0 $
@@ -148,11 +151,11 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     ENDIF
 
     FOR i=0,n_elements(peakinds)-1 DO BEGIN
-      gauss = spice_mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
-        max_lam=lammax[i], min_lam=lammin[i],$
-        min_fwhm = widmin, max_fwhm = widmax[i],$
-        min_intens=intmin[i], $
-        velocity=vel, use_list=use_list)
+       gauss = spice_mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
+                                   max_intens = max_intens[i], min_intens = min_intens[i], $
+                                   max_lam    = max_lam[i],   min_lam = min_lam[i],$
+                                   min_fwhm   = min_fwhm,     max_fwhm = max_fwhm[i],$
+                                   velocity=vel, use_list=use_list)
       IF ~keyword_set(position) AND keyword_set(blue_means_negative_velocity) THEN BEGIN
          gauss.param[1].trans_a = -gauss.param[1].trans_a
          max_vel = -gauss.param[1].min_val

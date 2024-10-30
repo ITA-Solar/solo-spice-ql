@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-28 12:59 CET $
+; $Id: 2024-10-29 15:01 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -97,6 +97,7 @@ END
 
 
 PRO spice_read_slit_region, slit_region_file, startrow=startrow, endrow=endrow
+  print,'  -  Reading '+slit_region_file
   openr, lun, slit_region_file,/get_lun
   readf, lun, startrow, endrow
   free_lun, lun
@@ -104,6 +105,7 @@ END
 
 
 PRO spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow
+  print, '  -  Writing '+slit_region_file
   spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   file_mkdir, slit_region_dir
   
@@ -111,26 +113,30 @@ PRO spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, res
   printf, lun, startrow
   printf, lun, endrow
   free_lun, lun
-  
-  spice_lock,'slit_region',/release
 END
 
 
 PRO spice_read_or_write_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
   archive_dir = spice_get_archive_dir(l3_filename)
   date = (archive_dir.extract('level3/(.+)',/subexp))[1]
-  slit_region_dir = getenv('instr_output') + '/l3_startrow_endrow/'+date
+  slit_region_dir = getenv('SPICE')+'/pipeline_output/l3_startrow_endrow/'+date
  
   spiobsid = (l3_filename.extract('([0-9]+)-',/subexp))[1]
   
   slit_region_file = slit_region_dir+'slit_region_'+string(spiobsid)+'.txt'
-  write_file = ~file_test(slit_region_file)
- 
+  write_file = ~ file_test(slit_region_file)
+  
+  lock = 'slit_region_'+trim(spiobsid)
+  
   IF write_file THEN BEGIN 
-     spice_lock,'slit_region',/get,/try_once, lock_obtained=lock_obtained
-     IF lock_obtained THEN spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow ELSE BEGIN 
-        spice_lock,'slit_region',/get
-        spice_lock,'slit_region',/release
+     spice_lock, lock, /get, /try_once, lock_obtained=lock_obtained
+     IF lock_obtained THEN BEGIN
+        spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow=startrow, endrow=endrow 
+        spice_lock, lock, /release
+     ENDIF ELSE BEGIN 
+        spice_lock, lock, /get
+        spice_lock, lock, /release
+        spice_lock, lock, /delete
         write_file = 0
      ENDELSE 
   ENDIF 
@@ -209,21 +215,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
     coords = wcs_get_coord(wcs)
     
     spice_get_slit_region, l3_filename, result, startrow=startrow, endrow=endrow
-    
-    raster = l3_file.contains('ras')
-    sz = size(result)
-    result_along_x = (raster) ? reform(result[0,*,sz[3]/2.]) : reform(result[0,*,sz[3]/2.,*])
-    goodx = where(result_along_x EQ result_along_x)
-    
-    
-    result_along_y = (raster) ? reform(result[0, goodx[0], *]) : reform(result[0, *, *,goodx[0]])
-    ok_result_along_y = where(result_along_y EQ result_along_y)
-    startrow = ok_result_along_y[0]
-    endrow   = ok_result_along_y[-1]
-    
-  
-    
-    
+   
     IF keyword_set(strongest_lines) THEN lLines = spice_line_list(/strongest_lines)
    
     n_components = N_TAGS(fit)
