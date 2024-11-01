@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2024-10-30 14:36 CET $
+; $Id: 2024-11-01 15:48 CET $
 
 
 FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
@@ -131,19 +131,19 @@ FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=ve
     ELSE lam0 = meanlambda[peakinds]
     wid0 = lam0 - meanlambda[peakinds-fwhm] >  widmin
 
-    v = 150.                       ; Max shift in km/s
+    v = 150.                      ; Max shift in km/s
     dlam = v*lam0/3.e5            ; Max shift in Aangstrom
 
     min_intens = fltarr(npeaks)     ; minimum intensity is 0
-    negative_int0_ix = where(int0 LT 0,/NULL)
-    IF negative_int0_ix NE !NULL THEN min_intens[*] = min(int0[negative_int0_ix])*5.
+    negative_int0_ix = where(int0 LT 0,/NULL) ; SPICE L2 HDUs may have negative values
+    IF negative_int0_ix NE !NULL THEN min_intens[*] = min(int0[negative_int0_ix])*5. 
     
     min_lam = (lam0 - dlam) > min(lam); v0 - v
     min_fwhm =  (keyword_set(widmin)) ? widmin : min((wid0 - 0.04) >  0.02) ; random guess...
     
-    max_intens = abs(int0)*100;30000      ; More random guessing
+    max_intens = abs(int0)*100;30000    ; Ensure that max value is greater than min value also for negative values
     max_lam  = (lam0 + dlam) < max(lam) ; v0 + v
-    max_fwhm = wid0 + 0.04              ; A final shot in the dark
+    max_fwhm = wid0 + 0.07              ; 
 
     IF ~keyword_set(position) THEN BEGIN
       IF N_ELEMENTS(velocity) EQ 0 THEN vel=0.0 $

@@ -62,9 +62,10 @@
 ;    18-Oct-2024: Terje Fredvik:  ::check_if_already_included: Removed warning
 ;                                 message being always printed, instead print
 ;                                 warning only when reading an old file
+;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-10-30 14:35 CET $
+; $Id: 2024-11-01 15:48 CET $
 
 
 ;+
@@ -710,16 +711,39 @@ FUNCTION spice_data::mk_analysis, window, no_masking=no_masking, approximated_sl
     debug_plot=debug_plot, $
     DATA=DATA, LAMBDA=LAMBDA, WEIGHTS=WEIGHTS, MISSING=MISSING, version=version_add
   version += version_add
-
+  
+  ;; Earlier: widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
+  ;; After fitting tests, this lower line width limit seems to be too
+  ;; high. In a calibration e-mail discussion Tim gave some other numbers:  
+  ;;
+  ;; Caldwell/Giunta presented at the calibration WG telecon 2020 line widths
+  ;; from comissioning data, using the present geometrical correction:
+  ;;
+  ;;  2" Slit: 7.8 SW, 8.4-8.8 LW
+  ;;  4" Slit: 8.7 SW, 10.1 LW
+  ;;  6" Slit: 8.8 SW, 10.1 LW
+  ;; 
+  ;; Tim suggests to use values ~2 pixels smaller than the numbers above. We
+  ;; therefore go with round(numbers)-2:
+  ;;
+  ;; However... Taking a file with good
+  ;; S/N,solo_L3_spice-n-ras_20241023T080536_V02_285212965-000.fits
+  ;; I find that for 4" C III the manually identified narrowest profiles 
+  ;; are 0.067683 nm, corresponding to widmin_pixels=7.033. For Ne VIII it's
+  ;; 6.95. The 6" profiles seem to be a bit wider, but I don't think we'll do
+  ;; anything wrong using the 4" limits.
+  ;; For 2" C III I get profiles ranging from 0.056176 - 0.11786, i.e. lower
+  ;; limit should be 5.8 pixels for LW.
+  ;;
+  ;;
+  slit_wid = self->get_header_keyword('SLIT_WID', window_index)
   detector = self->get_header_keyword('DETECTOR', window_index)
-  widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
-  ;; Very little difference between the spatial resolution of 2" and 4", we
-  ;; can use the 2" min widths for 4" as well. And until I get other numbers
-  ;; for the 6" slit we use the 2" for all slits. One caveat: Andrzej's
-  ;; numbers are L1 pixels, so not exactly the same size as L2 pixels. For the
-  ;; time begin , all we do is to take spectral binning into account: 
-  widmin_pixels_all_narrow_slits = widmin_pixels_2_arcsec_slit/self->get_header_keyword('NBIN3', window_index)
-  widmin = widmin_pixels_all_narrow_slits * self->get_header_keyword('CDELT3', window_index)
+  IF slit_wid EQ 2 THEN widmin_pixels = (detector EQ 'SW') ? 5.8  : 5.8
+  IF slit_wid EQ 4 THEN widmin_pixels = (detector EQ 'SW') ? 6.95 : 7.05
+  IF slit_wid EQ 6 THEN widmin_pixels = (detector EQ 'SW') ? 6.95 : 7.05
+  
+  nm_per_debinned_pixel = self->get_header_keyword('CDELT3', window_index)/self->get_header_keyword('NBIN3', window_index)
+  widmin = widmin_pixels*nm_per_debinned_pixel
 
   IF ~keyword_set(no_line_list) THEN BEGIN
     line_list=spice_line_list(version=version_line_list)
