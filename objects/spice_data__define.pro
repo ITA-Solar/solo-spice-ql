@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-01 15:48 CET $
+; $Id: 2024-11-06 09:30 CET $
 
 
 ;+
@@ -738,9 +738,9 @@ FUNCTION spice_data::mk_analysis, window, no_masking=no_masking, approximated_sl
   ;;
   slit_wid = self->get_header_keyword('SLIT_WID', window_index)
   detector = self->get_header_keyword('DETECTOR', window_index)
-  IF slit_wid EQ 2 THEN widmin_pixels = (detector EQ 'SW') ? 5.8  : 5.8
-  IF slit_wid EQ 4 THEN widmin_pixels = (detector EQ 'SW') ? 6.95 : 7.05
-  IF slit_wid EQ 6 THEN widmin_pixels = (detector EQ 'SW') ? 6.95 : 7.05
+  IF slit_wid EQ 2 THEN widmin_pixels = (detector EQ 'SW') ? 5.8 : 5.8
+  IF slit_wid EQ 4 THEN widmin_pixels = (detector EQ 'SW') ? 6.9 : 7.0
+  IF slit_wid EQ 6 THEN widmin_pixels = (detector EQ 'SW') ? 6.9 : 7.0
   
   nm_per_debinned_pixel = self->get_header_keyword('CDELT3', window_index)/self->get_header_keyword('NBIN3', window_index)
   widmin = widmin_pixels*nm_per_debinned_pixel
