@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-06 09:30 CET $
+; $Id: 2024-11-06 11:18 CET $
 
 
 ;+
@@ -730,17 +730,15 @@ FUNCTION spice_data::mk_analysis, window, no_masking=no_masking, approximated_sl
   ;; S/N,solo_L3_spice-n-ras_20241023T080536_V02_285212965-000.fits
   ;; I find that for 4" C III the manually identified narrowest profiles 
   ;; are 0.067683 nm, corresponding to widmin_pixels=7.033. For Ne VIII it's
-  ;; 6.95. The 6" profiles seem to be a bit wider, but I don't think we'll do
-  ;; anything wrong using the 4" limits.
-  ;; For 2" C III I get profiles ranging from 0.056176 - 0.11786, i.e. lower
-  ;; limit should be 5.8 pixels for LW.
+  ;; 5.81. The 6" profiles seem to be a bit wider, especially SW. 
+  ;; For 2" I find the lower limit to be 5.8 pixels for both detectors.
   ;;
   ;;
   slit_wid = self->get_header_keyword('SLIT_WID', window_index)
   detector = self->get_header_keyword('DETECTOR', window_index)
   IF slit_wid EQ 2 THEN widmin_pixels = (detector EQ 'SW') ? 5.8 : 5.8
-  IF slit_wid EQ 4 THEN widmin_pixels = (detector EQ 'SW') ? 6.9 : 7.0
-  IF slit_wid EQ 6 THEN widmin_pixels = (detector EQ 'SW') ? 6.9 : 7.0
+  IF slit_wid EQ 4 THEN widmin_pixels = (detector EQ 'SW') ? 5.8 : 7.0
+  IF slit_wid EQ 6 THEN widmin_pixels = (detector EQ 'SW') ? 6.8 : 7.0
   
   nm_per_debinned_pixel = self->get_header_keyword('CDELT3', window_index)/self->get_header_keyword('NBIN3', window_index)
   widmin = widmin_pixels*nm_per_debinned_pixel
