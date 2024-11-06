@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-10-29 15:01 CET $
+; $Id: 2024-11-06 09:08 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow=startrow, endrow=endrow 
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -245,19 +245,19 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         IF naxis4 GT 1 THEN BEGIN
           ; sit-and-stare
           xtitle1 = 'Time [s]'
-          xrange1 = [coords[3,0,0,startrow,0], coords[3,0,0,startrow,-1]]
-          xrange2 = [coords[3,0,0,endrow,0], coords[3,0,0,endrow,-1]]
-          yrange1 = [coords[2,0,0,startrow,0], coords[2,0,0,endrow,0]]
-          yrange2 = [coords[2,0,0,startrow,-1], coords[2,0,0,endrow,-1]]
+          xrange1 = [coords[3,0,0,startrow,0],  coords[3,0,0,startrow,-1]]
+          xrange2 = [coords[3,0,0,endrow,0],    coords[3,0,0,endrow,  -1]]
+          yrange1 = [coords[2,0,0,startrow,0],  coords[2,0,0,endrow,   0]]
+          yrange2 = [coords[2,0,0,startrow,-1], coords[2,0,0,endrow,  -1]]
           SCALE_TO_RANGE = 0
           image_data = transpose(image_data)
         ENDIF ELSE BEGIN
           ; raster
           xtitle1 = 'Solar X [arcsec]'
-          xrange1 = [coords[1,0,0,startrow], coords[1,0,-1,startrow]]
-          xrange2 = [coords[1,0,0,endrow], coords[1,0,-1,endrow]]
-          yrange1 = [coords[2,0,0,startrow], coords[2,0,0,endrow]]
-          yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,endrow]]
+          xrange1 = [coords[1,0,0,startrow],  coords[1,0,-1,startrow]]
+          xrange2 = [coords[1,0,0,endrow],    coords[1,0,-1,  endrow]]
+          yrange1 = [coords[2,0,0,startrow],  coords[2,0, 0,  endrow]]
+          yrange2 = [coords[2,0,-1,startrow], coords[2,0,-1,  endrow]]
           SCALE_TO_RANGE = 1
         ENDELSE
         ytitle1 = 'Solar Y [arcsec]'
@@ -283,9 +283,8 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth=smooth, interpolation=inter
         this_remove_horizontal_trend = (param.name EQ 'velocity') ? remove_horizontal_trend : 0
         this_remove_vertical_trend   = (param.name EQ 'velocity') ? remove_vertical_trend   : 0   
         
-   
         filename = filename_base2 + '.jpg'
-    
+        
         oJpg->update, filename, image_data, wcs, remove_horizontal_trend=this_remove_horizontal_trend, remove_vertical_trend=this_remove_vertical_trend,  $
                       fit_trend = fit_trend, value_max=value_max, value_min=value_min, colortable=colortable, reverse_colortable=reverse_colortable, $
                       xtitle=xtitle1, ytitle=ytitle1, $
