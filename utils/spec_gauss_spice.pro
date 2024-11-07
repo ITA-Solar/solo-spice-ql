@@ -1,5 +1,5 @@
 
-PRO spec_gauss_spice, specstr
+PRO spec_gauss_spice, specstr, fitfunc=fitfunc
 
 ;+
 ; NAME:
@@ -18,6 +18,11 @@ PRO spec_gauss_spice, specstr
 ; INPUTS:
 ;     Specstr:  A structure in the format returned by spice_mask_spectrum.
 ;
+; OPTIONAL INPUTS:
+;     Fitfunc:  String giving the name of a function to be used instead of
+;               a Gaussian. See the header for spice_gauss_widget for more
+;               details.
+;
 ; OUTPUTS:
 ;     A GUI will appear that allows Gaussians to be fit to the spectrum.
 ;     The fitting results will be written to the text file
@@ -32,9 +37,11 @@ PRO spec_gauss_spice, specstr
 ;
 ; MODIFICATION HISTORY:
 ;     Ver.1, 31-Oct-2024, Peter Young
+;     Ver.2, 07-Nov-2024, Peter Young
+;       Added fitfunc= optional input.
 ;-
 
-; $Id: 2024-11-06 10:25 EST $
+; $Id: 2024-11-07 15:19 EST $
 
 
 xx=specstr.wvl
@@ -61,6 +68,6 @@ spec_gauss_widget,xx,yy,ee,qq, $
                   def_width=def_width, qqmax=qual_max, $
                   angpix=1,/qqset, $
                   set_width_range=0, width_range=[0.5,0.15], $
-                  parinfo_wvl_step=0.005
+                  parinfo_wvl_step=0.005, fitfunc=fitfunc
 
 END
