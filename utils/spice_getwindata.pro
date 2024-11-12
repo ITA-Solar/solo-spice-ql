@@ -149,8 +149,11 @@
 ;         Compute error using method of Z. Huang et al. (2023, A&A).
 ;         Set negative intensities to missing.
 ;         Changed data quality flag.
+;       Ver.5, 12-Nov-2024, Peter Young
+;         Added hdr.date_end and hdr.tdetx to the output structure for
+;         compatibility with EIS software.
 ;-
-; $Id: 2023-08-01 09:40 CEST $
+; $Id: 2024-11-12 11:38 EST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   clean=clean, wrange=wrange, verbose=verbose, $
@@ -373,7 +376,11 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   hdr.slit_ind=5    ; note EIS slits are numbered 0-3, IRIS is 4
   hdr2=add_tag(hdr,ny,'YW')
   hdr=temporary(hdr2)
-
+  hdr2=add_tag(hdr,hdr.DATE_D$END,'DATE_END')
+  hdr=temporary(hdr2)
+  hdr2=add_tag(hdr,0,'TDETX')
+  hdr=temporary(hdr2)
+ 
   ;
   ; The keyword 'nexp_prp' is not consistent with EIS, as a 100 exposure
   ; sit-and-stare will be set to nexp_prp=100 whereas for EIS it would
