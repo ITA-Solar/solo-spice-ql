@@ -36,8 +36,12 @@
 ; Category    : SPICE, Fitting
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
+;               Terje Fredvik, UiO, October 2024: Two linelists, a full list
+;               used for selecting lines to be fitted for L3 FITS, and a short list
+;               containing all lines that will be used for creating L3 JPG images. 
+;               
 ;
-; $Id: 2024-08-22 13:15 CEST $
+; $Id: 2024-11-12 15:15 CET $
 ;-
 ;
 ;----------------------------------------------------------
@@ -45,7 +49,7 @@
 
 function spice_get_lines_all, version=version
 
-  version = 2 ; PLEASE increase this number when editing the code
+  version = 3 ; PLEASE increase this number when editing the code
 
   line_list = HASH( $
 
