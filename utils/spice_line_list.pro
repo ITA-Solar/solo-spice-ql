@@ -21,7 +21,7 @@
 ;
 ; The updated and much shorter line list (spice_get_lines_strongest) has been made
 ; from a selection of lines based on actual fitted lines and Alessandra's line
-; list.
+; list.  
 ;
 ; Use         :
 ;       line_list = spice_line_list()
@@ -36,12 +36,13 @@
 ; Category    : SPICE, Fitting
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022
-;               Terje Fredvik, UiO, October 2024: Two linelists, a full list
-;               used for selecting lines to be fitted for L3 FITS, and a short list
-;               containing all lines that will be used for creating L3 JPG images. 
+;               Terje Fredvik, UiO, October 2024: Two possible line lists, a
+;                                                 selection of the strongest
+;                                                 lines is returned when
+;                                                 STRONGEST_LINES is set 
 ;               
 ;
-; $Id: 2024-11-12 15:15 CET $
+; $Id: 2024-11-12 15:36 CET $
 ;-
 ;
 ;----------------------------------------------------------
