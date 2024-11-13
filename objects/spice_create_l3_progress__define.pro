@@ -61,7 +61,7 @@
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2024-11-21 13:17 CET $
+; $Id: 2024-11-21 13:31 CET $
 
 ;+
 ; Description:
@@ -107,9 +107,9 @@ FUNCTION spice_create_l3_progress::init, n_files, files = files, group_leader = 
 
   self.label_current_file_num = widget_label(self.base, value = 'File ' + string(1, format = self.n_files_format) + $
     ' of ' + string(1, format = self.n_files_format))
-  self.label_current_path = cw_field(self.base, title = 'Current path  ', /NoEdit, xsize = 75)
-  self.label_current_file = cw_field(self.base, title = 'Current file  ', /NoEdit, xsize = 75)
-  label = widget_label(self.base, value = ' ')
+  self.label_current_path = cw_field(self.base, title = 'Current path  ', /noedit, xsize = 75)
+  self.label_current_file = cw_field(self.base, title = 'Current file  ', /noedit, xsize = 75)
+  label = widget_label(self.base, value = ' ') ; idl-disable-line unused-var
 
   self.label_current_window_num = widget_label(self.base, value = 'Window ' + string(1, format = self.n_windows_format) + $
     ' of ' + string(1, format = self.n_windows_format))
@@ -261,7 +261,8 @@ END
 PRO spice_create_l3_progress__define
   COMPILE_OPT IDL2
 
-  struct = {spice_create_l3_progress, $
+  ; idl-disable-next-line unused-var
+  struct = {Spice_Create_L3_Progress, $
     n_files: 1, $ ; number of files to be processed
     i_file: -1, $ ; index of current file beginning at zero
     files: ptr_new(), $ ; list of files to be processed
