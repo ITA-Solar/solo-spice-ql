@@ -265,7 +265,7 @@ PRO rget_make_list::make_entry, file
      ELSE: BEGIN
         message,"Ooops: Not sure what this is:", /continue
         help, file_info
-        message, "Stopping"
+        ;message, "Stopping"
      END 
   END
 END
