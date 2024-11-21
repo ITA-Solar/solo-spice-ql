@@ -16,7 +16,7 @@
 ;      Solar Orbiter - SPICE; Utility.
 ;
 ; CALLING SEQUENCE:
-;      spice_create_l3_images, l3_file, out_dir [, smooth=smooth] [, /interpolation] $
+;      spice_create_l3_images, l3_file, out_dir [, smooth_width=smooth_width] [, /interpolation] $
 ;        [, version=version] [, /remove_trends] [, /no_background_images] $
 ;        [, /NO_TREE_STRUCT] [, /show_plot]
 ;
@@ -25,13 +25,13 @@
 ;      out_dir: The directory in which the images should be saved to.
 ;
 ; OPTIONAL INPUTS:
-;     SMOOTH: An integer. The width of the boxcar used when smoothing the
+;     SMOOTH_WIDTH: An integer. The width of the boxcar used when smoothing the
 ;             image using the smooth function. If not set no smoothing is performed.
 ;     VERSION: A string giving the version number of the file. Default is '01'.
 ;
 ; KEYWORDS:
 ;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
-;               This keyword should not be set, if SMOOTH input is provided.
+;               This keyword should not be set, if SMOOTH_WIDTH input is provided.
 ;     NO_TREE_STRUCT: If set, then the date tree structure won't be appended to OUT_DIR
 ;               (e.g. OUT_DIR/ instead of OUT_DIR/2020/06/21/)
 ;     SHOW_PLOT: If set, then the image is shown on the screen and not saved into a file.
@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-21 14:19 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -151,14 +151,14 @@ PRO spice_get_slit_region, l3_filename, result, startrow = startrow, endrow = en
   ENDELSE
 END
 
-PRO spice_create_l3_images, l3_file, out_dir, smooth = smooth, interpolation = interpolation, $
+PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, interpolation = interpolation, $
   version = version, remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend, $
   value_max = value_max, value_min = value_min, no_background_images = no_background_images, strongest_lines = strongest_lines, $
   reverse_colortable = reverse_colortable, no_tree_struct = no_tree_struct, show_plot = show_plot, quiet = quiet
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
   prits_tools.parcheck, version, 0, "version", 'STRing', 0, default = '01'
-  prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval = 0, /optional
+  prits_tools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
   prits_tools.parcheck, reverse_colortable, 0, 'reverse_colortable', 'int', 0, default = 0
 
   l3_filename = file_basename(l3_file)
@@ -183,14 +183,13 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth = smooth, interpolation = i
   oJpg = obj_new('spice_jpg')
 
   FOR iana = 0, n_elements(ana) - 1 DO BEGIN
-    handle_value, ana[iana].data_h, data ; ,/no_copy
-    handle_value, ana[iana].result_h, result ; ,/no_copy
-    handle_value, ana[iana].fit_h, fit ; ,/no_copy
+    handle_value, ana[iana].result_h, result
+    handle_value, ana[iana].fit_h, fit
 
     delete_analysis, ana[iana]
 
     hdr = fitshead2struct(*headers_results[iana])
-    dummy = readfits(l3_file, l2_header, ext = iana * 2 + 1, silent = quiet)
+    dummy = readfits(l3_file, l2_header, ext = iana * 2 + 1, silent = quiet) ; idl-disable-line unused-var
     ; check that there is more than one exposures
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing = 1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing = 1)
@@ -258,7 +257,6 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth = smooth, interpolation = i
 
             ; triggers call to eis_colors
             colortable = 100
-            background_color = 0
           END
           'width': BEGIN
             colortable = 68 ; 4
@@ -285,11 +283,11 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth = smooth, interpolation = i
         filename = filename_base2 + '-thumb.png'
         format = 'PNG'
         prits_tools.write_image_real_size, image_data, filename, $
-          remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, fit_trend = fit_trend, smooth = smooth, $
+          remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, fit_trend = fit_trend, smooth_width = smooth_width, $
           value_max = value_max, value_min = value_min, colortable = colortable, format = format, interpolation = interpolation, $
           height = 64, border = 0, reverse_colortable = reverse_colortable, $
           xrange1 = xrange1, yrange1 = yrange1, SCALE_TO_RANGE = SCALE_TO_RANGE, /no_axis, $
-          cutoff_threshold = cutoff_threshold, color_center_value = color_center_value, show_plot = show_plot
+          color_center_value = color_center_value, show_plot = show_plot
 
         ipartotal++
       ENDFOR ; ipar0,n_params-1
