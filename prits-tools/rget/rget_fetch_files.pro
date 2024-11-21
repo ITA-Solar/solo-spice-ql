@@ -35,34 +35,34 @@
 ;      Ver. 1, January 2021, Stein Haugan
 ;-
 
-FUNCTION rget_fetch_files::init, top_url, top_dir, username=username, password=password, $
-                                 debug=debug, verbose=verbose
-  dprint = self.rget_dprint::init(debug=debug, verbose=verbose)
-  
+FUNCTION rget_fetch_files::init, top_url, top_dir, username = username, password = password, $
+  debug = debug, verbose = verbose
+  dprint = self.rget_dprint::init(debug = debug, verbose = verbose)
+
   IF n_elements(username) EQ 0 THEN username = ''
   IF n_elements(password) EQ 0 THEN password = ''
-  
+
   self.d = dictionary()
-  
+
   full_topdir = (file_search(top_dir, /fully_qualify_path, /test_directory, /mark_directory))[0]
-  self.d.full_topdir = full_topdir.replace('\','/')
+  self.d.full_topdir = full_topdir.replace('\', '/')
   is_directory = self.d.full_topdir.endswith('/')
-  IF NOT is_directory THEN message, "Destination "  + top_dir + " is NOT a directory"
-  
+  IF NOT is_directory THEN message, "Destination " + top_dir + " is NOT a directory"
+
   IF NOT top_url.endswith('/') THEN top_url += '/'
   self.d.top_url = top_url
-  
+
   self.d.username = username
   self.d.password = password
-  
+
   self.make_fetch
 
   return, 1
 END
 
-;; IDL 8.5 messes up the (DY)LD_LIBRARY_PATHs - before spawning they
-;; must be blanked to run normal programs reliably
-;;
+; ; IDL 8.5 messes up the (DY)LD_LIBRARY_PATHs - before spawning they
+; ; must be blanked to run normal programs reliably
+; ;
 PRO rget_fetch_files::save_and_blank_library_paths
   self.d.ld_library_path = getenv("LD_LIBRARY_PATH")
   setenv, "LD_LIBRARY_PATH="
@@ -74,98 +74,91 @@ PRO rget_fetch_files::restore_library_paths
   setenv, "LD_LIBRARY_PATH=" + self.d.ld_library_path
   setenv, "DYLD_LIBRARY_PATH=" + self.d.dyld_library_path
 END
-  
-  
+
 FUNCTION rget_fetch_files::curl_credentials
   credentials = self.d.username
   IF credentials THEN credentials += ':' + self.d.password
   IF credentials THEN BEGIN
-     quotes = !version.os_family.tolower() eq "windows" ? '"' : "'"
-     credentials = "--user " + quotes + credentials + quotes
+    quotes = !version.os_family.tolower() EQ "windows" ? '"' : "'"
+    credentials = "--user " + quotes + credentials + quotes
   END
-  return,credentials
-end
-
+  return, credentials
+END
 
 PRO rget_fetch_files::create_file_if_necessary, temp_file, is_zero_length
   IF file_test(temp_file) THEN return
   IF NOT is_zero_length THEN BEGIN
-     self.info, "** Non-zero-length source file did not arrive, but curl status was 0", level = -2
-     self.info, "** Creating a zero-length file " + temp_file, level = -2
+    self.info, "** Non-zero-length source file did not arrive, but curl status was 0", level = -2
+    self.info, "** Creating a zero-length file " + temp_file, level = -2
   END ELSE BEGIN
-     self.info, "** Creating zero-length file " + temp_file, level = 1
+    self.info, "** Creating zero-length file " + temp_file, level = 1
   END
   openw, lun, temp_file, /get_lun
   free_lun, lun
 END
 
-
-PRO rget_fetch_files::spawn, command, stdout, stderr, exit_status=exit_status
-  IF !version.os_family ne 'unix' THEN BEGIN
-     spawn, command, stdout, stderr, exit_status=exit_status, /null_stdin, /noshell
+PRO rget_fetch_files::spawn, command, stdout, stderr, exit_status = exit_status
+  IF !version.os_family NE 'unix' THEN BEGIN
+    spawn, command, stdout, stderr, exit_status = exit_status, /null_stdin, /noshell
   END ELSE BEGIN
-     commands = strsplit(command, ' +', /regex, /extract)
-     commands = commands.replace("'", "")
-     commands = commands.replace("'", "")
-     spawn, commands, stdout, stderr, exit_status=exit_status, /null_stdin, /noshell
+    commands = strsplit(command, ' +', /regex, /extract)
+    commands = commands.replace("'", "")
+    commands = commands.replace("'", "")
+    spawn, commands, stdout, stderr, exit_status = exit_status, /null_stdin, /noshell
   END
 END
-
-
 
 FUNCTION rget_fetch_files::fetch_file, path, filename, is_zero_length
   url = self.d.top_url + path
   credentials = self.curl_credentials()
-  temp_file = filename+'.rget-tmp'
+  temp_file = filename + '.rget-tmp'
   curl = "curl --fail --remote-time"
   curl += " -o " + temp_file
   curl += " " + credentials
   curl += " " + url
-  self.dprint,"Executing: "+curl
-  
+  self.dprint, "Executing: " + curl
+
   self.save_and_blank_library_paths
-  self.spawn, curl, result, err,exit_status=exit_status
+  self.spawn, curl, result, err, exit_status = exit_status
   self.restore_library_paths
-  
+
   IF exit_status EQ 0 THEN BEGIN
-     self.create_file_if_necessary, temp_file, is_zero_length
-     file_move, temp_file, filename, /overwrite
-     return,1
+    self.create_file_if_necessary, temp_file, is_zero_length
+    file_move, temp_file, filename, /overwrite
+    return, 1
   END
 
-  ;; We don't want credentials to be piped to a log file:
-  IF credentials THEN curl = curl.replace(credentials,'--user <username>:<password>')
-  self.info, "** Error fetching "+url, level = -2
-  self.info, "** "+curl, level = -2
-  self.info, "** curl exit status: "+exit_status.toString(), level = -2
+  ; ; We don't want credentials to be piped to a log file:
+  IF credentials THEN curl = curl.replace(credentials, '--user <username>:<password>')
+  self.info, "** Error fetching " + url, level = -2
+  self.info, "** " + curl, level = -2
+  self.info, "** curl exit status: " + exit_status.toString(), level = -2
   self.info, "", level = -2
   return, 0
 END
 
-
 FUNCTION rget_fetch_files::file_is_ok, relative_path, remote_rget_file
   is_ok_so_far = self.d.local_hash.haskey(relative_path)
   IF is_ok_so_far THEN BEGIN
-     local_rget_file = self.d.local_hash[relative_path]
-     time_matches =  local_rget_file.time EQ remote_rget_file.time
-     size_matches = local_rget_file.size EQ remote_rget_file.size
-     exec_matches = local_rget_file.exec EQ remote_rget_file.exec
-     ignore_exec = !version.os_family.tolower() eq "windows"
-     IF NOT exec_matches AND ignore_exec THEN BEGIN
-        self.info,"Ignoring exec diff on Windows: " + relative_path
-     END
-     exec_matches = exec_matches OR ignore_exec
-     is_ok_so_far = time_matches AND time_matches AND exec_matches
+    local_rget_file = self.d.local_hash[relative_path]
+    time_matches = local_rget_file.time EQ remote_rget_file.time
+    size_matches = local_rget_file.size EQ remote_rget_file.size
+    exec_matches = local_rget_file.exec EQ remote_rget_file.exec
+    ignore_exec = !version.os_family.tolower() EQ "windows"
+    IF NOT exec_matches AND ignore_exec THEN BEGIN
+      self.info, "Ignoring exec diff on Windows: " + relative_path
+    END
+    exec_matches = exec_matches OR ignore_exec
+    is_ok_so_far = time_matches AND time_matches AND exec_matches
   END
   return, is_ok_so_far
 END
 
-
 PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   file_is_ok = self.file_is_ok(relative_path, remote_rget_file)
-  IF file_is_ok THEN BEGIN  
-     self.info, "Leave alone: " + relative_path, level = 1
-     return
+  IF file_is_ok THEN BEGIN
+    self.info, "Leave alone: " + relative_path, level = 1
+    return
   END
   remote_size_string = " (" + remote_rget_file.size.tostring() + "b)"
   remote_exe_string = remote_rget_file.exec EQ "x" ? " (executable)" : ""
@@ -176,29 +169,26 @@ PRO rget_fetch_files::maybe_fetch_file, relative_path, remote_rget_file
   IF result AND remote_rget_file.exec EQ "x" THEN file_chmod, output_path, /a_execute
 END
 
-
 PRO rget_fetch_files::make_directory, directory
   self.info, "Making directory " + self.d.full_topdir + directory
   file_mkdir, self.d.full_topdir + directory
 END
 
-
 PRO rget_fetch_files::do_fetches
-  foreach remote_entry, self.d.remote_hash, rem_key DO BEGIN
-     remote_key = rem_key
-     rem_key = rem_key + ''
-     entry_type = typename(remote_entry)
-     is_dir = remote_key.endswith('/') AND entry_type EQ "UNDEFINED"
-     CASE 1 OF
-        is_dir                            : self.make_directory, remote_key
-        entry_type EQ "RGET_FILE_STRUCT"  : self.maybe_fetch_file, remote_key, remote_entry
-     END
+  FOREACH remote_entry, self.d.remote_hash, rem_key DO BEGIN
+    remote_key = rem_key
+    rem_key = rem_key + ''
+    entry_type = typename(remote_entry)
+    is_dir = remote_key.endswith('/') AND entry_type EQ "UNDEFINED"
+    CASE 1 OF
+      is_dir: self.make_directory, remote_key
+      entry_type EQ "RGET_FILE_STRUCT": self.maybe_fetch_file, remote_key, remote_entry
+    END
   END
 END
 
-
 PRO rget_fetch_files::do_deletes
-  ;; Reverse order to ensure files are deleted before directories
+  ; ; Reverse order to ensure files are deleted before directories
   print, "Getting keys in reverse order"
   local_hash = self.d.local_hash
   stop
@@ -208,118 +198,110 @@ PRO rget_fetch_files::do_deletes
   local_keys_array = local_keys.toarray()
   print, "Got array"
   local_keys_reverse = reverse(local_keys_array)
-;  local_keys_reverse = reverse((self.d.local_hash.keys()).toarray())
+  ; local_keys_reverse = reverse((self.d.local_hash.keys()).toarray())
   print, "Got keys in reverse order"
-  foreach key, local_keys_reverse DO BEGIN
-     print, "Considering " + key
-     do_delete = ~ self.d.remote_hash.haskey(key)
-     local_type = typename(self.d.local_hash[key])
-     remote_type = do_delete ? "" : typename(self.d.remote_hash[key])
-     do_delete = do_delete || (local_type NE remote_type)
-     IF do_delete THEN BEGIN
-        self.info, "Deleting " + self.d.full_topdir + key
-        catch, err
-        IF err EQ 0 THEN file_delete, self.d.full_topdir + key
-        catch, /cancel
-        IF err NE 0 THEN self.info, "Could not delete " + self.d.full_topdir + key
-     END
+  FOREACH key, local_keys_reverse DO BEGIN
+    print, "Considering " + key
+    do_delete = ~self.d.remote_hash.haskey(key)
+    local_type = typename(self.d.local_hash[key])
+    remote_type = do_delete ? "" : typename(self.d.remote_hash[key])
+    do_delete = do_delete || (local_type NE remote_type)
+    IF do_delete THEN BEGIN
+      self.info, "Deleting " + self.d.full_topdir + key
+      catch, err
+      IF err EQ 0 THEN file_delete, self.d.full_topdir + key
+      catch, /cancel
+      IF err NE 0 THEN self.info, "Could not delete " + self.d.full_topdir + key
+    END
   END
 END
 
-
-FUNCTION rget_fetch_files::fetch_string_array,path
+FUNCTION rget_fetch_files::fetch_string_array, path
   url = self.d.top_url + path
   credentials = self.curl_credentials()
   curl = "curl " + credentials + " --fail " + url
-  self.info, "Executing: " + curl,/level
-  
+  self.info, "Executing: " + curl, /level
+
   self.save_and_blank_library_paths
-  spawn, curl, result, err_result, exit_status=exit_status, /null_stdin
+  spawn, curl, result, err_result, exit_status = exit_status, /null_stdin
   self.restore_library_paths
-  
-  if exit_status eq 0 then return, result
 
-  message,/continue,"curl error, exit status "+exit_status.toString()
-  print,curl
-  print,"Curl output:"
-  print,"  : "+result,format='(a)'
-  print,"Curl error output:"
-  print,"  : "+err_result
-  message,"Won't go on"
-end
+  IF exit_status EQ 0 THEN return, result
 
+  message, /continue, "curl error, exit status " + exit_status.toString()
+  print, curl
+  print, "Curl output:"
+  print, "  : " + result, format = '(a)'
+  print, "Curl error output:"
+  print, "  : " + err_result
+  message, "Won't go on"
+END
 
 PRO rget_fetch_files::fetch_rget_list
   rget_list = self.fetch_string_array("RGET-LIST")
-  self.info,"RGET-LIST: " + rget_list, format='(a)',/level
+  self.info, "RGET-LIST: " + rget_list, format = '(a)', /level
   IF rget_list[0] NE "#RGET-LIST" THEN BEGIN
-     message,"Remote RGET-LIST corrupt?",/CONTINUE
-     message,"First line is not '#RGET-LIST'",/CONTINUE
-     print," : "+rget_list,format='(a)'
-     message,"Can't continue"
+    message, "Remote RGET-LIST corrupt?", /CONTINUE
+    message, "First line is not '#RGET-LIST'", /CONTINUE
+    print, " : " + rget_list, format = '(a)'
+    message, "Can't continue"
   END
-  self.d.remote_array = rget_list[1:*]
+  self.d.remote_array = rget_list[1 : *]
   print, "Parsing RGET-LIST"
-  self.d.remote_hash = RGET_MAKE_LIST.list_as_hash(self.d.remote_array)
+  self.d.remote_hash = rget_make_list.list_as_hash(self.d.remote_array)
   print, "Done parsing RGET-LIST"
 END
 
-
 PRO rget_fetch_files::make_fetch
   self.info, "Making local file list"
-  self.d.local_array = rget_make_list(self.d.full_topdir, debug=0)
+  self.d.local_array = rget_make_list(self.d.full_topdir, debug = 0)
   self.d.local_hash = rget_make_list.list_as_hash(self.d.local_array)
   stop
   self.info, "Fetching remote file list"
   self.fetch_rget_list
-  self.info, "", "Doing deletes", "", format='(a)'
+  self.info, "", "Doing deletes", "", format = '(a)'
   self.do_deletes
-  self.info, "", "Doing fetches", "", format='(a)'
+  self.info, "", "Doing fetches", "", format = '(a)'
   self.do_fetches
 END
 
-
 PRO rget_fetch_files__define
-  ;; We use some static routines
+  ; ; We use some static routines
   resolve_routine, "rget_make_list", /compile_full_file
-  dummy = {rget_fetch_files, inherits rget_dprint, d: dictionary()}
+  dummy = {rget_fetch_files, INHERITS rget_dprint, d: dictionary()}
 END
 
+PRO rget_fetch_files, url, top_dir, debug = debug, user = user, password = password, verbose = verbose
+  o = obj_new('rget_fetch_files', url, top_dir, debug = debug, user = user, password = password, verbose = verbose)
+END
 
-PRO rget_fetch_files, url, top_dir, debug=debug, user=user, password=password, verbose=verbose
-  o = obj_new('rget_fetch_files', url, top_dir, debug=debug, user=user, password=password, verbose=verbose)
-END  
-
-
-PRO rget_fetch_files_test,debug=debug,verbose=verbose,delete=delete
+PRO rget_fetch_files_test, debug = debug, verbose = verbose, delete = delete
   !except = 2
   password = getenv("SPICE_PWD")
   user = 'spice'
-  IF n_elements(delete) EQ 0 THEN delete=0
-  
+  IF n_elements(delete) EQ 0 THEN delete = 0
+
   url = 'http://astro-sdc-db.uio.no/vol/spice/rget-test/simple'
-  top_dir = getenv("HOME")+"/rget-fetch-test-deleteme"
-  IF delete EQ 1 then file_delete, top_dir, /recursive, /allow_nonexist
-  IF delete EQ 2 then file_delete, top_dir+"/non-empty", /allow_nonexist
-  IF delete EQ 3 then file_delete, top_dir+"/subdir2",/recursive, /allow_nonexist
+  top_dir = getenv("HOME") + "/rget-fetch-test-deleteme"
+  IF delete EQ 1 THEN file_delete, top_dir, /recursive, /allow_nonexist
+  IF delete EQ 2 THEN file_delete, top_dir + "/non-empty", /allow_nonexist
+  IF delete EQ 3 THEN file_delete, top_dir + "/subdir2", /recursive, /allow_nonexist
   file_mkdir, top_dir
   file_chmod, top_dir, /u_write
-  
+
   print, "**********************************************************************"
   print, "**********************************************************************"
 
-  rget_fetch_files,url, top_dir, debug=debug, user = user, password = password,verbose=verbose
+  rget_fetch_files, url, top_dir, debug = debug, user = user, password = password, verbose = verbose
 END
 
 PRO rget_fetch_files_test_ssw
   tstart = systime(1)
-  rget_fetch_files,"https://sohowww.nascom.nasa.gov/solarsoft/","/astro/astro-sdc-fs/d1/sdc/roslo/rget_ssw",/verbose, /debug
-  tend =  systime(1)
-  print, "Fetch of SSW took: ", (tend - tstart)/60, "minutes"
-  
+  rget_fetch_files, "https://sohowww.nascom.nasa.gov/solarsoft/", "/astro/astro-sdc-fs/d1/sdc/roslo/rget_ssw", /verbose, /debug
+  tend = systime(1)
+  print, "Fetch of SSW took: ", (tend - tstart) / 60, "minutes"
 END
 
-IF getenv("USER") EQ "steinhh" THEN rget_fetch_files_test, debug=debug, verbose=verbose,delete=delete
+IF getenv("USER") EQ "steinhh" THEN rget_fetch_files_test, debug = debug, verbose = verbose, delete = delete
 
-end
-
+END
