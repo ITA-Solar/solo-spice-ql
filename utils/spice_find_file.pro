@@ -3,13 +3,13 @@
 ;     SPICE_FIND_FILE
 ;
 ; PURPOSE:
-;     This routine returns the path(s) and name(s) of SPICE raster files that correspond 
+;     This routine returns the path(s) and name(s) of SPICE raster files that correspond
 ;     to the specified time or lie within a given time window. The logic for what filename(s) is returned is as follows:
 ;
-;     If only the start time is given, then the file closest to that time is returned or, if SEQUENCE keyword is set, 
+;     If only the start time is given, then the file closest to that time is returned or, if SEQUENCE keyword is set,
 ;     all files with the same SPIOBSID as the file closest to that time are returned.
 ;
-;     If both, the end and start time are given, all files within the time window are returned or, 
+;     If both, the end and start time are given, all files within the time window are returned or,
 ;     if SEQUENCE keyword is set, all SPICE observations that have at least one file within the time window are returned.
 ;
 ; CATEGORY:
@@ -42,12 +42,12 @@
 ;               keyword allows you to specify which path should be searched. Default is 0.
 ;
 ; KEYWORD PARAMETERS:
-;     SEQUENCE: If set, then all files of the sequence that the found files belong to will 
-;               be returned, i.e. the time window to be searched is expanded to include files 
-;               outside of the given time window, but only sequences (= Spice observations) 
-;               that have at least one file in the given time window are returned. 
-;               If set and 'time_end' is provided, the returned value will be a LIST 
-;               in which each element is a string or string array with paths to SPICE FITS files 
+;     SEQUENCE: If set, then all files of the sequence that the found files belong to will
+;               be returned, i.e. the time window to be searched is expanded to include files
+;               outside of the given time window, but only sequences (= Spice observations)
+;               that have at least one file in the given time window are returned.
+;               If set and 'time_end' is provided, the returned value will be a LIST
+;               in which each element is a string or string array with paths to SPICE FITS files
 ;               that belong to the same sequence.
 ;     ALL:      If set, then all filenames for the specified day will be returned.
 ;               Ignored if TIME_END is provided or if NO_TREE_STRUCT or SEQUENCE is set.
@@ -68,9 +68,9 @@
 ;               REMOVE_DUPLICATES has to be set to zero explicitly to get all versions of a file.
 ;
 ; OUTPUTS:
-;     A string or string array containing the full path to a SPICE file or files. 
-;     If there are no matches, then an empty string is returned. If the keyword SEQUENCE is set 
-;     and time_end is provided, then a LIST is returned in which each element is a string or 
+;     A string or string array containing the full path to a SPICE file or files.
+;     If there are no matches, then an empty string is returned. If the keyword SEQUENCE is set
+;     and time_end is provided, then a LIST is returned in which each element is a string or
 ;     string array with paths to SPICE FITS files that belong to the same SPICE observation.
 ;
 ; OPTIONAL OUTPUTS:
@@ -100,30 +100,28 @@
 ;     Ver.3, 13-Dec-2023, Martin Wiesmann : Allows TIME_START to be a SPICE file instead of a time
 ;
 ;-
-; $Id: 2023-12-14 11:53 CET $
+; $Id: 2024-11-21 11:47 CET $
 
-
-FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
-  top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
-  search_subdir=search_subdir, ignore_time=ignore_time, remove_duplicates=remove_duplicates
-
+FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
+  top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $
+  all = all, sequence = sequence, no_level = no_level, no_tree_struct = no_tree_struct, user_dir = user_dir, $
+  search_subdir = search_subdir, ignore_time = ignore_time, remove_duplicates = remove_duplicates
   count_file = 0
   count_seq = 0
-  
+
   IF n_params() LT 1 THEN BEGIN
-    print,'Use:  IDL> Result = SPICE_FIND_FILE(time_start [, time_end=time_end, level=level, '
-    print,'       top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, '
-    print,'       /SEQUENCE, /ALL, /NO_LEVEL, /NO_TREE_STRUCT, /SEARCH_SUBDIR, /QUIET ] )'
-    print,''
-    print," Example time formats:  '28-may-2020 05:00', '2020-05-28 05:00'"
-    print,' Keywords:'
-    print,'   top_dir= The top directory in which the SPICE data lies'
-    print,'   level= The desired data level (default=2)'
-    print,'   /sequence  Return all files of the sequence
-    print,'   /all   Return all files for the specified day.'
-    print,'   count_file= The number of files found.'
-    return,''
+    print, 'Use:  IDL> Result = SPICE_FIND_FILE(time_start [, time_end=time_end, level=level, '
+    print, '       top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, '
+    print, '       /SEQUENCE, /ALL, /NO_LEVEL, /NO_TREE_STRUCT, /SEARCH_SUBDIR, /QUIET ] )'
+    print, ''
+    print, " Example time formats:  '28-may-2020 05:00', '2020-05-28 05:00'"
+    print, ' Keywords:'
+    print, '   top_dir= The top directory in which the SPICE data lies'
+    print, '   level= The desired data level (default=2)'
+    print, '   /sequence  Return all files of the sequence
+    print, '   /all   Return all files for the specified day.'
+    print, '   count_file= The number of files found.'
+    return, ''
   ENDIF
 
   IF ~valid_time(time_start) THEN BEGIN
@@ -135,43 +133,43 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     time_start_use = inputfile_info.datetime
     file_input = 1
     remove_duplicates = 0
-    IF N_ELEMENTS(level) EQ 0 THEN level = inputfile_info.level
+    IF n_elements(level) EQ 0 THEN level = inputfile_info.level
   ENDIF ELSE BEGIN
     time_start_use = time_start
     file_input = 0
   ENDELSE
-  IF N_ELEMENTS(level) EQ 0 THEN level = 2
+  IF n_elements(level) EQ 0 THEN level = 2
 
-  IF N_ELEMENTS(top_dir) eq 0 THEN BEGIN
-    topdir=getenv('SPICE_DATA')
+  IF n_elements(top_dir) EQ 0 THEN BEGIN
+    topdir = getenv('SPICE_DATA')
     IF topdir EQ '' THEN BEGIN
-      print,'% SPICE_FIND_FILE:  Please define the environment variable $SPICE_DATA to point to the '
-        print,'               top level of your directory structure.'
-      print,'               Or specify TOP_DIR. Returning...'
-      return,''
+      print, '% SPICE_FIND_FILE:  Please define the environment variable $SPICE_DATA to point to the '
+      print, '               top level of your directory structure.'
+      print, '               Or specify TOP_DIR. Returning...'
+      return, ''
     ENDIF
   ENDIF ELSE BEGIN
     topdir = top_dir
   ENDELSE
 
-  spice_paths=BREAK_path(topdir,/nocurrent)
-  np=n_elements(spice_paths)
-  IF np EQ 1 || N_ELEMENTS(path_index) eq 0 THEN BEGIN
-    topdir=spice_paths[0]
+  spice_paths = break_path(topdir, /nocurrent)
+  np = n_elements(spice_paths)
+  IF np EQ 1 || n_elements(path_index) EQ 0 THEN BEGIN
+    topdir = spice_paths[0]
   ENDIF ELSE BEGIN
     IF path_index LT np THEN BEGIN
-      topdir=spice_paths[path_index]
+      topdir = spice_paths[path_index]
     ENDIF ELSE BEGIN
-      print, 'index is out of bounds: ' + strtrim(string(path_index),2) + ' >= ' + strtrim(string(np),2)
-      return,''
+      print, 'index is out of bounds: ' + strtrim(string(path_index), 2) + ' >= ' + strtrim(string(np), 2)
+      return, ''
     ENDELSE
   ENDELSE
 
   IF keyword_set(user_dir) THEN topdir = concat_dir(topdir, 'user')
-  IF ~keyword_set(no_level) THEN topdir = concat_dir(topdir, 'level'+strtrim(string(level), 2))
-  
+  IF ~keyword_set(no_level) THEN topdir = concat_dir(topdir, 'level' + strtrim(string(level), 2))
+
   time0 = time_start_use
-  IF N_ELEMENTS(time_end) EQ 0 THEN BEGIN
+  IF n_elements(time_end) EQ 0 THEN BEGIN
     time1 = time0
     no_endtime = 1
   ENDIF ELSE BEGIN
@@ -179,7 +177,7 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     no_endtime = 0
   ENDELSE
   IF keyword_set(sequence) THEN BEGIN
-    time_window, [time0,time1], timeexp0, timeexp1, days=1 ; this expands input time +/- per user window
+    time_window, [time0, time1], timeexp0, timeexp1, days = 1 ; this expands input time +/- per user window
     time0 = timeexp0
     time1 = timeexp1
   ENDIF
@@ -188,10 +186,10 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
     dirs = ssw_time2paths(time0, time1, topdir)
     files1 = file_list(dirs, file_pattern, /quiet)
-    ind = where(files1 ne '', count1)
+    ind = where(files1 NE '', count1)
     file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits.gz'
     files2 = file_list(dirs, file_pattern, /quiet)
-    ind = where(files2 ne '', count2)
+    ind = where(files2 NE '', count2)
     count0 = count1 + count2
     files = []
     IF count1 GT 0 THEN BEGIN
@@ -206,9 +204,9 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
 
     file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.{fits,fits.gz}'
     IF keyword_set(search_subdir) THEN BEGIN
-      files = file_search(paths, file_pattern, count=count0)
+      files = file_search(paths, file_pattern, count = count0)
     ENDIF ELSE BEGIN
-      files = file_search(concat_dir(paths, file_pattern), count=count0)
+      files = file_search(concat_dir(paths, file_pattern), count = count0)
     ENDELSE
   ENDELSE
 
@@ -216,28 +214,27 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
     fileinfo = spice_file2info(files)
     fgood = where(fileinfo.is_spice_file, fcount)
     IF fcount GT 0 THEN BEGIN
-      files=files[fgood]
-      fileinfo=fileinfo[fgood]
-      count0=fcount
-    ENDIF ELSE count0=0
+      files = files[fgood]
+      fileinfo = fileinfo[fgood]
+      count0 = fcount
+    ENDIF ELSE count0 = 0
   ENDIF
 
   IF count0 EQ 0 THEN BEGIN
     print, 'no SPICE files found'
-    return,''
+    return, ''
   ENDIF
-  
-  
+
   IF keyword_set(remove_duplicates) || $
-    (no_endtime && ~keyword_set(all) && N_ELEMENTS(remove_duplicates) EQ 0) THEN BEGIN
+    (no_endtime && ~keyword_set(all) && n_elements(remove_duplicates) EQ 0) THEN BEGIN
     ; Remove duplicates of files
     ind_keep = []
     ind_keep_not = []
-    FOR i=0,count0-1 DO BEGIN
-      IF where(ind_keep eq i) GE 0 || where(ind_keep_not eq i) GE 0 THEN continue
-      ind = where(fileinfo.spiobsid eq fileinfo[i].spiobsid AND $
-        fileinfo.rasterno eq fileinfo[i].rasterno AND $
-        fileinfo.level eq fileinfo[i].level, count)
+    FOR i = 0, count0 - 1 DO BEGIN
+      IF where(ind_keep EQ i) GE 0 || where(ind_keep_not EQ i) GE 0 THEN CONTINUE
+      ind = where(fileinfo.spiobsid EQ fileinfo[i].spiobsid AND $
+        fileinfo.rasterno EQ fileinfo[i].rasterno AND $
+        fileinfo.level EQ fileinfo[i].level, count)
       IF count GT 1 THEN BEGIN
         max_version = max(fileinfo[ind].version, max_ind)
         ind_keep = [ind_keep, ind[max_ind]]
@@ -247,37 +244,35 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
         ind_keep = [ind_keep, i]
       ENDELSE
     ENDFOR
-    IF N_ELEMENTS(ind_keep_not) GT 0 THEN BEGIN
-      files=files[ind_keep]
-      fileinfo=fileinfo[ind_keep]
-      count0=N_ELEMENTS(ind_keep)
+    IF n_elements(ind_keep_not) GT 0 THEN BEGIN
+      files = files[ind_keep]
+      fileinfo = fileinfo[ind_keep]
+      count0 = n_elements(ind_keep)
     ENDIF
   ENDIF ; keyword_set(remove_duplicates)
 
-
   IF keyword_set(all) && ~keyword_set(no_tree_struct) && no_endtime && ~keyword_set(sequence) THEN BEGIN
     ; user wants all files of one specific day
-    count_file=count0
+    count_file = count0
     return, files
   ENDIF
 
-
   IF ~keyword_set(ignore_time) || ~keyword_set(no_tree_struct) THEN BEGIN
     ; we do not ignore the provided date/time (window)
-    startdate=utc2tai(time_start_use)
-    filedates=utc2tai(fileinfo.datetime)
+    startdate = utc2tai(time_start_use)
+    filedates = utc2tai(fileinfo.datetime)
 
     IF no_endtime THEN BEGIN
       ; user wants only one file, or one sequence, that is closest to provided date/time
-      temp = min(abs(filedates-startdate), min_index)
+      temp = min(abs(filedates - startdate), min_index)
       IF keyword_set(sequence) THEN BEGIN
-        same_obs_ind = where(fileinfo.spiobsid eq fileinfo[min_index].spiobsid, count_file)
+        same_obs_ind = where(fileinfo.spiobsid EQ fileinfo[min_index].spiobsid, count_file)
         files = files[same_obs_ind]
         count_seq = 1
-      ENDIF ELSE IF N_ELEMENTS(remove_duplicates) GT 0 && ~keyword_set(remove_duplicates) THEN BEGIN
-        ind = where(fileinfo.spiobsid eq fileinfo[min_index].spiobsid AND $
-          fileinfo.rasterno eq fileinfo[min_index].rasterno AND $
-          fileinfo.level eq fileinfo[min_index].level, count_file)
+      ENDIF ELSE IF n_elements(remove_duplicates) GT 0 && ~keyword_set(remove_duplicates) THEN BEGIN
+        ind = where(fileinfo.spiobsid EQ fileinfo[min_index].spiobsid AND $
+          fileinfo.rasterno EQ fileinfo[min_index].rasterno AND $
+          fileinfo.level EQ fileinfo[min_index].level, count_file)
         files = files[ind]
         fileinfo = fileinfo[ind]
       ENDIF ELSE BEGIN ; keyword_set(sequence)
@@ -285,58 +280,54 @@ FUNCTION spice_find_file, time_start, time_end=time_end, level=level, $
         count_file = 1
       ENDELSE ; keyword_set(sequence)
       IF file_input THEN BEGIN
-        ind = where(fileinfo.spiobsid eq inputfile_info.spiobsid AND $
-          fileinfo.rasterno eq inputfile_info.rasterno AND $
-          fileinfo.level eq level AND $
-          fileinfo.version eq inputfile_info.version, count_version)
+        ind = where(fileinfo.spiobsid EQ inputfile_info.spiobsid AND $
+          fileinfo.rasterno EQ inputfile_info.rasterno AND $
+          fileinfo.level EQ level AND $
+          fileinfo.version EQ inputfile_info.version, count_version)
         IF count_version GT 0 THEN files = files[ind] $
         ELSE files = ''
       ENDIF
       return, files
     ENDIF ; no_endtime
 
-    stopdate=utc2tai(time_end)
-    fgood=where((filedates ge startdate) AND (filedates le stopdate), fcount)
+    stopdate = utc2tai(time_end)
+    fgood = where((filedates GE startdate) AND (filedates LE stopdate), fcount)
     IF fcount EQ 0 THEN BEGIN
       print, 'no SPICE files found'
-      return,''
+      return, ''
     ENDIF
     IF keyword_set(sequence) THEN BEGIN
       all_obs = uniq(fileinfo[fgood].spiobsid, sort(fileinfo[fgood].spiobsid))
       all_obs = fileinfo[fgood[all_obs]].spiobsid
       seq_list = list()
-      count_seq = N_ELEMENTS(all_obs)
-      for i=0,count_seq-1 do begin
-        ftemp = where(fileinfo.spiobsid eq all_obs[i])
+      count_seq = n_elements(all_obs)
+      FOR i = 0, count_seq - 1 DO BEGIN
+        ftemp = where(fileinfo.spiobsid EQ all_obs[i])
         seq_list.add, files[ftemp]
-        count_file = count_file + N_ELEMENTS(ftemp)
-      endfor
-      return,seq_list
+        count_file = count_file + n_elements(ftemp)
+      ENDFOR
+      return, seq_list
     ENDIF ELSE BEGIN ; keyword_set(sequence)
       files = files[fgood]
       count_file = fcount
-      return,files
+      return, files
     ENDELSE ; keyword_set(sequence)
-
   ENDIF ELSE BEGIN ; ~keyword_set(ignore_time) || keyword_set(no_tree_struct)
     ; user wants to get all files, regardless of its observation date/time
     IF keyword_set(sequence) THEN BEGIN
       all_obs = uniq(fileinfo.spiobsid, sort(fileinfo.spiobsid))
       all_obs = fileinfo[all_obs].spiobsid
       seq_list = list()
-      count_seq = N_ELEMENTS(all_obs)
-      for i=0,count_seq-1 do begin
-        ftemp = where(fileinfo.spiobsid eq all_obs[i])
+      count_seq = n_elements(all_obs)
+      FOR i = 0, count_seq - 1 DO BEGIN
+        ftemp = where(fileinfo.spiobsid EQ all_obs[i])
         seq_list.add, files[ftemp]
-        count_file = count_file + N_ELEMENTS(ftemp)
-      endfor
-      return,seq_list
+        count_file = count_file + n_elements(ftemp)
+      ENDFOR
+      return, seq_list
     ENDIF ELSE BEGIN ; keyword_set(sequence)
       count_file = count0
-      return,files
+      return, files
     ENDELSE ; keyword_set(sequence)
-
   ENDELSE ; ~keyword_set(ignore_time) || keyword_set(no_tree_struct)
-
 END
-

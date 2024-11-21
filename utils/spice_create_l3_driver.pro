@@ -112,18 +112,16 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2024-01-11 15:38 CET $
+; $Id: 2024-11-21 11:47 CET $
 
-
-PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
-  top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-  all=all, sequence=sequence, no_level=no_level, no_tree_struct=no_tree_struct, user_dir=user_dir, $
-  search_subdir=search_subdir, ignore_time=ignore_time, $
-  no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
-  no_fitting=no_fitting, no_widget=no_widget, show_xcfit_block=show_xcfit_block, position=position, velocity=velocity, $
-  pipeline_dir=pipeline_dir, create_images=create_images, images_top_dir=images_top_dir, $
-  files_l3=files_l3, search_level3=search_level3, no_overwrite=no_overwrite
-
+PRO spice_create_l3_driver, time_start, time_end = time_end, l2_files = l2_files, $
+  top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $
+  all = all, sequence = sequence, no_level = no_level, no_tree_struct = no_tree_struct, user_dir = user_dir, $
+  search_subdir = search_subdir, ignore_time = ignore_time, $
+  no_masking = no_masking, approximated_slit = approximated_slit, no_line_list = no_line_list, $
+  no_fitting = no_fitting, no_widget = no_widget, show_xcfit_block = show_xcfit_block, position = position, velocity = velocity, $
+  pipeline_dir = pipeline_dir, create_images = create_images, images_top_dir = images_top_dir, $
+  files_l3 = files_l3, search_level3 = search_level3, no_overwrite = no_overwrite
   prits_tools.parcheck, time_start, 1, "time_start", 'time', 0
   prits_tools.parcheck, time_end, 0, "time_end", ['time', 'undefined'], 0
   prits_tools.parcheck, l2_files, 0, "l2_files", ['string', 'undefined'], [0, 1]
@@ -132,78 +130,72 @@ PRO spice_create_l3_driver, time_start, time_end=time_end, l2_files=l2_files, $
   prits_tools.parcheck, velocity, 0, "velocity", ['NUMERIC', 'undefined'], 0
   prits_tools.parcheck, images_top_dir, 0, "images_top_dir", ['string', 'undefined'], 0
 
-  IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
+  IF ~arg_present(no_line_list) THEN no_line_list = 1 ; See note for this keyword in documentation
 
   IF ~keyword_set(l2_files) THEN BEGIN
-
-    IF keyword_set(search_level3) THEN level=3 ELSE level=2
-    files = SPICE_FIND_FILE(time_start, time_end=time_end, level=level, $
-      top_dir=top_dir, path_index=path_index, count_file=count_file, count_seq=count_seq, $
-      SEQUENCE=SEQUENCE, ALL=ALL, NO_LEVEL=NO_LEVEL, NO_TREE_STRUCT=NO_TREE_STRUCT, USER_DIR=USER_DIR, $
-      SEARCH_SUBDIR=SEARCH_SUBDIR, IGNORE_TIME=IGNORE_TIME)
+    IF keyword_set(search_level3) THEN level = 3 ELSE level = 2
+    files = spice_find_file(time_start, time_end = time_end, level = level, $
+      top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $
+      SEQUENCE = sequence, ALL = all, NO_LEVEL = no_level, NO_TREE_STRUCT = no_tree_struct, USER_DIR = user_dir, $
+      SEARCH_SUBDIR = search_subdir, IGNORE_TIME = ignore_time)
 
     IF keyword_set(sequence) THEN BEGIN
-      files = files.toArray(dimension=1)
+      files = files.toArray(dimension = 1)
     ENDIF
-
   ENDIF ELSE BEGIN
-    count_file = N_ELEMENTS(l2_files)
+    count_file = n_elements(l2_files)
     files = l2_files
   ENDELSE
 
-  IF ~keyword_set(no_widget) THEN progress_widget=spice_create_l3_progress(files=files)
+  IF ~keyword_set(no_widget) THEN progress_widget = spice_create_l3_progress(files = files)
 
   files_l3 = []
-  FOR ifile=0,count_file-1 DO BEGIN
-
+  FOR ifile = 0, count_file - 1 DO BEGIN
     IF ~keyword_set(search_level3) THEN BEGIN
-
       l2_file = files[ifile]
-      print, 'LEVEL 2: '+l2_file
+      print, 'LEVEL 2: ' + l2_file
 
       do_create_l3 = 1
       IF keyword_set(no_overwrite) THEN BEGIN
         filename_l3 = l2_file.replace('_L2_', '_L3_')
         filename_l3 = file_basename(filename_l3)
-        spice_ingest, filename_l3, destination=destination, file_moved=file_moved, $
-          user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /dry_run, /quiet
+        spice_ingest, filename_l3, destination = destination, file_moved = file_moved, $
+          user_dir = ~keyword_set(official_l3dir), top_dir = top_dir, path_index = path_index, /dry_run, /quiet
         IF ~file_moved[0] THEN BEGIN
           print, 'level 3 file already exists, not doing it again.'
-          spice_ingest, filename_l3, destination=destination, /force, $
-            user_dir=~keyword_set(official_l3dir), top_dir=top_dir, path_index=path_index, /dry_run, /quiet
+          spice_ingest, filename_l3, destination = destination, /force, $
+            user_dir = ~keyword_set(official_l3dir), top_dir = top_dir, path_index = path_index, /dry_run, /quiet
           l3_file = destination[0]
           do_create_l3 = 0
         ENDIF
       ENDIF
 
       IF do_create_l3 THEN BEGIN
-        l2_object = spice_get_object(l2_file, is_spice=is_spice, object_created=object_created)
-        IF ~is_spice THEN continue
+        l2_object = spice_get_object(l2_file, is_spice = is_spice, object_created = object_created)
+        IF ~is_spice THEN CONTINUE
 
-        l3_file = l2_object->create_l3_file(no_masking=no_masking, approximated_slit=approximated_slit, $
-          no_fitting=no_fitting, no_widget=no_widget, no_xcfit_block=~keyword_set(show_xcfit_block), position=position, velocity=velocity, $
-          pipeline_dir=pipeline_dir, top_dir=top_dir, path_index=path_index, progress_widget=progress_widget)
+        l3_file = l2_object.create_l3_file(no_masking = no_masking, approximated_slit = approximated_slit, $
+          no_fitting = no_fitting, no_widget = no_widget, no_xcfit_block = ~keyword_set(show_xcfit_block), position = position, velocity = velocity, $
+          pipeline_dir = pipeline_dir, top_dir = top_dir, path_index = path_index, progress_widget = progress_widget)
       ENDIF ELSE BEGIN
-        IF ~keyword_set(no_widget) THEN progress_widget->next_file, 1
+        IF ~keyword_set(no_widget) THEN progress_widget.next_file, 1
       ENDELSE
 
-      IF progress_widget->halted() THEN return
+      IF progress_widget.halted() THEN return
 
       files_l3 = [files_l3, l3_file]
     ENDIF ELSE BEGIN
       l3_file = files[ifile]
     ENDELSE
 
-    print, 'LEVEL 3: '+l3_file
+    print, 'LEVEL 3: ' + l3_file
 
     IF keyword_set(create_images) THEN BEGIN
-      spice_ingest, l3_file, destination=destination, /force, $
-        user_dir=~keyword_set(official_l3dir), top_dir=images_top_dir, path_index=path_index, /dry_run, /quiet
+      spice_ingest, l3_file, destination = destination, /force, $
+        user_dir = ~keyword_set(official_l3dir), top_dir = images_top_dir, path_index = path_index, /dry_run, /quiet
       out_dir = file_dirname(destination[0], /mark_directory)
       out_dir = out_dir.replace('level3', 'images')
       spice_create_l3_images, l3_file, out_dir, /NO_TREE_STRUCT
     ENDIF
-
   ENDFOR
-
 END

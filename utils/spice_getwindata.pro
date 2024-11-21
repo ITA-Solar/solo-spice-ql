@@ -143,7 +143,7 @@
 ;       Version 3, 25-Jan-2022, Terje Fredvik. Added keyword nodumbell, if set
 ;         mask any pixels with contributions from the dumbbells, or any other
 ;         pixels below or above the narrow slit. Added keyword
-;         approximated_slit, if set (when slit_only is set) use a quicker way 
+;         approximated_slit, if set (when slit_only is set) use a quicker way
 ;         of estimating the pixels to be masked
 ;       Ver.4, 18-Jul-2023, Peter Young
 ;         Compute error using method of Z. Huang et al. (2023, A&A).
@@ -153,51 +153,47 @@
 ;         Added hdr.date_end and hdr.tdetx to the output structure for
 ;         compatibility with EIS software.
 ;-
-; $Id: 2024-11-12 11:38 EST $
+; $Id: 2024-11-21 11:47 CET $
 
-FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
-  clean=clean, wrange=wrange, verbose=verbose, $
-  ixrange=ixrange, normalize=normalize, quiet=quiet, $
-  calib=calib, perang=perang, no_masking=no_masking, approximated_slit=approximated_slit
-
-
-
+FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $
+  clean = clean, wrange = wrange, verbose = verbose, $
+  ixrange = ixrange, normalize = normalize, quiet = quiet, $
+  calib = calib, perang = perang, no_masking = no_masking, approximated_slit = approximated_slit
   IF n_params() EQ 0 THEN BEGIN
-    print,'Use:  IDL> wd=spice_getwindata( filename, i)'
-    print,'               where i is the index of the window'
-    print,'Or:   IDL> wd=spice_getwindata( filename, wvl)'
-    print,'               where wvl is the desired wavelength'
-    print,''
-    print,'Optional inputs:'
-    print,'   /keep_sat - do not flag saturated data as missing'
-    print,'   /clean    - clean window of cosmic rays with new_spike'
-    print,'   wrange=   - specify a subset of wavelength range to load'
-    print,'   ixrange=  - specify a subset of X (exposures) to load'
-    print,'   calib=    - apply IRIS radiometric calibration'
-    print,'   perang=   - (if /calib set) intensity given in per-Angstrom units'
-    return,-1
+    print, 'Use:  IDL> wd=spice_getwindata( filename, i)'
+    print, '               where i is the index of the window'
+    print, 'Or:   IDL> wd=spice_getwindata( filename, wvl)'
+    print, '               where wvl is the desired wavelength'
+    print, ''
+    print, 'Optional inputs:'
+    print, '   /keep_sat - do not flag saturated data as missing'
+    print, '   /clean    - clean window of cosmic rays with new_spike'
+    print, '   wrange=   - specify a subset of wavelength range to load'
+    print, '   ixrange=  - specify a subset of X (exposures) to load'
+    print, '   calib=    - apply IRIS radiometric calibration'
+    print, '   perang=   - (if /calib set) intensity given in per-Angstrom units'
+    return, -1
   ENDIF
 
-  t0=systime(1)
+  t0 = systime(1)
 
   ;
   ; Check if a filename or object is being input.
   ;
   IF datatype(input_file) EQ 'STR' THEN BEGIN
-    swtch=0
+    swtch = 0
     IF n_elements(input_file) GT 1 THEN BEGIN
-      print,'% SPICE_GETWINDATA: only a single filename can be specified. Please check your inputs.'
-      print,'                   Returning...'
-      return,-1
+      print, '% SPICE_GETWINDATA: only a single filename can be specified. Please check your inputs.'
+      print, '                   Returning...'
+      return, -1
     ENDIF
-    d=spice_data(input_file[0])
-    filename=input_file[0]
+    d = spice_data(input_file[0])
+    filename = input_file[0]
   ENDIF ELSE BEGIN
-    swtch=1
-    d=input_file
-    filename=d->get_filename()
+    swtch = 1
+    d = input_file
+    filename = d.get_filename()
   ENDELSE
-
 
   ;
   ; If input_iwin wasn't specified then the following asks the
@@ -205,83 +201,78 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; then this will be interpreted as round(1.3)=1.
   ;
   IF n_params() EQ 1 THEN BEGIN
-    print,'% SPICE_GETWINDATA: Please choose a window from the following:'
-    nwin=d->get_number_windows()
-    d->show_lines
-    ans=''
-    read,ans,prompt='Choose number from 0 to '+trim(nwin-1)+': '
+    print, '% SPICE_GETWINDATA: Please choose a window from the following:'
+    nwin = d.get_number_windows()
+    d.show_lines
+    ans = ''
+    read, ans, prompt = 'Choose number from 0 to ' + trim(nwin - 1) + ': '
     IF is_number(ans) THEN BEGIN
-      ans=fix(ans)
-      IF ans GE 0 && ans LT nwin THEN input_iwin=round(ans) ELSE input_iwin=-1
+      ans = fix(ans)
+      IF ans GE 0 && ans LT nwin THEN input_iwin = round(ans) ELSE input_iwin = -1
     ENDIF ELSE BEGIN
-      input_iwin=-1
+      input_iwin = -1
     ENDELSE
     IF input_iwin EQ -1 THEN BEGIN
-      print,'% SPICE_GETWINDATA: invalid input. Returning...'
-      return,-1
+      print, '% SPICE_GETWINDATA: invalid input. Returning...'
+      return, -1
     ENDIF
   ENDIF
 
   ;
   ; Get spatial binning factor
   ;
-  ;ybin=d->getinfo('SUMSPAT')
-
+  ; ybin=d->getinfo('SUMSPAT')
 
   ;
   ; The object codes will actually change input_iwin from a wavelength
   ; to an index, so the line below defines the index iwin based on what
   ; the user has input. Therefore input_iwin will not be modified.
   ;
-  iwin = (d->get_window_index(input_iwin))[0]
+  iwin = (d.get_window_index(input_iwin))[0]
 
   IF iwin EQ -1 THEN BEGIN
-    print,'% SPICE_GETWINDATA:  wavelength not found in data-set. Returning...'
-    return,-1
+    print, '% SPICE_GETWINDATA:  wavelength not found in data-set. Returning...'
+    return, -1
   ENDIF
 
   ;
   ; Extract the data array.
-  wd = d->get_window_data(iwin, no_masking=no_masking, approximated_slit=approximated_slit)
+  wd = d.get_window_data(iwin, no_masking = no_masking, approximated_slit = approximated_slit)
 
   ;
   ; SPICE missing data are set to NaN in level 2, so these get set to the
   ; missing value. I also set any negative numbers to missing, too.
   ;
-  ;missing_val = d->get_missing_value()
+  ; missing_val = d->get_missing_value()
   missing_val = -100.
-  k=where(~finite(wd) OR wd LE 0.,nk)
-  IF nk NE 0 THEN wd[k]=missing_val
+  k = where(~finite(wd) OR wd LE 0., nk)
+  IF nk NE 0 THEN wd[k] = missing_val
 
-
-  t1=systime(1)
+  t1 = systime(1)
 
   ;
   ; Get dimensions of array. Note that at this point X and Y are swapped
   ; in WD (this is fixed later).
   ;
-  s=size(wd,/dim)
-  nl=s[2]
-  IF d->get_sit_and_stare() THEN nx=s[3] ELSE nx=s[0]
-  ny=s[1]
-
+  s = size(wd, /dim)
+  nl = s[2]
+  IF d.get_sit_and_stare() THEN nx = s[3] ELSE nx = s[0]
+  ny = s[1]
 
   IF n_elements(ixrange) NE 0 THEN BEGIN
-    ix0=max([0,ixrange[0]])
-    ix1=min([nx-1,ixrange[1]])
-    IF d->get_sit_and_stare() THEN wd=wd[*,*,*,ix0:ix1] ELSE wd=wd[ix0:ix1,*,*,*]
-    nx=ix1-ix0+1
-    IF NOT keyword_set(quiet) THEN print,'% SPICE_GETWINDATA: Warning - the windata.xcen tag does not take account of the sub-range selected by IXRANGE.'
+    ix0 = max([0, ixrange[0]])
+    ix1 = min([nx - 1, ixrange[1]])
+    IF d.get_sit_and_stare() THEN wd = wd[*, *, *, ix0 : ix1] ELSE wd = wd[ix0 : ix1, *, *, *]
+    nx = ix1 - ix0 + 1
+    IF NOT keyword_set(quiet) THEN print, '% SPICE_GETWINDATA: Warning - the windata.xcen tag does not take account of the sub-range selected by IXRANGE.'
   ENDIF ELSE BEGIN
-    ix0=0
-    ix1=nx-1
+    ix0 = 0
+    ix1 = nx - 1
   ENDELSE
 
-
-  IF nl GE 2048 AND (nx*ny) GE 1e5 AND n_elements(wrange) EQ 0 THEN BEGIN
-    IF NOT keyword_set(quiet) THEN print,'% SPICE_GETWINDATA: this is a huge data-set! Please consider using WRANGE= to pick out a sub-range in the wavelength dimension.'
+  IF nl GE 2048 AND (nx * ny) GE 1e5 AND n_elements(wrange) EQ 0 THEN BEGIN
+    IF NOT keyword_set(quiet) THEN print, '% SPICE_GETWINDATA: this is a huge data-set! Please consider using WRANGE= to pick out a sub-range in the wavelength dimension.'
   ENDIF
-
 
   ;
   ; For computing the photons in an efficient way I need a 3D array of
@@ -291,155 +282,147 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; modifies WD making the routine significantly quicker from this point
   ; on.
   ;
-  lam=d->get_lambda_vector(iwin)
+  lam = d.get_lambda_vector(iwin)
   IF n_elements(wrange) NE 0 THEN BEGIN
-    k=where(lam GE wrange[0] AND lam LE wrange[1],nk)
+    k = where(lam GE wrange[0] AND lam LE wrange[1], nk)
     IF nk NE 0 THEN BEGIN
-      lam=lam[k]
-      nl=nk
-      wd=wd[*,*,k,*]
+      lam = lam[k]
+      nl = nk
+      wd = wd[*, *, k, *]
     ENDIF ELSE BEGIN
-      print,'% SPICE_GETWINDATA: the input WRANGE is not consistent with the wavelength window. Returning...'
-      return,-1
+      print, '% SPICE_GETWINDATA: the input WRANGE is not consistent with the wavelength window. Returning...'
+      return, -1
     ENDELSE
   ENDIF
-  wvl_arr=fltarr(nl,nx,ny,/nozero)
-  wvl_arr_2d=lam#(fltarr(ny)+1.)
-  FOR i=0,nx-1 DO wvl_arr[*,i,*]=wvl_arr_2d
-
+  wvl_arr = fltarr(nl, nx, ny, /nozero)
+  wvl_arr_2d = lam # (fltarr(ny) + 1.)
+  FOR i = 0, nx - 1 DO wvl_arr[*, i, *] = wvl_arr_2d
 
   ;
   ; Need to swap the X and Y dimensions in the array.
   ; For large files this can be very slow, but transpose is about a
   ; factor two quicker than rearrange (SSW routine).
   ;
-  ;wd=rearrange(temporary(wd),[1,3,2])
-  IF d->get_sit_and_stare() THEN wd=transpose(temporary(wd),[2,3,1]) $
-  ELSE wd=transpose(temporary(wd),[2,0,1])
-
+  ; wd=rearrange(temporary(wd),[1,3,2])
+  IF d.get_sit_and_stare() THEN wd = transpose(temporary(wd), [2, 3, 1]) $
+  ELSE wd = transpose(temporary(wd), [2, 0, 1])
 
   IF keyword_set(clean) THEN BEGIN
-    new_spike,wd,wdout,/neighbours,missing=missing_val
-    wd=temporary(wdout)
+    new_spike, wd, wdout, /neighbours, missing = missing_val
+    wd = temporary(wdout)
   ENDIF
 
   ;
   ; Identify which wavelength region we have ('fuv' or 'nuv')
   ;
-  ;reg=d->getregion(iwin)
-
-
+  ; reg=d->getregion(iwin)
 
   ;
-  ; Note that a pixel with negative DN is not assigned a photon noise error: 
+  ; Note that a pixel with negative DN is not assigned a photon noise error:
   ; it will only get a read noise error.
   ;
-  k=where(wd GT missing_val AND wd LT -1000,nk)
-  IF nk NE 0 THEN wd[k]=missing_val
-
+  k = where(wd GT missing_val AND wd LT -1000, nk)
+  IF nk NE 0 THEN wd[k] = missing_val
 
   ;
   ; Below I extract time information.
-  ;   - getti_1() seems to be the same as gettime() which is mentioned
-  ;     in the IRIS user guide.
-  ;   - ti2utc() rounds the time to the nearest second so it's
-  ;     better to use ti2tai()
-  ;   - ti2 is the shutter close time, but I don't actually put
-  ;     it in the windata output.
+  ; - getti_1() seems to be the same as gettime() which is mentioned
+  ; in the IRIS user guide.
+  ; - ti2utc() rounds the time to the nearest second so it's
+  ; better to use ti2tai()
+  ; - ti2 is the shutter close time, but I don't actually put
+  ; it in the windata output.
   ;
-  ti1=d->get_time_vector(iwin)
-  ;ti2=d->getti_2(iwin)
+  ti1 = d.get_time_vector(iwin)
+  ; ti2=d->getti_2(iwin)
 
-  time=ti1
+  time = ti1
 
-  ti1=anytim2tai(d->get_start_time())+ti1
-  ;ti2=d->ti2tai(ti2)
+  ti1 = anytim2tai(d.get_start_time()) + ti1
+  ; ti2=d->ti2tai(ti2)
 
-  ti1=anytim2utc(ti1,/ccsds)
-  ;ti2=anytim2utc(ti2,/ccsds)
+  ti1 = anytim2utc(ti1, /ccsds)
+  ; ti2=anytim2utc(ti2,/ccsds)
 
   ;
   ; The following adds some EIS tags to the header structure. Some are
   ; just set to zero, but others have real values that are used in the
   ; software.
   ;
-  hdr=d->get_header(iwin, /structure)
-  hdr2=add_tag(hdr,0,'YWS')
-  hdr=temporary(hdr2)
-  hdr2=add_tag(hdr,0,'RAST_ID')
-  hdr=temporary(hdr2)
-  hdr2=add_tag(hdr,0,'NRASTER')
-  hdr=temporary(hdr2)
-  hdr.nraster=1-(d->get_sit_and_stare())
-  hdr2=add_tag(hdr,0,'SLIT_IND')
-  hdr=temporary(hdr2)
-  hdr.slit_ind=5    ; note EIS slits are numbered 0-3, IRIS is 4
-  hdr2=add_tag(hdr,ny,'YW')
-  hdr=temporary(hdr2)
-  hdr2=add_tag(hdr,hdr.DATE_D$END,'DATE_END')
-  hdr=temporary(hdr2)
-  hdr2=add_tag(hdr,0,'TDETX')
-  hdr=temporary(hdr2)
- 
+  hdr = d.get_header(iwin, /structure)
+  hdr2 = add_tag(hdr, 0, 'YWS')
+  hdr = temporary(hdr2)
+  hdr2 = add_tag(hdr, 0, 'RAST_ID')
+  hdr = temporary(hdr2)
+  hdr2 = add_tag(hdr, 0, 'NRASTER')
+  hdr = temporary(hdr2)
+  hdr.nraster = 1 - (d.get_sit_and_stare())
+  hdr2 = add_tag(hdr, 0, 'SLIT_IND')
+  hdr = temporary(hdr2)
+  hdr.slit_ind = 5 ; note EIS slits are numbered 0-3, IRIS is 4
+  hdr2 = add_tag(hdr, ny, 'YW')
+  hdr = temporary(hdr2)
+  hdr2 = add_tag(hdr, hdr.DATE_D$END, 'DATE_END')
+  hdr = temporary(hdr2)
+  hdr2 = add_tag(hdr, 0, 'TDETX')
+  hdr = temporary(hdr2)
+
   ;
   ; The keyword 'nexp_prp' is not consistent with EIS, as a 100 exposure
   ; sit-and-stare will be set to nexp_prp=100 whereas for EIS it would
   ; be 1. It seems nexp_prp is always 1 for IRIS so I'm just
-  ; going to set it to 1. This keyword does not exist in SPICE, so we 
+  ; going to set it to 1. This keyword does not exist in SPICE, so we
   ; have to add it. Same for nexp.
   ;
-  hdr2=add_tag(hdr,0,'NEXP_PRP')
-  hdr=temporary(hdr2)
-  hdr.nexp_prp=1
-  hdr2=add_tag(hdr,0,'NEXP')
-  hdr=temporary(hdr2)
-  hdr.nexp=d->get_number_exposures(iwin)
-
+  hdr2 = add_tag(hdr, 0, 'NEXP_PRP')
+  hdr = temporary(hdr2)
+  hdr.nexp_prp = 1
+  hdr2 = add_tag(hdr, 0, 'NEXP')
+  hdr = temporary(hdr2)
+  hdr.nexp = d.get_number_exposures(iwin)
 
   ;
   ; Compute error using method of Z. Huang et al. (2023, A&A).
   ;
   ; Set various calibration parameters:
-  alpha=hdr.radcal
-  np=hdr.nbin
-  t=hdr.xposure
+  alpha = hdr.radcal
+  np = hdr.nbin
+  t = hdr.xposure
   IF mean(lam) GT 900. THEN BEGIN
-    f=1.6
-    g=0.57
-    sig_read=6.9
-    i_dark=0.54
+    f = 1.6
+    g = 0.57
+    sig_read = 6.9
+    i_dark = 0.54
   ENDIF ELSE BEGIN
-    f=1.0
-    g=3.58
-    sig_read=6.9
-    i_dark=0.89
+    f = 1.0
+    g = 3.58
+    sig_read = 6.9
+    i_dark = 0.89
   ENDELSE
   ;
-  err=wd
-  ind_good=where(wd NE missing_val, n_good, complement=ind_miss, ncomplement=n_miss)
-  IF n_good GT 0 THEN err[ind_good]=sqrt( f^2*alpha*wd[ind_good]*g + np*sig_read^2 + np*i_dark*t ) / alpha
-  IF n_miss GT 0 THEN err[ind_miss]=missing_val
-
+  err = wd
+  ind_good = where(wd NE missing_val, n_good, complement = ind_miss, ncomplement = n_miss)
+  IF n_good GT 0 THEN err[ind_good] = sqrt(f ^ 2 * alpha * wd[ind_good] * g + np * sig_read ^ 2 + np * i_dark * t) / alpha
+  IF n_miss GT 0 THEN err[ind_miss] = missing_val
 
   ;
   ; Convert to erg/cm2/s/sr/Ang
   ;
-  wd[ind_good]=wd[ind_good]*100.
-  err[ind_good]=err[ind_good]*100.
-  units='erg/cm2/s/sr/Ang'
-  ;units=d->get_variable_unit()
+  wd[ind_good] = wd[ind_good] * 100.
+  err[ind_good] = err[ind_good] * 100.
+  units = 'erg/cm2/s/sr/Ang'
+  ; units=d->get_variable_unit()
 
   ;
   ; Convert to angstroms
   ;
-  lam=lam*10.
-
+  lam = lam * 10.
 
   ;
   ; Get satellite roll angle
   ;
-  roll_angle=d->get_satellite_rotation()
-  if N_ELEMENTS(roll_angle) eq 0 then roll_angle=0
+  roll_angle = d.get_satellite_rotation()
+  IF n_elements(roll_angle) EQ 0 THEN roll_angle = 0
 
   ;
   ; The satellite roll angle potentially messes up xpos, ypos, etc. My
@@ -452,117 +435,109 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat=keep_sat, $
   ; degrees to now take the X and Y step-sizes from CDELT3 and CDELT2,
   ; respectively. (Previously I was setting the step sizes to 1, which
   ; caused problems for other routines.)
-  ; 
+  ;
   ; TODO: use wcs to get xpos and ypos?
   ;
   IF abs(roll_angle) LT 5.0 THEN BEGIN
-    xpos=d->get_instr_x_vector(iwin)
-    ypos=d->get_instr_y_vector(iwin)
-    IF d->get_sit_AND_stare() EQ 1 THEN xscale=1.0 ELSE BEGIN
+    xpos = d.get_instr_x_vector(iwin)
+    ypos = d.get_instr_y_vector(iwin)
+    IF d.get_sit_AND_stare() EQ 1 THEN xscale = 1.0 ELSE BEGIN
       IF nx GT 1 THEN BEGIN
-        xscale=median(xpos[1:nx-1]-xpos[0:nx-2])
+        xscale = median(xpos[1 : nx - 1] - xpos[0 : nx - 2])
       ENDIF ELSE BEGIN
-        xscale=1.0
+        xscale = 1.0
       ENDELSE
     ENDELSE
-    yscale=median(ypos[1:ny-1]-ypos[0:ny-2])
-    scale=[xscale,yscale]
-    xpos=xpos[ix0:ix1]
+    yscale = median(ypos[1 : ny - 1] - ypos[0 : ny - 2])
+    scale = [xscale, yscale]
+    xpos = xpos[ix0 : ix1]
   ENDIF ELSE BEGIN
-    dx=d->get_header_keyword('CDELT1',iwin)   ; perpendicular to slit
-    dy=d->get_header_keyword('CDELT2',iwin)   ; along slit
-    IF d->get_sit_AND_stare() EQ 1 THEN xpos=fltarr(nx)+0 ELSE xpos=findgen(nx)*dx
-    ypos=findgen(ny)*dy
-    scale=[dx,dy]
+    dx = d.get_header_keyword('CDELT1', iwin) ; perpendicular to slit
+    dy = d.get_header_keyword('CDELT2', iwin) ; along slit
+    IF d.get_sit_AND_stare() EQ 1 THEN xpos = fltarr(nx) + 0 ELSE xpos = findgen(nx) * dx
+    ypos = findgen(ny) * dy
+    scale = [dx, dy]
   ENDELSE
 
-
-  exp_time = make_array(d->get_number_exposures(iwin), value=d->get_exposure_time(iwin))
-
-
+  exp_time = make_array(d.get_number_exposures(iwin), value = d.get_exposure_time(iwin))
 
   ;
   ; If /normalize is set, then divide the intensity array by the
   ; exposure time. Don't do this if /calib has been set, though.
   ;
   IF keyword_set(normalize) AND NOT keyword_set(calib) THEN BEGIN
-    FOR i=0,nx-1 DO BEGIN
-      exp_img=wd[*,i,*]
-      k=where(exp_img NE missing_val,nk)
-      IF nk NE 0 THEN exp_img[k]=exp_img[k]/exp_time[ix0+i]
-      wd[*,i,*]=temporary(exp_img)
+    FOR i = 0, nx - 1 DO BEGIN
+      exp_img = wd[*, i, *]
+      k = where(exp_img NE missing_val, nk)
+      IF nk NE 0 THEN exp_img[k] = exp_img[k] / exp_time[ix0 + i]
+      wd[*, i, *] = temporary(exp_img)
     ENDFOR
-    units=units+' s^-1'
+    units = units + ' s^-1'
   ENDIF
 
-
-  t2=systime(1)
+  t2 = systime(1)
 
   ;
   ; Note for data-sets with very large windows (e.g., 2053x400x1093),
   ; simply creating the windata structure can take about 30secs.
   ;
-  windata= { filename: file_basename(filename), $
-    line_id: d->get_window_id(iwin), $
+  windata = {filename: file_basename(filename), $
+    line_id: d.get_window_id(iwin), $
     int: wd, $
     err: err, $
     wvl: lam, $
     data_quality: bytarr(nx), $
-    exposure_time: exp_time[ix0:ix1], $
-    time: time[ix0:ix1], $
-    time_ccsds: ti1[ix0:ix1], $
+    exposure_time: exp_time[ix0 : ix1], $
+    time: time[ix0 : ix1], $
+    time_ccsds: ti1[ix0 : ix1], $
     nl: nl, $
     nx: nx, $
     ny: ny, $
     scale: scale, $
     solar_x: xpos, $
     solar_y: ypos, $
-    xcen: d->get_header_keyword('CRVAL1',0), $
-    ycen: d->get_header_keyword('CRVAL2',0), $
+    xcen: d.get_header_keyword('CRVAL1', 0), $
+    ycen: d.get_header_keyword('CRVAL2', 0), $
     units: units, $
     missing: missing_val, $
     iwin: iwin, $
-    sit_AND_stare: d->get_sit_AND_stare(), $
+    sit_AND_stare: d.get_sit_AND_stare(), $
     wave_corr_set: 0, $
-    wave_corr: dblarr(nx,ny), $
+    wave_corr: dblarr(nx, ny), $
     wave_corr_tilt: dblarr(ny), $
     wave_corr_t: dblarr(nx), $
     time_stamp: systime(), $
-    hdr: hdr }
+    hdr: hdr}
 
-  IF swtch EQ 0 THEN obj_destroy,d
+  IF swtch EQ 0 THEN obj_destroy, d
 
-
-  ;ignore calibration for now
+  ; ignore calibration for now
   IF keyword_set(calib) && 0 THEN BEGIN
-    cal=iris_get_calib(windata.wvl,windata.hdr.date_obs,ybin=ybin,units=units, $
-      perang=perang)
+    cal = iris_get_calib(windata.wvl, windata.hdr.date_obs, ybin = ybin, units = units, $
+      perang = perang)
     ;
-    id_y=make_array(windata.ny,value=1.)
-    expt_y=(1./windata.exposure_time)#id_y
+    id_y = make_array(windata.ny, value = 1.)
+    expt_y = (1. / windata.exposure_time) # id_y
     ;
-    cal_array=fltarr(nl,nx,ny)
-    FOR i=0,nl-1 DO cal_array[i,*,*]=cal[i]*expt_y
+    cal_array = fltarr(nl, nx, ny)
+    FOR i = 0, nl - 1 DO cal_array[i, *, *] = cal[i] * expt_y
     ;
-    k=where(windata.int NE windata.missing)
-    windata.int[k]=windata.int[k]*cal_array[k]
-    windata.err[k]=cal_array[k]*windata.err[k]
-    windata.units=units
+    k = where(windata.int NE windata.missing)
+    windata.int[k] = windata.int[k] * cal_array[k]
+    windata.err[k] = cal_array[k] * windata.err[k]
+    windata.units = units
     ;
-    junk=temporary(cal_array)   ; tidy up
+    junk = temporary(cal_array) ; tidy up
   ENDIF
 
-
-
-  t3=systime(1)
+  t3 = systime(1)
 
   IF keyword_set(verbose) THEN BEGIN
-    print,format='("  Time taken (s): ",f6.2)',t3-t0
-    print,format='("       Load data: ",f6.2)',t1-t0
-    print,format='("  Prepare arrays: ",f6.2)',t2-t1
-    print,format='("  Make structure: ",f6.2)',t3-t2
+    print, format = '("  Time taken (s): ",f6.2)', t3 - t0
+    print, format = '("       Load data: ",f6.2)', t1 - t0
+    print, format = '("  Prepare arrays: ",f6.2)', t2 - t1
+    print, format = '("  Make structure: ",f6.2)', t3 - t2
   ENDIF
 
-  return,windata
-
+  return, windata
 END

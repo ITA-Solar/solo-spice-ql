@@ -19,7 +19,7 @@
 ;
 ; OUTPUTS:
 ;      a spice_data object
-;      
+;
 ; OPTIONAL OUTPUTS:
 ;      is_spice: is 1 if 'file' is a string and this function creates the SPICE_DATA object.
 ;                is 1 if 'file' is an object of type SPICE_DATA, 0 otherwise.
@@ -29,26 +29,24 @@
 ; HISTORY:
 ;      Ver. 1, 22-Oct-2020, Martin Wiesmann
 ;-
-; $Id: 2022-08-10 11:17 CEST $
+; $Id: 2024-11-21 11:47 CET $
 
-
-FUNCTION spice_get_object, file, is_spice=is_spice, object_created=object_created
-  
-  is_spice=0
-  object_created=0
+FUNCTION spice_get_object, file, is_spice = is_spice, object_created = object_created
+  is_spice = 0
+  object_created = 0
   type = size(file, /type)
-  if type eq 7 then begin
-    object_created=1
-    is_spice=1
+  IF type EQ 7 THEN BEGIN
+    object_created = 1
+    is_spice = 1
     return, spice_data(file)
-  endif else if type eq 11 then begin
-    if typename(file) ne 'SPICE_DATA' then begin
-      box_message,'input is not a SPICE_DATA object'
-    endif else begin
-      is_spice=1
-    endelse
-  endif else begin
+  ENDIF ELSE IF type EQ 11 THEN BEGIN
+    IF typename(file) NE 'SPICE_DATA' THEN BEGIN
+      box_message, 'input is not a SPICE_DATA object'
+    ENDIF ELSE BEGIN
+      is_spice = 1
+    ENDELSE
+  ENDIF ELSE BEGIN
     box_message, 'input must be either path to spice file or SPICE_DATA object'
-  endelse
+  ENDELSE
   return, file
 END

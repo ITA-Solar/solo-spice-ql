@@ -23,9 +23,9 @@
 ;         filename:      str,   name of the file, without the path
 ;         level:         int,   data level (0, 1, 2 or 3), -1 if unknown
 ;         study_type:    str,   type of study
-;         sat_time:      str,   internal satellite time of observation, 
+;         sat_time:      str,   internal satellite time of observation,
 ;                               only available for level 0
-;         datetime:      str,   date and time in CCSDS format of observation, 
+;         datetime:      str,   date and time in CCSDS format of observation,
 ;                               for level 0, this is the time the file was downlinked
 ;         version:       int,   version number (version of the spice data pipeline),
 ;                               not available for level 0
@@ -36,46 +36,43 @@
 ; HISTORY:
 ;      Ver. 1, 17-Jun-2020, Martin Wiesmann
 ;-
-; $Id: 2023-06-16 12:45 CEST $
-
+; $Id: 2024-11-21 11:47 CET $
 
 FUNCTION spice_file2info, file
-
   ; examples
   ; solo_L0_spice-n-sit_0639070018_V202004012012C_12583201-000.fits
   ; solo_L1_spice-n-ras-db-int_20200603T061613824_V01_12583776-000.fits
   ; solo_L2_spice-n-ras-db-int_20200603T061613824_V01_12583776-000.fits
 
-  nfile = N_ELEMENTS(file)
+  nfile = n_elements(file)
 
-  info_template = {is_spice_file:0B, $
-    filename:'', $
-    level:-1, $
-    study_type:'', $
-    sat_time:'', $
-    datetime:'', $
-    version:-1, $
-    spiobsid:-1L, $
-    rasterno:-1}
+  info_template = {is_spice_file: 0b, $
+    filename: '', $
+    level: -1, $
+    study_type: '', $
+    sat_time: '', $
+    datetime: '', $
+    version: -1, $
+    spiobsid: -1l, $
+    rasterno: -1}
 
-  FOR ifile=0,nfile-1 DO BEGIN
+  FOR ifile = 0, nfile - 1 DO BEGIN
     info_temp = info_template
 
     fname0 = file_basename(file[ifile])
     fname = strsplit(fname0, '_', /extract)
 
-    ;first check whether this is a spice file
+    ; first check whether this is a spice file
     IF fname[0] EQ 'solo' && strmatch(fname[2], 'spice-*') THEN BEGIN
-
       info_temp.is_spice_file = 1
-      
+
       info_temp.filename = fname0
 
       CASE fname[1] OF
-        'L0': info_temp.level=0
-        'L1': info_temp.level=1
-        'L2': info_temp.level=2
-        'L3': info_temp.level=3
+        'L0': info_temp.level = 0
+        'L1': info_temp.level = 1
+        'L2': info_temp.level = 2
+        'L3': info_temp.level = 3
         ELSE: BEGIN
           message, 'Cannot determine level of data in file: ' + file[ifile], /info
         END
@@ -94,8 +91,8 @@ FUNCTION spice_file2info, file
         obs_time = strmid(fname[3], 9, 6)
         obs_ms = strmid(fname[3], 15, 3)
       ENDELSE ; info_temp.level EQ 0
-      obs_datetime = obs_date+'_'+obs_time
-      obs = fid2time('_'+obs_datetime)
+      obs_datetime = obs_date + '_' + obs_time
+      obs = fid2time('_' + obs_datetime)
       obs = anytim2utc(obs)
       obs.time = obs.time + fix(obs_ms)
       info_temp.datetime = anytim2utc(obs, /CCSDS)
@@ -103,17 +100,15 @@ FUNCTION spice_file2info, file
       temp = strsplit(fname[5], '-.', /extract)
       info_temp.spiobsid = long(temp[0])
       info_temp.rasterno = fix(temp[1])
-
     ENDIF ELSE BEGIN ; fname[0] EQ 'solo' && strmatch(fname[2], 'spice-*')
       message, 'This is not a spice file: ' + file[ifile], /info
     ENDELSE ; fname[0] EQ 'solo' && strmatch(fname[2], 'spice-*')
 
     IF ifile EQ 0 THEN info = info_temp $
     ELSE info = [info, info_temp]
-
   ENDFOR ; ifile=0,N_ELEMENTS(file)-1
-  
-  IF nfile EQ 0 THEN info=info_template
+
+  IF nfile EQ 0 THEN info = info_template
 
   return, info
 END

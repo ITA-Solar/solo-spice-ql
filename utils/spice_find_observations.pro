@@ -66,12 +66,12 @@
 ;                            options.  If not passed, then the central time
 ;                            given by the DATE parameter is used.
 ;
-;		ERRMSG  = If defined and passed, then any error messages 
-;			  will be returned to the user in this parameter 
-;			  rather than being handled by the IDL MESSAGE 
-;			  utility.  If no errors are encountered, then a 
-;			  null string is returned.  In order to use this 
-;			  feature, the string ERRMSG must be defined 
+;		ERRMSG  = If defined and passed, then any error messages
+;			  will be returned to the user in this parameter
+;			  rather than being handled by the IDL MESSAGE
+;			  utility.  If no errors are encountered, then a
+;			  null string is returned.  In order to use this
+;			  feature, the string ERRMSG must be defined
 ;			  first, e.g.,
 ;
 ;			      ERRMSG = ''
@@ -105,242 +105,243 @@
 ; Contact     :	WTHOMPSON
 ;-
 ;
-;------------------------------------------------------------------------------
+; ------------------------------------------------------------------------------
 ;
-pro spice_find_observations_extract, name, variable, wgood, errmsg=errmsg
-;
-common spice_find_observations, header, catalog
-;
-;  Find the requested variable NAME within HEADER.
-;
-w = where(header eq strupcase(name), count)
-if count eq 0 then begin
+PRO spice_find_observations_extract, name, variable, wgood, errmsg = errmsg
+  ;
+  COMMON spice_find_observations, header, catalog
+  ;
+  ; Find the requested variable NAME within HEADER.
+  ;
+  w = where(header EQ strupcase(name), count)
+  IF count EQ 0 THEN BEGIN
     message = 'Variable ' + name + ' not found.'
-    if n_elements(errmsg) eq 0 then message, message
+    IF n_elements(errmsg) EQ 0 THEN message, message
     errmsg = message
     return
-endif
+  ENDIF
+  ;
+  ; Extract out the values for the requested variable.
+  ;
+  variable = catalog.(w[0])
+  ;
+  ; If WGOOD is passed, then extract those indices within the array.
+  ;
+  IF n_elements(wgood) GT 0 THEN variable = variable[wgood]
+  ;
+END
+
 ;
-;  Extract out the values for the requested variable.
+; ------------------------------------------------------------------------------
 ;
-variable = catalog.(w[0])
-;
-;  If WGOOD is passed, then extract those indices within the array.
-;
-if n_elements(wgood) gt 0 then variable = variable[wgood]
-;
-end
-;
-;------------------------------------------------------------------------------
-;
-function spice_find_observations, date, solarx, solary, count=count, $
-                               catfile=catfile, carrington=carrington, $
-                               stonyhurst=stonyhurst, earth=earth, $
-                               dateref=dateref, margin=k_margin, errmsg=errmsg
-;
-COMPILE_OPT STRICTARR
-common spice_find_observations, header, catalog
-;
-carrington_set = keyword_set(carrington)
-stony_or_earth = keyword_set(stonyhurst) or keyword_set(earth)
-;
-;  Check the input parameters.
-;
-if n_params() ne 3 then begin
+FUNCTION spice_find_observations, date, solarx, solary, count = count, $
+  catfile = catfile, carrington = carrington, $
+  stonyhurst = stonyhurst, earth = earth, $
+  dateref = dateref, margin = k_margin, errmsg = errmsg
+  ;
+  COMPILE_OPT STRICTARR
+  COMMON spice_find_observations, header, catalog
+  ;
+  carrington_set = keyword_set(carrington)
+  stony_or_earth = keyword_set(stonyhurst) OR keyword_set(earth)
+  ;
+  ; Check the input parameters.
+  ;
+  IF n_params() NE 3 THEN BEGIN
     message = 'Syntax: Result = SPICE_FIND_OBSERVATIONS(Date, SolarX, SolarY)'
-    goto, handle_error
-endif
-;
-if (n_elements(date) lt 1) or (n_elements(date) gt 2) then begin
+    GOTO, HANDLE_ERROR
+  ENDIF
+  ;
+  IF (n_elements(date) LT 1) OR (n_elements(date) GT 2) THEN BEGIN
     message = 'Date must have one or two values.'
-    goto, handle_error
-endif
-;
-if (n_elements(solarx) ne 1) or (n_elements(solary) ne 1) then begin
+    GOTO, HANDLE_ERROR
+  ENDIF
+  ;
+  IF (n_elements(solarx) NE 1) OR (n_elements(solary) NE 1) THEN BEGIN
     message = 'SolarX and SolarY must be scalars.'
-    goto, handle_error
-endif
-;
-case n_elements(k_margin) of
+    GOTO, HANDLE_ERROR
+  ENDIF
+  ;
+  CASE n_elements(k_margin) OF
     0: margin = 0
     1: margin = k_margin
-    else: begin
-        message = 'MARGIN must be a scalar'
-        goto, handle_error
-    end
-endcase
-;
-if n_elements(dateref) gt 1 then begin
+    ELSE: BEGIN
+      message = 'MARGIN must be a scalar'
+      GOTO, HANDLE_ERROR
+    END
+  ENDCASE
+  ;
+  IF n_elements(dateref) GT 1 THEN BEGIN
     message = 'DATEREF must be a scalar'
-    goto, handle_error
-endif
-;
-;  Convert the DATE(s) into TAI values.
-;
-message = ''
-tai = anytim2tai(date, errmsg=message)
-if message ne '' then goto, handle_error
-taimin = min(tai, max=taimax)
-;
-;  If the SPICE catalog file has not yet been read, then read it.
-;
-if n_elements(header) eq 0 then begin
-    if n_elements(catfile) ne 1 then begin
-        spice_data = getenv('SPICE_DATA')
-        if spice_data eq '' then begin
-            message = 'Environment variable SPICE_DATA not defined'
-            goto, handle_error
-        endif
-        catfile = concat_dir(spice_data, 'spice_catalog.csv')
-    endif
-;
-    if not file_exist(catfile) then begin
-        message = 'File $SPICE_DATA/spice_catalog.csv does not exist'
-        goto, handle_error
-    endif
-;
-    catalog = read_csv(catfile, header=header)
-endif
-;
-;  Extract out DATE-BEG and LEVEL.  Filter out entries with missing date
-;  values, and data levels other than L2.
-;
-message = ''
-spice_find_observations_extract, 'DATE-BEG', date_beg, errmsg=message
-spice_find_observations_extract, 'LEVEL', level, errmsg=message
-if message ne '' then goto, handle_error
-wgood = where((date_beg ne 'MISSING') and (level eq 'L2'))
-date_beg = date_beg[wgood]
-;
-;  Convert DATE-BEG from UTC to TAI.
-;
-message = ''
-tai_beg = utc2tai(date_beg, errmsg=message)
-if message ne '' then goto, handle_error
-;
-;  Extract out TELAPSE, and use it to calculate an end time.
-;
-spice_find_observations_extract, 'TELAPSE', telapse, wgood, errmsg=message
-if message ne '' then goto, handle_error
-tai_end = tai_beg + telapse
-date_end = tai2utc(tai_end, /ccsds)
-;
-;  Find observations which fall within the requested date range.  If none
-;  found, then return the null string.
-;
-w = where((taimax ge tai_beg) and (taimin le tai_end), count)
-if count eq 0 then return, ''
-;
-;  Filter out entries which don't fall within the requested date range.
-;
-wgood = wgood[w]
-tai_beg = tai_beg[w]
-tai_end = tai_end[w]
-date_beg = date_beg[w]
-date_end = date_end[w]
-;
-;  Extract out the filenames and pointing values.
-;
-message = ''
-spice_find_observations_extract, 'FILENAME', filename, wgood, errmsg=message
-spice_find_observations_extract, 'CROTA', crota, wgood, errmsg=message
-spice_find_observations_extract, 'NAXIS1', naxis1, wgood, errmsg=message
-spice_find_observations_extract, 'NAXIS2', naxis2, wgood, errmsg=message
-spice_find_observations_extract, 'CRVAL1', crval1, wgood, errmsg=message
-spice_find_observations_extract, 'CRVAL2', crval2, wgood, errmsg=message
-spice_find_observations_extract, 'CDELT1', cdelt1, wgood, errmsg=message
-spice_find_observations_extract, 'CDELT2', cdelt2, wgood, errmsg=message
-spice_find_observations_extract, 'SLIT_WID', slit_wid, wgood, errmsg=message
-if message ne '' then goto, handle_error
-;
-;  Calculate the corners of the SPICE field-of-view.
-;
-width1 = ((naxis1-1) * cdelt1 + slit_wid) / 2 + margin
-width2 = (naxis2 * cdelt2) / 2 + margin
-x0 = crval1 - width1
-x1 = crval1 + width1
-y0 = crval2 - width2
-y1 = crval2 + width2
-;
-;  Start by assuming that the input parameters are HPC coordinates as seen from
-;  Solar Orbiter, but preserve the possibility that they might be heliographic
-;  coordinates.
-;
-hgln = solarx
-hglt = solary
-solx = solarx
-soly = solary
-;
-;  If either the STONYHURST or EARTH keywords were set, then convert to
-;  Carrington coordinates.
-;
-if stony_or_earth then begin
+    GOTO, HANDLE_ERROR
+  ENDIF
+  ;
+  ; Convert the DATE(s) into TAI values.
+  ;
+  message = ''
+  tai = anytim2tai(date, errmsg = message)
+  IF message NE '' THEN GOTO, HANDLE_ERROR
+  taimin = min(tai, max = taimax)
+  ;
+  ; If the SPICE catalog file has not yet been read, then read it.
+  ;
+  IF n_elements(header) EQ 0 THEN BEGIN
+    IF n_elements(catfile) NE 1 THEN BEGIN
+      spice_data = getenv('SPICE_DATA')
+      IF spice_data EQ '' THEN BEGIN
+        message = 'Environment variable SPICE_DATA not defined'
+        GOTO, HANDLE_ERROR
+      ENDIF
+      catfile = concat_dir(spice_data, 'spice_catalog.csv')
+    ENDIF
+    ;
+    IF NOT file_exist(catfile) THEN BEGIN
+      message = 'File $SPICE_DATA/spice_catalog.csv does not exist'
+      GOTO, HANDLE_ERROR
+    ENDIF
+    ;
+    catalog = read_csv(catfile, header = header)
+  ENDIF
+  ;
+  ; Extract out DATE-BEG and LEVEL.  Filter out entries with missing date
+  ; values, and data levels other than L2.
+  ;
+  message = ''
+  spice_find_observations_extract, 'DATE-BEG', date_beg, errmsg = message
+  spice_find_observations_extract, 'LEVEL', level, errmsg = message
+  IF message NE '' THEN GOTO, HANDLE_ERROR
+  wgood = where((date_beg NE 'MISSING') AND (level EQ 'L2'))
+  date_beg = date_beg[wgood]
+  ;
+  ; Convert DATE-BEG from UTC to TAI.
+  ;
+  message = ''
+  tai_beg = utc2tai(date_beg, errmsg = message)
+  IF message NE '' THEN GOTO, HANDLE_ERROR
+  ;
+  ; Extract out TELAPSE, and use it to calculate an end time.
+  ;
+  spice_find_observations_extract, 'TELAPSE', telapse, wgood, errmsg = message
+  IF message NE '' THEN GOTO, HANDLE_ERROR
+  tai_end = tai_beg + telapse
+  date_end = tai2utc(tai_end, /ccsds)
+  ;
+  ; Find observations which fall within the requested date range.  If none
+  ; found, then return the null string.
+  ;
+  w = where((taimax GE tai_beg) AND (taimin LE tai_end), count)
+  IF count EQ 0 THEN return, ''
+  ;
+  ; Filter out entries which don't fall within the requested date range.
+  ;
+  wgood = wgood[w]
+  tai_beg = tai_beg[w]
+  tai_end = tai_end[w]
+  date_beg = date_beg[w]
+  date_end = date_end[w]
+  ;
+  ; Extract out the filenames and pointing values.
+  ;
+  message = ''
+  spice_find_observations_extract, 'FILENAME', filename, wgood, errmsg = message
+  spice_find_observations_extract, 'CROTA', crota, wgood, errmsg = message
+  spice_find_observations_extract, 'NAXIS1', naxis1, wgood, errmsg = message
+  spice_find_observations_extract, 'NAXIS2', naxis2, wgood, errmsg = message
+  spice_find_observations_extract, 'CRVAL1', crval1, wgood, errmsg = message
+  spice_find_observations_extract, 'CRVAL2', crval2, wgood, errmsg = message
+  spice_find_observations_extract, 'CDELT1', cdelt1, wgood, errmsg = message
+  spice_find_observations_extract, 'CDELT2', cdelt2, wgood, errmsg = message
+  spice_find_observations_extract, 'SLIT_WID', slit_wid, wgood, errmsg = message
+  IF message NE '' THEN GOTO, HANDLE_ERROR
+  ;
+  ; Calculate the corners of the SPICE field-of-view.
+  ;
+  width1 = ((naxis1 - 1) * cdelt1 + slit_wid) / 2 + margin
+  width2 = (naxis2 * cdelt2) / 2 + margin
+  x0 = crval1 - width1
+  x1 = crval1 + width1
+  y0 = crval2 - width2
+  y1 = crval2 + width2
+  ;
+  ; Start by assuming that the input parameters are HPC coordinates as seen from
+  ; Solar Orbiter, but preserve the possibility that they might be heliographic
+  ; coordinates.
+  ;
+  hgln = solarx
+  hglt = solary
+  solx = solarx
+  soly = solary
+  ;
+  ; If either the STONYHURST or EARTH keywords were set, then convert to
+  ; Carrington coordinates.
+  ;
+  IF stony_or_earth THEN BEGIN
     message = ''
-    if n_elements(dateref) eq 1 then begin
-        utc = anytim2utc(dateref, errmsg=message)
-        if message ne '' then goto, handle_error
-    end else utc = tai2utc((taimin + taimax) / 2)
-;
-    lonlat = get_sunspice_lonlat(utc, 'Earth', system='Carrington', /degrees, $
-                                 /meters, errmsg=message)
-    if message ne '' then goto, handle_error
-;
-;  If the EARTH keyword was set, then convert to Stonyhurst coordinates.
-;
-    if keyword_set(earth) then begin
-        wcs_conv_hpc_hg, solx/3600.d0, soly/3600.d0, hgln, hglt, $
-                         dsun_obs=lonlat[0], date_obs=utc, /degrees
-    endif
-;
-;  Convert from Stonyhurst to Carrington coordinates.
-;
-    hgln = (hgln + lonlat[1]) mod 360
+    IF n_elements(dateref) EQ 1 THEN BEGIN
+      utc = anytim2utc(dateref, errmsg = message)
+      IF message NE '' THEN GOTO, HANDLE_ERROR
+    END ELSE utc = tai2utc((taimin + taimax) / 2)
+    ;
+    lonlat = get_sunspice_lonlat(utc, 'Earth', system = 'Carrington', /degrees, $
+      /meters, errmsg = message)
+    IF message NE '' THEN GOTO, HANDLE_ERROR
+    ;
+    ; If the EARTH keyword was set, then convert to Stonyhurst coordinates.
+    ;
+    IF keyword_set(earth) THEN BEGIN
+      wcs_conv_hpc_hg, solx / 3600.d0, soly / 3600.d0, hgln, hglt, $
+        dsun_obs = lonlat[0], date_obs = utc, /degrees
+    ENDIF
+    ;
+    ; Convert from Stonyhurst to Carrington coordinates.
+    ;
+    hgln = (hgln + lonlat[1]) MOD 360
     carrington_set = 1
-endif
-;
-;  If any of the CARRINGTON, STONYHURST, or EARTH keywords were set, then
-;  convert the Carrington coordinates into Helioprojective Cartesian
-;  coordinates at the central times of the observations.
-;
-if carrington_set then begin
-    rsun = wcs_rsun(units='km')
+  ENDIF
+  ;
+  ; If any of the CARRINGTON, STONYHURST, or EARTH keywords were set, then
+  ; convert the Carrington coordinates into Helioprojective Cartesian
+  ; coordinates at the central times of the observations.
+  ;
+  IF carrington_set THEN BEGIN
+    rsun = wcs_rsun(units = 'km')
     tai = (tai_beg + tai_end) / 2
     solx = dblarr(n_elements(tai))
     soly = solx
-;
-    for i=0,n_elements(tai)-1 do begin
-        coord = [rsun, hgln, hglt]
-        convert_sunspice_lonlat, tai[i], coord, 'Carrington', 'HPC', /degrees, $
-                                 spacecraft='Solar Orbiter'
-        solx[i] = coord[1] * 3600
-        soly[i] = coord[2] * 3600
-    endfor
-endif
-;
-;  Rotate the requested position into the SPICE orientation.
-;
-crota = crota * !dpi / 180.d0
-cosa = cos(crota)
-sina = sin(crota)
-xx = solx * cosa + soly * sina
-yy = soly * cosa - solx * sina
-;
-;  Determine where the requested position falls within the SPICE
-;  field-of-view.  If none are found, then return the null string.
-;
-w = where((xx ge x0) and (xx le x1) and (yy ge y0) and (yy le y1), count)
-if count eq 0 then return, ''
-;
-;  Return the filenames.
-;
-return, filename[w]
-;
-;  Error handling point.
-;
-handle_error:
-if n_elements(errmsg) eq 0 then message, message
-errmsg = message
-count = 0
-return, ''
-;
-end
+    ;
+    FOR i = 0, n_elements(tai) - 1 DO BEGIN
+      coord = [rsun, hgln, hglt]
+      convert_sunspice_lonlat, tai[i], coord, 'Carrington', 'HPC', /degrees, $
+        spacecraft = 'Solar Orbiter'
+      solx[i] = coord[1] * 3600
+      soly[i] = coord[2] * 3600
+    ENDFOR
+  ENDIF
+  ;
+  ; Rotate the requested position into the SPICE orientation.
+  ;
+  crota = crota * !dpi / 180.d0
+  cosa = cos(crota)
+  sina = sin(crota)
+  xx = solx * cosa + soly * sina
+  yy = soly * cosa - solx * sina
+  ;
+  ; Determine where the requested position falls within the SPICE
+  ; field-of-view.  If none are found, then return the null string.
+  ;
+  w = where((xx GE x0) AND (xx LE x1) AND (yy GE y0) AND (yy LE y1), count)
+  IF count EQ 0 THEN return, ''
+  ;
+  ; Return the filenames.
+  ;
+  return, filename[w]
+  ;
+  ; Error handling point.
+  ;
+  HANDLE_ERROR:
+  IF n_elements(errmsg) EQ 0 THEN message, message
+  errmsg = message
+  count = 0
+  return, ''
+  ;
+END
