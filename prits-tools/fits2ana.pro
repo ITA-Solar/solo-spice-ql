@@ -73,7 +73,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:37 CET $
+; $Id: 2024-11-21 14:17 CET $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -223,7 +223,6 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
         parnr = string(byte(ipar + 97))
         param = stc.param[ipar]
         param.name = strtrim(fxpar(hdr, 'PNAME' + fitnr + parnr, missing = ''), 2)
-        punit = strtrim(fxpar(hdr, 'PUNIT' + fitnr + parnr, missing = ''), 2)
         param.description[*] = ''
         description = fxpar(hdr, 'PDESC' + fitnr + parnr, missing = '')
         param.description = strtrim(strsplit(description, ';', /extract, count = count), 2)
@@ -307,7 +306,6 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
         data = readfits(fitsfile, hdr, ext = extension, silent = quiet)
       ENDELSE
       size_data = size(data)
-      progenitor_data = fxpar(hdr, 'PRGDATA', missing = 0)
       IF ~headers_only && size_data[0] EQ 0 THEN BEGIN
         IF loud THEN message, 'Loading data cube from external extension', /info
         prg_file = spice_find_file(EXT_DATA_PATH)
@@ -543,7 +541,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
         FOR k = 0l, dimen[2] - 1 DO $
         FOR j = 0l, dimen[1] - 1 DO BEGIN
           spec = data[*, j, k, l, m, n, o]
-          ix = where_not_missing(spec, ngood, missing = missing)
+          ix = where_not_missing(spec, ngood)
 
           IF ngood GT 0 THEN BEGIN
             lam = xdim1[*, j, k, l, m, n, o]
@@ -581,10 +579,10 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       handle_value, ana.residual_h, residual, /no_copy, /set
       handle_value, ana.include_h, include, /no_copy, /set
       handle_value, ana.const_h, const, /no_copy, /set
-      handle_value, ana.origin_h, origin, /no_copy, /set
-      handle_value, ana.scale_h, scale, /no_copy, /set
-      handle_value, ana.phys_scale_h, phys_scale, /no_copy, /set
-      handle_value, ana.dimnames_h, dimnames, /no_copy, /set
+      ; handle_value, ana.origin_h, origin, /no_copy, /set
+      ; handle_value, ana.scale_h, scale, /no_copy, /set
+      ; handle_value, ana.phys_scale_h, phys_scale, /no_copy, /set
+      ; handle_value, ana.dimnames_h, dimnames, /no_copy, /set
 
       IF n_elements(ana_all) EQ 0 THEN ana_all = ana $
       ELSE ana_all = [ana_all, ana]
