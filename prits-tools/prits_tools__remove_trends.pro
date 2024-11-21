@@ -41,7 +41,7 @@ FUNCTION prits_tools::remove_trends, image, value_min = value_min, value_max = v
     minval = (keyword_set(value_min)) ? value_min : min(image)
     maxval = (keyword_set(value_max)) ? value_max : max(image)
 
-    image = image > (value_min) < value_max
+    image = image > minval < maxval
   ENDIF
 
   IF n_nanix GT 0 THEN image[nanix] = 0
