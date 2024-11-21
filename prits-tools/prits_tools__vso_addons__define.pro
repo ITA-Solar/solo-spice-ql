@@ -1,8 +1,8 @@
-FUNCTION prits_tools::vso_cached_search_use_savefile_or_not, date_beg, savefile, redo_recent_days
-  file_info = file_info(savefile)
-  IF NOT file_info.exists THEN return, 0
+FUNCTION prits_tools::vso_cached_search_use_savefile_or_not, savefile, redo_recent_days
+  fileInfo = file_info(savefile)
+  IF NOT fileInfo.exists THEN return, 0
 
-  file_utc = unixtai2utc(file_info.ctime)
+  file_utc = unixtai2utc(fileInfo.ctime)
   get_utc, current_utc
 
   file_age_days = current_utc.mjd - file_utc.mjd
@@ -15,6 +15,7 @@ END
 FUNCTION prits_tools::vso_cached_search, date_beg, date_end, instrument, wave_str_in, sample, include_urls, $
   accept_failure = accept_failure, $
   redo_recent_days = redo_recent_days, $
+  retry = retry, $
   quiet = quiet
   IF n_params() LT 6 THEN BEGIN
     message, "Must have six arguments!"
@@ -69,7 +70,7 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, instrument, wave_st
   END
 
   box_message, "Calling vso_search(), may take some time"
-  results = vso_search(date_beg, date_end, instrument = instrument, wave = wave_str, urls = inclulde_urls, sample = sample)
+  results = vso_search(date_beg, date_end, instrument = instrument, wave = wave_str, urls = include_urls, sample = sample)
   IF size(results, /tname) NE 'STRUCT' THEN BEGIN
     IF NOT quiet THEN box_message, "VSO_SEARCH did not work: " + savefile_name
     results = 0
@@ -189,11 +190,11 @@ PRO prits_tools::vso_fill_day_cache, results, hours
   END
 END
 
-PRO prits_tools::vso_fill_cache, start, final, reverse = reverse, waves_str = waves_str, $
+PRO prits_tools::vso_fill_cache, start, final, reverse_list = reverse_list, waves_str = waves_str, $
   instruments = instruments, hours = hours, retry = retry, quiet = quiet
   self.default, start, '2006/10/18' ; ; First Hinode obs
   self.default, final, 'today' ; ; Calculated later
-  self.default, reverse, 0
+  self.default, reverse_list, 0
   self.default, waves_str, ['171', '193', '304', '211']
   self.default, instruments, ['aia', 'eit']
   self.default, hours, ['00', '12']
@@ -205,7 +206,7 @@ PRO prits_tools::vso_fill_cache, start, final, reverse = reverse, waves_str = wa
     final = ymd
   END
 
-  days = self.list_of_days(start, final, reverse = reverse)
+  days = self.list_of_days(start, final, reverse_list = reverse_list)
 
   print, "FILLING CACHE"
   print, "FROM " + days[0]
@@ -250,6 +251,7 @@ END
 
 PRO prits_tools__vso_addons__define
   COMPILE_OPT STATIC
+  ; idl-disable-next-line unused-var
   vso = {prits_tools__vso_addons, $
     cache_dir: "" $
     }
