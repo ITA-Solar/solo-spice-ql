@@ -126,5 +126,6 @@ PRO oslo_fits_util::clean_header, hdr
 END
 
 PRO oslo_fits_util__define
+  ; idl-disable-next-line unused-var
   d = {oslo_fits_util, dummy: 0}
 END
