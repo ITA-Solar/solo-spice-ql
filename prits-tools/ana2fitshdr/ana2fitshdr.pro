@@ -128,7 +128,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-21 13:41 CET $
+; $Id: 2024-11-21 13:42 CET $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -235,7 +235,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
 
   ; Add time to DATE
   caldat, systime(/julian), month, day, year, hour, minute, second
-  datetime = {CDS_EXT_TIME, $
+  datetime = {cds_ext_time, $
     year: year, $
     month: month, $
     day: day, $
