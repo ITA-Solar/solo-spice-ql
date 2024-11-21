@@ -39,22 +39,20 @@
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;      Ver. 2, 25-Jan-2023, Terje Fredvik - update wcs.ix and wcs.iy if needed
 ;-
-; $Id: 2024-01-25 15:52 CET $
-
+; $Id: 2024-11-21 11:28 CET $
 
 FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
-
   prits_tools.parcheck, wcs, 1, 'wcs', 8, 0
   prits_tools.parcheck, move_dim, 2, 'move_dim', 'INTEGERS', 0
   prits_tools.parcheck, dest_dim, 3, 'dest_dim', 'INTEGERS', 0
 
   IF move_dim EQ dest_dim THEN return, wcs
-  naxis = N_ELEMENTS(wcs.naxis)
-  IF move_dim LT 0 || move_dim GE naxis|| dest_dim LT 0 || dest_dim GE naxis THEN BEGIN
+  naxis = n_elements(wcs.naxis)
+  IF move_dim LT 0 || move_dim GE naxis || dest_dim LT 0 || dest_dim GE naxis THEN BEGIN
     message, ['At least one of the indices is out of range', $
       'NAXIS    : ' + strtrim(naxis), $
       'MOVE_DIM : ' + strtrim(move_dim), $
-      'DEST_DIM : ' + strtrim(dest_dim) ]
+      'DEST_DIM : ' + strtrim(dest_dim)]
     return, wcs
   ENDIF
 

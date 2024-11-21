@@ -14,7 +14,7 @@
 ;      new_wcs = ana_wcs_get_transform(XDIM1_TYPE, HEADERS_INPUT_DATA)
 ;
 ; INPUTS:
-;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. 'WAVE'). If not found in HEADERS_INPUT_DATA, 
+;      XDIM1_TYPE: CTYPE of the absorbed dimension (e.g. 'WAVE'). If not found in HEADERS_INPUT_DATA,
 ;             !NULL will be returned.
 ;
 ; KEYWORDS:
@@ -32,7 +32,7 @@
 ; OUTPUTS:
 ;      WCS: Structure containing World Coordinate System information, with XDIM1_TYPE
 ;            in the first dimension.
-;            Or !NULL if HEADERS_INPUT_DATA is not provided or NAXIS=0 therein, or does not 
+;            Or !NULL if HEADERS_INPUT_DATA is not provided or NAXIS=0 therein, or does not
 ;            contain a CTYPE with value XDIM1_TYPE.
 ;
 ; OPTIONAL OUTPUTS:
@@ -44,28 +44,26 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2023-12-05 15:35 CET $
+; $Id: 2024-11-21 11:28 CET $
 
+FUNCTION ana_wcs_get_transform, xdim1_type, headers_input_data, ind_xdim1 = ind_xdim1
+  prits_tools.parcheck, xdim1_type, 1, 'XDIM1_TYPE', 'STRING', 0
+  prits_tools.parcheck, headers_input_data, 2, 'HEADERS_INPUT_DATA', 'STRING', 1, /optional
 
-FUNCTION ana_wcs_get_transform, XDIM1_TYPE, HEADERS_INPUT_DATA, ind_xdim1=ind_xdim1
-
-  prits_tools.parcheck, XDIM1_TYPE, 1, 'XDIM1_TYPE', 'STRING', 0
-  prits_tools.parcheck, HEADERS_INPUT_DATA, 2, 'HEADERS_INPUT_DATA', 'STRING', 1, /optional
-
-  IF N_ELEMENTS(HEADERS_INPUT_DATA) EQ 0 THEN return, !NULL
-  naxis = fxpar(HEADERS_INPUT_DATA, 'NAXIS', missing=0)
+  IF n_elements(headers_input_data) EQ 0 THEN return, !NULL
+  naxis = fxpar(headers_input_data, 'NAXIS', missing = 0)
   IF naxis EQ 0 THEN return, !NULL
 
-  ctypes = strtrim(fxpar(HEADERS_INPUT_DATA, 'CTYPE*', missing='xx'), 2)
-  ind_xdim1 = where(strcmp(ctypes, XDIM1_TYPE, /fold_case), count)
+  ctypes = strtrim(fxpar(headers_input_data, 'CTYPE*', missing = 'xx'), 2)
+  ind_xdim1 = where(strcmp(ctypes, xdim1_type, /fold_case), count)
   IF count EQ 0 THEN BEGIN
-    message, 'Did not find CTYPEn with value: ' + XDIM1_TYPE, /informational
+    message, 'Did not find CTYPEn with value: ' + xdim1_type, /informational
     return, !NULL
   ENDIF
   ind_xdim1 = ind_xdim1[0]
 
-  IF size(HEADERS_INPUT_DATA, /type) EQ 7 THEN hdr = spice_fitshead2struct(HEADERS_INPUT_DATA, /MULTIVALUE, /silent) $
-  ELSE hdr = HEADERS_INPUT_DATA
+  IF size(headers_input_data, /type) EQ 7 THEN hdr = spice_fitshead2struct(headers_input_data, /multivalue, /silent) $
+  ELSE hdr = headers_input_data
   wcs_original = fitshead2wcs(hdr)
   wcs_transformed = ana_wcs_transform(wcs_original, ind_xdim1, 0)
 
