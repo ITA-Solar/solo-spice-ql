@@ -40,7 +40,7 @@
 ;       chunk_size=chunk_size, retina=retina, no_goes=no_goes]
 ;
 ; INPUTS:
-;     INPUT:  Can be either the name and path of a SPICE data file, 
+;     INPUT:  Can be either the name and path of a SPICE data file,
 ;             or a SPICE data object.
 ;
 ; KEYWORDS:
@@ -104,63 +104,62 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2023-06-14 13:30 CEST $
+; $Id: 2024-11-21 11:40 CET $
 
-
-;---------------------
-PRO spice_raster_browser, input_data, quiet=quiet, yoffsets=yoffsets, $
-  chunk_size=chunk_size, retina=retina, no_goes=no_goes, group_leader=group_leader
+; ---------------------
+PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
+  chunk_size = chunk_size, retina = retina, no_goes = no_goes, group_leader = group_leader
   COMPILE_OPT IDL2
 
   IF n_params() EQ 0 THEN BEGIN
-    print,'Use:  IDL> spice_raster_browser, obj'
-    print,' or:  IDL> spice_raster_browser, filename'
+    print, 'Use:  IDL> spice_raster_browser, obj'
+    print, ' or:  IDL> spice_raster_browser, filename'
     return
   ENDIF
 
   ;
   ; Below I check if INPUT is a string (i.e., a filename) or an object.
   ;
-  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
-  if ~is_spice then return
+  data = spice_get_object(input_data, is_spice = is_spice, object_created = object_created)
+  IF ~is_spice THEN return
 
   ;
   ; Check if we have an internet connection.
   ;
-  net_chck=have_network()
+  net_chck = have_network()
 
   ;
   ; This retrieves a list of GOES flare for the observing period.
   ; To be uncommented later. Commented it out for testing
   ;
-  ;  IF net_chck EQ 1 THEN BEGIN
-  ;    start_time = data->get_start_time()
-  ;    end_time = data->get_end_time()
-  ;    flare_data=iris_hek_swpc_flares(starttime=start_time, endtime=end_time)
-  ;  ENDIF ELSE BEGIN
-  flare_data=-1
-  ;  ENDELSE
+  ; IF net_chck EQ 1 THEN BEGIN
+  ; start_time = data->get_start_time()
+  ; end_time = data->get_end_time()
+  ; flare_data=iris_hek_swpc_flares(starttime=start_time, endtime=end_time)
+  ; ENDIF ELSE BEGIN
+  flare_data = -1
+  ; ENDELSE
 
   ; something similar for spice_browser_raster?
-  ;  IF net_chck EQ 1 THEN BEGIN
-  ;    sock_list,'http://pyoung.org/iris/iris_raster_browser_check.html',page
-  ;  ENDIF
+  ; IF net_chck EQ 1 THEN BEGIN
+  ; sock_list,'http://pyoung.org/iris/iris_raster_browser_check.html',page
+  ; ENDIF
 
   IF NOT keyword_set(quiet) THEN BEGIN
-    box_message, ['FILENAME = ' + data->get_header_keyword('FILENAME', 0), $
-      'EXTNAME  = ' + data->get_header_keyword('EXTNAME', 0), $
-      'STUDYTYP = ' + data->get_header_keyword('STUDYTYP', 0), $
-      'STUDYDES = ' + data->get_header_keyword('STUDYDES', 0, ''), $
-      'STUDY    = ' + data->get_header_keyword('STUDY', 0, ''), $
-      'OBS_TYPE = ' + data->get_header_keyword('OBS_TYPE', 0, ''), $
-      'OBS_ID   = ' + data->get_header_keyword('OBS_ID', 0, ''), $
-      'SPIOBSID = ' + strtrim(string(data->get_header_keyword('SPIOBSID', 0)), 2), $
-      'PURPOSE  = ' + data->get_header_keyword('PURPOSE', 0, ''), $
-      'SOOPNAME = ' + data->get_header_keyword('SOOPNAME', 0, '')]
+    box_message, ['FILENAME = ' + data.get_header_keyword('FILENAME', 0), $
+      'EXTNAME  = ' + data.get_header_keyword('EXTNAME', 0), $
+      'STUDYTYP = ' + data.get_header_keyword('STUDYTYP', 0), $
+      'STUDYDES = ' + data.get_header_keyword('STUDYDES', 0, ''), $
+      'STUDY    = ' + data.get_header_keyword('STUDY', 0, ''), $
+      'OBS_TYPE = ' + data.get_header_keyword('OBS_TYPE', 0, ''), $
+      'OBS_ID   = ' + data.get_header_keyword('OBS_ID', 0, ''), $
+      'SPIOBSID = ' + strtrim(string(data.get_header_keyword('SPIOBSID', 0)), 2), $
+      'PURPOSE  = ' + data.get_header_keyword('PURPOSE', 0, ''), $
+      'SOOPNAME = ' + data.get_header_keyword('SOOPNAME', 0, '')]
   ENDIF
 
-  spice_browser_widget, data, yoffsets=yoffsets, chunk_size=chunk_size, $
-    retina=retina, no_goes=no_goes, flare_data=flare_data, quiet=quiet, group_leader=group_leader
+  spice_browser_widget, data, yoffsets = yoffsets, chunk_size = chunk_size, $
+    retina = retina, no_goes = no_goes, flare_data = flare_data, quiet = quiet, group_leader = group_leader
 
   ;
   ; Tidy up before exiting.
@@ -168,5 +167,4 @@ PRO spice_raster_browser, input_data, quiet=quiet, yoffsets=yoffsets, $
   IF object_created EQ 1 THEN BEGIN
     obj_destroy, data
   ENDIF
-
 END

@@ -37,30 +37,28 @@
 ;     Ver. 2, 23-May-2023, Martin Wiesmann
 ;       uses now spice_line_list() instead of user defined line list.
 ;-
-; $Id: 2023-05-23 11:35 CEST $
+; $Id: 2024-11-21 11:40 CET $
 
-
-PRO spice_browser_oplot_line_ids, wrange, yrange, velocity=velocity, refwvl=refwvl
+PRO spice_browser_oplot_line_ids, wrange, yrange, velocity = velocity, refwvl = refwvl
   ;
   ; Overplots line IDs on the spectra
   ;
   line_list = spice_line_list()
   lines = line_list.keys()
   lines = lines.toArray()
-  IF keyword_set(velocity) THEN wvls = lamb2v(lines-refwvl,refwvl) $
+  IF keyword_set(velocity) THEN wvls = lamb2v(lines - refwvl, refwvl) $
   ELSE wvls = lines
   ind_lines = where(wvls GE wrange[0] AND wvls LE wrange[1], npeaks)
 
-  for iline=0,npeaks-1 do begin
+  FOR iline = 0, npeaks - 1 DO BEGIN
     wvl = wvls[ind_lines[iline]]
     ion = line_list[lines[ind_lines[iline]]]
 
-    y75=0.75*yrange[1]+0.25*yrange[0]
-    y25=0.25*yrange[1]+0.75*yrange[0]
-    ypos=(10-(iline MOD 10))*(y75-y25)/10. + y25
+    y75 = 0.75 * yrange[1] + 0.25 * yrange[0]
+    y25 = 0.25 * yrange[1] + 0.75 * yrange[0]
+    ypos = (10 - (iline MOD 10)) * (y75 - y25) / 10. + y25
     ;
-    xyouts,wvl,ypos,trim(ion),charsiz=1.2
-    oplot,[1,1]*wvl,[-(y75-y25)/15.,0]+ypos
-  endfor
-
+    xyouts, wvl, ypos, trim(ion), charsiz = 1.2
+    oplot, [1, 1] * wvl, [-(y75 - y25) / 15., 0] + ypos
+  ENDFOR
 END

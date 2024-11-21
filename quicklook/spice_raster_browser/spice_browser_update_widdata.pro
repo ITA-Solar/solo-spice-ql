@@ -34,8 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
-
+; $Id: 2024-11-21 11:40 CET $
 
 PRO spice_browser_update_widdata, state, meta
   ;
@@ -43,21 +42,20 @@ PRO spice_browser_update_widdata, state, meta
   ; and modifies entries in wid_data. (This is needed when a new object
   ; is loaded.)
   ;
-  wid_data=state.wid_data
+  wid_data = state.wid_data
 
-  wid_data.xpos=meta.xpos
-  wid_data.ypos=meta.ypos
-  wid_data.midtime=meta.midtime
-  wid_data.tmid=meta.midtime
-  wid_data.utc=meta.utc
-  wid_data.sit_stare=meta.sit_stare
-  wid_data.origin=meta.origin
-  wid_data.scale=meta.scale
-  wid_data.tmid_min=meta.tmid_min
-  wid_data.rast_direct=meta.rast_direct
-  wid_data.l1p5_ver=meta.l1p5_ver
+  wid_data.xpos = meta.xpos
+  wid_data.ypos = meta.ypos
+  wid_data.midtime = meta.midtime
+  wid_data.tmid = meta.midtime
+  wid_data.utc = meta.utc
+  wid_data.sit_stare = meta.sit_stare
+  wid_data.origin = meta.origin
+  wid_data.scale = meta.scale
+  wid_data.tmid_min = meta.tmid_min
+  wid_data.rast_direct = meta.rast_direct
+  wid_data.l1p5_ver = meta.l1p5_ver
 
-  state.wid_data=wid_data
-  widget_control,state.spice_browser_base,set_uvalue=state
-
+  state.wid_data = wid_data
+  widget_control, state.spice_browser_base, set_uvalue = state
 END
