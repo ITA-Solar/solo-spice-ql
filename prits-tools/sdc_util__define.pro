@@ -145,7 +145,7 @@ PRO sdc_util::cleanup
 END
 
 FUNCTION sdc_util::classdef, name
-  IF n_params() EQ 0 THEN name = obj_class(self, count = count)
+  IF n_params() EQ 0 THEN name = obj_class(self)
   super = obj_class(name, /super, count = nsuper)
   out = name
   FOR i = nsuper - 1, 0, -1 DO BEGIN
@@ -194,6 +194,7 @@ FUNCTION sdc_util::clone, object = object
   return, obj
 END
 
+; idl-disable-next-line unused-var
 PRO sdc_util::set_sdc_util_version, val
   on_error, 1
   message, "How dare you try to change sdc_util_version!"
@@ -233,6 +234,7 @@ PRO sdc_util::private, strictly = strictly
 END
 
 PRO sdc_util::debug
+  ; idl-disable-next-line unused-var
   o = self
   stop
 END
@@ -241,6 +243,7 @@ PRO sdc_util__define
   pseudo = 0b
   ptr = ptr_new()
   str = ''
+  ; idl-disable-next-line unused-var
   d = {sdc_util, $
     sdc_util_version: pseudo, $
     sdc_util_tags: ptr, $
