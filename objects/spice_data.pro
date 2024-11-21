@@ -23,8 +23,8 @@
 ; COMMON BLOCKS:
 ;
 ; PROCEDURE:
-;     The function checks whether 'file' is a string ending with '.fits' and if it is a SPICE 
-;     file. If yes, it creates either a SPICE_DATA object, if it is a level 2 file, or a 
+;     The function checks whether 'file' is a string ending with '.fits' and if it is a SPICE
+;     file. If yes, it creates either a SPICE_DATA object, if it is a level 2 file, or a
 ;     SPICE_DATA_L3 object, if it is a level 3 file.
 ;
 ;     This function exists for the user's
@@ -36,31 +36,29 @@
 ; HISTORY:
 ;     27-Nov-2019: Martin Wiesmann
 ;-
-; $Id: 2023-06-15 15:00 CEST $
-
+; $Id: 2024-11-21 13:17 CET $
 
 FUNCTION spice_data, file
   COMPILE_OPT IDL2
-  
-  IF N_ELEMENTS(file) NE 1 || $ 
-    SIZE(file, /TYPE) NE 7 || $
-    ~ strmatch(file, '*.fits', /fold_case) THEN BEGIN
-      print, 'File input must be a scalar string ending with .fits'
-      return, 0
+
+  IF n_elements(file) NE 1 || $
+    size(file, /TYPE) NE 7 || $
+    ~strmatch(file, '*.fits', /fold_case) THEN BEGIN
+    print, 'File input must be a scalar string ending with .fits'
+    return, 0
   ENDIF ELSE BEGIN
     file_info = spice_file2info(file)
-    if ~file_info.is_spice_file then begin
-      print, 'File is not a SPICE file: '+file
+    IF ~file_info.is_spice_file THEN BEGIN
+      print, 'File is not a SPICE file: ' + file
       return, 0
-    endif
-    case file_info.level of
+    ENDIF
+    CASE file_info.level OF
       2: return, obj_new('spice_data', file)
       3: return, obj_new('spice_data_l3', file)
-      else: begin
+      ELSE: BEGIN
         print, 'No IDL object defined for this data level: ' + string(file_info.level)
         return, 0
-      end
-    endcase
+      END
+    ENDCASE
   ENDELSE
-
 END
