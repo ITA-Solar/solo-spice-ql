@@ -28,7 +28,7 @@ FUNCTION prits_tools::anytim2julday, anytim
   return, jd.int + jd.frac
 END
 
-FUNCTION prits_tools::list_of_days, start, final, reverse = reverse, delimiter = delimiter
+FUNCTION prits_tools::list_of_days, start, final, reverse_list = reverse_list, delimiter = delimiter
   COMPILE_OPT STATIC
 
   addon = strpos(start, 'T') EQ -1 ? 'T12:00' : ''
@@ -37,7 +37,7 @@ FUNCTION prits_tools::list_of_days, start, final, reverse = reverse, delimiter =
   final_jd = prits_tools.anytim2julday(final + addon)
 
   julian_days = timegen(start = start_jd, final = final_jd, units = 'days')
-  IF keyword_set(reverse) THEN julian_days = reverse(julian_days)
+  IF keyword_set(reverse_list) THEN julian_days = reverse(julian_days)
 
   dates = prits_tools.julday2iso(julian_days, delimiter = delimiter)
 
@@ -50,6 +50,7 @@ END
 
 PRO prits_tools__date_addons__define
   COMPILE_OPT STATIC
+  ; idl-disable-next-line unused-var
   vso = {prits_tools__date_addons, $
     dummy: 0b $
     }
