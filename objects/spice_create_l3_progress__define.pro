@@ -61,7 +61,7 @@
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2024-11-21 13:31 CET $
+; $Id: 2024-11-21 13:34 CET $
 
 ;+
 ; Description:
@@ -262,7 +262,7 @@ PRO spice_create_l3_progress__define
   COMPILE_OPT IDL2
 
   ; idl-disable-next-line unused-var
-  struct = {Spice_Create_L3_Progress, $
+  struct = {spice_create_l3_progress, $
     n_files: 1, $ ; number of files to be processed
     i_file: -1, $ ; index of current file beginning at zero
     files: ptr_new(), $ ; list of files to be processed

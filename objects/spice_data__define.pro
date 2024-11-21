@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-21 13:29 CET $
+; $Id: 2024-11-21 13:34 CET $
 
 ;+
 ; Description:
@@ -3198,8 +3198,8 @@ END
 ;-
 PRO spice_data__define
   COMPILE_OPT IDL2
-  ; idl-disable-next-line unused-var
 
+  ; idl-disable-next-line unused-var
   struct = {spice_data, $
     file: '', $ ; input filename
     title: '', $ ; instrument name
