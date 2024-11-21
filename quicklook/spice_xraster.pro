@@ -18,7 +18,7 @@
 ;                     group_leader = groupleader]
 ;
 ; INPUTS:
-;       data: Can be either the name and path of a SPICE data file, 
+;       data: Can be either the name and path of a SPICE data file,
 ;             or a SPICE data object.
 ;       windows : The index(es) of the line windows to be displayed
 ;
@@ -62,445 +62,438 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2023-06-13 15:16 CEST $
+; $Id: 2024-11-21 11:41 CET $
 ;-
 ;
 ; save as postscript file
-pro spice_xraster_ps,event
-  thisfile=dialog_pickfile(/write,file='spice_xraster.ps', dialog_parent=event.top)
-  if thisfile eq '' then return
-  widget_control,event.top,get_uvalue=info
-  thisdevice=!d.name
-  set_plot,'ps',/copy
-  device,file=thisfile,_extra=keywords,/inches,bits_per_pixel=8,/color
-  pseudoevent={widget_button,id:0l, $
-    top:event.top, handler:0l, select:1}
-  widget_control,event.top,set_uvalue=info
-  spice_xraster_draw,pseudoevent
-  device,/close_file
-  set_plot,thisdevice
-end
+PRO spice_xraster_ps, event
+  thisfile = dialog_pickfile(/write, file = 'spice_xraster.ps', dialog_parent = event.top)
+  IF thisfile EQ '' THEN return
+  widget_control, event.top, get_uvalue = info
+  thisdevice = !d.name
+  set_plot, 'ps', /copy
+  device, file = thisfile, _extra = keywords, /inches, bits_per_pixel = 8, /color
+  pseudoevent = {widget_button, id: 0l, $
+    top: event.top, handler: 0l, select: 1}
+  widget_control, event.top, set_uvalue = info
+  spice_xraster_draw, pseudoevent
+  device, /close_file
+  set_plot, thisdevice
+END
 
 ; save as jpeg file
-pro spice_xraster_jpeg,event
-  thisfile=dialog_pickfile(/write,file='spice_xraster.jpg', dialog_parent=event.top)
-  if thisfile eq '' then return
-  widget_control,event.top,get_uvalue=info
-  wset,(*info).wid
-  snapshot=tvrd()
-  tvlct,r,g,b,/get
-  s=size(snapshot)
-  image24=bytarr(3,s[1],s[2])
-  image24(0,*,*)=r(snapshot)
-  image24(1,*,*)=g(snapshot)
-  image24(2,*,*)=b(snapshot)
-  write_jpeg,thisfile,image24,true=1,quality=75
-end
-
-;display image in the draw window:
-pro spice_xraster_draw, event
+PRO spice_xraster_jpeg, event
+  thisfile = dialog_pickfile(/write, file = 'spice_xraster.jpg', dialog_parent = event.top)
+  IF thisfile EQ '' THEN return
   widget_control, event.top, get_uvalue = info
-  old_charsize=!p.charsize
-  if !d.name ne 'PS' then begin
+  wset, (*info).wid
+  snapshot = tvrd()
+  tvlct, r, g, b, /get
+  s = size(snapshot)
+  image24 = bytarr(3, s[1], s[2])
+  image24(0, *, *) = r(snapshot)
+  image24(1, *, *) = g(snapshot)
+  image24(2, *, *) = b(snapshot)
+  write_jpeg, thisfile, image24, true = 1, quality = 75
+END
+
+; display image in the draw window:
+PRO spice_xraster_draw, event
+  widget_control, event.top, get_uvalue = info
+  old_charsize = !p.charsize
+  IF !d.name NE 'PS' THEN BEGIN
     wset, (*info).wid
-    !p.charsize=2.0
-    tcharsize=1.0
+    !p.charsize = 2.0
+    tcharsize = 1.0
     erase
-  endif else begin
-    !p.charsize=0.85
-    tcharsize=0.5
-  endelse
-  nr=(*info).nexp
+  ENDIF ELSE BEGIN
+    !p.charsize = 0.85
+    tcharsize = 0.5
+  ENDELSE
+  nr = (*info).nexp
   nwin = (*info).nwin
   xsz = 0
   ysz = 0
   ; this loop is for determining max size of spectral line windows
   ; (since they can have varying size)
-  for i = 0, nwin-1 do begin
-    j=(*info).windows[i]
-    ;pos=*(*info).data->getpos(j)
-    ;sz = size(wd)
-    xsz = xsz > *(*info).data->get_header_keyword('naxis3', j)
-    ysz = ysz > *(*info).data->get_header_keyword('naxis2', j)
-  endfor
+  FOR i = 0, nwin - 1 DO BEGIN
+    j = (*info).windows[i]
+    ; pos=*(*info).data->getpos(j)
+    ; sz = size(wd)
+    xsz = xsz > *(*info).data.get_header_keyword('naxis3', j)
+    ysz = ysz > *(*info).data.get_header_keyword('naxis2', j)
+  ENDFOR
   ; determine size of each window. The scale factors
   ; (xpixels*2)x(ypixels/2), with a minimum of
   ; 50x100 and max of 100x250 pixels.
-  xpix = (xsz*2) > 75 < 250
-  ypix = (ysz/2) > 100 < 250
+  xpix = (xsz * 2) > 75 < 250
+  ypix = (ysz / 2) > 100 < 250
   nxticks = 3
   ; determine if draw window needs to be larger (by
   ; applying scroll bars.)
-  xfac = fix((xpix*nr*2)/(*info).x_scroll_size)
-  yfac = fix((ypix*nwin*1.2)/(*info).y_scroll_size)
-  xvs = (*info).x_scroll_size*xfac  > (*info).x_scroll_size < 2L^15-1
-  yvs = (*info).y_scroll_size*yfac  > (*info).y_scroll_size
+  xfac = fix((xpix * nr * 2) / (*info).x_scroll_size)
+  yfac = fix((ypix * nwin * 1.2) / (*info).y_scroll_size)
+  xvs = (*info).x_scroll_size * xfac > (*info).x_scroll_size < 2l ^ 15 - 1
+  yvs = (*info).y_scroll_size * yfac > (*info).y_scroll_size
   ;
   widget_control, (*info).drawid, draw_xsize = xvs, draw_ysize = yvs
-  if *(*info).data->get_missing_value() ne *(*info).data->get_missing_value() then missing=-99999L $
-  else missing=*(*info).data->get_missing_value()
-  wdmin=fltarr((*info).nwin)-missing
-  wdmax=fltarr((*info).nwin)+missing
+  IF *(*info).data.get_missing_value() NE *(*info).data.get_missing_value() THEN missing = -99999l $
+  ELSE missing = *(*info).data.get_missing_value()
+  wdmin = fltarr((*info).nwin) - missing
+  wdmax = fltarr((*info).nwin) + missing
   ; set up plot scale:
-  for i = 0, (*info).nwin-1 do begin
+  FOR i = 0, (*info).nwin - 1 DO BEGIN
     j = (*info).windows[i]
-    for it=0,min([5,nr-1]) do begin
-      var=*(*info).data->get_one_image(j,it,no_masking=(*info).no_masking)
-      wdmin[i]=min([min(iris_histo_opt(var,0.01,/bot_only,missing=missing),/nan),wdmin[i]],/nan)
-      wdmax[i]=max([max(iris_histo_opt(var,0.001,/top_only,missing=missing),/nan),wdmax[i]],/nan)
-    endfor
-    if wdmin[i] gt wdmax[i] then begin
-      wdmin[i]=min(var, max=maxtemp)
-      wdmax[i]=maxtemp
-    endif
+    FOR it = 0, min([5, nr - 1]) DO BEGIN
+      var = *(*info).data.get_one_image(j, it, no_masking = (*info).no_masking)
+      wdmin[i] = min([min(iris_histo_opt(var, 0.01, /bot_only, missing = missing), /nan), wdmin[i]], /nan)
+      wdmax[i] = max([max(iris_histo_opt(var, 0.001, /top_only, missing = missing), /nan), wdmax[i]], /nan)
+    ENDFOR
+    IF wdmin[i] GT wdmax[i] THEN BEGIN
+      wdmin[i] = min(var, max = maxtemp)
+      wdmax[i] = maxtemp
+    ENDIF
     sz = size(var)
 
     ; wavelength scale of NUV/FUV1/FUV2
-    if ~(*info).xdim_unit then begin
-      lambda=indgen(sz[1])
-      if N_ELEMENTS(lambda) eq 1 then  lambda = [lambda-0.5, lambda+0.5]
-    endif else begin
-      lambda=*(*info).data->get_lambda_vector(j)
-      if N_ELEMENTS(lambda) eq 1 then begin
-        cdelt = *(*info).data.get_resolution(j,/lambda) / 2.0
-        lambda = [lambda-cdelt, lambda+cdelt]
-      endif
-    endelse
-    if ~(*info).ydim_unit then begin
-      ypos=indgen(sz[2])
-    endif else begin
-      ypos=*(*info).data->get_instr_y_vector(j)
-    endelse
+    IF ~(*info).xdim_unit THEN BEGIN
+      lambda = indgen(sz[1])
+      IF n_elements(lambda) EQ 1 THEN lambda = [lambda - 0.5, lambda + 0.5]
+    ENDIF ELSE BEGIN
+      lambda = *(*info).data.get_lambda_vector(j)
+      IF n_elements(lambda) EQ 1 THEN BEGIN
+        cdelt = *(*info).data.get_resolution(j, /lambda) / 2.0
+        lambda = [lambda - cdelt, lambda + cdelt]
+      ENDIF
+    ENDELSE
+    IF ~(*info).ydim_unit THEN BEGIN
+      ypos = indgen(sz[2])
+    ENDIF ELSE BEGIN
+      ypos = *(*info).data.get_instr_y_vector(j)
+    ENDELSE
     xscale = interpol(lambda, xpix)
     yscale = interpol(ypos, ypix)
-    origin=[min(xscale),min(yscale)]
-    timepos=[min(xscale)+(max(xscale)-min(xscale))*0.05,max(yscale)-(max(yscale)-min(yscale))*0.1]
+    origin = [min(xscale), min(yscale)]
+    timepos = [min(xscale) + (max(xscale) - min(xscale)) * 0.05, max(yscale) - (max(yscale) - min(yscale)) * 0.1]
 
     ; draw images
-    for it = 0, nr-1 do begin
-      drawimage = congrid(*(*info).data->get_one_image(j,it,no_masking=(*info).no_masking),xpix,ypix)
-      sz=size(drawimage)
-      scale=[(max(xscale)-min(xscale))/sz[1],(max(yscale)-min(yscale))/sz[2]]
+    FOR it = 0, nr - 1 DO BEGIN
+      drawimage = congrid(*(*info).data.get_one_image(j, it, no_masking = (*info).no_masking), xpix, ypix)
+      sz = size(drawimage)
+      scale = [(max(xscale) - min(xscale)) / sz[1], (max(yscale) - min(yscale)) / sz[2]]
       ymin = wdmin[i]
       ymax = wdmax[i]
-      if it eq 0 then ytitle=*(*info).data->get_window_id(j)+' '+(*info).ytitle else ytitle=''
-      spice_br_panel,it,i,nx=nr,ny=(*info).nwin,order=0,ydist=3,/xlabel,ytop=3,xright=5,xleft=12
-      plot_image,drawimage,origin=origin,scale=scale,/nosquare, $
-        xtitle = (*info).xtitle, xticks = nxticks, ytitle=ytitle,min=ymin,max=ymax
-      if i eq 0 then xyouts,timepos[0],timepos[1],'t = '+ $
-        strtrim(string((*(*info).data->get_time_vector(j))[it],format='(f6.1)'),2) +' [s]', $
-        alignment=0.0,chars=tcharsize,color=255
-    endfor
-  endfor
-  spice_br_panel,/reset
+      IF it EQ 0 THEN ytitle = *(*info).data.get_window_id(j) + ' ' + (*info).ytitle ELSE ytitle = ''
+      spice_br_panel, it, i, nx = nr, ny = (*info).nwin, order = 0, ydist = 3, /xlabel, ytop = 3, xright = 5, xleft = 12
+      plot_image, drawimage, origin = origin, scale = scale, /nosquare, $
+        xtitle = (*info).xtitle, xticks = nxticks, ytitle = ytitle, min = ymin, max = ymax
+      IF i EQ 0 THEN xyouts, timepos[0], timepos[1], 't = ' + $
+        strtrim(string((*(*info).data.get_time_vector(j))[it], format = '(f6.1)'), 2) + ' [s]', $
+        alignment = 0.0, chars = tcharsize, color = 255
+    ENDFOR
+  ENDFOR
+  spice_br_panel, /reset
   !p.multi = 0
   !p.charsize = 1.0
-  ;create colorbar (if plot to 'PS' then skip colorbar:
-  if !d.name ne 'PS' then begin
+  ; create colorbar (if plot to 'PS' then skip colorbar:
+  IF !d.name NE 'PS' THEN BEGIN
     widget_control, (*info).colorbarid, get_value = wid
     wset, wid
     erase
     widget_control, (*info).colorbarid, draw_ysize = yvs
-    nwin=(*info).nwin
-    for i = 0,nwin-1 do begin
+    nwin = (*info).nwin
+    FOR i = 0, nwin - 1 DO BEGIN
       ; find max and min values of drawimage to produce color bar y-scale
       ymin = wdmin[i]
       ymax = wdmax[i]
-      if ymax-ymin eq 0.0 then ymax=ymin+1
-      format='(i6)'
-      if ymax-ymin lt 10 then format='(f7.4)'
-      position = [0.75, 0.04+float(nwin-i-1)/nwin*0.95, $
-        0.95, 0.01+float(nwin-i)/nwin*0.95]
-      hw_colorbar, position=position, range = [ymin, ymax], $
-        /vertical , format=format, title=(*info).colorbar_title, $
+      IF ymax - ymin EQ 0.0 THEN ymax = ymin + 1
+      format = '(i6)'
+      IF ymax - ymin LT 10 THEN format = '(f7.4)'
+      position = [0.75, 0.04 + float(nwin - i - 1) / nwin * 0.95, $
+        0.95, 0.01 + float(nwin - i) / nwin * 0.95]
+      hw_colorbar, position = position, range = [ymin, ymax], $
+        /vertical, format = format, title = (*info).colorbar_title, $
         /keep_pos
-    endfor
-  endif
-end
+    ENDFOR
+  ENDIF
+END
 
 ; Popup window for line selection
-pro spice_xraster_pickline, event
-  widget_control, event.top ,get_uvalue = info
+PRO spice_xraster_pickline, event
+  widget_control, event.top, get_uvalue = info
   ; open window for line selection
   lineselect_widget = widget_base(title = 'Select line', $
-    group_leader = (*info).tlb,/row)
-  closefield = widget_base(lineselect_widget,/column)
+    group_leader = (*info).tlb, /row)
+  closefield = widget_base(lineselect_widget, /column)
   closebutton = widget_button(closefield, value = 'OK', $
     event_pro = 'spice_xraster_pickline_destroy')
-  line_base = widget_base(lineselect_widget,/column,/frame)
+  line_base = widget_base(lineselect_widget, /column, /frame)
   linelist = cw_bgroup(line_base, (*info).linelist, /return_index, $
     /exclusive, event_func = 'spice_xraster_pickline_pick')
   widget_control, lineselect_widget, set_uvalue = info
   widget_control, lineselect_widget, /realize
   xmanager, 'Select line', lineselect_widget, $
     /no_block, group_leader = (*info).tlb
-end
+END
 
 ; get the value of the selected line from the line list:
-function spice_xraster_pickline_pick, event
+FUNCTION spice_xraster_pickline_pick, event
   widget_control, event.top, get_uvalue = info
-  (*info).line = event.value+(*info).windows[0]
+  (*info).line = event.value + (*info).windows[0]
   return, 0
-end
+END
 
 ; close Line selection widget
-pro spice_xraster_pickline_destroy, event
+PRO spice_xraster_pickline_destroy, event
   widget_control, event.top, get_uvalue = info
-  if (*info).messenger eq (*info).animenu then begin
+  IF (*info).messenger EQ (*info).animenu THEN BEGIN
     spice_xraster_anim, event
-  endif
-  widget_control, event.top,/destroy
-end
+  ENDIF
+  widget_control, event.top, /destroy
+END
 
 ; Controls the animation event: If only one line,
 ; start animation, if several line, then pop up
 ; line selection window first.
-pro spice_xraster_control_anim,event
+PRO spice_xraster_control_anim, event
   widget_control, event.top, get_uvalue = info
-  if (*info).nwin lt 2 then begin
+  IF (*info).nwin LT 2 THEN BEGIN
     spice_xraster_anim, event
-  endif else begin
+  ENDIF ELSE BEGIN
     (*info).messenger = (*info).animenu
     spice_xraster_pickline, event
-  endelse
-end
+  ENDELSE
+END
 
 ; create animation widget and launch animation
-pro spice_xraster_anim, event
-  print,'does NOT work yet'
+PRO spice_xraster_anim, event
+  print, 'does NOT work yet'
   return
   widget_control, event.top, get_uvalue = info
-  magnification=0.95
-  minsize=400.0
-  maxsize=800.0
-  xsize=*(*info).data->getxw((*info).line)
-  ysize=*(*info).data->getyw((*info).line)
-  if xsize lt minsize then magnification=minsize/xsize
-  if xsize gt maxsize then magnification=maxsize/xsize
-  if ysize*magnification lt minsize then magnification=minsize/ysize
-  if ysize*magnification gt maxsize then magnification=maxsize/ysize
-  if 1.0 eq swap_endian(1.0,/swap_if_big_endian) then swap=1
-  iris_ximovie,*(*info).data->getfilename(),group_leader=(*info).tlb, $
-    *(*info).data->getxw((*info).line),*(*info).data->getyw((*info).line), $
-    nframes=*(*info).data->getnraster((*info).line), $
-    offset=*(*info).data->getposition((*info).line),/float,swap=swap, $
-    magnification=magnification,missing=*(*info).data->missing()
+  magnification = 0.95
+  minsize = 400.0
+  maxsize = 800.0
+  xsize = *(*info).data.getxw((*info).line)
+  ysize = *(*info).data.getyw((*info).line)
+  IF xsize LT minsize THEN magnification = minsize / xsize
+  IF xsize GT maxsize THEN magnification = maxsize / xsize
+  IF ysize * magnification LT minsize THEN magnification = minsize / ysize
+  IF ysize * magnification GT maxsize THEN magnification = maxsize / ysize
+  IF 1.0 EQ swap_endian(1.0, /swap_if_big_endian) THEN swap = 1
+  iris_ximovie, *(*info).data.getfilename(), group_leader = (*info).tlb, $
+    * (*info).data.getxw((*info).line), *(*info).data.getyw((*info).line), $
+    nframes = *(*info).data.getnraster((*info).line), $
+    offset = *(*info).data.getposition((*info).line), /float, swap = swap, $
+    magnification = magnification, missing = *(*info).data.missing()
 
-  ;;   *(*info).data-> getwin,(*info).line,wd,pos
-  ;; ;
-  ;;   sz = size(wd)
-  ;;   ndim = sz[0]
-  ;;   xsize = sz[1]
-  ;;   ysize = sz[2]
-  ;; ;
-  ;;   if ndim lt 3 then begin
-  ;;     ok = dialog_message('Data array must be 3-D to make animation!',/center)
-  ;;     return
-  ;;   endif
-  ;; ; bytscale data to save time in animation tool
-  ;; ;  wdb = bytscl(iris_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
-  ;; ; write data to assoc file if not already existing:
-  ;;   ct=0
-  ;;   repeat begin
-  ;;     ct=ct+1
-  ;;     assoc_file = IRISxfiles_appReadme()+'/iris_xraster_ximovie_'+strtrim(string(ct),2)+'.tmp'
-  ;;   endrep until ((findfile(assoc_file))[0] eq '')
-  ;;   if ct gt 99 then begin
-  ;;     message,'more than 100 temporary assoc files stored in',/info
-  ;;     message,IRISxfiles_appReadme()+'/iris_xdetector_ximovie_XX.tmp. Consider purge!',/info
-  ;;   endif
-  ;;   openw, lu, assoc_file, /get_lun
-  ;;   rec = assoc(lu, wd)
-  ;;   rec[0] = wd
-  ;;   close, lu & free_lun, lu
-  ;; ; start iris_ximovie, with the delete keyword (afile is removed from disc
-  ;; ; when iris_ximovie is closed
-  ;;   iris_ximovie, assoc_file, xsize, ysize, group_leader = (*info).tlb, $
-  ;;      /fdelete,/float,missing=*(*info).data->missing()
+  ; ;   *(*info).data-> getwin,(*info).line,wd,pos
+  ; ; ;
+  ; ;   sz = size(wd)
+  ; ;   ndim = sz[0]
+  ; ;   xsize = sz[1]
+  ; ;   ysize = sz[2]
+  ; ; ;
+  ; ;   if ndim lt 3 then begin
+  ; ;     ok = dialog_message('Data array must be 3-D to make animation!',/center)
+  ; ;     return
+  ; ;   endif
+  ; ; ; bytscale data to save time in animation tool
+  ; ; ;  wdb = bytscl(iris_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
+  ; ; ; write data to assoc file if not already existing:
+  ; ;   ct=0
+  ; ;   repeat begin
+  ; ;     ct=ct+1
+  ; ;     assoc_file = IRISxfiles_appReadme()+'/iris_xraster_ximovie_'+strtrim(string(ct),2)+'.tmp'
+  ; ;   endrep until ((findfile(assoc_file))[0] eq '')
+  ; ;   if ct gt 99 then begin
+  ; ;     message,'more than 100 temporary assoc files stored in',/info
+  ; ;     message,IRISxfiles_appReadme()+'/iris_xdetector_ximovie_XX.tmp. Consider purge!',/info
+  ; ;   endif
+  ; ;   openw, lu, assoc_file, /get_lun
+  ; ;   rec = assoc(lu, wd)
+  ; ;   rec[0] = wd
+  ; ;   close, lu & free_lun, lu
+  ; ; ; start iris_ximovie, with the delete keyword (afile is removed from disc
+  ; ; ; when iris_ximovie is closed
+  ; ;   iris_ximovie, assoc_file, xsize, ysize, group_leader = (*info).tlb, $
+  ; ;      /fdelete,/float,missing=*(*info).data->missing()
   return
-end
+END
 
 ; change spatial scale to pixels
-pro spice_xraster_spix, event
+PRO spice_xraster_spix, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
-  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim, /pixels)
+  (*info).ytitle = *(*info).data.get_axis_title((*info).ydim, /pixels)
   (*info).ydim_unit = 0
-  pseudoevent={widget_button,id:0L, $
-    top:event.top, handler:0l, select:1}
+  pseudoevent = {widget_button, id: 0l, $
+    top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
-end
+END
 
 ; change spatial scale to arcsec
-pro spice_xraster_sarcsec, event
+PRO spice_xraster_sarcsec, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
-  (*info).ytitle = *(*info).data->get_axis_title((*info).ydim)
+  (*info).ytitle = *(*info).data.get_axis_title((*info).ydim)
   (*info).ydim_unit = 1
-  pseudoevent={widget_button,id:0L, $
-    top:event.top, handler:0l, select:1}
+  pseudoevent = {widget_button, id: 0l, $
+    top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
-end
+END
 
 ; change wavelength scale to pixels
-pro spice_xraster_wpix, event
+PRO spice_xraster_wpix, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
-  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim, /pixels)
+  (*info).xtitle = *(*info).data.get_axis_title((*info).xdim, /pixels)
   (*info).xdim_unit = 0
-  pseudoevent={widget_button,id:0L, $
-    top:event.top, handler:0l, select:1}
+  pseudoevent = {widget_button, id: 0l, $
+    top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
-end
+END
 
 ; change wavelength scale to Angstrom
-pro spice_xraster_wangstr, event
+PRO spice_xraster_wangstr, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
-  (*info).xtitle = *(*info).data->get_axis_title((*info).xdim)
+  (*info).xtitle = *(*info).data.get_axis_title((*info).xdim)
   (*info).xdim_unit = 1
-  pseudoevent={widget_button,id:0L, $
-    top:event.top, handler:0l, select:1}
+  pseudoevent = {widget_button, id: 0l, $
+    top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
-end
+END
 
 ; Toggle masking of pixels outside slit ON
-pro spice_xraster_mask_on, event
+PRO spice_xraster_mask_on, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
   (*info).no_masking = 0
-  pseudoevent={widget_button,id:0L, $
-    top:event.top, handler:0l, select:1}
+  pseudoevent = {widget_button, id: 0l, $
+    top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
-end
+END
 
 ; Toggle masking of pixels outside slit OFF
-pro spice_xraster_mask_off, event
+PRO spice_xraster_mask_off, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
   (*info).no_masking = 1
-  pseudoevent={widget_button,id:0L, $
-    top:event.top, handler:0l, select:1}
+  pseudoevent = {widget_button, id: 0l, $
+    top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
-end
+END
 
-
-
-
-;; change wavelength scale to pixels
-;pro spice_xraster_wpix, event
-;  widget_control, event.top, get_uvalue = info
-;  ; change titles in aux object
-;  (*(*info).data->getaux())->setwscale,'pixels'
-;  (*(*info).data->getaux())->setxytitle,wscale='pixels'
-;  ; set titles for image plots
-;  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-;  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+; ; change wavelength scale to pixels
+; pro spice_xraster_wpix, event
+; widget_control, event.top, get_uvalue = info
+; ; change titles in aux object
+; (*(*info).data->getaux())->setwscale,'pixels'
+; (*(*info).data->getaux())->setxytitle,wscale='pixels'
+; ; set titles for image plots
+; (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
+; (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
 ;
-;  pseudoevent={widget_button,id:0L, $
-;    top:event.top, handler:0l, select:1}
-;  spice_xraster_draw, pseudoevent
-;end
+; pseudoevent={widget_button,id:0L, $
+; top:event.top, handler:0l, select:1}
+; spice_xraster_draw, pseudoevent
+; end
 ;
-;; change spatial scale to pixels
-;pro spice_xraster_spix, event
-;  widget_control, event.top, get_uvalue = info
-;  ; change titles in aux object
-;  (*(*info).data->getaux())->setsscale,'pixels'
-;  (*(*info).data->getaux())->setxytitle,sscale='pixels'
-;  ; set titles for image plots
-;  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-;  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+; ; change spatial scale to pixels
+; pro spice_xraster_spix, event
+; widget_control, event.top, get_uvalue = info
+; ; change titles in aux object
+; (*(*info).data->getaux())->setsscale,'pixels'
+; (*(*info).data->getaux())->setxytitle,sscale='pixels'
+; ; set titles for image plots
+; (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
+; (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
 ;
-;  pseudoevent={widget_button,id:0L, $
-;    top:event.top, handler:0l, select:1}
-;  spice_xraster_draw, pseudoevent
-;end
+; pseudoevent={widget_button,id:0L, $
+; top:event.top, handler:0l, select:1}
+; spice_xraster_draw, pseudoevent
+; end
 ;
-;; change spatial scale to arcsec
-;pro spice_xraster_sarcsec, event
-;  widget_control, event.top, get_uvalue = info
-;  ; change titles in aux object
-;  (*(*info).data->getaux())->setsscale,'arcsec'
-;  (*(*info).data->getaux())->setxytitle,sscale='arcsec'
-;  ; set titles for image plots
-;  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-;  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+; ; change spatial scale to arcsec
+; pro spice_xraster_sarcsec, event
+; widget_control, event.top, get_uvalue = info
+; ; change titles in aux object
+; (*(*info).data->getaux())->setsscale,'arcsec'
+; (*(*info).data->getaux())->setxytitle,sscale='arcsec'
+; ; set titles for image plots
+; (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
+; (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
 ;
-;  pseudoevent={widget_button,id:0L, $
-;    top:event.top, handler:0l, select:1}
-;  spice_xraster_draw, pseudoevent
-;end
+; pseudoevent={widget_button,id:0L, $
+; top:event.top, handler:0l, select:1}
+; spice_xraster_draw, pseudoevent
+; end
 ;
-;; change wavelength scale to Angstrom
-;pro spice_xraster_wangstr, event
-;  widget_control, event.top, get_uvalue = info
-;  ; set titles for image plots
-;  (*(*info).data->getaux())->setwscale,string(197b)
-;  (*(*info).data->getaux())->setxytitle,wscale=string(197b)
-;  ; set titles for image plots
-;  (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
-;  (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
+; ; change wavelength scale to Angstrom
+; pro spice_xraster_wangstr, event
+; widget_control, event.top, get_uvalue = info
+; ; set titles for image plots
+; (*(*info).data->getaux())->setwscale,string(197b)
+; (*(*info).data->getaux())->setxytitle,wscale=string(197b)
+; ; set titles for image plots
+; (*info).xtitle = (*(*info).data->getxytitle())[(*info).xdim]
+; (*info).ytitle = (*(*info).data->getxytitle())[(*info).ydim]
 ;
-;  pseudoevent={widget_button,id:0L, $
-;    top:event.top, handler:0l, select:1}
-;  spice_xraster_draw, pseudoevent
-;end
-
-
-
-
+; pseudoevent={widget_button,id:0L, $
+; top:event.top, handler:0l, select:1}
+; spice_xraster_draw, pseudoevent
+; end
 
 ; select color table
-pro spice_xraster_colors, event
-  widget_control, event.top, get_uvalue=info
+PRO spice_xraster_colors, event
+  widget_control, event.top, get_uvalue = info
   thisevent = tag_names(event, /structure_name)
-  case thisevent of
-    'WIDGET_BUTTON': begin
-      widget_control, event.top, TLB_GET_OFFSET=offset_parent
+  CASE thisevent OF
+    'WIDGET_BUTTON': BEGIN
+      widget_control, event.top, TLB_GET_OFFSET = offset_parent
       xcolors, ncolors = (*info).ncolors, bottom = (*info).bottom, $
         title = 'spice_xraster colors (' + strtrim((*info).wid, 2) + ')', $
         group_leader = event.top, notifyid = [event.id, event.top], $
-        xoffset=offset_parent[0]+50, yoffset=offset_parent[1]+50
-    endcase
-    'XCOLORS_LOAD': begin
-      (*info).r = event.r((*info).bottom:(*info).ncolors-1 + (*info).bottom)
-      (*info).g = event.g((*info).bottom:(*info).ncolors-1 + (*info).bottom)
-      (*info).b = event.b((*info).bottom:(*info).ncolors-1 + (*info).bottom)
-      if !d.n_colors gt 256 then begin
-        pseudoevent={widget_button,id:0l, $
-          top:event.top, handler:0l, select:1}
+        xoffset = offset_parent[0] + 50, yoffset = offset_parent[1] + 50
+    ENDCASE
+    'XCOLORS_LOAD': BEGIN
+      (*info).r = event.r((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
+      (*info).g = event.g((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
+      (*info).b = event.b((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
+      IF !d.n_colors GT 256 THEN BEGIN
+        pseudoevent = {widget_button, id: 0l, $
+          top: event.top, handler: 0l, select: 1}
         spice_xraster_draw, pseudoevent
-      endif
-    endcase
-  endcase
+      ENDIF
+    ENDCASE
+  ENDCASE
   widget_control, event.top, set_uvalue = info
-end
+END
 
 ; protect colors
-pro spice_xraster_protect_colors,event
+PRO spice_xraster_protect_colors, event
   widget_control, event.top, get_uvalue = info
   tvlct, (*info).r, (*info).g, (*info).b, (*info).bottom
-end
+END
 
 ; resize main window
-pro spice_xraster_resize, event
-  widget_control, event.top ,get_uvalue = info
-  if (*info).timer eq 'off' then begin
-    widget_control,event.top,timer=0.1
-    (*info).timer='on'
-  endif
-  case tag_names(event,/structure_name) of
-    'WIDGET_TIMER': if (*info).oldx eq (*info).xs and (*info).oldy eq (*info).ys then (*info).redraw=1 $
-    else widget_control,event.top,timer=0.25
-    'WIDGET_BASE': begin
-      (*info).xs=event.x
-      (*info).ys=event.y
-    end
-    else:
-  endcase
-  if (*info).redraw then begin
-    (*info).d_xsz = ((*info).xs - (*info).lcol_xsz-(*info).cb_xsz) > 0
+PRO spice_xraster_resize, event
+  widget_control, event.top, get_uvalue = info
+  IF (*info).timer EQ 'off' THEN BEGIN
+    widget_control, event.top, timer = 0.1
+    (*info).timer = 'on'
+  ENDIF
+  CASE tag_names(event, /structure_name) OF
+    'WIDGET_TIMER': IF (*info).oldx EQ (*info).xs AND (*info).oldy EQ (*info).ys THEN (*info).redraw = 1 $
+    ELSE widget_control, event.top, timer = 0.25
+    'WIDGET_BASE': BEGIN
+      (*info).xs = event.x
+      (*info).ys = event.y
+    END
+    ELSE:
+  ENDCASE
+  IF (*info).redraw THEN BEGIN
+    (*info).d_xsz = ((*info).xs - (*info).lcol_xsz - (*info).cb_xsz) > 0
     (*info).d_ysz = (*info).ys
     (*info).x_scroll_size = (*info).d_xsz
     (*info).y_scroll_size = (*info).d_ysz
@@ -511,119 +504,119 @@ pro spice_xraster_resize, event
       draw_ysize = (*info).d_ysz, xsize = (*info).cb_xsz, $
       ysize = (*info).d_ysz
 
-    pseudoevent={widget_button,id:0L, $
-      top:event.top,handler:0l,select:1}
+    pseudoevent = {widget_button, id: 0l, $
+      top: event.top, handler: 0l, select: 1}
     spice_xraster_draw, pseudoevent
-    (*info).redraw=0
-    (*info).timer='off'
-  endif
-  (*info).oldx=(*info).xs
-  (*info).oldy=(*info).ys
-end
+    (*info).redraw = 0
+    (*info).timer = 'off'
+  ENDIF
+  (*info).oldx = (*info).xs
+  (*info).oldy = (*info).ys
+END
 
 ; close spice_xraster
-pro spice_xraster_destroy, event
-  widget_control, event.top,/destroy
-end
+PRO spice_xraster_destroy, event
+  widget_control, event.top, /destroy
+END
 
-pro spice_xraster_cleanup, tlb
+PRO spice_xraster_cleanup, tlb
   widget_control, tlb, get_uvalue = info
   ptr_free, (*info).xscale
   ptr_free, (*info).yscale
   ptr_free, (*info).data
   ptr_free, info
-end
+END
 
-pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_leader
+PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_leader
   ;
-  if n_params() lt 2 then begin
-    message,'spice_xraster,data,windows, ncolors=ncolors,group_leader = group',/cont
+  IF n_params() LT 2 THEN BEGIN
+    message, 'spice_xraster,data,windows, ncolors=ncolors,group_leader = group', /cont
     return
-  endif
+  ENDIF
 
-  data = spice_get_object(input_data, is_spice=is_spice, object_created=object_created)
-  if ~is_spice then return
+  data = spice_get_object(input_data, is_spice = is_spice, object_created = object_created)
+  IF ~is_spice THEN return
 
-  if n_elements(ncolors) eq 0 then ncolors = (!d.n_colors < 256)
-  maxexp=200
+  IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)
+  maxexp = 200
   ; drawing window size in relation to screen
-  screensize=get_screen_size()
-  if n_elements(scfac) eq 0 then scfac=0.6
-  sz=screensize*scfac
+  screensize = get_screen_size()
+  IF n_elements(scfac) EQ 0 THEN scfac = 0.6
+  sz = screensize * scfac
   d_xsz = sz[0]
   d_ysz = sz[1]
-  nwin=n_elements(windows)       ; number of line windows selected by user
+  nwin = n_elements(windows) ; number of line windows selected by user
   line = windows[0]
-  ;nraster = max(data->getnraster())   ; number of raster positions in data set
-  nexp =  max(data->get_number_exposures())        ; number of exposures
-  if nexp gt maxexp then begin
-    warning=['Raster/Time series contains more than '+string(strtrim(maxexp,2))+' exposures', $
+  ; nraster = max(data->getnraster())   ; number of raster positions in data set
+  nexp = max(data.get_number_exposures()) ; number of exposures
+  IF nexp GT maxexp THEN BEGIN
+    warning = ['Raster/Time series contains more than ' + string(strtrim(maxexp, 2)) + ' exposures', $
       'spice_xraster will be quite slow. Continue?']
-    continue=dialog_message(warning,/cancel,/default_cancel,dialog_parent=group)
-    if continue eq 'Cancel' then return
-  endif
-  xdim = 2   ; wavelength
-  ydim = 1   ; slit pos
-  xtitle = data->get_axis_title(xdim) ; wavelength
-  ytitle = data->get_axis_title(ydim) ; slit position
+    CONTINUE = dialog_message(warning, /cancel, /default_cancel, dialog_parent = group)
+    IF continue EQ 'Cancel' THEN return
+  ENDIF
+  xdim = 2 ; wavelength
+  ydim = 1 ; slit pos
+  xtitle = data.get_axis_title(xdim) ; wavelength
+  ytitle = data.get_axis_title(ydim) ; slit position
 
-  ;create linelist
+  ; create linelist
   linelist = strarr(nwin)
-  for i = 0, nwin-1 do linelist[i] = 'Line '+strtrim(data->get_window_id(windows[i]),2)
+  FOR i = 0, nwin - 1 DO linelist[i] = 'Line ' + strtrim(data.get_window_id(windows[i]), 2)
 
   ; base widget:
-  xwt = 'SPICE_Xraster -' +data->get_filename()   ; spice_xraster window title
-  tlb = widget_base(/row, title=xwt, tlb_size_events = 1, $
-    mbar=menubar, xoffset=100, yoffset=100, group_leader=group_leader) ;
-  lcol = widget_base(tlb, /frame, /column)      ;left column.
-  rcol = widget_base(tlb, /column)              ;right column.
+  xwt = 'SPICE_Xraster -' + data.get_filename() ; spice_xraster window title
+  tlb = widget_base(/row, title = xwt, tlb_size_events = 1, $
+    mbar = menubar, xoffset = 100, yoffset = 100, group_leader = group_leader) ;
+  lcol = widget_base(tlb, /frame, /column) ; left column.
+  rcol = widget_base(tlb, /column) ; right column.
 
   ; create pulldown menus on the base widget menubar
-  filemenu=widget_button(menubar, value='File',/menu, uvalue='file')
-  savemenu=widget_button(filemenu, value='Save as', uvalue='save', /menu)
-  psmenu=widget_button(savemenu, value='Postscript', event_pro = 'spice_xraster_ps')
-  jpgmenu=widget_button(savemenu, value='JPG', event_pro = 'spice_xraster_jpeg')
-  exitmenu=widget_button(filemenu, value='Close', event_pro='spice_xraster_destroy')
-  optmenu=widget_button(menubar,value='Options', uvalue='options')
-  colmenu=widget_button(optmenu, value='Colour table', $
-    event_pro='spice_xraster_colors')
-  ;animenu = widget_button(optmenu, value = 'Create Animation', uvalue='anim', $
-  ;  event_pro = 'spice_xraster_control_anim')
-  wscalemenu=widget_button(optmenu, value='Change wavelength scale',/menu)
-  angstr = string('305'oB)+'ngstr'+string('370'oB)+'m'
-  pixmenu=widget_button(wscalemenu, value='Pixels',event_pro='spice_xraster_wpix')
-  angstrmenu=widget_button(wscalemenu, value='nm',event_pro='spice_xraster_wangstr')
-  sscalemenu=widget_button(optmenu, value='Change spatial scale',/menu)
-  pixmenu=widget_button(sscalemenu, value='Pixels',event_pro='spice_xraster_spix')
-  angstrmenu=widget_button(sscalemenu, value='arcsec',event_pro='spice_xraster_sarcsec')
-  maskmenu=widget_button(optmenu, value='Toggle masking', /menu)
-  maskonmenu=widget_button(maskmenu, value='On',event_pro='spice_xraster_mask_on')
-  maskoffmenu=widget_button(maskmenu, value='Off',event_pro='spice_xraster_mask_off')
+  filemenu = widget_button(menubar, value = 'File', /menu, uvalue = 'file')
+  savemenu = widget_button(filemenu, value = 'Save as', uvalue = 'save', /menu)
+  psmenu = widget_button(savemenu, value = 'Postscript', event_pro = 'spice_xraster_ps')
+  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xraster_jpeg')
+  exitmenu = widget_button(filemenu, value = 'Close', event_pro = 'spice_xraster_destroy')
+  optmenu = widget_button(menubar, value = 'Options', uvalue = 'options')
+  colmenu = widget_button(optmenu, value = 'Colour table', $
+    event_pro = 'spice_xraster_colors')
+  ; animenu = widget_button(optmenu, value = 'Create Animation', uvalue='anim', $
+  ; event_pro = 'spice_xraster_control_anim')
+  wscalemenu = widget_button(optmenu, value = 'Change wavelength scale', /menu)
+  angstr = string("305"ob) + 'ngstr' + string("370"ob) + 'm'
+  pixmenu = widget_button(wscalemenu, value = 'Pixels', event_pro = 'spice_xraster_wpix')
+  angstrmenu = widget_button(wscalemenu, value = 'nm', event_pro = 'spice_xraster_wangstr')
+  sscalemenu = widget_button(optmenu, value = 'Change spatial scale', /menu)
+  pixmenu = widget_button(sscalemenu, value = 'Pixels', event_pro = 'spice_xraster_spix')
+  angstrmenu = widget_button(sscalemenu, value = 'arcsec', event_pro = 'spice_xraster_sarcsec')
+  maskmenu = widget_button(optmenu, value = 'Toggle masking', /menu)
+  maskonmenu = widget_button(maskmenu, value = 'On', event_pro = 'spice_xraster_mask_on')
+  maskoffmenu = widget_button(maskmenu, value = 'Off', event_pro = 'spice_xraster_mask_off')
 
   ; display window:
   displaybase = widget_base(rcol, /row)
-  drawid=widget_draw(displaybase, retain = 2, $
-    xsize = d_xsz, x_scroll_size = d_xsz ,$
-    ysize = d_ysz, y_scroll_size = d_ysz ,$
-    event_pro='spice_xraster_draw')
-  cb_xsz = 84  ; xsize of color bar draw widget
+  drawid = widget_draw(displaybase, retain = 2, $
+    xsize = d_xsz, x_scroll_size = d_xsz, $
+    ysize = d_ysz, y_scroll_size = d_ysz, $
+    event_pro = 'spice_xraster_draw')
+  cb_xsz = 84 ; xsize of color bar draw widget
   ; create color bar to the right of display window:
   colorbarid = widget_draw(displaybase, retain = 2, $
-    xsize = cb_xsz, x_scroll_size = cb_xsz, $$
-    ysize = d_ysz, y_scroll_size= d_ysz)
-  colorbar_title=data->get_title()+' '+(data->get_variable_unit())
+    xsize = cb_xsz, x_scroll_size = cb_xsz, $ $
+    ysize = d_ysz, y_scroll_size = d_ysz)
+  colorbar_title = data.get_title() + ' ' + (data.get_variable_unit())
   ; close button
   closefield = widget_base(lcol, /column)
   closebutton = widget_button(closefield, value = 'Close', $
     event_pro = 'spice_xraster_destroy')
   ; realize main window:
 
-  wp = widget_positioner(tlb, parent=group_leader)
-  wp->position
+  wp = widget_positioner(tlb, parent = group_leader)
+  wp.position
   widget_control, tlb, tlb_get_size = tlb_sz
   ; define size of widget and the menu column
-  tlb_xsz = tlb_sz[0]  ; xsize of whole widget in pixels
-  tlb_ysz = tlb_sz[1]  ; ysize of whole widget in pixels
+  tlb_xsz = tlb_sz[0] ; xsize of whole widget in pixels
+  tlb_ysz = tlb_sz[1] ; ysize of whole widget in pixels
   lcol_xsz = tlb_xsz - d_xsz - cb_xsz
   ; get window id of display window
   widget_control, drawid, get_value = wid
@@ -632,62 +625,62 @@ pro spice_xraster, input_data, windows, ncolors=ncolors, group_leader = group_le
   ; get and save color table
   tvlct, r, g, b, /get
   bottom = 0
-  if (!d.n_colors le 256) then begin
-    r = r[bottom:ncolors-1+bottom]
-    g = g[bottom:ncolors-1+bottom]
-    b = b[bottom:ncolors-1+bottom]
-  endif
+  IF (!d.n_colors LE 256) THEN BEGIN
+    r = r[bottom : ncolors - 1 + bottom]
+    g = g[bottom : ncolors - 1 + bottom]
+    b = b[bottom : ncolors - 1 + bottom]
+  ENDIF
 
   ; define the info structure, used send information around
-  info = {xscale:ptr_new(), $
-    yscale:ptr_new(), $
-    data:ptr_new(), $
-    xdim:xdim, $
-    ydim:ydim, $
-    xdim_unit:1, $
-    ydim_unit:1, $
-    nwin:nwin, $
-    ;nraster:nraster, $
-    nexp:nexp, $
-    line:line, $
-    windows:windows, $
-    linelist:linelist, $
-    lcol_xsz:lcol_xsz, $
-    d_xsz:d_xsz, $
-    d_ysz:d_ysz, $
-    oldx:0, $
-    oldy:0, $
-    xs:0, $
-    ys:0, $
-    redraw:0, $
-    no_masking:0, $
-    timer:'off', $
-    x_scroll_size:d_xsz, $
-    y_scroll_size:d_ysz, $
-    cb_xsz:cb_xsz, $
-    tlb:tlb, $
-    lcol:lcol, $
-    rcol:rcol,  $
-    ;animenu:animenu, $
-    messenger:0, $
-    r:r, g:g, b:b, $
-    bottom:bottom, $
-    ncolors:ncolors, $
-    drawid:drawid, $
-    colorbarid:colorbarid, $
-    colorbar_title:colorbar_title,$ ;
-    xtitle:xtitle, $
-    ytitle:ytitle, $
-    wid:wid}
+  info = {xscale: ptr_new(), $
+    yscale: ptr_new(), $
+    data: ptr_new(), $
+    xdim: xdim, $
+    ydim: ydim, $
+    xdim_unit: 1, $
+    ydim_unit: 1, $
+    nwin: nwin, $
+    ; nraster:nraster, $
+    nexp: nexp, $
+    line: line, $
+    windows: windows, $
+    linelist: linelist, $
+    lcol_xsz: lcol_xsz, $
+    d_xsz: d_xsz, $
+    d_ysz: d_ysz, $
+    oldx: 0, $
+    oldy: 0, $
+    xs: 0, $
+    ys: 0, $
+    redraw: 0, $
+    no_masking: 0, $
+    timer: 'off', $
+    x_scroll_size: d_xsz, $
+    y_scroll_size: d_ysz, $
+    cb_xsz: cb_xsz, $
+    tlb: tlb, $
+    lcol: lcol, $
+    rcol: rcol, $
+    ; animenu:animenu, $
+    messenger: 0, $
+    r: r, g: g, b: b, $
+    bottom: bottom, $
+    ncolors: ncolors, $
+    drawid: drawid, $
+    colorbarid: colorbarid, $
+    colorbar_title: colorbar_title, $ ;
+    xtitle: xtitle, $
+    ytitle: ytitle, $
+    wid: wid}
   info = ptr_new(info, /no_copy)
-  (*info).data=ptr_new(data)
+  (*info).data = ptr_new(data)
   ; set user value of tlb widget to be the info ptr
   widget_control, tlb, set_uvalue = info
   ; create pseudoevent and send this event to spice_xraster_draw,
   ; in order to draw the image
 
-  pseudoevent={widget_button,id:0L, top:tlb, handler:0l, select:1}
-  spice_xraster_draw,pseudoevent
-  xmanager,'spice_xraster',tlb,/no_block,event_handler='spice_xraster_resize', $
-    group_leader=group,cleanup = 'spice_xraster_cleanup'
-end
+  pseudoevent = {widget_button, id: 0l, top: tlb, handler: 0l, select: 1}
+  spice_xraster_draw, pseudoevent
+  xmanager, 'spice_xraster', tlb, /no_block, event_handler = 'spice_xraster_resize', $
+    group_leader = group, cleanup = 'spice_xraster_cleanup'
+END

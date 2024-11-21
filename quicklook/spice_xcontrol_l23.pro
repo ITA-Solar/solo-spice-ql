@@ -41,105 +41,100 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-06-26 14:59 CEST $
+; $Id: 2024-11-21 11:41 CET $
 ;-
 
-
-pro spice_xcontrol_l23_destroy, event
+PRO spice_xcontrol_l23_destroy, event
   pseudoevent = {WIDGET_KILL_REQUEST, $
-    ID:event.id, $
-    TOP:event.top, $
-    HANDLER:event.handler}
+    ID: event.id, $
+    TOP: event.top, $
+    HANDLER: event.handler}
   spice_xcontrol_event, pseudoevent
-end
+END
 
-
-pro spice_xcontrol_l23_cleanup, tlb
-  widget_control, tlb, get_uvalue=info
-  ptr_free,(*info).winno_l3_official
-  ptr_free,(*info).winno_l3_user
-  FOR i=0,N_ELEMENTS(*(*info).ana_l3_official)-1 DO BEGIN
+PRO spice_xcontrol_l23_cleanup, tlb
+  widget_control, tlb, get_uvalue = info
+  ptr_free, (*info).winno_l3_official
+  ptr_free, (*info).winno_l3_user
+  FOR i = 0, n_elements(*(*info).ana_l3_official) - 1 DO BEGIN
     IF size((*(*info).ana_l3_official)[i], /type) EQ 8 THEN $
       delete_analysis, (*(*info).ana_l3_official)[i]
   ENDFOR
-  ptr_free,(*info).ana_l3_official
-  FOR i=0,N_ELEMENTS(*(*info).ana_l3_user)-1 DO BEGIN
+  ptr_free, (*info).ana_l3_official
+  FOR i = 0, n_elements(*(*info).ana_l3_user) - 1 DO BEGIN
     IF size((*(*info).ana_l3_user)[i], /type) EQ 8 THEN $
       delete_analysis, (*(*info).ana_l3_user)[i]
   ENDFOR
-  ptr_free,(*info).ana_l3_user
-  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official)-1 DO ptr_free, (*(*info).hdr_l3_official)[i]
-  ptr_free,(*info).hdr_l3_official
-  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_official_data)-1 DO ptr_free, (*(*info).hdr_l3_official_data)[i]
-  ptr_free,(*info).hdr_l3_official_data
-  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user)-1 DO ptr_free, (*(*info).hdr_l3_user)[i]
-  ptr_free,(*info).hdr_l3_user
-  FOR i=0,N_ELEMENTS(*(*info).hdr_l3_user_data)-1 DO ptr_free, (*(*info).hdr_l3_user_data)[i]
-  ptr_free,(*info).hdr_l3_user_data
-  FOR i=0,N_ELEMENTS(*(*info).proc_steps_user)-1 DO IF ptr_valid((*(*info).proc_steps_user)[i]) THEN ptr_free, (*(*info).proc_steps_user)[i]
-  ptr_free,(*info).proc_steps_user
-  FOR i=0,N_ELEMENTS(*(*info).proc_steps_official)-1 DO IF ptr_valid((*(*info).proc_steps_official)[i]) THEN ptr_free, (*(*info).proc_steps_official)[i]
-  ptr_free,(*info).proc_steps_official
-  ptr_free,info
-end
+  ptr_free, (*info).ana_l3_user
+  FOR i = 0, n_elements(*(*info).hdr_l3_official) - 1 DO ptr_free, (*(*info).hdr_l3_official)[i]
+  ptr_free, (*info).hdr_l3_official
+  FOR i = 0, n_elements(*(*info).hdr_l3_official_data) - 1 DO ptr_free, (*(*info).hdr_l3_official_data)[i]
+  ptr_free, (*info).hdr_l3_official_data
+  FOR i = 0, n_elements(*(*info).hdr_l3_user) - 1 DO ptr_free, (*(*info).hdr_l3_user)[i]
+  ptr_free, (*info).hdr_l3_user
+  FOR i = 0, n_elements(*(*info).hdr_l3_user_data) - 1 DO ptr_free, (*(*info).hdr_l3_user_data)[i]
+  ptr_free, (*info).hdr_l3_user_data
+  FOR i = 0, n_elements(*(*info).proc_steps_user) - 1 DO IF ptr_valid((*(*info).proc_steps_user)[i]) THEN ptr_free, (*(*info).proc_steps_user)[i]
+  ptr_free, (*info).proc_steps_user
+  FOR i = 0, n_elements(*(*info).proc_steps_official) - 1 DO IF ptr_valid((*(*info).proc_steps_official)[i]) THEN ptr_free, (*(*info).proc_steps_official)[i]
+  ptr_free, (*info).proc_steps_official
+  ptr_free, info
+END
 
-
-pro spice_xcontrol_l23_event, event
-  widget_control, event.top, get_uvalue=info
-  case tag_names(event, /structure_name) of
-    
+PRO spice_xcontrol_l23_event, event
+  widget_control, event.top, get_uvalue = info
+  CASE tag_names(event, /structure_name) OF
     'WIDGET_KILL_REQUEST': BEGIN
       IF total((*info).state_l3_user.edited) GT 0 THEN BEGIN
         answer = dialog_message(['WARNING: Possibly UNSAVED changes.', $
-          'This warning also shows up, even if you only looked at level 3 data',$
+          'This warning also shows up, even if you only looked at level 3 data', $
           'without changing anything.', $
           'Do you really want to exit?'], $
-          /question, /default_no, title='WARNING: Possibly UNSAVED changes.', $
-          /center, dialog_parent=event.top)
+          /question, /default_no, title = 'WARNING: Possibly UNSAVED changes.', $
+          /center, dialog_parent = event.top)
         IF answer EQ 'No' THEN return
       ENDIF
-    widget_control, event.top, /destroy
+      widget_control, event.top, /destroy
     END
-    
+
     'SPICE_XCFIT_BLOCK_EVENT': BEGIN
-      IF event.signal_id ge 100 THEN BEGIN
+      IF event.signal_id GE 100 THEN BEGIN
         winno = event.signal_id - 100
         state_l3 = (*info).state_l3_official
       ENDIF ELSE BEGIN
         winno = event.signal_id
         state_l3 = (*info).state_l3_user
       ENDELSE
-      ind = where(state_l3.l3_winno eq winno, count)
-      if count NE 1 then begin
+      ind = where(state_l3.l3_winno EQ winno, count)
+      IF count NE 1 THEN BEGIN
         print, 'This should not happen. Contact prits-group@astro.uio.no'
         stop
         return
-      endif
-      
+      ENDIF
+
       state_l3[ind[0]].edited = 1
-      
-      IF event.signal_id ge 100 THEN BEGIN
+
+      IF event.signal_id GE 100 THEN BEGIN
         (*info).state_l3_official = state_l3
       ENDIF ELSE BEGIN
         (*info).state_l3_user = state_l3
       ENDELSE
 
-      spice_xcontrol_l23_update_state_display, info      
+      spice_xcontrol_l23_update_state_display, info
     END
-    
+
     ELSE:
-  endcase
-end
+  ENDCASE
+END
 
-
-pro spice_xcontrol_l23_save_file, event
-  widget_control, event.top, get_uvalue=info
+PRO spice_xcontrol_l23_save_file, event
+  widget_control, event.top, get_uvalue = info
   IF size((*info).object_l2, /type) NE 11 THEN BEGIN
     answer = dialog_message(['Saving of level 3 SPICE FITS files is not (yet) supported', $
       'when the corresponding level 2 file is not available.', $
       'Contact prits-group@astro.uio.no if you need this feature'], $
-      title='WARNING: NOT supported.', $
-      /center, dialog_parent=event.top)
+      title = 'WARNING: NOT supported.', $
+      /center, dialog_parent = event.top)
     ; TODO
     return
   ENDIF
@@ -149,67 +144,65 @@ pro spice_xcontrol_l23_save_file, event
   ana_l3_read = *(*info).ana_l3_user_read
   file_l3 = (*info).file_l3_user
   IF file_exist(file_l3) THEN BEGIN
-    answer = dialog_message(['This file already exists.',file_l3,'Do you want to overwrite it?'], $
-      /question, /default_no, title='File exists. Overwrite?',/center)
+    answer = dialog_message(['This file already exists.', file_l3, 'Do you want to overwrite it?'], $
+      /question, /default_no, title = 'File exists. Overwrite?', /center)
     IF answer EQ 'No' THEN return
 
     ind_read = where(ana_l3_read EQ 0, count_read)
     IF count_read GT 0 THEN BEGIN
       hdr_l3 = *(*info).hdr_l3_user
       PGEXTNAM = []
-      FOR i=0,count_read-1 DO BEGIN
-        PGEXTNAM = [PGEXTNAM, fxpar(*hdr_l3[ind_read[i]], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')]        
+      FOR i = 0, count_read - 1 DO BEGIN
+        PGEXTNAM = [PGEXTNAM, fxpar(*hdr_l3[ind_read[i]], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')]
       ENDFOR
 
-      ana = fits2ana(file_l3, windows=PGEXTNAM);, /quiet)
-      FOR i=0,count_read-1 DO BEGIN
+      ana = fits2ana(file_l3, windows = PGEXTNAM) ; , /quiet)
+      FOR i = 0, count_read - 1 DO BEGIN
         delete_analysis, ana_l3[ind_read[i]]
         ana_l3[ind_read[i]] = ana[i]
         ana_l3_read[ind_read[i]] = 1
       ENDFOR
     ENDIF
-    
+
     file_old = 1
-    file_move, file_l3, file_l3+'.old', /overwrite
+    file_move, file_l3, file_l3 + '.old', /overwrite
   ENDIF ELSE file_old = 0 ; file_exist(file_l3)
-  IF ~FILE_TEST(file_dirname(file_l3)) THEN FILE_MKDIR, file_dirname(file_l3)
+  IF ~file_test(file_dirname(file_l3)) THEN file_mkdir, file_dirname(file_l3)
 
   all_result_headers = ptrarr(nwin_l3)
   all_data_headers = ptrarr(nwin_l3)
   l3_pr_steps_all = ptrarr(nwin_l3)
-  FOR iwindow=0,nwin_l3-1 DO BEGIN
-
-    original_data = (*info).object_l2->get_window_data(winno_l3[iwindow], no_masking=no_masking, approximated_slit=approximated_slit)
+  FOR iwindow = 0, nwin_l3 - 1 DO BEGIN
+    original_data = (*info).object_l2.get_window_data(winno_l3[iwindow], no_masking = no_masking, approximated_slit = approximated_slit)
 
     PROC_STEPS = *(*(*info).proc_steps_user)[iwindow]
-    if (*info).state_l3_user[iwindow].edited then begin
-      proc_step_new =  [ $
-        HASH('name','PRSTEP', 'value','MANUAL-LINE-FITTING', 'comment','Processing step type, step '), $
-        HASH('name','PRPROC', 'value','spice_xcfit_block, spice_xcontrol_l23', 'comment','Name of procedure performing PRSTEP'), $
-        HASH('name','PRLIB' , 'value','solarsoft/so/spice/idl/quicklook', 'comment','Software library containing PRPROC'), $
-        HASH('name','PRPARA', 'value','POSSIBLE_MANUAL_EDITING = 1', 'comment','Parameters for PRPROC') $
+    IF (*info).state_l3_user[iwindow].edited THEN BEGIN
+      proc_step_new = [ $
+        hash('name', 'PRSTEP', 'value', 'MANUAL-LINE-FITTING', 'comment', 'Processing step type, step '), $
+        hash('name', 'PRPROC', 'value', 'spice_xcfit_block, spice_xcontrol_l23', 'comment', 'Name of procedure performing PRSTEP'), $
+        hash('name', 'PRLIB', 'value', 'solarsoft/so/spice/idl/quicklook', 'comment', 'Software library containing PRPROC'), $
+        hash('name', 'PRPARA', 'value', 'POSSIBLE_MANUAL_EDITING = 1', 'comment', 'Parameters for PRPROC') $
         ]
       PROC_STEPS.add, proc_ste_new, /no_copy
-    endif
-    
-    if iwindow gt 0 then IS_EXTENSION=1 else IS_EXTENSION=0
-    ana2fits, ana_l3[iwindow], FILEPATH_OUT=file_l3, $
-      N_WINDOWS=nwin_l3, WINNO=iwindow, $
-      DATA_ID=DATA_ID, TYPE_XDIM1='WAVE', $
-      IS_EXTENSION=IS_EXTENSION, LEVEL='L3', VERSION=number_version_l3, $
-      PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-      PROGENITOR_DATA=original_data, HEADER_INPUT_DATA=(*info).object_l2->get_header(winno_l3[iwindow]), $
-      SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
-      SAVE_NOT=SAVE_NOT, $
-      headers_results=headers_results, headers_data=headers_data
+    ENDIF
+
+    IF iwindow GT 0 THEN IS_EXTENSION = 1 ELSE IS_EXTENSION = 0
+    ana2fits, ana_l3[iwindow], FILEPATH_OUT = file_l3, $
+      N_WINDOWS = nwin_l3, WINNO = iwindow, $
+      DATA_ID = DATA_ID, TYPE_XDIM1 = 'WAVE', $
+      IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', VERSION = number_version_l3, $
+      PROC_STEPS = PROC_STEPS, PROJ_KEYWORDS = PROJ_KEYWORDS, $
+      PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = (*info).object_l2.get_header(winno_l3[iwindow]), $
+      SAVE_XDIM1 = SAVE_XDIM1, NO_SAVE_DATA = NO_SAVE_DATA, PRINT_HEADERS = PRINT_HEADERS, $
+      SAVE_NOT = SAVE_NOT, $
+      headers_results = headers_results, headers_data = headers_data
 
     all_result_headers[iwindow] = ptr_new(*headers_results[0])
     all_data_headers[iwindow] = ptr_new(*headers_data[0])
     l3_pr_steps_all[iwindow] = ptr_new(PROC_STEPS)
-
   ENDFOR ; iwin=0,nwin_l3-1
 
-  IF file_old THEN file_delete, file_l3+'.old'
+  IF file_old THEN file_delete, file_l3 + '.old'
 
   ptr_free, (*info).ana_l3_user
   (*info).ana_l3_user = ptr_new(ana_l3)
@@ -223,12 +216,11 @@ pro spice_xcontrol_l23_save_file, event
   (*info).proc_steps_user = ptr_new(l3_pr_steps_all)
   (*info).state_l3_user.edited = 0
   spice_xcontrol_l23_update_state_display, info
-end
-
+END
 
 ; Add or replace new results
 ; This happens if the user clicks on one of the '(Re)create window' buttons
-pro spice_xcontrol_l23_update_state_add, info, result
+PRO spice_xcontrol_l23_update_state_add, info, result
   ana_l3 = *(*info).ana_l3_user
   ana_l3_read = *(*info).ana_l3_user_read
   hdr_l3 = *(*info).hdr_l3_user
@@ -237,18 +229,18 @@ pro spice_xcontrol_l23_update_state_add, info, result
   state_l3 = (*info).state_l3_user
   winno_l3 = *(*info).winno_l3_user
 
-  nwin_l3_result = N_ELEMENTS(*result.ana)
+  nwin_l3_result = n_elements(*result.ana)
   winno_l3_result = intarr(nwin_l3_result)
-  FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1) ; old result header
+  FOR iwin = 0, nwin_l3_result - 1 DO BEGIN
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing = -1) ; old result header
     IF winno_l3_result[iwin] EQ -1 THEN $
-      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing=-1)
+      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing = -1)
   ENDFOR
 
   nwin_l3 = 0
-  FOR iwin=0,(*info).nwin-1 DO BEGIN
-    ind_result = where(winno_l3_result eq iwin, count_result)
-    ind_old = where(winno_l3 eq iwin, count_old)
+  FOR iwin = 0, (*info).nwin - 1 DO BEGIN
+    ind_result = where(winno_l3_result EQ iwin, count_result)
+    ind_old = where(winno_l3 EQ iwin, count_old)
     IF count_result GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = nwin_l3
       state_l3[iwin].edited = ~result.file_saved
@@ -264,8 +256,8 @@ pro spice_xcontrol_l23_update_state_add, info, result
       spice_xcontrol_l23_add_window, ana_l3_new, ana_l3[ind_old[0]], $
         ana_l3_read_new, ana_l3_read[ind_old[0]], $
         hdr_l3_new, *hdr_l3[ind_old[0]], $
-        hdr_data_l3_new,  *hdr_data_l3[ind_old[0]], $
-        l3_pr_steps_new,  *proc_steps_user[ind_old[0]], $
+        hdr_data_l3_new, *hdr_data_l3[ind_old[0]], $
+        l3_pr_steps_new, *proc_steps_user[ind_old[0]], $
         winno_l3_new, iwin
       nwin_l3++
     ENDIF ELSE BEGIN
@@ -290,12 +282,11 @@ pro spice_xcontrol_l23_update_state_add, info, result
   (*info).state_l3_user = state_l3
 
   spice_xcontrol_l23_update_state_display, info
-end
+END
 
-
-pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, ana_l3_read_new, new_ana_read, hdr_l3_new, new_hdr, hdr_data_l3_new, new_hdr_data, $
+PRO spice_xcontrol_l23_add_window, ana_l3_new, new_ana, ana_l3_read_new, new_ana_read, hdr_l3_new, new_hdr, hdr_data_l3_new, new_hdr_data, $
   l3_pr_steps_new, new_pr_step, winno_l3_new, new_winno
-  IF N_ELEMENTS(ana_l3_new) EQ 0 THEN BEGIN
+  IF n_elements(ana_l3_new) EQ 0 THEN BEGIN
     ana_l3_new = new_ana
     ana_l3_read_new = new_ana_read
     hdr_l3_new = ptr_new(new_hdr)
@@ -310,24 +301,22 @@ pro spice_xcontrol_l23_add_window, ana_l3_new, new_ana, ana_l3_read_new, new_ana
     l3_pr_steps_new = [l3_pr_steps_new, ptr_new(new_pr_step)]
     winno_l3_new = [winno_l3_new, new_winno]
   ENDELSE
-end
-
+END
 
 ; Replace previous results with the new ones.
 ; This happens if the user clicks on upper most '(Re)create file' button
-pro spice_xcontrol_l23_update_state_replace, info, result
-
+PRO spice_xcontrol_l23_update_state_replace, info, result
   state_l3 = (*info).state_l3_user
-  nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', missing=0)
+  nwin_l3_result = fxpar(*(*result.RESULT_HEADERS)[0], 'NWIN', missing = 0)
   winno_l3_result = intarr(nwin_l3_result)
-  FOR iwin=0,nwin_l3_result-1 DO BEGIN
-    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing=-1) ; old result header
+  FOR iwin = 0, nwin_l3_result - 1 DO BEGIN
+    winno_l3_result[iwin] = fxpar(*(*result.RESULT_HEADERS)[iwin], 'L2WINNO', missing = -1) ; old result header
     IF winno_l3_result[iwin] EQ -1 THEN $
-      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing=-1)
+      winno_l3_result[iwin] = fxpar(*(*result.data_headers)[iwin], 'WINNO', missing = -1)
   ENDFOR
 
-  FOR iwin=0,(*info).nwin-1 DO BEGIN
-    ind = where(winno_l3_result eq iwin, count)
+  FOR iwin = 0, (*info).nwin - 1 DO BEGIN
+    ind = where(winno_l3_result EQ iwin, count)
     IF count GT 0 THEN BEGIN
       state_l3[iwin].l3_winno = ind[0]
       state_l3[iwin].edited = ~result.file_saved
@@ -356,12 +345,10 @@ pro spice_xcontrol_l23_update_state_replace, info, result
   (*info).state_l3_user = state_l3
 
   spice_xcontrol_l23_update_state_display, info
-end
+END
 
-
-pro spice_xcontrol_l23_update_state_display, info
-
-  FOR icol=1,2 DO BEGIN
+PRO spice_xcontrol_l23_update_state_display, info
+  FOR icol = 1, 2 DO BEGIN
     CASE icol OF
       1: BEGIN
         file_l3 = (*info).file_l3_official
@@ -377,50 +364,46 @@ pro spice_xcontrol_l23_update_state_display, info
       END
     ENDCASE
 
-    FOR iwin=0,(*info).nwin-1 DO BEGIN
+    FOR iwin = 0, (*info).nwin - 1 DO BEGIN
       title = ' - '
       status = 'NOT CREATED'
       editable = 0
       IF state_l3[iwin].l3_winno GE 0 THEN BEGIN
-        title = fxpar(*hdr_l3[state_l3[iwin].l3_winno], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+        title = fxpar(*hdr_l3[state_l3[iwin].l3_winno], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
         status = 'CREATED'
         IF state_l3[iwin].edited THEN status = status + ' and EDITED'
         editable = 1
       ENDIF
-      widget_control, state_l3[iwin].title_label, get_value=title_old
-      IF title_old NE title THEN widget_control, state_l3[iwin].title_label, set_value=title
-      widget_control, state_l3[iwin].status_label, get_value=status_old
-      IF status_old NE status THEN widget_control, state_l3[iwin].status_label, set_value=status
+      widget_control, state_l3[iwin].title_label, get_value = title_old
+      IF title_old NE title THEN widget_control, state_l3[iwin].title_label, set_value = title
+      widget_control, state_l3[iwin].status_label, get_value = status_old
+      IF status_old NE status THEN widget_control, state_l3[iwin].status_label, set_value = status
       IF widget_info(state_l3[iwin].edit_button, /sensitive) NE editable THEN $
-        widget_control, state_l3[iwin].edit_button, sensitive=editable
-      IF icol EQ 2 THEN widget_control, state_l3[iwin].edit_button, set_uvalue={l3_type:2, winno:state_l3[iwin].l3_winno}
+        widget_control, state_l3[iwin].edit_button, sensitive = editable
+      IF icol EQ 2 THEN widget_control, state_l3[iwin].edit_button, set_uvalue = {l3_type: 2, winno: state_l3[iwin].l3_winno}
     ENDFOR ; iwin=0,(*info).nwin-1
     savable = total(state_l3.edited) GT 0
-    IF icol eq 2 && widget_info((*info).save_button_user, /sensitive) NE savable THEN $
-      widget_control, (*info).save_button_user, sensitive=savable
-    widget_control, (*info).dir_labels[icol], get_value=dir_name_old
+    IF icol EQ 2 && widget_info((*info).save_button_user, /sensitive) NE savable THEN $
+      widget_control, (*info).save_button_user, sensitive = savable
+    widget_control, (*info).dir_labels[icol], get_value = dir_name_old
     dir_name = (file_dirname(file_l3))[0]
-    IF dir_name_old NE dir_name THEN widget_control, (*info).dir_labels[icol], set_value=dir_name
+    IF dir_name_old NE dir_name THEN widget_control, (*info).dir_labels[icol], set_value = dir_name
     base_name = (file_basename(file_l3))[0]
-    widget_control, (*info).file_labels[icol], get_value=base_name_old
-    IF base_name_old NE base_name THEN widget_control, (*info).file_labels[icol], set_value=base_name
-
+    widget_control, (*info).file_labels[icol], get_value = base_name_old
+    IF base_name_old NE base_name THEN widget_control, (*info).file_labels[icol], set_value = base_name
   ENDFOR ; icol=1,ncolumn
+END
 
-end
-
-
-pro spice_xcontrol_l23_open_l2, event
-  widget_control, event.top, get_uvalue=info
+PRO spice_xcontrol_l23_open_l2, event
+  widget_control, event.top, get_uvalue = info
   spice_xcontrol, (*info).object_l2
-end
+END
 
-
-pro spice_xcontrol_l23_open_l3, event
-  widget_control, event.top, get_uvalue=info
-  widget_control, event.id, get_uvalue=win_info
+PRO spice_xcontrol_l23_open_l3, event
+  widget_control, event.top, get_uvalue = info
+  widget_control, event.id, get_uvalue = win_info
   signal_id = win_info.winno
-  case win_info.l3_type of
+  CASE win_info.l3_type OF
     1: BEGIN
       signal_id += 100
       file_l3 = (*info).file_l3_official
@@ -428,7 +411,7 @@ pro spice_xcontrol_l23_open_l3, event
       ana_l3_read = (*(*info).ana_l3_official_read)[win_info.winno]
       hdr_l3 = (*(*info).hdr_l3_official)[win_info.winno]
       hdr_l3_data = (*(*info).hdr_l3_official_data)[win_info.winno]
-      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
       title = 'L3 - official - ' + PGEXTNAM
     END
     2: BEGIN
@@ -437,15 +420,15 @@ pro spice_xcontrol_l23_open_l3, event
       ana_l3_read = (*(*info).ana_l3_user_read)[win_info.winno]
       hdr_l3 = (*(*info).hdr_l3_user)[win_info.winno]
       hdr_l3_data = (*(*info).hdr_l3_user_data)[win_info.winno]
-      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
       title = 'L3 - user - ' + PGEXTNAM
     END
-  endcase
+  ENDCASE
 
   IF ~ana_l3_read THEN BEGIN
     delete_analysis, ana_l3
-    ana_l3 = fits2ana(file_l3, windows=PGEXTNAM, /quiet)
-    case win_info.l3_type of
+    ana_l3 = fits2ana(file_l3, windows = PGEXTNAM, /quiet)
+    CASE win_info.l3_type OF
       1: BEGIN
         (*(*info).ana_l3_official)[win_info.winno] = ana_l3
         (*(*info).ana_l3_official_read)[win_info.winno] = 1
@@ -454,44 +437,42 @@ pro spice_xcontrol_l23_open_l3, event
         (*(*info).ana_l3_user)[win_info.winno] = ana_l3
         (*(*info).ana_l3_user_read)[win_info.winno] = 1
       END
-    endcase
+    ENDCASE
   ENDIF
 
-  origin = [0,0,0]
-  scale = [1,1,1]
-  phys_scale = [0,0,0]
-  spice_data_l3.get_plot_variables, *hdr_l3_data, origin=origin, scale=scale, phys_scale=phys_scale
-  spice_xcfit_block, ana=ana_l3, title=title, origin=origin, scale=scale, phys_scale=phys_scale, group_leader=(*info).tlb, $
-    signal_id=signal_id, /no_save_option, image_dim=[1,2]
-end
+  origin = [0, 0, 0]
+  scale = [1, 1, 1]
+  phys_scale = [0, 0, 0]
+  spice_data_l3.get_plot_variables, *hdr_l3_data, origin = origin, scale = scale, phys_scale = phys_scale
+  spice_xcfit_block, ana = ana_l3, title = title, origin = origin, scale = scale, phys_scale = phys_scale, group_leader = (*info).tlb, $
+    signal_id = signal_id, /no_save_option, image_dim = [1, 2]
+END
 
-
-pro spice_xcontrol_l23_create_l3, event
-  widget_control, event.top, get_uvalue=info
-  widget_control, event.id, get_uvalue=win_info
+PRO spice_xcontrol_l23_create_l3, event
+  widget_control, event.top, get_uvalue = info
+  widget_control, event.id, get_uvalue = win_info
   IF ~(*info).file_in_user_dir THEN top_dir = (*info).file_top_dir
-  IF N_ELEMENTS(win_info) GT 1 THEN all_windows=1 ELSE all_windows=0
-  result = spice_create_l3_widget( (*info).object_L2, event.top, window_index=win_info, $
-    no_widget=all_windows, top_dir=top_dir, save_not=~all_windows, block_save=~all_windows)
+  IF n_elements(win_info) GT 1 THEN all_windows = 1 ELSE all_windows = 0
+  result = spice_create_l3_widget((*info).object_L2, event.top, window_index = win_info, $
+    no_widget = all_windows, top_dir = top_dir, save_not = ~all_windows, block_save = ~all_windows)
 
   IF result.l3_file EQ 'Cancel' THEN return
   IF all_windows THEN spice_xcontrol_l23_update_state_replace, info, result $
   ELSE spice_xcontrol_l23_update_state_add, info, result
-end
+END
 
-
-pro spice_xcontrol_l23_copy_window, event
-  widget_control, event.top, get_uvalue=info
-  widget_control, event.id, get_uvalue=win_info
+PRO spice_xcontrol_l23_copy_window, event
+  widget_control, event.top, get_uvalue = info
+  widget_control, event.id, get_uvalue = win_info
   ana_l3 = *(*info).ana_l3_official
   hdr_l3 = *(*info).hdr_l3_official
   ana_l3_read = *(*info).ana_l3_official_read
   IF ana_l3_read[win_info] EQ 0 THEN BEGIN
-    ana = fits2ana((*info).file_l3_official, windows=win_info, /quiet)
+    ana = fits2ana((*info).file_l3_official, windows = win_info, /quiet)
     delete_analysis, ana_l3[win_info]
     ana_l3[win_info] = ana
     ana_l3_read[win_info] = 1
-    *(*info).ana_l3_official_read = ana_l3_read
+    * (*info).ana_l3_official_read = ana_l3_read
   ENDIF
 
   hdr_new = ptrarr(1)
@@ -502,32 +483,29 @@ pro spice_xcontrol_l23_copy_window, event
   proc_step_l3 = *(*info).proc_steps_official
   pr_step_new = ptrarr(1)
   pr_step_new[0] = ptr_new(*proc_step_l3[win_info])
-  result = {l3_file:'', $
-    ana:ptr_new(ana_l3[win_info]), $
-    ana_read:ptr_new(ana_l3_read[win_info]), $
-    result_headers:ptr_new(hdr_new), $
-    data_headers:ptr_new(hdr_new_data), $
-    proc_steps:ptr_new(pr_step_new), $
-    file_saved:0b, user_dir:0b, top_dir:''}
+  result = {l3_file: '', $
+    ana: ptr_new(ana_l3[win_info]), $
+    ana_read: ptr_new(ana_l3_read[win_info]), $
+    result_headers: ptr_new(hdr_new), $
+    data_headers: ptr_new(hdr_new_data), $
+    proc_steps: ptr_new(pr_step_new), $
+    file_saved: 0b, user_dir: 0b, top_dir: ''}
 
   spice_xcontrol_l23_update_state_add, info, result
-end
-
-
+END
 
 ; -----------------------------------------------------------------------
 ; MAIN PROGRAM
 ; -----------------------------------------------------------------------
 
-pro spice_xcontrol_l23, file, group_leader=group_leader
-
+PRO spice_xcontrol_l23, file, group_leader = group_leader
   prits_tools.parcheck, file, 1, "file", 'string', 0
   prits_tools.parcheck, group_leader, 0, "group_leader", 'integers', 0, /optional
 
-  if n_params() lt 1 then begin
-    message,'Usage: spice_xcontrol_l23, file [, group_leader=group_leader]',/cont
-    ;return
-  endif
+  IF n_params() LT 1 THEN BEGIN
+    message, 'Usage: spice_xcontrol_l23, file [, group_leader=group_leader]', /cont
+    ; return
+  ENDIF
 
   file_in = (file_search(file, /fully_qualify_path))[0]
   IF file_in EQ '' THEN BEGIN
@@ -540,8 +518,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     return
   ENDIF
 
-  file_top_dir=''
-  file_in_user_dir=0
+  file_top_dir = ''
+  file_in_user_dir = 0
 
   CASE file_info.level OF
     2: BEGIN
@@ -552,25 +530,25 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
     3: BEGIN
       l3_obj = spice_data(file_in)
-      file_l2 = l3_obj->find_l2_file()
-      IF file_l2 EQ '' THEN file_l2 = l3_obj->find_l2_file(/user_dir)
+      file_l2 = l3_obj.find_l2_file()
+      IF file_l2 EQ '' THEN file_l2 = l3_obj.find_l2_file(/user_dir)
 
       file_l3_official = ''
-      file_l3_official_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file_official)
-      FOR ifile=0,count_file_official-1 DO BEGIN
+      file_l3_official_all = spice_find_file(file_info.datetime, level = 3, remove_duplicates = 0, count_file = count_file_official)
+      FOR ifile = 0, count_file_official - 1 DO BEGIN
         IF file_l3_official_all[ifile] EQ file_in THEN BEGIN
           file_l3_official = file_l3_official_all[ifile]
-          break
+          BREAK
         ENDIF
       ENDFOR
 
       file_l3_user = ''
-      file_l3_user_all = spice_find_file(file_info.datetime, level=3, remove_duplicates=0, count_file=count_file_user, /user_dir)
-      FOR ifile=0,count_file_user-1 DO BEGIN
+      file_l3_user_all = spice_find_file(file_info.datetime, level = 3, remove_duplicates = 0, count_file = count_file_user, /user_dir)
+      FOR ifile = 0, count_file_user - 1 DO BEGIN
         IF file_l3_user_all[ifile] EQ file_in THEN BEGIN
           file_l3_user = file_l3_user_all[ifile]
-          file_in_user_dir=1
-          break
+          file_in_user_dir = 1
+          BREAK
         ENDIF
       ENDFOR
 
@@ -578,8 +556,8 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
         file_l3_user = file_in
         file_top_dir = file_dirname(file_l3_user)
         file_top_dir = file_top_dir.split(path_sep())
-        IF N_ELEMENTS(file_top_dir) GT 6 THEN BEGIN
-          file_top_dir = file_top_dir[0:-5]
+        IF n_elements(file_top_dir) GT 6 THEN BEGIN
+          file_top_dir = file_top_dir[0 : -5]
         ENDIF
         file_top_dir = file_top_dir.join(path_sep())
       ENDIF
@@ -610,30 +588,30 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
 
   IF exist_l2 THEN BEGIN
     object_l2 = spice_data(file_l2)
-    nwin = object_l2->get_number_windows()
+    nwin = object_l2.get_number_windows()
     file_l3_calc = file_l2.replace('level2', 'level3')
-    file_l3_calc = file_l3_calc.replace('_L2_','_L3_')
-  ENDIF ELSE object_l2=0
+    file_l3_calc = file_l3_calc.replace('_L2_', '_L3_')
+  ENDIF ELSE object_l2 = 0
 
   IF exist_l3_official THEN BEGIN
-    ana_l3_official = fits2ana(file_l3_official, headers_results=hdr_l3_official, headers_data=hdr_l3_official_data, /headers_only)
-    nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', missing=0)
+    ana_l3_official = fits2ana(file_l3_official, headers_results = hdr_l3_official, headers_data = hdr_l3_official_data, /headers_only)
+    nwin_l3_official = fxpar(*hdr_l3_official[0], 'NWIN', missing = 0)
     ana_l3_official = mk_analysis()
-    for i=1,nwin_l3_official-1 do ana_l3_official = [ana_l3_official, mk_analysis()]
+    FOR i = 1, nwin_l3_official - 1 DO ana_l3_official = [ana_l3_official, mk_analysis()]
     ana_l3_official_read = intarr(nwin_l3_official)
-    if nwin eq 0 then nwin = fxpar(*hdr_l3_official_data[0], 'NWIN', missing=0)
-    if nwin eq 0 then nwin = nwin_l3_official
+    IF nwin EQ 0 THEN nwin = fxpar(*hdr_l3_official_data[0], 'NWIN', missing = 0)
+    IF nwin EQ 0 THEN nwin = nwin_l3_official
     winno_l3_official = intarr(nwin_l3_official)
-    FOR iwin=0,nwin_l3_official-1 DO BEGIN
-      winno_l3_official[iwin] = fxpar(*hdr_l3_official_data[iwin], 'WINNO', missing=-1)
+    FOR iwin = 0, nwin_l3_official - 1 DO BEGIN
+      winno_l3_official[iwin] = fxpar(*hdr_l3_official_data[iwin], 'WINNO', missing = -1)
     ENDFOR
     l3_obj = spice_data(file_l3_official)
-    proc_steps_official = l3_obj->get_l3_processing_steps()
+    proc_steps_official = l3_obj.get_l3_processing_steps()
   ENDIF ELSE BEGIN
     IF exist_l2 THEN BEGIN
       file_l3_official = file_l3_calc
     ENDIF ELSE IF exist_l3_user THEN BEGIN
-      file_l3_official = file_l3_user.replace(path_sep()+'user'+path_sep(), path_sep())
+      file_l3_official = file_l3_user.replace(path_sep() + 'user' + path_sep(), path_sep())
     ENDIF
     nwin_l3_official = 0
     ana_l3_official = 0
@@ -645,22 +623,22 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
   ENDELSE
 
   IF exist_l3_user THEN BEGIN
-    ana_l3_user = fits2ana(file_l3_user, headers_results=hdr_l3_user, headers_data=hdr_l3_user_data, /headers_only)
-    nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', missing=0)
+    ana_l3_user = fits2ana(file_l3_user, headers_results = hdr_l3_user, headers_data = hdr_l3_user_data, /headers_only)
+    nwin_l3_user = fxpar(*hdr_l3_user[0], 'NWIN', missing = 0)
     ana_l3_user = mk_analysis()
-    for i=1,nwin_l3_user-1 do ana_l3_user = [ana_l3_user, mk_analysis()]
+    FOR i = 1, nwin_l3_user - 1 DO ana_l3_user = [ana_l3_user, mk_analysis()]
     ana_l3_user_read = intarr(nwin_l3_user)
-    if nwin eq 0 then nwin = fxpar(*hdr_l3_user_data[0], 'NWIN', missing=0)
-    if nwin eq 0 then nwin = nwin_l3_user
+    IF nwin EQ 0 THEN nwin = fxpar(*hdr_l3_user_data[0], 'NWIN', missing = 0)
+    IF nwin EQ 0 THEN nwin = nwin_l3_user
     winno_l3_user = intarr(nwin_l3_user)
-    FOR iwin=0,nwin_l3_user-1 DO BEGIN
-      winno_l3_user[iwin] = fxpar(*hdr_l3_user_data[iwin], 'WINNO', missing=-1)
+    FOR iwin = 0, nwin_l3_user - 1 DO BEGIN
+      winno_l3_user[iwin] = fxpar(*hdr_l3_user_data[iwin], 'WINNO', missing = -1)
     ENDFOR
     l3_obj = spice_data(file_l3_user)
-    proc_steps_user = l3_obj->get_l3_processing_steps()
+    proc_steps_user = l3_obj.get_l3_processing_steps()
   ENDIF ELSE BEGIN
-    old_path_part = path_sep()+'spice'+path_sep()+'level3'+path_sep()
-    new_path_part = path_sep()+'spice'+path_sep()+'user'+path_sep()+'level3'+path_sep()
+    old_path_part = path_sep() + 'spice' + path_sep() + 'level3' + path_sep()
+    new_path_part = path_sep() + 'spice' + path_sep() + 'user' + path_sep() + 'level3' + path_sep()
     IF exist_l2 THEN BEGIN
       file_l3_user = file_l3_calc.replace(old_path_part, new_path_part)
     ENDIF ELSE IF exist_l3_official THEN BEGIN
@@ -675,162 +653,155 @@ pro spice_xcontrol_l23, file, group_leader=group_leader
     proc_steps_user = 0
   ENDELSE
 
-
-
   ; WIDGETS
 
   dir_labels = lonarr(4)
   file_labels = lonarr(4)
-  
+
   screen = spice_get_screen_size()
   y_screen_no_use = 150
   need_x_size = 1110
-  need_y_size = 210+100*nwin+y_screen_no_use
+  need_y_size = 210 + 100 * nwin + y_screen_no_use
   IF screen[0] LT need_x_size || screen[1] LT need_y_size THEN BEGIN
-    x_scroll_size = min([screen[0]-10, need_x_size])
-    y_scroll_size = min([screen[1]-y_screen_no_use, need_y_size])
-    tlb = widget_base(/column, mbar=menubar, $
-      title='SPICE_Xcontrol_L23 - '+file, group_leader=group_leader, /tlb_kill_request_events, $
-      /scroll, x_scroll_size=x_scroll_size, y_scroll_size=y_scroll_size)
+    x_scroll_size = min([screen[0] - 10, need_x_size])
+    y_scroll_size = min([screen[1] - y_screen_no_use, need_y_size])
+    tlb = widget_base(/column, mbar = menubar, $
+      title = 'SPICE_Xcontrol_L23 - ' + file, group_leader = group_leader, /tlb_kill_request_events, $
+      /scroll, x_scroll_size = x_scroll_size, y_scroll_size = y_scroll_size)
   ENDIF ELSE BEGIN
-    tlb = widget_base(/column, mbar=menubar, $
-      title='SPICE_Xcontrol_L23 - '+file, group_leader=group_leader, /tlb_kill_request_events)    
+    tlb = widget_base(/column, mbar = menubar, $
+      title = 'SPICE_Xcontrol_L23 - ' + file, group_leader = group_leader, /tlb_kill_request_events)
   ENDELSE
 
-  win_base = widget_base(tlb, /grid_layout, column=3, /frame)
-
+  win_base = widget_base(tlb, /grid_layout, column = 3, /frame)
 
   ; Column 0 - Level 2 file
 
   base_l2 = widget_base(win_base, /column, /frame)
-  label = widget_label(base_l2, value='LEVEL 2', /align_center)
-  dir_labels[0] = widget_label(base_l2, value=(file_dirname(file_l2))[0], /DYNAMIC_RESIZE, /align_center)
-  file_labels[0] = widget_label(base_l2, value=(file_basename(file_l2))[0], /DYNAMIC_RESIZE, /align_center)
-  button = widget_button(base_l2, value='Open file', event_pro='spice_xcontrol_l23_open_l2', $
-    sensitive=exist_l2)
+  label = widget_label(base_l2, value = 'LEVEL 2', /align_center)
+  dir_labels[0] = widget_label(base_l2, value = (file_dirname(file_l2))[0], /DYNAMIC_RESIZE, /align_center)
+  file_labels[0] = widget_label(base_l2, value = (file_basename(file_l2))[0], /DYNAMIC_RESIZE, /align_center)
+  button = widget_button(base_l2, value = 'Open file', event_pro = 'spice_xcontrol_l23_open_l2', $
+    sensitive = exist_l2)
 
-  FOR iwin=0,nwin-1 DO BEGIN
+  FOR iwin = 0, nwin - 1 DO BEGIN
     win_base_l2 = widget_base(win_base, /column, /frame)
     IF exist_l2 THEN BEGIN
-      label = widget_label(win_base_l2, value=object_l2->get_window_id(iwin), /align_left)
+      label = widget_label(win_base_l2, value = object_l2.get_window_id(iwin), /align_left)
     ENDIF
   ENDFOR ; iwin=0,nwin-1
-  dummy_label = widget_label(win_base, value='')
-
+  dummy_label = widget_label(win_base, value = '')
 
   ; Column 1 - Level 3 - official file
 
   base_l3_official = widget_base(win_base, /column, /frame)
-  label = widget_label(base_l3_official, value='LEVEL 3 - official', /align_center)
-  dir_labels[1] = widget_label(base_l3_official, value=(file_dirname(file_l3_official))[0], /DYNAMIC_RESIZE, /align_center)
-  file_labels[1] = widget_label(base_l3_official, value=(file_basename(file_l3_official))[0], /DYNAMIC_RESIZE, /align_center)
+  label = widget_label(base_l3_official, value = 'LEVEL 3 - official', /align_center)
+  dir_labels[1] = widget_label(base_l3_official, value = (file_dirname(file_l3_official))[0], /DYNAMIC_RESIZE, /align_center)
+  file_labels[1] = widget_label(base_l3_official, value = (file_basename(file_l3_official))[0], /DYNAMIC_RESIZE, /align_center)
 
-  state_l3_official = make_array(nwin, value={l3_winno:-1, edited:0b, title_label:0L, status_label:0L, edit_button:0L})
-  FOR iwin=0,nwin-1 DO BEGIN
+  state_l3_official = make_array(nwin, value = {l3_winno: -1, edited: 0b, title_label: 0l, status_label: 0l, edit_button: 0l})
+  FOR iwin = 0, nwin - 1 DO BEGIN
     win_base_l3_official = widget_base(win_base, /column, /frame)
     win_created = 0
     title = ' - '
     status = 'NOT CREATED'
     IF exist_l3_official THEN BEGIN
-      ind = where(winno_l3_official eq iwin, count)
+      ind = where(winno_l3_official EQ iwin, count)
       IF count GT 0 THEN BEGIN
         win_created = 1
-        state_l3_official[iwin].l3_winno=ind[0]
-        title = fxpar(*hdr_l3_official[ind[0]], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+        state_l3_official[iwin].l3_winno = ind[0]
+        title = fxpar(*hdr_l3_official[ind[0]], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
         status = 'CREATED'
       ENDIF
     ENDIF
-    state_l3_official[iwin].title_label = widget_label(win_base_l3_official, value=title, /DYNAMIC_RESIZE, /align_left)
-    state_l3_official[iwin].status_label = widget_label(win_base_l3_official, value=status, /DYNAMIC_RESIZE, /align_left)
+    state_l3_official[iwin].title_label = widget_label(win_base_l3_official, value = title, /DYNAMIC_RESIZE, /align_left)
+    state_l3_official[iwin].status_label = widget_label(win_base_l3_official, value = status, /DYNAMIC_RESIZE, /align_left)
     button_base = widget_base(win_base_l3_official, /row)
-    state_l3_official[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
-      sensitive=win_created, uvalue={l3_type:1, winno:state_l3_official[iwin].l3_winno})
-    copy_button = widget_button(button_base, value='Copy window to user file', event_pro='spice_xcontrol_l23_copy_window', $
-      sensitive=win_created, uvalue=state_l3_official[iwin].l3_winno)
+    state_l3_official[iwin].edit_button = widget_button(button_base, value = 'View/Edit window', event_pro = 'spice_xcontrol_l23_open_l3', $
+      sensitive = win_created, uvalue = {l3_type: 1, winno: state_l3_official[iwin].l3_winno})
+    copy_button = widget_button(button_base, value = 'Copy window to user file', event_pro = 'spice_xcontrol_l23_copy_window', $
+      sensitive = win_created, uvalue = state_l3_official[iwin].l3_winno)
   ENDFOR ; iwin=0,nwin-1
-  dummy_label = widget_label(win_base, value='')
-
+  dummy_label = widget_label(win_base, value = '')
 
   ; Column 2 - Level 3 - user file
 
   base_l3_user = widget_base(win_base, /column, /frame)
-  label = widget_label(base_l3_user, value='LEVEL 3 - user')
-  dir_labels[2] = widget_label(base_l3_user, value=(file_dirname(file_l3_user))[0], /DYNAMIC_RESIZE, /align_center)
-  file_labels[2] = widget_label(base_l3_user, value=(file_basename(file_l3_user))[0], /DYNAMIC_RESIZE, /align_center)
-  button = widget_button(base_l3_user, value='(Re)create file', event_pro='spice_xcontrol_l23_create_l3', $
-    sensitive=exist_l2, uvalue=indgen(nwin))
+  label = widget_label(base_l3_user, value = 'LEVEL 3 - user')
+  dir_labels[2] = widget_label(base_l3_user, value = (file_dirname(file_l3_user))[0], /DYNAMIC_RESIZE, /align_center)
+  file_labels[2] = widget_label(base_l3_user, value = (file_basename(file_l3_user))[0], /DYNAMIC_RESIZE, /align_center)
+  button = widget_button(base_l3_user, value = '(Re)create file', event_pro = 'spice_xcontrol_l23_create_l3', $
+    sensitive = exist_l2, uvalue = indgen(nwin))
 
-  state_l3_user = make_array(nwin, value={l3_winno:-1, edited:0b, title_label:0L, status_label:0L, edit_button:0L})
-  FOR iwin=0,nwin-1 DO BEGIN
+  state_l3_user = make_array(nwin, value = {l3_winno: -1, edited: 0b, title_label: 0l, status_label: 0l, edit_button: 0l})
+  FOR iwin = 0, nwin - 1 DO BEGIN
     win_base_l3_user = widget_base(win_base, /column, /frame)
     win_created = 0
     title = ' - '
     status = 'NOT CREATED'
     IF exist_l3_user THEN BEGIN
-      ind = where(winno_l3_user eq iwin, count)
+      ind = where(winno_l3_user EQ iwin, count)
       IF count GT 0 THEN BEGIN
         win_created = 1
-        state_l3_user[iwin].l3_winno=ind[0]
-        title = fxpar(*hdr_l3_user[ind[0]], 'PGEXTNAM', missing='PGEXTNAM keyword empty/missing')
+        state_l3_user[iwin].l3_winno = ind[0]
+        title = fxpar(*hdr_l3_user[ind[0]], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
         status = 'CREATED'
       ENDIF
     ENDIF
-    state_l3_user[iwin].title_label = widget_label(win_base_l3_user, value=title, /DYNAMIC_RESIZE, /align_left)
-    state_l3_user[iwin].status_label = widget_label(win_base_l3_user, value=status, /DYNAMIC_RESIZE, /align_left)
+    state_l3_user[iwin].title_label = widget_label(win_base_l3_user, value = title, /DYNAMIC_RESIZE, /align_left)
+    state_l3_user[iwin].status_label = widget_label(win_base_l3_user, value = status, /DYNAMIC_RESIZE, /align_left)
     button_base = widget_base(win_base_l3_user, /row)
-    state_l3_user[iwin].edit_button = widget_button(button_base, value='View/Edit window', event_pro='spice_xcontrol_l23_open_l3', $
-      sensitive=win_created, uvalue={l3_type:2, winno:state_l3_user[iwin].l3_winno})
-    create_button = widget_button(button_base, value='(Re)create window', event_pro='spice_xcontrol_l23_create_l3', $
-      sensitive=exist_l2, uvalue=iwin)
+    state_l3_user[iwin].edit_button = widget_button(button_base, value = 'View/Edit window', event_pro = 'spice_xcontrol_l23_open_l3', $
+      sensitive = win_created, uvalue = {l3_type: 2, winno: state_l3_user[iwin].l3_winno})
+    create_button = widget_button(button_base, value = '(Re)create window', event_pro = 'spice_xcontrol_l23_create_l3', $
+      sensitive = exist_l2, uvalue = iwin)
   ENDFOR ; iwin=0,nwin-1
 
-  save_button_user = widget_button(win_base, value='Save File', sensitive=0, event_pro='spice_xcontrol_l23_save_file')
-
+  save_button_user = widget_button(win_base, value = 'Save File', sensitive = 0, event_pro = 'spice_xcontrol_l23_save_file')
 
   ; Define the info structure, used to send information around
-  info= { $
-    tlb:tlb, $
-    file_in:file_in, $
-    dir_labels:dir_labels, $
-    file_labels:file_labels, $
-    exist_l2:exist_l2, $
-    exist_l3_official:exist_l3_official, $
-    exist_l3_user:exist_l3_user, $
-    file_l2:file_l2, $
-    file_l3_official:file_l3_official, $
-    file_l3_user:file_l3_user, $
-    file_in_user_dir:file_in_user_dir, $
-    file_top_dir:file_top_dir, $
-    object_l2:object_l2, $
-    winno_l3_official:ptr_new(winno_l3_official), $
-    winno_l3_user:ptr_new(winno_l3_user), $
-    ana_l3_official:ptr_new(ana_l3_official), $
-    ana_l3_user:ptr_new(ana_l3_user), $
-    ana_l3_official_read:ptr_new(ana_l3_official_read), $
-    ana_l3_user_read:ptr_new(ana_l3_user_read), $
-    nwin:nwin, $
-    nwin_l3_official:nwin_l3_official, $
-    nwin_l3_user:nwin_l3_user, $
-    hdr_l3_official:ptr_new(hdr_l3_official), $
-    hdr_l3_official_data:ptr_new(hdr_l3_official_data), $
-    hdr_l3_user:ptr_new(hdr_l3_user), $
-    hdr_l3_user_data:ptr_new(hdr_l3_user_data), $
-    proc_steps_official:ptr_new(proc_steps_official), $
-    proc_steps_user:ptr_new(proc_steps_user), $
-    state_l3_official:state_l3_official, $
-    state_l3_user:state_l3_user, $
-    save_button_user:save_button_user $
-  }
-  info=ptr_new(info,/no_copy)
+  info = { $
+    tlb: tlb, $
+    file_in: file_in, $
+    dir_labels: dir_labels, $
+    file_labels: file_labels, $
+    exist_l2: exist_l2, $
+    exist_l3_official: exist_l3_official, $
+    exist_l3_user: exist_l3_user, $
+    file_l2: file_l2, $
+    file_l3_official: file_l3_official, $
+    file_l3_user: file_l3_user, $
+    file_in_user_dir: file_in_user_dir, $
+    file_top_dir: file_top_dir, $
+    object_l2: object_l2, $
+    winno_l3_official: ptr_new(winno_l3_official), $
+    winno_l3_user: ptr_new(winno_l3_user), $
+    ana_l3_official: ptr_new(ana_l3_official), $
+    ana_l3_user: ptr_new(ana_l3_user), $
+    ana_l3_official_read: ptr_new(ana_l3_official_read), $
+    ana_l3_user_read: ptr_new(ana_l3_user_read), $
+    nwin: nwin, $
+    nwin_l3_official: nwin_l3_official, $
+    nwin_l3_user: nwin_l3_user, $
+    hdr_l3_official: ptr_new(hdr_l3_official), $
+    hdr_l3_official_data: ptr_new(hdr_l3_official_data), $
+    hdr_l3_user: ptr_new(hdr_l3_user), $
+    hdr_l3_user_data: ptr_new(hdr_l3_user_data), $
+    proc_steps_official: ptr_new(proc_steps_official), $
+    proc_steps_user: ptr_new(proc_steps_user), $
+    state_l3_official: state_l3_official, $
+    state_l3_user: state_l3_user, $
+    save_button_user: save_button_user $
+    }
+  info = ptr_new(info, /no_copy)
 
   ; Set the info ptr to be the user value of the tlb widget
-  widget_control, tlb, set_uvalue=info
+  widget_control, tlb, set_uvalue = info
 
   ; realize the top level base widget
-  wp = widget_positioner(tlb, parent=group_leader)
-  wp->position
+  wp = widget_positioner(tlb, parent = group_leader)
+  wp.position
 
   xmanager, 'spice_xcontrol_l23', tlb, /no_block, $
-    group_leader=group_leader, cleanup='spice_xcontrol_l23_cleanup'
-
-end
+    group_leader = group_leader, cleanup = 'spice_xcontrol_l23_cleanup'
+END
