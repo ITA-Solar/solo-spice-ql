@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-21 13:17 CET $
+; $Id: 2024-11-21 13:29 CET $
 
 ;+
 ; Description:
@@ -431,14 +431,8 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
 
   filename_l2 = self.get_header_keyword('FILENAME', 0, '')
 
-  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version = force_version, version_l3 = version_l3, $
+  filename_l3 = spice_data.get_filename_l3(filename_l2, force_version = force_version, $
     number_version_l3 = number_version_l3, top_dir = top_dir, path_index = path_index)
-
-  file_info_l2 = spice_file2info(filename_l2)
-
-  file_id = fns('V##_', file_info_l2.version) + $
-    strtrim(string(file_info_l2.spiobsid), 2) + $
-    fns('-###', file_info_l2.rasterno)
 
   IF ~keyword_set(no_widget) THEN $
     progress_widget.next_file, n_elements(window), filename = filename_l2, halt = halt
@@ -500,7 +494,6 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
       ENDIF
 
-      ; data_id = file_id + fns(' ext##', self.get_header_keyword('WINNO', window_index, 99))
       original_data = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
       IF iwindow GT 0 THEN IS_EXTENSION = 1 ELSE BEGIN
         IS_EXTENSION = 0
@@ -533,14 +526,14 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         file = (keyword_set(pipeline_dir)) ? pipeline_dir + '/' + filename_l3 : filepath(filename_l3, /tmp)
       ENDELSE ; iwindow gt 0
 
-      CREATOR = keyword_set(pipeline_dir) ? self.get_header_keyword('CREATOR', window_index, '') : getenv("USER")
+      creator = keyword_set(pipeline_dir) ? self.get_header_keyword('CREATOR', window_index, '') : getenv("USER")
 
       ana2fits, ana, FILEPATH_OUT = file, $
         N_WINDOWS = n_elements(window), WINNO = iwindow, $
-        DATA_ID = DATA_ID, TYPE_XDIM1 = 'WAVE', $
+        TYPE_XDIM1 = 'WAVE', $
         EXT_DATA_PATH = filename_l2, $
         IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', VERSION = number_version_l3, $
-        PROC_STEPS = PROC_STEPS, PROJ_KEYWORDS = PROJ_KEYWORDS, $
+        PROC_STEPS = PROC_STEPS, creator = creator, $
         PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = self.get_header(window_index), $
         SAVE_XDIM1 = SAVE_XDIM1, PRINT_HEADERS = PRINT_HEADERS, $
         SAVE_NOT = save_not, $
@@ -560,7 +553,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   ENDFOR ; iwindow=0,N_ELEMENTS(window)-1
 
   IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN
-    spice_ingest, file, destination = destination, file_moved = file_moved, files_found = files_found, $
+    spice_ingest, file, destination = destination, $
       /user_dir, top_dir = top_dir, path_index = path_index, /force, $
       dry_run = keyword_set(save_not)
     IF ~keyword_set(save_not) THEN print, 'Level 3 file saved to: ', destination
@@ -1026,6 +1019,7 @@ PRO spice_data::add_window, all_data, data, window_index, included_winnos
   IF all_data EQ !NULL THEN BEGIN
     data_has_been_debinned_in_y = (self.get_header_keyword('NBIN2', window_index) NE 0)
     naxis1 = self.get_header_keyword('NAXIS1', window_index)
+    naxis2 = self.get_header_keyword('NAXIS2', window_index)
     naxis3 = self.get_header_keyword('NAXIS3', window_index)
     naxis4 = self.get_header_keyword('NAXIS4', window_index)
 
@@ -1081,7 +1075,6 @@ FUNCTION spice_data::read_satpixlist, extno
 END
 
 FUNCTION spice_data::get_satpixlist, window_index
-  referring_extname = self.get_header_keyword('EXTNAME', window_index)
   pixlists = self.get_header_keyword('PIXLISTS', window_index)
 
   IF pixlists EQ !NULL THEN return, !NULL
@@ -1127,7 +1120,7 @@ FUNCTION spice_data::get_saturated, window_index, satpixlist_attributes = satpix
 END
 
 FUNCTION spice_data::restore_saturated_pixels, data, window_index, max_saturation_fraction
-  saturated = self.get_saturated(window_index, satpixlist_attributes = satpixlist_attributes)
+  saturated = self.get_saturated(window_index)
   IF saturated EQ !NULL THEN BEGIN
     box_message, ['', 'Data does not contain any saturated pixels.', 'Returning untouched data array', '']
     return, data
@@ -1217,7 +1210,7 @@ FUNCTION spice_data::get_rebinned_indices, indices, nbin2
   return, binned_indices
 END
 
-FUNCTION spice_data::get_slit_y_range, data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot
+FUNCTION spice_data::get_slit_y_range, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot
   nbin2 = self.get_header_keyword('NBIN2', window_index)
 
   IF *self.slit_y_range NE !NULL THEN return, (nbin2 EQ 1) ? *self.slit_y_range : self.get_rebinned_indices(*self.slit_y_range, nbin2)
@@ -1351,7 +1344,7 @@ FUNCTION spice_data::mask_regions_outside_slit, data, window_index, approximated
   data_may_be_masked = self.check_if_data_may_be_masked(window_index)
   IF ~data_may_be_masked THEN return, data
 
-  slit_y_range = self.get_slit_y_range(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
+  slit_y_range = self.get_slit_y_range(window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
 
   data[*, 0 : slit_y_range[0], *, *] = !values.f_nan
   data[*, slit_y_range[1] : *, *, *] = !values.f_nan
@@ -1401,7 +1394,8 @@ END
 ;-
 FUNCTION spice_data::get_window_data, window, noscale = noscale, $
   no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot, $
-  load = load, slit_only = slit_only, nodescale = nodescale, max_saturation_fraction = max_saturation_fraction, quiet = quiet
+  nodescale = nodescale, max_saturation_fraction = max_saturation_fraction, quiet = quiet, $
+  load = load, slit_only = slit_only ; idl-disable-line unused-var
   ; Returns the data of a window
   COMPILE_OPT IDL2
 
@@ -1423,7 +1417,7 @@ FUNCTION spice_data::get_window_data, window, noscale = noscale, $
     (*self.window_masked)[window_index] EQ masked && (*self.window_max_sat)[window_index] EQ max_saturation_fraction THEN BEGIN
     data = *(*self.window_data)[window_index]
   ENDIF ELSE BEGIN
-    data = readfits(self.get_filename(), hdr, noscale = noscale, ext = window_index)
+    data = readfits(self.get_filename(), noscale = noscale, ext = window_index)
 
     IF keyword_set(max_saturation_fraction) THEN BEGIN
       data = self.restore_saturated_pixels(data, window_index, max_saturation_fraction)
@@ -2857,7 +2851,7 @@ FUNCTION spice_data::get_bintable_ttypes, include_window_tag = include_window_ta
       extension_index = self.return_extension_index(extension)
       FOR i = 0, n_elements(column_indices) - 1 DO BEGIN
         icol = column_indices[i]
-        ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
+        ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count) ; idl-disable-line unused-var
         IF count GT 0 THEN BEGIN
           ttypes_new = [ttypes_new, ttypes[i]]
           column_indices_new = [column_indices_new, icol]
@@ -3155,7 +3149,7 @@ PRO spice_data::get_bintable_info
     var_keys = self.get_header_keyword('VAR_KEYS', iwin, '')
     var_keys = strsplit(var_keys, ',', /extract)
     bin_extension_name = ''
-    FOREACH column, var_keys, index DO BEGIN
+    FOREACH column, var_keys DO BEGIN
       entry = strsplit(column, ';', count = count1, /extract)
       IF count1 EQ 2 THEN BEGIN
         bin_extension_name = strtrim(entry[0], 2)
@@ -3204,6 +3198,7 @@ END
 ;-
 PRO spice_data__define
   COMPILE_OPT IDL2
+  ; idl-disable-next-line unused-var
 
   struct = {spice_data, $
     file: '', $ ; input filename
