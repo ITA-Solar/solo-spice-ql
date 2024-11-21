@@ -52,157 +52,150 @@
 ;                                            peaks to be included.
 ;      Ver. 1.4, 26-Apr-2023, Terje Fredvik: When blue_means_negative_velocity
 ;                                            the min and max values of
-;                                            parameters corresponding to 
+;                                            parameters corresponding to
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2024-11-01 15:48 CET $
+; $Id: 2024-11-21 11:37 CET $
 
-
-FUNCTION generate_adef, data, lam, widmin=widmin, position=position, velocity=velocity, $
-  line_list=line_list, plot=plot, version=version, gt_peaks_version=version_gt_peaks
-  ;; Automatically generate cfit analysis definitions based on input intensity and
-  ;; wavelength arrays
+FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
+  line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
+  ; ; Automatically generate cfit analysis definitions based on input intensity and
+  ; ; wavelength arrays
 
   version = 1 ; PLEASE increase this number when editing the code
 
-  prits_tools.parcheck, data, 1, "data", 'NUMERIC', [2,3,4]
-  prits_tools.parcheck, lam, 2, "lam", 'NUMERIC', [2,3,4]
-  prits_tools.parcheck, widmin, 0, "widmin", 'NUMERIC', 0, minval=0, /optional
+  prits_tools.parcheck, data, 1, "data", 'NUMERIC', [2, 3, 4]
+  prits_tools.parcheck, lam, 2, "lam", 'NUMERIC', [2, 3, 4]
+  prits_tools.parcheck, widmin, 0, "widmin", 'NUMERIC', 0, minval = 0, /optional
   prits_tools.parcheck, velocity, 0, "velocity", 'NUMERIC', 0, /optional
-  prits_tools.parcheck, line_list, 0, "line_list", 'OBJREF', 1, object_name='hash', /optional
+  prits_tools.parcheck, line_list, 0, "line_list", 'OBJREF', 1, object_name = 'hash', /optional
 
   use_list = keyword_set(line_list)
   blue_means_negative_velocity = 1
 
   meanprofile = data
   sz = size(meanprofile)
-  while sz[0] gt 1 do begin
-    meanprofile = mean(meanprofile, dimension=2, /nan)
+  WHILE sz[0] GT 1 DO BEGIN
+    meanprofile = mean(meanprofile, dimension = 2, /nan)
     sz = size(meanprofile)
-  endwhile
+  ENDWHILE
 
   meanlambda = lam
   sz = size(meanlambda)
-  while sz[0] gt 1 do begin
-    meanlambda = mean(meanlambda, dimension=2, /nan)
+  WHILE sz[0] GT 1 DO BEGIN
+    meanlambda = mean(meanlambda, dimension = 2, /nan)
     sz = size(meanlambda)
-  endwhile
+  ENDWHILE
 
   IF use_list THEN BEGIN
     lines = line_list.keys()
     lines = lines.toArray()
-    min_lambda = min(lam, max=max_lambda)
+    min_lambda = min(lam, max = max_lambda)
     ind_lines = where(lines GT min_lambda AND lines LT max_lambda, npeaks)
 
     IF npeaks GT 0 THEN BEGIN
-
       peakinds = intarr(npeaks)
-      for iline=0,npeaks-1 do begin
-        lambda_diff = abs(meanlambda-lines[ind_lines[iline]])
+      FOR iline = 0, npeaks - 1 DO BEGIN
+        lambda_diff = abs(meanlambda - lines[ind_lines[iline]])
         min_diff = min(lambda_diff, lambda_ind)
-        IF lambda_ind LT 3 || lambda_ind GE N_ELEMENTS(meanlambda)-3 THEN BEGIN
+        IF lambda_ind LT 3 || lambda_ind GE n_elements(meanlambda) - 3 THEN BEGIN
           peakinds[iline] = 0
         ENDIF ELSE BEGIN
           peakinds[iline] = lambda_ind
         ENDELSE
-      endfor
-      ind = where(peakinds gt 0, npeaks)
-      if npeaks gt 0 then begin
+      ENDFOR
+      ind = where(peakinds GT 0, npeaks)
+      IF npeaks GT 0 THEN BEGIN
         peakinds = peakinds[ind]
         fwhm = intarr(npeaks) ; TODO: Estimate FWHM in pixels for each peak
         fwhm[*] = 3 ; for now
-      endif
-
+      ENDIF
     ENDIF ; npeaks GT 0
-
   ENDIF ELSE BEGIN ; use_list
-    peakinds = spice_gt_peaks(meanprofile, fwhm=fwhm, minmedian=4.5, /sort, plot=plot, version=version_gt_peaks)
+    peakinds = spice_gt_peaks(meanprofile, fwhm = fwhm, minmedian = 4.5, /sort, plot = plot, version = version_gt_peaks)
     npeaks = n_elements(peakinds)
   ENDELSE ; use_list
 
-
   IF npeaks GT 0 THEN BEGIN
-
-    gaussians = replicate(spice_mk_comp_gauss([0,0,0]), npeaks)
+    gaussians = replicate(spice_mk_comp_gauss([0, 0, 0]), npeaks)
 
     int0 = meanprofile[peakinds]
     IF use_list THEN lam0 = lines[ind_lines] $
     ELSE lam0 = meanlambda[peakinds]
-    wid0 = lam0 - meanlambda[peakinds-fwhm] >  widmin
+    wid0 = lam0 - meanlambda[peakinds - fwhm] > widmin
 
-    v = 150.                      ; Max shift in km/s
-    dlam = v*lam0/3.e5            ; Max shift in Aangstrom
+    v = 150. ; Max shift in km/s
+    dlam = v * lam0 / 3.e5 ; Max shift in Aangstrom
 
-    min_intens = fltarr(npeaks)     ; minimum intensity is 0
-    negative_int0_ix = where(int0 LT 0,/NULL) ; SPICE L2 HDUs may have negative values
-    IF negative_int0_ix NE !NULL THEN min_intens[*] = min(int0[negative_int0_ix])*5. 
-    
-    min_lam = (lam0 - dlam) > min(lam); v0 - v
-    min_fwhm =  (keyword_set(widmin)) ? widmin : min((wid0 - 0.04) >  0.02) ; random guess...
-    
-    max_intens = abs(int0)*100;30000    ; Ensure that max value is greater than min value also for negative values
-    max_lam  = (lam0 + dlam) < max(lam) ; v0 + v
-    max_fwhm = wid0 + 0.07              ; 
+    min_intens = fltarr(npeaks) ; minimum intensity is 0
+    negative_int0_ix = where(int0 LT 0, /NULL) ; SPICE L2 HDUs may have negative values
+    IF negative_int0_ix NE !NULL THEN min_intens[*] = min(int0[negative_int0_ix]) * 5.
+
+    min_lam = (lam0 - dlam) > min(lam) ; v0 - v
+    min_fwhm = (keyword_set(widmin)) ? widmin : min((wid0 - 0.04) > 0.02) ; random guess...
+
+    max_intens = abs(int0) * 100 ; 30000    ; Ensure that max value is greater than min value also for negative values
+    max_lam = (lam0 + dlam) < max(lam) ; v0 + v
+    max_fwhm = wid0 + 0.07 ;
 
     IF ~keyword_set(position) THEN BEGIN
-      IF N_ELEMENTS(velocity) EQ 0 THEN vel=0.0 $
+      IF n_elements(velocity) EQ 0 THEN vel = 0.0 $
       ELSE vel = velocity
     ENDIF
 
-    FOR i=0,n_elements(peakinds)-1 DO BEGIN
-       gauss = spice_mk_comp_gauss([int0[i],lam0[i],wid0[i]], $
-                                   max_intens = max_intens[i], min_intens = min_intens[i], $
-                                   max_lam    = max_lam[i],   min_lam = min_lam[i],$
-                                   min_fwhm   = min_fwhm,     max_fwhm = max_fwhm[i],$
-                                   velocity=vel, use_list=use_list)
+    FOR i = 0, n_elements(peakinds) - 1 DO BEGIN
+      gauss = spice_mk_comp_gauss([int0[i], lam0[i], wid0[i]], $
+        max_intens = max_intens[i], min_intens = min_intens[i], $
+        max_lam = max_lam[i], min_lam = min_lam[i], $
+        min_fwhm = min_fwhm, max_fwhm = max_fwhm[i], $
+        velocity = vel, use_list = use_list)
       IF ~keyword_set(position) AND keyword_set(blue_means_negative_velocity) THEN BEGIN
-         gauss.param[1].trans_a = -gauss.param[1].trans_a
-         max_vel = -gauss.param[1].min_val
-         gauss.param[1].min_val = -gauss.param[1].max_val
-         gauss.param[1].max_val = max_vel
+        gauss.param[1].trans_a = -gauss.param[1].trans_a
+        max_vel = -gauss.param[1].min_val
+        gauss.param[1].min_val = -gauss.param[1].max_val
+        gauss.param[1].max_val = max_vel
       ENDIF
       iontxt = (use_list) ? line_list[lam0[i]] : 'AutoGauss'
-      lam0txt = trim(lam0[i],'(F6.2)') + ' nm'
+      lam0txt = trim(lam0[i], '(F6.2)') + ' nm'
       gauss.name = iontxt + ' ' + lam0txt
       gaussians[i] = gauss
     ENDFOR
-
   ENDIF ; npeaks GT 0
 
-  bg = mk_comp_poly([0.5*median(meanprofile)], max_arr=[30000],min_arr=[0],trans_a=[1],$
-    trans_b=[0],const=[0b])
+  bg = mk_comp_poly([0.5 * median(meanprofile)], max_arr = [30000], min_arr = [0], trans_a = [1], $
+    trans_b = [0], const = [0b])
   bg.name = 'Background'
 
-  IF npeaks EQ 0 THEN adef = {bg:bg}
-  IF npeaks EQ 1 THEN adef = {igauss2:gaussians[0], bg:bg}
-  IF npeaks EQ 2 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], bg:bg}
-  IF npeaks EQ 3 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], $
-    igauss4:gaussians[2], bg:bg}
-  IF npeaks EQ 4 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], $
-    igauss4:gaussians[2], igauss5:gaussians[3], bg:bg}
-  IF npeaks EQ 5 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], $
-    igauss4:gaussians[2], igauss5:gaussians[3], $
-    igauss6:gaussians[4], bg:bg}
-  IF npeaks EQ 6 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], $
-    igauss4:gaussians[2], igauss5:gaussians[3], $
-    igauss6:gaussians[4], igauss7:gaussians[5], bg:bg}
-  IF npeaks EQ 7 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], $
-    igauss4:gaussians[2], igauss5:gaussians[3], $
-    igauss6:gaussians[4], igauss7:gaussians[5], $
-    igauss8:gaussians[6], bg:bg}
-  IF npeaks EQ 8 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], $
-    igauss4:gaussians[2], igauss5:gaussians[3], $
-    igauss6:gaussians[4], igauss7:gaussians[5], $
-    igauss8:gaussians[6], igauss9:gaussians[7], $
-    bg:bg}
-  IF npeaks GE 9 THEN adef = {igauss2:gaussians[0], igauss3:gaussians[1], $
-    igauss4:gaussians[2], igauss5:gaussians[3], $
-    igauss6:gaussians[4], igauss7:gaussians[5], $
-    igauss8:gaussians[6], igauss9:gaussians[7], $
-    igauss10:gaussians[8], bg:bg}
+  IF npeaks EQ 0 THEN adef = {bg: bg}
+  IF npeaks EQ 1 THEN adef = {igauss2: gaussians[0], bg: bg}
+  IF npeaks EQ 2 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], bg: bg}
+  IF npeaks EQ 3 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], $
+    igauss4: gaussians[2], bg: bg}
+  IF npeaks EQ 4 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], $
+    igauss4: gaussians[2], igauss5: gaussians[3], bg: bg}
+  IF npeaks EQ 5 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], $
+    igauss4: gaussians[2], igauss5: gaussians[3], $
+    igauss6: gaussians[4], bg: bg}
+  IF npeaks EQ 6 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], $
+    igauss4: gaussians[2], igauss5: gaussians[3], $
+    igauss6: gaussians[4], igauss7: gaussians[5], bg: bg}
+  IF npeaks EQ 7 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], $
+    igauss4: gaussians[2], igauss5: gaussians[3], $
+    igauss6: gaussians[4], igauss7: gaussians[5], $
+    igauss8: gaussians[6], bg: bg}
+  IF npeaks EQ 8 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], $
+    igauss4: gaussians[2], igauss5: gaussians[3], $
+    igauss6: gaussians[4], igauss7: gaussians[5], $
+    igauss8: gaussians[6], igauss9: gaussians[7], $
+    bg: bg}
+  IF npeaks GE 9 THEN adef = {igauss2: gaussians[0], igauss3: gaussians[1], $
+    igauss4: gaussians[2], igauss5: gaussians[3], $
+    igauss6: gaussians[4], igauss7: gaussians[5], $
+    igauss8: gaussians[6], igauss9: gaussians[7], $
+    igauss10: gaussians[8], bg: bg}
 
-  result_message = 'Found '+trim(npeaks)+' peaks.'
+  result_message = 'Found ' + trim(npeaks) + ' peaks.'
   IF npeaks GT 9 THEN result_message += ' Fitting only the 9 highest.'
   box_message, result_message
 

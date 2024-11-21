@@ -32,19 +32,17 @@
 ; HISTORY:
 ;     2-Nov-2023: Martin Wiesmann
 ;-
-; $Id: 2023-12-04 14:43 CET $
-
+; $Id: 2024-11-21 11:37 CET $
 
 FUNCTION fits2ana_get_data_id, fits_content
-
   prits_tools.parcheck, fits_content, 1, "fits_content", 8, 0, /optional
-  IF N_ELEMENTS(fits_content) EQ 0 THEN return, ['']
+  IF n_elements(fits_content) EQ 0 THEN return, ['']
 
   ind_results = where(fits_content.extname.Contains(' results'), count)
   IF count EQ 0 THEN return, ['']
-  
+
   data_ids = strsplit(fits_content.extname[ind_results], ' results', /extract, /regex)
   IF size(data_ids, /type) EQ 11 THEN data_ids = data_ids.ToArray(/no_copy)
-  
+
   return, data_ids
 END

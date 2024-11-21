@@ -17,17 +17,17 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2024-02-13 13:59 CET $
-;-
+; $Id: 2024-11-21 11:37 CET $
+; -
 
 PRO prits_tools::center_overlay_window, new_window, old_window
-  compile_opt idl2, static
-  widget_control, new_window, tlb_get_size=new_window_tlb_size
-  widget_control, old_window, tlb_get_size=old_window_tlb_size
-  widget_control, old_window, tlb_get_offset=old_window_offset
-  
-  old_window_center = old_window_offset + old_window_tlb_size/2
-  new_window_offset = old_window_center - new_window_tlb_size/2
-  
-  widget_control,new_window, xoffset=new_window_offset[0], yoffset=new_window_offset[1]
+  COMPILE_OPT IDL2, STATIC
+  widget_control, new_window, tlb_get_size = new_window_tlb_size
+  widget_control, old_window, tlb_get_size = old_window_tlb_size
+  widget_control, old_window, tlb_get_offset = old_window_offset
+
+  old_window_center = old_window_offset + old_window_tlb_size / 2
+  new_window_offset = old_window_center - new_window_tlb_size / 2
+
+  widget_control, new_window, xoffset = new_window_offset[0], yoffset = new_window_offset[1]
 END
