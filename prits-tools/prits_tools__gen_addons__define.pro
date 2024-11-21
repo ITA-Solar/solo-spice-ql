@@ -36,7 +36,6 @@ FUNCTION prits_tools::shorten_symlink, link_to_input, link_from_input, verbose =
   differences_bytarr = link_from_bytarr - link_to_bytarr
 
   different_bytarr = differences_bytarr NE 0
-  equal_bytarr = differences_bytarr EQ 0
 
   first_difference = (where(different_bytarr))[0]
 
@@ -72,6 +71,7 @@ END
 
 PRO prits_tools__gen_addons__define
   COMPILE_OPT STATIC
+  ; idl-disable-next-line unused-var
   vso = {prits_tools__gen_addons, $
     dummy: 0b $
     }
