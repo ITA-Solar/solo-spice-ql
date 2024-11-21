@@ -1,4 +1,4 @@
-; $Id: 2024-11-21 11:37 CET $
+; $Id: 2024-11-21 14:19 CET $
 PRO shadow_check, file_hash, duplicate_hash, different_hash
   rm_path, "$HOME/sf", /expand
   rm_path, "$IDL_DIR/lib", /expand
@@ -66,5 +66,6 @@ PRO shadow_check, file_hash, duplicate_hash, different_hash
   stop
 END
 
+; idl-disable-next-line unused-var
 shadow_check, file_hash, duplicate_hash, different_hash
 END
