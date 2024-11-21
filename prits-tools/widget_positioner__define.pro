@@ -32,7 +32,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:37 CET $
+; $Id: 2024-11-21 14:20 CET $
 
 ;+
 ; Description:
@@ -257,6 +257,7 @@ END
 PRO widget_positioner__define
   COMPILE_OPT IDL2
 
+  ; idl-disable-next-line unused-var
   struct = {widget_positioner, $
     widget: -1, $ ; The ID of the widget to be positioned.
     parent: -1, $ ; The ID of the parent widget to which the widget should get a certain position.
