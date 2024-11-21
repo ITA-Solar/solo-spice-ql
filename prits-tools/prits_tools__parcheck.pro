@@ -141,7 +141,7 @@
 ;
 ; Version     :	Version 4, October 2024
 ;
-; $Id: 2024-11-21 11:37 CET $
+; $Id: 2024-11-21 14:18 CET $
 ;-
 ;
 ; ----------------------------------------------------------
@@ -153,7 +153,7 @@ PRO prits_tools::check_type, parameter, types_string, error, pt, $
   IF (where(par_type EQ types_string))[0] EQ -1 THEN BEGIN
     IF (where('TIME' EQ types_string OR 'TIME0' EQ types_string))[0] GE 0 THEN BEGIN
       result = valid_time(parameter, err = err, zero = (where('TIME0' EQ types_string))[0] GE 0)
-      ind = where(result EQ 0, count)
+      ind = where(result EQ 0, count) ; idl-disable-line unused-var
       IF count GT 0 THEN BEGIN
         error = "has wrong time format: " + err
       ENDIF
@@ -478,7 +478,7 @@ PRO prits_tools::parcheck_test
 
   print, ''
   print, 'Test 6 should be OK, tests structure'
-  st = {mystruct, a: 0, b: 'adf'}
+  st = {mystruct, a: 0, b: 'adf'} ; idl-disable-line unknown-structure
   prits_tools.parcheck, st, 0, "test_06", 8, 0, result = result
   print, result, format = '(a)'
   print, ''
@@ -518,30 +518,30 @@ PRO prits_tools::parcheck_test
 
   print, ''
   print, 'Test 10 should be OK, tests hash'
-  hash = hash("one", 1.0, "blue", [255, 0, 0], "Pi", !DPI)
-  prits_tools.parcheck, hash, 0, "test_10", 11, 1, result = result, object_name = 'hash'
+  hash_var = hash("one", 1.0, "blue", [255, 0, 0], "Pi", !DPI)
+  prits_tools.parcheck, hash_var, 0, "test_10", 11, 1, result = result, object_name = 'hash'
   print, result, format = '(a)'
   print, ''
   print, 'Test 11 should FAIL, test hash with wrong object name'
-  prits_tools.parcheck, hash, 0, "test_11", 11, 0, result = result, object_name = 'list'
+  prits_tools.parcheck, hash_var, 0, "test_11", 11, 0, result = result, object_name = 'list'
   print, result, format = '(a)'
   print, ''
   print, 'Test 12.1 should be OK, test hash without object name'
-  prits_tools.parcheck, hash, 0, "test_12.1", 11, 1, result = result
+  prits_tools.parcheck, hash_var, 0, "test_12.1", 11, 1, result = result
   print, result, format = '(a)'
   print, ''
   print, 'Test 12.2 should be OK, test array of hashes'
-  prits_tools.parcheck, [hash, hash], 0, "test_12.2", 11, 1, result = result, object_name = 'hash'
+  prits_tools.parcheck, [hash_var, hash_var], 0, "test_12.2", 11, 1, result = result, object_name = 'hash'
   print, result, format = '(a)'
 
   print, ''
   print, 'Test 13.1 should be OK, test list'
-  list = list('one', 2.0, 3, 4l, ptr_new(5), {n: 6}, complex(7, 0))
-  prits_tools.parcheck, list, 0, "test_13.1", 11, 1, result = result, object_name = 'list'
+  list_var = list('one', 2.0, 3, 4l, ptr_new(5), {n: 6}, complex(7, 0))
+  prits_tools.parcheck, list_var, 0, "test_13.1", 11, 1, result = result, object_name = 'list'
   print, result, format = '(a)'
   print, ''
   print, 'Test 13.2 should be OK, test array of list'
-  prits_tools.parcheck, [list, list], 0, "test_13.2", 11, 1, result = result, object_name = 'list'
+  prits_tools.parcheck, [list_var, list_var], 0, "test_13.2", 11, 1, result = result, object_name = 'list'
   print, result, format = '(a)'
 
   print, ''
