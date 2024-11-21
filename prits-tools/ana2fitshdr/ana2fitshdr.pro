@@ -60,9 +60,6 @@
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
 ;      PROGENITOR_DATA: A data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              along the first dimension. If this data array is provided, it will be saved into the XDIM1 extension instead of INPUT_DATA.
-;      PATH_EXTERNAL_EXTENSION: String. A path, relative to this FITS file, which points to the
-;            progenitor FITS file that contains the original data cube. This will be added as a prefix
-;            to DATAEXT keyword. If this is provided the keyword NO_SAVE_DATA will be set, and PRGDATA is set to True.
 ;      DATA_ID: A string defining the prefix to the names of the 6 extensions.
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have he this EXTNAME (without 'data') as its extension name.
@@ -131,7 +128,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:28 CET $
+; $Id: 2024-11-21 13:41 CET $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -144,7 +141,6 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   const = const, filename_ana = filename_ana, datasource = datasource, $
   definition = definition, missing = missing, label = label, history = history, $
   progenitor_data = progenitor_data, header_input_data = header_input_data, $
-  path_external_extension = path_external_extension, $ ; TODO
   save_xdim1 = save_xdim1, no_save_data = no_save_data, print_headers = print_headers, $
   data_array = data_array
   prits_tools.parcheck, ana, 1, 'ANA', 'STRUCT', 0, structure_name = 'CFIT_ANALYSIS', /optional
