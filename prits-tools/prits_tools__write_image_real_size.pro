@@ -15,7 +15,7 @@
 ;
 ; CALLING SEQUENCE:
 ;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME] $
-;       [, /REMOVE_TRENDS] [,SMOOTH=SMOOTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
+;       [, /REMOVE_TRENDS] [,SMOOTH_WIDTH=SMOOTH_WIDTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
 ;       [, XRANGE1=XRANGE1] [, XRANGE2=XRANGE2] [, YRANGE1=YRANGE1] [, YRANGE2=YRANGE2] $
 ;       [, XTITLE1=XTITLE1] [, XTITLE2=XTITLE2] [, YTITLE1=YTITLE1] [, YTITLE2=YTITLE2] $
 ;       [, TITLE=TITLE] $
@@ -33,7 +33,7 @@
 ;               Default is 'image.xxx' (where xxx is the chosen file format) in the current directory.
 ;
 ; OPTIONAL INPUT:
-;     SMOOTH:   An integer. The width of the boxcar used when smoothing the
+;     SMOOTH_WIDTH: An integer. The width of the boxcar used when smoothing the
 ;               image using the smooth function. If not set no smoothing is performed.
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
 ;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword
@@ -83,7 +83,7 @@
 ;
 ; KEYWORD PARAMETERS:
 ;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
-;               This keyword should not be set, if SMOOTH input is provided.
+;               This keyword should not be set, if SMOOTH_WIDTH input is provided.
 ;     REMOVE_HORIZONTAL_TREND: If set, remove horizontal trend in the image
 ;     REMOVE_VERTICAL_TREND: If set, remove vertical trend in the image
 ;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
@@ -129,10 +129,11 @@
 ;     2 pixels to prevent crash
 ;
 ;-
-; $Id: 2024-11-21 11:37 CET $
+; $Id: 2024-11-21 14:19 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, $
-  remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend, $ smooth = smooth, $
+  remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, $
+  fit_trend = fit_trend, smooth_width = smooth_width, $
   value_max = value_max, value_min = value_min, $
   colortable = colortable, format = format, interpolation = interpolation, $
   xrange1 = xrange1, xrange2 = xrange2, yrange1 = yrange1, yrange2 = yrange2, $
@@ -171,7 +172,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval = 0, maxval = 1, default = 0.02
   prits_tools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
   prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval = 0, maxval = 100, default = 75
-  prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval = 0, /optional
+  prits_tools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
 
   show_plot = keyword_set(show_plot)
 
@@ -187,7 +188,6 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
 
   line_vel = filename.contains('vel')
   line_wid = filename.contains('wid')
-  line_int = filename.contains('int')
 
   IF line_vel THEN BEGIN
     eis_colors, /velocity
@@ -303,7 +303,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
     device, set_res = WINsize
   ENDELSE
 
-  IF keyword_set(smooth) THEN image_data = smooth(image_data, smooth)
+  IF keyword_set(smooth_width) THEN image_data = smooth(image_data, smooth_width)
 
   IF line_vel THEN image_data -= median(image_data)
   IF line_wid THEN image_data -= min(image_data)
@@ -379,6 +379,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
       yticks = yticks, ytickname = ytickname, ytickformat = '(I)'
   ENDIF
 
+  ; idl-disable-next-line unknown-kw
   IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b, quality = jpeg_quality, _extra = _extra
 
   ; Set previous colortable again
@@ -429,18 +430,13 @@ PRO prits_tools::write_image_real_size_test
   image_data = fltarr(xs, ys)
   FOR i = 0, xs - 1 DO BEGIN
     FOR j = 0, ys - 1 DO BEGIN
-      image_data[i, j] = ((i + j) MOD 2) * (randomn(seed) * 5 + i + j)
+      image_data[i, j] = ((i + j) MOD 2) * (randomn(seed) * 5 + i + j) ; idl-disable-line unused-var
     ENDFOR
   ENDFOR
 
   prits_tools.write_image_real_size, image_data, filename, colortable = colortable, format = format, $
     xrange1 = xrange1, xrange2 = xrange2, yrange1 = yrange1, yrange2 = yrange2, $
-    xtitle1 = xtitle1, xtitle2 = xtitle2, ytitle1 = ytitle1, ytitle2 = ytitle2, $
-    title = title, $
-    background_color = background_color, text_color = text_color, $
-    border = border, scale_factor = scale_factor, height = height, width = width, $
-    jpeg_quality = jpeg_quality, $
-    show_plot = show_plot
+    xtitle1 = xtitle1, ytitle1 = ytitle1
 END
 
 IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
