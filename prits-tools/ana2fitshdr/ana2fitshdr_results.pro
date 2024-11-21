@@ -75,7 +75,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:28 CET $
+; $Id: 2024-11-21 13:44 CET $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -273,14 +273,14 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   ; Processing steps
   fits_util.add_description, hdr, 'Processing steps'
   max_version_number = get_last_prstep_keyword(header_input_data, count = count, pr_keywords = pr_keywords, ind_pr_keywords = ind_pr_keywords, $
-    pr_versions = pr_versions, pr_types = pr_types)
+    pr_versions = pr_versions)
   IF count GT 0 THEN BEGIN
     FOR ipr = 0, count - 1 DO BEGIN
       pr_value = fxpar(header_input_data, pr_keywords[ipr], missing = '', comment = comment)
       fits_util.add, hdr, pr_keywords[ipr], pr_value, comment
     ENDFOR ; ipr
     ind = where(pr_versions EQ max_version_number)
-    max_ind_hdr = max(ind_pr_keywords[ind], max_ind)
+    max_ind_hdr = max(ind_pr_keywords[ind], max_ind) ; idl-disable-line unused-var
     after = pr_keywords[ind[max_ind]]
     procstep1 = n_elements(proc_steps) - 1
     procstep2 = 0
