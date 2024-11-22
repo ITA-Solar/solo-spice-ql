@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2024-11-21 11:41 CET $
+; $Id: 2024-11-22 15:20 CET $
 ;-
 
 ; xfiles exit:
@@ -230,7 +230,6 @@ PRO spice_xfiles_display_results, info, newfiles = newfiles
       hdr = *(*info).filehdr
       spiobsids = *(*info).file_spiobsids
     ENDELSE ; keyword_set(newfiles)
-    hdrall = hdr
     file2obsmap = make_array(n_elements(files), value = -1l)
 
     ; apply display filter
@@ -285,6 +284,7 @@ END
 ; return, {widget_stopsearch, id:1L, top:0L, handler:0L}
 ; end
 
+; idl-disable-next-line unused-var
 PRO spice_xfiles_event, event
   ; this is just here for the stop button, because apparently I can't define an event_func and event_pro at the same time
   ; when there is an event_func defined, it ignores event_pro and searches for spice_xfiles_event
@@ -373,6 +373,7 @@ END
 PRO spice_xfiles_changesdir, event
   widget_control, event.top, get_uvalue = info
   widget_control, (*info).dir_manual_field, get_value = sdir
+  ; idl-disable-next-line unused-var, illegal-arrow
   sfile = dialog_pickfile(path = sdir, title = 'Please select a directory', get_path = sdir)
   IF sdir NE '' THEN BEGIN
     widget_control, (*info).dir_manual_field, set_value = sdir
@@ -403,6 +404,7 @@ PRO spice_xfiles_select, event
   ; first check if this is the second click of a double click
   ; ...if so call spice_xfiles_read
   IF event.clicks EQ 2 THEN BEGIN
+    ; idl-disable-next-line unknown-structure
     pseudoevent = {widget_button, id: 0l, $
       top: event.top, handler: 0l, select: 1}
     spice_xfiles_read, pseudoevent
@@ -417,7 +419,7 @@ PRO spice_xfiles_select, event
   ; files can be selected directly
   ; first check if the first entry is a subdirectory (it ends with a ':')
 
-  last_char = strmid(flist(0), 0, /reverse_offset)
+  last_char = strmid(flist[0], 0, /reverse_offset)
 
   ; find the indexes of the rest of the subdirectories
   subdirindx = where(flist EQ '', count) + 1
@@ -433,7 +435,7 @@ PRO spice_xfiles_select, event
     flist[0] = subdir
     start = 1
     stop = subdirindx[0] - 2
-    IF stop GT start THEN flist(start : stop) = subdir + flist[start : stop]
+    IF stop GT start THEN flist[start : stop] = subdir + flist[start : stop]
   ENDIF
   ; then add path to the rest of the files in subdirectories
   FOR i = 0, nsub - 1 DO BEGIN
@@ -458,8 +460,7 @@ PRO spice_xfiles_select, event
     filelist = file_search(sstr, count = fcount)
     IF fcount NE 0 THEN BEGIN
       ptr_free, (*info).filelist
-      (*info).filelist = ptr_new(strarr(fcount))
-      * (*info).filelist = filelist
+      (*info).filelist = ptr_new(filelist)
     ENDIF ELSE filelist = ' '
     widget_control, (*info).searchdir, set_value = sdir
     widget_control, (*info).foundfiles, set_value = filelist
@@ -573,7 +574,7 @@ PRO spice_xfiles
 
   ; first row contains exit button
   exitbase = widget_base(tlb, /row, /frame)
-  exitb = widget_button(exitbase, value = 'Exit', event_pro = 'spice_xfiles_exit')
+  exitb = widget_button(exitbase, value = 'Exit', event_pro = 'spice_xfiles_exit') ; idl-disable-line unused-var
 
   eis_icon_base = widget_base(exitbase, /col, /align_right)
   eis_icon = widget_draw(eis_icon_base, retain = 2, $
@@ -593,13 +594,13 @@ PRO spice_xfiles
   row3 = widget_base(tlb, /row, /frame)
   tlabelfield = widget_base(row3, /column)
   tls = 'Start/Stop for file search. Time Units: [D]D-MON-[YR]YR HH:MM:SS[.MS]'
-  tlabel = widget_label(tlabelfield, value = tls, /align_left)
+  tlabel = widget_label(tlabelfield, value = tls, /align_left) ; idl-disable-line unused-var
   tfield = widget_base(tlabelfield, /row, event_pro = 'spice_xfiles_date')
   tstart = cw_field(tfield, Title = 'Start Time:  ', value = tstartval, /string, /return_events)
   tstop = cw_field(tfield, Title = 'Stop Time:   ', value = tstopval, /string, /return_events)
   tfieldbuttons = widget_base(row3, /Column, event_pro = 'spice_xfiles_currentdate')
   getlast5days = widget_button(tfieldbuttons, value = 'Last 5 days')
-  getcurrentdate = widget_button(tfieldbuttons, value = 'Up until now')
+  getcurrentdate = widget_button(tfieldbuttons, value = 'Up until now') ; idl-disable-line unused-var
   tfield2 = widget_base(row3, /column, event_pro = 'spice_xfiles_date')
   recentdroplist = widget_droplist(tfield2, value = recentwindows.getwindows(), title = 'Recent time-windows')
   ignoredatebg = cw_bgroup(tfield2, ['Ignore times (only if no tree structure)'], set_value = [ignoretime], /column, /nonexclusive)
@@ -607,14 +608,14 @@ PRO spice_xfiles
   ; search filter
   row4 = widget_base(tlb, /column, /frame, event_pro = 'spice_xfiles_change_search')
   top_dir_base = widget_base(row4, /row)
-  top_dir_label1 = widget_label(top_dir_base, value = 'Top directory')
+  top_dir_label1 = widget_label(top_dir_base, value = 'Top directory') ; idl-disable-line unused-var
   top_dir_choice_bg = cw_bgroup(top_dir_base, ['Environment variable', 'Path'], set_value = top_dir_choice, /column, /exclusive)
   top_dir_path_base = widget_base(top_dir_base, /column)
   top_dir_env_var_base = widget_base(top_dir_path_base, /row)
   top_dir_env_var_field = cw_field(top_dir_env_var_base, title = '', value = top_dir_env_var, /string, /return_events, xsize = 100, ysize = 0.7)
   dir_manual_base = widget_base(top_dir_path_base, /row)
   dir_manual_field = cw_field(dir_manual_base, title = '', value = dir_manual, /string, /return_events, xsize = 100)
-  dir_manual_button = widget_button(dir_manual_base, value = 'Change', event_pro = 'spice_xfiles_changesdir')
+  dir_manual_button = widget_button(dir_manual_base, value = 'Change', event_pro = 'spice_xfiles_changesdir') ; idl-disable-line unused-var
   level_base = widget_base(row4, /row)
   level_choice_droplist = widget_droplist(level_base, value = ['Level 0', 'Level 1', 'Level 2', 'Level 3'], title = 'Data Level')
   widget_control, level_choice_droplist, set_droplist_select = level
@@ -623,36 +624,29 @@ PRO spice_xfiles
   search_path_base = widget_base(row4, /row)
   searchdir = cw_field(search_path_base, title = 'Search Directory  ', value = 'blablabladkjfa/adflkja/dlkfja/', /string, xsize = 100, /noedit)
   label = widget_label(search_path_base, value = '     ')
-  searchstartbutton = widget_button(search_path_base, value = 'Start Search', event_pro = 'spice_xfiles_startsearch')
+  searchstartbutton = widget_button(search_path_base, value = 'Start Search', event_pro = 'spice_xfiles_startsearch') ; idl-disable-line unused-var
   label = widget_label(search_path_base, value = '     ')
   ; searchstopbutton = widget_button(search_path_base, value='Stop Search', event_func='spice_xfiles_stopsearch')
-  use_catalog_button = widget_button(search_path_base, value = 'Use catalog', event_pro = 'spice_xfiles_use_catalog')
+  use_catalog_button = widget_button(search_path_base, value = 'Use catalog', event_pro = 'spice_xfiles_use_catalog') ; idl-disable-line unused-var
 
   ; display filter
   display_filter_base = widget_base(row4, /row, event_pro = 'spice_xfiles_change_display_filter')
-  display_filter_label = widget_label(display_filter_base, value = 'Filter displayed OBS: ')
+  display_filter_label = widget_label(display_filter_base, value = 'Filter displayed OBS: ') ; idl-disable-line unused-var
   display_filter_purpose = widget_droplist(display_filter_base, value = ['All'], title = 'Purpose', xsize = 230)
   display_filter_studytyp = widget_droplist(display_filter_base, value = ['All'], title = 'Study Type', xsize = 200)
-  display_filter_slitwid_label = widget_label(display_filter_base, value = 'Slit width:')
+  display_filter_slitwid_label = widget_label(display_filter_base, value = 'Slit width:') ; idl-disable-line unused-var
   display_filter_slitwid_min = cw_field(display_filter_base, title = 'min', value = 0, /integer, /return_events, xsize = 6)
   display_filter_slitwid_max = cw_field(display_filter_base, title = 'max', value = 10000, /integer, /return_events, xsize = 6)
 
   ; display results
-  foundOBS = widget_list(row4, value = '', /frame, xsize = 150 $
-  , scr_ysize = 0, units = 2, $
-    event_pro = 'spice_xfiles_selectOBS')
-  foundfiles = widget_list(row4, value = '', /frame, xsize = 150 $
-  , scr_ysize = 0, units = 2 $
-  , event_pro = 'spice_xfiles_select')
+  foundOBS = widget_list(row4, value = '', /frame, xsize = 150, scr_ysize = 0, units = 2, event_pro = 'spice_xfiles_selectOBS')
+  foundfiles = widget_list(row4, value = '', /frame, xsize = 150, scr_ysize = 0, units = 2, event_pro = 'spice_xfiles_select')
   confbase = widget_base(row4, /row, /align_left)
-  confb = widget_button(confbase, value = 'Confirm selection' $
-  , event_pro = 'spice_xfiles_read', uvalue = 0)
+  confb = widget_button(confbase, value = 'Confirm selection', event_pro = 'spice_xfiles_read', uvalue = 0)
   label = widget_label(confbase, value = '                 ')
-  confb = widget_button(confbase, value = 'Open file in XControl_L23' $
-  , event_pro = 'spice_xfiles_read', uvalue = 1)
+  confb = widget_button(confbase, value = 'Open file in XControl_L23', event_pro = 'spice_xfiles_read', uvalue = 1)
   label = widget_label(confbase, value = '                 ')
-  printfile = widget_button(confbase, value = 'Print filename to console' $
-  , event_pro = 'spice_xfiles_printfilename')
+  printfile = widget_button(confbase, value = 'Print filename to console', event_pro = 'spice_xfiles_printfilename') ; idl-disable-line unused-var
 
   geometry = widget_info(tlb, /geometry)
   screen = spice_get_screen_size()
@@ -749,5 +743,5 @@ PRO spice_xfiles
   spice_xfiles_search_dir, info
 
   xmanager, 'spice_xfiles', tlb, /no_block, $
-    group_leader = group, cleanup = 'spice_xfiles_cleanup', event_handler = 'spice_xfiles_event' ; , /catch, no_block=0
+    cleanup = 'spice_xfiles_cleanup', event_handler = 'spice_xfiles_event' ; , /catch, no_block=0
 END
