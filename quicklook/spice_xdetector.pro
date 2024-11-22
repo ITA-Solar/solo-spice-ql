@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-11-21 11:41 CET $
+; $Id: 2024-11-22 15:20 CET $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event
@@ -56,7 +56,8 @@ PRO spice_xdetector_ps, event
   widget_control, event.top, get_uvalue = info
   thisdevice = !d.name
   set_plot, 'ps', /copy
-  device, file = thisfile, _extra = keywords, /inches, bits_per_pixel = 8, /color
+  device, file = thisfile, /inches, bits_per_pixel = 8, /color
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -75,9 +76,9 @@ PRO spice_xdetector_jpeg, event
   tvlct, r, g, b, /get
   s = size(snapshot)
   image24 = bytarr(3, s[1], s[2])
-  image24(0, *, *) = r(snapshot)
-  image24(1, *, *) = g(snapshot)
-  image24(2, *, *) = b(snapshot)
+  image24[0, *, *] = r[snapshot]
+  image24[1, *, *] = g[snapshot]
+  image24[2, *, *] = b[snapshot]
   write_jpeg, thisfile, image24, true = 1, quality = 75
 END
 
@@ -141,7 +142,6 @@ END
 ; wavelength selection buttons
 FUNCTION spice_xdetector_wloption, event
   IF event.select EQ 0 THEN return, 0
-  widget_control, event.top, get_uvalue = info
   CASE event.value OF
     0: spice_xdetector_wpix, event
     1: spice_xdetector_wangstr, event
@@ -152,7 +152,6 @@ END
 ; slit scale selection buttons
 FUNCTION spice_xdetector_sloption, event
   IF event.select EQ 0 THEN return, 0
-  widget_control, event.top, get_uvalue = info
   CASE event.value OF
     0: spice_xdetector_spix, event
     1: spice_xdetector_sarcsec, event
@@ -177,6 +176,7 @@ PRO spice_xdetector_expslider, event
         (*info).clip_image[i, 2] : size_image[2] - 1 - (*info).clip_image[i, 3]]
     ENDFOR
   ; display new raster position
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   widget_control, event.top, set_uvalue = info
@@ -242,6 +242,7 @@ FUNCTION spice_xdetector_drawsizeoption, event
     0: xysz = (*info).standard_size
     1: xysz = (*info).big_size
   ENDCASE
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, top: (*info).tlb, handler: 0l, $
     x: xysz[0] + (*info).lcol_xsz, y: xysz[1] + w_ysz}
   spice_xdetector_resize, pseudoevent
@@ -391,7 +392,6 @@ PRO spice_xdetector_zoom, event
       image = ((*info).detector)[x1 : x2, y1 : y2]
       sz = size(image)
       mind = min(sz[0 : 2])
-      pos = [x1, x2, y1, y2]
       CASE (*info).dwoption OF
         0: BEGIN
           IF mind GE 2 THEN BEGIN
@@ -455,10 +455,10 @@ PRO spice_xdetector_pickline, event
   lineselect_widget = widget_base(title = 'Select line', $
     group_leader = (*info).tlb, /row, xoff = 200, yoff = 200)
   closefield = widget_base(lineselect_widget, /column)
-  closebutton = widget_button(closefield, value = 'OK', $
+  closebutton = widget_button(closefield, value = 'OK', $ ; idl-disable-line unused-var
     event_pro = 'spice_xdetector_pickline_destroy')
   line_base = widget_base(lineselect_widget, /column, /frame)
-  linelist = cw_bgroup(line_base, (*info).linelist, /return_index, $
+  linelist = cw_bgroup(line_base, (*info).linelist, /return_index, $ ; idl-disable-line unused-var
     /exclusive, event_func = 'spice_xdetector_pickline_pick')
   widget_control, lineselect_widget, set_uvalue = info
   widget_control, lineselect_widget, /realize
@@ -470,14 +470,12 @@ END
 FUNCTION spice_xdetector_pickline_pick, event
   IF event.select EQ 0 THEN return, 0
   widget_control, event.top, get_uvalue = info
-  defdir = ''
   (*info).line = event.value + (*info).lindx[0]
   return, 0
 END
 
 ; close Line selection widget
 PRO spice_xdetector_pickline_destroy, event
-  widget_control, event.top, get_uvalue = info
   spice_xdetector_anim, event
   widget_control, event.top, /destroy
 END
@@ -571,6 +569,7 @@ PRO spice_xdetector_wpix, event
   (*info).xtitle = *(*info).data.get_axis_title((*info).xdim, /pixels)
   ; set scale for images
   (*info).lambda = (*info).xscale_pixels
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -583,6 +582,7 @@ PRO spice_xdetector_wangstr, event
   (*info).xtitle = *(*info).data.get_axis_title((*info).xdim)
   ; set scale for images
   (*info).lambda = (*info).xscale_physical
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -595,6 +595,7 @@ PRO spice_xdetector_spix, event
   (*info).ytitle = *(*info).data.get_axis_title((*info).ydim, /pixels)
   ; set scale for images
   (*info).spatial = (*info).yscale_pixels
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -607,6 +608,7 @@ PRO spice_xdetector_sarcsec, event
   (*info).ytitle = *(*info).data.get_axis_title((*info).ydim)
   ; set scale for images
   (*info).spatial = (*info).yscale_physical
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -629,6 +631,7 @@ PRO spice_xdetector_colors, event
       (*info).g = event.g((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
       (*info).b = event.b((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
       IF !d.n_colors GT 256 THEN BEGIN
+        ; idl-disable-next-line unknown-structure
         pseudoevent = {widget_button, id: 0l, $
           top: event.top, handler: 0l, select: 1}
         spice_xdetector_draw, pseudoevent
@@ -713,6 +716,7 @@ PRO spice_xdetector_resize, event
     * (*info).drawimage = drawimage
   ENDELSE
 
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xdetector_draw, pseudoevent
@@ -761,6 +765,7 @@ PRO spice_xdetector_log, event
   ENDIF ELSE BEGIN
     (*info).colorbar_title = *(*info).data.get_title() + ' ' + (*(*info).data.get_variable_unit())
   ENDELSE
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: (*info).tlb, handler: 0l, select: 1}
   spice_xdetector_draw, pseudoevent
@@ -781,6 +786,7 @@ PRO spice_xdetector_mask, event
         (*info).clip_image[i, 2] : size_image[2] - 1 - (*info).clip_image[i, 3]]
     ENDFOR
   ; display new raster position
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   widget_control, event.top, set_uvalue = info
@@ -791,6 +797,7 @@ END
 PRO spice_xdetector_line, event
   widget_control, event.top, get_uvalue = info
   (*info).lineplot = event.select
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: (*info).tlb, handler: 0l, select: 1}
   spice_xdetector_draw, pseudoevent
@@ -807,6 +814,7 @@ PRO spice_xdetector_realsize, event
     widget_control, (*info).drawsizeoption_menu, sensitive = 1
   ENDELSE
   ; create resize event to resize draw widget
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: (*info).tlb, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -838,7 +846,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     return
   ENDIF
 
-  data = spice_get_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_get_object(input_data, is_spice = is_spice)
   IF ~is_spice THEN return
 
   IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)
@@ -1006,20 +1014,20 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ; create pulldown menus on the base widget menubar
   filemenu = widget_button(menubar, value = 'File', /menu, uvalue = 'file')
   savemenu = widget_button(filemenu, value = 'Save as', uvalue = 'save', /menu)
-  psmenu = widget_button(savemenu, value = 'Postscript', $
+  psmenu = widget_button(savemenu, value = 'Postscript', $ ; idl-disable-line unused-var
     event_pro = 'spice_xdetector_ps')
-  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xdetector_jpeg')
-  exitmenu = widget_button(filemenu, value = 'Close', $
+  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xdetector_jpeg') ; idl-disable-line unused-var
+  exitmenu = widget_button(filemenu, value = 'Close', $ ; idl-disable-line unused-var
     event_pro = 'spice_xdetector_destroy')
 
   optmenu = widget_button(menubar, value = 'Options', uvalue = 'options')
-  colmenu = widget_button(optmenu, value = 'Colour table', $
+  colmenu = widget_button(optmenu, value = 'Colour table', $ ; idl-disable-line unused-var
     event_pro = 'spice_xdetector_colors')
   ; animenu=widget_button(optmenu, value='Create Animation', $ ; TODO: does not work yet
   ; event_pro='spice_xdetector_control_anim')
   wscalemenu = widget_button(optmenu, value = 'Change wavelength scale', /menu)
-  pixmenu = widget_button(wscalemenu, value = data.get_axis_title(xdim, /pixels), event_pro = 'spice_xdetector_wpix')
-  angstrmenu = widget_button(wscalemenu, value = data.get_axis_title(xdim), event_pro = 'spice_xdetector_wangstr')
+  pixmenu = widget_button(wscalemenu, value = data.get_axis_title(xdim, /pixels), event_pro = 'spice_xdetector_wpix') ; idl-disable-line unused-var
+  angstrmenu = widget_button(wscalemenu, value = data.get_axis_title(xdim), event_pro = 'spice_xdetector_wangstr') ; idl-disable-line unused-var
 
   ; display window:
   displaybase = widget_base(rcol, /row)
@@ -1038,7 +1046,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     /exclusive, set_value = 2, $
     event_func = 'spice_xdetector_dwoption')
 
-  titletext = widget_label(lcol, value = data.get_start_time() + ' ' + data.get_obs_id(), /align_center)
+  titletext = widget_label(lcol, value = data.get_start_time() + ' ' + data.get_obs_id(), /align_center) ; idl-disable-line unused-var
 
   lsubcol0 = widget_base(lcol, /row)
   sliderbase = widget_base(lsubcol0, /col)
@@ -1046,8 +1054,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   IF nexp GT 1 THEN BEGIN
     ; if nexpprp le 1 then begin
     nr = nexp
-    title = 'Exposure nr'
-    expslider = widget_slider(sliderbase, xsize = 90, $
+    expslider = widget_slider(sliderbase, xsize = 90, $ ; idl-disable-line unused-var
       minimum = 0, maximum = nr - 1, $
       title = 'Exp # ', $
       value = 0, $
@@ -1106,7 +1113,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
 
   lsubcol1 = widget_base(lcol, /row)
   colorbase = widget_base(lsubcol1, /col)
-  colorbutton = widget_button(colorbase, value = 'Colour table', $
+  colorbutton = widget_button(colorbase, value = 'Colour table', $ ; idl-disable-line unused-var
     event_pro = 'spice_xdetector_colors')
   ; animbase = widget_base(lsubcol1,/col)
   ; animbutton=widget_button(animbase, value='Create Animation', $
@@ -1115,24 +1122,24 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   lsubpix = widget_base(lcol, /row)
   wlbase = widget_base(lsubpix, /column, /frame)
   wl_names = [data.get_axis_title(xdim, /pixels), data.get_axis_title(xdim)]
-  wlbutton = cw_bgroup(wlbase, wl_names, /return_index, $
+  wlbutton = cw_bgroup(wlbase, wl_names, /return_index, $ ; idl-disable-line unused-var
     /exclusive, set_value = 1, $
     event_func = 'spice_xdetector_wloption')
 
   slbase = widget_base(lsubpix, /column, /frame)
   sl_names = ['Pixels', 'arcsec']
-  slbutton = cw_bgroup(slbase, sl_names, /return_index, $
+  slbutton = cw_bgroup(slbase, sl_names, /return_index, $ ; idl-disable-line unused-var
     /exclusive, set_value = 1, $
     event_func = 'spice_xdetector_sloption')
 
   lsubcol2 = widget_base(lcol, /row)
   linefield = widget_base(lsubcol2, /column, /nonexclusive)
-  linebutton = widget_button(linefield, $
+  linebutton = widget_button(linefield, $ ; idl-disable-line unused-var
     value = 'Line Plot', $
     event_pro = 'spice_xdetector_line')
 
   logfield = widget_base(lsubcol2, /column, /nonexclusive)
-  logbutton = widget_button(logfield, $
+  logbutton = widget_button(logfield, $ ; idl-disable-line unused-var
     value = 'log(image)', $
     event_pro = 'spice_xdetector_log')
 
@@ -1157,7 +1164,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     event_func = 'spice_xdetector_drawsizeoption')
 
   closefield = widget_base(lcol, /column)
-  closebutton = widget_button(closefield, value = 'Close', $
+  closebutton = widget_button(closefield, value = 'Close', $ ; idl-disable-line unused-var
     event_pro = 'spice_xdetector_destroy')
 
   ; ; eis_icon_base=widget_base(lcol,/col)
@@ -1194,11 +1201,11 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ENDIF
 
   ; define the info structure, used to send information around
-  info = {detector: detector, $
+  info_struct = {detector: detector, $
     drawimage: ptr_new(), $
     xscale: ptr_new(), $
     yscale: ptr_new(), $
-    data: ptr_new(), $
+    data: ptr_new(data), $
     win_positions: win_positions, $
     clip_image: clip_image, $
     xscale_pixels: xscale_pixels, $
@@ -1239,7 +1246,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     ccd_ysz: ccd_size[1], $
     xdim: xdim, $ ; dimension of x (i.e. lambda) in original data
     ydim: ydim, $ ; dimension of y in original data
-    nwin: nwin, $ ; number or windows/lines to be shown
+    nwin: nwin, $ ; number of windows/lines to be shown
     lindx: lindx, $ ; line indices to be shown
     line: 0, $
     ; nraster:nraster, $
@@ -1281,8 +1288,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     except: !except $
     }
 
-  info = ptr_new(info, /no_copy)
-  (*info).data = ptr_new(data)
+  info = ptr_new(info_struct, /no_copy)
   ; set user value of tlb widget to be the info ptr
   widget_control, tlb, set_uvalue = info
 
@@ -1291,6 +1297,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
 
   ; create pseudoevent and send this event to spice_xdetector_draw,
   ; in order to draw the image
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: tlb, handler: 0l, x: tlb_xsz, y: tlb_ysz}
   spice_xdetector_resize, pseudoevent
@@ -1304,5 +1311,5 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ; ; tvscl,icon_resized , true = 1
 
   xmanager, 'ql', tlb, /no_block, event_handler = 'spice_xdetector_resize', $
-    group_leader = group, cleanup = 'spice_xdetector_cleanup'
+    cleanup = 'spice_xdetector_cleanup'
 END
