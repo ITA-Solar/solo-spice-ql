@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2024-11-21 11:41 CET $
+; $Id: 2024-11-25 15:17 CET $
 
 ; save as postscript file
 PRO spice_xwhisker_ps, event
@@ -607,7 +607,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     return
   ENDIF
 
-  data = spice_get_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return
 
   IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)

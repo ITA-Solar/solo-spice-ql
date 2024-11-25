@@ -87,7 +87,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-25 15:17 CET $
 ;-
 ;
 ;
@@ -250,7 +250,7 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
     print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
     return, -1
   ENDIF
-  l2_object = spice_get_object(l2_object, is_spice = is_spice, object_created = object_created)
+  l2_object = spice_object(l2_object, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return, -1
 
   official_l3dir = keyword_set(official_l3dir)

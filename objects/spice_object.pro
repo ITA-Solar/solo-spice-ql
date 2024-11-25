@@ -1,52 +1,73 @@
 ;+
 ; NAME:
-;      SPICE_GET_OBJECT
+;      SPICE_OBJECT
 ;
 ; PURPOSE:
-;      This function is used to make sure that the input is a spice_data object.
-;      If input is a string, it is assumed that this is a path to a spice
-;      FITS file, a spice_data object of this file is then returned. If input is
-;      other than a string, it is returned unaltered.
+;      This function returns a SPICE_DATA or a SPICE_DATA_L3 object, depending on the input.
+;      If the input is a string, the function assumes that the input is a path to a SPICE FITS file,
+;      and tries to return either a SPICE_DATA or a SPICE_DATA_L3 object.
+;      If input is not a string, the function checks whether the input is one of these two objects,
+;      the result of this check is returned in IS_SPICE. The input is returned unaltered.
 ;
 ; CATEGORY:
 ;      SPICE -- utility
 ;
 ; CALLING SEQUENCE:
-;      object = spice_get_object(file [, is_spice=is_spice, object_created=object_created])
+;      object = spice_object(input [, is_spice=is_spice, object_created=object_created])
 ;
 ; INPUTS:
-;      file: The name and path of a SPICE file or a spice_data object
+;      input: The name and path of a SPICE file (level 2 or 3) or a SPICE_DATA or a SPICE_DATA_L3 object
+;
+; KEYWORDS:
+;     quiet : If set, then warnings are suppressed.
 ;
 ; OUTPUTS:
-;      a spice_data object
+;      a SPICE_DATA or SPICE_DATA_L3 object
 ;
 ; OPTIONAL OUTPUTS:
-;      is_spice: is 1 if 'file' is a string and this function creates the SPICE_DATA object.
-;                is 1 if 'file' is an object of type SPICE_DATA, 0 otherwise.
-;      object_created: is 1 if 'file' is a string and this function creates the SPICE_DATA object.
+;      is_spice: is 2 (or 3) if 'input' is a string and this function creates the SPICE_DATA(_L3) object,
+;                is 2 (or 3) if 'input' is an object of type SPICE_DATA(_L3),
+;                0 otherwise.
+;      object_created: is 1 if 'input' is a string and this function creates a SPICE_DATA(_L3) object,
 ;                0 otherwise.
 ;
 ; HISTORY:
 ;      Ver. 1, 22-Oct-2020, Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-25 15:17 CET $
 
-FUNCTION spice_get_object, file, is_spice = is_spice, object_created = object_created
+FUNCTION spice_object, input, is_spice = is_spice, object_created = object_created, quiet = quiet
   is_spice = 0
   object_created = 0
-  type = size(file, /type)
+  type = size(input, /type)
   IF type EQ 7 THEN BEGIN
-    object_created = 1
-    is_spice = 1
-    return, spice_data(file)
-  ENDIF ELSE IF type EQ 11 THEN BEGIN
-    IF typename(file) NE 'SPICE_DATA' THEN BEGIN
-      box_message, 'input is not a SPICE_DATA object'
+    object = spice_data(input, /quiet)
+    IF typename(object) EQ 'SPICE_DATA' THEN BEGIN
+      object_created = 1
+      is_spice = 2
+      return, object
     ENDIF ELSE BEGIN
-      is_spice = 1
+      object = spice_data_l3(input)
+      IF typename(object) EQ 'SPICE_DATA_L3' THEN BEGIN
+        object_created = 1
+        is_spice = 3
+        return, object
+      ENDIF
     ENDELSE
+  ENDIF ELSE IF type EQ 11 THEN BEGIN
+    IF typename(input) EQ 'SPICE_DATA' THEN BEGIN
+      is_spice = 2
+      return, input
+    ENDIF ELSE BEGIN
+      IF typename(input) EQ 'SPICE_DATA_L3' THEN BEGIN
+        is_spice = 3
+        return, input
+      ENDIF
+    ENDELSE
+
+    IF ~keyword_set(quiet) THEN box_message, 'Input is not a SPICE_DATA or SPICE_DATA_L3 object'
   ENDIF ELSE BEGIN
-    box_message, 'input must be either path to spice file or SPICE_DATA object'
+    IF ~keyword_set(quiet) THEN box_message, 'Input must be either path to SPICE FITS file or SPICE_DATA or SPICE_DATA_L3 object'
   ENDELSE
-  return, file
+  return, input
 END

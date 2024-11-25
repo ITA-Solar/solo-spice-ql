@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2024-11-21 11:41 CET $
+; $Id: 2024-11-25 15:17 CET $
 ;-
 ;
 ; save as postscript file
@@ -777,7 +777,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     return
   ENDIF
 
-  data = spice_get_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return
 
   ; drawing window size in relation to screen

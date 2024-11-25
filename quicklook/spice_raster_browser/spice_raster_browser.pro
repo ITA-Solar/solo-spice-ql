@@ -104,7 +104,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-21 11:40 CET $
+; $Id: 2024-11-25 15:17 CET $
 
 ; ---------------------
 PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
@@ -120,7 +120,7 @@ PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
   ;
   ; Below I check if INPUT is a string (i.e., a filename) or an object.
   ;
-  data = spice_get_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return
 
   ;

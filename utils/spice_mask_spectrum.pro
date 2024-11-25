@@ -58,7 +58,7 @@ FUNCTION spice_mask_spectrum, l1name, mask, $
 
   IF n_tags(mask) NE 0 THEN swtch = mask.image ELSE swtch = mask
 
-  d = spice_data(l1name)
+  d = spice_object(l1name)
   nwin = d.get_number_windows()
   date_obs = d.get_header_keyword('DATE-OBS', 0)
   slit_wid = d.get_header_keyword('SLIT_WID', 0)

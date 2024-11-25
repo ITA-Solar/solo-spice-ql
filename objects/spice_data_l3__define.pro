@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2024-11-21 13:33 CET $
+; $Id: 2024-11-25 15:17 CET $
 
 ;+
 ; Description:
@@ -45,20 +45,23 @@
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
 ;
+; KEYWORDS:
+;     quiet : If set, then warnings are suppressed.
+;
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise
 ;-
-FUNCTION spice_data_l3::init, file
+FUNCTION spice_data_l3::init, file, quiet = quiet
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, file, 1, "file", 'string', 0
   file_info = spice_file2info(file)
   IF ~file_info.is_spice_file THEN BEGIN
-    print, 'File is not a SPICE file: ' + file
+    IF ~keyword_set(quiet) THEN print, 'File is not a SPICE file: ' + file
     return, 0
   ENDIF
   IF file_info.level NE 3 THEN BEGIN
-    print, 'This is not a SPICE level 3 file: ' + file
+    IF ~keyword_set(quiet) THEN print, 'This is not a SPICE level 3 file: ' + file
     return, 0
   ENDIF
   self.file = file
@@ -163,7 +166,7 @@ FUNCTION spice_data_l3::xcfit_block, window_index, $
     origin = [0, 0, 0]
     scale = [1, 1, 1]
     phys_scale = [0, 0, 0]
-    spice_data_l3.get_plot_variables, *headers_data[0], origin = origin, scale = scale, phys_scale = phys_scale
+    spice_data_L3.get_plot_variables, *headers_data[0], origin = origin, scale = scale, phys_scale = phys_scale
     spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = phys_scale, image_dim = [1, 2]
   ENDIF ELSE BEGIN
     print, 'Something went wrong when trying to reproduce an ANA structure.'

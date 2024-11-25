@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-21 13:34 CET $
+; $Id: 2024-11-25 15:17 CET $
 
 ;+
 ; Description:
@@ -74,20 +74,23 @@
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
 ;
+; KEYWORDS:
+;     quiet : If set, then warnings are suppressed.
+;
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise
 ;-
-FUNCTION spice_data::init, file
+FUNCTION spice_data::init, file, quiet = quiet
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, file, 1, "file", 'string', 0
   file_info = spice_file2info(file)
   IF ~file_info.is_spice_file THEN BEGIN
-    print, 'File is not a SPICE file: ' + file
+    IF ~keyword_set(quiet) THEN print, 'File is not a SPICE file: ' + file
     return, 0
   ENDIF
   IF file_info.level NE 2 THEN BEGIN
-    print, 'This is not a SPICE level 2 file: ' + file
+    IF ~keyword_set(quiet) THEN print, 'This is not a SPICE level 2 file: ' + file
     return, 0
   ENDIF
   self.title = 'SPICE'

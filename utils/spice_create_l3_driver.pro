@@ -112,7 +112,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-25 15:17 CET $
 
 PRO spice_create_l3_driver, time_start, time_end = time_end, l2_files = l2_files, $
   top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $
@@ -171,7 +171,7 @@ PRO spice_create_l3_driver, time_start, time_end = time_end, l2_files = l2_files
       ENDIF
 
       IF do_create_l3 THEN BEGIN
-        l2_object = spice_get_object(l2_file, is_spice = is_spice, object_created = object_created)
+        l2_object = spice_object(l2_file, is_spice = is_spice, object_created = object_created)
         IF ~is_spice THEN CONTINUE
 
         l3_file = l2_object.create_l3_file(no_masking = no_masking, approximated_slit = approximated_slit, $

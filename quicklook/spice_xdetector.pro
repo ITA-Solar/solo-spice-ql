@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-11-25 13:50 CET $
+; $Id: 2024-11-25 15:17 CET $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event
@@ -846,7 +846,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     return
   ENDIF
 
-  data = spice_get_object(input_data, is_spice = is_spice)
+  data = spice_object(input_data, is_spice = is_spice)
   IF ~is_spice THEN return
 
   IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)

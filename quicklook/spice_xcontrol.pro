@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-11-21 11:41 CET $
+; $Id: 2024-11-25 15:17 CET $
 ;-
 ;
 ;
@@ -411,7 +411,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     return
   ENDIF
 
-  data = spice_get_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return
 
   ; ; information about data set

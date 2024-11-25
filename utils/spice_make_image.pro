@@ -48,7 +48,7 @@ FUNCTION spice_make_image, file, wvl, image_only = image_only
     return, -1
   ENDIF
 
-  d = spice_data(file)
+  d = spice_object(file)
   nwin = d.get_number_windows()
 
   sit_stare = d.get_sit_AND_stare()

@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-21 11:41 CET $
+; $Id: 2024-11-25 15:17 CET $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -443,7 +443,7 @@ PRO spice_xcontrol_l23_open_l3, event
   origin = [0, 0, 0]
   scale = [1, 1, 1]
   phys_scale = [0, 0, 0]
-  spice_data_l3.get_plot_variables, *hdr_l3_data, origin = origin, scale = scale, phys_scale = phys_scale
+  spice_data_L3.get_plot_variables, *hdr_l3_data, origin = origin, scale = scale, phys_scale = phys_scale
   spice_xcfit_block, ana = ana_l3, title = title, origin = origin, scale = scale, phys_scale = phys_scale, group_leader = (*info).tlb, $
     signal_id = signal_id, /no_save_option, image_dim = [1, 2]
 END
@@ -524,12 +524,12 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
   CASE file_info.level OF
     2: BEGIN
       file_l2 = file_in
-      file_l3_official = spice_data_l3.find_l3_file_from_l2(file_l2, /latest)
-      file_l3_user = spice_data_l3.find_l3_file_from_l2(file_l2, /user_dir, /latest)
+      file_l3_official = spice_data_L3.find_l3_file_from_l2(file_l2, /latest)
+      file_l3_user = spice_data_L3.find_l3_file_from_l2(file_l2, /user_dir, /latest)
     ENDCASE
 
     3: BEGIN
-      l3_obj = spice_data(file_in)
+      l3_obj = spice_object(file_in)
       file_l2 = l3_obj.find_l2_file()
       IF file_l2 EQ '' THEN file_l2 = l3_obj.find_l2_file(/user_dir)
 
@@ -587,7 +587,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
   nwin = 0
 
   IF exist_l2 THEN BEGIN
-    object_l2 = spice_data(file_l2)
+    object_l2 = spice_object(file_l2)
     nwin = object_l2.get_number_windows()
     file_l3_calc = file_l2.replace('level2', 'level3')
     file_l3_calc = file_l3_calc.replace('_L2_', '_L3_')
@@ -605,7 +605,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
     FOR iwin = 0, nwin_l3_official - 1 DO BEGIN
       winno_l3_official[iwin] = fxpar(*hdr_l3_official_data[iwin], 'WINNO', missing = -1)
     ENDFOR
-    l3_obj = spice_data(file_l3_official)
+    l3_obj = spice_object(file_l3_official)
     proc_steps_official = l3_obj.get_l3_processing_steps()
   ENDIF ELSE BEGIN
     IF exist_l2 THEN BEGIN
@@ -634,7 +634,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
     FOR iwin = 0, nwin_l3_user - 1 DO BEGIN
       winno_l3_user[iwin] = fxpar(*hdr_l3_user_data[iwin], 'WINNO', missing = -1)
     ENDFOR
-    l3_obj = spice_data(file_l3_user)
+    l3_obj = spice_object(file_l3_user)
     proc_steps_user = l3_obj.get_l3_processing_steps()
   ENDIF ELSE BEGIN
     old_path_part = path_sep() + 'spice' + path_sep() + 'level3' + path_sep()
