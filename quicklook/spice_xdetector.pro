@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-11-22 15:20 CET $
+; $Id: 2024-11-25 13:50 CET $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event
@@ -171,10 +171,10 @@ PRO spice_xdetector_expslider, event
     IF *(*info).data.has_dumbbells((*info).lindx[i]) THEN window_image = rotate(window_image, 5)
     size_image = size(window_image)
     (*info).detector[(*info).win_positions[i, 0] : (*info).win_positions[i, 1], $
-      (*info).win_positions[i, 2] : (*info).win_positions[i, 3]] $
-      = window_image[(*info).clip_image[i, 0] : size_image[1] - 1 - (*info).clip_image[i, 2], $
-        (*info).clip_image[i, 2] : size_image[2] - 1 - (*info).clip_image[i, 3]]
-    ENDFOR
+      (*info).win_positions[i, 2] : (*info).win_positions[i, 3]] = $
+      window_image[(*info).clip_image[i, 0] : size_image[1] - 1 - (*info).clip_image[i, 2], $
+      (*info).clip_image[i, 2] : size_image[2] - 1 - (*info).clip_image[i, 3]]
+  ENDFOR
   ; display new raster position
   ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
@@ -627,9 +627,9 @@ PRO spice_xdetector_colors, event
         xoffset = offset_parent[0] + 50, yoffset = offset_parent[1] + 50
     ENDCASE
     'XCOLORS_LOAD': BEGIN
-      (*info).r = event.r((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).g = event.g((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).b = event.b((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
+      (*info).r = event.r[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).g = event.g[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).b = event.b[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
       IF !d.n_colors GT 256 THEN BEGIN
         ; idl-disable-next-line unknown-structure
         pseudoevent = {widget_button, id: 0l, $
@@ -680,9 +680,9 @@ PRO spice_xdetector_resize, event
     (*info).xscale = ptr_new((*info).ccd_xsz)
     (*info).yscale = ptr_new((*info).ccd_ysz)
     (*info).drawimage = ptr_new(uintarr((*info).ccd_xsz, (*info).ccd_ysz))
-    * (*info).drawimage = drawimage
-    * (*info).xscale = xscale
-    * (*info).yscale = yscale
+    (*(*info).drawimage) = drawimage
+    (*(*info).xscale) = xscale
+    (*(*info).yscale) = yscale
   ENDIF ELSE BEGIN
     (*info).imagepos = [0.1, 0.1, 0.9, 0.95]
     (*info).xps = (*info).d_xsz * (1. + (*info).imagepos[0] + (1. - (*info).imagepos[2]))
@@ -710,10 +710,10 @@ PRO spice_xdetector_resize, event
     drawimage = congrid(detector, (*info).xps, (*info).yps)
     (*info).xscale = ptr_new((*info).xps)
     (*info).yscale = ptr_new((*info).yps)
-    * (*info).xscale = interpol(xscale, (*info).xps)
-    * (*info).yscale = interpol(yscale, (*info).yps)
+    (*(*info).xscale) = interpol(xscale, (*info).xps)
+    (*(*info).yscale) = interpol(yscale, (*info).yps)
     (*info).drawimage = ptr_new(uintarr((*info).xps, (*info).yps))
-    * (*info).drawimage = drawimage
+    (*(*info).drawimage) = drawimage
   ENDELSE
 
   ; idl-disable-next-line unknown-structure
@@ -781,10 +781,10 @@ PRO spice_xdetector_mask, event
     IF *(*info).data.has_dumbbells((*info).lindx[i]) THEN window_image = rotate(window_image, 5)
     size_image = size(window_image)
     (*info).detector[(*info).win_positions[i, 0] : (*info).win_positions[i, 1], $
-      (*info).win_positions[i, 2] : (*info).win_positions[i, 3]] $
-      = window_image[(*info).clip_image[i, 0] : size_image[1] - 1 - (*info).clip_image[i, 2], $
-        (*info).clip_image[i, 2] : size_image[2] - 1 - (*info).clip_image[i, 3]]
-    ENDFOR
+      (*info).win_positions[i, 2] : (*info).win_positions[i, 3]] = $
+      window_image[(*info).clip_image[i, 0] : size_image[1] - 1 - (*info).clip_image[i, 2], $
+      (*info).clip_image[i, 2] : size_image[2] - 1 - (*info).clip_image[i, 3]]
+  ENDFOR
   ; display new raster position
   ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
