@@ -34,11 +34,12 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-11-25 15:17 CET $
+; $Id: 2024-11-26 13:44 CET $
 ;-
 ;
 ;
 PRO spice_xcontrol_destroy, event
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {WIDGET_KILL_REQUEST, $
     ID: event.id, $
     TOP: event.top, $
@@ -123,7 +124,7 @@ PRO spice_xcontrol_hdrdisp, event
   hdr_widget = widget_base(title = 'Header Contents', $
     group_leader = (*info).tlb, /row)
   closefield = widget_base(hdr_widget, /column)
-  closebutton = widget_button(closefield, value = 'Close', $
+  closebutton = widget_button(closefield, value = 'Close', $ ; idl-disable-line unused-var
     event_pro = 'spice_xcontrol_hdrdisp_destroy')
 
   CASE !version.os OF
@@ -157,7 +158,7 @@ PRO spice_xcontrol_hdrdisp_destroy, event
 END
 
 ; event procedure for header display,
-PRO DisplayHeaderContents_event, event
+PRO DisplayHeaderContents_event, event ; idl-disable-line unused-var
 END
 
 FUNCTION spice_xcontrol_lineselect, event
@@ -190,7 +191,7 @@ END
 PRO spice_xcontrol_leve3file, event
   widget_control, event.top, get_uvalue = info
   IF (*info).level3_dir EQ '' THEN cd, current = wdir ELSE wdir = (*info).level3_dir
-  file = dialog_pickfile(dialog_parent = (*info).tlb, /directory, /write, path = wdir, $
+  file = dialog_pickfile(dialog_parent = (*info).tlb, /directory, /write, path = wdir, $ ; idl-disable-line unused-var
     title = 'Select level 3 directory', get_path = level3_dir)
   IF n_elements(level3_dir) GT 0 && level3_dir NE '' THEN BEGIN
     (*info).level3_dir = level3_dir
@@ -272,7 +273,6 @@ FUNCTION spice_xcontrol_dispselect, event
 END
 
 PRO spice_xcontrol_listmoments, event
-  widget_control, event.top, get_uvalue = info
   thisevent = tag_names(event, /structure_name)
   CASE thisevent OF
     'WIDGET_DROPLIST': BEGIN
@@ -304,7 +304,7 @@ PRO spice_xcontrol_detnuv, event
       nwin = *(*info).d.get_number_windows()
       win_positions = intarr(nwin)
       FOR iwin = 0, nwin - 1 DO BEGIN
-        temp = *(*info).d.get_window_position(iwin, detector = detectornr)
+        temp = *(*info).d.get_window_position(iwin, detector = detectornr) ; idl-disable-line unused-var
         win_positions[iwin] = detectornr
       ENDFOR
       ind = where(win_positions EQ 1, count)
@@ -321,7 +321,7 @@ PRO spice_xcontrol_detfuv, event
       nwin = *(*info).d.get_number_windows()
       win_positions = intarr(nwin)
       FOR iwin = 0, nwin - 1 DO BEGIN
-        temp = *(*info).d.get_window_position(iwin, detector = detectornr)
+        temp = *(*info).d.get_window_position(iwin, detector = detectornr) ; idl-disable-line unused-var
         win_positions[iwin] = detectornr
       ENDFOR
       ind = where(win_positions EQ 2, count)
@@ -344,11 +344,11 @@ PRO spice_xcontrol_pointing, event
     0:
     1: BEGIN
       widget_control, /hourglass
-      * (*info).sdo.read, date_obs, quality = 'high'
+      (*(*info).sdo).read, date_obs, quality = 'high'
       IF (*(*info).sdo.getim())[0] EQ -1 THEN BEGIN
-        *(*info).sdo.read, *(*info).d.getdate_obs(), quality = 'low'
+        (*(*info).sdo).read, *(*info).d.getdate_obs(), quality = 'low'
       ENDIF
-      * (*info).sdo.rotate, date_obs, /keep_limb
+      (*(*info).sdo).rotate, date_obs, /keep_limb
       coord = *(*info).sdo.raster_coords(xcen, ycen, dx, dy, theta)
       xpointing_image, *(*info).sdo.getdata(), coord
     END
@@ -373,7 +373,7 @@ PRO spice_xcontrol_moments, fit, event
 
   lindx = where((*info).lines EQ 1) ; index of selected lines
   IF lindx[0] LT 0 THEN BEGIN
-    ok = dialog_message('Please select at least 1 line', /information, /center)
+    ok = dialog_message('Please select at least 1 line', /information, /center) ; idl-disable-line unused-var
     return
   ENDIF
   nindx = n_elements(lindx) ; number of lines selected
@@ -398,7 +398,7 @@ PRO spice_xcontrol_create_l3, event
   IF total(lineselect) NE 0 THEN BEGIN
     window_index = where(lineselect)
   ENDIF
-  result = spice_create_l3_widget(*(*info).d, event.top, window_index = window_index, /allow_xcontrol_l23)
+  result = spice_create_l3_widget(*(*info).d, event.top, window_index = window_index, /allow_xcontrol_l23) ; idl-disable-line unused-var
 END
 
 ; -----------------------------------------------------------------------------
@@ -411,7 +411,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     return
   ENDIF
 
-  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice)
   IF ~is_spice THEN return
 
   ; ; information about data set
@@ -430,7 +430,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
 
   ; create menu bar:
   filemenu = widget_button(menubar, value = 'File', /menu, uvalue = 'file')
-  closemenu = widget_button(filemenu, value = 'Close', $
+  closemenu = widget_button(filemenu, value = 'Close', $ ; idl-disable-line unused-var
     event_pro = 'spice_xcontrol_destroy')
 
   ; hdrdispmenu=widget_button(optmenu, value='Display header', $
@@ -445,7 +445,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   title = 'Select Line window(s)' ; line select label string
   lslabel = widget_label(lineselect_label, value = title)
   lslabel = widget_label(lineselect_label, value = '      ')
-  create_l3_button = widget_button(lineselect_label, value = 'Create level 3 files', $
+  create_l3_button = widget_button(lineselect_label, value = 'Create level 3 files', $ ; idl-disable-line unused-var
     event_pro = 'spice_xcontrol_create_l3')
 
   IF n_elements(line_id) GT 3 THEN column = 2 ELSE column = 1
@@ -458,7 +458,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   ; Select display tool label field
   dispselect_label = widget_base(dispselect_base, /row)
   title = 'Tool' ; display tool select label string
-  dslabel = widget_label(dispselect_label, value = title)
+  dslabel = widget_label(dispselect_label, value = title) ; idl-disable-line unused-var
 
   ; tools=['Detector        ', $
   ; 'Browser         ', $
@@ -471,7 +471,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     'Whisker         ', $
     'Intensity map (XMap)']
   IF max(nraster) LE 1 THEN tools = tools[0 : 2]
-  dispselect = cw_bgroup(dispselect_label, row = 5, $
+  dispselect = cw_bgroup(dispselect_label, row = 5, $ ; idl-disable-line unused-var
     tools, event_func = 'spice_xcontrol_dispselect')
 
   ; Text field to display data information
@@ -496,7 +496,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
 
   ; Solar map showing pointing of raster
   pointing_size = 200
-  calc_xysize, pointing_size, pointing_size, xs, ys, nxchar = 4, nychar = 4
+  calc_xysize, pointing_size, pointing_size, nxchar = 4, nychar = 4
   pointing_base = widget_base(lcol, /row)
   pointing_icon = widget_draw(pointing_base, $
     retain = 2, $
@@ -504,7 +504,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     YSize = pointing_size, $
     frame = 1, event_pro = 'spice_xcontrol_pointing', /button_events)
 
-  info_base = widget_base(pointing_base, /col)
+  info_base = widget_base(pointing_base, /col) ; idl-disable-line unused-var
 
   ; lsubcol2 = widget_base(lcol, /row,/frame)
   ; momfield = widget_base(lsubcol2, /col)
@@ -518,12 +518,12 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
 
   ; Close and header display buttons
   lsubcol3 = widget_base(lcol, /column, /frame)
-  hdrdispbutton = widget_button(lsubcol3, value = '  Display header  ', $
+  hdrdispbutton = widget_button(lsubcol3, value = '  Display header  ', $ ; idl-disable-line unused-var
     event_pro = 'spice_xcontrol_hdrdisp')
-  closefield = widget_base(lsubcol3, /column)
-  printfilesbutton = widget_button(lsubcol3, value = 'Print filename to console', $
+  closefield = widget_base(lsubcol3, /column) ; idl-disable-line unused-var
+  printfilesbutton = widget_button(lsubcol3, value = 'Print filename to console', $ ; idl-disable-line unused-var
     event_pro = 'spice_xcontrol_printfilename')
-  closebutton = widget_button(lsubcol3, value = '  Close   ', $
+  closebutton = widget_button(lsubcol3, value = '  Close   ', $ ; idl-disable-line unused-var
     event_pro = 'spice_xcontrol_destroy')
 
   ; SPICE icon
@@ -531,7 +531,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   spice_icon = widget_draw(spice_icon_base, retain = 2, XSize = 120, YSize = 120, frame = 1)
 
   ; Define the info structure, used to send information around
-  info = {d: ptr_new(), $
+  info_struct = {d: ptr_new(data), $
     sdo: ptr_new(), $
     moment: ptr_new(), $
     lineselect: lineselect, $
@@ -543,8 +543,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     pointing_wid: -1, $
     pointing_phase: 1, $
     tlb: tlb}
-  info = ptr_new(info, /no_copy)
-  (*info).d = ptr_new(data)
+  info = ptr_new(info_struct, /no_copy)
 
   ; Set the info ptr to be the user value of the tlb widget
   widget_control, tlb, set_uvalue = info
@@ -662,6 +661,5 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   ENDIF
   (*info).pointing_wid = drawID2
 
-  xmanager, 'spice_xcontrol', tlb, /no_block, $
-    group_leader = group, cleanup = 'spice_xcontrol_cleanup'
+  xmanager, 'spice_xcontrol', tlb, /no_block, cleanup = 'spice_xcontrol_cleanup'
 END
