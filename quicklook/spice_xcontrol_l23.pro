@@ -41,10 +41,11 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-26 14:20 CET $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {WIDGET_KILL_REQUEST, $
     ID: event.id, $
     TOP: event.top, $
@@ -173,7 +174,7 @@ PRO spice_xcontrol_l23_save_file, event
   all_data_headers = ptrarr(nwin_l3)
   l3_pr_steps_all = ptrarr(nwin_l3)
   FOR iwindow = 0, nwin_l3 - 1 DO BEGIN
-    original_data = (*info).object_l2.get_window_data(winno_l3[iwindow], no_masking = no_masking, approximated_slit = approximated_slit)
+    original_data = (*info).object_l2.get_window_data(winno_l3[iwindow])
 
     PROC_STEPS = *(*(*info).proc_steps_user)[iwindow]
     IF (*info).state_l3_user[iwindow].edited THEN BEGIN
@@ -183,18 +184,16 @@ PRO spice_xcontrol_l23_save_file, event
         hash('name', 'PRLIB', 'value', 'solarsoft/so/spice/idl/quicklook', 'comment', 'Software library containing PRPROC'), $
         hash('name', 'PRPARA', 'value', 'POSSIBLE_MANUAL_EDITING = 1', 'comment', 'Parameters for PRPROC') $
         ]
-      PROC_STEPS.add, proc_ste_new, /no_copy
+      PROC_STEPS.add, proc_step_new, /no_copy
     ENDIF
 
     IF iwindow GT 0 THEN IS_EXTENSION = 1 ELSE IS_EXTENSION = 0
     ana2fits, ana_l3[iwindow], FILEPATH_OUT = file_l3, $
       N_WINDOWS = nwin_l3, WINNO = iwindow, $
-      DATA_ID = DATA_ID, TYPE_XDIM1 = 'WAVE', $
-      IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', VERSION = number_version_l3, $
-      PROC_STEPS = PROC_STEPS, PROJ_KEYWORDS = PROJ_KEYWORDS, $
+      TYPE_XDIM1 = 'WAVE', $
+      IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', $
+      PROC_STEPS = PROC_STEPS, $
       PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = (*info).object_l2.get_header(winno_l3[iwindow]), $
-      SAVE_XDIM1 = SAVE_XDIM1, NO_SAVE_DATA = NO_SAVE_DATA, PRINT_HEADERS = PRINT_HEADERS, $
-      SAVE_NOT = SAVE_NOT, $
       headers_results = headers_results, headers_data = headers_data
 
     all_result_headers[iwindow] = ptr_new(*headers_results[0])
@@ -719,6 +718,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
     button_base = widget_base(win_base_l3_official, /row)
     state_l3_official[iwin].edit_button = widget_button(button_base, value = 'View/Edit window', event_pro = 'spice_xcontrol_l23_open_l3', $
       sensitive = win_created, uvalue = {l3_type: 1, winno: state_l3_official[iwin].l3_winno})
+    ; idl-disable-next-line unused-var
     copy_button = widget_button(button_base, value = 'Copy window to user file', event_pro = 'spice_xcontrol_l23_copy_window', $
       sensitive = win_created, uvalue = state_l3_official[iwin].l3_winno)
   ENDFOR ; iwin=0,nwin-1
@@ -753,6 +753,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
     button_base = widget_base(win_base_l3_user, /row)
     state_l3_user[iwin].edit_button = widget_button(button_base, value = 'View/Edit window', event_pro = 'spice_xcontrol_l23_open_l3', $
       sensitive = win_created, uvalue = {l3_type: 2, winno: state_l3_user[iwin].l3_winno})
+    ; idl-disable-next-line unused-var
     create_button = widget_button(button_base, value = '(Re)create window', event_pro = 'spice_xcontrol_l23_create_l3', $
       sensitive = exist_l2, uvalue = iwin)
   ENDFOR ; iwin=0,nwin-1
