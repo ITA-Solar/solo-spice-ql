@@ -55,5 +55,6 @@ FUNCTION rget_dprint::verbose, level = level
 END
 
 PRO rget_dprint__define
+  ; idl-disable-next-line unused-var
   dummy = {rget_dprint, dprint_data: dictionary()}
 END
