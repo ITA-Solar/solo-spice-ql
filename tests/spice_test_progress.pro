@@ -4,13 +4,13 @@ PRO spice_test_progress
   IF test EQ 1 THEN BEGIN
     files = ['/Users/ich/data/1-asdfa', '/Users/ich/data/2-wrgwrgasdf', '/Users/ich/data/qer/3-wer', '/Users/ich/data/asdf/4-asdf']
     n_windows = [2, 3, 4, 2]
-    name_windows = ['WIN 1', 'WIN 2', 'WIN 3', 'WIN 4', 'WIN 5']
+    name_windows = ['WIN 1', 'WIN 2', 'WIN 3', 'WIN 4', 'WIN 5'] ; idl-disable-line unused-var
 
     o = spice_create_l3_progress(files = files)
 
     FOR i = 0, n_elements(files) - 1 DO BEGIN
       print, 'new file', i
-      o.next_file, n_windows[i], filename = 'WRONG', window_name = name_windows[0], halt = halt
+      o.next_file, n_windows[i], filename = 'WRONG', halt = halt
       IF halt THEN BEGIN
         print, 'stopped'
         return
@@ -34,7 +34,7 @@ PRO spice_test_progress
 
     FOR i = 0, n_files - 1 DO BEGIN
       print, 'new file', i
-      n_windows = ceil(randomu(seed) * 10)
+      n_windows = ceil(randomu(seed) * 10) ; idl-disable-line unused-var
       o.next_file, n_windows, halt = halt, filename = 'done'
       IF halt THEN BEGIN
         print, 'stopped'
