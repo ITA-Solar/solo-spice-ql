@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-26 15:07 CET $
 ;-
 ;
 ; save as postscript file
@@ -84,8 +84,8 @@ PRO spice_xmap_ps, event
   ysz = 15
   xsz = (*info).aspect * ysz
   calc_xysize, xsz, ysz, ps_xsz, ps_ysz, nxchar = total(!x.margin), nychar = total(!y.margin)
-  device, xsize = ps_xsz, ysize = py_ysz, file = thisfile, _extra = keywords, $
-    bits_per_pixel = 8, /color
+  device, xsize = ps_xsz, ysize = ps_ysz, file = thisfile, bits_per_pixel = 8, /color
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -105,9 +105,9 @@ PRO spice_xmap_jpeg, event
   tvlct, r, g, b, /get
   s = size(snapshot)
   image24 = bytarr(3, s[1], s[2])
-  image24(0, *, *) = r(snapshot)
-  image24(1, *, *) = g(snapshot)
-  image24(2, *, *) = b(snapshot)
+  image24[0, *, *] = r[snapshot]
+  image24[1, *, *] = g[snapshot]
+  image24[2, *, *] = b[snapshot]
   write_jpeg, thisfile, image24, true = 1, quality = 75
 END
 
@@ -125,8 +125,9 @@ FUNCTION spice_xmap_gamma, event
     (*info).gamma = 1.0
     text = 'All data < im_min ' + strtrim(string(im_min, format = '(f4.2)'), 2) + ' gamma reset to 1.0'
     message, text, /info
-    ok = dialog_message(text, dialog_parent = (*info).tlb)
+    ok = dialog_message(text, dialog_parent = (*info).tlb) ; idl-disable-line unused-var
   ENDIF
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -146,6 +147,7 @@ FUNCTION spice_xmap_histoopt, event
     (*info).imin = min(iris_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
     (*info).imax = max(iris_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
   ENDIF
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -231,6 +233,7 @@ FUNCTION spice_xmap_drawsizeoption, event
   ; endif else begin
   ; xysz=(*(*info).data->getaux())->getdrawsize(sizemode)
   ; endelse
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, top: (*info).tlb, handler: 0l, $
     x: xysz[0] + (*info).lcol_xsz, y: xysz[1] + w_ysz}
   spice_xmap_resize, pseudoevent
@@ -239,7 +242,6 @@ END
 
 ; wavelength selection buttons
 FUNCTION spice_xmap_dsoption, event
-  widget_control, event.top, get_uvalue = info
   IF event.select EQ 0 THEN return, 0
   CASE event.value OF
     0: spice_xmap_wpix, event
@@ -257,6 +259,7 @@ PRO spice_xmap_wpix, event
   ; set scale for images
   *(*info).xscale = (*info).xscale_pixels
   *(*info).yscale = (*info).yscale_pixels
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -271,6 +274,7 @@ PRO spice_xmap_warcsec, event
   ; set scale for images
   *(*info).xscale = (*info).xscale_physical
   *(*info).yscale = (*info).yscale_physical
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -279,6 +283,7 @@ END
 PRO spice_xmap_aspect, event
   widget_control, event.top, get_uvalue = info
   (*info).keep_aspect = event.select
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -287,6 +292,7 @@ END
 PRO spice_xmap_default_colors, event
   widget_control, event.top, get_uvalue = info
   (*info).defcol = event.select
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: event.top, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -304,6 +310,7 @@ PRO spice_xmap_expprp_slider, event
       format = '(a,f5.2,a)'), 2) + ' s'
 
   ; create resize pseudoevent to draw selected line
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: (*info).tlb, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -315,6 +322,7 @@ PRO spice_xmap_lineselect, event
   (*info).line = (*info).linelist[event.index]
 
   ; create resize pseudoevent to draw selected line
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: (*info).tlb, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -328,9 +336,10 @@ PRO spice_xmap_dpselect, event
   ;
   IF moment_name EQ 'Velocity' THEN BEGIN
     gamma = 1.0
+    ; idl-disable-next-line unknown-structure
     pseudoevent = {widget_slider, id: 0l, $
       top: event.top, handler: 0l, value: gamma, drag: 1}
-    dum = spice_xmap_gamma(pseudoevent)
+    dum = spice_xmap_gamma(pseudoevent) ; idl-disable-line unused-var
     widget_control, (*info).gamma_slider, sensitive = 0
   ENDIF ELSE widget_control, (*info).gamma_slider, sensitive = 1
   (*info).color = 255
@@ -346,6 +355,7 @@ PRO spice_xmap_dpselect, event
     ENDCASE
   ENDIF
   ; create resize pseudoevent to draw selected data
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: (*info).tlb, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -420,7 +430,6 @@ PRO spice_xmap_zoom, event
       xscale = xscale[sx < dx : sx > dx]
       yscale = yscale[sy < dy : sy > dy]
       sz = size(image)
-      pos = [sx < dx, sx > dx, sy < dy, sy > dy]
       mind = min(sz[0 : 2])
       CASE (*info).dwoption OF
         0: BEGIN
@@ -495,10 +504,11 @@ PRO spice_xmap_colors, event
         xoffset = offset_parent[0] + 50, yoffset = offset_parent[1] + 50
     ENDCASE
     'XCOLORS_LOAD': BEGIN
-      (*info).r = event.r((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).g = event.g((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).b = event.b((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
+      (*info).r = event.r[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).g = event.g[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).b = event.b[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
       IF !d.n_colors GT 256 THEN BEGIN
+        ; idl-disable-next-line unknown-structure
         pseudoevent = {widget_button, id: 0l, $
           top: event.top, handler: 0l, select: 1}
         spice_xmap_draw, pseudoevent
@@ -512,6 +522,7 @@ END
 PRO spice_xmap_bgr, event
   widget_control, event.top, get_uvalue = info
   (*(*info).data.getaux()).loadct, 'vel'
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xmap_draw, pseudoevent
@@ -527,6 +538,7 @@ END
 PRO spice_xmap_momminslider, event
   widget_control, event.top, get_uvalue = info
   (*info).min = event.value
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -536,6 +548,7 @@ END
 PRO spice_xmap_mommaxslider, event
   widget_control, event.top, get_uvalue = info
   (*info).max = event.value
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -674,6 +687,7 @@ PRO spice_xmap_resize, event
   (*info).tlb_xsz = event.x
   (*info).tlb_ysz = event.y
   ; draw image
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -722,6 +736,7 @@ PRO spice_xmap_mask, event
   wd = *(*info).data.get_window_data((*info).line, no_masking = masking EQ 0)
   *(*info).wd = wd
   ; draw image
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: (*info).tlb, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -732,7 +747,7 @@ PRO spice_xmap_save_moments, event
   widget_control, event.top, get_uvalue = info
 
   IF obj_isa(*(*info).data, 'eis_moment') THEN $
-    * (*info).data.save, iwin = (*info).linelist
+    (*(*info).data).save, iwin = (*info).linelist
 END
 
 PRO spice_xmap_linedef, event
@@ -750,6 +765,7 @@ PRO spice_xmap_linedef, event
   ; endelse
   xmoment_moment, *(*info).data, mspec, (*info).line, lambda, wlref = wlref, groupl = event.top
   IF NOT (ptr_valid(info)) THEN return ; if spice_xmap window closes
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: (*info).tlb, handler: 0l, x: (*info).tlb_xsz, y: (*info).tlb_ysz}
   spice_xmap_resize, pseudoevent
@@ -777,7 +793,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     return
   ENDIF
 
-  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice)
   IF ~is_spice THEN return
 
   ; drawing window size in relation to screen
@@ -792,7 +808,6 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ;
   nwin = data.get_number_windows()
   nraster = data.get_number_exposures(line) ; number of raster positions
-  nslit = data.get_number_y_pixels(line) ; number of slit positions
   nexp = data.get_number_exposures(line)
   nexpprp = 1 ; number of exp pr. raster pos.
   ydim = 1
@@ -868,7 +883,6 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     IF angle EQ 90 OR angle EQ 270 THEN BEGIN
       yscale = data.get_instr_x_vector(line)
     ENDIF ELSE yscale = data.get_instr_y_vector(line)
-    sx = {xtitle: 'Time [s]', rot: 0}
   ENDIF ELSE BEGIN
     xscale = data.get_instr_x_vector(line)
     yscale = data.get_instr_y_vector(line)
@@ -919,14 +933,14 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; create pulldown menus on the base widget menubar
   filemenu = widget_button(menubar, value = 'File', /menu, uvalue = 'file')
   savemenu = widget_button(filemenu, value = 'Save as', uvalue = 'save', /menu)
-  psmenu = widget_button(savemenu, value = 'Postscript', $
+  psmenu = widget_button(savemenu, value = 'Postscript', $ ; idl-disable-line unused-var
     event_pro = 'spice_xmap_ps')
-  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xmap_jpeg')
-  exitmenu = widget_button(filemenu, value = 'Close', $
+  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xmap_jpeg') ; idl-disable-line unused-var
+  exitmenu = widget_button(filemenu, value = 'Close', $ ; idl-disable-line unused-var
     event_pro = 'spice_xmap_destroy')
 
   optmenu = widget_button(menubar, value = 'Options', uvalue = 'options')
-  colmenu = widget_button(optmenu, value = 'Colour table', $
+  colmenu = widget_button(optmenu, value = 'Colour table', $ ; idl-disable-line unused-var
     event_pro = 'spice_xmap_colors')
   ; colmenu=widget_button(optmenu, value='Color table BGR', $
   ; event_pro='spice_xmap_bgr')
@@ -941,11 +955,11 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   colorbar_title = data.get_title() + ' ' + data.get_variable_unit()
   ; endelse
   ; information on raster
-  titletext = widget_label(lcol, value = data.get_start_time() + ' ' + data.get_obs_id(), /align_center)
+  titletext = widget_label(lcol, value = data.get_start_time() + ' ' + data.get_obs_id(), /align_center) ; idl-disable-line unused-var
   lsubcol = widget_base(lcol, /row)
   id = data.get_window_id(line)
-  idtext = widget_label(lcol, value = strtrim(id, 2), /align_left)
-  exposuretext = widget_label(lcol, $
+  idtext = widget_label(lcol, value = strtrim(id, 2), /align_left) ; idl-disable-line unused-var
+  exposuretext = widget_label(lcol, $ ; idl-disable-line unused-var
     value = 'Exp = ' + strtrim(string(data.get_exposure_time(line), format = '(a,f5.2)'), 2) + ' s', $
     /align_left)
   ; TODO:
@@ -972,7 +986,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   IF nexpprp GT 1 THEN BEGIN
     sliderbase = widget_base(lsubcol, /column)
     exprp = 1
-    expprpslider = widget_slider(sliderbase, xsize = 90, $
+    expprpslider = widget_slider(sliderbase, xsize = 90, $ ; idl-disable-line unused-var
       minimum = 1, maximum = nexpprp, $
       title = 'Exp.# at rast. pos.', $
       value = 1, $
@@ -991,21 +1005,21 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
 
   ; menu for preset widget sizes
   drawsizeoption = widget_base(lcol, /column, /frame)
-  drawsizeoption_title = widget_label(drawsizeoption, value = 'Resize widget')
+  drawsizeoption_title = widget_label(drawsizeoption, value = 'Resize widget') ; idl-disable-line unused-var
   menu = ['Standard', 'Big']
   drawsizeoption_names = menu
-  drawsizeoption_menu = cw_bgroup(drawsizeoption, drawsizeoption_names, $
+  drawsizeoption_menu = cw_bgroup(drawsizeoption, drawsizeoption_names, $ ; idl-disable-line unused-var
     /return_index, $
     /exclusive, set_value = 0, $
     event_func = 'spice_xmap_drawsizeoption')
   ; keep true aspect option on/off
   aspectfield = widget_base(lcol, /row, /nonexclusive)
-  aspectbutton = widget_button(aspectfield, $
+  aspectbutton = widget_button(aspectfield, $ ; idl-disable-line unused-var
     value = 'Keep aspect', $
     event_pro = 'spice_xmap_aspect')
   ; default colors
-  defcolfield = widget_base(lcol, /column, /nonexclusive)
-  defcolbutton = widget_button(aspectfield, $
+  defcolfield = widget_base(lcol, /column, /nonexclusive) ; idl-disable-line unused-var
+  defcolbutton = widget_button(aspectfield, $ ; idl-disable-line unused-var
     value = 'Default colors', $
     event_pro = 'spice_xmap_default_colors')
 
@@ -1014,14 +1028,14 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     ll = widget_base(lcol, /column, /frame)
     ll_title = 'Select line'
     ll_names = data.get_window_id(linelist)
-    ll_menu = widget_droplist(ll, value = ll_names, title = ll_title, $
+    ll_menu = widget_droplist(ll, value = ll_names, title = ll_title, $ ; idl-disable-line unused-var
       event_pro = 'spice_xmap_lineselect')
   ENDIF
 
   IF NOT sit_and_stare THEN BEGIN
     dsbase = widget_base(lcol, /row, /frame)
     ds_names = ['Pixels/step', 'Arcsec']
-    dsbutton = cw_bgroup(dsbase, ds_names, /return_index, $
+    dsbutton = cw_bgroup(dsbase, ds_names, /return_index, $ ; idl-disable-line unused-var
       /exclusive, set_value = 1, $
       event_func = 'spice_xmap_dsoption')
   ENDIF
@@ -1035,7 +1049,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     event_func = 'spice_xmap_gamma', /drag)
 
   histo_lim = -3.0
-  histoopt_slider = cw_fslider(gammacol, /edit, format = '(f6.2)', /frame, $
+  histoopt_slider = cw_fslider(gammacol, /edit, format = '(f6.2)', /frame, $ ; idl-disable-line unused-var
     maximum = -1.0, minimum = -6.0, value = histo_lim, $
     title = 'log(HistoOpt Value)', $
     event_func = 'spice_xmap_histoopt', /drag)
@@ -1043,7 +1057,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
 
   ; create menu for selecting data product (if moments/gauss_fit):
   ; comment = data->getcomment()
-  dp_base = widget_base(lcol, /column, /frame)
+  dp_base = widget_base(lcol, /column, /frame) ; idl-disable-line unused-var
   ; if comment eq 'IRIS_moment' then begin
   ; dp_title = 'Select data'
   ; dp_names = data->getvariablename()
@@ -1102,11 +1116,11 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; event_pro = 'spice_xmap_save_moments')
   ; endif else begin
   linedeffield = widget_base(buttonrow1, /column)
-  linedefbutton = widget_button(linedeffield, value = 'Define Line', $
+  linedefbutton = widget_button(linedeffield, value = 'Define Line', $ ; idl-disable-line unused-var
     event_pro = 'spice_xmap_linedef')
   ; endelse
   closefield = widget_base(buttonrow1, /column)
-  closebutton = widget_button(closefield, value = 'Close     ', $
+  closebutton = widget_button(closefield, value = 'Close     ', $ ; idl-disable-line unused-var
     event_pro = 'spice_xmap_destroy')
 
   ; ; eis_icon_base=widget_base(lcol,/col)
@@ -1141,7 +1155,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ;
   imagepos = [0.10, 0.10, 0.77, 0.95]
   ; define the info structure, used send information around
-  info = {drawimage: ptr_new(), $
+  info_struct = {drawimage: ptr_new(), $
     wd: ptr_new(wd, /no_copy), $
     ; pos:pos, $
     n_subplot: 0, $
@@ -1154,7 +1168,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     max: 0.0, $
     min: 0.0, $
     ct: 0, $
-    data: ptr_new(), $
+    data: ptr_new(data), $
     xdim: xdim, $
     ydim: ydim, $
     nwin: nwin, $
@@ -1214,8 +1228,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     mommaxslider: mommaxslider, $
     wid: wid}
 
-  info = ptr_new(info, /no_copy)
-  (*info).data = ptr_new(data)
+  info = ptr_new(info_struct, /no_copy)
   ; set user value of tlb widget to be the info ptr
   widget_control, tlb, set_uvalue = info
 
@@ -1228,10 +1241,10 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
 
   ; create pseudoevent and send this event to spice_xmap_draw,
   ; in order to draw the image
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_base, id: 0l, $
     top: tlb, handler: 0l, x: tlb_xsz, y: tlb_ysz}
   spice_xmap_resize, pseudoevent
 
-  xmanager, 'ql', tlb, /no_block, event_handler = 'spice_xmap_resize', $
-    group_leader = group, cleanup = 'spice_xmap_cleanup'
+  xmanager, 'ql', tlb, /no_block, event_handler = 'spice_xmap_resize', cleanup = 'spice_xmap_cleanup'
 END
