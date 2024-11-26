@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-25 15:17 CET $
+; $Id: 2024-11-26 13:50 CET $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -472,7 +472,7 @@ PRO spice_xcontrol_l23_copy_window, event
     delete_analysis, ana_l3[win_info]
     ana_l3[win_info] = ana
     ana_l3_read[win_info] = 1
-    * (*info).ana_l3_official_read = ana_l3_read
+    *(*info).ana_l3_official_read = ana_l3_read
   ENDIF
 
   hdr_new = ptrarr(1)

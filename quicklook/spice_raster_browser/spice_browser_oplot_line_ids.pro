@@ -37,7 +37,7 @@
 ;     Ver. 2, 23-May-2023, Martin Wiesmann
 ;       uses now spice_line_list() instead of user defined line list.
 ;-
-; $Id: 2024-11-21 11:40 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 PRO spice_browser_oplot_line_ids, wrange, yrange, velocity = velocity, refwvl = refwvl
   ;

@@ -25,7 +25,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:43 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 PRO widget_positioner_test
   parent = widget_base(/column, title = 'Parent Widget', xsize = 300, ysize = 400)

@@ -66,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-21 13:44 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $

@@ -32,7 +32,7 @@
 ; HISTORY:
 ;     2-Nov-2023: Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:37 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION fits2ana_get_data_id, fits_content
   prits_tools.parcheck, fits_content, 1, "fits_content", 8, 0, /optional

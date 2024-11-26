@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-26 13:50 CET $
 ;-
 ; ;
 PRO spice_cat::_____________UTILITY_FUNCTIONS

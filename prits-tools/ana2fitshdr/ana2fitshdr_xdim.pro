@@ -42,7 +42,7 @@
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;      Ver. 1.1, 9-Feb-2024, Terje Fredvik - fixed typo in TYPE_XDIM1 parcheck
 ;-
-; $Id: 2024-11-21 11:28 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION ana2fitshdr_xdim, datetime = datetime, extension_names = extension_names, xdim1 = xdim1, wcs = wcs, $
   save_xdim1 = save_xdim1, type_xdim1 = type_xdim1

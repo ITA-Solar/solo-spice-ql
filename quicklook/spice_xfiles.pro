@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2024-11-22 15:20 CET $
+; $Id: 2024-11-26 13:50 CET $
 ;-
 
 ; xfiles exit:

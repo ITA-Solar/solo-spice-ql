@@ -17,7 +17,7 @@
 ; HISTORY:
 ;      15-Jun-2020 : Martin Wiesmann : first version
 ;-
-; $Id: 2024-11-21 11:43 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION spice_ingest_test_create_fits_file, spiobsid, level, datetime, repetition, seq_beg = seq_beg
   spiobsid_string = strtrim(string(spiobsid), 2)

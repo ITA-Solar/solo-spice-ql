@@ -100,7 +100,7 @@
 ;     Ver.3, 13-Dec-2023, Martin Wiesmann : Allows TIME_START to be a SPICE file instead of a time
 ;
 ;-
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
   top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $

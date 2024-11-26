@@ -27,7 +27,7 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 PRO spice_create_level3_jpeg_presentation, meta_data
   root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'

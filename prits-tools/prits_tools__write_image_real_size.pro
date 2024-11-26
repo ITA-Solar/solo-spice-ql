@@ -129,7 +129,7 @@
 ;     2 pixels to prevent crash
 ;
 ;-
-; $Id: 2024-11-21 14:19 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, $
   remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, $

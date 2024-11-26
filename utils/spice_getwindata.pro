@@ -153,7 +153,7 @@
 ;         Added hdr.date_end and hdr.tdetx to the output structure for
 ;         compatibility with EIS software.
 ;-
-; $Id: 2024-11-25 15:17 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $
   clean = clean, wrange = wrange, verbose = verbose, $

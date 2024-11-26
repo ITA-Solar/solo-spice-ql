@@ -50,7 +50,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-21 11:40 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   chunk_size = chunk_size, retina = retina, no_goes = no_goes, $

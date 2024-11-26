@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-25 15:17 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 ;+
 ; Description:

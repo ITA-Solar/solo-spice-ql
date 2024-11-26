@@ -1,4 +1,4 @@
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-26 13:50 CET $
 PRO spice_remove_old_files, top_dir, do_delete = do_delete
   IF n_elements(top_dir) EQ 0 THEN top_dir = getenv("SPICE_DATA")
   files = file_search(top_dir, "solo_L?_spice*.fits", count = count, /expand_environment)

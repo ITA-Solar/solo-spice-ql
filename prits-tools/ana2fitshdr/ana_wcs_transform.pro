@@ -39,7 +39,7 @@
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;      Ver. 2, 25-Jan-2023, Terje Fredvik - update wcs.ix and wcs.iy if needed
 ;-
-; $Id: 2024-11-21 11:28 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
   prits_tools.parcheck, wcs, 1, 'wcs', 8, 0

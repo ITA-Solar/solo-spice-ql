@@ -46,7 +46,7 @@
 ; a vector of the form [xres, yres] reporting the pixel
 ; resolution, measured in cm/pixel.
 ;
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION spice_get_screen_size, display_arg, display_name = display_name, $
   resolution = resolution

@@ -1,4 +1,4 @@
-; $Id: 2024-11-21 11:47 CET $
+; $Id: 2024-11-26 13:50 CET $
 FUNCTION spice_keyword_info_header
   text = inline_text()
   ; NAXIS1  =                    1 /

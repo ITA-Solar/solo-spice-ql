@@ -44,7 +44,7 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2024-11-21 11:28 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION ana_wcs_get_transform, xdim1_type, headers_input_data, ind_xdim1 = ind_xdim1
   prits_tools.parcheck, xdim1_type, 1, 'XDIM1_TYPE', 'STRING', 0

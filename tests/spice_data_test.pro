@@ -1,4 +1,4 @@
-; $Id: 2024-11-21 11:43 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 PRO get_window_data_test, spice_object
   result = spice_object.get_window_data(0)

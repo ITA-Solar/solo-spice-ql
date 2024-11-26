@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-11-25 15:17 CET $
+; $Id: 2024-11-26 13:50 CET $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event
