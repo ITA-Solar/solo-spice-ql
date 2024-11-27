@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 15:06 CET $
 ;-
 ;
 ; save as postscript file
@@ -72,7 +72,8 @@ PRO spice_xraster_ps, event
   widget_control, event.top, get_uvalue = info
   thisdevice = !d.name
   set_plot, 'ps', /copy
-  device, file = thisfile, _extra = keywords, /inches, bits_per_pixel = 8, /color
+  device, file = thisfile, /inches, bits_per_pixel = 8, /color
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -91,16 +92,15 @@ PRO spice_xraster_jpeg, event
   tvlct, r, g, b, /get
   s = size(snapshot)
   image24 = bytarr(3, s[1], s[2])
-  image24(0, *, *) = r(snapshot)
-  image24(1, *, *) = g(snapshot)
-  image24(2, *, *) = b(snapshot)
+  image24[0, *, *] = r[snapshot]
+  image24[1, *, *] = g[snapshot]
+  image24[2, *, *] = b[snapshot]
   write_jpeg, thisfile, image24, true = 1, quality = 75
 END
 
 ; display image in the draw window:
 PRO spice_xraster_draw, event
   widget_control, event.top, get_uvalue = info
-  old_charsize = !p.charsize
   IF !d.name NE 'PS' THEN BEGIN
     wset, (*info).wid
     !p.charsize = 2.0
@@ -225,10 +225,10 @@ PRO spice_xraster_pickline, event
   lineselect_widget = widget_base(title = 'Select line', $
     group_leader = (*info).tlb, /row)
   closefield = widget_base(lineselect_widget, /column)
-  closebutton = widget_button(closefield, value = 'OK', $
+  closebutton = widget_button(closefield, value = 'OK', $ ; idl-disable-line unused-var
     event_pro = 'spice_xraster_pickline_destroy')
   line_base = widget_base(lineselect_widget, /column, /frame)
-  linelist = cw_bgroup(line_base, (*info).linelist, /return_index, $
+  linelist = cw_bgroup(line_base, (*info).linelist, /return_index, $ ; idl-disable-line unused-var
     /exclusive, event_func = 'spice_xraster_pickline_pick')
   widget_control, lineselect_widget, set_uvalue = info
   widget_control, lineselect_widget, /realize
@@ -326,6 +326,7 @@ PRO spice_xraster_spix, event
   ; set titles for image plots
   (*info).ytitle = *(*info).data.get_axis_title((*info).ydim, /pixels)
   (*info).ydim_unit = 0
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
@@ -337,6 +338,7 @@ PRO spice_xraster_sarcsec, event
   ; set titles for image plots
   (*info).ytitle = *(*info).data.get_axis_title((*info).ydim)
   (*info).ydim_unit = 1
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
@@ -348,6 +350,7 @@ PRO spice_xraster_wpix, event
   ; set titles for image plots
   (*info).xtitle = *(*info).data.get_axis_title((*info).xdim, /pixels)
   (*info).xdim_unit = 0
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
@@ -359,6 +362,7 @@ PRO spice_xraster_wangstr, event
   ; set titles for image plots
   (*info).xtitle = *(*info).data.get_axis_title((*info).xdim)
   (*info).xdim_unit = 1
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
@@ -369,6 +373,7 @@ PRO spice_xraster_mask_on, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
   (*info).no_masking = 0
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
@@ -379,6 +384,7 @@ PRO spice_xraster_mask_off, event
   widget_control, event.top, get_uvalue = info
   ; set titles for image plots
   (*info).no_masking = 1
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
@@ -457,10 +463,11 @@ PRO spice_xraster_colors, event
         xoffset = offset_parent[0] + 50, yoffset = offset_parent[1] + 50
     ENDCASE
     'XCOLORS_LOAD': BEGIN
-      (*info).r = event.r((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).g = event.g((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).b = event.b((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
+      (*info).r = event.r[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).g = event.g[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).b = event.b[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
       IF !d.n_colors GT 256 THEN BEGIN
+        ; idl-disable-next-line unknown-structure
         pseudoevent = {widget_button, id: 0l, $
           top: event.top, handler: 0l, select: 1}
         spice_xraster_draw, pseudoevent
@@ -504,6 +511,7 @@ PRO spice_xraster_resize, event
       draw_ysize = (*info).d_ysz, xsize = (*info).cb_xsz, $
       ysize = (*info).d_ysz
 
+    ; idl-disable-next-line unknown-structure
     pseudoevent = {widget_button, id: 0l, $
       top: event.top, handler: 0l, select: 1}
     spice_xraster_draw, pseudoevent
@@ -534,7 +542,7 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
     return
   ENDIF
 
-  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice)
   IF ~is_spice THEN return
 
   IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)
@@ -552,8 +560,8 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
   IF nexp GT maxexp THEN BEGIN
     warning = ['Raster/Time series contains more than ' + string(strtrim(maxexp, 2)) + ' exposures', $
       'spice_xraster will be quite slow. Continue?']
-    CONTINUE = dialog_message(warning, /cancel, /default_cancel, dialog_parent = group)
-    IF continue EQ 'Cancel' THEN return
+    answer = dialog_message(warning, /cancel, /default_cancel, dialog_parent = group)
+    IF answer EQ 'Cancel' THEN return
   ENDIF
   xdim = 2 ; wavelength
   ydim = 1 ; slit pos
@@ -574,24 +582,24 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
   ; create pulldown menus on the base widget menubar
   filemenu = widget_button(menubar, value = 'File', /menu, uvalue = 'file')
   savemenu = widget_button(filemenu, value = 'Save as', uvalue = 'save', /menu)
-  psmenu = widget_button(savemenu, value = 'Postscript', event_pro = 'spice_xraster_ps')
-  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xraster_jpeg')
-  exitmenu = widget_button(filemenu, value = 'Close', event_pro = 'spice_xraster_destroy')
+  psmenu = widget_button(savemenu, value = 'Postscript', event_pro = 'spice_xraster_ps') ; idl-disable-line unused-var
+  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xraster_jpeg') ; idl-disable-line unused-var
+  exitmenu = widget_button(filemenu, value = 'Close', event_pro = 'spice_xraster_destroy') ; idl-disable-line unused-var
   optmenu = widget_button(menubar, value = 'Options', uvalue = 'options')
-  colmenu = widget_button(optmenu, value = 'Colour table', $
+  colmenu = widget_button(optmenu, value = 'Colour table', $ ; idl-disable-line unused-var
     event_pro = 'spice_xraster_colors')
   ; animenu = widget_button(optmenu, value = 'Create Animation', uvalue='anim', $
   ; event_pro = 'spice_xraster_control_anim')
   wscalemenu = widget_button(optmenu, value = 'Change wavelength scale', /menu)
-  angstr = string("305"ob) + 'ngstr' + string("370"ob) + 'm'
+  ; angstr = string("305"ob) + 'ngstr' + string("370"ob) + 'm'
   pixmenu = widget_button(wscalemenu, value = 'Pixels', event_pro = 'spice_xraster_wpix')
   angstrmenu = widget_button(wscalemenu, value = 'nm', event_pro = 'spice_xraster_wangstr')
   sscalemenu = widget_button(optmenu, value = 'Change spatial scale', /menu)
   pixmenu = widget_button(sscalemenu, value = 'Pixels', event_pro = 'spice_xraster_spix')
   angstrmenu = widget_button(sscalemenu, value = 'arcsec', event_pro = 'spice_xraster_sarcsec')
   maskmenu = widget_button(optmenu, value = 'Toggle masking', /menu)
-  maskonmenu = widget_button(maskmenu, value = 'On', event_pro = 'spice_xraster_mask_on')
-  maskoffmenu = widget_button(maskmenu, value = 'Off', event_pro = 'spice_xraster_mask_off')
+  maskonmenu = widget_button(maskmenu, value = 'On', event_pro = 'spice_xraster_mask_on') ; idl-disable-line unused-var
+  maskoffmenu = widget_button(maskmenu, value = 'Off', event_pro = 'spice_xraster_mask_off') ; idl-disable-line unused-var
 
   ; display window:
   displaybase = widget_base(rcol, /row)
@@ -602,12 +610,12 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
   cb_xsz = 84 ; xsize of color bar draw widget
   ; create color bar to the right of display window:
   colorbarid = widget_draw(displaybase, retain = 2, $
-    xsize = cb_xsz, x_scroll_size = cb_xsz, $ $
+    xsize = cb_xsz, x_scroll_size = cb_xsz, $
     ysize = d_ysz, y_scroll_size = d_ysz)
   colorbar_title = data.get_title() + ' ' + (data.get_variable_unit())
   ; close button
   closefield = widget_base(lcol, /column)
-  closebutton = widget_button(closefield, value = 'Close', $
+  closebutton = widget_button(closefield, value = 'Close', $ ; idl-disable-line unused-var
     event_pro = 'spice_xraster_destroy')
   ; realize main window:
 
@@ -616,7 +624,7 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
   widget_control, tlb, tlb_get_size = tlb_sz
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0] ; xsize of whole widget in pixels
-  tlb_ysz = tlb_sz[1] ; ysize of whole widget in pixels
+  ; tlb_ysz = tlb_sz[1] ; ysize of whole widget in pixels
   lcol_xsz = tlb_xsz - d_xsz - cb_xsz
   ; get window id of display window
   widget_control, drawid, get_value = wid
@@ -632,9 +640,9 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
   ENDIF
 
   ; define the info structure, used send information around
-  info = {xscale: ptr_new(), $
+  info_struct = {xscale: ptr_new(), $
     yscale: ptr_new(), $
-    data: ptr_new(), $
+    data: ptr_new(data), $
     xdim: xdim, $
     ydim: ydim, $
     xdim_unit: 1, $
@@ -672,13 +680,13 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
     xtitle: xtitle, $
     ytitle: ytitle, $
     wid: wid}
-  info = ptr_new(info, /no_copy)
-  (*info).data = ptr_new(data)
+  info = ptr_new(info_struct, /no_copy)
   ; set user value of tlb widget to be the info ptr
   widget_control, tlb, set_uvalue = info
   ; create pseudoevent and send this event to spice_xraster_draw,
   ; in order to draw the image
 
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, top: tlb, handler: 0l, select: 1}
   spice_xraster_draw, pseudoevent
   xmanager, 'spice_xraster', tlb, /no_block, event_handler = 'spice_xraster_resize', $
