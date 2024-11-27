@@ -1,7 +1,7 @@
 FUNCTION prits_tools::init, quiet = quiet
   COMMON prits_tools, first_pt
   IF n_elements(first_pt) EQ 0 THEN first_pt = self
-  dummy = self.IDL_Object::init() ; idl-disable-line unused-var
+  !NULL = self.IDL_Object::init()
   self.vso_addons_init, quiet = quiet
   self.gen_addons_init
   self.date_addons_init
@@ -28,8 +28,7 @@ PRO prits_tools__define
   vso = {prits_tools__vso_addons}
   gen = {prits_tools__gen_addons}
   date = {prits_tools__date_addons}
-  ; idl-disable-next-line unused-var
-  struct = {prits_tools, INHERITS idl_object, vso: vso, gen: gen, date: date}
+  !NULL = {prits_tools, INHERITS idl_object, vso: vso, gen: gen, date: date}
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN

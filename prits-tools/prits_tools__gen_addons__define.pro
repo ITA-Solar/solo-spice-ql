@@ -71,8 +71,7 @@ END
 
 PRO prits_tools__gen_addons__define
   COMPILE_OPT STATIC
-  ; idl-disable-next-line unused-var
-  vso = {prits_tools__gen_addons, $
+  !NULL = {prits_tools__gen_addons, $
     dummy: 0b $
     }
 END

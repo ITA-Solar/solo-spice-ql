@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -189,7 +189,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
     delete_analysis, ana[iana]
 
     hdr = fitshead2struct(*headers_results[iana])
-    dummy = readfits(l3_file, l2_header, ext = iana * 2 + 1, silent = quiet) ; idl-disable-line unused-var
+    !NULL = readfits(l3_file, l2_header, ext = iana * 2 + 1, silent = quiet)
     ; check that there is more than one exposures
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing = 1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing = 1)

@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
@@ -98,7 +98,7 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
       peakinds = intarr(npeaks)
       FOR iline = 0, npeaks - 1 DO BEGIN
         lambda_diff = abs(meanlambda - lines[ind_lines[iline]])
-        min_diff = min(lambda_diff, lambda_ind) ; idl-disable-line unused-var
+        !NULL = min(lambda_diff, lambda_ind)
         IF lambda_ind LT 3 || lambda_ind GE n_elements(meanlambda) - 3 THEN BEGIN
           peakinds[iline] = 0
         ENDIF ELSE BEGIN

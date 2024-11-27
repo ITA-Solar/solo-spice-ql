@@ -141,7 +141,7 @@
 ;
 ; Version     :	Version 4, October 2024
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 ;-
 ;
 ; ----------------------------------------------------------
@@ -153,7 +153,7 @@ PRO prits_tools::check_type, parameter, types_string, error, pt, $
   IF (where(par_type EQ types_string))[0] EQ -1 THEN BEGIN
     IF (where('TIME' EQ types_string OR 'TIME0' EQ types_string))[0] GE 0 THEN BEGIN
       result = valid_time(parameter, err = err, zero = (where('TIME0' EQ types_string))[0] GE 0)
-      ind = where(result EQ 0, count) ; idl-disable-line unused-var
+      !NULL = where(result EQ 0, count)
       IF count GT 0 THEN BEGIN
         error = "has wrong time format: " + err
       ENDIF

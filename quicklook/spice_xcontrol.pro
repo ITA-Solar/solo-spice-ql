@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-11-26 13:44 CET $
+; $Id: 2024-11-27 10:44 CET $
 ;-
 ;
 ;
@@ -191,7 +191,7 @@ END
 PRO spice_xcontrol_leve3file, event
   widget_control, event.top, get_uvalue = info
   IF (*info).level3_dir EQ '' THEN cd, current = wdir ELSE wdir = (*info).level3_dir
-  file = dialog_pickfile(dialog_parent = (*info).tlb, /directory, /write, path = wdir, $ ; idl-disable-line unused-var
+  !NULL = dialog_pickfile(dialog_parent = (*info).tlb, /directory, /write, path = wdir, $
     title = 'Select level 3 directory', get_path = level3_dir)
   IF n_elements(level3_dir) GT 0 && level3_dir NE '' THEN BEGIN
     (*info).level3_dir = level3_dir
@@ -304,7 +304,7 @@ PRO spice_xcontrol_detnuv, event
       nwin = *(*info).d.get_number_windows()
       win_positions = intarr(nwin)
       FOR iwin = 0, nwin - 1 DO BEGIN
-        temp = *(*info).d.get_window_position(iwin, detector = detectornr) ; idl-disable-line unused-var
+        !NULL = *(*info).d.get_window_position(iwin, detector = detectornr)
         win_positions[iwin] = detectornr
       ENDFOR
       ind = where(win_positions EQ 1, count)
@@ -321,7 +321,7 @@ PRO spice_xcontrol_detfuv, event
       nwin = *(*info).d.get_number_windows()
       win_positions = intarr(nwin)
       FOR iwin = 0, nwin - 1 DO BEGIN
-        temp = *(*info).d.get_window_position(iwin, detector = detectornr) ; idl-disable-line unused-var
+        !NULL = *(*info).d.get_window_position(iwin, detector = detectornr)
         win_positions[iwin] = detectornr
       ENDFOR
       ind = where(win_positions EQ 2, count)
@@ -373,7 +373,7 @@ PRO spice_xcontrol_moments, fit, event
 
   lindx = where((*info).lines EQ 1) ; index of selected lines
   IF lindx[0] LT 0 THEN BEGIN
-    ok = dialog_message('Please select at least 1 line', /information, /center) ; idl-disable-line unused-var
+    !NULL = dialog_message('Please select at least 1 line', /information, /center)
     return
   ENDIF
   nindx = n_elements(lindx) ; number of lines selected
@@ -398,7 +398,7 @@ PRO spice_xcontrol_create_l3, event
   IF total(lineselect) NE 0 THEN BEGIN
     window_index = where(lineselect)
   ENDIF
-  result = spice_create_l3_widget(*(*info).d, event.top, window_index = window_index, /allow_xcontrol_l23) ; idl-disable-line unused-var
+  !NULL = spice_create_l3_widget(*(*info).d, event.top, window_index = window_index, /allow_xcontrol_l23)
 END
 
 ; -----------------------------------------------------------------------------

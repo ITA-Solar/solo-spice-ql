@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2024-11-26 15:07 CET $
+; $Id: 2024-11-27 10:44 CET $
 ;-
 ;
 ; save as postscript file
@@ -125,7 +125,7 @@ FUNCTION spice_xmap_gamma, event
     (*info).gamma = 1.0
     text = 'All data < im_min ' + strtrim(string(im_min, format = '(f4.2)'), 2) + ' gamma reset to 1.0'
     message, text, /info
-    ok = dialog_message(text, dialog_parent = (*info).tlb) ; idl-disable-line unused-var
+    !NULL = dialog_message(text, dialog_parent = (*info).tlb)
   ENDIF
   ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
@@ -339,7 +339,7 @@ PRO spice_xmap_dpselect, event
     ; idl-disable-next-line unknown-structure
     pseudoevent = {widget_slider, id: 0l, $
       top: event.top, handler: 0l, value: gamma, drag: 1}
-    dum = spice_xmap_gamma(pseudoevent) ; idl-disable-line unused-var
+    !NULL = spice_xmap_gamma(pseudoevent)
     widget_control, (*info).gamma_slider, sensitive = 0
   ENDIF ELSE widget_control, (*info).gamma_slider, sensitive = 1
   (*info).color = 255

@@ -66,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $
@@ -154,7 +154,7 @@ FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_name
       ind_end = n_elements(hdr)
     ENDELSE
     hdr = [hdr[0 : ind_end - 1], hdr_addition]
-    ind_end_addition = where(strmatch(hdr_addition, 'END *') EQ 1, count_hdr_addition) ; idl-disable-line unused-var
+    !NULL = where(strmatch(hdr_addition, 'END *') EQ 1, count_hdr_addition)
     IF count_hdr_addition EQ 0 && count_hdr GT 0 THEN BEGIN
       hdr = [hdr, hdr_end]
     ENDIF

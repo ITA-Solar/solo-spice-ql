@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 ;-
 
 ; xfiles exit:
@@ -373,8 +373,7 @@ END
 PRO spice_xfiles_changesdir, event
   widget_control, event.top, get_uvalue = info
   widget_control, (*info).dir_manual_field, get_value = sdir
-  ; idl-disable-next-line unused-var, illegal-arrow
-  sfile = dialog_pickfile(path = sdir, title = 'Please select a directory', get_path = sdir)
+  !NULL = dialog_pickfile(path = sdir, title = 'Please select a directory', get_path = sdir)
   IF sdir NE '' THEN BEGIN
     widget_control, (*info).dir_manual_field, set_value = sdir
     spice_xfiles_search_dir, info

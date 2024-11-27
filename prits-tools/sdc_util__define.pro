@@ -243,8 +243,7 @@ PRO sdc_util__define
   pseudo = 0b
   ptr = ptr_new()
   str = ''
-  ; idl-disable-next-line unused-var
-  d = {sdc_util, $
+  !NULL = {sdc_util, $
     sdc_util_version: pseudo, $
     sdc_util_tags: ptr, $
     idl_pid: str $

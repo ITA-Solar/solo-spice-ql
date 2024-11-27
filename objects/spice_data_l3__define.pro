@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 
 ;+
 ; Description:
@@ -311,7 +311,7 @@ FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir = user_dir, l3_o
   IF keyword_set(latest) && COUNT GT 1 THEN BEGIN
     versions = found_l3_file.extract('V[0-9]{2}')
     versions = fix(versions.substring(1, 2))
-    max_version = max(versions, maxind) ; idl-disable-line unused-var
+    !NULL = max(versions, maxind)
     found_l3_file = found_l3_file[maxind]
     l3_objects = l3_objects[maxind]
   ENDIF
@@ -337,7 +337,7 @@ FUNCTION spice_data_l3::get_l3_processing_steps, headers_results
   FOR iwin = 0, nwin - 1 DO BEGIN
     hdr = *(headers_results)[iwin]
 
-    max_version = get_last_prstep_keyword(hdr, pr_keywords = pr_keywords, pr_versions = pr_versions) ; idl-disable-line unused-var
+    !NULL = get_last_prstep_keyword(hdr, pr_keywords = pr_keywords, pr_versions = pr_versions)
     ind = where(pr_keywords.startswith('PRSTEP'), count_step)
     l3_pr_steps = !NULL
     FOR istep = 0, count_step - 1 DO BEGIN
@@ -390,8 +390,7 @@ END
 PRO spice_data_l3__define
   COMPILE_OPT IDL2
 
-  ; idl-disable-next-line unused-var
-  struct = {spice_data_L3, $
+  !NULL = {spice_data_L3, $
     file: '', $ ; full filename as given by the user
     filename: '', $ ; name of the file, without the path
     filepath: '', $ ; path of the file, without the name

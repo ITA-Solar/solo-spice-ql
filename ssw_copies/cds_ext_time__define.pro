@@ -14,11 +14,10 @@
 ; HISTORY:
 ;      Ver. 1, 13-Nov-2024, Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 
 PRO cds_ext_time__define
-  ; idl-disable-next-line unused-var
-  void = {cds_ext_time, $
+  !NULL = {cds_ext_time, $
     year: 0, $
     month: 0, $
     day: 0, $

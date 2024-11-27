@@ -251,8 +251,7 @@ END
 
 PRO prits_tools__vso_addons__define
   COMPILE_OPT STATIC
-  ; idl-disable-next-line unused-var
-  vso = {prits_tools__vso_addons, $
+  !NULL = {prits_tools__vso_addons, $
     cache_dir: "" $
     }
 END

@@ -50,8 +50,7 @@ END
 
 PRO prits_tools__date_addons__define
   COMPILE_OPT STATIC
-  ; idl-disable-next-line unused-var
-  vso = {prits_tools__date_addons, $
+  !NULL = {prits_tools__date_addons, $
     dummy: 0b $
     }
 END

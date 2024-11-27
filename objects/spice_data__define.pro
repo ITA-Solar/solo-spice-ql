@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-27 10:44 CET $
 
 ;+
 ; Description:
@@ -2854,7 +2854,7 @@ FUNCTION spice_data::get_bintable_ttypes, include_window_tag = include_window_ta
       extension_index = self.return_extension_index(extension)
       FOR i = 0, n_elements(column_indices) - 1 DO BEGIN
         icol = column_indices[i]
-        ind = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count) ; idl-disable-line unused-var
+        !NULL = where(*(*self.bintable_columns)[icol].data_extension_index EQ extension_index, count)
         IF count GT 0 THEN BEGIN
           ttypes_new = [ttypes_new, ttypes[i]]
           column_indices_new = [column_indices_new, icol]
@@ -3202,8 +3202,7 @@ END
 PRO spice_data__define
   COMPILE_OPT IDL2
 
-  ; idl-disable-next-line unused-var
-  struct = {spice_data, $
+  !NULL = {spice_data, $
     file: '', $ ; input filename
     title: '', $ ; instrument name
     ccd_size: [0, 0], $ ; size of the detector, set in init
