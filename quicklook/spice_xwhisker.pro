@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 09:55 CET $
 
 ; save as postscript file
 PRO spice_xwhisker_ps, event
@@ -61,7 +61,8 @@ PRO spice_xwhisker_ps, event
   widget_control, event.top, get_uvalue = info
   thisdevice = !d.name
   set_plot, 'ps', /copy
-  device, file = thisfile, _extra = keywords, /inches, bits_per_pixel = 8, /color
+  device, file = thisfile, /inches, bits_per_pixel = 8, /color
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -80,9 +81,9 @@ PRO spice_xwhisker_jpeg, event
   tvlct, r, g, b, /get
   s = size(snapshot)
   image24 = bytarr(3, s[1], s[2])
-  image24(0, *, *) = r(snapshot)
-  image24(1, *, *) = g(snapshot)
-  image24(2, *, *) = b(snapshot)
+  image24[0, *, *] = r[snapshot]
+  image24[1, *, *] = g[snapshot]
+  image24[2, *, *] = b[snapshot]
   write_jpeg, thisfile, image24, true = 1, quality = 75
 END
 
@@ -137,14 +138,14 @@ PRO spice_xwhisker_draw, event
   ptr_free, (*info).yscale
   ptr_free, (*info).ypscale
   ptr_free, (*info).drawimage
-  (*info).drawimage = ptr_new(uintarr(sz(1), sz(2)))
+  (*info).drawimage = ptr_new(uintarr(sz[1], sz[2]))
   *(*info).drawimage = drawimage ^ (*info).gamma
-  (*info).xscale = ptr_new(sz(1))
-  (*info).ypscale = ptr_new(sz(1))
-  (*info).yscale = ptr_new(sz(2))
-  *(*info).xscale = interpol(xscale, sz(1))
-  *(*info).yscale = interpol(yscale, sz(2))
-  *(*info).ypscale = interpol(yscale, sz(1))
+  (*info).xscale = ptr_new(sz[1])
+  (*info).ypscale = ptr_new(sz[1])
+  (*info).yscale = ptr_new(sz[2])
+  *(*info).xscale = interpol(xscale, sz[1])
+  *(*info).yscale = interpol(yscale, sz[2])
+  *(*info).ypscale = interpol(yscale, sz[1])
   mplot_image, *(*info).drawimage, min = (*info).imin, max = (*info).imax, $
     * (*info).xscale, *(*info).yscale, $
     xstyle = 1, ystyle = 1, position = (*info).imagepos, $
@@ -175,8 +176,9 @@ FUNCTION spice_xwhisker_gamma, event
     (*info).gamma = 1.0
     text = 'All data < im_min ' + strtrim(string(im_min, format = '(f4.2)'), 2) + ' gamma reset to 1.0'
     message, text, /info
-    ok = dialog_message(text, dialog_parent = (*info).tlb)
+    !NULL = dialog_message(text, dialog_parent = (*info).tlb)
   ENDIF
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -194,6 +196,7 @@ FUNCTION spice_xwhisker_histoopt, event
     (*info).imin = min(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
     (*info).imax = max(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
   ENDIF
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -219,8 +222,6 @@ PRO spice_xwhisker_expprp_slider, event
   good = finite((*info).image)
   IF (where(good))[0] EQ -1 THEN BEGIN
     message, 'All data is NaN for expprp ' + string(nr), /info
-    sz = size((*info).image)
-    image = fltarr(sz[1], sz[2]) + (*info).missing
   ENDIF
   widget_control, (*info).exposuretext, $
     set_value = strtrim('Exp time: ' + string((*(*info).data.getexp())[nr], $
@@ -235,6 +236,7 @@ PRO spice_xwhisker_expprp_slider, event
   widget_control, (*info).fmirrytext, $
     set_value = 'Y: ' + string(pzty, format = '(f10.3)') + ' arcsec'
   ; display new exposure nr
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -245,6 +247,7 @@ END
 PRO spice_xwhisker_slitslider, event
   widget_control, event.top, get_uvalue = info
   (*info).slitpos = event.value
+  nr = (*info).exprp - 1
   wd = *(*info).wd
   IF (*info).nexpprp LE 1 THEN BEGIN
     (*info).image = reform(wd[*, (*info).slitpos, *])
@@ -254,8 +257,6 @@ PRO spice_xwhisker_slitslider, event
   good = finite((*info).image)
   IF (where(good))[0] EQ -1 THEN BEGIN
     message, 'All data is NaN for expprp ' + string(nr), /info
-    sz = size((*info).image)
-    image = fltarr(sz[1], sz[2]) + (*info).missing
   ENDIF
   rot = round(*(*info).data.get_satellite_rotation())
   IF rot < 0 THEN rot = 360 + rot
@@ -269,6 +270,7 @@ PRO spice_xwhisker_slitslider, event
   widget_control, (*info).fmirrytext, $
     set_value = slittxt + string(pzty[(*info).slitpos], format = '(f10.3)') + ' arcsec'
   ; display new raster position
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   widget_control, event.top, set_uvalue = info
@@ -282,9 +284,7 @@ PRO spice_xwhisker_zoom, event
   events = ['down', 'up', 'motion']
   thisevent = events[event.type]
   window, /pixmap, /free, xsize = (*info).d_xsz, ysize = (*info).d_ysz
-  xs = ((*info).imagepos)[0] * (*info).d_xsz
-  ys = ((*info).imagepos)[1] * (*info).d_ysz
-  mplot_image, *(*info).drawimage, min = (*info).imin, max = (*info).imax, $ , $
+  mplot_image, *(*info).drawimage, min = (*info).imin, max = (*info).imax, $
     * (*info).xscale, *(*info).yscale, $
     xstyle = 1, ystyle = 1, position = (*info).imagepos, $
     xtitle = (*info).xtitle, ytitle = (*info).ytitle, $
@@ -336,7 +336,6 @@ PRO spice_xwhisker_zoom, event
       yscale = yscale[sy < dy : sy > dy]
       sz = size(image)
       mind = min(sz[0 : 2])
-      pos = [sx < dx, sx > dx, sy < dy, sy > dy]
       CASE (*info).dwoption OF
         0: BEGIN
           IF mind GE 2 THEN BEGIN
@@ -448,6 +447,7 @@ PRO spice_xwhisker_spix, event
   ; set titles for image plots
   (*info).ytitle = *(*info).data.get_axis_title((*info).ydim, /pixels)
   (*info).ydim_unit = 0
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xwhisker_draw, pseudoevent
@@ -459,6 +459,7 @@ PRO spice_xwhisker_sarcsec, event
   ; set titles for image plots
   (*info).ytitle = *(*info).data.get_axis_title((*info).ydim)
   (*info).ydim_unit = 1
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xwhisker_draw, pseudoevent
@@ -470,6 +471,7 @@ PRO spice_xwhisker_wpix, event
   ; set titles for image plots
   (*info).xtitle = *(*info).data.get_axis_title((*info).xdim, /pixels)
   (*info).xdim_unit = 0
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xwhisker_draw, pseudoevent
@@ -481,6 +483,7 @@ PRO spice_xwhisker_wangstr, event
   ; set titles for image plots
   (*info).xtitle = *(*info).data.get_axis_title((*info).xdim)
   (*info).xdim_unit = 1
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xwhisker_draw, pseudoevent
@@ -499,10 +502,11 @@ PRO spice_xwhisker_colors, event
         xoffset = offset_parent[0] + 50, yoffset = offset_parent[1] + 50
     ENDCASE
     'XCOLORS_LOAD': BEGIN
-      (*info).r = event.r((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).g = event.g((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
-      (*info).b = event.b((*info).bottom:(*info).ncolors - 1 + (*info).bottom)
+      (*info).r = event.r[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).g = event.g[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
+      (*info).b = event.b[(*info).bottom : (*info).ncolors - 1 + (*info).bottom]
       IF !d.n_colors GT 256 THEN BEGIN
+        ; idl-disable-next-line unknown-structure
         pseudoevent = {widget_button, id: 0l, $
           top: event.top, handler: 0l, select: 1}
         spice_xwhisker_draw, pseudoevent
@@ -525,6 +529,7 @@ PRO spice_xwhisker_resize, event
   (*info).d_ysz = event.y
   widget_control, (*info).drawid, xsize = (*info).d_xsz, $
     ysize = (*info).d_ysz
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xwhisker_draw, pseudoevent
@@ -571,11 +576,10 @@ PRO spice_xwhisker_mask, event
   IF *(*info).data.get_missing_value() NE *(*info).data.get_missing_value() THEN missing = -99999l $
   ELSE missing = *(*info).data.get_missing_value()
   wd = iris_histo_opt(wd, missing = missing)
-  imin = min(wd)
-  imax = max(wd)
   image = iris_histo_opt(image)
   *(*info).wd = wd
   (*info).image = image
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: event.top, handler: 0l, select: 1}
   spice_xwhisker_draw, pseudoevent
@@ -607,7 +611,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     return
   ENDIF
 
-  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
+  data = spice_object(input_data, is_spice = is_spice)
   IF ~is_spice THEN return
 
   IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)
@@ -672,12 +676,12 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
   ; create pulldown menus on the base widget menubar
   filemenu = widget_button(menubar, value = 'File', /menu, uvalue = 'file')
   savemenu = widget_button(filemenu, value = 'Save as', uvalue = 'save', /menu)
-  psmenu = widget_button(savemenu, value = 'Postscript', event_pro = 'spice_xwhisker_ps')
-  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xwhisker_jpeg')
-  exitmenu = widget_button(filemenu, value = 'Close', event_pro = 'spice_xwhisker_destroy')
+  psmenu = widget_button(savemenu, value = 'Postscript', event_pro = 'spice_xwhisker_ps') ; idl-disable-line unused-var
+  jpgmenu = widget_button(savemenu, value = 'JPG', event_pro = 'spice_xwhisker_jpeg') ; idl-disable-line unused-var
+  exitmenu = widget_button(filemenu, value = 'Close', event_pro = 'spice_xwhisker_destroy') ; idl-disable-line unused-var
 
   optmenu = widget_button(menubar, value = 'Options', uvalue = 'options')
-  colmenu = widget_button(optmenu, value = 'Colour table', $
+  colmenu = widget_button(optmenu, value = 'Colour table', $ ; idl-disable-line unused-var
     event_pro = 'spice_xwhisker_colors')
   ; animenu=widget_button(optmenu, value='Create Animation', $
   ; event_pro='spice_xwhisker_anim')
@@ -711,14 +715,13 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     /exclusive, set_value = 0, $
     event_func = 'spice_xwhisker_dwoption')
 
-  titletext = widget_label(lcol, value = data.get_start_time() + ' ' + data.get_obs_id(), /align_center)
+  titletext = widget_label(lcol, value = data.get_start_time() + ' ' + data.get_obs_id(), /align_center) ; idl-disable-line unused-var
 
   lsubcol = widget_base(lcol, /row)
   sliderbase = widget_base(lsubcol, /col)
 
   IF nexpprp GT 1 THEN BEGIN
-    exprp = 1
-    expprpslider = widget_slider(sliderbase, xsize = 90, $
+    expprpslider = widget_slider(sliderbase, xsize = 90, $ ; idl-disable-line unused-var
       minimum = 1, maximum = nexpprp, $
       title = 'Exp.# at rast. pos.', $
       value = 1, $
@@ -727,7 +730,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
 
   id = data.get_window_id(line)
   idbase = widget_base(lsubcol, /col)
-  idtext = widget_label(idbase, value = strtrim(id, 2), /align_left)
+  idtext = widget_label(idbase, value = strtrim(id, 2), /align_left) ; idl-disable-line unused-var
 
   exposurebase = widget_base(idbase, /col)
   exposuretext = widget_label(exposurebase, $
@@ -756,7 +759,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     /align_left)
 
   title = 'Slit Position'
-  slitslider = widget_slider(sliderbase, xsize = 90, $
+  slitslider = widget_slider(sliderbase, xsize = 90, $ ; idl-disable-line unused-var
     minimum = 0, maximum = nslit - 1, title = title, $
     value = slitpos, event_pro = 'spice_xwhisker_slitslider', /drag)
 
@@ -767,13 +770,13 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
   ; control of gamma and histo_
   gammacol = widget_base(lcol, /row)
   gamma = 1.0
-  gamma_slider = cw_fslider(gammacol, /edit, format = '(f6.2)', /frame, $
+  gamma_slider = cw_fslider(gammacol, /edit, format = '(f6.2)', /frame, $ ; idl-disable-line unused-var
     maximum = 3.0, minimum = 0.1, value = gamma, $
     title = 'Gamma Correction', $
     event_func = 'spice_xwhisker_gamma', /drag)
 
   histo_lim = -3.0
-  histoopt_slider = cw_fslider(gammacol, /edit, format = '(f6.2)', /frame, $
+  histoopt_slider = cw_fslider(gammacol, /edit, format = '(f6.2)', /frame, $ ; idl-disable-line unused-var
     maximum = -1.0, minimum = -6.0, value = histo_lim, $
     title = 'log(HistoOpt Value)', $
     event_func = 'spice_xwhisker_histoopt', /drag)
@@ -786,7 +789,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     event_pro = 'spice_xwhisker_lineplot')
 
   closefield = widget_base(lcol, /column)
-  closebutton = widget_button(closefield, value = 'Close', $
+  closebutton = widget_button(closefield, value = 'Close', $ ; idl-disable-line unused-var
     event_pro = 'spice_xwhisker_destroy')
 
   ; realize main window:
@@ -796,7 +799,6 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
 
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0] ; xsize of whole widget in pixels
-  tlb_ysz = tlb_sz[1] ; ysize of whole widget in pixels
   lcol_xsz = tlb_xsz - d_xsz
 
   ; get window id of display window
@@ -814,7 +816,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
   ;
   imagepos = [0.15, 0.10, 0.77, 0.95]
   ; set up default display mode:
-  info = {drawimage: ptr_new(), $
+  info_struct = {drawimage: ptr_new(), $
     wd: ptr_new(wd, /no_copy), $
     image: image, $
     xdim: xdim, $
@@ -822,7 +824,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     xscale: ptr_new(), $
     yscale: ptr_new(), $
     ypscale: ptr_new(), $
-    data: ptr_new(), $
+    data: ptr_new(data), $
     sit_and_stare: sit_and_stare, $
     n_subplot: 0, $
     xdim_unit: 1, $
@@ -867,16 +869,16 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     xtitle: xtitle, $
     ytitle: ytitle, $
     wid: wid}
-  info = ptr_new(info, /no_copy)
-  (*info).data = ptr_new(data)
+  info = ptr_new(info_struct, /no_copy)
   ; set user value of tlb widget to be the info ptr
   widget_control, tlb, set_uvalue = info
   ; create pseudoevent and send this event to spice_xwhisker_draw,
   ; in order to draw the image
+  ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
     top: tlb, handler: 0l, select: 1}
   spice_xwhisker_draw, pseudoevent
 
   xmanager, 'spice_xwhisker', tlb, /no_block, event_handler = 'spice_xwhisker_resize', $
-    group_leader = group, cleanup = 'spice_xwhisker_cleanup'
+    cleanup = 'spice_xwhisker_cleanup'
 END
