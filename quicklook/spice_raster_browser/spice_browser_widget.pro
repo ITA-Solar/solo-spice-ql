@@ -50,7 +50,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 14:36 CET $
 
 PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   chunk_size = chunk_size, retina = retina, no_goes = no_goes, $
@@ -71,7 +71,6 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
 
   spice_browser_font, font, retina = retina
   spice_browser_font, bigfont, /big, retina = retina
-  spice_browser_font, fixfont, /fixed, retina = retina
 
   ;
   ; Get metadata from the object.
@@ -287,7 +286,7 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
     wid_data.iwin[i_plot_window] = i_plot_window
     wid_data.lambda[i_plot_window] = data.get_header_keyword('CRVAL3', i_plot_window)
     lam = data.get_lambda_vector(i_plot_window)
-    getmin = min(abs(lam), imin)
+    !NULL = min(abs(lam), imin)
     wid_data.ilambda[i_plot_window] = imin
     nl = n_elements(lam)
     wid_data.lrange[*, i_plot_window] = [0, nl - 1]
@@ -363,7 +362,7 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   ; PIXEL NUMBER & EXPOSURE TIME
   ; ----------------------------
   textbase = widget_base(opt_base, /col, frame = 1)
-  pixtext = widget_label(textbase, value = 'Selected image pixel', font = font)
+  pixtext = widget_label(textbase, value = 'Selected image pixel', font = font) ; idl-disable-line unused-var
   xt = 'X-pixel: ' + trim(0)
   xtext = widget_label(textbase, value = xt, font = font, xsiz = 100)
   yt = 'Y-pixel: ' + trim(0)
@@ -408,7 +407,7 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   ; NUMBER OF PIXELS FOR WAVELENGTH SUMMATION
   ; -----------------------------------------
   wpix_base = widget_base(opt_base, /col, frame = 1)
-  wpix_text = widget_label(wpix_base, val = 'Wavelength pixels to sum:', $
+  wpix_text = widget_label(wpix_base, val = 'Wavelength pixels to sum:', $ ; idl-disable-line unused-var
     font = font, /align_left)
   wpix = [1, 5, 9, 15]
   i = where(wid_data.lbin EQ wpix)
@@ -419,7 +418,7 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   ; SWITCH LINE IDS ON OR OFF
   ; -------------------------
   lids_base = widget_base(opt_base, /col, frame = 1)
-  lids_text = widget_label(lids_base, val = 'Show line IDS?', $
+  lids_text = widget_label(lids_base, val = 'Show line IDS?', $ ; idl-disable-line unused-var
     font = font, /align_left)
   lids_butts = cw_bgroup(lids_base, ['No', 'Yes'], $
     set_value = wid_data.line_ids, /exclusive, font = font, /row)
@@ -428,7 +427,7 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   ; WAVELENGTH OR VELOCITY?
   ; -----------------------
   vel_base = widget_base(opt_base, /col, frame = 1)
-  vel_text = widget_label(vel_base, val = 'Spectrum axis:', $
+  vel_text = widget_label(vel_base, val = 'Spectrum axis:', $ ; idl-disable-line unused-var
     font = font, /align_left)
   vel_butts = cw_bgroup(vel_base, ['Wavelength', 'Velocity'], $
     set_value = wid_data.velocity, /exclusive, font = font, /row)
@@ -437,7 +436,7 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   ; INTENSITY SCALING: LOG OR LINEAR?
   ; ---------------------------------
   log_base = widget_base(opt_base, /col, frame = 1)
-  log_text = widget_label(log_base, val = 'Image scaling:', $
+  log_text = widget_label(log_base, val = 'Image scaling:', $ ; idl-disable-line unused-var
     font = font, /align_left)
   log_butts = cw_bgroup(log_base, ['Linear', 'Log'], $
     set_value = wid_data.linlog, /exclusive, font = font, /row)
@@ -446,10 +445,10 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   ; Images: X-Y, or lambda-Y
   ; ---------------------------------
   im_type_base = widget_base(opt_base, /col, frame = 1)
-  im_type_text = widget_label(im_type_base, val = 'Image type:', $
+  im_type_text = widget_label(im_type_base, val = 'Image type:', $ ; idl-disable-line unused-var
     font = font, /align_left)
   IF sit_stare EQ 1 THEN options = ['time-Y', 'lambda-Y'] ELSE options = ['X-Y', 'lambda-Y']
-  temp = where(data.get_number_exposures() EQ 1, counttemp)
+  !NULL = where(data.get_number_exposures() EQ 1, counttemp)
   IF counttemp GT 0 THEN wid_data.im_type = 1
   im_type_butts = cw_bgroup(im_type_base, options, $
     set_value = wid_data.im_type, /exclusive, font = font, /row)
@@ -505,9 +504,9 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   date_end = data.get_header_keyword('DATE-END', 0, '')
   ; ENDELSE
   ;
-  text1 = widget_label(meta_base, val = 'OBSID: ' + stud_acr, font = font, $
+  text1 = widget_label(meta_base, val = 'OBSID: ' + stud_acr, font = font, $ ; idl-disable-line unused-var
     /align_left)
-  text1a = widget_label(meta_base, val = 'TYPE: ' + obs_type, font = font, $
+  text1a = widget_label(meta_base, val = 'TYPE: ' + obs_type, font = font, $ ; idl-disable-line unused-var
     /align_left)
   IF date_obs NE '' THEN BEGIN
     ex = anytim(/ex, date_obs)
@@ -517,32 +516,31 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
     date = 'N/A'
     time = 'N/A'
   ENDELSE
-  text2 = widget_label(meta_base, val = 'DATE: ' + date, font = font, $
+  text2 = widget_label(meta_base, val = 'DATE: ' + date, font = font, $ ; idl-disable-line unused-var
     /align_left)
   text3 = widget_label(meta_base, val = 'START TIME: ' + time, font = font, $
     /align_left)
   ;
   value = 'XCEN: ' + trim(string(format = '(f10.1)', meta.xcen))
-  text6 = widget_label(meta_base, val = value, font = font, $
+  text6 = widget_label(meta_base, val = value, font = font, $ ; idl-disable-line unused-var
     /align_left)
   ;
   value = 'YCEN: ' + trim(string(format = '(f10.1)', meta.ycen))
-  text7 = widget_label(meta_base, val = value, font = font, $
+  text7 = widget_label(meta_base, val = value, font = font, $ ; idl-disable-line unused-var
     /align_left)
   ; IF nexp_prp EQ 1 THEN BEGIN
   cadence = meta.cadence
   cadstr = trim(string(format = '(f10.1)', cadence)) + ' s'
-  text4 = widget_label(meta_base, val = 'CADENCE: ' + cadstr, font = font, $
+  text4 = widget_label(meta_base, val = 'CADENCE: ' + cadstr, font = font, $ ; idl-disable-line unused-var
     /align_left)
   ; ENDIF
   nuvbin = data.get_header_keyword('NBIN3', 0)
   fuvbin = data.get_header_keyword('NBIN3', 0)
-  spatbin = data.get_header_keyword('NBIN2', 0)
-  text5a = widget_label(meta_base, val = 'FUV SPEC BIN: ' + trim(fuvbin), font = font, $
+  text5a = widget_label(meta_base, val = 'FUV SPEC BIN: ' + trim(fuvbin), font = font, $ ; idl-disable-line unused-var
     /align_left)
-  text5b = widget_label(meta_base, val = 'NUV SPEC BIN: ' + trim(nuvbin), font = font, $
+  text5b = widget_label(meta_base, val = 'NUV SPEC BIN: ' + trim(nuvbin), font = font, $ ; idl-disable-line unused-var
     /align_left)
-  text5c = widget_label(meta_base, val = 'SPATIAL BIN: ' + trim(nuvbin), font = font, $
+  text5c = widget_label(meta_base, val = 'SPATIAL BIN: ' + trim(nuvbin), font = font, $ ; idl-disable-line unused-var
     /align_left)
   ;
   rollstr = trim(string(format = '(f10.1)', wid_data.roll))
@@ -553,15 +551,15 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
     /align_left)
   IF n_tags(hcr) NE 0 THEN BEGIN
     IF trim(hcr.planners) NE '' THEN BEGIN
-      text8 = widget_label(meta_base, val = 'PLANNER: ' + trim(hcr.planners), font = font, $
+      text8 = widget_label(meta_base, val = 'PLANNER: ' + trim(hcr.planners), font = font, $ ; idl-disable-line unused-var
         /align_left)
     ENDIF
     IF trim(hcr.target) NE '' THEN BEGIN
-      text9 = widget_label(meta_base, val = 'TARGET: ' + trim(hcr.target), font = font, $
+      text9 = widget_label(meta_base, val = 'TARGET: ' + trim(hcr.target), font = font, $ ; idl-disable-line unused-var
         /align_left)
     ENDIF
     IF trim(hcr.noaanum) NE '' THEN BEGIN
-      text10 = widget_label(meta_base, val = 'NOAA NUM: ' + trim(hcr.noaanum), font = font, $
+      text10 = widget_label(meta_base, val = 'NOAA NUM: ' + trim(hcr.noaanum), font = font, $ ; idl-disable-line unused-var
         /align_left)
     ENDIF
   ENDIF
@@ -583,7 +581,6 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
 
   choices = trim(data.get_window_id())
   choices = ['Choose a wavelength window', choices]
-  nc = n_elements(choices)
 
   plot_base = lonarr(n_plot_window)
   int_butt_base = lonarr(n_plot_window)
@@ -642,10 +639,10 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
     plot_base_sji = widget_base(spice_browser_base, /col)
     ;
     int_butt_base_sji = widget_base(plot_base_sji, /row)
-    min_lbl_sji = widget_label(int_butt_base_sji, value = 'Min:', font = font)
+    min_lbl_sji = widget_label(int_butt_base_sji, value = 'Min:', font = font) ; idl-disable-line unused-var
     min_text_sji = widget_text(int_butt_base_sji, value = trim(0.), $
       font = font, xsiz = 7, /editable)
-    max_lbl_sji = widget_label(int_butt_base_sji, value = 'Max:', font = font)
+    max_lbl_sji = widget_label(int_butt_base_sji, value = 'Max:', font = font) ; idl-disable-line unused-var
     max_text_sji = widget_text(int_butt_base_sji, value = trim(0.), $
       font = font, xsiz = 7, /editable)
     auto_int_sji = widget_button(int_butt_base_sji, value = 'Auto', font = font)
@@ -932,7 +929,7 @@ PRO spice_browser_widget, data, yoffsets = yoffsets, quiet = quiet, $
   ett = 'Earth Time: ' + trim(midtime_earth[state.wid_data.xpix - 1])
   widget_control, state.ettext, set_value = ett
 
-  xmanager, 'spice_browser_base', spice_browser_base, group = group
+  xmanager, 'spice_browser_base', spice_browser_base
 
   IF datatype(g) EQ 'OBJ' THEN obj_destroy, g
   IF sji_file[0] NE '' THEN obj_destroy, sji_d
