@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 14:38 CET $
 
 PRO spice_browser_update_spectrum, state, pwin
   ;
@@ -51,32 +51,11 @@ PRO spice_browser_update_spectrum, state, pwin
 
   exptime = replicate(state.data.get_exposure_time(iwin), state.data.get_number_exposures(iwin))
 
-  ;
-  ; This is the X-offset (index number) used for "chunked" sit-and-stare data.
-  ;
-  xoff = state.wid_data.ichunk * state.wid_data.nxpos
-
   nx = state.wid_data.nx
   ny = state.data.get_header_keyword('NAXIS2', iwin)
-  scale = state.wid_data.scale
 
   state.spectra[*, pwin] = 0.
   state.expimages[*, pwin] = 0.
-
-  ;
-  ; Work out Y-offsets between the 3 channels.
-  ;
-  ; IF state.wid_data.yoffsets EQ 1 THEN BEGIN
-  ; reg=state.data->getregion(iwin,/full)
-  ; ;
-  ; CASE reg OF
-  ; 'FUV1': yoff=round(6.0/scale[1])
-  ; 'FUV2': yoff=round(2.0/scale[1])
-  ; 'NUV': yoff=0
-  ; ENDCASE
-  ; ENDIF ELSE BEGIN
-  yoff = 0
-  ; ENDELSE
 
   ;
   ; The following loads up the expimages and spectra tags with the new
@@ -88,8 +67,8 @@ PRO spice_browser_update_spectrum, state, pwin
     no_masking = masking[0] EQ 0
     expimg = state.data.get_one_image(iwin, xpix, no_masking = no_masking)
     IF exptime[xpix] NE 0. THEN expimg = expimg / exptime[xpix]
-    state.expimages[0 : nl - 1, yoff : yoff + ny - 1, pwin] = expimg
-    state.spectra[0 : nl - 1, pwin] = expimg[*, ypix - yoff]
+    state.expimages[0 : nl - 1, 0 : ny - 1, pwin] = expimg
+    state.spectra[0 : nl - 1, pwin] = expimg[*, ypix]
   ENDIF ELSE BEGIN
     state.expimages[*, *, pwin] = 0
     state.spectra[*, pwin] = 0
