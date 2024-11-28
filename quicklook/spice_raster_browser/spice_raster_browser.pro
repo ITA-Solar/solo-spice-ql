@@ -104,7 +104,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 10:44 CET $
 
 ; ---------------------
 PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
@@ -126,7 +126,7 @@ PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
   ;
   ; Check if we have an internet connection.
   ;
-  net_chck = have_network()
+  ; net_chck = have_network()
 
   ;
   ; This retrieves a list of GOES flare for the observing period.
