@@ -87,7 +87,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 15:33 CET $
 ;-
 ;
 ;
@@ -123,7 +123,6 @@ PRO spice_create_l3_widget_event, event
       widget_control, info.top_dir_choice_bg, get_value = top_dir_choice
       IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value = top_dir
       widget_control, info.dir_user_bg, get_value = user_dir
-      official_l3dir = user_dir[0] EQ 0
       widget_control, info.save_bg, get_value = save
       save_not = save[0] EQ 0
       droplist_select = widget_info(info.file_l3_name_list, /droplist_select)
@@ -203,7 +202,7 @@ END
 PRO spice_create_l3_widget_changesdir, event
   widget_control, event.top, get_uvalue = info
   widget_control, info.dir_manual_field, get_value = sdir
-  sfile = dialog_pickfile(path = sdir, title = 'Please select a directory', get_path = sdir)
+  !NULL = dialog_pickfile(path = sdir, title = 'Please select a directory', get_path = sdir)
   IF sdir NE '' THEN BEGIN
     widget_control, info.dir_manual_field, set_value = sdir
   ENDIF
@@ -216,8 +215,7 @@ PRO spice_create_l3_widget_calc_l3_dir, info
   widget_control, info.dir_user_bg, get_value = user_dir
   user_dir = user_dir[0]
   file_l2 = info.l2_object.get_filename()
-  file_l3 = spice_data.get_filename_l3(file_l2, force_version = force_version, $
-    version_l3 = version_l3, existing_l3_files = existing_l3_files, l3_dir = l3_dir, top_dir = top_dir)
+  file_l3 = spice_data.get_filename_l3(file_l2, existing_l3_files = existing_l3_files, l3_dir = l3_dir, top_dir = top_dir)
   all_files = [file_l3]
   all_files_list = [file_l3 + ' [new]']
   ind = where(existing_l3_files NE '', count)
@@ -250,14 +248,14 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
     print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
     return, -1
   ENDIF
-  l2_object = spice_object(l2_object, is_spice = is_spice, object_created = object_created)
+  l2_object = spice_object(l2_object, is_spice = is_spice)
   IF ~is_spice THEN return, -1
 
   official_l3dir = keyword_set(official_l3dir)
   top_dir_choice = keyword_set(top_dir)
   dir_user_choice = [~official_l3dir && ~top_dir_choice]
   option_choice = [keyword_set(no_fitting), keyword_set(no_widget), keyword_set(no_masking), $
-    keyword_set(apporximated_slit), keyword_set(no_line_list), keyword_set(position)]
+    keyword_set(approximated_slit), keyword_set(no_line_list), keyword_set(position)]
   IF n_elements(velocity) EQ 0 THEN velocity = 0.0
   save_choice = [~keyword_set(save_not)]
   IF n_elements(top_dir) EQ 0 THEN cd, current = dir_manual ELSE dir_manual = top_dir
@@ -282,14 +280,14 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
 
   output_path_base = widget_base(base, /column, sensitive = ~keyword_set(block_save))
   top_dir_base = widget_base(output_path_base, /row, event_func = 'spice_create_l3_widget_change_topdir')
-  top_dir_label1 = widget_label(top_dir_base, value = 'Top directory', /align_left)
+  top_dir_label1 = widget_label(top_dir_base, value = 'Top directory', /align_left) ; idl-disable-line unused-var
   top_dir_choice_bg = cw_bgroup(top_dir_base, ['Environment variable', 'Path'], set_value = top_dir_choice, /column, /exclusive)
   top_dir_path_base = widget_base(top_dir_base, /column)
-  top_dir_env_var_field = cw_field(top_dir_path_base, title = '', value = 'SPICE_DATA', /string, /return_events, xsize = 15, $
+  top_dir_env_var_field = cw_field(top_dir_path_base, title = '', value = 'SPICE_DATA', /string, /return_events, xsize = 15, $ ; idl-disable-line unused-var
     /NOEDIT, ysize = 0.7)
   dir_manual_base = widget_base(top_dir_path_base, /row)
   dir_manual_field = cw_field(dir_manual_base, title = '', value = dir_manual, /string, /return_events, xsize = 80)
-  dir_manual_button = widget_button(dir_manual_base, value = 'Change', event_pro = 'spice_create_l3_widget_changesdir')
+  dir_manual_button = widget_button(dir_manual_base, value = 'Change', event_pro = 'spice_create_l3_widget_changesdir') ; idl-disable-line unused-var
   dir_user_bg = cw_bgroup(output_path_base, ['Save in "user" subdirectory'], set_value = dir_user_choice, /nonexclusive, $
     event_func = 'spice_create_l3_widget_change_topdir')
   widget_control, dir_user_bg, sensitive = official_l3dir
@@ -303,7 +301,6 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
   save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value = save_choice, /nonexclusive)
   file_l3_base = widget_base(save_base, /column)
   file_l3_dir_label = widget_label(file_l3_base, value = (file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  ; file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
   file_l3_name_list = widget_droplist(file_l3_base, value = (file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
 
   button_base = widget_base(base, /row)
