@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 15:09 CET $
 
 PRO spice_browser_plot_sji, state
   ;
@@ -59,9 +59,7 @@ PRO spice_browser_plot_sji, state
       return
     ENDIF
 
-    sji_file = state.wid_data.sji_file
     xpix = state.wid_data.xpix
-    utc = state.wid_data.utc[xpix]
 
     ;
     ; Get the SJI file index from the drop-down list
@@ -162,7 +160,6 @@ PRO spice_browser_plot_sji, state
     crpix1 = state.data.get_header_keyword('CRPIX1', window_index)
     crpix2 = state.data.get_header_keyword('CRPIX2', window_index)
     fovx = cdelt1 * state.data.get_header_keyword('NAXIS1', window_index)
-    fovy = cdelt2 * state.data.get_header_keyword('NAXIS2', window_index)
     ;
     IF abs(state.wid_data.roll) GE 85 THEN BEGIN
       xc_temp = xcen
@@ -281,7 +278,7 @@ PRO spice_browser_plot_sji, state
         intmin = 0
         intmax = 10
       ENDIF ELSE BEGIN
-        chck = sigrange(image[k], range = range, fraction = 0.99, missing = -200)
+        !NULL = sigrange(image[k], range = range, fraction = 0.99, missing = -200)
         intmin = range[0]
         intmax = range[1]
       ENDELSE
@@ -332,7 +329,6 @@ PRO spice_browser_plot_sji, state
     ;
     ; Plot the SJI image.
     ;
-    texp_string = 'xx' ; trim(string(sji_exp[state.wid_data.sji_frame],format='(f7.2)'))
     ; title='title';anytim2utc(/ccsds,/time,/trunc,sji_utc[imin])+' UT (exp: '+texp_string+'s)'
     plot_image, image, origin = origin, scale = scale, min = intmin, max = intmax, $
       title = title, $

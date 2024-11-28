@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 15:09 CET $
 
 FUNCTION spice_browser_sji_frame_options, state, default_option = default_option
   ;
@@ -65,7 +65,7 @@ FUNCTION spice_browser_sji_frame_options, state, default_option = default_option
   ;
   ; Choose default value of no. of frames by choosing closest to 10mins
   ;
-  getmin = min(abs(float(value) * sji_cadence - 600.), imin)
+  !NULL = min(abs(float(value) * sji_cadence - 600.), imin)
   default_option = imin
 
   return, value_string

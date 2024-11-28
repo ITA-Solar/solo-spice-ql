@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 15:09 CET $
 
 PRO spice_browser_update_image, state, pwin
   ;
@@ -43,14 +43,13 @@ PRO spice_browser_update_image, state, pwin
   ;
   wwidth = state.wid_data.lbin
 
-  t1 = systime(1)
+  ; t1 = systime(1)
 
   missing = [-200., -199.]
   nmiss = n_elements(missing)
 
   iwin = state.wid_data.iwin[pwin]
   nx = state.wid_data.nx
-  nxpos = state.wid_data.nxpos
   ny = state.data.get_header_keyword('NAXIS2', iwin)
   nl = state.data.get_header_keyword('NAXIS3', iwin)
 
@@ -65,10 +64,8 @@ PRO spice_browser_update_image, state, pwin
   x1 = min([state.wid_data.jxpos, state.wid_data.nx - 1])
   nx = x1 - x0 + 1
 
-  scale = state.wid_data.scale
-
   lam = state.data.get_lambda_vector(iwin)
-  getmin = min(abs(lam - state.wid_data.lambda[pwin]), imin)
+  !NULL = min(abs(lam - state.wid_data.lambda[pwin]), imin)
   wpix = imin
 
   j0 = max([0, wpix - wwidth / 2])
@@ -131,6 +128,6 @@ PRO spice_browser_update_image, state, pwin
 
   widget_control, state.spice_browser_base, set_uvalue = state
 
-  t2 = systime(1)
+  ; t2 = systime(1)
   ; print,'Update image '+trim(pwin)+' takes '+trim(string(format='(f5.1)',t2-t1))+' s'
 END

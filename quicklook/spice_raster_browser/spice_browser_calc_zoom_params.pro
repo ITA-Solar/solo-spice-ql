@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 15:09 CET $
 
 PRO spice_browser_calc_zoom_params, state, pwin
   ;
@@ -53,7 +53,6 @@ PRO spice_browser_calc_zoom_params, state, pwin
   ypix = state.wid_data.ypix
   lpix = state.wid_data.ilambda[pwin]
 
-  origin = state.wid_data.origin
   scale = state.wid_data.scale
 
   ;

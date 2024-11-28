@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 15:09 CET $
 
 PRO spice_browser_plot_spectrum, state, pwin
   ;
@@ -52,10 +52,6 @@ PRO spice_browser_plot_spectrum, state, pwin
   ;
   ll = state.data.get_lambda_vector(iwin)
   wvl = ll
-  nw = n_elements(wvl)
-
-  xpix = state.wid_data.xpix
-  ypix = state.wid_data.ypix
 
   lambda = state.wid_data.lambda[pwin]
   lpix = state.wid_data.ilambda[pwin]

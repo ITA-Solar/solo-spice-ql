@@ -34,18 +34,15 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 15:09 CET $
 
-PRO spice_browser_plot_image, state, pwin, ps = ps
+PRO spice_browser_plot_image, state, pwin
   ;
   ; Plots the image in the upper window. Setting /ps sends the plot to a
   ; postscript file.
   ;
 
   iwin = state.wid_data.iwin[pwin]
-
-  xs = state.wid_data.nx
-  ys = state.wid_data.ny
 
   xpos = state.wid_data.xpos
   ypos = state.wid_data.ypos
@@ -106,7 +103,7 @@ PRO spice_browser_plot_image, state, pwin, ps = ps
       intmin = 0
       intmax = 10
     ENDIF ELSE BEGIN
-      chck = sigrange(im[k], range = range, fraction = 0.99, missing = 0)
+      !NULL = sigrange(im[k], range = range, fraction = 0.99, missing = 0)
       intmin = range[0]
       intmax = range[1]
     ENDELSE
