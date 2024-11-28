@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-28 14:24 CET $
 
 PRO spice_browser_base_event, event
   ;
@@ -188,9 +188,7 @@ PRO spice_browser_base_event, event
         ENDIF
 
         iwin = state.wid_data.iwin[pwin]
-        wvl = state.data.get_lambda_vector(iwin)
         ;
-        getmin = min(abs(lambda - wvl), lpix)
         state.wid_data.lambda[pwin] = lambda
         state.wid_data.ilambda[pwin] = lpix
         ;
@@ -260,17 +258,6 @@ PRO spice_browser_base_event, event
         spice_browser_update_spectrum, state, pwin
         spice_browser_plot_image, state, pwin
         spice_browser_plot_spectrum, state, pwin
-      END
-      ;
-      ; Button for whisker plot
-      ; -----------------------
-      ; - this only works for sit-and-stare data.
-      ;
-      iwin EQ nw: BEGIN
-        xrange = state.wid_data.xrange + state.wid_data.ichunk * state.wid_data.nxpos
-        spice_xwhisker, state.data, state.wid_data.iwin[pwin], slitpos = state.wid_data.ypix, $
-          wpix_range = reform(state.wid_data.lrange[*, pwin]), $
-          tpix_range = xrange
       END
     ENDCASE
   ENDIF
