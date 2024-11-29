@@ -67,7 +67,7 @@
 ; HISTORY:
 ;      29-Oct-2020 : Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-29 14:52 CET $
 
 PRO spice_ingest_reorder, index_origin = index_origin, index_destination = index_destination, $
   force = force, nolevel = nolevel, $
@@ -92,7 +92,7 @@ PRO spice_ingest_reorder, index_origin = index_origin, index_destination = index
     ENDELSE
   ENDELSE
 
-  spice_ingest, topdir, index = index_destination, force = force, nolevel = nolevel, $
+  spice_ingest, topdir, path_index = index_destination, force = force, nolevel = nolevel, $
     /search_subdir, $
     destination = destination, file_moved = file_moved, files_found = files_found
 
