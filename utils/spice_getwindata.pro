@@ -153,9 +153,9 @@
 ;         Added hdr.date_end and hdr.tdetx to the output structure for
 ;         compatibility with EIS software.
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-29 14:28 CET $
 
-FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $
+FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $ ; idl-disable-line unused-var
   clean = clean, wrange = wrange, verbose = verbose, $
   ixrange = ixrange, normalize = normalize, quiet = quiet, $
   calib = calib, perang = perang, no_masking = no_masking, approximated_slit = approximated_slit
@@ -513,8 +513,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $
 
   ; ignore calibration for now
   IF keyword_set(calib) && 0 THEN BEGIN
-    cal = iris_get_calib(windata.wvl, windata.hdr.date_obs, ybin = ybin, units = units, $
-      perang = perang)
+    cal = iris_get_calib(windata.wvl, windata.hdr.date_obs, units = units, perang = perang)
     ;
     id_y = make_array(windata.ny, value = 1.)
     expt_y = (1. / windata.exposure_time) # id_y
@@ -527,7 +526,7 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $
     windata.err[k] = cal_array[k] * windata.err[k]
     windata.units = units
     ;
-    junk = temporary(cal_array) ; tidy up
+    !NULL = temporary(cal_array) ; tidy up
   ENDIF
 
   t3 = systime(1)
