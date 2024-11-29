@@ -73,7 +73,7 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-29 14:53 CET $
 
 PRO spice_ingest, filename, path_index = path_index, force = force, nolevel = nolevel, $
   search_subdir = search_subdir, $
@@ -164,7 +164,7 @@ PRO spice_ingest, filename, path_index = path_index, force = force, nolevel = no
 
     ; check if file to be moved already exists
     old_files = file_search(concat_dir(outdir, 'solo*.fits'))
-    filechck = where(file_basename(old_files) EQ file_info.filename, nf)
+    !NULL = where(file_basename(old_files) EQ file_info.filename, nf)
     IF nf EQ 0 OR keyword_set(force) THEN BEGIN
       IF ~file_test(outdir, /directory) && ~keyword_set(dry_run) THEN BEGIN
         file_mkdir, outdir
