@@ -27,24 +27,24 @@
 ;      Ver. 1, 13-Jun-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-29 14:19 CET $
 
 PRO spice_create_level3_jpeg_presentation, meta_data
   root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'
   meta_data_file = '/Users/mawiesma/Documents/spice/generate_l3_meta_data.sav'
-  meta_data_template = { $
-    file: '', $
-    winno: 0, $
-    extname: '', $
-    category: 0, $
-    l3_created: 0b, $
-    l3_file: '', $
-    image_small_created: 0b, $
-    image_large_created: 0b $
-    }
+  ; meta_data_template = { $
+  ; file: '', $
+  ; winno: 0, $
+  ; extname: '', $
+  ; category: 0, $
+  ; l3_created: 0b, $
+  ; l3_file: '', $
+  ; image_small_created: 0b, $
+  ; image_large_created: 0b $
+  ; }
 
   IF n_elements(meta_data) EQ 0 THEN restore, meta_data_file
-  ind = where(meta_data.l3_created, ndata)
+  ind = where(meta_data.l3_created, ndata) ; idl-disable-line unused-var
 
   ; Red Temperature (intensity/default)
   c = colortable(3)
@@ -95,7 +95,7 @@ PRO spice_create_level3_jpeg_presentation, meta_data
     yrange2 = [coords[2, 0, -1, 0], coords[2, 0, -1, -1]]
     ycoord_transform2 = [yrange2[0], (yrange2[1] - yrange2[0]) / size_result[3]]
 
-    n_components = n_tags(fit)
+    ; n_components = n_tags(fit)
     ipartotal = 0
     ; for itag=0,n_components-1 do begin
     FOR itag = 0, 0 DO BEGIN
