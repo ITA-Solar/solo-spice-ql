@@ -100,7 +100,7 @@
 ;     Ver.3, 13-Dec-2023, Martin Wiesmann : Allows TIME_START to be a SPICE file instead of a time
 ;
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-11-29 14:25 CET $
 
 FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
   top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $
@@ -118,7 +118,7 @@ FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
     print, ' Keywords:'
     print, '   top_dir= The top directory in which the SPICE data lies'
     print, '   level= The desired data level (default=2)'
-    print, '   /sequence  Return all files of the sequence
+    print, '   /sequence  Return all files of the sequence'
     print, '   /all   Return all files for the specified day.'
     print, '   count_file= The number of files found.'
     return, ''
@@ -236,7 +236,7 @@ FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
         fileinfo.rasterno EQ fileinfo[i].rasterno AND $
         fileinfo.level EQ fileinfo[i].level, count)
       IF count GT 1 THEN BEGIN
-        max_version = max(fileinfo[ind].version, max_ind)
+        !NULL = max(fileinfo[ind].version, max_ind)
         ind_keep = [ind_keep, ind[max_ind]]
         remove, max_ind, ind
         ind_keep_not = [ind_keep_not, ind]
@@ -264,7 +264,7 @@ FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
 
     IF no_endtime THEN BEGIN
       ; user wants only one file, or one sequence, that is closest to provided date/time
-      temp = min(abs(filedates - startdate), min_index)
+      !NULL = min(abs(filedates - startdate), min_index)
       IF keyword_set(sequence) THEN BEGIN
         same_obs_ind = where(fileinfo.spiobsid EQ fileinfo[min_index].spiobsid, count_file)
         files = files[same_obs_ind]
