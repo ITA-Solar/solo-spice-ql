@@ -139,7 +139,7 @@ FUNCTION spice_find_observations, date, solarx, solary, count = count, $
   stonyhurst = stonyhurst, earth = earth, $
   dateref = dateref, margin = k_margin, errmsg = errmsg
   ;
-  COMPILE_OPT STRICTARR
+  COMPILE_OPT IDL2
   COMMON spice_find_observations, header, catalog
   ;
   carrington_set = keyword_set(carrington)
