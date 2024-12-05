@@ -1,12 +1,11 @@
-FUNCTION spice_mask_auto_fit, windata, mask_spec, template, wvl_select = wvl_select, $
-  outfile = outfile, chi2 = chi2, $
-  FUNCTION_name = FUNCTION_name
+FUNCTION spice_mask_auto_fit, windata, mask_spec, template = template, wvl_select = wvl_select, $
+  outfile = outfile, chi2 = chi2
   ;+
   ; NAME:
   ;     SPICE_MASK_AUTO_FIT
   ;
   ; PURPOSE:
-  ;     Runs spice_auto_fit on a "mask spectrum", i.e., one created with
+  ;     Runs eis_auto_fit on a "mask spectrum", i.e., one created with
   ;     the routine spice_mask_spectrum with the specified fit template.
   ;
   ; CATEGORY:
@@ -21,16 +20,16 @@ FUNCTION spice_mask_auto_fit, windata, mask_spec, template, wvl_select = wvl_sel
   ;     Mask_Spec: A structure in the format produced by
   ;                spice_mask_spectrum.pro containing a SPICE spectrum that
   ;                has been averaged over a spatial area.
-  ;     Template:  A structure in the format produced by
-  ;                eis_fit_template.pro containing a template for
-  ;                fitting the mask spectrum.
   ;
   ; OPTIONAL INPUTS:
+  ;     Template: A structure that specifies a template for the
+  ;               Gaussian fit - see the routine EIS_MAKE_FIT_TEMPLATE
+  ;               for more details. Note that it is essential to specify
+  ;               this structure if you're doing a multi-Gauss fit,
+  ;               but it is optional for single Gauss fits.
   ;     Wvl_Select:  A structure in the format created by
   ;                  eis_wvl_select.pro containing a specification for
   ;                  which part of the spectrum should be fitted.
-  ;     Function_Name:  String giving the name of a fitting function to
-  ;                     be used in place of a Gaussian.
   ;     Outfile:   The new name of a text file to which the results are
   ;                written. If outfile already exists, then the results
   ;                will be appended to the file.
@@ -60,15 +59,18 @@ FUNCTION spice_mask_auto_fit, windata, mask_spec, template, wvl_select = wvl_sel
   ; MODIFICATION HISTORY:
   ;     Ver.1, 08-Nov-2024, Peter Young
   ;       Adapted from eis_mask_auto_fit.
+  ;     Ver.2, 05-Dec-2024, Martin Wiesmann
+  ;       Removed keyword FUNCTION_NAME, since this is not an input to eis_auto_fit
+  ;       Made TEMPLATE into an optional keyword
+  ;
+  ; $Id: 2024-11-06 10:25 EST $
+  ;
   ;-
 
   IF n_params() LT 3 THEN BEGIN
-    print, 'Use:  IDL> result=spice_mask_auto_fit(windata,mask_spec,template [,wvl_select=, outfile= '
-    print, '                                        function_name= ])'
+    print, 'Use:  IDL> result=spice_mask_auto_fit(windata, mask_spec [,template= ,wvl_select=, outfile= ])'
     return, -1
   ENDIF
-
-  IF n_tags(wvl_select) NE 0 THEN ws = wvl_select
 
   wdout = spice_mask2windata(windata, mask_spec)
 
@@ -77,7 +79,7 @@ FUNCTION spice_mask_auto_fit, windata, mask_spec, template, wvl_select = wvl_sel
   ; a 2x2 array to save time.
   ;
   eis_auto_fit, wdout, fit, template = template, xrange = [0, 1], yrange = [0, 1], /quiet, $
-    wvl_select = wvl_select, FUNCTION_name = FUNCTION_name
+    wvl_select = wvl_select
 
   chi2 = reform(fit.chi2[0, 0])
   n = fit.ngauss
