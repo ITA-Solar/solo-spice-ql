@@ -1,4 +1,4 @@
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-12-05 10:41 CET $
 FUNCTION spice_read_cat_txt, catalog_file
   openr, lun, catalog_file, /get_lun
   t = ''
@@ -29,7 +29,6 @@ FUNCTION spice_read_cat_csv, catalog_file
   keyword_values = read_csv(catalog_file, count = count, header = tags)
   ntags = n_elements(tags)
   tags = tags.replace("-", "$")
-  catalog = list()
   entry = {}
   FOREACH tag, tags, ix DO entry = create_struct(entry, tag, (keyword_values.(ix))[0])
   fits_array = make_array(count, value = entry)
