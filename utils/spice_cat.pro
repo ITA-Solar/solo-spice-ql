@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-12-05 14:41 CET $
 ;-
 ; ;
 PRO spice_cat::_____________UTILITY_FUNCTIONS
@@ -249,12 +249,13 @@ FUNCTION spice_cat::apply_filters, filters
 END
 
 FUNCTION spice_cat::sort, list
+  COMPILE_OPT IDL2
   IF n_elements(list) EQ 0 THEN return, list
 
   tag_names = tag_names(list)
   current_sort_tag = self.curr.sort_column.replace('-', '$')
 
-  sort_tag_ix = (where(tag_names EQ current_sort_tag, count))[0]
+  sort_tag_ix = (where(tag_names EQ current_sort_tag))[0]
 
   IF self.d.keyword_info[self.curr.sort_column].type EQ "i" THEN BEGIN
     sort_values = 0.0d + list[*].(sort_tag_ix)
@@ -478,7 +479,6 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
 END
 
 PRO spice_cat::set_filter_cell_to_edit_color, column_name, clear = clear
-  num_columns = n_elements(tag_names(self.curr.displayed))
   filter_colors = self.baseline_filter_colors(table_selection = table_selection)
 
   IF NOT keyword_set(clear) THEN BEGIN
@@ -506,12 +506,10 @@ PRO spice_cat::deal_with_click_on_filter_cell, column_name
     IF column_type EQ "i" THEN current_filter_as_array = ["", ""] ; range
   END
 
-  filter_as_uvalue_text = current_filter_as_array.join("`")
-
   ; ; Simulates event with UVALUE = "REBUILD_FILTER`column_name`min`max"
   ; ;                 or   UVALUE = "REBUILD_FILTER`column_name`text_filter"
   ; ;
-  self.handle_rebuild_filter, dummy_event, ["REBUILD_FILTER", column_name, current_filter_as_array]
+  self.handle_rebuild_filter, ["REBUILD_FILTER", column_name, current_filter_as_array]
 END
 
 PRO spice_cat::set_message_to_full_content, sel
@@ -552,7 +550,7 @@ PRO spice_cat::handle_tlb, event
   widget_control, self.wid.table_id, scr_xsize = tablex, scr_ysize = tabley
 END
 
-PRO spice_cat::handle_remove_column, event, parts
+PRO spice_cat::handle_remove_column, event, parts ; idl-disable-line unused-var
   column_name = parts[1]
 
   goodix = where(self.curr.column_names NE column_name, count)
@@ -573,7 +571,6 @@ PRO spice_cat::handle_remove_column, event, parts
   IF removed_filter NE "<filter>" THEN self.register_rows_selection, /clear
 
   self.create_displayed_list, new_column_names
-  start_time = systime(1)
   self.display_displayed_list
 END
 
@@ -681,7 +678,7 @@ PRO spice_cat::handle_range_filter_change, event, parts
   self.set_filter_by_column_name, column_name, new_range_filter_as_array
 END
 
-PRO spice_cat::handle_rebuild_filter, dummy_event, parts
+PRO spice_cat::handle_rebuild_filter, parts
   widget_control, self.wid.top_base, update = 0
 
   column_name = parts[1]
@@ -702,24 +699,24 @@ PRO spice_cat::handle_rebuild_filter, dummy_event, parts
   widget_control, self.wid.top_base, update = 1
 END
 
-PRO spice_cat::handle_table_context, ev
-  IF ev.row EQ 0 THEN return ; No context menu for filter row
+PRO spice_cat::handle_table_context, event
+  IF event.row EQ 0 THEN return ; No context menu for filter row
 
   ; ; It's tempting to mess with table_select here since IDL doesn't blank out
   ; ; the previous selection even if the context click was on a different cell,
   ; ; BUT THIS CAUSES A SCROLL so the new selection (or top-row) is on top
   ; ; (even though it was already visible)
   ; ;
-  context_menu_base = widget_base(/CONTEXT_MENU, ev.id)
+  context_menu_base = widget_base(/CONTEXT_MENU, event.id)
 
-  IF ev.row EQ -1 THEN self.build_context_menu_heading, context_menu_base, ev
-  IF ev.row GE 1 THEN self.build_context_menu_datacell, context_menu_base, ev
+  IF event.row EQ -1 THEN self.build_context_menu_heading, context_menu_base, event
+  IF event.row GE 1 THEN self.build_context_menu_datacell, context_menu_base, event
 
-  widget_displaycontextmenu, ev.id, ev.x, ev.y, context_menu_base
+  widget_displaycontextmenu, event.id, event.x, event.y, context_menu_base
 END
 
-PRO spice_cat::handle_table_cell_sel, ev
-  sel = {left: ev.sel_left, right: ev.sel_right, top: ev.sel_top, bottom: ev.sel_bottom}
+PRO spice_cat::handle_table_cell_sel, event
+  sel = {left: event.sel_left, right: event.sel_right, top: event.sel_top, bottom: event.sel_bottom}
 
   ; ; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
@@ -752,10 +749,10 @@ PRO spice_cat::handle_table_cell_sel, ev
   END
 END
 
-PRO spice_cat::handle_all_table_events, ev, parts
+PRO spice_cat::handle_all_table_events, event
   ; ; We came here because of any table event (uvalue="ALL_TABLE_EVENTS`")
   ; ;
-  type = tag_names(ev, /structure_name)
+  type = tag_names(event, /structure_name)
 
   IF type EQ "WIDGET_TABLE_COL_WIDTH" THEN BEGIN
     self.capture_column_widths
@@ -764,7 +761,7 @@ PRO spice_cat::handle_all_table_events, ev, parts
 
   IF type EQ "WIDGET_TABLE_CH" THEN return ; ; Doh! Typing into non-editable cells triggers this!!!
 
-  short_event_name = strmid(tag_names(ev, /structure_name), 7, 1000)
+  short_event_name = strmid(tag_names(event, /structure_name), 7, 1000)
 
   ; ; Note that context events within the table come as "WIDGET_CONTEXT"
   ; ; events, not WIDGET_TABLE_CONTEXT. So we "fix" that:
@@ -772,14 +769,14 @@ PRO spice_cat::handle_all_table_events, ev, parts
   IF short_event_name EQ "CONTEXT" THEN short_event_name = "TABLE_CONTEXT"
 
   method = "handle_" + short_event_name
-  call_method, method, self, ev
+  call_method, method, self, event
 END
 
 PRO spice_cat::handle_call_program, event, parts
   call_procedure, parts[1], self.selection()
 END
 
-PRO spice_cat::handle_exit, event, parts
+PRO spice_cat::handle_exit, event
   widget_control, event.top, /destroy
   IF NOT self.d.modal THEN obj_destroy, self
 END
@@ -799,7 +796,7 @@ PRO spice_cat::build_text_filter, column_name, filter_as_array
   self.wid.filter_text = widget_text(self.wid.filter_base, value = filter_as_text, $
     _extra = text_props, uvalue = filter_text_uvalue)
   button_uvalue = "REBUILD_FILTER`" + column_name + "``"
-  button = widget_button(self.wid.filter_base, value = "Use alphabetical range", uvalue = button_uvalue)
+  button = widget_button(self.wid.filter_base, value = "Use alphabetical range", uvalue = button_uvalue) ; idl-disable-line unused-var
   self.wid.filter_focus_text = self.wid.filter_text
   widget_control, self.wid.filter_text, set_text_select = strlen(filter_as_text)
   widget_control, self.wid.filter_base, update = 1
@@ -819,7 +816,7 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
 
   min_text = self.build_range_filter_text(base, column_name, "MIN", filter_as_array[0])
 
-  label = widget_label(self.wid.filter_base, value = "<= " + column_name + " <=")
+  label = widget_label(self.wid.filter_base, value = "<= " + column_name + " <=") ; idl-disable-line unused-var
 
   max_text = self.build_range_filter_text(base, column_name, "MAX", filter_as_array[1])
 
@@ -828,7 +825,7 @@ PRO spice_cat::build_range_filter, column_name, filter_as_array
 
   IF self.d.keyword_info[column_name].type EQ "t" THEN BEGIN
     button_uvalue = "REBUILD_FILTER`" + column_name + "`"
-    button = widget_button(self.wid.filter_base, value = "Use glob pattern", uvalue = button_uvalue)
+    button = widget_button(self.wid.filter_base, value = "Use glob pattern", uvalue = button_uvalue) ; idl-disable-line unused-var
   END
 
   self.wid.filter_focus_text = min_text
@@ -843,7 +840,7 @@ PRO spice_cat::build_sort_choices_for_column, base, sort_column_name
     sensitive = (sort_column_name NE self.curr.sort_column) $
       OR (sort_order NE self.curr.sort_order)
     value = sort_order.tolower()
-    button = widget_button(column_name_base, uvalue = uvalue, value = value, sensitive = sensitive)
+    button = widget_button(column_name_base, uvalue = uvalue, value = value, sensitive = sensitive) ; idl-disable-line unused-var
   END
 END
 
@@ -865,11 +862,10 @@ PRO spice_cat::build_sort_pulldown
 END
 
 PRO spice_cat::build_add_column_menu, base, uvalue
-  left_or_right_of = (uvalue.split("`"))[2]
   FOREACH column_name, self.d.full_column_names DO BEGIN
     IF total(column_name EQ self.curr.column_names) GT 0 THEN CONTINUE
     full_uvalue = uvalue + "`" + column_name
-    b = widget_button(base, value = column_name, uvalue = full_uvalue)
+    !NULL = widget_button(base, value = column_name, uvalue = full_uvalue)
   END
 END
 
@@ -878,8 +874,8 @@ PRO spice_cat::desensitize_button_by_uvalue, struct_arr, uvalue
   IF matching_uvalue_ix NE -1 THEN struct_arr[matching_uvalue_ix].sensitive = 0
 END
 
-PRO spice_cat::build_context_menu_heading, base, ev
-  column_name = ((tag_names(self.curr.displayed))[ev.col]).replace('$', '-')
+PRO spice_cat::build_context_menu_heading, base, event
+  column_name = ((tag_names(self.curr.displayed))[event.col]).replace('$', '-')
   num_columns = n_elements(self.curr.displayed)
 
   ; ; TODO: Add button showing full header name
@@ -898,8 +894,8 @@ PRO spice_cat::build_context_menu_heading, base, ev
   current_sort_uvalue = "SORT`" + self.curr.sort_order + "`" + self.curr.sort_column
   self.desensitize_button_by_uvalue, buttons, current_sort_uvalue
 
-  IF ev.col EQ 0 THEN self.desensitize_button_by_uvalue, buttons, "MOVE`LEFT"
-  IF ev.col EQ num_columns THEN self.desensitize_button_by_uvalue, buttons, "MOVE`RIGHT"
+  IF event.col EQ 0 THEN self.desensitize_button_by_uvalue, buttons, "MOVE`LEFT"
+  IF event.col EQ num_columns THEN self.desensitize_button_by_uvalue, buttons, "MOVE`RIGHT"
 
   FOREACH button, buttons DO BEGIN
     add_column_menu = strmid(button.uvalue, 0, 10) EQ "ADD_COLUMN"
@@ -908,7 +904,7 @@ PRO spice_cat::build_context_menu_heading, base, ev
   END
 END
 
-PRO spice_cat::handle_filter_on_precise_cell_value, ev, parts
+PRO spice_cat::handle_filter_on_precise_cell_value, event, parts
   column_name = parts[1]
   full_value = parts[2]
   IF self.d.keyword_info[column_name].type EQ "t" THEN BEGIN
@@ -920,17 +916,17 @@ PRO spice_cat::handle_filter_on_precise_cell_value, ev, parts
   self.scroll_to_top_without_select
 END
 
-PRO spice_cat::build_context_menu_datacell, base, ev
-  column_name = (tag_names(self.curr.displayed))[ev.col].replace('$', '-')
-  cell_value = self.curr.displayed[ev.row].(ev.col).tostring()
+PRO spice_cat::build_context_menu_datacell, base, event
+  column_name = (tag_names(self.curr.displayed))[event.col].replace('$', '-')
+  cell_value = self.curr.displayed[event.row].(event.col).tostring()
 
   filter_on_value = "Filter on " + column_name + "='" + cell_value + "'"
   filter_on_value_uvalue = "FILTER_ON_PRECISE_CELL_VALUE`" + column_name + "`" + cell_value
 
-  button = widget_button(base, value = filter_on_value, uvalue = filter_on_value_uvalue)
+  button = widget_button(base, value = filter_on_value, uvalue = filter_on_value_uvalue) ; idl-disable-line unused-var
 END
 
-PRO spice_cat::handle_spice_gen_cat, ev, parts
+PRO spice_cat::handle_spice_gen_cat, event
   spice_gen_cat
   spice_cat, self.d.cat_filename
 END
@@ -984,7 +980,7 @@ PRO spice_cat::build_widget
   w.draw_focus_away = widget_text(w.ysize_spacer_base, scr_xsize = 1, scr_ysize = 1)
   w.button_base = widget_base(w.top_row_base, /row, /align_center, xpad = 0, ypad = 0)
   w.sort_base = widget_base(w.top_row_base, /row, xpad = 0, ypad = 0, /align_center)
-  button_spacer = widget_base(w.top_row_base, xsize = 1, xpad = 0, ypad = 0)
+  button_spacer = widget_base(w.top_row_base, xsize = 1, xpad = 0, ypad = 0) ; idl-disable-line unused-var
   w.filter_base = widget_base(w.top_row_base, /row, xpad = 0, ypad = 0, /align_center)
 
   w.message_label = widget_label(w.message_base, value = '     STATUS:', /align_right)
@@ -995,7 +991,7 @@ PRO spice_cat::build_widget
   self.build_sort_pulldown
 
   t = "Click on green line or the heading to edit filter"
-  text = widget_label(w.filter_base, frame = 2, value = t)
+  text = widget_label(w.filter_base, frame = 2, value = t) ; idl-disable-line unused-var
 
   self.build_table
 
@@ -1004,6 +1000,7 @@ PRO spice_cat::build_widget
 
   ; ; Make table fill available space despite /scroll
   widget_control, w.top_base, tlb_get_size = tlb_size
+  ; idl-disable-next-line unknown-structure
   resize_event = {widget_base, id: 0l, top: 0l, handler: 0l, x: tlb_size[0], y: tlb_size[1]}
   self.handle_tlb, resize_event
 END
@@ -1054,7 +1051,7 @@ FUNCTION spice_cat::parameters, modal = modal, catalog = catalog
 
   self.d.modal = keyword_set(modal)
   self.d.programs = ["help", "print"] ; ; TODO: plug in Martin's routines
-  self.d.keyword_info = spice_keyword_info(/all)
+  self.d.keyword_info = spice_keyword_info()
 
   column_names = getenv("SPICE_CAT_KEYWORDS")
   IF column_names GT "" THEN BEGIN
@@ -1104,12 +1101,11 @@ FUNCTION spice_cat::init, catalog, modal = modal, keywords = keywords, widths = 
   ENDIF ELSE return, 0
 END
 
-PRO spice_cat_define_structure
-  dummy = {spice_cat, d: dictionary(), wid: dictionary(), curr: dictionary(), last: dictionary()}
+PRO spice_cat__define
+  !NULL = {spice_cat, d: dictionary(), wid: dictionary(), curr: dictionary(), last: dictionary()}
 END
 
 FUNCTION spice_cat, catalog, keywords = keywords, widths = widths ; ; IDL> selection = spice_cat()
-  spice_cat_define_structure
   cat = obj_new('spice_cat', catalog, /modal, keywords = keywords, widths = widths)
   IF cat EQ !NULL THEN return, !NULL
   cat.start ; Blocking
@@ -1119,7 +1115,6 @@ FUNCTION spice_cat, catalog, keywords = keywords, widths = widths ; ; IDL> selec
 END
 
 PRO spice_cat, catalog, output_object = object, keywords = keywords, widths = widths ; ; IDL> spice_cat
-  spice_cat_define_structure
   object = obj_new('spice_cat', catalog, keywords = keywords, widths = widths)
   object.start
 END
