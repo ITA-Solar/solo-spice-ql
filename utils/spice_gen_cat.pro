@@ -95,7 +95,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-12-05 11:22 CET $
 ;-
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -126,7 +126,7 @@ END
 PRO spice_gen_cat::rsync_file_to_other_servers, filename
   IF ~self.d.running_as_pipeline THEN return
 
-  FOREACH other_server, self.d.other_servers, ix DO BEGIN
+  FOREACH other_server, self.d.other_servers DO BEGIN
     print, 'rsyncing ' + file_basename(filename) + ' on ' + self.d.host + ' to ' + other_server
     rsync_command = 'rsync -av ' + filename + ' osdcapps@' + other_server + ':' + filename
     spawn, rsync_command, rsync_output
@@ -303,7 +303,7 @@ PRO spice_gen_cat::set_filelist
 END
 
 PRO spice_gen_cat::remove_files_to_be_updated
-  FOREACH file, self.d.new_files, index DO BEGIN
+  FOREACH file, self.d.new_files DO BEGIN
     this_key = self.extract_key(file_basename(file))
     IF self.d.old_hash.hasKey(this_key) THEN BEGIN
       self.d.old_hash.remove, this_key
@@ -317,7 +317,7 @@ PRO spice_gen_cat::restore_old_cat
 
   print, 'Restoring ' + file_basename(self.d.catalog_hash_save_file)
   restore, self.d.catalog_hash_save_file
-  self.d.old_hash = old_hash
+  self.d.old_hash = old_hash ; idl-disable-line var-use-before-def
   print, 'Done restoring hash with ' + trim(n_elements(old_hash)) + ' keys'
 END
 
@@ -403,7 +403,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
   self.d.spice_datadir = expand_path(spice_data_dir) ; Must have explicit path to find relative paths
   self.d.catalog_basename = concat_dir(spice_data_dir, 'spice_catalog')
   self.d.keyword_info_filename = concat_dir(spice_data_dir, 'spice_keyword_info.json')
-  self.d.keyword_info = spice_keyword_info(/all)
+  self.d.keyword_info = spice_keyword_info()
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
 
   self.d.old_hash = orderedhash()
@@ -429,7 +429,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
 END
 
 PRO spice_gen_cat__define
-  spice_gen_cat = {spice_gen_cat, d: dictionary()}
+  !NULL = {spice_gen_cat, d: dictionary()}
 END
 
 ; ;    ----------------------
