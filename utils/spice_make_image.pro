@@ -58,7 +58,6 @@ FUNCTION spice_make_image, file, wvl, image_only = image_only
   FOR i = 0, nwin - 1 DO BEGIN
     wvl_array = d.get_lambda_vector(i)
     IF wvl / 10. GE min(wvl_array) AND wvl / 10. LE max(wvl_array) THEN BEGIN
-      nw = n_elements(wvl_array)
       getmin = min(abs((wvl / 10. - instr_width / 20.) - wvl_array), i1)
       getmin = min(abs((wvl / 10. + instr_width / 20.) - wvl_array), i2)
       wd = d.get_window_data(i)
@@ -69,8 +68,6 @@ FUNCTION spice_make_image, file, wvl, image_only = image_only
         wd = rearrange(wd, [3, 1, 2])
       ENDELSE
       img = average(wd[i1 : i2, *, *], 1)
-      ;
-      solar_y = d.get_instr_y_vector(i)
       ;
       IF d.get_sit_AND_stare() THEN BEGIN
         solar_x = d.get_time_vector(i)
