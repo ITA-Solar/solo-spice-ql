@@ -70,10 +70,10 @@ FUNCTION spice_plot_mask_auto_fit, spec, mask_fit, _extra = extra, $
     add_func = call_function(FUNCTION_name, x, [mask_fit[i].peak, mask_fit[i].wvl, mask_fit[i].width / sig_fwhm])
     ; add_func=mask_fit[i].peak*exp( -(x-mask_fit[i].wvl)^2/2./(mask_fit[i].width/sig_fwhm)^2)
     func = func + add_func
-    q = plot(/overplot, x, add_func + bg)
+    !NULL = plot(/overplot, x, add_func + bg)
   ENDFOR
 
-  r = plot(x, func + bg, th = th, /overplot, color = 'blue')
+  !NULL = plot(x, func + bg, th = th, /overplot, color = 'blue')
 
   p.yrange = [0, max(func + bg) * 1.1]
 
