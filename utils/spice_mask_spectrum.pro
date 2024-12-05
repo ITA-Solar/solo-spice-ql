@@ -64,8 +64,6 @@ FUNCTION spice_mask_spectrum, l1name, mask, $
   slit_wid = d.get_header_keyword('SLIT_WID', 0)
   obj_destroy, d
 
-  chck = 0
-  yip = -1
   FOR i = 0, nwin - 1 DO BEGIN
     ;
     wd = spice_getwindata(l1name, i, /quiet)
