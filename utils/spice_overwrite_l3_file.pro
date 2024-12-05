@@ -33,7 +33,7 @@
 ; MODIFICATION HISTORY:
 ;     12-Sep-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-12-05 10:42 CET $
 ;-
 ;
 ;
@@ -55,9 +55,9 @@ FUNCTION spice_overwrite_l3_file, file, group_leader, allow_xcontrol_l23 = allow
   label = widget_label(base, value = file, /align_left)
   label = widget_label(base, value = 'Do you want to overwrite it?', /align_left)
   button_base = widget_base(base, /row)
-  button_yes = widget_button(button_base, value = '  Yes  ', uvalue = 'Yes')
-  IF keyword_set(allow_xcontrol_l23) THEN button_xcontrol = widget_button(button_base, value = 'Open in XControl_L23', uvalue = 'Open')
-  button_no = widget_button(button_base, value = '  No   ', uvalue = 'No')
+  button_yes = widget_button(button_base, value = '  Yes  ', uvalue = 'Yes') ; idl-disable-line unused-var
+  IF keyword_set(allow_xcontrol_l23) THEN button_xcontrol = widget_button(button_base, value = 'Open in XControl_L23', uvalue = 'Open') ; idl-disable-line unused-var
+  button_no = widget_button(button_base, value = '  No   ', uvalue = 'No') ; idl-disable-line unused-var
 
   result = ptr_new('No')
   info = { $
