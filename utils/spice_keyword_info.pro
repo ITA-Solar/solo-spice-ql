@@ -1,6 +1,6 @@
-; $Id: 2024-12-05 11:18 CET $
+; $Id: 2024-12-09 10:34 CET $
 FUNCTION spice_keyword_info_header
-  text = inline_text()
+  text = inline_text('  ; - END')
   ; NAXIS1  =                    1 /
   ; NAXIS2  =                    1 /
   ; NAXIS3  =                    1 /
@@ -285,7 +285,7 @@ FUNCTION spice_keyword_info_header
   ; PRLIB13A = 'uio-spice-pipeline' / Software library containing PRPROC9
   ; PRVER13A =                 4730 / UiO SVN revision number of PRLIB3 (2024-08-21)
   ;
-  ; -
+  ; - END
   text = text[0 : -2]
   text = strmid(text, 1, 1000)
   return, [text, '']
