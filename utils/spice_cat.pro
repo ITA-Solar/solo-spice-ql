@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2024-12-10 14:16 CET $
+; $Id: 2024-12-10 14:25 CET $
 ;-
 ; ;
 PRO spice_cat::_____________UTILITY_FUNCTIONS
@@ -1106,7 +1106,7 @@ PRO spice_cat__define
 END
 
 FUNCTION spice_cat, catalog, keywords = keywords, widths = widths ; ; IDL> selection = spice_cat()
-  cat = obj_new('spice_cat', catalog, /modal, keywords = keywords, widths = widths)
+  cat = obj_new('spice_cat', catalog, /modal, keywords = keywords, widths = widths) ; idl-disable-line unknown-kw
   IF cat EQ !NULL THEN return, !NULL
   cat.start ; Blocking
   selection = cat.selection()
