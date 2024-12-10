@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2024-12-05 14:41 CET $
+; $Id: 2024-12-10 14:16 CET $
 ;-
 ; ;
 PRO spice_cat::_____________UTILITY_FUNCTIONS
@@ -1006,10 +1006,10 @@ PRO spice_cat::build_widget
 END
 
 PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
-  widget_control, event.top, get_uvalue = self
+  widget_control, event.top, get_uvalue = selfi
 
   IF event.id EQ event.top THEN BEGIN ; ; TLB event has ID = TOP
-    self.handle_tlb, event
+    selfi.handle_tlb, event
     return
   END
 
@@ -1020,7 +1020,7 @@ PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
 
   method = "handle_" + parts[0]
 
-  call_method, method, self, event, parts
+  call_method, method, selfi, event, parts
 END
 
 PRO spice_cat::set_background_colors
