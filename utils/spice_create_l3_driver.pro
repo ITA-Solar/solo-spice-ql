@@ -112,7 +112,7 @@
 ;      Ver. 1, 12-Oct-2022, Martin Wiesmann
 ;
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-12-12 11:54 CET $
 
 PRO spice_create_l3_driver, time_start, time_end = time_end, l2_files = l2_files, $
   top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $
@@ -177,6 +177,8 @@ PRO spice_create_l3_driver, time_start, time_end = time_end, l2_files = l2_files
         l3_file = l2_object.create_l3_file(no_masking = no_masking, approximated_slit = approximated_slit, $
           no_fitting = no_fitting, no_widget = no_widget, no_xcfit_block = ~keyword_set(show_xcfit_block), position = position, velocity = velocity, $
           pipeline_dir = pipeline_dir, top_dir = top_dir, path_index = path_index, progress_widget = progress_widget)
+
+        IF object_created THEN obj_destroy, l2_object
       ENDIF ELSE BEGIN
         IF ~keyword_set(no_widget) THEN progress_widget.next_file, 1
       ENDELSE
