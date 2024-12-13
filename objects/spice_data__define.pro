@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2024-12-13 14:14 CET $
 
 ;+
 ; Description:
@@ -234,7 +234,8 @@ END
 ;
 ; OPTIONAL OUTPUTS:
 ;     existing_l3_files: A list of filenames with the same SPIOBSID and RASTERNO but different version number
-;                        that already exist
+;                        that already exist.
+;     existing_l3_paths: Same list as given in 'existing_l3_files' but with full path.
 ;     l3_dir: The directory in which the level 3 file will be saved.
 ;     number_version_l3: The version of the new level 3 file, as a number.
 ;
@@ -242,7 +243,7 @@ END
 ;     The version of the new level 3 file, as a string in the format 'V##'.
 ;-
 FUNCTION spice_data::get_version_l3, filename_l3, force_version = force_version, number_version_l3 = number_version_l3, $
-  existing_l3_files = existing_l3_files, top_dir = top_dir, path_index = path_index, l3_dir = l3_dir
+  existing_l3_files = existing_l3_files, existing_l3_paths = existing_l3_paths, top_dir = top_dir, path_index = path_index, l3_dir = l3_dir
   ; Returns the version for a new level 3
   COMPILE_OPT IDL2, STATIC
 
@@ -251,8 +252,8 @@ FUNCTION spice_data::get_version_l3, filename_l3, force_version = force_version,
   l3_dir = file_dirname(destination, /mark_directory)
 
   spiobsid_rasterno = filename_l3.extract('[0-9]+-[0-9]{3}')
-  existing_l3_files = file_search(l3_dir, '*' + spiobsid_rasterno + '*', count = n_l3_files)
-  existing_l3_files = file_basename(existing_l3_files)
+  existing_l3_paths = file_search(l3_dir, '*' + spiobsid_rasterno + '*', count = n_l3_files)
+  existing_l3_files = file_basename(existing_l3_paths)
 
   IF keyword_set(force_version) THEN BEGIN
     number_version_l3 = force_version
@@ -290,14 +291,15 @@ END
 ;     version_l3: The version of the new level 3 file, as a string in the format 'V##'.
 ;     number_version_l3: The version of the new level 3 file, as a number.
 ;     existing_l3_files: A list of filenames with the saem SPIOBSID and RASTERNO but different version number
-;                        that already exist
+;                        that already exist.
+;     existing_l3_paths: Same list as given in 'existing_l3_files' but with full path.
 ;     l3_dir: The directory in which the level 3 file will be saved.
 ;
 ; OUTPUT:
 ;     The new filename of the level 3 file.
 ;-
 FUNCTION spice_data::get_filename_l3, filename_l2, force_version = force_version, number_version_l3 = number_version_l3, $
-  version_l3 = version_l3, existing_l3_files = existing_l3_files, top_dir = top_dir, path_index = path_index, l3_dir = l3_dir
+  version_l3 = version_l3, existing_l3_files = existing_l3_files, existing_l3_paths = existing_l3_paths, top_dir = top_dir, path_index = path_index, l3_dir = l3_dir
   ; Returns L3 filename based on L2 filename, with version number being the highest version number of any existing L3 files incremented by 1.
   COMPILE_OPT IDL2, STATIC
 
@@ -305,7 +307,7 @@ FUNCTION spice_data::get_filename_l3, filename_l2, force_version = force_version
   filename_l3 = file_basename(filename_l2)
   filename_l3 = filename_l3.replace('_L2_', '_L3_')
   version_l3 = spice_data.get_version_l3(filename_l3, force_version = force_version, number_version_l3 = number_version_l3, $
-    existing_l3_files = existing_l3_files, top_dir = top_dir, path_index = path_index, l3_dir = l3_dir)
+    existing_l3_files = existing_l3_files, existing_l3_paths = existing_l3_paths, top_dir = top_dir, path_index = path_index, l3_dir = l3_dir)
 
   filename_l3 = filename_l3.replace(version_l2, version_l3)
   return, filename_l3
