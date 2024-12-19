@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2024-11-27 15:06 CET $
+; $Id: 2024-12-19 13:56 CET $
 ;-
 ;
 ; save as postscript file
@@ -531,6 +531,7 @@ PRO spice_xraster_cleanup, tlb
   widget_control, tlb, get_uvalue = info
   ptr_free, (*info).xscale
   ptr_free, (*info).yscale
+  IF (*info).object_created THEN obj_destroy, *(*info).data
   ptr_free, (*info).data
   ptr_free, info
 END
@@ -542,7 +543,7 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
     return
   ENDIF
 
-  data = spice_object(input_data, is_spice = is_spice)
+  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return
 
   IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)
@@ -643,6 +644,7 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
   info_struct = {xscale: ptr_new(), $
     yscale: ptr_new(), $
     data: ptr_new(data), $
+    object_created: object_created, $
     xdim: xdim, $
     ydim: ydim, $
     xdim_unit: 1, $

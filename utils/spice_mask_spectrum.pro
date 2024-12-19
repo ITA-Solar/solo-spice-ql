@@ -58,11 +58,12 @@ FUNCTION spice_mask_spectrum, l1name, mask, $
 
   IF n_tags(mask) NE 0 THEN swtch = mask.image ELSE swtch = mask
 
-  d = spice_object(l1name)
+  d = spice_object(l1name, is_spice = is_spice, object_created = object_created)
+  IF ~is_spice THEN return, -1
   nwin = d.get_number_windows()
   date_obs = d.get_header_keyword('DATE-OBS', 0)
   slit_wid = d.get_header_keyword('SLIT_WID', 0)
-  obj_destroy, d
+  IF object_created THEN obj_destroy, d
 
   FOR i = 0, nwin - 1 DO BEGIN
     ;

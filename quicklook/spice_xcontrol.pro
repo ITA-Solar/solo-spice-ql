@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2024-12-19 13:56 CET $
 ;-
 ;
 ;
@@ -49,6 +49,7 @@ END
 
 PRO spice_xcontrol_cleanup, tlb
   widget_control, tlb, get_uvalue = info
+  IF (*info).object_created THEN obj_destroy, *(*info).d
   ptr_free, (*info).d
   ptr_free, info
 END
@@ -411,7 +412,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     return
   ENDIF
 
-  data = spice_object(input_data, is_spice = is_spice)
+  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return
 
   ; ; information about data set
@@ -532,6 +533,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
 
   ; Define the info structure, used to send information around
   info_struct = {d: ptr_new(data), $
+    object_created: object_created, $
     sdo: ptr_new(), $
     moment: ptr_new(), $
     lineselect: lineselect, $

@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-26 14:20 CET $
+; $Id: 2024-12-19 13:56 CET $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -79,6 +79,8 @@ PRO spice_xcontrol_l23_cleanup, tlb
   ptr_free, (*info).proc_steps_user
   FOR i = 0, n_elements(*(*info).proc_steps_official) - 1 DO IF ptr_valid((*(*info).proc_steps_official)[i]) THEN ptr_free, (*(*info).proc_steps_official)[i]
   ptr_free, (*info).proc_steps_official
+  !NULL = spice_object((*info).object_l2, is_spice = is_spice)
+  IF is_spice THEN obj_destroy, (*info).object_l2
   ptr_free, info
 END
 
@@ -528,9 +530,10 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
     ENDCASE
 
     3: BEGIN
-      l3_obj = spice_object(file_in)
+      l3_obj = spice_object(file_in, object_created = object_created)
       file_l2 = l3_obj.find_l2_file()
       IF file_l2 EQ '' THEN file_l2 = l3_obj.find_l2_file(/user_dir)
+      IF object_created THEN obj_destroy, l3_obj
 
       file_l3_official = ''
       file_l3_official_all = spice_find_file(file_info.datetime, level = 3, remove_duplicates = 0, count_file = count_file_official)
@@ -604,8 +607,9 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
     FOR iwin = 0, nwin_l3_official - 1 DO BEGIN
       winno_l3_official[iwin] = fxpar(*hdr_l3_official_data[iwin], 'WINNO', missing = -1)
     ENDFOR
-    l3_obj = spice_object(file_l3_official)
+    l3_obj = spice_object(file_l3_official, object_created = object_created)
     proc_steps_official = l3_obj.get_l3_processing_steps()
+    IF object_created THEN obj_destroy, l3_obj
   ENDIF ELSE BEGIN
     IF exist_l2 THEN BEGIN
       file_l3_official = file_l3_calc
@@ -633,8 +637,9 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
     FOR iwin = 0, nwin_l3_user - 1 DO BEGIN
       winno_l3_user[iwin] = fxpar(*hdr_l3_user_data[iwin], 'WINNO', missing = -1)
     ENDFOR
-    l3_obj = spice_object(file_l3_user)
+    l3_obj = spice_object(file_l3_user, object_created = object_created)
     proc_steps_user = l3_obj.get_l3_processing_steps()
+    IF object_created THEN obj_destroy, l3_obj
   ENDIF ELSE BEGIN
     old_path_part = path_sep() + 'spice' + path_sep() + 'level3' + path_sep()
     new_path_part = path_sep() + 'spice' + path_sep() + 'user' + path_sep() + 'level3' + path_sep()

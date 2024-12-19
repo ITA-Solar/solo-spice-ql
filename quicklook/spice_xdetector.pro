@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2024-12-19 13:56 CET $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event
@@ -828,6 +828,7 @@ END
 PRO spice_xdetector_cleanup, tlb
   widget_control, tlb, get_uvalue = info
   wdelete, (*info).mainpixid
+  IF (*info).object_created THEN obj_destroy, *(*info).data
   ptr_free, (*info).data
   ptr_free, (*info).drawimage
   ptr_free, (*info).xscale
@@ -846,7 +847,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     return
   ENDIF
 
-  data = spice_object(input_data, is_spice = is_spice)
+  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return
 
   IF n_elements(ncolors) EQ 0 THEN ncolors = (!d.n_colors < 256)
@@ -1206,6 +1207,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
     xscale: ptr_new(), $
     yscale: ptr_new(), $
     data: ptr_new(data), $
+    object_created: object_created, $
     win_positions: win_positions, $
     clip_image: clip_image, $
     xscale_pixels: xscale_pixels, $

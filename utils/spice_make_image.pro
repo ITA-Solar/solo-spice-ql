@@ -48,7 +48,8 @@ FUNCTION spice_make_image, file, wvl, image_only = image_only
     return, -1
   ENDIF
 
-  d = spice_object(file)
+  d = spice_object(file, is_spice = is_spice, object_created = object_created)
+  IF ~is_spice THEN return, -1
   nwin = d.get_number_windows()
 
   sit_stare = d.get_sit_AND_stare()
@@ -94,7 +95,7 @@ FUNCTION spice_make_image, file, wvl, image_only = image_only
     ENDIF
   ENDFOR
 
-  obj_destroy, d
+  IF object_created THEN obj_destroy, d
   message, /info, /cont, 'The specified wavelength is not found in this dataset. Returning...'
   return, -1
 END

@@ -87,7 +87,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-11-28 15:33 CET $
+; $Id: 2024-12-19 13:56 CET $
 ;-
 ;
 ;
@@ -230,6 +230,12 @@ PRO spice_create_l3_widget_calc_l3_dir, info
   widget_control, info.file_l3_dir_label, set_value = l3_dir
 END
 
+PRO spice_create_l3_widget_cleanup, base
+  widget_control, base, get_uvalue = info
+  IF info.object_created THEN obj_destroy, info.l2_object
+  IF ptr_valid(info.file_l3) THEN ptr_free, info.file_l3
+END
+
 ; -----------------------------------------------------------------------
 ; MAIN program
 ; -----------------------------------------------------------------------
@@ -248,7 +254,7 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
     print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
     return, -1
   ENDIF
-  l2_object = spice_object(l2_object, is_spice = is_spice)
+  l2_object = spice_object(l2_object, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return, -1
 
   official_l3dir = keyword_set(official_l3dir)
@@ -312,6 +318,7 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
   info = { $
     group_leader: group_leader, $
     l2_object: l2_object, $
+    object_created: object_created, $
     file_l3: ptr_new(), $
     dir_l3: '', $
     official_l3dir: official_l3dir, $
@@ -335,7 +342,8 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
   widget_control, base, set_Uvalue = info, /No_Copy
   wp = widget_positioner(base, parent = group_leader)
   wp.position
-  xmanager, 'spice_create_l3_widget', base, event_handler = 'spice_create_l3_widget_event'
+  xmanager, 'spice_create_l3_widget', base, event_handler = 'spice_create_l3_widget_event', $
+    cleanup = 'spice_create_l3_widget_cleanup'
 
   res = *result
   ptr_free, result
