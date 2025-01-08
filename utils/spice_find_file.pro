@@ -100,7 +100,7 @@
 ;     Ver.3, 13-Dec-2023, Martin Wiesmann : Allows TIME_START to be a SPICE file instead of a time
 ;
 ;-
-; $Id: 2024-11-29 14:25 CET $
+; $Id: 2025-01-08 14:13 CET $
 
 FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
   top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $
@@ -183,21 +183,14 @@ FUNCTION spice_find_file, time_start, time_end = time_end, level = level, $
   ENDIF
 
   IF ~keyword_set(no_tree_struct) && ~keyword_set(search_subdir) THEN BEGIN
-    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits'
+    file_patterns = ['solo_L' + strtrim(string(level), 2) + '_spice*.fits', 'solo_L' + strtrim(string(level), 2) + '_spice*.fits.gz']
     dirs = ssw_time2paths(time0, time1, topdir)
-    files1 = file_list(dirs, file_pattern, /quiet)
-    ind = where(files1 NE '', count1)
-    file_pattern = 'solo_L' + strtrim(string(level), 2) + '_spice*.fits.gz'
-    files2 = file_list(dirs, file_pattern, /quiet)
-    ind = where(files2 NE '', count2)
-    count0 = count1 + count2
     files = []
-    IF count1 GT 0 THEN BEGIN
-      files = [files, files1]
-    ENDIF
-    IF count2 GT 0 THEN BEGIN
-      files = [files, files2]
-    ENDIF
+    FOR i = 0, n_elements(file_patterns) - 1 DO BEGIN
+      temp_files = file_list(dirs, file_patterns[i], /quiet)
+      IF n_elements(temp_files) GT 0 THEN files = [files, temp_files]
+    ENDFOR
+    count0 = n_elements(files)
   ENDIF ELSE BEGIN
     IF ~keyword_set(no_tree_struct) THEN paths = ssw_time2paths(time0, time1, topdir) $
     ELSE paths = topdir
