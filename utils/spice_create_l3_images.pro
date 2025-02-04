@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-02-04 14:23 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -178,15 +178,13 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
   filename_base = base_dir + path_sep() + l3ql_filename + '-'
   IF ~file_test(base_dir, /directory) THEN file_mkdir, base_dir
 
-  ana = fits2ana(l3_file, headers_results = headers_results, quiet = quiet)
+  ana = fits2ana(l3_file, headers_results = headers_results, headers_data = headers_data, quiet = quiet)
 
   oJpg = obj_new('spice_jpg')
 
   FOR iana = 0, n_elements(ana) - 1 DO BEGIN
     handle_value, ana[iana].result_h, result
     handle_value, ana[iana].fit_h, fit
-
-    delete_analysis, ana[iana]
 
     hdr = fitshead2struct(*headers_results[iana])
     !NULL = readfits(l3_file, l2_header, ext = iana * 2 + 1, silent = quiet)
@@ -197,11 +195,14 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
       message, ['This is a single exposure window, cannot create images from it', $
         l3_file, $
         'window: ' + trim(fxpar(*headers_results[iana], 'WINNO', missing = -1))], /info
-      CONTINUE
+      ; CONTINUE
+      spice_create_l3_images_single_exp, l3_file, ana[iana], *headers_data[iana]
+      stop
     ENDIF
     wcs = fitshead2wcs(hdr)
-
     coords = wcs_get_coord(wcs)
+
+    delete_analysis, ana[iana]
 
     spice_get_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
 
@@ -210,6 +211,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
     n_components = n_tags(fit)
     ipartotal = 0
     FOR icomp = 0, n_components - 1 DO BEGIN
+      stop
       fit_cur = fit.(icomp)
       n_params = n_elements(fit_cur.param)
       include_component = (keyword_set(no_background_images)) ? fit_cur.name NE 'Background' : 1
