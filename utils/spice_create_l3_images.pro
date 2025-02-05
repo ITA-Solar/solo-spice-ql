@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-02-04 14:23 CET $
+; $Id: 2025-02-05 15:23 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -195,9 +195,9 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
       message, ['This is a single exposure window, cannot create images from it', $
         l3_file, $
         'window: ' + trim(fxpar(*headers_results[iana], 'WINNO', missing = -1))], /info
-      ; CONTINUE
-      spice_create_l3_images_single_exp, l3_file, ana[iana], *headers_data[iana]
-      stop
+      spice_create_l3_images_single_exp, l3_file, ana[iana], *headers_data[iana], filename_base, $
+        l2_header, show_plot = show_plot, filename = filename
+      CONTINUE
     ENDIF
     wcs = fitshead2wcs(hdr)
     coords = wcs_get_coord(wcs)
@@ -211,7 +211,6 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
     n_components = n_tags(fit)
     ipartotal = 0
     FOR icomp = 0, n_components - 1 DO BEGIN
-      stop
       fit_cur = fit.(icomp)
       n_params = n_elements(fit_cur.param)
       include_component = (keyword_set(no_background_images)) ? fit_cur.name NE 'Background' : 1

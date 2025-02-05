@@ -1,7 +1,52 @@
-PRO spice_create_l3_images_single_exp, l3_file, ana, headers_data
+PRO spice_create_l3_images_single_exp, l3_file, ana, headers_data, filename_base, l2_header, $
+  show_plot = show_plot, filename = filename
   help, headers_data
-  print, headers_data
-  stop
+  ; print, headers_data
+
+  oJpg = spice_jpg_exp()
+
+  handle_value, ana.data_h, data
+
+  wcs = fitshead2wcs(headers_data)
+  coords = wcs_get_coord(wcs)
+
+  ; crop image so that lines with invalid data is not shown
+  image_data = reform(data)
+  help, image_data
+
+  ion = 'SiExp'
+  lam = '103nm6'
+  winno = fxpar(headers_data, 'WINNO')
+  ; filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + param.name.substring(0, 2)) + fns('#', hdr.winno) + '-' + fns('#', icomp + 1) + '-' + param.name.substring(0, 2)
+  filename_base2 = filename_base.replace('ql', 'ql-sit-' + ion + lam + '-' + 'int' + fns('#', winno) + '-' + fns('#', 0 + 1) + '-' + 'int') + 'int'
+  filename = filename_base2 + '.jpg'
+  print, filename_base
+  print, filename_base2
+  print, filename
+
+  colortable = 3
+  reverse_colortable = 0
+  startrow = 0
+  endrow = (size(image_data))[1] - 1
+  help, startrow, endrow
+
+  oJpg.update, filename, image_data, wcs, remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, $
+    fit_trend = fit_trend, value_max = value_max, value_min = value_min, colortable = colortable, reverse_colortable = reverse_colortable, $
+    xtitle = xtitle1, ytitle = ytitle1, $
+    startrow = startrow, endrow = endrow, l2_header = l2_header, l3_header = headers_data, show_plot = show_plot
+  ; stop
+  oJpg.plot, /clock
+  oJpg.save
+
+  filename = filename_base2 + '-thumb.png'
+  format = 'PNG'
+  prits_tools.write_image_real_size, image_data, filename, $
+    remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, fit_trend = fit_trend, smooth_width = smooth_width, $
+    value_max = value_max, value_min = value_min, colortable = colortable, format = format, interpolation = interpolation, $
+    height = 64, border = 0, reverse_colortable = reverse_colortable, $
+    xrange1 = xrange1, yrange1 = yrange1, SCALE_TO_RANGE = SCALE_TO_RANGE, /no_axis, $
+    color_center_value = color_center_value, show_plot = show_plot
+
   return
 
   FOR iana = 0, n_elements(ana) - 1 DO BEGIN
