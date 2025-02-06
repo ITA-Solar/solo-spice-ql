@@ -14,11 +14,15 @@ PRO spice_create_l3_images_single_exp, l3_file, ana, headers_data, filename_base
   image_data = reform(data)
   help, image_data
 
-  ion = 'SiExp'
-  lam = '103nm6'
+  ion = 'single'
+  lam = '00nm00'
+  ; ion = name.extract('[a-z]+')
+  ion = string(ion + '--------', format = '(A-8)')
+  IF lam.strlen() EQ 6 THEN lam = '-' + lam
+
   winno = fxpar(headers_data, 'WINNO')
   ; filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + param.name.substring(0, 2)) + fns('#', hdr.winno) + '-' + fns('#', icomp + 1) + '-' + param.name.substring(0, 2)
-  filename_base2 = filename_base.replace('ql', 'ql-sit-' + ion + lam + '-' + 'int' + fns('#', winno) + '-' + fns('#', 0 + 1) + '-' + 'int') + 'int'
+  filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + 'int') + fns('#', winno) + '-' + '1-int'
   filename = filename_base2 + '.jpg'
   print, filename_base
   print, filename_base2
@@ -30,13 +34,18 @@ PRO spice_create_l3_images_single_exp, l3_file, ana, headers_data, filename_base
   endrow = (size(image_data))[1] - 1
   help, startrow, endrow
 
-  oJpg.update, filename, image_data, wcs, remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, $
-    fit_trend = fit_trend, value_max = value_max, value_min = value_min, colortable = colortable, reverse_colortable = reverse_colortable, $
-    xtitle = xtitle1, ytitle = ytitle1, $
-    startrow = startrow, endrow = endrow, l2_header = l2_header, l3_header = headers_data, show_plot = show_plot
-  ; stop
-  oJpg.plot, /clock
-  oJpg.save
+  xtitle1 = 'Solar X [arcsec]'
+  ytitle1 = 'Solar Y [arcsec]'
+
+  IF 1 THEN BEGIN
+    oJpg.update, filename, image_data, wcs, remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, $
+      fit_trend = fit_trend, value_max = value_max, value_min = value_min, colortable = colortable, reverse_colortable = reverse_colortable, $
+      xtitle = xtitle1, ytitle = ytitle1, $
+      startrow = startrow, endrow = endrow, l2_header = l2_header, l3_header = headers_data, show_plot = show_plot
+    ; stop
+    oJpg.plot, /clock
+    oJpg.save
+  ENDIF
 
   filename = filename_base2 + '-thumb.png'
   format = 'PNG'
