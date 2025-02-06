@@ -1,17 +1,14 @@
 PRO spice_jpg_exp::_set_filename_related_parameters
-  print, 'new aaaaaaa'
   self.d.sit_and_stare = 1
   self.d.parameter = 'int'
   self.d.units = '$W/m^2/sr/nm$'
 END
 
 FUNCTION spice_jpg_exp::_get_plot_dimensions_ix
-  print, 'new aaaaaaa'
   return, [2, 1]
 END
 
 FUNCTION spice_jpg_exp::_get_tix
-  print, 'new aaaaaaa'
   return, self.d.sit_and_stare ? [0, self.d.wcs.naxis[3] - 1] : [0, 0]
 END
 
@@ -94,6 +91,11 @@ PRO spice_jpg_exp::_set_congrid_data
   self.d.aDataCongrid = self.d.aData
 END
 
+PRO spice_jpg_exp::_set_title
+  IF self.d.hLines EQ !NULL THEN self.d.hLines = spice_line_list()
+  self.d.title = ['Single Exposure', ' Intensity']
+END
+
 PRO spice_jpg_exp::_plot_coordinate_system
   self._set_coordinate_data
   help, self.d.aDataCoordinates, self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y
@@ -117,8 +119,6 @@ PRO spice_jpg_exp::_plot_data
   imPadded.position = self.d.plot_position
 
   self.d.imPadded = imPadded
-
-  IF ~self.d.sit_and_stare THEN imPadded.rotate, fxpar(self.d.l2_header, 'CROTA')
 END
 
 PRO spice_jpg_exp__define
