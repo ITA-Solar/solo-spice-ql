@@ -79,16 +79,16 @@ PRO spice_jpg_exp::_set_congrid_data
 
   x_min_unrot = min(x_unrot) - xadd
   x_max_unrot = max(x_unrot) + xadd
-  self.d.xrange_congrid = [x_min_unrot, x_max_unrot]
+  ; self.d.xrange_congrid = [x_min_unrot, x_max_unrot]
 
   naxis2_l2 = fxpar(self.d.l3_header, 'NAXIS3')
   y_unrot = crval2 + cdelt2 * (indgen(naxis2_l2) + 1 - crpix2)
   y_min_unrot = y_unrot[self.d.startrow] - yadd
   y_max_unrot = y_unrot[self.d.endrow] + yadd
-  self.d.yrange_congrid = [y_min_unrot, y_max_unrot]
+  ; self.d.yrange_congrid = [y_min_unrot, y_max_unrot]
 
   self.d.sz = size(self.d.aData)
-  self.d.aDataCongrid = self.d.aData
+  ; self.d.aDataCongrid = self.d.aData
 END
 
 PRO spice_jpg_exp::_set_title
@@ -132,23 +132,14 @@ PRO spice_jpg_exp::_plot_coordinate_system
 END
 
 PRO spice_jpg_exp::_plot_data
-  help, self.d.aData, self.d.sAxisPadded.x, self.d.sAxisPadded.y
   size_image = size(self.d.aData)
   sAxisx = findgen(size_image[1])
   sAxisy = findgen(size_image[2])
-  ; help, self.d.sAxisPadded.x, self.d.sAxisPadded.y
-  ; print, 'self.d.sAxisPadded.x', self.d.sAxisPadded.x
-  ; stop
-  ; print, 'self.d.sAxisPadded.y', self.d.sAxisPadded.y
-  ; stop
-  imPadded = image(self.d.aData, sAxisx, sAxisy, $
-    rgb_table = self.d.palette, axis_style = 2, font_size = self.d.font_size, xtitle = self.d.xtitle, ytitle = self.d.ytitle, /current)
-  ; print, 'imPadded 1', imPadded.position
+  imPadded = image(self.d.aData, sAxisx, sAxisy, /current, $
+    title = self.d.title, xtitle = self.d.xtitle, ytitle = self.d.ytitle, $
+    axis_style = 2, font_size = self.d.font_size, $
+    rgb_table = self.d.palette)
   imPadded.position = self.d.plot_position
-  ; print, 'imPadded 2', imPadded.position
-  ; help, self.d.plot_position
-  ; print, self.d.plot_position
-  ; stop
 
   xrange = self.d.srangepadded.x
   xa = double(min(xrange))
@@ -161,11 +152,73 @@ PRO spice_jpg_exp::_plot_data
   ax[0].coord_transform = [xa, xb]
   ax[0].major = 3
   ax[1].coord_transform = [ya, yb]
+  ; ax[1].major = 0
 
   self.d.imPadded = imPadded
 
   self.d.imCoordinatesPosition = imPadded.position
   self.d.plot_top_position = self.d.imCoordinatesPosition[3] * self.d.winsize_padded[1]
+END
+
+PRO spice_jpg_exp::_set_plot_keywords_based_on_padded_data_size
+  self.d.xtickinterval = 0
+  self.d.colorbar_major = -1
+  self.d.font_size = 12
+  self.d.text_font_size = 10
+
+  self.d.clock_size = 1
+  self.d.clock_position_offset = [0, 0]
+
+  szx = self.d.sz[1]
+
+  IF szx LT 160 THEN BEGIN
+    raster = self.d.filename.contains('ras')
+    self.d.xtickinterval = (raster) ? 50 : 25
+
+    self.d.colorbar_major = (self.d.parameter EQ 'vel') ? 3 : 2
+  ENDIF
+
+  IF szx LT 100 THEN BEGIN
+    self.d.clock_size = 0.7
+    self.d.clock_position_offset = [-10, -10]
+  ENDIF
+
+  IF szx LT 80 THEN BEGIN
+    self.d.text_font_size -= 2
+  ENDIF
+
+  IF szx LT 50 THEN BEGIN
+    self.d.text_font_size -= 1
+    self.d.clock_size = 0.5
+    self.d.clock_position_offset = [25, -5]
+  ENDIF
+END
+
+PRO spice_jpg_exp::plot, clock = clock
+  self._plot_data
+  ; self._plot_coordinate_system
+  self._plot_colorbar
+  self._plot_texts
+  self._plot_compass
+  IF keyword_set(clock) THEN self._plot_clock
+END
+
+PRO spice_jpg_exp::update, filename, aData, wcs, _extra = extra
+  self._ingest_input_parameters_and_keywords, filename, aData, wcs, _extra = extra
+
+  self._set_spiobsid_and_rasterno
+  self._set_title
+  self._set_colors
+
+  self._remove_trends_in_data
+
+  ; self._set_congrid_data
+  self._set_xyrange_padded_data
+  ; self._set_padded_data
+  self._set_plot_keywords_based_on_padded_data_size
+
+  ; self._set_plot_axis
+  self._init_graphics_window
 END
 
 PRO spice_jpg_exp__define
