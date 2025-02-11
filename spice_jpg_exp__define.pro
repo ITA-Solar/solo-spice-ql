@@ -150,6 +150,18 @@ PRO spice_jpg_exp::_plot_data
   ; print, self.d.plot_position
   ; stop
 
+  xrange = self.d.srangepadded.x
+  xa = double(min(xrange))
+  xb = (max(xrange) - xa) / (size_image[1] - 1)
+  yrange = self.d.srangepadded.y
+  ya = double(min(yrange))
+  yb = (max(yrange) - ya) / (size_image[2] - 1)
+
+  ax = imPadded.axes
+  ax[0].coord_transform = [xa, xb]
+  ax[0].major = 3
+  ax[1].coord_transform = [ya, yb]
+
   self.d.imPadded = imPadded
 
   self.d.imCoordinatesPosition = imPadded.position
