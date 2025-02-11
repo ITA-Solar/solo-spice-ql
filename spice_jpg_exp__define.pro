@@ -97,15 +97,35 @@ PRO spice_jpg_exp::_set_title
 END
 
 PRO spice_jpg_exp::_plot_coordinate_system
+  return
   self._set_coordinate_data
   help, self.d.aDataCoordinates, self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y
   ; stop
-  imCoordinates = image(self.d.aData, /current, $ ; self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y, /current, $
+  size_image = size(self.d.aData)
+  sAxisx = findgen(size_image[1]) * 0.3 + 500
+  sAxisy = findgen(size_image[2]) * 20
+  help, self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y
+  ; stop
+
+  ; print, ''
+  ; print, 'x diff'
+  ; print, self.d.sAxisPadded.x - self.d.sCoordinateAxis.x
+  ; stop
+  ; print, ''
+  ; print, 'y diff'
+  ; print, self.d.sAxisPadded.y - self.d.sCoordinateAxis.y
+  ; stop
+
+  imCoordinates = image(self.d.aData, sAxisx, self.d.sCoordinateAxis.y, /current, $ ; sAxisx, sAxisy, /current, $ ;
     transparency = 90, axis_style = 2, xtickinterval = self.d.xtickinterval, $
     xtitle = self.d.xtitle, ytitle = self.d.ytitle, title = self.d.title, $
-    font_size = self.d.font_size)
-
+    font_size = self.d.font_size, aspect_ratio = 0.5)
+  ; print, 'imPadded 1', imCoordinates.position
   imCoordinates.position = self.d.plot_position
+  ; print, 'imPadded 2', imCoordinates.position
+  ; help, self.d.plot_position
+  ; print, self.d.plot_position
+  ; stop
 
   self.d.imCoordinatesPosition = imCoordinates.position
   self.d.plot_top_position = self.d.imCoordinatesPosition[3] * self.d.winsize_padded[1]
@@ -113,12 +133,27 @@ END
 
 PRO spice_jpg_exp::_plot_data
   help, self.d.aData, self.d.sAxisPadded.x, self.d.sAxisPadded.y
+  size_image = size(self.d.aData)
+  sAxisx = findgen(size_image[1])
+  sAxisy = findgen(size_image[2])
+  ; help, self.d.sAxisPadded.x, self.d.sAxisPadded.y
+  ; print, 'self.d.sAxisPadded.x', self.d.sAxisPadded.x
   ; stop
-  imPadded = image(self.d.aData, $ ; self.d.sAxis.x, self.d.sAxis.y, $
-    rgb_table = self.d.palette, axis_style = 4, font_size = self.d.font_size, xtitle = self.d.xtitle, ytitle = self.d.ytitle, /current)
+  ; print, 'self.d.sAxisPadded.y', self.d.sAxisPadded.y
+  ; stop
+  imPadded = image(self.d.aData, sAxisx, sAxisy, $
+    rgb_table = self.d.palette, axis_style = 2, font_size = self.d.font_size, xtitle = self.d.xtitle, ytitle = self.d.ytitle, /current)
+  ; print, 'imPadded 1', imPadded.position
   imPadded.position = self.d.plot_position
+  ; print, 'imPadded 2', imPadded.position
+  ; help, self.d.plot_position
+  ; print, self.d.plot_position
+  ; stop
 
   self.d.imPadded = imPadded
+
+  self.d.imCoordinatesPosition = imPadded.position
+  self.d.plot_top_position = self.d.imCoordinatesPosition[3] * self.d.winsize_padded[1]
 END
 
 PRO spice_jpg_exp__define
