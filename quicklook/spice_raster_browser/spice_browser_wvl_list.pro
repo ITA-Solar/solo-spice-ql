@@ -34,18 +34,17 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
-
+; $Id: 2024-11-26 13:50 CET $
 
 FUNCTION spice_browser_wvl_list, data, wid_data
   ;
   ; This creates the pull-down list of wavelength windows.
   ;
-  id=data->get_window_id()
-  n_id=n_elements(id)
-  choices='1\Choose a wavelength window'
-  FOR i=0,n_id-1 DO BEGIN
-    IF i NE n_id-1 THEN choices=[choices,'0\'+id[i]] ELSE choices=[choices,'2\'+id[i]]
+  id = data.get_window_id()
+  n_id = n_elements(id)
+  choices = '1\Choose a wavelength window'
+  FOR i = 0, n_id - 1 DO BEGIN
+    IF i NE n_id - 1 THEN choices = [choices, '0\' + id[i]] ELSE choices = [choices, '2\' + id[i]]
   ENDFOR
   ;
   ; PRY, 16-Mar-2017
@@ -56,7 +55,6 @@ FUNCTION spice_browser_wvl_list, data, wid_data
   ; the button never appears. If the object does get fixed, then I can
   ; change the check below back to 1.
   ;
-  IF wid_data.sit_stare EQ 2 THEN choices=[choices,'0\Whisker (t-Y) plot']
-  return,choices
-
+  IF wid_data.sit_stare EQ 2 THEN choices = [choices, '0\Whisker (t-Y) plot']
+  return, choices
 END

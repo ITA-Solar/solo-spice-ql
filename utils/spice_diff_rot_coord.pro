@@ -62,89 +62,89 @@
 ; Contact     :	WTHOMPSON
 ;-
 ;
-pro spice_diff_rot_coord, wcs, coord, tracking=tracking, $
-                          target_wcs=target_wcs, _extra=_extra
-;
-;  Get the reference date.
-;
-if tag_exist(wcs.time, 'DATEREF') then dateref = wcs.time.dateref else $
-  dateref = wcs.time.observ_date
-;
-;  If the target date was unspecified, then use the reference date.
-;
-if n_elements(target_wcs) ne 1 then target_time = wcs.time.observ_avg else begin
-    date_avg = wcs_get_time(target_wcs, /avg, _extra=_extra)
-    if date_avg ne '' then target_time = date_avg
-endelse
-;
-;  Calculate the TAI times, and the change due to the spacecraft orbit,
-;  depending on whether /TRACKING is set or not.
-;
-tai0 = anytim2tai(wcs.time.observ_avg)
-if keyword_set(tracking) then begin
+PRO spice_diff_rot_coord, wcs, coord, tracking = tracking, $
+  target_wcs = target_wcs, _extra = _extra
+  ;
+  ; Get the reference date.
+  ;
+  IF tag_exist(wcs.time, 'DATEREF') THEN dateref = wcs.time.dateref ELSE $
+    dateref = wcs.time.observ_date
+  ;
+  ; If the target date was unspecified, then use the reference date.
+  ;
+  IF n_elements(target_wcs) NE 1 THEN target_time = wcs.time.observ_avg ELSE BEGIN
+    date_avg = wcs_get_time(target_wcs, /avg, _extra = _extra)
+    IF date_avg NE '' THEN target_time = date_avg
+  ENDELSE
+  ;
+  ; Calculate the TAI times, and the change due to the spacecraft orbit,
+  ; depending on whether /TRACKING is set or not.
+  ;
+  tai0 = anytim2tai(wcs.time.observ_avg)
+  IF keyword_set(tracking) THEN BEGIN
     tai = tai0
-end else begin
+  END ELSE BEGIN
     tai = anytim2tai(dateref) + reform(coord[3, *, *, *, *])
     utc0 = tai2utc(tai0)
-    lonlat0 = get_sunspice_lonlat(utc0, 'solo', system='Carrington', /degrees)
+    lonlat0 = get_sunspice_lonlat(utc0, 'solo', system = 'Carrington', /degrees)
     sz = size(tai)
-    dlon = make_array(size=sz, /nozero)
-    dlat = make_array(size=sz, /nozero)
+    dlon = make_array(size = sz, /nozero)
+    dlat = make_array(size = sz, /nozero)
     tai1 = all_vals(tai)
     utc1 = tai2utc(tai1)
-    for i=0,n_elements(utc1)-1 do begin
-        lonlat1 = get_sunspice_lonlat(utc1[i], 'solo', system='Carrington', $
-                                      /degrees)
-        w = where(tai1[i] eq tai)
-        dlon[w] = lonlat1[1,w] - lonlat0[1]
-        dlat[w] = lonlat1[2,w] - lonlat0[2]
-    endfor
-endelse
-;
-;  Calculate the time difference in days.  If this would result in no change,
-;  then return.
-;
-dd = (anytim2tai(target_time) - tai) / 86400.d0
-if (n_elements(dd) eq 1) and (dd[0] eq 0) then return
-;
-;  Convert the HPC coordinates into Carrington longitude and latitude.
-;
-wcs_convert_from_coord, wcs, coord, 'HG', lon, lat, /carrington
-;
-;  Apply the differential rotation and the spacecraft motion.
-;
-drot = diff_rot(dd, lat, /carrington, rigid=0, synodic=0, _extra=_extra)
-lon = lon + dlon + drot
-lat = lat + dlat
-;
-;  Correct any latitudes that go beyond -90 to +90.
-;
-w = where(lat gt 90, count)
-if count gt 0 then begin
+    FOR i = 0, n_elements(utc1) - 1 DO BEGIN
+      lonlat1 = get_sunspice_lonlat(utc1[i], 'solo', system = 'Carrington', $
+        /degrees)
+      w = where(tai1[i] EQ tai)
+      dlon[w] = lonlat1[1, w] - lonlat0[1]
+      dlat[w] = lonlat1[2, w] - lonlat0[2]
+    ENDFOR
+  ENDELSE
+  ;
+  ; Calculate the time difference in days.  If this would result in no change,
+  ; then return.
+  ;
+  dd = (anytim2tai(target_time) - tai) / 86400.d0
+  IF (n_elements(dd) EQ 1) AND (dd[0] EQ 0) THEN return
+  ;
+  ; Convert the HPC coordinates into Carrington longitude and latitude.
+  ;
+  wcs_convert_from_coord, wcs, coord, 'HG', lon, lat, /carrington
+  ;
+  ; Apply the differential rotation and the spacecraft motion.
+  ;
+  drot = diff_rot(dd, lat, /carrington, rigid = 0, synodic = 0, _extra = _extra)
+  lon = lon + dlon + drot
+  lat = lat + dlat
+  ;
+  ; Correct any latitudes that go beyond -90 to +90.
+  ;
+  w = where(lat GT 90, count)
+  IF count GT 0 THEN BEGIN
     lat[w] = 180 - lat[w]
     lon[w] = lon[w] + 180
-endif
-;
-w = where(lat lt (-90), count)
-if count gt 0 then begin
+  ENDIF
+  ;
+  w = where(lat LT (-90), count)
+  IF count GT 0 THEN BEGIN
     lat[w] = -180 - lat[w]
     lon[w] = lon[w] + 180
-endif
-;
-;  Convert the longitude and latitude back into HPC coordinates.  Only update
-;  coordinates that are on the disk.
-;
-if n_elements(target_wcs) eq 1 then wcsout = target_wcs else wcsout = wcs
-wcs_convert_to_coord, wcsout, coord1, 'HG', lon, lat, /carrington
-sz = size(coord)
-dim = sz[1:sz[0]]
-nn = product(dim[1:*])
-coord = reform(coord, sz[1], nn, /overwrite)
-sz1 = size(coord1)
-coord1 = reform(coord1, sz1[1], nn, /overwrite)
-w = where(finite(coord1[0,*]))
-coord[0,w] = coord1[0,w]
-coord[1,w] = coord1[1,w]
-coord = reform(coord, dim, /overwrite)
-;
-end
+  ENDIF
+  ;
+  ; Convert the longitude and latitude back into HPC coordinates.  Only update
+  ; coordinates that are on the disk.
+  ;
+  IF n_elements(target_wcs) EQ 1 THEN wcsout = target_wcs ELSE wcsout = wcs
+  wcs_convert_to_coord, wcsout, coord1, 'HG', lon, lat, /carrington
+  sz = size(coord)
+  dim = sz[1 : sz[0]]
+  nn = product(dim[1 : *])
+  coord = reform(coord, sz[1], nn, /overwrite)
+  sz1 = size(coord1)
+  coord1 = reform(coord1, sz1[1], nn, /overwrite)
+  w = where(finite(coord1[0, *]))
+  coord[0, w] = coord1[0, w]
+  coord[1, w] = coord1[1, w]
+  coord = reform(coord, dim, /overwrite)
+  ;
+END

@@ -106,6 +106,7 @@ We defined a SPICE data object, called SPICE_DATA, which can be initiated with a
 contains many methods to handle the data and the header contained in the given FITS file. It can be created 
 using one of these commands:
 ```
+spice_object = spice_object(spice_file)          ; flexible form, accepts also level 3 files
 spice_object = spice_data(spice_file)            ; short form
 spice_object = obj_new('spice_data', spice_file) ; long form
 ```
@@ -204,7 +205,7 @@ There are several useful tools to manage SPICE files:
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
 date and time. The line with this format will be edited:
 ```
-; $Id: 2024-02-09 14:12 CET $
+; $Id: 2024-11-26 11:40 CET $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
 description at the beginning of the file. 

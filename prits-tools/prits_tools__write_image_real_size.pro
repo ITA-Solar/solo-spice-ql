@@ -15,7 +15,7 @@
 ;
 ; CALLING SEQUENCE:
 ;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME] $
-;       [, /REMOVE_TRENDS] [,SMOOTH=SMOOTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
+;       [, /REMOVE_TRENDS] [,SMOOTH_WIDTH=SMOOTH_WIDTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
 ;       [, XRANGE1=XRANGE1] [, XRANGE2=XRANGE2] [, YRANGE1=YRANGE1] [, YRANGE2=YRANGE2] $
 ;       [, XTITLE1=XTITLE1] [, XTITLE2=XTITLE2] [, YTITLE1=YTITLE1] [, YTITLE2=YTITLE2] $
 ;       [, TITLE=TITLE] $
@@ -33,11 +33,11 @@
 ;               Default is 'image.xxx' (where xxx is the chosen file format) in the current directory.
 ;
 ; OPTIONAL INPUT:
-;     SMOOTH:   An integer. The width of the boxcar used when smoothing the
+;     SMOOTH_WIDTH: An integer. The width of the boxcar used when smoothing the
 ;               image using the smooth function. If not set no smoothing is performed.
 ;     COLORTABLE: An integer. The number of the colortable to be used. See here for a list of colortables:
-;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword 
-;               to 100 (a color table that doesn't exist) signals that the 
+;               https://www.l3harrisgeospatial.com/docs/loadingdefaultcolortables.html . Setting this keyword
+;               to 100 (a color table that doesn't exist) signals that the
 ;               input image_data is a velocity image that needs special
 ;               treatment, among other things using the eis_colors,/velocity
 ;               red-blue color table.
@@ -83,12 +83,12 @@
 ;
 ; KEYWORD PARAMETERS:
 ;     INTERPOLATION: If set, then the image is expanded with bilinear interpolation.
-;               This keyword should not be set, if SMOOTH input is provided.
+;               This keyword should not be set, if SMOOTH_WIDTH input is provided.
 ;     REMOVE_HORIZONTAL_TREND: If set, remove horizontal trend in the image
 ;     REMOVE_VERTICAL_TREND: If set, remove vertical trend in the image
 ;     SCALE_TO_RANGE: If set, then the width/height ratio of the image will be adjusted to the given
-;               XRANGE1 and YRANGE1. If neither HEIGHT nor WIDTH is provided, then the width of the 
-;               image will be adjusted. 
+;               XRANGE1 and YRANGE1. If neither HEIGHT nor WIDTH is provided, then the width of the
+;               image will be adjusted.
 ;               This keyword is ignored if XRANGE1 and YRANGE1 are not provided, or if both HEIGHT and WIDTH
 ;               are provided.
 ;     NO_AXIS:  If set, then no axis will be plotted, eventhough XRANGEn and/or YRANGEn is provided.
@@ -121,7 +121,7 @@
 ;     Ver. 4, 14-May-2024, Terje Fredvik - replaced remove_trend keyword with
 ;     remove_vertical_trend and remove_horizontal_trend
 ;     Ver. 5, 03-Jun-2024, Terje Fredvik - New keyword fit_trend. Remove min value from line width
-;     images. 
+;     images.
 ;     Ver. 6, 03-Jul-2024, Terje Fredvik - New keywords value_max and
 ;     value_min. Currently only used as upper and lower limits for velocity
 ;     images
@@ -129,101 +129,96 @@
 ;     2 pixels to prevent crash
 ;
 ;-
-; $Id: 2024-09-27 07:26 CEST $
-
-
+; $Id: 2024-11-26 13:50 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, $
-  remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend=fit_trend, $smooth = smooth, $
-  value_max=value_max, value_min=value_min, $
-  colortable=colortable, format=format, interpolation=interpolation, $
-  xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
-  xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
-  title=title, $
-  background_color=background_color, text_color=text_color, $
-  border=border, scale_factor=scale_factor, height=height, width=width, $ 
-  SCALE_TO_RANGE=SCALE_TO_RANGE, no_axis=no_axis, $
-  cutoff_threshold=cutoff_threshold, color_center_value=color_center_value, $
-  jpeg_quality=jpeg_quality, $
-  show_plot=show_plot, reverse_colortable=reverse_colortable, $
-  _extra=_extra
-
-  compile_opt idl2, static
+  remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, $
+  fit_trend = fit_trend, smooth_width = smooth_width, $
+  value_max = value_max, value_min = value_min, $
+  colortable = colortable, format = format, interpolation = interpolation, $
+  xrange1 = xrange1, xrange2 = xrange2, yrange1 = yrange1, yrange2 = yrange2, $
+  xtitle1 = xtitle1, xtitle2 = xtitle2, ytitle1 = ytitle1, ytitle2 = ytitle2, $
+  title = title, $
+  background_color = background_color, text_color = text_color, $
+  border = border, scale_factor = scale_factor, height = height, width = width, $
+  scale_to_range = scale_to_range, no_axis = no_axis, $
+  cutoff_threshold = cutoff_threshold, color_center_value = color_center_value, $
+  jpeg_quality = jpeg_quality, $
+  show_plot = show_plot, reverse_colortable = reverse_colortable, $
+  _extra = _extra
+  COMPILE_OPT IDL2, STATIC
 
   prits_tools.parcheck, image_data, 1, "image_data", 'NUMERIC', 2
-  prits_tools.parcheck, filename, 2, "filename", 'STRING', 0, default=''
-  prits_tools.parcheck, colortable, 0, "colortable", 'INTEGERS', 0, minval=0, default=0
-  prits_tools.parcheck, format, 0, "format", 'STRING', 0, default='JPEG'
-  prits_tools.parcheck, xrange1, 0, "xrange1", ['NUMERIC', 'undefined'], 1, valid_nelements=2
-  prits_tools.parcheck, xrange2, 0, "xrange2", ['NUMERIC', 'undefined'], 1, valid_nelements=2
-  prits_tools.parcheck, yrange1, 0, "yrange1", ['NUMERIC', 'undefined'], 1, valid_nelements=2
-  prits_tools.parcheck, yrange2, 0, "yrange2", ['NUMERIC', 'undefined'], 1, valid_nelements=2
+  prits_tools.parcheck, filename, 2, "filename", 'STRING', 0, default = ''
+  prits_tools.parcheck, colortable, 0, "colortable", 'INTEGERS', 0, minval = 0, default = 0
+  prits_tools.parcheck, format, 0, "format", 'STRING', 0, default = 'JPEG'
+  prits_tools.parcheck, xrange1, 0, "xrange1", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
+  prits_tools.parcheck, xrange2, 0, "xrange2", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
+  prits_tools.parcheck, yrange1, 0, "yrange1", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
+  prits_tools.parcheck, yrange2, 0, "yrange2", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
   prits_tools.parcheck, xtitle1, 0, "xtitle1", ['STRING', 'undefined'], 0
   prits_tools.parcheck, xtitle2, 0, "xtitle2", ['STRING', 'undefined'], 0
   prits_tools.parcheck, ytitle1, 0, "ytitle1", ['STRING', 'undefined'], 0
   prits_tools.parcheck, ytitle2, 0, "ytitle2", ['STRING', 'undefined'], 0
   prits_tools.parcheck, title, 0, "title", ['STRING', 'undefined'], 0
-  prits_tools.parcheck, background_color, 0, "background_color", 'INTEGERS', 1, valid_nelements=3, $
-    minval=0, maxval=255, default=[255, 255, 255]
-  prits_tools.parcheck, text_color, 0, "text_color", 'INTEGERS', 1, valid_nelements=3, $
-    minval=0, maxval=255, default=[0, 0, 0]
-  prits_tools.parcheck, border, 0, "border", 'INTEGERS', 0, minval=0, default=5
-  prits_tools.parcheck, scale_factor, 0, "scale_factor", 'numeric', 0, minval=1e-6, /optional
-  prits_tools.parcheck, height, 0, "height", 'INTEGERS', 0, minval=2, /optional
-  prits_tools.parcheck, width, 0, "width", 'INTEGERS', 0, minval=2, /optional
-  prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval=0, maxval=1, default=0.02
+  prits_tools.parcheck, background_color, 0, "background_color", 'INTEGERS', 1, valid_nelements = 3, $
+    minval = 0, maxval = 255, default = [255, 255, 255]
+  prits_tools.parcheck, text_color, 0, "text_color", 'INTEGERS', 1, valid_nelements = 3, $
+    minval = 0, maxval = 255, default = [0, 0, 0]
+  prits_tools.parcheck, border, 0, "border", 'INTEGERS', 0, minval = 0, default = 5
+  prits_tools.parcheck, scale_factor, 0, "scale_factor", 'numeric', 0, minval = 1e-6, /optional
+  prits_tools.parcheck, height, 0, "height", 'INTEGERS', 0, minval = 2, /optional
+  prits_tools.parcheck, width, 0, "width", 'INTEGERS', 0, minval = 2, /optional
+  prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval = 0, maxval = 1, default = 0.02
   prits_tools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
-  prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval=0, maxval=100, default=75
-  prits_tools.parcheck, smooth, 0, "smooth", 'numeric', 0, minval=0, /optional
-  
+  prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval = 0, maxval = 100, default = 75
+  prits_tools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
+
   show_plot = keyword_set(show_plot)
-  
-  IF show_plot THEN set_plot,'x' ELSE set_plot,'z'
-  
-  DEVICE, DECOMPOSED = 0  
+
+  IF show_plot THEN set_plot, 'x' ELSE set_plot, 'z'
+
+  device, DECOMPOSED = 0
 
   ; Get the current colortable to restore it at the end
-  TVLCT, Red_old, Green_old, Blue_old, /GET
+  tvlct, Red_old, Green_old, Blue_old, /GET
 
-                                ; Install the new colortable and set the background and text color
+  ; Install the new colortable and set the background and text color
   cutoff_threshold_old = cutoff_threshold
-  
+
   line_vel = filename.contains('vel')
   line_wid = filename.contains('wid')
-  line_int = filename.contains('int')
-  
-  IF line_vel THEN BEGIN 
-     eis_colors, /velocity
-     cutoff_threshold = 0
-     default, value_max, 50             
-     default, value_min, -50
+
+  IF line_vel THEN BEGIN
+    eis_colors, /velocity
+    cutoff_threshold = 0
+    default, value_max, 50
+    default, value_min, -50
   ENDIF ELSE loadct, colortable
-  
-  tvlct,r,g,b,/get
-  
+
+  tvlct, r, g, b, /get
+
   IF keyword_set(reverse_colortable) THEN BEGIN
     r = reverse(r)
     g = reverse(g)
     b = reverse(b)
- ENDIF
-  
-  ;background color
- 
-  r[0]=background_color[0]
-  g[0]=background_color[1]
-  b[0]=background_color[2]
+  ENDIF
 
-     
-  ;text color
-  r[255]=text_color[0]
-  g[255]=text_color[1]
-  b[255]=text_color[2]
-  tvlct,r,g,b
+  ; background color
 
-  
+  r[0] = background_color[0]
+  g[0] = background_color[1]
+  b[0] = background_color[2]
+
+  ; text color
+  r[255] = text_color[0]
+  g[255] = text_color[1]
+  b[255] = text_color[2]
+  tvlct, r, g, b
+
   IF ~show_plot && filename EQ '' THEN BEGIN
-    filename = 'image.'+format
-    message, 'No filename provided. Saving image in '+filename+' in current directory', /info
+    filename = 'image.' + format
+    message, 'No filename provided. Saving image in ' + filename + ' in current directory', /info
   ENDIF
 
   margin_left = border
@@ -269,9 +264,8 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   size_image = size(image_data)
   xs = size_image[1]
   ys = size_image[2]
-  IF keyword_set(SCALE_TO_RANGE) && keyword_set(xrange1) && keyword_set(yrange1) && $
-    ~(keyword_set(HEIGHT) && keyword_set(WIDTH)) THEN BEGIN
-    
+  IF keyword_set(scale_to_range) && keyword_set(xrange1) && keyword_set(yrange1) && $
+    ~(keyword_set(height) && keyword_set(width)) THEN BEGIN
     xyratio = (yrange1[1] - yrange1[0]) / (xrange1[1] - xrange1[0])
     IF keyword_set(height) THEN BEGIN
       ys = height
@@ -282,183 +276,168 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
     ENDIF ELSE BEGIN
       xs = ys / xyratio
     ENDELSE
-
   ENDIF ELSE IF keyword_set(scale_factor) THEN BEGIN
-    xs = round(double(xs)*scale_factor)
-    ys = round(double(ys)*scale_factor)
+    xs = round(double(xs) * scale_factor)
+    ys = round(double(ys) * scale_factor)
   ENDIF ELSE BEGIN
     IF keyword_set(height) && keyword_set(width) THEN BEGIN
       xs = width
       ys = height
     ENDIF ELSE IF keyword_set(height) THEN BEGIN
       scale_factor = double(height) / double(ys)
-      xs = round(double(xs)*scale_factor)
+      xs = round(double(xs) * scale_factor)
       ys = height
     ENDIF ELSE IF keyword_set(width) THEN BEGIN
       scale_factor = double(width) / double(xs)
-      ys = round(double(ys)*scale_factor)
+      ys = round(double(ys) * scale_factor)
       xs = width
     ENDIF
   ENDELSE
-  WINsize = [xs+margin_left+margin_right > 2, ys+margin_top+margin_bottom]
-  Win_position = [double(margin_left)/WINsize[0], double(margin_bottom)/WINsize[1], $
-    (double(xs+margin_left))/WINsize[0], (double(ys+margin_bottom))/WINsize[1]]
+  WINsize = [xs + margin_left + margin_right > 2, ys + margin_top + margin_bottom]
+  Win_position = [double(margin_left) / WINsize[0], double(margin_bottom) / WINsize[1], $
+    (double(xs + margin_left)) / WINsize[0], (double(ys + margin_bottom)) / WINsize[1]]
 
-  if show_plot then begin
-    window, 16, xs=WINsize[0], ys=WINsize[1]
-  endif else begin
-    device, set_res=WINsize
-  endelse
-  
-  IF keyword_set(smooth)        THEN image_data = smooth(image_data, smooth)
-  
+  IF show_plot THEN BEGIN
+    window, 16, xs = WINsize[0], ys = WINsize[1]
+  ENDIF ELSE BEGIN
+    device, set_res = WINsize
+  ENDELSE
+
+  IF keyword_set(smooth_width) THEN image_data = smooth(image_data, smooth_width)
+
   IF line_vel THEN image_data -= median(image_data)
   IF line_wid THEN image_data -= min(image_data)
-  
-  image_data = prits_tools.remove_trends(image_data, value_min=value_min, value_max=value_max, $
-                                         remove_horizontal_trend=remove_horizontal_trend, remove_vertical_trend=remove_vertical_trend, fit_trend = fit_trend)
-     
-  image_data_use = (cutoff_threshold GT 0) ? HISTO_OPT(image_data, cutoff_threshold) : image_data
 
- IF N_ELEMENTS(color_center_value) EQ 1 THEN BEGIN
-    max_image = max(abs(image_data_use-color_center_value))
+  image_data = prits_tools.remove_trends(image_data, value_min = value_min, value_max = value_max, $
+    remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend)
+
+  image_data_use = (cutoff_threshold GT 0) ? histo_opt(image_data, cutoff_threshold) : image_data
+
+  IF n_elements(color_center_value) EQ 1 THEN BEGIN
+    max_image = max(abs(image_data_use - color_center_value))
     min_image = -1 * max_image + color_center_value
     max_image += color_center_value
   ENDIF
 
-  pih, image_data_use, position=Win_position, $
-    xstyle=5, ystyle=5, top=254, bottom=1, $
-    background=0, color=255, title=title, $
-    min=min_image, max=max_image, smooth=interpolation, $
-    _extra=_extra
+  pih, image_data_use, position = Win_position, $
+    xstyle = 5, ystyle = 5, top = 254, bottom = 1, $
+    background = 0, color = 255, title = title, $
+    min = min_image, max = max_image, smooth = interpolation, $
+    _extra = _extra
 
-  if show_plot then charsize=1.15 else charsize=1
+  IF show_plot THEN charsize = 1.15 ELSE charsize = 1
 
   IF border GT 0 || keyword_set(title) || $
     keyword_set(xtitle1) || keyword_set(xrange1) || $
     keyword_set(xtitle2) || keyword_set(xrange2) || $
     keyword_set(ytitle1) || keyword_set(yrange1) || $
     keyword_set(ytitle2) || keyword_set(yrange2) THEN BEGIN
-
     IF keyword_set(xrange1) && ~keyword_set(no_axis) THEN BEGIN
       n_digits_x1 = max(strlen(trim(string(ceil(xrange1)))))
       xticks = floor(double(xs) / 15.0d / n_digits_x1)
-      IF xticks EQ 0 THEN xticks=1
-      IF xticks GT 3 THEN xticks=0
-      xtickname=''
+      IF xticks EQ 0 THEN xticks = 1
+      IF xticks GT 3 THEN xticks = 0
+      xtickname = ''
     ENDIF ELSE BEGIN
-      xticks=1
-      xtickname=REPLICATE(' ', 2)
+      xticks = 1
+      xtickname = replicate(' ', 2)
     ENDELSE
-    axis, xaxis=0, xrange=xrange1, xtitle=xtitle1, xstyle=1, color=255, charsize=charsize, $
-      xticks=xticks, xtickname=xtickname, xtickformat='(I)'
+    axis, xaxis = 0, xrange = xrange1, xtitle = xtitle1, xstyle = 1, color = 255, charsize = charsize, $
+      xticks = xticks, xtickname = xtickname, xtickformat = '(I)'
 
     IF keyword_set(xrange2) && ~keyword_set(no_axis) THEN BEGIN
       n_digits_x2 = max(strlen(trim(string(ceil(xrange2)))))
       xticks = floor(double(xs) / 15.0d / n_digits_x2)
-      IF xticks EQ 0 THEN xticks=1
-      IF xticks GT 3 THEN xticks=0
-      xtickname=''
+      IF xticks EQ 0 THEN xticks = 1
+      IF xticks GT 3 THEN xticks = 0
+      xtickname = ''
     ENDIF ELSE BEGIN
-      xticks=1
-      xtickname=REPLICATE(' ', 2)
+      xticks = 1
+      xtickname = replicate(' ', 2)
     ENDELSE
-    axis, xaxis=1, xrange=xrange2, xtitle=xtitle2, xstyle=1, color=255, charsize=charsize, $
-      xticks=xticks, xtickname=xtickname, xtickformat='(I)'
+    axis, xaxis = 1, xrange = xrange2, xtitle = xtitle2, xstyle = 1, color = 255, charsize = charsize, $
+      xticks = xticks, xtickname = xtickname, xtickformat = '(I)'
 
     IF keyword_set(yrange1) && ~keyword_set(no_axis) THEN BEGIN
-      yticks=0
-      ytickname=''
+      yticks = 0
+      ytickname = ''
     ENDIF ELSE BEGIN
-      yticks=1
-      ytickname=REPLICATE(' ', 2)
+      yticks = 1
+      ytickname = replicate(' ', 2)
     ENDELSE
-    axis, yaxis=0, yrange=yrange1, ytitle=ytitle1, ystyle=1, color=255, charsize=charsize, $
-      yticks=yticks, ytickname=ytickname, ytickformat='(I)'
+    axis, yaxis = 0, yrange = yrange1, ytitle = ytitle1, ystyle = 1, color = 255, charsize = charsize, $
+      yticks = yticks, ytickname = ytickname, ytickformat = '(I)'
 
     IF keyword_set(yrange2) && ~keyword_set(no_axis) THEN BEGIN
-      yticks=0
-      ytickname=''
+      yticks = 0
+      ytickname = ''
     ENDIF ELSE BEGIN
-      yticks=1
-      ytickname=REPLICATE(' ', 2)
+      yticks = 1
+      ytickname = replicate(' ', 2)
     ENDELSE
-    axis, yaxis=1, yrange=yrange2, ytitle=ytitle2, ystyle=1, color=255, charsize=charsize, $
-      yticks=yticks, ytickname=ytickname, ytickformat='(I)'
-
+    axis, yaxis = 1, yrange = yrange2, ytitle = ytitle2, ystyle = 1, color = 255, charsize = charsize, $
+      yticks = yticks, ytickname = ytickname, ytickformat = '(I)'
   ENDIF
 
-  IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b, quality=jpeg_quality, _extra=_extra
+  ; idl-disable-next-line unknown-kw
+  IF ~show_plot THEN write_image, filename, format, tvrd(), r, g, b, quality = jpeg_quality, _extra = _extra
 
   ; Set previous colortable again
-  TVLCT, Red_old, Green_old, Blue_old
+  tvlct, Red_old, Green_old, Blue_old
   cutoff_threshold = cutoff_threshold_old
   set_plot, 'x'
 END
 
-
-
-
-
 PRO prits_tools::write_image_real_size_test
-  compile_opt static
-  print,''
-  print,'write_image_real_size_test'
-  print,''
+  COMPILE_OPT STATIC
+  print, ''
+  print, 'write_image_real_size_test'
+  print, ''
 
-  format='PNG'
+  format = 'PNG'
   filename = '~/temp/test_pt.png'
 
-  ;format='JPEG'
-  ;filename = '~/temp/test_pt.jpg'
-  ;jpeg_quality = 30
+  ; format='JPEG'
+  ; filename = '~/temp/test_pt.jpg'
+  ; jpeg_quality = 30
 
-  ;show_plot = 1
+  ; show_plot = 1
   colortable = 70
-  ;border = 3
-  ;scale_factor = 0.2
-  ;height = 400
-  ;width = 40
+  ; border = 3
+  ; scale_factor = 0.2
+  ; height = 400
+  ; width = 40
 
-  ;title='My Sun'
+  ; title='My Sun'
 
-  xtitle1='Solar X'
-  xrange1=[100,900]
+  xtitle1 = 'Solar X'
+  xrange1 = [100, 900]
 
-  ;xtitle2='Solar Z'
-  xrange2=[1,9]
+  ; xtitle2='Solar Z'
+  xrange2 = [1, 9]
 
-  ytitle1='Solar Y'
-  yrange1=[-1111,111]
+  ytitle1 = 'Solar Y'
+  yrange1 = [-1111, 111]
 
-  ;ytitle2='Solarplex'
-  yrange2=[-1111,111]
+  ; ytitle2='Solarplex'
+  yrange2 = [-1111, 111]
 
-  ;background_color = [255,0,0]
-  ;text_color = [88,233,23]
+  ; background_color = [255,0,0]
+  ; text_color = [88,233,23]
 
   xs = 100
   ys = 700
-  image_data=fltarr(xs,ys)
-  for i=0,xs-1 do begin
-    for j=0,ys-1 do begin
-      image_data[i,j] = ((i+j) mod 2) * (randomn(seed)*5 + i +j)
-    endfor
-  endfor
+  image_data = fltarr(xs, ys)
+  FOR i = 0, xs - 1 DO BEGIN
+    FOR j = 0, ys - 1 DO BEGIN
+      image_data[i, j] = ((i + j) MOD 2) * (randomn(seed) * 5 + i + j) ; idl-disable-line unused-var
+    ENDFOR
+  ENDFOR
 
-
-  prits_tools.write_image_real_size, image_data, filename, colortable=colortable, format=format, $
-    xrange1=xrange1, xrange2=xrange2, yrange1=yrange1, yrange2=yrange2, $
-    xtitle1=xtitle1, xtitle2=xtitle2, ytitle1=ytitle1, ytitle2=ytitle2, $
-    title=title, $
-    background_color=background_color, text_color=text_color, $
-    border=border, scale_factor=scale_factor, height=height, width=width, $
-    jpeg_quality=jpeg_quality, $
-    show_plot=show_plot
-
+  prits_tools.write_image_real_size, image_data, filename, colortable = colortable, format = format, $
+    xrange1 = xrange1, xrange2 = xrange2, yrange1 = yrange1, yrange2 = yrange2, $
+    xtitle1 = xtitle1, ytitle1 = ytitle1
 END
-
-
 
 IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
   IF getenv("USER") EQ "steinhh" THEN add_path, "$HOME/idl/solo-spice-ql", /expand

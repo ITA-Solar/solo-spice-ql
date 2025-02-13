@@ -54,7 +54,7 @@
 ;
 ; RESTRICTIONS:
 ;      The environment variable SPICE_DATA must be defined.
-;      
+;
 ; USAGE:
 ;     spice_ingest_reorder
 ;           A call without arguments is required, when you have used spice_ingest before 2-Nov-2020,
@@ -67,48 +67,44 @@
 ; HISTORY:
 ;      29-Oct-2020 : Martin Wiesmann
 ;-
-; $Id: 2020-11-02 11:24 CET $
+; $Id: 2024-11-29 14:52 CET $
 
-
-PRO spice_ingest_reorder, index_origin=index_origin, index_destination=index_destination, $
-  force=force, nolevel=nolevel, $
-  destination=destination, file_moved=file_moved, files_found=files_found
-
-  topdir=getenv('SPICE_DATA')
+PRO spice_ingest_reorder, index_origin = index_origin, index_destination = index_destination, $
+  force = force, nolevel = nolevel, $
+  destination = destination, file_moved = file_moved, files_found = files_found
+  topdir = getenv('SPICE_DATA')
   IF topdir EQ '' THEN BEGIN
-    print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
-      print,'               top level of your directory structure. Returning...'
+    print, '% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
+    print, '               top level of your directory structure. Returning...'
     return
   ENDIF
 
-  spice_paths=BREAK_path(topdir,/nocurrent)
-  np=n_elements(spice_paths)
-  IF np EQ 1 || N_ELEMENTS(index_origin) eq 0 THEN BEGIN
-    topdir=spice_paths[0]
+  spice_paths = break_path(topdir, /nocurrent)
+  np = n_elements(spice_paths)
+  IF np EQ 1 || n_elements(index_origin) EQ 0 THEN BEGIN
+    topdir = spice_paths[0]
   ENDIF ELSE BEGIN
     IF index_origin LT np THEN BEGIN
-      topdir=spice_paths[index_origin]
+      topdir = spice_paths[index_origin]
     ENDIF ELSE BEGIN
-      print, 'index is out of bounds: ' + strtrim(string(index_origin),2) + ' >= ' + strtrim(string(np),2)
+      print, 'index is out of bounds: ' + strtrim(string(index_origin), 2) + ' >= ' + strtrim(string(np), 2)
       return
     ENDELSE
   ENDELSE
 
-  spice_ingest, topdir, index=index_destination, force=force, nolevel=nolevel, $
+  spice_ingest, topdir, path_index = index_destination, force = force, nolevel = nolevel, $
     /search_subdir, $
-    destination=destination, file_moved=file_moved, files_found=files_found
-
+    destination = destination, file_moved = file_moved, files_found = files_found
 
   dirsep = path_sep()
-  if strmid(topdir, 0,1, /reverse_offset) ne dirsep then topdir = topdir+dirsep
+  IF strmid(topdir, 0, 1, /reverse_offset) NE dirsep THEN topdir = topdir + dirsep
 
-  nfiles = N_ELEMENTS(files_found)
-  FOR i=0,nfiles-1 DO BEGIN
+  nfiles = n_elements(files_found)
+  FOR i = 0, nfiles - 1 DO BEGIN
     parent_dir = file_dirname(files_found[i], /mark_directory)
-    while parent_dir ne topdir do begin
-      file_delete, parent_dir,/allow_nonexistent,/quiet
+    WHILE parent_dir NE topdir DO BEGIN
+      file_delete, parent_dir, /allow_nonexistent, /quiet
       parent_dir = file_dirname(parent_dir, /mark_directory)
-    endwhile
+    ENDWHILE
   ENDFOR
-
 END

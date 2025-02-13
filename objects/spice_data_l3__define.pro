@@ -36,8 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2024-06-26 14:59 CEST $
-
+; $Id: 2024-11-27 10:44 CET $
 
 ;+
 ; Description:
@@ -46,22 +45,25 @@
 ; INPUTS:
 ;     file : path of a SPICE FITS file.
 ;
+; KEYWORDS:
+;     quiet : If set, then warnings are suppressed.
+;
 ; OUTPUT:
 ;     1 (True) if initialization succeeded, 0 (False) otherwise
 ;-
-FUNCTION spice_data_l3::init, file
+FUNCTION spice_data_l3::init, file, quiet = quiet
   COMPILE_OPT IDL2
 
   prits_tools.parcheck, file, 1, "file", 'string', 0
   file_info = spice_file2info(file)
-  if ~file_info.is_spice_file then begin
-    print, 'File is not a SPICE file: '+file
+  IF ~file_info.is_spice_file THEN BEGIN
+    IF ~keyword_set(quiet) THEN print, 'File is not a SPICE file: ' + file
     return, 0
-  endif
-  if file_info.level ne 3 then begin
-    print, 'This is not a SPICE level 3 file: '+file
+  ENDIF
+  IF file_info.level NE 3 THEN BEGIN
+    IF ~keyword_set(quiet) THEN print, 'This is not a SPICE level 3 file: ' + file
     return, 0
-  endif
+  ENDIF
   self.file = file
   self.filename = file_info.filename
   self.filepath = file_dirname(file, /mark_directory)
@@ -71,15 +73,15 @@ FUNCTION spice_data_l3::init, file
   self.version = file_info.version
   self.spiobsid = file_info.spiobsid
   self.rasterno = file_info.rasterno
-  hdr = headfits(file, exten=0)
-  self.nwin = fxpar(hdr, 'NWIN', missing=0)
-  self.l2_filename = fxpar(hdr, 'PGFILENA', missing='')
+  hdr = headfits(file, exten = 0)
+  self.nwin = fxpar(hdr, 'NWIN', missing = 0)
+  self.l2_filename = fxpar(hdr, 'PGFILENA', missing = '')
   fits_open, file, fits_content
   fits_close, fits_content
   data_ids = fits2ana_get_data_id(fits_content)
-  n_windows = N_ELEMENTS(data_ids)
+  n_windows = n_elements(data_ids)
   headers_results = ptrarr(self.nwin)
-  for iwin=0,n_windows-1 do begin
+  FOR iwin = 0, n_windows - 1 DO BEGIN
     extname = data_ids[iwin] + ' results'
     extension = where(fits_content.extname EQ extname, count)
     IF count EQ 0 THEN BEGIN
@@ -87,28 +89,26 @@ FUNCTION spice_data_l3::init, file
       message, 'Ignoring this window', /info
       hdr = ''
       headers_results[iwin] = ptr_new(hdr)
-      continue
+      CONTINUE
     ENDIF
     extension = extension[0]
-    hdr = headfits(file, exten=extension)
+    hdr = headfits(file, exten = extension)
     headers_results[iwin] = ptr_new(hdr)
-  endfor
+  ENDFOR
   self.headers_results = ptr_new(headers_results)
   return, 1
 END
-
 
 ;+
 ; Description:
 ;     called by obj_destroy, frees all pointers and closes all associated files
 ;-
-pro spice_data_l3::cleanup
+PRO spice_data_l3::cleanup
   COMPILE_OPT IDL2
 
-  FOR i=0,N_ELEMENTS(*self.headers_results)-1 DO ptr_free, (*self.headers_results)[i]
-  ptr_free,self.headers_results
+  FOR i = 0, n_elements(*self.headers_results) - 1 DO ptr_free, (*self.headers_results)[i]
+  ptr_free, self.headers_results
 END
-
 
 ;+
 ; Description:
@@ -120,16 +120,15 @@ END
 ;     description : If set, the header info of the class will also be printed.
 ;
 ;-
-pro spice_data_l3::help, description=description, _extra=_extra
-  ;Prints out this help, setting the 'description' keyword will also print the header info
+PRO spice_data_l3::help, description = description, _extra = _extra
+  ; Prints out this help, setting the 'description' keyword will also print the header info
   COMPILE_OPT IDL2
 
   IF arg_present(description) || keyword_set(description) THEN $
-    obj_help, self, description=description, _extra=_extra $
+    obj_help, self, description = description, _extra = _extra $
   ELSE $
-    obj_help, self, _extra=_extra
+    obj_help, self, _extra = _extra
 END
-
 
 ;+
 ; Description:
@@ -151,31 +150,30 @@ END
 ;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
 ;-
-function spice_data_l3::xcfit_block, window_index, $
-  headers_results=headers_results, headers_data=headers_data, $
-  headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
-  headers_include=headers_include, headers_constants=headers_constants
-  ;Calls xcfit_block with the data of the chosen window(s)
+FUNCTION spice_data_l3::xcfit_block, window_index, $
+  headers_results = headers_results, headers_data = headers_data, $
+  headers_xdim1 = headers_xdim1, headers_weights = headers_weights, $
+  headers_include = headers_include, headers_constants = headers_constants
+  ; Calls xcfit_block with the data of the chosen window(s)
   COMPILE_OPT IDL2
 
-  ana = fits2ana(self.file, windows=window_index, $
-    headers_results=headers_results, headers_data=headers_data, $
-    headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
-    headers_include=headers_include, headers_constants=headers_constants)
-  
-  if size(ana, /type) EQ 8 then begin
-    origin = [0,0,0]
-    scale = [1,1,1]
-    phys_scale = [0,0,0]
-    spice_data_l3.get_plot_variables, *headers_data[0], origin=origin, scale=scale, phys_scale=phys_scale
-    SPICE_XCFIT_BLOCK, ana=ana, origin=origin, scale=scale, phys_scale=phys_scale, image_dim=[1,2]
-  endif else begin
+  ana = fits2ana(self.file, windows = window_index, $
+    headers_results = headers_results, headers_data = headers_data, $
+    headers_xdim1 = headers_xdim1, headers_weights = headers_weights, $
+    headers_include = headers_include, headers_constants = headers_constants)
+
+  IF size(ana, /type) EQ 8 THEN BEGIN
+    origin = [0, 0, 0]
+    scale = [1, 1, 1]
+    phys_scale = [0, 0, 0]
+    spice_data_L3.get_plot_variables, *headers_data[0], origin = origin, scale = scale, phys_scale = phys_scale
+    spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = phys_scale, image_dim = [1, 2]
+  ENDIF ELSE BEGIN
     print, 'Something went wrong when trying to reproduce an ANA structure.'
-  endelse
+  ENDELSE
 
   return, ana
 END
-
 
 ;+
 ; Description:
@@ -189,38 +187,37 @@ END
 ;     scale: A 3-element array. The CDELT values of each exis.
 ;     phys_scale: A 3-element array. Boolean values, whether the axis should be scaled physically.
 ;-
-pro spice_data_l3::get_plot_variables, header_data, origin=origin, scale=scale, phys_scale=phys_scale
-  COMPILE_OPT IDL2, static
-  
-  crval = fxpar(header_data, 'CRVAL1', missing=1)
-  naxis = fxpar(header_data, 'NAXIS1', missing=1)
-  crpix = fxpar(header_data, 'CRPIX1', missing=0)
-  cdelt1 = fxpar(header_data, 'CDELT1', missing=1)
-  pc1_1 = fxpar(header_data, 'PC1_1', missing=0)
-  x_vector = crval + cdelt1 * pc1_1 * (findgen(naxis)+1.0-crpix)
+PRO spice_data_l3::get_plot_variables, header_data, origin = origin, scale = scale, phys_scale = phys_scale
+  COMPILE_OPT IDL2, STATIC
+
+  crval = fxpar(header_data, 'CRVAL1', missing = 1)
+  naxis = fxpar(header_data, 'NAXIS1', missing = 1)
+  crpix = fxpar(header_data, 'CRPIX1', missing = 0)
+  cdelt1 = fxpar(header_data, 'CDELT1', missing = 1)
+  pc1_1 = fxpar(header_data, 'PC1_1', missing = 0)
+  x_vector = crval + cdelt1 * pc1_1 * (findgen(naxis) + 1.0 - crpix)
   IF naxis EQ 1 THEN BEGIN
-    naxis = fxpar(header_data, 'NAXIS4', missing=1)
+    naxis = fxpar(header_data, 'NAXIS4', missing = 1)
     x_vector = replicate(x_vector, naxis)
   ENDIF
 
-  crval = fxpar(header_data, 'CRVAL2', missing=1)
-  naxis = fxpar(header_data, 'NAXIS2', missing=1)
-  crpix = fxpar(header_data, 'CRPIX2', missing=0)
-  cdelt2 = fxpar(header_data, 'CDELT2', missing=1)
-  pc2_2 = fxpar(header_data, 'PC2_2', missing=0)
-  y_vector = crval + cdelt2 * pc2_2 * (findgen(naxis)+1.0-crpix)
+  crval = fxpar(header_data, 'CRVAL2', missing = 1)
+  naxis = fxpar(header_data, 'NAXIS2', missing = 1)
+  crpix = fxpar(header_data, 'CRPIX2', missing = 0)
+  cdelt2 = fxpar(header_data, 'CDELT2', missing = 1)
+  pc2_2 = fxpar(header_data, 'PC2_2', missing = 0)
+  y_vector = crval + cdelt2 * pc2_2 * (findgen(naxis) + 1.0 - crpix)
 
-  crval = fxpar(header_data, 'CRVAL3', missing=1)
-  naxis = fxpar(header_data, 'NAXIS3', missing=1)
-  crpix = fxpar(header_data, 'CRPIX3', missing=0)
-  cdelt3 = fxpar(header_data, 'CDELT3', missing=1)
-  lambda_vector = crval + cdelt3 * (findgen(naxis)+1.0-crpix)
-  
-  origin = [ lambda_vector[0], x_vector[0], y_vector[0] ]
-  scale = [ cdelt3, cdelt1, cdelt2 ]
-  phys_scale = [ 0, 1, 1 ]
-end
+  crval = fxpar(header_data, 'CRVAL3', missing = 1)
+  naxis = fxpar(header_data, 'NAXIS3', missing = 1)
+  crpix = fxpar(header_data, 'CRPIX3', missing = 0)
+  cdelt3 = fxpar(header_data, 'CDELT3', missing = 1)
+  lambda_vector = crval + cdelt3 * (findgen(naxis) + 1.0 - crpix)
 
+  origin = [lambda_vector[0], x_vector[0], y_vector[0]]
+  scale = [cdelt3, cdelt1, cdelt2]
+  phys_scale = [0, 1, 1]
+END
 
 ;+
 ; Description:
@@ -238,7 +235,6 @@ FUNCTION spice_data_l3::get_l2_filename
   return, self.l2_filename
 END
 
-
 ;+
 ; Description:
 ;     Finds and returns the level 2 file that was used to create this level 3 file.
@@ -252,17 +248,16 @@ END
 ; OUTPUT:
 ;     Full path and name of the level 2 file, if it exists, otherwise an empty string.
 ;-
-FUNCTION spice_data_l3::find_l2_file, user_dir=user_dir
+FUNCTION spice_data_l3::find_l2_file, user_dir = user_dir
   COMPILE_OPT IDL2
 
-  file_l2 = spice_find_file(self.datetime, remove_duplicates=0, user_dir=user_dir)
+  file_l2 = spice_find_file(self.datetime, remove_duplicates = 0, user_dir = user_dir)
   filename_l2 = file_basename(file_l2)
-  pgfilena = self->get_l2_filename()
-  ind = where(filename_l2 eq pgfilena, count)
-  if count gt 0 then result = file_l2[ind[0]] else result = ''
+  pgfilena = self.get_l2_filename()
+  ind = where(filename_l2 EQ pgfilena, count)
+  IF count GT 0 THEN result = file_l2[ind[0]] ELSE result = ''
   return, result
 END
-
 
 ;+
 ; Description:
@@ -285,44 +280,43 @@ END
 ;     This is an empty string if no files were found, a scalar string if one file was found or /latest keyword was set
 ;     or an array of strings if multiple files were found.
 ;-
-FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir=user_dir, l3_objects=l3_objects, COUNT=COUNT, latest=latest
-  COMPILE_OPT IDL2, static
+FUNCTION spice_data_l3::find_l3_file_from_l2, file_l2, user_dir = user_dir, l3_objects = l3_objects, COUNT = COUNT, latest = latest
+  COMPILE_OPT IDL2, STATIC
 
   file_l2_info = spice_file2info(file_l2)
-  file_l3_all = spice_find_file(file_l2_info.datetime, remove_duplicates=0, user_dir=user_dir, level=3, COUNT_FILE=COUNT_FILE)
-  count = 0
+  file_l3_all = spice_find_file(file_l2_info.datetime, remove_duplicates = 0, user_dir = user_dir, level = 3, COUNT_FILE = COUNT_FILE)
+  COUNT = 0
   found_l3_file = ''
-  FOR ifile=0,count_file-1 DO BEGIN
+  FOR ifile = 0, COUNT_FILE - 1 DO BEGIN
     file_l3_info = spice_file2info(file_l3_all[ifile])
     IF file_l3_info.spiobsid NE file_l2_info.spiobsid || $
-      file_l3_info.rasterno NE file_l2_info.rasterno THEN continue
+      file_l3_info.rasterno NE file_l2_info.rasterno THEN CONTINUE
 
     l3_obj_temp = spice_data_l3(file_l3_all[ifile])
-    l2_file_temp = l3_obj_temp->get_l2_filename()
+    l2_file_temp = l3_obj_temp.get_l2_filename()
     l2_version = l2_file_temp.extract('V[0-9]{2}')
-    l2_version = fix(l2_version.substring(1,2))
+    l2_version = fix(l2_version.substring(1, 2))
     IF l2_version EQ file_l2_info.version THEN BEGIN
-      IF count EQ 0 THEN BEGIN
+      IF COUNT EQ 0 THEN BEGIN
         found_l3_file = file_l3_all[ifile]
         l3_objects = l3_obj_temp
       ENDIF ELSE BEGIN
         found_l3_file = [found_l3_file, file_l3_all[ifile]]
         l3_objects = [l3_objects, l3_obj_temp]
       ENDELSE
-      count++
+      COUNT++
     ENDIF
   ENDFOR
 
-  IF keyword_set(latest) && count GT 1 THEN BEGIN
+  IF keyword_set(latest) && COUNT GT 1 THEN BEGIN
     versions = found_l3_file.extract('V[0-9]{2}')
-    versions = fix(versions.substring(1,2))
-    max_version = max(versions, maxind)
+    versions = fix(versions.substring(1, 2))
+    !NULL = max(versions, maxind)
     found_l3_file = found_l3_file[maxind]
     l3_objects = l3_objects[maxind]
   ENDIF
   return, found_l3_file
 END
-
 
 ;+
 ; Description:
@@ -335,63 +329,59 @@ END
 ;-
 FUNCTION spice_data_l3::get_l3_processing_steps, headers_results
   COMPILE_OPT IDL2
-  
-  IF N_ELEMENTS(headers_results) EQ 0 THEN headers_results = *self.headers_results
-  nwin = N_ELEMENTS(headers_results)
+
+  IF n_elements(headers_results) EQ 0 THEN headers_results = *self.headers_results
+  nwin = n_elements(headers_results)
   l3_pr_steps_all = ptrarr(nwin)
 
-  for iwin=0,nwin-1 do begin
-    
+  FOR iwin = 0, nwin - 1 DO BEGIN
     hdr = *(headers_results)[iwin]
 
-    max_version = get_last_prstep_keyword(hdr, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
-      pr_versions=pr_versions, pr_types=pr_types)
+    !NULL = get_last_prstep_keyword(hdr, pr_keywords = pr_keywords, pr_versions = pr_versions)
     ind = where(pr_keywords.startswith('PRSTEP'), count_step)
     l3_pr_steps = !NULL
-    FOR istep=0,count_step-1 DO BEGIN
-      prstep = fxpar(hdr, pr_keywords[ind[istep]], missing='')
+    FOR istep = 0, count_step - 1 DO BEGIN
+      prstep = fxpar(hdr, pr_keywords[ind[istep]], missing = '')
       IF prstep EQ 'LINE-FITTING' || prstep EQ 'PEAK-FINDING' || prstep EQ 'MANUAL-LINE-FITTING' THEN BEGIN
-        proc_step = [HASH('name','PRSTEP', 'value',prstep, 'comment','Processing step type, step ')]
-        
+        proc_step = [hash('name', 'PRSTEP', 'value', prstep, 'comment', 'Processing step type, step ')]
+
         ind_proc = where(pr_keywords.startswith('PRPROC') AND pr_versions EQ pr_versions[ind[istep]], count_proc)
         IF count_proc GT 0 THEN BEGIN
-          proc = fxpar(hdr, pr_keywords[ind_proc[0]], missing='')
-          proc_step = [proc_step, HASH('name','PRPROC', 'value',proc, 'comment','Name of procedure performing PRSTEP')]
+          proc = fxpar(hdr, pr_keywords[ind_proc[0]], missing = '')
+          proc_step = [proc_step, hash('name', 'PRPROC', 'value', proc, 'comment', 'Name of procedure performing PRSTEP')]
         ENDIF
-        
+
         ind_version = where(pr_keywords.startswith('PRPVER') AND pr_versions EQ pr_versions[ind[istep]], count_version)
         IF count_version GT 0 THEN BEGIN
-          version = fix(fxpar(hdr, pr_keywords[ind_version[0]], missing=0L), type=3)
-          proc_step = [proc_step, HASH('name','PRPVER', 'value',version, 'comment','Version of procedure PRPROC')]
+          version = fix(fxpar(hdr, pr_keywords[ind_version[0]], missing = 0l), type = 3)
+          proc_step = [proc_step, hash('name', 'PRPVER', 'value', version, 'comment', 'Version of procedure PRPROC')]
         ENDIF
-  
+
         ind_lib = where(pr_keywords.startswith('PRLIB') AND pr_versions EQ pr_versions[ind[istep]], count_lib)
         IF count_lib GT 0 THEN BEGIN
-          lib = fxpar(hdr, pr_keywords[ind_lib[0]], missing='')
-          proc_step = [proc_step, HASH('name','PRLIB' , 'value',lib, 'comment','Software library containing PRPROC')]
+          lib = fxpar(hdr, pr_keywords[ind_lib[0]], missing = '')
+          proc_step = [proc_step, hash('name', 'PRLIB', 'value', lib, 'comment', 'Software library containing PRPROC')]
         ENDIF
-  
+
         ind_params = where(pr_keywords.startswith('PRPARA') AND pr_versions EQ pr_versions[ind[istep]], count_params)
         IF count_params GT 0 THEN BEGIN
-          params = fxpar(hdr, pr_keywords[ind_params[0]], missing='')
-          proc_step = [proc_step, HASH('name','PRPARA', 'value',params, 'comment','Parameters for PRPROC')]
+          params = fxpar(hdr, pr_keywords[ind_params[0]], missing = '')
+          proc_step = [proc_step, hash('name', 'PRPARA', 'value', params, 'comment', 'Parameters for PRPROC')]
         ENDIF
-        
-        IF N_ELEMENTS(l3_pr_steps) EQ 0 THEN BEGIN
+
+        IF n_elements(l3_pr_steps) EQ 0 THEN BEGIN
           l3_pr_steps = list(proc_step, /no_copy)
         ENDIF ELSE BEGIN
           l3_pr_steps.add, proc_step, /no_copy
         ENDELSE
       ENDIF
     ENDFOR
-    
+
     l3_pr_steps_all[iwin] = ptr_new(l3_pr_steps)
-    
-  endfor
+  ENDFOR
 
   return, l3_pr_steps_all
 END
-
 
 ;+
 ; Description:
@@ -400,18 +390,18 @@ END
 PRO spice_data_l3__define
   COMPILE_OPT IDL2
 
-  struct = {spice_data_l3, $
-    file:'', $            ; full filename as given by the user
-    filename:'', $        ; name of the file, without the path
-    filepath:'', $        ; path of the file, without the name
-    level:-1, $           ; data level (0, 1, 2 or 3), -1 if unknown
-    study_type:'', $      ; type of study
-    datetime:'', $        ; date and time in CCSDS format of observation
-    version:-1, $         ; version number (version of the spice data pipeline)
-    spiobsid:-1L, $       ; SPICE OBS ID
-    rasterno:-1, $        ; raster repetition number
-    nwin:-1, $            ; number of windows in this file
-    l2_filename:'', $     ; filename of level 2 file
-    headers_results:ptr_new() $ ; A pointer array to the header strings of the results extensions
-  }
+  !NULL = {spice_data_L3, $
+    file: '', $ ; full filename as given by the user
+    filename: '', $ ; name of the file, without the path
+    filepath: '', $ ; path of the file, without the name
+    level: -1, $ ; data level (0, 1, 2 or 3), -1 if unknown
+    study_type: '', $ ; type of study
+    datetime: '', $ ; date and time in CCSDS format of observation
+    version: -1, $ ; version number (version of the spice data pipeline)
+    spiobsid: -1l, $ ; SPICE OBS ID
+    rasterno: -1, $ ; raster repetition number
+    nwin: -1, $ ; number of windows in this file
+    l2_filename: '', $ ; filename of level 2 file
+    headers_results: ptr_new() $ ; A pointer array to the header strings of the results extensions
+    }
 END

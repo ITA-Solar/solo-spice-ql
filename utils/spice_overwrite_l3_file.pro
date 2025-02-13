@@ -33,48 +33,44 @@
 ; MODIFICATION HISTORY:
 ;     12-Sep-2022: First version by Martin Wiesmann
 ;
-; $Id: 2023-06-13 11:50 CEST $
+; $Id: 2024-12-05 10:42 CET $
 ;-
 ;
 ;
 
-
-pro spice_overwrite_l3_file_event, event
-  widget_control, event.top, get_Uvalue=info
-  widget_control, event.id, get_Uvalue=answer
+PRO spice_overwrite_l3_file_event, event
+  widget_control, event.top, get_Uvalue = info
+  widget_control, event.id, get_Uvalue = answer
   (*info.result) = answer
   widget_control, event.top, /destroy
-end
-
-
+END
 
 ; -----------------------------------------------------------------------
 ; MAIN program
 ; -----------------------------------------------------------------------
 
-function spice_overwrite_l3_file, file, group_leader, allow_xcontrol_l23=allow_xcontrol_l23
-
-  base = widget_base(title='File exists. Overwrite?', group_leader=group_leader, /column, /modal)
-  label = widget_label(base, value='This file already exists.', /align_left)
-  label = widget_label(base, value=file, /align_left)
-  label = widget_label(base, value='Do you want to overwrite it?', /align_left)
+FUNCTION spice_overwrite_l3_file, file, group_leader, allow_xcontrol_l23 = allow_xcontrol_l23
+  base = widget_base(title = 'File exists. Overwrite?', group_leader = group_leader, /column, /modal)
+  label = widget_label(base, value = 'This file already exists.', /align_left)
+  label = widget_label(base, value = file, /align_left)
+  label = widget_label(base, value = 'Do you want to overwrite it?', /align_left)
   button_base = widget_base(base, /row)
-  button_yes = widget_button(button_base, value='  Yes  ', uvalue='Yes')
-  IF keyword_set(allow_xcontrol_l23) THEN button_xcontrol = widget_button(button_base, value='Open in XControl_L23', uvalue='Open')
-  button_no = widget_button(button_base,  value='  No   ', uvalue='No')
+  button_yes = widget_button(button_base, value = '  Yes  ', uvalue = 'Yes') ; idl-disable-line unused-var
+  IF keyword_set(allow_xcontrol_l23) THEN button_xcontrol = widget_button(button_base, value = 'Open in XControl_L23', uvalue = 'Open') ; idl-disable-line unused-var
+  button_no = widget_button(button_base, value = '  No   ', uvalue = 'No') ; idl-disable-line unused-var
 
   result = ptr_new('No')
   info = { $
-    result:result $
-  }
+    result: result $
+    }
 
   ; Center the widget on display.
-  widget_control, base, set_Uvalue=info, /No_Copy
-  wp = widget_positioner(base, parent=group_leader)
-  wp->position, /center
-  xmanager, 'spice_overwrite_l3_file', base, event_handler='spice_overwrite_l3_file_event'
+  widget_control, base, set_Uvalue = info, /No_Copy
+  wp = widget_positioner(base, parent = group_leader)
+  wp.position, /center
+  xmanager, 'spice_overwrite_l3_file', base, event_handler = 'spice_overwrite_l3_file_event'
 
   res = *result
   ptr_free, result
   return, res
-end
+END

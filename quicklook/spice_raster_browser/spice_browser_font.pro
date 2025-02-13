@@ -15,7 +15,7 @@
 ;
 ; INPUTS:
 ;     None
-;     
+;
 ; KEYWORDS:
 ;     BIG: Bigger font
 ;     FIXED: Font with fixed width-letters (Courier)
@@ -34,32 +34,28 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 24.02.2020 20:49 CET $
+; $Id: 2024-11-26 13:50 CET $
 
-
-PRO spice_browser_font, font, big=big, fixed=fixed, retina=retina
+PRO spice_browser_font, font, big = big, fixed = fixed, retina = retina
   COMPILE_OPT IDL2
 
   CASE !version.os_family OF
-
     'unix': BEGIN
-      IF keyword_set(fixed) THEN fstr='-*-courier-' ELSE $
-        fstr='-adobe-helvetica-'
+      IF keyword_set(fixed) THEN fstr = '-*-courier-' ELSE $
+        fstr = '-adobe-helvetica-'
       IF keyword_set(retina) THEN BEGIN
-        IF keyword_set(big) THEN str='14' ELSE str='10'
+        IF keyword_set(big) THEN str = '14' ELSE str = '10'
       ENDIF ELSE BEGIN
-        IF keyword_set(big) THEN str='18' ELSE str='12'
+        IF keyword_set(big) THEN str = '18' ELSE str = '12'
       ENDELSE
-      font=fstr+'bold-r-*-*-'+str+'-*'
+      font = fstr + 'bold-r-*-*-' + str + '-*'
     END
 
     ELSE: BEGIN
-      IF keyword_set(fixed) THEN fstr='Courier' ELSE $
-        fstr='Arial'
-      IF keyword_set(big) THEN str='20' ELSE str='16'
-      font=fstr+'*bold*'+str
+      IF keyword_set(fixed) THEN fstr = 'Courier' ELSE $
+        fstr = 'Arial'
+      IF keyword_set(big) THEN str = '20' ELSE str = '16'
+      font = fstr + '*bold*' + str
     END
-
   ENDCASE
-
 END

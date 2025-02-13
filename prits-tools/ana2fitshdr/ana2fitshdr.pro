@@ -15,7 +15,7 @@
 ;      from the DATA extension.
 ;      The other headers (INCLUDE, CONST, WEIGHTS) are only saved if at least one
 ;      value is not the default value.
-;      RESIDUAL is not saved at all, since this is not required and can be recalculated 
+;      RESIDUAL is not saved at all, since this is not required and can be recalculated
 ;      using xcfit_block.
 ;
 ; CATEGORY:
@@ -60,9 +60,6 @@
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
 ;      PROGENITOR_DATA: A data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              along the first dimension. If this data array is provided, it will be saved into the XDIM1 extension instead of INPUT_DATA.
-;      PATH_EXTERNAL_EXTENSION: String. A path, relative to this FITS file, which points to the
-;            progenitor FITS file that contains the original data cube. This will be added as a prefix
-;            to DATAEXT keyword. If this is provided the keyword NO_SAVE_DATA will be set, and PRGDATA is set to True.
 ;      DATA_ID: A string defining the prefix to the names of the 6 extensions.
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have he this EXTNAME (without 'data') as its extension name.
@@ -131,125 +128,121 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-01-30 14:25 CET $
+; $Id: 2024-11-26 13:50 CET $
 
+FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
+  n_windows = n_windows, winno = winno, $
+  data_id = data_id, type_xdim1 = type_xdim1, $
+  ext_data_path = ext_data_path, $
+  is_extension = is_extension, level = level, version = version, creator = creator, $
+  proc_steps = proc_steps, proj_keywords = proj_keywords, $
+  xdim1 = xdim1, input_data = input_data, fit = fit, $
+  result = result, residual = residual, weights = weights, include = include, $
+  const = const, filename_ana = filename_ana, datasource = datasource, $
+  definition = definition, missing = missing, label = label, history = history, $
+  progenitor_data = progenitor_data, header_input_data = header_input_data, $
+  save_xdim1 = save_xdim1, no_save_data = no_save_data, print_headers = print_headers, $
+  data_array = data_array
+  prits_tools.parcheck, ana, 1, 'ANA', 'STRUCT', 0, structure_name = 'CFIT_ANALYSIS', /optional
+  ana_given = n_elements(ana)
+  prits_tools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = ana_given
+  prits_tools.parcheck, fit, 0, 'FIT', 'STRUCT', 0, optional = ana_given
+  prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], optional = 1
+  prits_tools.parcheck, xdim1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional = 1
+  prits_tools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  prits_tools.parcheck, include, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  prits_tools.parcheck, const, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
 
-FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
-  N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
-  DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
-  EXT_DATA_PATH=EXT_DATA_PATH, $
-  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
-  PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-  XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
-  RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
-  CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-  DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-  PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
-  PATH_EXTERNAL_EXTENSION=PATH_EXTERNAL_EXTENSION, $ ; TODO
-  SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
-  DATA_ARRAY=DATA_ARRAY
-
-
-  prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', 0, structure_name='CFIT_ANALYSIS', /optional
-  ana_given = N_ELEMENTS(ANA)
-  prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=ana_given
-  prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0, optional=ana_given
-  prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-
-  prits_tools.parcheck, FILENAME_OUT, 0, 'FILENAME_OUT', 'STRING', 0
-  prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0
-  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0
-  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', 0
-  prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional=1
-  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', 0, result=error
+  prits_tools.parcheck, filename_out, 0, 'FILENAME_OUT', 'STRING', 0
+  prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0
+  prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0
+  prits_tools.parcheck, type_xdim1, 0, 'TYPE_XDIM1', 'STRING', 0
+  prits_tools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
+  prits_tools.parcheck, data_id, 0, 'DATA_ID', 'STRING', 0, result = error
   IF error[0] NE '' THEN BEGIN
     data_id = strtrim(winno, 2)
-    IF N_ELEMENTS(HEADER_INPUT_DATA) GT 0 THEN data_id = fxpar(HEADER_INPUT_DATA, 'EXTNAME', missing=data_id) $
+    IF n_elements(header_input_data) GT 0 THEN data_id = fxpar(header_input_data, 'EXTNAME', missing = data_id) $
     ELSE data_id = data_id + ' data'
   ENDIF
-  prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, CREATOR, 0, 'CREATOR', 'STRING', 0, /optional
-  prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional
-  prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
+  prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, creator, 0, 'CREATOR', 'STRING', 0, /optional
+  prits_tools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional
+  prits_tools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
 
-  prits_tools.parcheck, RESIDUAL, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional=1
-  prits_tools.parcheck, HISTORY, 0, 'HISTORY', 'STRING', [0, 1], optional=1
-  prits_tools.parcheck, FILENAME_ANA, 0, 'FILENAME_ANA', 'STRING', 0, optional=1
-  prits_tools.parcheck, DATASOURCE, 0, 'DATASOURCE', 'STRING', 0, optional=1
-  prits_tools.parcheck, DEFINITION, 0, 'DEFINITION', 'STRING', 0, optional=1
-  prits_tools.parcheck, MISSING, 0, 'MISSING', 'NUMERIC', 0, optional=1
-  prits_tools.parcheck, LABEL, 0, 'LABEL', 'STRING', 0, optional=1
+  prits_tools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  prits_tools.parcheck, history, 0, 'HISTORY', 'STRING', [0, 1], optional = 1
+  prits_tools.parcheck, filename_ana, 0, 'FILENAME_ANA', 'STRING', 0, optional = 1
+  prits_tools.parcheck, datasource, 0, 'DATASOURCE', 'STRING', 0, optional = 1
+  prits_tools.parcheck, definition, 0, 'DEFINITION', 'STRING', 0, optional = 1
+  prits_tools.parcheck, missing, 0, 'MISSING', 'NUMERIC', 0, optional = 1
+  prits_tools.parcheck, label, 0, 'LABEL', 'STRING', 0, optional = 1
 
   input_type = size(ana, /type)
-  case input_type of
-    7: begin
+  CASE input_type OF
+    7: BEGIN
       restore, ana, /verbose
-      handle_value,ana.history_h,history
-      handle_value,ana.lambda_h,xdim1
-      handle_value,ana.data_h,input_data
-      handle_value,ana.weights_h,weights
-      handle_value,ana.fit_h,fit
-      handle_value,ana.result_h,result
-      handle_value,ana.residual_h,residual
-      handle_value,ana.include_h,include
-      handle_value,ana.const_h,const
-      handle_value,ana.origin_h,origin
-      handle_value,ana.scale_h,scale
-      handle_value,ana.phys_scale_h,phys_scale
-      handle_value,ana.dimnames_h,dimnames
+      handle_value, ana.history_h, history
+      handle_value, ana.lambda_h, xdim1
+      handle_value, ana.data_h, input_data
+      handle_value, ana.weights_h, weights
+      handle_value, ana.fit_h, fit
+      handle_value, ana.result_h, result
+      handle_value, ana.residual_h, residual
+      handle_value, ana.include_h, include
+      handle_value, ana.const_h, const
+      handle_value, ana.origin_h, origin
+      handle_value, ana.scale_h, scale
+      handle_value, ana.phys_scale_h, phys_scale
+      handle_value, ana.dimnames_h, dimnames
       filename_ana = ana.filename
       datasource = ana.datasource
       definition = ana.definition
       missing = ana.missing
       label = ana.label
-    end
+    END
 
-    8: begin
-      handle_value,ana.history_h,history
-      handle_value,ana.lambda_h,xdim1
-      handle_value,ana.data_h,input_data
-      handle_value,ana.weights_h,weights
-      handle_value,ana.fit_h,fit
-      handle_value,ana.result_h,result
-      handle_value,ana.residual_h,residual
-      handle_value,ana.include_h,include
-      handle_value,ana.const_h,const
-      handle_value,ana.origin_h,origin
-      handle_value,ana.scale_h,scale
-      handle_value,ana.phys_scale_h,phys_scale
-      handle_value,ana.dimnames_h,dimnames
+    8: BEGIN
+      handle_value, ana.history_h, history
+      handle_value, ana.lambda_h, xdim1
+      handle_value, ana.data_h, input_data
+      handle_value, ana.weights_h, weights
+      handle_value, ana.fit_h, fit
+      handle_value, ana.result_h, result
+      handle_value, ana.residual_h, residual
+      handle_value, ana.include_h, include
+      handle_value, ana.const_h, const
+      handle_value, ana.origin_h, origin
+      handle_value, ana.scale_h, scale
+      handle_value, ana.phys_scale_h, phys_scale
+      handle_value, ana.dimnames_h, dimnames
       filename_ana = ana.filename
       datasource = ana.datasource
       definition = ana.definition
       missing = ana.missing
       label = ana.label
-    end
+    END
 
-    0: begin
-    end
+    0: BEGIN
+    END
 
-    else: begin
+    ELSE: BEGIN
       print, 'wrong input'
       return, -1
-    end
-  endcase
+    END
+  ENDCASE
 
   ; Add time to DATE
   caldat, systime(/julian), month, day, year, hour, minute, second
-  datetime = {CDS_EXT_TIME, $
-    year:year, $
-    month:month, $
-    day:day, $
-    hour:hour, $
-    minute:minute, $
-    second:second, $
-    millisecond:0}
+  datetime = {cds_ext_time, $
+    year: year, $
+    month: month, $
+    day: day, $
+    hour: hour, $
+    minute: minute, $
+    second: second, $
+    millisecond: 0}
   datetime = anytim(datetime, /ccsds)
 
   extension_names = data_id + [ $
@@ -260,78 +253,71 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
     ' includes', $
     ' constants']
 
-  wcs = ana_wcs_get_transform(TYPE_XDIM1, HEADER_INPUT_DATA)
+  wcs = ana_wcs_get_transform(type_xdim1, header_input_data)
 
   all_headers = ptrarr(6)
-
 
   ; ------
   ; Create result header
   ; ------
 
-  hdr = ana2fitshdr_results(RESULT=RESULT, FIT=FIT, datetime=datetime, $
-    filename_out=file_basename(FILENAME_OUT), n_windows=n_windows, winno=winno, $
-    EXTENSION_NAMES=EXTENSION_NAMES, IS_EXTENSION=IS_EXTENSION, $
-    HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
-    LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
-    PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-    HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
-    DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+  hdr = ana2fitshdr_results(result = result, fit = fit, datetime = datetime, $
+    filename_out = file_basename(filename_out), n_windows = n_windows, winno = winno, $
+    extension_names = extension_names, is_extension = is_extension, $
+    header_input_data = header_input_data, wcs = wcs, $
+    level = level, version = version, creator = creator, $
+    proc_steps = proc_steps, proj_keywords = proj_keywords, $
+    history = history, filename_ana = filename_ana, $
+    datasource = datasource, definition = definition, missing = missing, label = label)
   all_headers[0] = ptr_new(hdr)
-
 
   ; ------
   ; Create data header
   ; ------
 
-  IF keyword_set(EXT_DATA_PATH) THEN NO_SAVE_DATA=1
-  hdr = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
-    HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA, NO_SAVE_DATA=NO_SAVE_DATA, $
-    DATA_ARRAY=DATA_ARRAY)
+  IF keyword_set(ext_data_path) THEN no_save_data = 1
+  hdr = ana2fitshdr_data(datetime = datetime, extension_names = extension_names, input_data = input_data, $
+    header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $
+    data_array = data_array)
   all_headers[1] = ptr_new(hdr)
-  IF keyword_set(EXT_DATA_PATH) THEN EXTENSION_NAMES[1] = EXT_DATA_PATH+';'+EXTENSION_NAMES[1] $
-  ELSE IF hdr[0] EQ '' THEN EXTENSION_NAMES[1] = ''
-
+  IF keyword_set(ext_data_path) THEN extension_names[1] = ext_data_path + ';' + extension_names[1] $
+  ELSE IF hdr[0] EQ '' THEN extension_names[1] = ''
 
   ; ------
   ; Create xdim header
   ; ------
 
-  hdr = ana2fitshdr_xdim(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, XDIM1=XDIM1, WCS=WCS, $
-    SAVE_XDIM1=SAVE_XDIM1, TYPE_XDIM1=TYPE_XDIM1)
+  hdr = ana2fitshdr_xdim(datetime = datetime, extension_names = extension_names, xdim1 = xdim1, wcs = wcs, $
+    save_xdim1 = save_xdim1, type_xdim1 = type_xdim1)
   all_headers[2] = ptr_new(hdr)
-  if hdr[0] eq '' then EXTENSION_NAMES[2] = ''
-
+  IF hdr[0] EQ '' THEN extension_names[2] = ''
 
   ; ------
   ; Create weights header
   ; ------
 
-  hdr = ana2fitshdr_weights(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, WEIGHTS=WEIGHTS, WCS=WCS)
+  hdr = ana2fitshdr_weights(datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs)
   all_headers[3] = ptr_new(hdr)
-  if hdr[0] eq '' then EXTENSION_NAMES[3] = ''
-
+  IF hdr[0] EQ '' THEN extension_names[3] = ''
 
   ; ------
   ; Create include header
   ; ------
 
-  hdr = ana2fitshdr_include(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INCLUDE=INCLUDE, WCS=WCS)
+  hdr = ana2fitshdr_include(datetime = datetime, extension_names = extension_names, include = include, wcs = wcs)
   all_headers[4] = ptr_new(hdr)
-  if hdr[0] eq '' then EXTENSION_NAMES[4] = ''
-
+  IF hdr[0] EQ '' THEN extension_names[4] = ''
 
   ; ------
   ; Create const header
   ; ------
 
-  hdr = ana2fitshdr_const(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, CONST=CONST, WCS=WCS)
+  hdr = ana2fitshdr_const(datetime = datetime, extension_names = extension_names, const = const, wcs = wcs)
   all_headers[5] = ptr_new(hdr)
-  if hdr[0] eq '' then EXTENSION_NAMES[5] = ''
-  
-  
+  IF hdr[0] EQ '' THEN extension_names[5] = ''
+
   ; Delete extension names if necessary
-  FOR iext=0,5 DO BEGIN
+  FOR iext = 0, 5 DO BEGIN
     hdr = all_headers[iext]
     IF (*hdr)[0] NE '' THEN BEGIN
       fxaddpar, *hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
@@ -340,21 +326,20 @@ FUNCTION ana2fitshdr, ANA, FILENAME_OUT=FILENAME_OUT, $
       fxaddpar, *hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
       fxaddpar, *hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
     ENDIF
-    if keyword_set(print_headers) then begin
-      print,''
-      case iext of
-        0: print,'--- RESULTS ---'
-        1: print,'--- DATA ---'
-        2: print,'--- XDIM ---'
-        3: print,'--- WEIGHTS ---'
-        4: print,'--- INCLUDE ---'
-        5: print,'--- CONST ---'
-      endcase
-      print,''
-      print,*hdr
-    endif
+    IF keyword_set(print_headers) THEN BEGIN
+      print, ''
+      CASE iext OF
+        0: print, '--- RESULTS ---'
+        1: print, '--- DATA ---'
+        2: print, '--- XDIM ---'
+        3: print, '--- WEIGHTS ---'
+        4: print, '--- INCLUDE ---'
+        5: print, '--- CONST ---'
+      ENDCASE
+      print, ''
+      print, *hdr
+    ENDIF
   ENDFOR
 
-
   return, all_headers
-end
+END

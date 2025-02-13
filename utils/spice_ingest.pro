@@ -73,69 +73,67 @@
 ;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2024-04-30 11:25 CEST $
+; $Id: 2024-11-29 14:53 CET $
 
-
-PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel, $
-  search_subdir=search_subdir, $
-  destination=destination, file_moved=file_moved, files_found=files_found, $
-  user_dir=user_dir, top_dir=top_dir, dry_run=dry_run, $
-  help=help, debug=debug, quiet=quiet
-
+PRO spice_ingest, filename, path_index = path_index, force = force, nolevel = nolevel, $
+  search_subdir = search_subdir, $
+  destination = destination, file_moved = file_moved, files_found = files_found, $
+  user_dir = user_dir, top_dir = top_dir, dry_run = dry_run, $
+  help = help, debug = debug, quiet = quiet
   IF n_params() LT 1 AND NOT keyword_set(help) THEN BEGIN
     filename = './'
   ENDIF
 
   IF keyword_set(top_dir) THEN BEGIN
-    IF N_ELEMENTS(top_dir) NE 1 || size(top_dir, /type) NE 7 THEN BEGIN
+    IF n_elements(top_dir) NE 1 || size(top_dir, /type) NE 7 THEN BEGIN
       print, 'top_dir must be a scalar string.'
       print, 'No files moved.'
       return
     ENDIF
     topdir = top_dir
   ENDIF ELSE BEGIN ; keyword_set(top_dir)
-    topdir=getenv('SPICE_DATA')
+    topdir = getenv('SPICE_DATA')
     IF topdir EQ '' THEN BEGIN
-      print,'% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
-        print,'               top level of your directory structure. Returning...'
+      print, '% SPICE_INGEST:  Please define the environment variable $SPICE_DATA to point to the '
+      print, '               top level of your directory structure. Returning...'
       return
     ENDIF
   ENDELSE ; keyword_set(top_dir)
 
-  spice_paths=BREAK_path(topdir,/nocurrent)
-  np=n_elements(spice_paths)
-  IF np EQ 1 || N_ELEMENTS(path_index) eq 0 THEN BEGIN
-    topdir=spice_paths[0]
+  spice_paths = break_path(topdir, /nocurrent)
+  np = n_elements(spice_paths)
+  IF np EQ 1 || n_elements(path_index) EQ 0 THEN BEGIN
+    topdir = spice_paths[0]
   ENDIF ELSE BEGIN
     IF path_index LT np THEN BEGIN
-      topdir=spice_paths[path_index]
+      topdir = spice_paths[path_index]
     ENDIF ELSE BEGIN
-      print, 'path_index is out of bounds: ' + strtrim(string(path_index),2) + ' >= ' + strtrim(string(np),2)
+      print, 'path_index is out of bounds: ' + strtrim(string(path_index), 2) + ' >= ' + strtrim(string(np), 2)
       return
     ENDELSE
   ENDELSE
 
-  IF keyword_set(help) THEN begin
-    print,'% SPICE_INGEST: your SPICE data paths are:'
-    FOR i=0,np-1 DO BEGIN
-      istr=strpad(trim(i),4,fill=' ')+'. '
-      print,istr+trim(spice_paths[i])
+  IF keyword_set(help) THEN BEGIN
+    print, '% SPICE_INGEST: your SPICE data paths are:'
+    FOR i = 0, np - 1 DO BEGIN
+      istr = strpad(trim(i), 4, fill = ' ') + '. '
+      print, istr + trim(spice_paths[i])
     ENDFOR
-    print,'Use path_index=  to put a file in the appropriate path.'
+    print, 'Use path_index=  to put a file in the appropriate path.'
     IF n_params() LT 1 THEN return
   ENDIF
 
   IF keyword_set(user_dir) && ~keyword_set(top_dir) THEN topdir = concat_dir(topdir, 'user')
 
-  nfiles=n_elements(filename)
+  nfiles = n_elements(filename)
   IF nfiles GT 1 THEN BEGIN
     files = filename[sort(filename)]
   ENDIF ELSE BEGIN ; nfiles GT 1
     IF file_test(filename, /directory) THEN BEGIN
       IF keyword_set(search_subdir) THEN BEGIN
-        files = file_search(filename, 'solo*.fits', count=nfiles)
+        files = file_search(filename, 'solo*.fits', count = nfiles)
       ENDIF ELSE BEGIN ; keyword_set(search_subdir)
-        files = file_search(concat_dir(filename,'solo*.fits'), count=nfiles)
+        files = file_search(concat_dir(filename, 'solo*.fits'), count = nfiles)
       ENDELSE ; keyword_set(search_subdir)
       IF nfiles EQ 0 THEN BEGIN
         print, 'No files found'
@@ -147,40 +145,37 @@ PRO spice_ingest, filename, path_index=path_index, force=force, nolevel=nolevel,
     ENDELSE ; file_test(filename, /directory)
   ENDELSE ; nfiles GT 1
 
-
   files_found = files
   destination = files
   file_moved = intarr(nfiles)
   debug = keyword_set(debug)
 
-  FOR ifiles=0,nfiles-1 DO BEGIN
+  FOR ifiles = 0, nfiles - 1 DO BEGIN
     file_info = spice_file2info(files[ifiles])
 
     IF ~file_info.is_spice_file THEN BEGIN
-      if ~keyword_set(quiet) then print,'% SPICE_INGEST: File '+file_info.filename+' has not been moved as it is not a spice file.'
-      continue
+      IF ~keyword_set(quiet) THEN print, '% SPICE_INGEST: File ' + file_info.filename + ' has not been moved as it is not a spice file.'
+      CONTINUE
     ENDIF
 
     outdir = topdir
-    IF ~keyword_set(nolevel) THEN outdir = concat_dir(outdir, 'level'+strtrim(string(file_info.level), 2))
-    outdir = concat_dir(outdir, time2fid(file_info.datetime, /full_year, delim=path_sep()))
+    IF ~keyword_set(nolevel) THEN outdir = concat_dir(outdir, 'level' + strtrim(string(file_info.level), 2))
+    outdir = concat_dir(outdir, time2fid(file_info.datetime, /full_year, delim = path_sep()))
 
-    ;check if file to be moved already exists
-    old_files = file_search(concat_dir(outdir,'solo*.fits'))
-    filechck=where(file_basename(old_files) EQ file_info.filename,nf)
+    ; check if file to be moved already exists
+    old_files = file_search(concat_dir(outdir, 'solo*.fits'))
+    !NULL = where(file_basename(old_files) EQ file_info.filename, nf)
     IF nf EQ 0 OR keyword_set(force) THEN BEGIN
       IF ~file_test(outdir, /directory) && ~keyword_set(dry_run) THEN BEGIN
         file_mkdir, outdir
       ENDIF
-      if ~keyword_set(dry_run) then file_move,files[ifiles], outdir, /overwrite
+      IF ~keyword_set(dry_run) THEN file_move, files[ifiles], outdir, /overwrite
       file_moved[ifiles] = 1
       destination[ifiles] = concat_dir(outdir, file_info.filename)
     ENDIF ELSE IF ~keyword_set(quiet) THEN BEGIN
-      print,'% SPICE_INGEST: file '+file_info.filename+' was not moved '
-      print,'               as it already exists in the data directory.'
-      print,'               Use the keyword /FORCE to overwrite the existing file.'
+      print, '% SPICE_INGEST: file ' + file_info.filename + ' was not moved '
+      print, '               as it already exists in the data directory.'
+      print, '               Use the keyword /FORCE to overwrite the existing file.'
     ENDIF
-
   ENDFOR ; ifiles=0,nfiles-1
-
 END

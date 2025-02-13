@@ -6,3 +6,6 @@
 .\#*
 ._.DS_Store
 ._*
+.vscode
+ancillary.code-workspace
+cf_*.pro

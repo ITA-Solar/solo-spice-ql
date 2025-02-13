@@ -40,29 +40,28 @@
 ; HISTORY:
 ;     22-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2023-11-27 13:42 CET $
+; $Id: 2024-11-26 13:50 CET $
 
-
-FUNCTION get_last_prstep_keyword, header, count=count, pr_keywords=pr_keywords, ind_pr_keywords=ind_pr_keywords, $
-  pr_versions=pr_versions, pr_types=pr_types
-  compile_opt idl2
+FUNCTION get_last_prstep_keyword, header, count = count, pr_keywords = pr_keywords, ind_pr_keywords = ind_pr_keywords, $
+  pr_versions = pr_versions, pr_types = pr_types
+  COMPILE_OPT IDL2
 
   prits_tools.parcheck, header, 1, "header", 'string', 1
 
   pr_keywords = header.extract('^PR(STEP|PROC|PVER|MODE|PARA|REF|LOG|ENV|VER|HSH|BRA|LIB)[1-9][0-9]{0,1}[^ =]?')
   ind_pr_keywords = where(pr_keywords NE '', count)
-  if count eq 0 then begin
+  IF count EQ 0 THEN BEGIN
     pr_keywords = ''
     pr_versions = 0
     pr_version_max = 0
     pr_types = ''
-  endif else begin
+  ENDIF ELSE BEGIN
     ind_pr_keywords = ind_pr_keywords[sort(ind_pr_keywords)]
     pr_keywords = pr_keywords[ind_pr_keywords]
     pr_versions = fix(pr_keywords.extract('[1-9][0-9]{0,1}'))
     pr_version_max = max(pr_versions)
     pr_types = pr_keywords.extract('(STEP|PROC|PVER|MODE|PARA|REF|LOG|ENV|VER|HSH|BRA|LIB)')
-  endelse
+  ENDELSE
 
   return, pr_version_max
 END

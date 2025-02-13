@@ -87,32 +87,31 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-01-09 14:50 CET $
+; $Id: 2024-12-19 13:56 CET $
 ;-
 ;
 ;
 
-
-pro spice_create_l3_widget_event, event
-  widget_control, event.top, get_Uvalue=info
-  case event.id of
-    ;cancel, we do nothing, just destroy this widget
-    ;the returned structure is the initial one
-    ;the l3_file is 'Cancel'
-    info.cancel: begin
+PRO spice_create_l3_widget_event, event
+  widget_control, event.top, get_Uvalue = info
+  CASE event.id OF
+    ; cancel, we do nothing, just destroy this widget
+    ; the returned structure is the initial one
+    ; the l3_file is 'Cancel'
+    info.cancel: BEGIN
       widget_control, event.top, /destroy
-    end
+    END
 
-    ;ok, use the current settings to create l3 data/file
-    ;and destroy the widget
-    info.ok: begin
+    ; ok, use the current settings to create l3 data/file
+    ; and destroy the widget
+    info.ok: BEGIN
       widget_control, /hourglass
       widget_control, info.lineselect, get_value = lineselect
-      window_index = where(lineselect eq 1, count)
-      if count eq 0 then begin
-        box_message,'You need to select at least one window/line'
+      window_index = where(lineselect EQ 1, count)
+      IF count EQ 0 THEN BEGIN
+        box_message, 'You need to select at least one window/line'
         return
-      endif
+      ENDIF
       widget_control, info.options_bg, get_value = options
       no_masking = options[2]
       approximated_slit = options[3]
@@ -121,35 +120,34 @@ pro spice_create_l3_widget_event, event
       position = options[5]
       no_line_list = options[4]
       widget_control, info.fit_velocity_field, get_value = velocity
-      widget_control, info.top_dir_choice_bg, get_value=top_dir_choice
-      IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value=top_dir
-      widget_control, info.dir_user_bg, get_value=user_dir
-      official_l3dir = user_dir[0] EQ 0
-      widget_control, info.save_bg, get_value=save
+      widget_control, info.top_dir_choice_bg, get_value = top_dir_choice
+      IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value = top_dir
+      widget_control, info.dir_user_bg, get_value = user_dir
+      widget_control, info.save_bg, get_value = save
       save_not = save[0] EQ 0
       droplist_select = widget_info(info.file_l3_name_list, /droplist_select)
       file_l3 = info.dir_l3 + (*info.file_l3)[droplist_select]
       IF droplist_select GT 0 THEN BEGIN
         force_version = file_l3.extract('V[0-9]{2}')
-        force_version = fix(force_version.substring(1,2))
-       IF ~save_not && file_exist(file_l3) THEN BEGIN
-          overwrite = spice_overwrite_l3_file(file_l3, event.top, allow_xcontrol_l23=info.allow_xcontrol_l23)
+        force_version = fix(force_version.substring(1, 2))
+        IF ~save_not && file_exist(file_l3) THEN BEGIN
+          overwrite = spice_overwrite_l3_file(file_l3, event.top, allow_xcontrol_l23 = info.allow_xcontrol_l23)
           IF overwrite EQ 'No' THEN return
           IF overwrite EQ 'Open' THEN BEGIN
-            spice_xcontrol_l23, file_l3, group_leader=info.group_leader
+            spice_xcontrol_l23, file_l3, group_leader = info.group_leader
             widget_control, event.top, /destroy
             return
           ENDIF
         ENDIF
       ENDIF
-      l3_file = info.l2_object->create_l3_file(window_index, no_masking=no_masking, approximated_slit=approximated_slit, $
-        no_fitting=no_fitting, no_xcfit_block=no_xcfit_block, position=position, velocity=velocity, no_line_list=no_line_list, $
-        top_dir=top_dir, save_not=save_not, force_version=force_version, $
-        all_ana=all_ana, all_result_headers=all_result_headers, all_data_headers=all_data_headers, all_proc_steps=all_proc_steps, $
-        group_leader=info.group_leader)
+      l3_file = info.l2_object.create_l3_file(window_index, no_masking = no_masking, approximated_slit = approximated_slit, $
+        no_fitting = no_fitting, no_xcfit_block = no_xcfit_block, position = position, velocity = velocity, no_line_list = no_line_list, $
+        top_dir = top_dir, save_not = save_not, force_version = force_version, $
+        all_ana = all_ana, all_result_headers = all_result_headers, all_data_headers = all_data_headers, all_proc_steps = all_proc_steps, $
+        group_leader = info.group_leader)
       (*info.result).l3_file = l3_file
       (*info.result).ana = ptr_new(all_ana)
-      (*info.result).ana_read = ptr_new(make_array(N_ELEMENTS(all_ana), value=1))
+      (*info.result).ana_read = ptr_new(make_array(n_elements(all_ana), value = 1))
       (*info.result).result_headers = ptr_new(all_result_headers)
       (*info.result).data_headers = ptr_new(all_data_headers)
       (*info.result).proc_steps = ptr_new(all_proc_steps)
@@ -157,199 +155,197 @@ pro spice_create_l3_widget_event, event
       (*info.result).user_dir = user_dir[0]
       IF top_dir_choice EQ 1 THEN (*info.result).top_dir = top_dir
       widget_control, event.top, /destroy
-    end
+    END
 
-    else:
-  endcase
-end
-
+    ELSE:
+  ENDCASE
+END
 
 ; User clicked on a line button
-function spice_create_l3_widget_lineselect, event
+FUNCTION spice_create_l3_widget_lineselect, event
   widget_control, event.top, get_uvalue = info
   widget_control, info.lineselect, get_value = lineselect
   widget_control, info.lineall_clear, get_value = lineall_clear
-  case event.id of
-    info.lineall_clear: begin
-      if event.select eq 0 then return,0
-      if event.value eq 0 then begin
-        lineselect[*]=1
-        lineall_clear=[1,0]
-      endif else begin
-        lineselect[*]=0
-        lineall_clear=[0,1]
-      endelse
+  CASE event.id OF
+    info.lineall_clear: BEGIN
+      IF event.select EQ 0 THEN return, 0
+      IF event.value EQ 0 THEN BEGIN
+        lineselect[*] = 1
+        lineall_clear = [1, 0]
+      ENDIF ELSE BEGIN
+        lineselect[*] = 0
+        lineall_clear = [0, 1]
+      ENDELSE
       widget_control, info.lineselect, set_value = lineselect
-    end
-    info.lineselect: begin
-      lineall_clear[*]=0
-    end
-    else: return,0
-  endcase
+    END
+    info.lineselect: BEGIN
+      lineall_clear[*] = 0
+    END
+    ELSE: return, 0
+  ENDCASE
   widget_control, info.lineall_clear, set_value = lineall_clear
-  return,0
-end
-
+  return, 0
+END
 
 ; User changed top-dir of l3
-function spice_create_l3_widget_change_topdir, event
+FUNCTION spice_create_l3_widget_change_topdir, event
   widget_control, event.top, get_uvalue = info
   IF event.id EQ info.top_dir_choice_bg THEN BEGIN
-    user_dir=0
-    IF event.value EQ 0 && info.official_l3dir EQ 0 THEN user_dir=1
-    widget_control, info.dir_user_bg, set_value=user_dir
+    user_dir = 0
+    IF event.value EQ 0 && info.official_l3dir EQ 0 THEN user_dir = 1
+    widget_control, info.dir_user_bg, set_value = user_dir
   ENDIF
   spice_create_l3_widget_calc_l3_dir, info
-  return,0
-end
+  return, 0
+END
 
-
-pro spice_create_l3_widget_changesdir, event
+PRO spice_create_l3_widget_changesdir, event
   widget_control, event.top, get_uvalue = info
-  widget_control, info.dir_manual_field, get_value=sdir
-  sfile=dialog_pickfile(path=sdir, title='Please select a directory', get_path=sdir)
-  if sdir ne '' then begin
-    widget_control, info.dir_manual_field, set_value=sdir
-  endif
+  widget_control, info.dir_manual_field, get_value = sdir
+  !NULL = dialog_pickfile(path = sdir, title = 'Please select a directory', get_path = sdir)
+  IF sdir NE '' THEN BEGIN
+    widget_control, info.dir_manual_field, set_value = sdir
+  ENDIF
   spice_create_l3_widget_calc_l3_dir, info
-end
+END
 
-
-pro spice_create_l3_widget_calc_l3_dir, info
-  widget_control, info.top_dir_choice_bg, get_value=top_dir_choice
-  IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value=top_dir
-  widget_control, info.dir_user_bg, get_value=user_dir
+PRO spice_create_l3_widget_calc_l3_dir, info
+  widget_control, info.top_dir_choice_bg, get_value = top_dir_choice
+  IF top_dir_choice EQ 1 THEN widget_control, info.dir_manual_field, get_value = top_dir
+  widget_control, info.dir_user_bg, get_value = user_dir
   user_dir = user_dir[0]
-  file_l2 = info.l2_object->get_filename()
-  file_l3 = spice_data.get_filename_l3(file_l2, force_version=force_version, $
-    version_l3=version_l3, existing_l3_files=existing_l3_files, l3_dir=l3_dir, top_dir=top_dir)
+  file_l2 = info.l2_object.get_filename()
+  file_l3 = spice_data.get_filename_l3(file_l2, existing_l3_files = existing_l3_files, l3_dir = l3_dir, top_dir = top_dir)
   all_files = [file_l3]
-  all_files_list = [file_l3+' [new]']
+  all_files_list = [file_l3 + ' [new]']
   ind = where(existing_l3_files NE '', count)
   IF count GT 0 THEN BEGIN
     all_files = [all_files, existing_l3_files[ind]]
-    all_files_list = [all_files_list, existing_l3_files[ind]+' [overwrite]']
+    all_files_list = [all_files_list, existing_l3_files[ind] + ' [overwrite]']
   ENDIF
-  if ptr_valid(info.file_l3) then ptr_free, info.file_l3
+  IF ptr_valid(info.file_l3) THEN ptr_free, info.file_l3
   info.file_l3 = ptr_new(all_files)
   info.dir_l3 = l3_dir
-  widget_control, info.file_l3_name_list, set_value=all_files_list
-  widget_control, info.file_l3_dir_label, set_value=l3_dir
-end
+  widget_control, info.file_l3_name_list, set_value = all_files_list
+  widget_control, info.file_l3_dir_label, set_value = l3_dir
+END
 
-
+PRO spice_create_l3_widget_cleanup, base
+  widget_control, base, get_uvalue = info
+  IF info.object_created THEN obj_destroy, info.l2_object
+  IF ptr_valid(info.file_l3) THEN ptr_free, info.file_l3
+END
 
 ; -----------------------------------------------------------------------
 ; MAIN program
 ; -----------------------------------------------------------------------
 
-function spice_create_l3_widget, l2_object, group_leader, window_index=window_index, $
-  no_masking=no_masking, approximated_slit=approximated_slit, no_line_list=no_line_list, $
-  no_fitting=no_fitting, no_widget=no_widget, position=position, velocity=velocity, $
-  official_l3dir=official_l3dir, top_dir=top_dir, save_not=save_not, block_save=block_save, $
-  allow_xcontrol_l23=allow_xcontrol_l23
+FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_index, $
+  no_masking = no_masking, approximated_slit = approximated_slit, no_line_list = no_line_list, $
+  no_fitting = no_fitting, no_widget = no_widget, position = position, velocity = velocity, $
+  official_l3dir = official_l3dir, top_dir = top_dir, save_not = save_not, block_save = block_save, $
+  allow_xcontrol_l23 = allow_xcontrol_l23
+  IF ~arg_present(no_line_list) THEN no_line_list = 1 ; See note for this keyword in documentation
 
-  IF ~ARG_PRESENT(no_line_list) THEN no_line_list=1 ; See note for this keyword in documentation
-
-  IF N_PARAMS() EQ 0 THEN BEGIN
+  IF n_params() EQ 0 THEN BEGIN
     print, 'Usage: res = spice_create_l3_widget(l2_object [, group_leader] [, window_index=window_index] $'
-      print, '  [, /no_masking] [, /approximated_slit] $'
-      print, '  [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $'
-      print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
+    print, '  [, /no_masking] [, /approximated_slit] $'
+    print, '  [, /no_fitting] [, /no_widget] [, /position] [, velocity=velocity] $'
+    print, '  [, /official_l3dir] [, top_dir=top_dir] [, /save_not] )'
     return, -1
   ENDIF
-  l2_object = spice_get_object(l2_object, is_spice=is_spice, object_created=object_created)
-  if ~is_spice then return, -1
+  l2_object = spice_object(l2_object, is_spice = is_spice, object_created = object_created)
+  IF ~is_spice THEN return, -1
 
   official_l3dir = keyword_set(official_l3dir)
   top_dir_choice = keyword_set(top_dir)
   dir_user_choice = [~official_l3dir && ~top_dir_choice]
   option_choice = [keyword_set(no_fitting), keyword_set(no_widget), keyword_set(no_masking), $
-    keyword_set(apporximated_slit), keyword_set(no_line_list), keyword_set(position)]
-  if N_ELEMENTS(velocity) eq 0 then velocity = 0.0
+    keyword_set(approximated_slit), keyword_set(no_line_list), keyword_set(position)]
+  IF n_elements(velocity) EQ 0 THEN velocity = 0.0
   save_choice = [~keyword_set(save_not)]
-  if N_ELEMENTS(top_dir) eq 0 then cd, current=dir_manual else dir_manual=top_dir
+  IF n_elements(top_dir) EQ 0 THEN cd, current = dir_manual ELSE dir_manual = top_dir
 
-  file_l2 = l2_object->get_filename()
-  line_id = l2_object->get_window_id()
-  n_windows = N_ELEMENTS(line_id)
+  file_l2 = l2_object.get_filename()
+  line_id = l2_object.get_window_id()
+  n_windows = n_elements(line_id)
   window_select = intarr(n_windows)
-  FOR i=0,N_ELEMENTS(window_index)-1 DO $
-    IF window_index[i] GE 0 && window_index[i] LT n_windows THEN window_select[window_index[i]]=1
+  FOR i = 0, n_elements(window_index) - 1 DO $
+    IF window_index[i] GE 0 && window_index[i] LT n_windows THEN window_select[window_index[i]] = 1
 
-  base = widget_base(title='SPICE create level 3 data/file', group_leader=group_leader, /column);, modal=keyword_set(group_leader))
+  base = widget_base(title = 'SPICE create level 3 data/file', group_leader = group_leader, /column) ; , modal=keyword_set(group_leader))
   ; If this widget is modal, the user can't stop the fitting calculations
 
-  label = widget_label(base, value=(file_dirname(file_l2))[0], /align_center)
-  label = widget_label(base, value=(file_basename(file_l2))[0], /align_center)
-  column = fix(n_windows/3.0)+1
-  if column gt 5 then column=5
-  lineselect = cw_bgroup(base, /nonexclusive, line_id, column=column, set_value=window_select, $
+  label = widget_label(base, value = (file_dirname(file_l2))[0], /align_center)
+  label = widget_label(base, value = (file_basename(file_l2))[0], /align_center)
+  column = fix(n_windows / 3.0) + 1
+  IF column GT 5 THEN column = 5
+  lineselect = cw_bgroup(base, /nonexclusive, line_id, column = column, set_value = window_select, $
     event_func = 'spice_create_l3_widget_lineselect')
-  lineall_clear = cw_bgroup(base, /nonexclusive, ['all','clear'], column=2, event_func = 'spice_create_l3_widget_lineselect')
+  lineall_clear = cw_bgroup(base, /nonexclusive, ['all', 'clear'], column = 2, event_func = 'spice_create_l3_widget_lineselect')
 
-  output_path_base = widget_base(base, /column, sensitive=~keyword_set(block_save))
-  top_dir_base = widget_base(output_path_base, /row, event_func='spice_create_l3_widget_change_topdir')
-  top_dir_label1 = widget_label(top_dir_base, value='Top directory', /align_left)
-  top_dir_choice_bg = cw_bgroup(top_dir_base, ['Environment variable', 'Path'], set_value=top_dir_choice, /column, /exclusive)
+  output_path_base = widget_base(base, /column, sensitive = ~keyword_set(block_save))
+  top_dir_base = widget_base(output_path_base, /row, event_func = 'spice_create_l3_widget_change_topdir')
+  top_dir_label1 = widget_label(top_dir_base, value = 'Top directory', /align_left) ; idl-disable-line unused-var
+  top_dir_choice_bg = cw_bgroup(top_dir_base, ['Environment variable', 'Path'], set_value = top_dir_choice, /column, /exclusive)
   top_dir_path_base = widget_base(top_dir_base, /column)
-  top_dir_env_var_field = cw_field(top_dir_path_base, title='', value = 'SPICE_DATA', /string, /return_events, xsize = 15, $
-    /NOEDIT, ysize=0.7)
+  top_dir_env_var_field = cw_field(top_dir_path_base, title = '', value = 'SPICE_DATA', /string, /return_events, xsize = 15, $ ; idl-disable-line unused-var
+    /NOEDIT, ysize = 0.7)
   dir_manual_base = widget_base(top_dir_path_base, /row)
-  dir_manual_field = cw_field(dir_manual_base, title='', value = dir_manual, /string, /return_events, xsize = 80)
-  dir_manual_button = widget_button(dir_manual_base, value='Change', event_pro='spice_create_l3_widget_changesdir')
-  dir_user_bg = cw_bgroup(output_path_base, ['Save in "user" subdirectory'], set_value=dir_user_choice, /nonexclusive, $
-    event_func='spice_create_l3_widget_change_topdir')
-  widget_control, dir_user_bg, sensitive=official_l3dir
+  dir_manual_field = cw_field(dir_manual_base, title = '', value = dir_manual, /string, /return_events, xsize = 80)
+  dir_manual_button = widget_button(dir_manual_base, value = 'Change', event_pro = 'spice_create_l3_widget_changesdir') ; idl-disable-line unused-var
+  dir_user_bg = cw_bgroup(output_path_base, ['Save in "user" subdirectory'], set_value = dir_user_choice, /nonexclusive, $
+    event_func = 'spice_create_l3_widget_change_topdir')
+  widget_control, dir_user_bg, sensitive = official_l3dir
 
   options_values = ['Do not run the fit routine', 'Do not open xcfit_block', $
     'No masking of dumbbell', 'Approximate dumbbell masking', 'Do not use line list', 'Use position, i.e. fit lambda, not velocity']
-  options_bg = cw_bgroup(base, options_values, set_value=option_choice, /nonexclusive, column=3)
-  fit_velocity_field = cw_field(base, title='Initial velocity', value = velocity, /float, xsize = 10)
+  options_bg = cw_bgroup(base, options_values, set_value = option_choice, /nonexclusive, column = 3)
+  fit_velocity_field = cw_field(base, title = 'Initial velocity', value = velocity, /float, xsize = 10)
 
-  save_base = widget_base(base, /row, sensitive=~keyword_set(block_save))
-  save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value=save_choice, /nonexclusive)
+  save_base = widget_base(base, /row, sensitive = ~keyword_set(block_save))
+  save_bg = cw_bgroup(save_base, ['Save level 3 FITS file to:'], set_value = save_choice, /nonexclusive)
   file_l3_base = widget_base(save_base, /column)
-  file_l3_dir_label = widget_label(file_l3_base, value=(file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  ;file_l3_name_label = widget_label(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
-  file_l3_name_list = widget_droplist(file_l3_base, value=(file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  file_l3_dir_label = widget_label(file_l3_base, value = (file_dirname('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
+  file_l3_name_list = widget_droplist(file_l3_base, value = (file_basename('path/file_l3'))[0], /align_left, /DYNAMIC_RESIZE)
 
   button_base = widget_base(base, /row)
-  button_ok = widget_button(button_base, value='OK')
-  button_cancel = widget_button(button_base, value='Cancel')
+  button_ok = widget_button(button_base, value = 'OK')
+  button_cancel = widget_button(button_base, value = 'Cancel')
 
-
-  result = ptr_new({l3_file:'Cancel', ana:ptr_new(), ana_read:ptr_new(), result_headers:ptr_new(), data_headers:ptr_new(), proc_steps:ptr_new(), $
-    file_saved:0b, user_dir:0b, top_dir:''})
+  result = ptr_new({l3_file: 'Cancel', ana: ptr_new(), ana_read: ptr_new(), result_headers: ptr_new(), data_headers: ptr_new(), proc_steps: ptr_new(), $
+    file_saved: 0b, user_dir: 0b, top_dir: ''})
   info = { $
-    group_leader:group_leader, $
-    l2_object:l2_object, $
-    file_l3:ptr_new(), $
-    dir_l3:'', $
-    official_l3dir:official_l3dir, $
-    result:result, $
-    lineselect:lineselect, $
-    lineall_clear:lineall_clear, $
-    top_dir_choice_bg:top_dir_choice_bg, $
-    dir_manual_field:dir_manual_field, $
-    dir_user_bg:dir_user_bg, $
-    options_bg:options_bg, $
-    fit_velocity_field:fit_velocity_field, $
-    save_bg:save_bg, $
-    file_l3_dir_label:file_l3_dir_label, $
-    file_l3_name_list:file_l3_name_list, $
-    ok:button_ok, $
-    cancel:button_cancel, $
-    allow_xcontrol_l23:keyword_set(allow_xcontrol_l23) $
-  }
+    group_leader: group_leader, $
+    l2_object: l2_object, $
+    object_created: object_created, $
+    file_l3: ptr_new(), $
+    dir_l3: '', $
+    official_l3dir: official_l3dir, $
+    result: result, $
+    lineselect: lineselect, $
+    lineall_clear: lineall_clear, $
+    top_dir_choice_bg: top_dir_choice_bg, $
+    dir_manual_field: dir_manual_field, $
+    dir_user_bg: dir_user_bg, $
+    options_bg: options_bg, $
+    fit_velocity_field: fit_velocity_field, $
+    save_bg: save_bg, $
+    file_l3_dir_label: file_l3_dir_label, $
+    file_l3_name_list: file_l3_name_list, $
+    ok: button_ok, $
+    cancel: button_cancel, $
+    allow_xcontrol_l23: keyword_set(allow_xcontrol_l23) $
+    }
   spice_create_l3_widget_calc_l3_dir, info
 
-  widget_control, base, set_Uvalue=info, /No_Copy
-  wp = widget_positioner(base, parent=group_leader)
-  wp->position
-  xmanager, 'spice_create_l3_widget', base, event_handler='spice_create_l3_widget_event'
+  widget_control, base, set_Uvalue = info, /No_Copy
+  wp = widget_positioner(base, parent = group_leader)
+  wp.position
+  xmanager, 'spice_create_l3_widget', base, event_handler = 'spice_create_l3_widget_event', $
+    cleanup = 'spice_create_l3_widget_cleanup'
 
   res = *result
   ptr_free, result
   return, res
-end
+END

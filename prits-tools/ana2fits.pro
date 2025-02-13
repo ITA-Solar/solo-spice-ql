@@ -169,34 +169,32 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2024-05-31 11:21 CEST $
+; $Id: 2024-11-26 13:50 CET $
 
-
-PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
-  N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
-  DATA_ID=DATA_ID, TYPE_XDIM1=TYPE_XDIM1, $
-  EXT_DATA_PATH=EXT_DATA_PATH, $
-  IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
-  PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-  XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
-  RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
-  CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-  DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-  PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
-  SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
-  SAVE_NOT=SAVE_NOT, $
-  headers_results=headers_results, headers_data=headers_data, $
-  headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
-  headers_include=headers_include, headers_constants=headers_constants
-
-  prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name='CFIT_ANALYSIS', /optional
-  n_ana = N_ELEMENTS(ANA)
-  prits_tools.parcheck, TYPE_XDIM1, 0, 'TYPE_XDIM1', 'STRING', [0, 1]
-  prits_tools.parcheck, FILEPATH_OUT, 0, 'FILEPATH_OUT', 'STRING', 0
-  prits_tools.parcheck, N_WINDOWS, 0, 'N_WINDOWS', 'INTEGERS', 0, default=max([n_ana, 1])
-  prits_tools.parcheck, WINNO, 0, 'WINNO', 'INTEGERS', 0, default=0
-  prits_tools.parcheck, LEVEL, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, VERSION, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+PRO ana2fits, ANA, filepath_out = filepath_out, $
+  n_windows = n_windows, winno = winno, $
+  data_id = data_id, type_xdim1 = type_xdim1, $
+  ext_data_path = ext_data_path, $
+  is_extension = is_extension, level = level, version = version, creator = creator, $
+  proc_steps = proc_steps, proj_keywords = proj_keywords, $
+  xdim1 = xdim1, input_data = input_data, fit = fit, $
+  result = result, residual = residual, weights = weights, include = include, $
+  const = const, filename_ana = filename_ana, datasource = datasource, $
+  definition = definition, missing = missing, label = label, history = history, $
+  progenitor_data = progenitor_data, header_input_data = header_input_data, $
+  save_xdim1 = save_xdim1, no_save_data = no_save_data, print_headers = print_headers, $
+  save_not = save_not, $
+  headers_results = headers_results, headers_data = headers_data, $
+  headers_xdim1 = headers_xdim1, headers_weights = headers_weights, $
+  headers_include = headers_include, headers_constants = headers_constants
+  prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name = 'CFIT_ANALYSIS', /optional
+  n_ana = n_elements(ANA)
+  prits_tools.parcheck, type_xdim1, 0, 'TYPE_XDIM1', 'STRING', [0, 1]
+  prits_tools.parcheck, filepath_out, 0, 'FILEPATH_OUT', 'STRING', 0
+  prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0, default = max([n_ana, 1])
+  prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0, default = 0
+  prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
+  prits_tools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
 
   result_ptr = 0
   fit_ptr = 0
@@ -212,157 +210,150 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
   proj_kwd_ptr = 0
 
   IF ~n_ana THEN BEGIN
-
-    prits_tools.parcheck, RESULT, 0, 'RESULT', 'POINTER', [0, 1], result=error
-    IF error[0] NE '' THEN prits_tools.parcheck, RESULT, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7] $
-    ELSE result_ptr = N_ELEMENTS(RESULT)
+    prits_tools.parcheck, result, 0, 'RESULT', 'POINTER', [0, 1], result = error
+    IF error[0] NE '' THEN prits_tools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7] $
+    ELSE result_ptr = n_elements(result)
     IF result_ptr GT 0 THEN n_ana = result_ptr ELSE n_ana = 1
 
     IF n_ana GT 1 THEN BEGIN
-
-      prits_tools.parcheck, FIT, 0, 'FIT', 'POINTER', 1, VALID_NELEMENTS=n_ana
-      prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
-      prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
-      prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
-      prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
-      prits_tools.parcheck, CONST, 0, 'CONST', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
-
+      prits_tools.parcheck, fit, 0, 'FIT', 'POINTER', 1, valid_nelements = n_ana
+      prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
+      prits_tools.parcheck, xdim1, 0, 'XDIM1', 'POINTER', 1, /optional, valid_nelements = n_ana
+      prits_tools.parcheck, weights, 0, 'WEIGHTS', 'POINTER', 1, /optional, valid_nelements = n_ana
+      prits_tools.parcheck, include, 0, 'INCLUDE', 'POINTER', 1, /optional, valid_nelements = n_ana
+      prits_tools.parcheck, const, 0, 'CONST', 'POINTER', 1, /optional, valid_nelements = n_ana
     ENDIF ELSE BEGIN ; n_ana GT 1
 
-      prits_tools.parcheck, FIT, 0, 'FIT', 'POINTER', [0, 1], VALID_NELEMENTS=n_ana, result=error
-      IF error[0] NE '' THEN prits_tools.parcheck, FIT, 0, 'FIT', 'STRUCT', 0 $
-      ELSE fit_ptr = N_ELEMENTS(FIT)
-      prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error[0] NE '' THEN prits_tools.parcheck, INPUT_DATA, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
-      ELSE in_data_ptr = N_ELEMENTS(INPUT_DATA)
-      prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error[0] NE '' THEN prits_tools.parcheck, XDIM1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], /optional $
-      ELSE xdim1_ptr = N_ELEMENTS(XDIM1)
-      prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error[0] NE '' THEN prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
-      ELSE weights_ptr = N_ELEMENTS(WEIGHTS)
-      prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error[0] NE '' THEN prits_tools.parcheck, INCLUDE, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
-      ELSE incl_ptr = N_ELEMENTS(INCLUDE)
-      prits_tools.parcheck, CONST, 0, 'CONST', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-      IF error[0] NE '' THEN prits_tools.parcheck, CONST, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
-      ELSE const_ptr = N_ELEMENTS(CONST)
-
+      prits_tools.parcheck, fit, 0, 'FIT', 'POINTER', [0, 1], valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN prits_tools.parcheck, fit, 0, 'FIT', 'STRUCT', 0 $
+      ELSE fit_ptr = n_elements(fit)
+      prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE in_data_ptr = n_elements(input_data)
+      prits_tools.parcheck, xdim1, 0, 'XDIM1', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN prits_tools.parcheck, xdim1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], /optional $
+      ELSE xdim1_ptr = n_elements(xdim1)
+      prits_tools.parcheck, weights, 0, 'WEIGHTS', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN prits_tools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE weights_ptr = n_elements(weights)
+      prits_tools.parcheck, include, 0, 'INCLUDE', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN prits_tools.parcheck, include, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE incl_ptr = n_elements(include)
+      prits_tools.parcheck, const, 0, 'CONST', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN prits_tools.parcheck, const, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE const_ptr = n_elements(const)
     ENDELSE ; n_ana GT 1
-
   ENDIF ; ~n_ana
 
   IF n_ana GT 1 THEN BEGIN
-    prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
-    prg_data_ptr = N_ELEMENTS(PROGENITOR_DATA)
-    prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana
-    hdr_in_data_ptr = N_ELEMENTS(HEADER_INPUT_DATA)
+    prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
+    prg_data_ptr = n_elements(progenitor_data)
+    prits_tools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
+    hdr_in_data_ptr = n_elements(header_input_data)
   ENDIF ELSE BEGIN ; n_ana GT 1
-    prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-    IF error[0] NE '' THEN prits_tools.parcheck, PROGENITOR_DATA, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
-    ELSE prg_data_ptr = N_ELEMENTS(PROGENITOR_DATA)
-    prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'POINTER', [0, 1], /optional, VALID_NELEMENTS=n_ana, result=error
-    IF error[0] NE '' THEN prits_tools.parcheck, HEADER_INPUT_DATA, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional $
-    ELSE hdr_in_data_ptr = N_ELEMENTS(HEADER_INPUT_DATA)
+    prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+    IF error[0] NE '' THEN prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+    ELSE prg_data_ptr = n_elements(progenitor_data)
+    prits_tools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+    IF error[0] NE '' THEN prits_tools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional $
+    ELSE hdr_in_data_ptr = n_elements(header_input_data)
   ENDELSE ; n_ana GT 1
 
-  prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana, result=error
-  IF error[0] NE '' THEN prits_tools.parcheck, PROC_STEPS, 0, 'PROC_STEPS', 11, 1, /optional $
-  ELSE proc_st_ptr = N_ELEMENTS(PROC_STEPS)
-  prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', 'POINTER', 1, /optional, VALID_NELEMENTS=n_ana, result=error
-  IF error[0] NE '' THEN   prits_tools.parcheck, PROJ_KEYWORDS, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
-  ELSE proj_kwd_ptr = N_ELEMENTS(PROJ_KEYWORDS)
+  prits_tools.parcheck, proc_steps, 0, 'PROC_STEPS', 'POINTER', 1, /optional, valid_nelements = n_ana, result = error
+  IF error[0] NE '' THEN prits_tools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional $
+  ELSE proc_st_ptr = n_elements(proc_steps)
+  prits_tools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', 'POINTER', 1, /optional, valid_nelements = n_ana, result = error
+  IF error[0] NE '' THEN prits_tools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
+  ELSE proj_kwd_ptr = n_elements(proj_keywords)
 
-  prits_tools.parcheck, DATA_ID, 0, 'DATA_ID', 'STRING', [0, 1], VALID_NELEMENTS=n_ana, /optional
-
+  prits_tools.parcheck, data_id, 0, 'DATA_ID', 'STRING', [0, 1], valid_nelements = n_ana, /optional
 
   filename_out = file_basename(filepath_out)
 
   get_headers = bytarr(6)
-  if arg_present(headers_results) then begin
+  IF arg_present(headers_results) THEN BEGIN
     headers_results = ptrarr(n_ana)
     get_headers[0] = 1
-  endif
-  if arg_present(headers_data) then begin
+  ENDIF
+  IF arg_present(headers_data) THEN BEGIN
     headers_data = ptrarr(n_ana)
     get_headers[1] = 1
-  endif
-  if arg_present(headers_xdim1) then begin
+  ENDIF
+  IF arg_present(headers_xdim1) THEN BEGIN
     headers_xdim1 = ptrarr(n_ana)
     get_headers[2] = 1
-  endif
-  if arg_present(headers_weights) then begin
+  ENDIF
+  IF arg_present(headers_weights) THEN BEGIN
     headers_weights = ptrarr(n_ana)
     get_headers[3] = 1
-  endif
-  if arg_present(headers_include) then begin
+  ENDIF
+  IF arg_present(headers_include) THEN BEGIN
     headers_include = ptrarr(n_ana)
     get_headers[4] = 1
-  endif
-  if arg_present(headers_constants) then begin
+  ENDIF
+  IF arg_present(headers_constants) THEN BEGIN
     headers_constants = ptrarr(n_ana)
     get_headers[5] = 1
-  endif
+  ENDIF
 
   n_windows_use = max([n_ana, n_windows])
-  for iwindow=0,n_ana-1 do begin
+  FOR iwindow = 0, n_ana - 1 DO BEGIN
+    IF result_ptr THEN result_use = *result[iwindow] ELSE IF n_elements(result) GT 0 THEN result_use = result
+    IF fit_ptr THEN fit_use = *fit[iwindow] ELSE IF n_elements(fit) GT 0 THEN fit_use = fit
+    IF in_data_ptr THEN INPUT_DATA_use = *input_data[iwindow] ELSE IF n_elements(input_data) GT 0 THEN INPUT_DATA_use = input_data
+    IF xdim1_ptr THEN xdim1_use = *xdim1[iwindow] ELSE IF n_elements(xdim1) GT 0 THEN xdim1_use = xdim1
+    IF weights_ptr THEN weights_use = *weights[iwindow] ELSE IF n_elements(weights) GT 0 THEN weights_use = weights
+    IF incl_ptr THEN include_use = *include[iwindow] ELSE IF n_elements(include) GT 0 THEN include_use = include
+    IF const_ptr THEN const_use = *const[iwindow] ELSE IF n_elements(const) GT 0 THEN const_use = const
 
-    IF result_ptr THEN result_use = *result[iwindow] ELSE IF N_ELEMENTS(result) GT 0 THEN result_use = result
-    IF fit_ptr THEN fit_use = *fit[iwindow] ELSE IF N_ELEMENTS(fit) GT 0 THEN fit_use = fit
-    IF in_data_ptr THEN INPUT_DATA_use = *INPUT_DATA[iwindow] ELSE IF N_ELEMENTS(input_data) GT 0 THEN input_data_use = input_data
-    IF xdim1_ptr THEN xdim1_use = *xdim1[iwindow] ELSE IF N_ELEMENTS(xdim1) GT 0 THEN xdim1_use = xdim1
-    IF weights_ptr THEN weights_use = *weights[iwindow] ELSE IF N_ELEMENTS(weights) GT 0 THEN weights_use = weights
-    IF incl_ptr THEN include_use = *include[iwindow] ELSE IF N_ELEMENTS(include) GT 0 THEN include_use = include
-    IF const_ptr THEN const_use = *const[iwindow] ELSE IF N_ELEMENTS(const) GT 0 THEN const_use = const
+    IF prg_data_ptr THEN PROGENITOR_DATA_use = *progenitor_data[iwindow] ELSE IF n_elements(progenitor_data) GT 0 THEN PROGENITOR_DATA_use = progenitor_data
+    IF hdr_in_data_ptr THEN HEADER_INPUT_DATA_use = *header_input_data[iwindow] ELSE IF n_elements(header_input_data) GT 0 THEN HEADER_INPUT_DATA_use = header_input_data
+    IF proc_st_ptr THEN PROC_STEPS_use = *proc_steps[iwindow] ELSE IF n_elements(proc_steps) GT 0 THEN PROC_STEPS_use = proc_steps
+    IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *proj_keywords[iwindow] ELSE IF n_elements(proj_keywords) GT 0 THEN PROJ_KEYWORDS_use = proj_keywords
 
-    IF prg_data_ptr THEN PROGENITOR_DATA_use = *PROGENITOR_DATA[iwindow] ELSE IF N_ELEMENTS(PROGENITOR_DATA) GT 0 THEN PROGENITOR_DATA_use = PROGENITOR_DATA
-    IF hdr_in_data_ptr THEN HEADER_INPUT_DATA_use = *HEADER_INPUT_DATA[iwindow] ELSE IF N_ELEMENTS(HEADER_INPUT_DATA) GT 0 THEN HEADER_INPUT_DATA_use = HEADER_INPUT_DATA
-    IF proc_st_ptr THEN PROC_STEPS_use = *PROC_STEPS[iwindow] ELSE IF N_ELEMENTS(PROC_STEPS) GT 0 THEN PROC_STEPS_use = PROC_STEPS
-    IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *PROJ_KEYWORDS[iwindow] ELSE IF N_ELEMENTS(PROJ_KEYWORDS) GT 0 THEN PROJ_KEYWORDS_use = PROJ_KEYWORDS
-    
     IF keyword_set(data_id) THEN data_id_use = data_id[iwindow]
-    IF N_ELEMENTS(TYPE_XDIM1) GT 1 THEN TYPE_XDIM1_use = TYPE_XDIM1[iwindow] ELSE TYPE_XDIM1_use = TYPE_XDIM1
-    IF N_ELEMENTS(NO_SAVE_DATA) GT 1 THEN NO_SAVE_DATA_use = NO_SAVE_DATA[iwindow] ELSE $
-      IF N_ELEMENTS(NO_SAVE_DATA) EQ 1 THEN NO_SAVE_DATA_use = NO_SAVE_DATA
-    IF N_ELEMENTS(SAVE_XDIM1) GT 1 THEN SAVE_XDIM1_use = SAVE_XDIM1[iwindow] ELSE $
-      IF N_ELEMENTS(SAVE_XDIM1) EQ 1 THEN SAVE_XDIM1_use = SAVE_XDIM1
-    IF N_ELEMENTS(EXT_DATA_PATH) GT 1 THEN EXT_DATA_PATH_use = EXT_DATA_PATH[iwindow] ELSE $
-      IF N_ELEMENTS(EXT_DATA_PATH) EQ 1 THEN EXT_DATA_PATH_use = EXT_DATA_PATH
+    IF n_elements(type_xdim1) GT 1 THEN TYPE_XDIM1_use = type_xdim1[iwindow] ELSE TYPE_XDIM1_use = type_xdim1
+    IF n_elements(no_save_data) GT 1 THEN NO_SAVE_DATA_use = no_save_data[iwindow] ELSE $
+      IF n_elements(no_save_data) EQ 1 THEN NO_SAVE_DATA_use = no_save_data
+    IF n_elements(save_xdim1) GT 1 THEN SAVE_XDIM1_use = save_xdim1[iwindow] ELSE $
+      IF n_elements(save_xdim1) EQ 1 THEN SAVE_XDIM1_use = save_xdim1
+    IF n_elements(ext_data_path) GT 1 THEN EXT_DATA_PATH_use = ext_data_path[iwindow] ELSE $
+      IF n_elements(ext_data_path) EQ 1 THEN EXT_DATA_PATH_use = ext_data_path
 
-    extension = keyword_set(IS_EXTENSION) || iwindow GT 0
-    
-    if N_ELEMENTS(ana) then begin
-      headers = ana2fitshdr(ana[iwindow], FILENAME_OUT=FILENAME_OUT, $
-        N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
-        DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1_use, $
-        EXT_DATA_PATH=EXT_DATA_PATH_use, $
-        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
-        PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
-        XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
-        RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $
-        CONST=const_use, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-        PROGENITOR_DATA=PROGENITOR_DATA_use, HEADER_INPUT_DATA=HEADER_INPUT_DATA_use, $
-        SAVE_XDIM1=SAVE_XDIM1_use, NO_SAVE_DATA=NO_SAVE_DATA_use, PRINT_HEADERS=PRINT_HEADERS, $
-        DATA_ARRAY=DATA_ARRAY)
-    endif else begin
-      headers = ana2fitshdr( FILENAME_OUT=FILENAME_OUT, $
-        N_WINDOWS=n_windows_use, WINNO=WINNO+iwindow, $
-        DATA_ID=data_id_use, TYPE_XDIM1=TYPE_XDIM1_use, $
-        EXT_DATA_PATH=EXT_DATA_PATH_use, $
-        IS_EXTENSION=extension, LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
-        PROC_STEPS=PROC_STEPS_use, PROJ_KEYWORDS=PROJ_KEYWORDS_use, $
-        XDIM1=xdim1_use, INPUT_DATA=INPUT_DATA_use, FIT=fit_use, $
-        RESULT=result_use, RESIDUAL=RESIDUAL, WEIGHTS=weights_use, INCLUDE=include_use, $
-        CONST=const_use, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-        DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-        PROGENITOR_DATA=PROGENITOR_DATA_use, HEADER_INPUT_DATA=HEADER_INPUT_DATA_use, $
-        SAVE_XDIM1=SAVE_XDIM1_use, NO_SAVE_DATA=NO_SAVE_DATA_use, PRINT_HEADERS=PRINT_HEADERS, $
-        DATA_ARRAY=DATA_ARRAY)
-    endelse
+    extension = keyword_set(is_extension) || iwindow GT 0
+
+    IF n_elements(ANA) THEN BEGIN
+      headers = ana2fitshdr(ANA[iwindow], filename_out = filename_out, $
+        n_windows = n_windows_use, winno = winno + iwindow, $
+        data_id = data_id_use, type_xdim1 = TYPE_XDIM1_use, $
+        ext_data_path = EXT_DATA_PATH_use, $
+        is_extension = extension, level = level, version = version, creator = creator, $
+        proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
+        xdim1 = xdim1_use, input_data = INPUT_DATA_use, fit = fit_use, $
+        result = result_use, residual = residual, weights = weights_use, include = include_use, $
+        const = const_use, filename_ana = filename_ana, datasource = datasource, $
+        definition = definition, missing = missing, label = label, history = history, $
+        progenitor_data = PROGENITOR_DATA_use, header_input_data = HEADER_INPUT_DATA_use, $
+        save_xdim1 = SAVE_XDIM1_use, no_save_data = NO_SAVE_DATA_use, print_headers = print_headers, $
+        data_array = DATA_ARRAY)
+    ENDIF ELSE BEGIN
+      headers = ana2fitshdr(filename_out = filename_out, $
+        n_windows = n_windows_use, winno = winno + iwindow, $
+        data_id = data_id_use, type_xdim1 = TYPE_XDIM1_use, $
+        ext_data_path = EXT_DATA_PATH_use, $
+        is_extension = extension, level = level, version = version, creator = creator, $
+        proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
+        xdim1 = xdim1_use, input_data = INPUT_DATA_use, fit = fit_use, $
+        result = result_use, residual = residual, weights = weights_use, include = include_use, $
+        const = const_use, filename_ana = filename_ana, datasource = datasource, $
+        definition = definition, missing = missing, label = label, history = history, $
+        progenitor_data = PROGENITOR_DATA_use, header_input_data = HEADER_INPUT_DATA_use, $
+        save_xdim1 = SAVE_XDIM1_use, no_save_data = NO_SAVE_DATA_use, print_headers = print_headers, $
+        data_array = DATA_ARRAY)
+    ENDELSE
 
     IF ~keyword_set(save_not) THEN BEGIN
-      writefits, filepath_out, result_use, *headers[0], append=extension
+      writefits, filepath_out, result_use, *headers[0], append = extension
       IF (*headers[1])[0] NE '' THEN $
         writefits, filepath_out, DATA_ARRAY, *headers[1], /append
       IF (*headers[2])[0] NE '' THEN $
@@ -373,15 +364,13 @@ PRO ana2fits, ANA, FILEPATH_OUT=FILEPATH_OUT, $
         writefits, filepath_out, include_use, *headers[4], /append
       IF (*headers[5])[0] NE '' THEN $
         writefits, filepath_out, const_use, *headers[5], /append
-    endif
+    ENDIF
 
-    if get_headers[0] then headers_results[iwindow] = ptr_new(*headers[0])
-    if get_headers[1] then headers_data[iwindow] = ptr_new(*headers[1])
-    if get_headers[2] then headers_xdim1[iwindow] = ptr_new(*headers[2])
-    if get_headers[3] then headers_weights[iwindow] = ptr_new(*headers[3])
-    if get_headers[4] then headers_include[iwindow] = ptr_new(*headers[4])
-    if get_headers[5] then headers_constants[iwindow] = ptr_new(*headers[5])
-
-  endfor ; iwindow=0,n_windows-1
-
+    IF get_headers[0] THEN headers_results[iwindow] = ptr_new(*headers[0])
+    IF get_headers[1] THEN headers_data[iwindow] = ptr_new(*headers[1])
+    IF get_headers[2] THEN headers_xdim1[iwindow] = ptr_new(*headers[2])
+    IF get_headers[3] THEN headers_weights[iwindow] = ptr_new(*headers[3])
+    IF get_headers[4] THEN headers_include[iwindow] = ptr_new(*headers[4])
+    IF get_headers[5] THEN headers_constants[iwindow] = ptr_new(*headers[5])
+  ENDFOR ; iwindow=0,n_windows-1
 END

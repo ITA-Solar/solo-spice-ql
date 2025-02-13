@@ -1,34 +1,32 @@
-;; TODO: documentation & get better fonts
-; $Id: 2024-02-13 13:53 CET $
+; ; TODO: documentation & get better fonts
+; $Id: 2024-11-26 13:50 CET $
 
 PRO spice_modal_message__event_handler, event
-  widget_control,event.top,/destroy
+  widget_control, event.top, /destroy
 END
 
+PRO spice_modal_message, parent_base, messages, timer = timer
+  base = widget_base(group_leader = parent_base, /floating, /modal, /row)
+  left = widget_base(base, xsize = 10)
+  center = widget_base(base, /column, frame = 0)
+  right = widget_base(base, xsize = 10)
 
-PRO spice_modal_message,parent_base, messages, timer=timer
-  base = widget_base(group_leader=parent_base,/floating, /modal, /row)
-  left = widget_base(base,xsize=10)
-  center = widget_base(base,/column, frame=0)
-  right = widget_base(base,xsize=10)
-  
-  message_base = widget_base(center,/row,frame=5)
-  
-  left = widget_base(message_base,xsize=5)
-  middle = widget_base(message_base,/column)
-  right = widget_base(message_base,xsize=5)
-  
-  label = widget_label(middle,value=' ')
-  label = widget_label(middle,value=' ')
-  aligned_left = widget_base(middle,/column,/base_align_left)
-  foreach message, messages DO label = widget_label(aligned_left,value='   '+message+'   ')
-  label = widget_label(middle,value=' ')
-  text = widget_text(center,value="    Hit any key or click to dismiss    ",/all_events)
-  label = widget_label(middle,value=' ')
-  widget_control,base,/realize
+  message_base = widget_base(center, /row, frame = 5)
+
+  left = widget_base(message_base, xsize = 5)
+  middle = widget_base(message_base, /column)
+  right = widget_base(message_base, xsize = 5)
+
+  label = widget_label(middle, value = ' ')
+  label = widget_label(middle, value = ' ')
+  aligned_left = widget_base(middle, /column, /base_align_left)
+  FOREACH message, messages DO label = widget_label(aligned_left, value = '   ' + message + '   ')
+  label = widget_label(middle, value = ' ')
+  text = widget_text(center, value = "    Hit any key or click to dismiss    ", /all_events)
+  label = widget_label(middle, value = ' ')
+  widget_control, base, /realize
   prits_tools.center_overlay_window, base, parent_base
-  IF keyword_set(timer) THEN widget_control,base,timer=timer
-  widget_control,text, /input_focus
-  xmanager,"spice_modal_message",base,event_handler="spice_modal_message__event_handler"
+  IF keyword_set(timer) THEN widget_control, base, timer = timer
+  widget_control, text, /input_focus
+  xmanager, "spice_modal_message", base, event_handler = "spice_modal_message__event_handler"
 END
-

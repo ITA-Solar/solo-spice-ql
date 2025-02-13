@@ -38,43 +38,40 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2024-01-30 14:25 CET $
+; $Id: 2024-11-26 13:50 CET $
 
+FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs
+  prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
+  prits_tools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
+  prits_tools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  prits_tools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
 
-FUNCTION ana2fitshdr_weights, DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, WEIGHTS=WEIGHTS, WCS=WCS
-
-  prits_tools.parcheck, DATETIME, 0, 'DATETIME', 'STRING', 0
-  prits_tools.parcheck, EXTENSION_NAMES, 0, 'EXTENSION_NAMES', 'STRING', 1, VALID_NELEMENTS=6
-  prits_tools.parcheck, WEIGHTS, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
-  prits_tools.parcheck, WCS, 0, 'WCS', 8, 0, /optional
-
-  IF N_ELEMENTS(WEIGHTS) EQ 0 THEN return, ''
-  min_weights = min(WEIGHTS, max=max_weights)
+  IF n_elements(weights) EQ 0 THEN return, ''
+  min_weights = min(weights, max = max_weights)
   IF min_weights EQ 1.0 && max_weights EQ 1.0 THEN return, ''
 
   fits_util = obj_new('oslo_fits_util')
-  mkhdr, hdr, WEIGHTS, /image
+  mkhdr, hdr, weights, /image
 
-  fits_util->add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
-  fits_util->add, hdr, '', ' '
+  fits_util.add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
+  fits_util.add, hdr, '', ' '
 
-  fits_util->add, hdr, 'EXTNAME', extension_names[3], 'Extension name'
+  fits_util.add, hdr, 'EXTNAME', extension_names[3], 'Extension name'
 
-  fits_util->add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
-  fits_util->add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
-  fits_util->add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
-  fits_util->add, hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
-  fits_util->add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
-  fits_util->add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
+  fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
+  fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
+  fits_util.add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
+  fits_util.add, hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
+  fits_util.add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
+  fits_util.add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
 
-  hdr = ana2fitshdr_addwcs(HDR, WCS, /WEIGHTS)
+  hdr = ana2fitshdr_addwcs(hdr, wcs, /weights)
 
-  fits_util->add, hdr, ' ', ' '
-  fits_util->add, hdr, 'BTYPE', 'WEIGHT', 'Type of data'
-  fits_util->add, hdr, 'UCD', 'stat.weight', 'Unified Content Descriptors v1.23'
-  fits_util->add, hdr, 'BUNIT', ' ', 'Units of the data'
+  fits_util.add, hdr, ' ', ' '
+  fits_util.add, hdr, 'BTYPE', 'WEIGHT', 'Type of data'
+  fits_util.add, hdr, 'UCD', 'stat.weight', 'Unified Content Descriptors v1.23'
+  fits_util.add, hdr, 'BUNIT', ' ', 'Units of the data'
 
-  fits_util->clean_header, hdr
+  fits_util.clean_header, hdr
   return, hdr
-
 END

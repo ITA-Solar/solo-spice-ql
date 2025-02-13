@@ -26,18 +26,18 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2024-02-13 13:59 CET $
-;-
+; $Id: 2024-11-26 13:50 CET $
+; -
 
 PRO prits_tools::center_window, top_base
-  compile_opt idl2, static
+  COMPILE_OPT IDL2, STATIC
   screen_size = spice_get_screen_size()
-  
-  ;; Left edge offset from left edge of screen is...
-  ;; middle of screen minus half our size.
-  ;; Ditto for top edge.
-  
-  widget_control,top_base, tlb_get_size=tlb_size
-  offsets = screen_size/2 - tlb_size/2
-  widget_control,top_base, xoffset=offsets[0], yoffset=offsets[1]
+
+  ; ; Left edge offset from left edge of screen is...
+  ; ; middle of screen minus half our size.
+  ; ; Ditto for top edge.
+
+  widget_control, top_base, tlb_get_size = tlb_size
+  offsets = screen_size / 2 - tlb_size / 2
+  widget_control, top_base, xoffset = offsets[0], yoffset = offsets[1]
 END
