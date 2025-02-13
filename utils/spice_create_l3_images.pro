@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-02-13 13:22 CET $
+; $Id: 2025-02-13 15:28 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -157,7 +157,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
   reverse_colortable = reverse_colortable, no_tree_struct = no_tree_struct, show_plot = show_plot, quiet = quiet
   prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
-  prits_tools.parcheck, version, 0, "version", 'STRing', 0, default = '01'
+  prits_tools.parcheck, version, 0, "version", 'STRing', 0, default = 'xx'
   prits_tools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
   prits_tools.parcheck, reverse_colortable, 0, 'reverse_colortable', 'int', 0, default = 0
 
@@ -187,13 +187,13 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
     handle_value, ana[iana].fit_h, fit
 
     hdr = fitshead2struct(*headers_results[iana])
-    !NULL = readfits(l3_file, l2_header, ext = iana * 2 + 1, silent = quiet)
     ; check that there is more than one exposures
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing = 1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing = 1)
     IF naxis2 + naxis4 LE 2 THEN BEGIN
-      spice_create_l3_images_single_exp, ana[iana], *headers_data[iana], filename_base, $
-        l2_header, show_plot = show_plot, filename = filename
+      handle_value, ana.data_h, data
+      spice_create_l3_images_single_exp, data, *headers_data[iana], filename_base, $
+        show_plot = show_plot, filename = filename
       CONTINUE
     ENDIF
     wcs = fitshead2wcs(hdr)
@@ -273,7 +273,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
         oJpg.update, filename, image_data, wcs, remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, $
           fit_trend = fit_trend, value_max = value_max, value_min = value_min, colortable = colortable, reverse_colortable = reverse_colortable, $
           xtitle = xtitle1, ytitle = ytitle1, $
-          startrow = startrow, endrow = endrow, l2_header = l2_header, l3_header = *headers_results[iana], show_plot = show_plot
+          startrow = startrow, endrow = endrow, l2_header = *headers_data[iana], l3_header = *headers_results[iana], show_plot = show_plot
         oJpg.plot, /clock
         oJpg.save
 
