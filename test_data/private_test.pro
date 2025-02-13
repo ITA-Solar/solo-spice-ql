@@ -21,7 +21,7 @@ PRO private_test
       '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20230117T151432_V01_167772346-000.fits', $ ; single exposure, small window
       '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20240101T180040_V01_234881025-000.fits' $ ; single exposure, whole detector
       ] ; list of L3 files
-    l3_file = l3_files[3] ; select the first L3 file
+    l3_file = l3_files[0] ; select the first L3 file
     out_dir = '/Users/mawiesma/Documents/spice/tests/images_l4' ; output directory
 
     ; ana = fits2ana(l3_file)
@@ -40,7 +40,7 @@ PRO private_test
     default, remove_vertical_trend, 1
     default, strongest_lines, 0
     default, reverse_colortable, 0
-    version = 'xx'
+    ; version = 'xx'
 
     spice_create_l3_images, l3_file, out_dir, version = version, $
       remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend, $
