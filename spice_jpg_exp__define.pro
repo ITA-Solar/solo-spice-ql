@@ -24,7 +24,7 @@ PRO spice_jpg_exp::_set_xyrange_padded_data
     lower_left = (wcs_get_coord(self.d.wcs, [0, ix.lower.left.x, ix.lower.left.y, ix.lower.left.t]))[aDimIx]
     lower_right = (wcs_get_coord(self.d.wcs, [0, ix.lower.right.x, ix.lower.right.y, ix.lower.right.t]))[aDimIx]
     upper_left = (wcs_get_coord(self.d.wcs, [0, ix.upper.left.x, ix.upper.left.y, ix.upper.left.t]))[aDimIx]
-    upper_right = (wcs_get_coord(self.d.wcs, [0, ix.upper.right.x, ix.upper.right.y, ix.upper.right.t]))[aDimIx]
+    upper_right = (wcs_get_coord(self.d.wcs, [0, ix.upper.right.x, ix.upper.right.y, ix.upper.right.t]))[aDimIx] ; typo in original code
   ENDIF ELSE BEGIN
     lower_left = (wcs_get_coord(self.d.wcs, [0, ix.lower.left.x, ix.lower.left.y]))[aDimIx]
     lower_right = (wcs_get_coord(self.d.wcs, [0, ix.lower.right.x, ix.lower.right.y]))[aDimIx]
@@ -39,6 +39,7 @@ PRO spice_jpg_exp::_set_xyrange_padded_data
 
   xrange = [min(xrange1 < xrange2), max(xrange1 > xrange2)]
   yrange = [min(yrange1 < yrange2), max(yrange1 > yrange2)]
+
   self.d.sRangePadded = {x: xrange, y: yrange}
 END
 
