@@ -34,7 +34,7 @@ PRO spice_create_l3_images_single_exp, l3_file, ana, headers_data, filename_base
   endrow = (size(image_data))[1] - 1
   help, startrow, endrow
 
-  xtitle1 = 'Solar X [arcsec]'
+  xtitle1 = 'Wavelength [nm]'
   ytitle1 = 'Solar Y [arcsec]'
 
   IF 1 THEN BEGIN
