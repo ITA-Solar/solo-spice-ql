@@ -8,10 +8,6 @@ FUNCTION spice_jpg_exp::_get_plot_dimensions_ix
   return, [2, 1]
 END
 
-FUNCTION spice_jpg_exp::_get_tix
-  return, self.d.sit_and_stare ? [0, self.d.wcs.naxis[3] - 1] : [0, 0]
-END
-
 PRO spice_jpg_exp::_set_xyrange_padded_data
   ; ; We want the x/y ranges of the rebinned-to-1" resolution array, we need to
   ; ; calculate the coordinates at the centre of edge pixels when rebinned to 1"
