@@ -39,31 +39,12 @@ PRO spice_jpg_exp::_set_xyrange_padded_data
 
   xrange = [min(xrange1 < xrange2), max(xrange1 > xrange2)]
   yrange = [min(yrange1 < yrange2), max(yrange1 > yrange2)]
-  help, xrange1
-  print, xrange1
-  help, xrange2
-  print, xrange2
-  help, xrange
-  print, xrange
-  help, yrange1
-  print, yrange1
-  help, yrange2
-  print, yrange2
-  help, yrange
-  print, yrange
-
-  help, xrange, yrange
-  ; stop
   self.d.sRangePadded = {x: xrange, y: yrange}
 END
 
 PRO spice_jpg_exp::_set_congrid_data
-  aData = self.d.aData
-
-  IF self.d.parameter NE 'vel' THEN BEGIN
-    aData = sigrange(aData)
-    self.d.aData = aData
-  ENDIF
+  aData = sigrange(self.d.aData)
+  self.d.aData = aData
 
   crval1 = fxpar(self.d.l2_header, 'CRVAL1')
   cdelt1 = fxpar(self.d.l2_header, 'CDELT1')
@@ -79,56 +60,21 @@ PRO spice_jpg_exp::_set_congrid_data
 
   x_min_unrot = min(x_unrot) - xadd
   x_max_unrot = max(x_unrot) + xadd
-  ; self.d.xrange_congrid = [x_min_unrot, x_max_unrot]
+  self.d.xrange_congrid = [x_min_unrot, x_max_unrot]
 
   naxis2_l2 = fxpar(self.d.l3_header, 'NAXIS3')
   y_unrot = crval2 + cdelt2 * (indgen(naxis2_l2) + 1 - crpix2)
   y_min_unrot = y_unrot[self.d.startrow] - yadd
   y_max_unrot = y_unrot[self.d.endrow] + yadd
-  ; self.d.yrange_congrid = [y_min_unrot, y_max_unrot]
+  self.d.yrange_congrid = [y_min_unrot, y_max_unrot]
 
-  self.d.sz = size(self.d.aData)
-  ; self.d.aDataCongrid = self.d.aData
+  self.d.sz = size(aData)
+  self.d.aDataCongrid = aData
 END
 
 PRO spice_jpg_exp::_set_title
   IF self.d.hLines EQ !NULL THEN self.d.hLines = spice_line_list()
   self.d.title = ['Single Exposure', ' Intensity']
-END
-
-PRO spice_jpg_exp::_plot_coordinate_system
-  return
-  self._set_coordinate_data
-  help, self.d.aDataCoordinates, self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y
-  ; stop
-  size_image = size(self.d.aData)
-  sAxisx = findgen(size_image[1]) * 0.3 + 500
-  sAxisy = findgen(size_image[2]) * 20
-  help, self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y
-  ; stop
-
-  ; print, ''
-  ; print, 'x diff'
-  ; print, self.d.sAxisPadded.x - self.d.sCoordinateAxis.x
-  ; stop
-  ; print, ''
-  ; print, 'y diff'
-  ; print, self.d.sAxisPadded.y - self.d.sCoordinateAxis.y
-  ; stop
-
-  imCoordinates = image(self.d.aData, sAxisx, self.d.sCoordinateAxis.y, /current, $ ; sAxisx, sAxisy, /current, $ ;
-    transparency = 90, axis_style = 2, xtickinterval = self.d.xtickinterval, $
-    xtitle = self.d.xtitle, ytitle = self.d.ytitle, title = self.d.title, $
-    font_size = self.d.font_size, aspect_ratio = 0.5)
-  ; print, 'imPadded 1', imCoordinates.position
-  imCoordinates.position = self.d.plot_position
-  ; print, 'imPadded 2', imCoordinates.position
-  ; help, self.d.plot_position
-  ; print, self.d.plot_position
-  ; stop
-
-  self.d.imCoordinatesPosition = imCoordinates.position
-  self.d.plot_top_position = self.d.imCoordinatesPosition[3] * self.d.winsize_padded[1]
 END
 
 PRO spice_jpg_exp::_plot_data
@@ -195,30 +141,25 @@ PRO spice_jpg_exp::_set_plot_keywords_based_on_padded_data_size
 END
 
 PRO spice_jpg_exp::plot, clock = clock
+  tic
   self._plot_data
+  print, 'self._plot_data'
+  toc
   ; self._plot_coordinate_system
+  print, 'self._plot_coordinate_system'
+  toc
   self._plot_colorbar
+  print, 'self._plot_colorbar'
+  toc
   self._plot_texts
+  print, 'self._plot_texts'
+  toc
   self._plot_compass
+  print, 'self._plot_compass'
+  toc
   IF keyword_set(clock) THEN self._plot_clock
-END
-
-PRO spice_jpg_exp::update, filename, aData, wcs, _extra = extra
-  self._ingest_input_parameters_and_keywords, filename, aData, wcs, _extra = extra
-
-  self._set_spiobsid_and_rasterno
-  self._set_title
-  self._set_colors
-
-  self._remove_trends_in_data
-
-  ; self._set_congrid_data
-  self._set_xyrange_padded_data
-  ; self._set_padded_data
-  self._set_plot_keywords_based_on_padded_data_size
-
-  ; self._set_plot_axis
-  self._init_graphics_window
+  print, 'self._plot_clock'
+  toc
 END
 
 PRO spice_jpg_exp__define
