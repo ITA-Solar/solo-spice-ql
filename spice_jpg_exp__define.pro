@@ -8,10 +8,6 @@ FUNCTION spice_jpg_exp::_get_plot_dimensions_ix
   return, [2, 1]
 END
 
-FUNCTION spice_jpg_exp::_get_tix
-  return, self.d.sit_and_stare ? [0, self.d.wcs.naxis[3] - 1] : [0, 0]
-END
-
 PRO spice_jpg_exp::_set_xyrange_padded_data
   ; ; We want the x/y ranges of the rebinned-to-1" resolution array, we need to
   ; ; calculate the coordinates at the centre of edge pixels when rebinned to 1"
@@ -24,7 +20,7 @@ PRO spice_jpg_exp::_set_xyrange_padded_data
     lower_left = (wcs_get_coord(self.d.wcs, [0, ix.lower.left.x, ix.lower.left.y, ix.lower.left.t]))[aDimIx]
     lower_right = (wcs_get_coord(self.d.wcs, [0, ix.lower.right.x, ix.lower.right.y, ix.lower.right.t]))[aDimIx]
     upper_left = (wcs_get_coord(self.d.wcs, [0, ix.upper.left.x, ix.upper.left.y, ix.upper.left.t]))[aDimIx]
-    upper_right = (wcs_get_coord(self.d.wcs, [0, ix.upper.right.x, ix.upper.right.y, ix.upper.right.t]))[aDimIx]
+    upper_right = (wcs_get_coord(self.d.wcs, [0, ix.upper.right.x, ix.upper.right.y, ix.upper.right.t]))[aDimIx] ; typo in original code
   ENDIF ELSE BEGIN
     lower_left = (wcs_get_coord(self.d.wcs, [0, ix.lower.left.x, ix.lower.left.y]))[aDimIx]
     lower_right = (wcs_get_coord(self.d.wcs, [0, ix.lower.right.x, ix.lower.right.y]))[aDimIx]
@@ -39,31 +35,13 @@ PRO spice_jpg_exp::_set_xyrange_padded_data
 
   xrange = [min(xrange1 < xrange2), max(xrange1 > xrange2)]
   yrange = [min(yrange1 < yrange2), max(yrange1 > yrange2)]
-  help, xrange1
-  print, xrange1
-  help, xrange2
-  print, xrange2
-  help, xrange
-  print, xrange
-  help, yrange1
-  print, yrange1
-  help, yrange2
-  print, yrange2
-  help, yrange
-  print, yrange
 
-  help, xrange, yrange
-  ; stop
   self.d.sRangePadded = {x: xrange, y: yrange}
 END
 
 PRO spice_jpg_exp::_set_congrid_data
-  aData = self.d.aData
-
-  IF self.d.parameter NE 'vel' THEN BEGIN
-    aData = sigrange(aData)
-    self.d.aData = aData
-  ENDIF
+  aData = sigrange(self.d.aData)
+  self.d.aData = aData
 
   crval1 = fxpar(self.d.l2_header, 'CRVAL1')
   cdelt1 = fxpar(self.d.l2_header, 'CDELT1')
@@ -87,8 +65,8 @@ PRO spice_jpg_exp::_set_congrid_data
   y_max_unrot = y_unrot[self.d.endrow] + yadd
   self.d.yrange_congrid = [y_min_unrot, y_max_unrot]
 
-  self.d.sz = size(self.d.aData)
-  self.d.aDataCongrid = self.d.aData
+  self.d.sz = size(aData)
+  self.d.aDataCongrid = aData
 END
 
 PRO spice_jpg_exp::_set_title
@@ -96,59 +74,15 @@ PRO spice_jpg_exp::_set_title
   self.d.title = ['Single Exposure', ' Intensity']
 END
 
-PRO spice_jpg_exp::_plot_coordinate_system
-  return
-  self._set_coordinate_data
-  help, self.d.aDataCoordinates, self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y
-  ; stop
-  size_image = size(self.d.aData)
-  sAxisx = findgen(size_image[1]) * 0.3 + 500
-  sAxisy = findgen(size_image[2]) * 20
-  help, self.d.sCoordinateAxis.x, self.d.sCoordinateAxis.y
-  ; stop
-
-  ; print, ''
-  ; print, 'x diff'
-  ; print, self.d.sAxisPadded.x - self.d.sCoordinateAxis.x
-  ; stop
-  ; print, ''
-  ; print, 'y diff'
-  ; print, self.d.sAxisPadded.y - self.d.sCoordinateAxis.y
-  ; stop
-
-  imCoordinates = image(self.d.aData, sAxisx, self.d.sCoordinateAxis.y, /current, $ ; sAxisx, sAxisy, /current, $ ;
-    transparency = 90, axis_style = 2, xtickinterval = self.d.xtickinterval, $
-    xtitle = self.d.xtitle, ytitle = self.d.ytitle, title = self.d.title, $
-    font_size = self.d.font_size, aspect_ratio = 0.5)
-  ; print, 'imPadded 1', imCoordinates.position
-  imCoordinates.position = self.d.plot_position
-  ; print, 'imPadded 2', imCoordinates.position
-  ; help, self.d.plot_position
-  ; print, self.d.plot_position
-  ; stop
-
-  self.d.imCoordinatesPosition = imCoordinates.position
-  self.d.plot_top_position = self.d.imCoordinatesPosition[3] * self.d.winsize_padded[1]
-END
-
 PRO spice_jpg_exp::_plot_data
-  help, self.d.aData, self.d.sAxisPadded.x, self.d.sAxisPadded.y
   size_image = size(self.d.aData)
   sAxisx = findgen(size_image[1])
   sAxisy = findgen(size_image[2])
-  ; help, self.d.sAxisPadded.x, self.d.sAxisPadded.y
-  ; print, 'self.d.sAxisPadded.x', self.d.sAxisPadded.x
-  ; stop
-  ; print, 'self.d.sAxisPadded.y', self.d.sAxisPadded.y
-  ; stop
-  imPadded = image(self.d.aData, sAxisx, sAxisy, $
-    rgb_table = self.d.palette, axis_style = 2, font_size = self.d.font_size, xtitle = self.d.xtitle, ytitle = self.d.ytitle, /current)
-  ; print, 'imPadded 1', imPadded.position
+  imPadded = image(self.d.aData, sAxisx, sAxisy, /current, $
+    title = self.d.title, xtitle = self.d.xtitle, ytitle = self.d.ytitle, $
+    axis_style = 2, font_size = self.d.font_size, $
+    rgb_table = self.d.palette)
   imPadded.position = self.d.plot_position
-  ; print, 'imPadded 2', imPadded.position
-  ; help, self.d.plot_position
-  ; print, self.d.plot_position
-  ; stop
 
   xrange = self.d.srangepadded.x
   xa = double(min(xrange))
@@ -157,15 +91,57 @@ PRO spice_jpg_exp::_plot_data
   ya = double(min(yrange))
   yb = (max(yrange) - ya) / (size_image[2] - 1)
 
-  ax = imPadded.axes
-  ax[0].coord_transform = [xa, xb]
-  ax[0].major = 3
-  ax[1].coord_transform = [ya, yb]
+  axes = imPadded.axes
+  axes[0].coord_transform = [xa, xb]
+  axes[0].major = self.d.xtickmajor
+  axes[1].coord_transform = [ya, yb]
 
   self.d.imPadded = imPadded
 
   self.d.imCoordinatesPosition = imPadded.position
   self.d.plot_top_position = self.d.imCoordinatesPosition[3] * self.d.winsize_padded[1]
+END
+
+PRO spice_jpg_exp::_set_plot_keywords_based_on_padded_data_size
+  self.d.xtickinterval = 0
+  self.d.xtickmajor = -1
+  self.d.colorbar_major = -1
+  self.d.font_size = 12
+  self.d.text_font_size = 10
+
+  self.d.clock_size = 1
+  self.d.clock_position_offset = [0, 0]
+
+  szx = self.d.sz[1]
+  IF szx LT 160 THEN BEGIN
+    self.d.xtickmajor = 2
+    self.d.colorbar_major = (self.d.parameter EQ 'vel') ? 3 : 2
+  ENDIF
+
+  IF szx LT 100 THEN BEGIN
+    self.d.clock_size = 0.7
+    self.d.clock_position_offset = [-10, -10]
+  ENDIF
+
+  IF szx LT 80 THEN BEGIN
+    self.d.text_font_size -= 2
+  ENDIF
+
+  IF szx LT 50 THEN BEGIN
+    self.d.xtickmajor = 1
+    self.d.text_font_size -= 1
+    self.d.clock_size = 0.5
+    self.d.clock_position_offset = [25, -5]
+  ENDIF
+END
+
+PRO spice_jpg_exp::plot, clock = clock
+  self._plot_data
+  ; self._plot_coordinate_system
+  self._plot_colorbar
+  self._plot_texts
+  self._plot_compass
+  IF keyword_set(clock) THEN self._plot_clock
 END
 
 PRO spice_jpg_exp__define

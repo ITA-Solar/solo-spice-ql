@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-02-05 15:23 CET $
+; $Id: 2025-02-13 13:22 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -192,10 +192,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing = 1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing = 1)
     IF naxis2 + naxis4 LE 2 THEN BEGIN
-      message, ['This is a single exposure window, cannot create images from it', $
-        l3_file, $
-        'window: ' + trim(fxpar(*headers_results[iana], 'WINNO', missing = -1))], /info
-      spice_create_l3_images_single_exp, l3_file, ana[iana], *headers_data[iana], filename_base, $
+      spice_create_l3_images_single_exp, ana[iana], *headers_data[iana], filename_base, $
         l2_header, show_plot = show_plot, filename = filename
       CONTINUE
     ENDIF
@@ -230,7 +227,6 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
         filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + param.name.substring(0, 2)) + fns('#', hdr.winno) + '-' + fns('#', icomp + 1) + '-' + param.name.substring(0, 2)
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal, *, startrow : endrow, *])
-        help, image_data
 
         IF naxis4 GT 1 THEN BEGIN
           ; sit-and-stare
