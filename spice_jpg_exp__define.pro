@@ -91,11 +91,10 @@ PRO spice_jpg_exp::_plot_data
   ya = double(min(yrange))
   yb = (max(yrange) - ya) / (size_image[2] - 1)
 
-  ax = imPadded.axes
-  ax[0].coord_transform = [xa, xb]
-  ax[0].major = 3
-  ax[1].coord_transform = [ya, yb]
-  ; ax[1].major = 0
+  axes = imPadded.axes
+  axes[0].coord_transform = [xa, xb]
+  axes[0].major = self.d.xtickmajor
+  axes[1].coord_transform = [ya, yb]
 
   self.d.imPadded = imPadded
 
@@ -105,6 +104,7 @@ END
 
 PRO spice_jpg_exp::_set_plot_keywords_based_on_padded_data_size
   self.d.xtickinterval = 0
+  self.d.xtickmajor = -1
   self.d.colorbar_major = -1
   self.d.font_size = 12
   self.d.text_font_size = 10
@@ -113,11 +113,8 @@ PRO spice_jpg_exp::_set_plot_keywords_based_on_padded_data_size
   self.d.clock_position_offset = [0, 0]
 
   szx = self.d.sz[1]
-
   IF szx LT 160 THEN BEGIN
-    raster = self.d.filename.contains('ras')
-    self.d.xtickinterval = (raster) ? 50 : 25
-
+    self.d.xtickmajor = 2
     self.d.colorbar_major = (self.d.parameter EQ 'vel') ? 3 : 2
   ENDIF
 
@@ -131,6 +128,7 @@ PRO spice_jpg_exp::_set_plot_keywords_based_on_padded_data_size
   ENDIF
 
   IF szx LT 50 THEN BEGIN
+    self.d.xtickmajor = 1
     self.d.text_font_size -= 1
     self.d.clock_size = 0.5
     self.d.clock_position_offset = [25, -5]
