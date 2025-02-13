@@ -136,25 +136,12 @@ PRO spice_jpg_exp::_set_plot_keywords_based_on_padded_data_size
 END
 
 PRO spice_jpg_exp::plot, clock = clock
-  tic
   self._plot_data
-  print, 'self._plot_data'
-  toc
   ; self._plot_coordinate_system
-  print, 'self._plot_coordinate_system'
-  toc
   self._plot_colorbar
-  print, 'self._plot_colorbar'
-  toc
   self._plot_texts
-  print, 'self._plot_texts'
-  toc
   self._plot_compass
-  print, 'self._plot_compass'
-  toc
   IF keyword_set(clock) THEN self._plot_clock
-  print, 'self._plot_clock'
-  toc
 END
 
 PRO spice_jpg_exp__define
