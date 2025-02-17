@@ -15,7 +15,7 @@
 ;
 ; INPUTS:
 ;      l2_files: A SPICE level 2 FITS file. May be an array of files.
-;               Must include the full path to the file.
+;               Must include the full path to the file(s).
 ;      out_dir: The directory where the images should be saved.
 ;
 ; KEYWORDS:
@@ -27,13 +27,13 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      fxpar, fitshead2wcs, prits_tools.write_image_real_size
+;      prits_tools.parcheck, spice_object, spice_create_l3_images_single_exp
 ;
 ; HISTORY:
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-16 21:36 CET $
+; $Id: 2025-02-17 09:54 CET $
 
 PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
   prits_tools.parcheck, l2_files, 1, "l2_files", 'STRing', [0, 1]
