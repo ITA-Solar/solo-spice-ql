@@ -35,12 +35,12 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-13 15:28 CET $
+; $Id: 2025-02-18 21:05 CET $
 
 PRO spice_create_l3_images_single_exp, data, l2_header, filename_base, show_plot = show_plot, filename = filename
   oJpg = spice_jpg_exp()
 
-  image_data = reform(data)
+  image_data = transpose(reform(data))
 
   wcs = fitshead2wcs(l2_header)
 
