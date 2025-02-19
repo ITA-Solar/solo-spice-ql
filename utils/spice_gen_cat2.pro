@@ -105,7 +105,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-02-19 15:20 CET $
+; $Id: 2025-02-19 17:20 CET $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -438,7 +438,7 @@ FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = 
   self.d.spice_data_dir = expand_path(spice_data_dir) ; Must have explicit path to find relative paths
   self.d.catalog_basename = concat_dir(spice_data_dir, 'spice_catalog2')
   self.d.keyword_info_filename = concat_dir(spice_data_dir, 'spice_keyword_info.json')
-  self.d.keyword_info = spice_keyword_info(/all)
+  self.d.keyword_info = spice_keyword_info()
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
 
   self.d.file_hash = orderedhash()
