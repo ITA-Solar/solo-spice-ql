@@ -105,7 +105,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-02-12 17:10 CET $
+; $Id: 2025-02-19 15:20 CET $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -210,13 +210,6 @@ PRO spice_gen_cat2::write_csv, filename
   self.rsync_file_to_other_servers, filename
 END
 
-PRO spice_gen_cat2::write_hash_save_file
-  print, 'Writing ' + self.d.catalog_hash_save_file
-  old_hash = self.d.file_hash
-  save, file = self.d.catalog_hash_save_file, old_hash
-  self.rsync_file_to_other_servers, self.d.catalog_hash_save_file
-END
-
 PRO spice_gen_cat2::write
   self.write_keyword_info_file, self.d.keyword_info_filename
 
@@ -232,9 +225,7 @@ PRO spice_gen_cat2::create_catalog_from_scratch
   print, 'Generating catalog from scratch. This will take a very long time.'
   self.d.use_old_catalog = 0
   self.d.file_hash = orderedhash()
-  self.d.creating_catalog_from_scratch = 1
   self.d.n_modified_files = 0
-
   self.populate_hash
 END
 
@@ -250,23 +241,21 @@ FUNCTION spice_gen_cat2::line_from_header, header, relative_path
     value_list.add, value[0]
   END
   value_array = value_list.toArray(/no_copy)
-  RETURN, strjoin(value_array, string(9b))
+  RETURN, strjoin(value_array, string(9b)) ; Tab
 END
 
 FUNCTION spice_gen_cat2::add_file, fits_filename
   key = self.extract_key(fits_filename)
   IF self.d.file_hash.haskey(key) THEN BEGIN
-    print
-    print, "Skipping DUPLICATE?? File: " + key
     return, !null
   END
 
   header = self.get_header(fits_filename)
   IF n_elements(header) EQ 0 THEN BEGIN
-    print
-    print, "Skipping EMPTY?? File: " + fits_filename
+    print, "Skipping EMPTY?? file: " + fits_filename
     return, !null
   END
+  print, "Adding file: " + fits_filename
   fits_filename_expanded = expand_path(fits_filename)
   relative_filename = fits_filename_expanded.replace(self.d.spice_data_dir + "/", "")
   relative_path = file_dirname(relative_filename)
@@ -275,29 +264,46 @@ FUNCTION spice_gen_cat2::add_file, fits_filename
   return, key
 END
 
+PRO spice_gen_cat2::remove_nonexisting_files
+  t = systime(1)
+  print, "Removing files that are not on disk"
+  filelist_hash = hash()
+  FOREACH file, self.d.filelist, index DO BEGIN
+    key = self.extract_key(file_basename(file))
+    filelist_hash[key] = 1
+  END
+  print, "Converted filenames to keys", (t2 = systime(1)) - t
+  keys = (self.d.file_hash.keys()).toArray()
+  FOREACH key, keys DO BEGIN
+    is_on_disk = filelist_hash.hasKey(key)
+    IF ~is_on_disk THEN BEGIN
+      line = self.d.file_hash[key]
+      filename = self.extract_filename(line) + '.fits'
+      print, "Removing file: " + filename
+      self.d.file_hash.remove, key
+    END
+  ENDFOREACH
+  print, "Removed non-existing files", (t3 = systime(1)) - t2
+END
+
 PRO spice_gen_cat2::populate_hash
   print
-  print, "Populating list of files to add or modify using names of files", format = '(A,$)'
+  print, "Populating list of files to add or modify using names of files on disk"
 
-  IF self.d.use_old_catalog THEN BEGIN
-    print, ' in saved hash:'
-    self.d.file_hash = self.d.old_hash
-    filelist = self.d.new_files
-  ENDIF ELSE BEGIN
-    filelist = self.d.filelist
-    print, ' on disk:'
-  ENDELSE
-  n_files = n_elements(filelist)
-  n_modified = self.d.n_modified_files
-  n_new = n_files - n_modified
+  n_files = n_elements(self.d.filelist)
 
-  print, '  Adding    ' + (n_new).toString('(i6)') + ' new files'
-  print, '  Modifying ' + (n_modified).toString('(i6)') + ' existing files'
+  n_modified_manual = self.d.n_modified_files
+  n_new_manual = n_elements(self.d.new_files_manual) - n_modified_manual
+
+  print, '  Found ' + (n_files).toString('(i6)') + ' files'
+
+  print, '  Adding manually    ' + (n_new_manual).toString('(i6)') + ' new files'
+  print, '  Modifying manually ' + (n_modified_manual).toString('(i6)') + ' existing files'
   print
   modno = (n_files / 10 - (n_files / 10 MOD 10) > 10) < 100
 
-  FOREACH fits_filename, filelist, index DO BEGIN
-    key = self.add_file(fits_filename)
+  FOREACH file, self.d.filelist, index DO BEGIN
+    key = self.add_file(file)
     IF n_elements(key) EQ 0 THEN CONTINUE
     IF (index + 1) MOD modno EQ 0 THEN BEGIN
       PRINT, "Files done: " + (index + 1).toString("(i6)") + "    (key: " + key + ")"
@@ -308,12 +314,14 @@ PRO spice_gen_cat2::populate_hash
 END
 
 PRO spice_gen_cat2::set_filelist
-  top_level = ~self.d.spice_data_dir.contains('level')
+  spice_search_dirs = self.d.spice_data_dir
+  data_dir_is_top_level = ~self.d.spice_data_dir.contains('level')
+  IF data_dir_is_top_level AND self.d.ignore_L0 THEN BEGIN
+    spice_search_dirs = spice_search_dirs + '/level' + ['1', '2', '3'] + '/'
+  END
+  ignore_txt = (data_dir_is_top_level AND self.d.ignore_L0) ? ', ignoring /level0' : ''
 
-  spice_search_dirs = (top_level AND self.d.ignore_L0) ? self.d.spice_data_dir + '/level' + ['1', '2', '3'] + '/' : self.d.spice_data_dir
-  ignore_txt = (top_level AND self.d.ignore_L0) ? ', ignoring /level0' : ''
-
-  print, "Finding FITS files on disk" + ignore_txt + '... ', format = '(A,$)'
+  print, "Finding FITS files on disk" + ignore_txt + '... '
 
   self.d.filelist = file_search(spice_search_dirs, "*.{fits,fits.gz}")
 
@@ -325,29 +333,39 @@ PRO spice_gen_cat2::set_filelist
   END
 END
 
-PRO spice_gen_cat2::remove_files_to_be_updated
-  FOREACH file, self.d.new_files, index DO BEGIN
+PRO spice_gen_cat2::remove_manual_files_to_be_updated
+  print, 'Removing manually added files that are already in the catalog'
+  FOREACH file, self.d.new_files_manual DO BEGIN
     this_key = self.extract_key(file_basename(file))
-    IF self.d.old_hash.hasKey(this_key) THEN BEGIN
-      self.d.old_hash.remove, this_key
+    IF self.d.file_hash.hasKey(this_key) THEN BEGIN
+      self.d.file_hash.remove, this_key
       self.d.n_modified_files++
     ENDIF
   ENDFOREACH
 END
 
-PRO spice_gen_cat2::restore_old_cat
-  IF ~file_exist(self.d.catalog_hash_save_file) THEN message, 'Create hash save file by running spice_gen_cat2,dir,use_old_catalog=0'
-
-  print, 'Restoring ' + file_basename(self.d.catalog_hash_save_file)
-  restore, self.d.catalog_hash_save_file
-  self.d.old_hash = old_hash
-  print, 'Done restoring hash with ' + trim(n_elements(old_hash)) + ' keys'
+PRO spice_gen_cat2::write_hash_save_file
+  print, 'Writing ' + self.d.catalog_hash_save_file
+  file_hash = self.d.file_hash
+  save, file = self.d.catalog_hash_save_file, file_hash
+  self.rsync_file_to_other_servers, self.d.catalog_hash_save_file
 END
 
+PRO spice_gen_cat2::restore_hash_save_file
+  IF ~file_exist(self.d.catalog_hash_save_file) THEN message, 'Create hash save file by running spice_gen_cat2,dir,use_old_catalog=0'
+  print, 'Restoring ' + file_basename(self.d.catalog_hash_save_file)
+  restore, self.d.catalog_hash_save_file
+  ; idl-disable-next-line undefined-var
+  IF file_hash EQ !null THEN file_hash = old_hash ; Transition from old to new code
+  print, 'Done restoring hash with ' + trim(n_elements(file_hash)) + ' keys'
+  self.d.file_hash = file_hash ; idl-disable var-use-before-def
+END
+
+; Why? Is it as a double check when manually adding files, to also make sure
+; than any *other* new/deleted files have appeared/disappeared (by some other
+; process)
 FUNCTION spice_gen_cat2::filenames_match
   print, 'Checking that FITS filenames in saved hash match FITS filenames on disk: '
-
-  self.set_filelist
   keys = self.d.file_hash.keys()
   n_keys = n_elements(keys)
 
@@ -390,38 +408,32 @@ FUNCTION spice_gen_cat2::filenames_match
 END
 
 PRO spice_gen_cat2::execute
+  print
   IF self.d.use_old_catalog THEN BEGIN
-    self.restore_old_cat
-    self.remove_files_to_be_updated
-  END ELSE self.set_filelist
-
+    self.restore_hash_save_file
+    print
+    self.remove_manual_files_to_be_updated
+  END
+  print
+  self.set_filelist
+  print
+  self.remove_nonexisting_files
+  print
   self.populate_hash
-
-  IF self.d.use_old_catalog THEN BEGIN
-    filenames_in_hash_and_on_disk_match = self.filenames_match()
-    IF ~filenames_in_hash_and_on_disk_match THEN self.create_catalog_from_scratch
-  ENDIF
-
+  print
   self.write
 END
 
-FUNCTION spice_gen_cat2::get_catalog_hash_save_file
-  level = self.d.spice_data_dir.extract('level[0-9]')
-  level_dir = (level EQ '') ? '' : '/l' + level.extract('[0-9]') + '/'
-  return, self.d.spice_data_dir + "/spice_catalog2_hash.save"
-END
-
 FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = use_old_catalog, $
-  new_files = new_files, ignore_L0 = ignore_L0
+  new_files_manual = new_files_manual, ignore_L0 = ignore_L0
   self.d = dictionary()
 
   prits_tools.default, spice_data_dir, getenv("SPICE_DATA")
-
   prits_tools.default, use_old_catalog, 1
+  prits_tools.default, new_files_manual, !null
 
   self.d.quiet = keyword_set(quiet)
   self.d.use_old_catalog = use_old_catalog
-  self.d.creating_catalog_from_scratch = 0
 
   self.d.spice_data_dir = expand_path(spice_data_dir) ; Must have explicit path to find relative paths
   self.d.catalog_basename = concat_dir(spice_data_dir, 'spice_catalog2')
@@ -429,15 +441,13 @@ FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = 
   self.d.keyword_info = spice_keyword_info(/all)
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
 
-  self.d.old_hash = orderedhash()
   self.d.file_hash = orderedhash()
 
   self.d.n_modified_files = 0
 
-  self.d.catalog_hash_save_file = self.get_catalog_hash_save_file()
+  self.d.catalog_hash_save_file = self.d.spice_data_dir + "/spice_catalog2_hash.save"
 
-  self.d.new_files = (new_files NE !null) ? new_files : !null
-  self.d.ingest_new_files = self.d.new_files NE !null
+  self.d.new_files_manual = new_files_manual
 
   self.d.ignore_L0 = (keyword_set(ignore_L0))
 
@@ -466,7 +476,13 @@ PRO spice_gen_cat2, spice_data_dir, _extra = extra
   o.execute
 END
 
+PRO do_spice_gen_cat2_forever
+  WHILE 1 DO BEGIN
+    spice_gen_cat2, '$HOME/spice_home/fits', /use_old_cat, /ignore_l0
+  ENDWHILE
+END
+
 IF getenv("USER") EQ 'steinhh' THEN BEGIN
-  spice_gen_cat2, '$HOME/tmp/spice_data'
+  spice_gen_cat2, '$HOME/tmp/spice_data', /ignore_l0, /use_old_catalog
 ENDIF
 END
