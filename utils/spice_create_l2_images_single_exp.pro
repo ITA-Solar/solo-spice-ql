@@ -33,7 +33,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-17 10:05 CET $
+; $Id: 2025-02-22 20:05 CET $
 
 PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
   prits_tools.parcheck, l2_files, 1, "l2_files", 'STRing', [0, 1]
@@ -43,12 +43,11 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
 
   FOREACH l2_file, l2_files DO BEGIN
     l2_filename = file_basename(l2_file)
-    l2_filename = strsplit(l2_filename, '.', /extract)
-    l2_filename = l2_filename[0]
-    l3ql_filename = l2_filename.replace('spice', 'spice-ql')
-    l3ql_filename = l3ql_filename.replace(l3ql_filename.extract('V[0-9]{2}'), 'Vxx')
+    l2_filename = prits_tools.regex_replace(l2_filename, '\..*', '')
+    l3ql_filename = prits_tools.regex_replace(l2_filename, 'solo_L2_spice-', 'solo_L3_spice-ql-')
+    l3ql_filename = prits_tools.regex_replace(l3ql_filename, 'V[0-9]{2}', 'Vxx')
     filename_base = out_dir + path_sep() + l3ql_filename + '-'
-
+    print, "L3QL filename base: " + filename_base
     l2_object = spice_object(l2_file)
     FOR iwin = 0, l2_object.get_number_windows() - 1 DO BEGIN
       data = l2_object.get_window_data(iwin, /no_masking)

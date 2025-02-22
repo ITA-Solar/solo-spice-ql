@@ -35,7 +35,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-18 21:05 CET $
+; $Id: 2025-02-22 20:05 CET $
 
 PRO spice_create_l3_images_single_exp, data, l2_header, filename_base, show_plot = show_plot, filename = filename
   oJpg = spice_jpg_exp()
@@ -44,17 +44,14 @@ PRO spice_create_l3_images_single_exp, data, l2_header, filename_base, show_plot
 
   wcs = fitshead2wcs(l2_header)
 
-  ion = 'single'
-  lam = '00nm00'
-  ion = string(ion + '--------', format = '(A-8)')
-  IF lam.strlen() EQ 6 THEN lam = '-' + lam
-
   winno = fxpar(l2_header, 'WINNO')
-  filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + 'int') + fns('#', winno) + '-' + '1-int'
-  filename = filename_base2 + '.jpg'
+  ; Full prefix to prevent parts of path to match
+  ; Single-exp images are always type "int"
+  filename_base2 = filename_base.replace('solo_L3_spice-ql-', 'solo_L3_spice-ql-int-')
+  filename = filename_base2 + winno.toString() + '-int.jpg'
 
   colortable = 3
-  color_center_value = !NULL
+  color_center_value = !null
   reverse_colortable = 0
   startrow = 0
   endrow = (size(image_data))[1] - 1
@@ -71,7 +68,7 @@ PRO spice_create_l3_images_single_exp, data, l2_header, filename_base, show_plot
     oJpg.save
   ENDIF
 
-  filename = filename_base2 + '-thumb.png'
+  filename = filename.replace('-int.jpg', '-int-thumb.png')
   format = 'PNG'
   prits_tools.write_image_real_size, image_data, filename, $
     remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, fit_trend = fit_trend, $
