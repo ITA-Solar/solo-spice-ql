@@ -54,12 +54,15 @@ FUNCTION prits_tools::regex_replace_arr, string_in, regex, replacement, global =
   return, result
 END
 
-FUNCTION prits_tools::regex_replace, string_in, regex, replacement, global = global
+FUNCTION prits_tools::regex_replace, string, regex, replacement, global = global
   COMPILE_OPT STATIC
-  IF size(string_in, /n_dim) GT 0 THEN $
-    return, prits_tools.regex_replace_strarr(string_in, regex, replacement, global = global)
+  prits_tools.parcheck, string, 1, "string", 'STRing', 0
+  prits_tools.parcheck, regex, 2, "regex", 'STRing', 0
+  prits_tools.parcheck, replacement, 3, "replacement", 'STRing', 0
 
-  string = string_in
+  IF size(string, /n_dim) GT 0 THEN $
+    return, prits_tools.regex_replace_strarr(string, regex, replacement, global = global)
+
   replace_with = replacement
   match = [stregex(string, regex, /extract, /subexpr)]
   IF match[0] EQ "" THEN return, string
