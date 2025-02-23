@@ -3,7 +3,7 @@ PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f
   IF ~file_test(level3qljpg_f, /directory) THEN message, "Output directory does not exist: " + level3qljpg_f, /continue
   l2_topdir = prits_tools.physical_path(l2_topdir)
   level3qljpg_f = prits_tools.physical_path(level3qljpg_f)
-  l2_files = file_search(l2_topdir, '*-exp-*.fits', count = nfiles)
+  l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
   IF nfiles EQ 0 THEN BEGIN
     message, "No SPICE files found in " + l2_topdir, /continue
     return
