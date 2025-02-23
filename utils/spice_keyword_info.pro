@@ -1,4 +1,4 @@
-; $Id: 2024-12-09 10:34 CET $
+; $Id: 2025-02-23 15:28 CET $
 FUNCTION spice_keyword_info_header
   text = inline_text('  ; - END')
   ; NAXIS1  =                    1 /
@@ -287,11 +287,12 @@ FUNCTION spice_keyword_info_header
   ;
   ; - END
   text = text[0 : -2]
-  text = strmid(text, 1, 1000)
+  text = strmid(text, 4, 1000)
   return, [text, '']
 END
 
 FUNCTION spice_keyword_get_info, header, keyword
+  IF stregex(keyword, '^[A-Z0-9_]{1,8} *$') EQ -1 THEN return, !null
   val = fxpar(header, keyword)
   datatype = size(val, /tname)
   CASE datatype OF
@@ -333,6 +334,7 @@ FUNCTION spice_keyword_info, requested_keywords
   keyword_info_hash = orderedhash()
   FOREACH keyword, requested_keywords DO BEGIN
     info = spice_keyword_get_info(header, keyword)
+    IF info EQ !null THEN CONTINUE
     keyword_info_hash[keyword] = info
   END
 
@@ -356,7 +358,7 @@ FUNCTION spice_keyword_info_as_json, requested_keywords
 END
 
 PRO SPICE_KEYWORD_INFO__define
-  !NULL = {SPICE_KEYWORD_INFO, keyword: "", display_width: 0, type: "", webcat_type: ""}
+  !null = {SPICE_KEYWORD_INFO, keyword: "", display_width: 0, type: "", webcat_type: ""}
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
