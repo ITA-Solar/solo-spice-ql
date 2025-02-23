@@ -1,4 +1,4 @@
-; $Id: 2025-02-23 18:07 CET $
+; $Id: 2025-02-23 20:03 CET $
 FUNCTION spice_keyword_info_header
   text = inline_text('  ; - END')
   ; NAXIS1  =                    1 /
@@ -292,7 +292,7 @@ FUNCTION spice_keyword_info_header
 END
 
 FUNCTION spice_keyword_get_info, header, keyword
-  IF stregex(keyword, '^[A-Z0-9_-]* *$') EQ -1 THEN return, !null
+  IF stregex(keyword, '^[A-Z0-9_-]+ *$') EQ -1 THEN return, !null
   val = fxpar(header, keyword)
   datatype = size(val, /tname)
   CASE datatype OF
