@@ -15,12 +15,12 @@ PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f
     IF ~file_test(image_path, /directory) THEN file_mkdir, image_path
     out_dir = level3qljpg_f + path_sep() + fits_relative_path
     IF ~file_test(out_dir, /directory) THEN file_mkdir, out_dir
-    spice_create_l2_images_single_exp, [l2_file], out_dir
+    spice_create_l2_images_single_exp, [l2_file], out_dir, show_plot = 0
   ENDFOREACH
 END
 
 PRO runtest
-  IF getenv("USER") EQ "steinhh" THEN BEGIN
+  IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
     spice_produce_single_exp_images, '$HOME/tmp/spice_data/fits/level2', '$HOME/tmp/spice_data/quicklook/level3qljpg_f'
   END
 END
