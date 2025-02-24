@@ -33,7 +33,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-22 20:05 CET $
+; $Id: 2025-02-24 14:40 CET $
 
 PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
   prits_tools.parcheck, l2_files, 1, "l2_files", 'STRing', [0, 1]
@@ -51,8 +51,9 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
     l2_object = spice_object(l2_file)
     FOR iwin = 0, l2_object.get_number_windows() - 1 DO BEGIN
       data = l2_object.get_window_data(iwin, /no_masking)
+      image_data = transpose(reform(data))
       l2_header = l2_object.get_header(iwin)
-      spice_create_l3_images_single_exp, data, l2_header, filename_base, show_plot = show_plot
+      spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot
     ENDFOR
   ENDFOREACH
 END

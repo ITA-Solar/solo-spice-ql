@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-02-13 15:33 CET $
+; $Id: 2025-02-24 14:40 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -191,8 +191,9 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
     naxis2 = fxpar(*headers_results[iana], 'NAXIS2', missing = 1)
     naxis4 = fxpar(*headers_results[iana], 'NAXIS4', missing = 1)
     IF naxis2 + naxis4 LE 2 THEN BEGIN
-      handle_value, ana[iana].data_h, data
-      spice_create_l3_images_single_exp, data, *headers_data[iana], filename_base, $
+      handle_value, ana[iana].data_h, data, /no_copy
+      image_data = reform(data)
+      spice_create_l3_images_single_exp, image_data, *headers_data[iana], filename_base, $
         show_plot = show_plot, filename = filename
       CONTINUE
     ENDIF
