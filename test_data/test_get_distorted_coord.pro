@@ -17,5 +17,7 @@ PRO test_get_distorted_coord
   wcs = fitshead2wcs(header, filename = file)
   corrected_coordinates = wcs_get_coord(wcs)
   help, corrected_coordinates
+  sc = size(corrected_coordinates)
+  print, corrected_coordinates[0, 0 : 9, floor(sc[2] / 2.), floor(sc[3] / 2.), floor(sc[4] / 2.)]
   stop
 END
