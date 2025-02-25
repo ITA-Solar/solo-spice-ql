@@ -61,6 +61,7 @@ PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, force = force
     message, "No SPICE files found in " + l2_topdir, /continue
     return
   ENDIF
+  ; l2_files = l2_files[0 : 2]
   FOREACH l2_file, l2_files DO BEGIN
     spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
   ENDFOREACH
