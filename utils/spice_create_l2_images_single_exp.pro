@@ -33,11 +33,30 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-24 14:40 CET $
+; $Id: 2025-02-25 18:31 CET $
+
+PRO spcl2im_report_error, l2_file, force_email = force_email
+  COMMON spcl2im_report_error, last_report_time
+  prits_tools.default, last_report_time, 0
+  spawn, "echo " + l2_file + " >> " + (error_reports_file = '/tmp/spcl2im_error_reports')
+  box_message, ['', 'Error reading L2 file!', '', '     ' + l2_file, '', ''], /info
+  curr_time = systime(1)
+  IF curr_time - last_report_time GT 240 OR keyword_set(force_email) THEN BEGIN
+    subject = 'SPICE L2 image creation error: ' + l2_file + ' (' + error_reports_file + ')'
+    echo_email_contents = "echo 'See also " + error_reports_file + "'"
+    send_mail = "mail -s '" + subject + "' s.v.h.haugan@astro.uio.no < /dev/null"
+    cmd = send_mail
+    print, cmd
+    spawn, cmd
+  END
+  last_report_time = systime(1)
+END
 
 PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
   prits_tools.parcheck, l2_files, 1, "l2_files", 'STRing', [0, 1]
   prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
+
+  spawn, "truncate -s 0 /tmp/spcl2im_error_reports"
 
   IF ~file_test(out_dir, /directory) THEN file_mkdir, out_dir
 
@@ -48,6 +67,12 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
     l3ql_filename = prits_tools.regex_replace(l3ql_filename, 'V[0-9]{2}', 'Vxx')
     filename_base = out_dir + path_sep() + l3ql_filename + '-'
     print, "L3QL filename base: " + filename_base
+    catch, error
+    IF error NE 0 THEN BEGIN
+      catch, /cancel
+      spcl2im_report_error, l2_file
+      CONTINUE
+    ENDIF
     l2_object = spice_object(l2_file)
     FOR iwin = 0, l2_object.get_number_windows() - 1 DO BEGIN
       data = l2_object.get_window_data(iwin, /no_masking)
