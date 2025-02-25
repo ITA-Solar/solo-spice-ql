@@ -42,7 +42,10 @@ PRO spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
     IF keyword_set(force) THEN box_message, ['', newer, 'but FORCE keyword is set', ''] $
     ELSE BEGIN
       box_message, ['', newer, 'not processing (but rsyncing)', '']
-      spsei_rsync_to_other_server, outdir
+      COMMON spsei_process_file, last_rsync
+      prits_tools.default, last_rsync, ""
+      IF last_rsync NE outdir THEN spsei_rsync_to_other_server, outdir
+      last_rsync = outdir
       return
     END
   END
@@ -51,20 +54,22 @@ PRO spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
   spsei_rsync_to_other_server, outdir
 END
 
-PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, force = force
+PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, force = force, forever = forever
   IF ~file_test(l2_topdir, /directory) THEN message, "Input directory does not exist: " + l2_topdir
   IF ~file_test(level3qljpg_f, /directory) THEN message, "Output directory does not exist: " + level3qljpg_f
   l2_topdir = prits_tools.physical_path(l2_topdir)
   level3qljpg_f = prits_tools.physical_path(level3qljpg_f)
-  l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
-  IF nfiles EQ 0 THEN BEGIN
-    message, "No SPICE files found in " + l2_topdir, /continue
-    return
-  ENDIF
-  ; l2_files = l2_files[0 : 2]
-  FOREACH l2_file, l2_files DO BEGIN
-    spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
-  ENDFOREACH
+  REPEAT BEGIN
+    l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
+    IF nfiles EQ 0 THEN BEGIN
+      message, "No SPICE files found in " + l2_topdir, /continue
+      return
+    ENDIF
+    ; l2_files = l2_files[0 : 2]
+    FOREACH l2_file, l2_files DO BEGIN
+      spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
+    ENDFOREACH
+  END UNTIL ~keyword_set(forever)
 END
 
 PRO runtest
