@@ -35,7 +35,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-24 14:40 CET $
+; $Id: 2025-02-25 12:01 CET $
 
 PRO spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot, filename = filename
   oJpg = spice_jpg_exp()
@@ -65,6 +65,8 @@ PRO spice_create_l3_images_single_exp, image_data, l2_header, filename_base, sho
     oJpg.plot, /clock
     oJpg.save
   ENDIF
+
+  obj_destroy, oJpg
 
   filename = filename.replace('-int.jpg', '-int-thumb.png')
   format = 'PNG'

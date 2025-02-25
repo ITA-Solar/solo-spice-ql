@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-02-24 14:40 CET $
+; $Id: 2025-02-25 12:01 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -292,6 +292,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
     ENDFOR ; icomp=0,n_components-1
   ENDFOR ; iana=0,N_ELEMENTS(ana)-1 do begin
 
+  obj_destroy, oJpg
   jpg_window_name = (filename.extract('([0-9]+)-[0-9]+', /subexp))[1]
   win = getwindows(jpg_window_name)
   win_exists = obj_valid(win)
