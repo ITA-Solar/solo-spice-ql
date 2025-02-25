@@ -129,7 +129,7 @@
 ;     2 pixels to prevent crash
 ;
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-02-25 12:00 CET $
 
 PRO prits_tools::write_image_real_size, image_data, filename, $
   remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, $
@@ -186,9 +186,9 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   ; Install the new colortable and set the background and text color
   cutoff_threshold_old = cutoff_threshold
 
-  line_vel = filename.contains('vel')
-  line_wid = filename.contains('wid')
-
+  filename_base = file_basename(filename)
+  line_vel = filename_base.contains('vel')
+  line_wid = filename_base.contains('wid')
   IF line_vel THEN BEGIN
     eis_colors, /velocity
     cutoff_threshold = 0
