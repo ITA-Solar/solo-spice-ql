@@ -41,7 +41,7 @@
 ; Version     : 2, 2023-04-07
 ;-
 
-PRO PRITS_TOOLS::DEFAULT, VAR, VAL
+PRO prits_tools::default, VAR, VAL
   COMPILE_OPT STATIC
 
   IF n_params() LT 2 THEN message, "Use: DEFAULT,VARIABLE,DEFAULT_VALUE"
