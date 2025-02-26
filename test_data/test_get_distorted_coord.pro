@@ -13,11 +13,25 @@ PRO test_get_distorted_coord
   x0 = obj.get_instr_x_vector(0)
   print, x0[0 : 9]
 
+  print, ''
+
   data = readfits(file, header, ext = 0)
   wcs = fitshead2wcs(header, filename = file)
   corrected_coordinates = wcs_get_coord(wcs)
-  help, corrected_coordinates
   sc = size(corrected_coordinates)
-  print, corrected_coordinates[0, 0 : 9, floor(sc[2] / 2.), floor(sc[3] / 2.), floor(sc[4] / 2.)]
-  stop
+  help, corrected_coordinates
+  print, sc
+  x1 = reform(corrected_coordinates[0, *, floor(sc[3] / 2.), floor(sc[4] / 2.), floor(sc[5] / 2.)])
+  print, x1[0 : 9]
+
+  print, ''
+
+  x2 = obj.get_wcs_coord(0, /x)
+  sc2 = size(x2)
+  help, x2
+  print, sc2
+  x2b = reform(x2[*, floor(sc2[2] / 2.), floor(sc2[3] / 2.), floor(sc2[4] / 2.)])
+
+  print, x2b[0 : 9]
+  ; stop
 END
