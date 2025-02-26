@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2025-02-26 14:37 CET $
+; $Id: 2025-02-26 15:34 CET $
 
 ;+
 ; Description:
@@ -2553,6 +2553,8 @@ END
 ;     y : If set, only coordinates of the second dimension (y-direction) are returned.
 ;     lambda : If set, only coordinates of the third dimension (wavelength) are returned.
 ;     time : If set, only coordinates of the fourth dimension (time) are returned.
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
 ;
 ; OUTPUT:
 ;     float array,
@@ -2563,7 +2565,7 @@ END
 ;         4D: No pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;         5D: No pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
 ;-
-FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambda, time = time
+FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambda, time = time, diff_rot = diff_rot
   ; Returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
   COMPILE_OPT IDL2
 
@@ -2575,7 +2577,16 @@ FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambd
     return, !NULL
   ENDIF
 
-  coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
+  IF keyword_set(diff_rot) THEN BEGIN
+    coords = wcs_get_coord(*(*self.window_wcs)[window_index])
+    spice_diff_rot_coord, *(*self.window_wcs)[window_index], coords
+    IF n_elements(pixels) GT 0 THEN BEGIN
+      print, 'Differential rotation correction applied to coordinates'
+    ENDIF
+  ENDIF ELSE BEGIN
+    coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
+  ENDELSE
+
   CASE 1 OF
     keyword_set(x): axis_ind = 0
     keyword_set(y): axis_ind = 1
