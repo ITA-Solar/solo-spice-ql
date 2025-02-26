@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2024-12-13 14:14 CET $
+; $Id: 2025-02-26 11:22 CET $
 
 ;+
 ; Description:
@@ -3103,7 +3103,7 @@ PRO spice_data::read_file, file
     hdr = spice_fitshead2struct(hdr, /multivalue, /silent)
     headers[iwin] = ptr_new(hdr)
     IF iwin LT self.nwin THEN BEGIN
-      wcs[iwin] = ptr_new(fitshead2wcs(hdr))
+      wcs[iwin] = ptr_new(fitshead2wcs(hdr, filename = file))
       IF hdr.DUMBBELL EQ 1 THEN self.dumbbells[0] = iwin $
       ELSE IF hdr.DUMBBELL EQ 2 THEN self.dumbbells[1] = iwin
     ENDIF
