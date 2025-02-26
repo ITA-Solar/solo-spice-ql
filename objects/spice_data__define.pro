@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2025-02-26 11:22 CET $
+; $Id: 2025-02-26 14:37 CET $
 
 ;+
 ; Description:
@@ -2280,27 +2280,35 @@ END
 ; INPUTS:
 ;     window : the index or name of the window
 ;
+; OPTIONAL INPUTS:
+;     y : the index of the y-coordinate of the pixel, default is the middle of the window
+;     lambda : the index of the wavelength coordinate of the pixel, default is the middle of the window
+;     time : the index of the time coordinate of the pixel, default is the middle of the window
+;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_x_vector, window
+FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = time
   ; Returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
 
-  crval = self.get_header_keyword('crval1', window_index)
-  naxis = self.get_header_keyword('naxis1', window_index)
-  crpix = self.get_header_keyword('crpix1', window_index)
-  cdelt = self.get_header_keyword('cdelt1', window_index)
-  pc1_1 = self.get_header_keyword('PC1_1', window_index)
-  x_vector = crval + cdelt * pc1_1 * (findgen(naxis) + 1.0 - crpix)
-  IF naxis EQ 1 THEN BEGIN
-    naxis = self.get_header_keyword('naxis4', window_index)
-    x_vector = replicate(x_vector, naxis)
-  ENDIF
-  return, x_vector
+  naxis = self.get_header_keyword('naxis*', window_index)
+
+  prits_tools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
+  prits_tools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
+  prits_tools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
+
+  npix = self.get_sit_and_stare() ? naxis[3] : naxis[0]
+  pixels = fltarr(4, npix)
+  pixels[0, *] = self.get_sit_and_stare() ? 0 : indgen(npix)
+  pixels[1, *] = y
+  pixels[2, *] = lambda
+  pixels[3, *] = self.get_sit_and_stare() ? indgen(npix) : time
+
+  return, self.get_wcs_coord(window_index, pixels, /x)
 END
 
 ;+
@@ -2311,6 +2319,11 @@ END
 ; INPUTS:
 ;     window : the index or name of the window
 ;
+; OPTIONAL INPUTS:
+;     x : the index of the x-coordinate of the pixel, default is the middle of the window
+;     lambda : the index of the wavelength coordinate of the pixel, default is the middle of the window
+;     time : the index of the time coordinate of the pixel, default is the middle of the window
+;
 ; OPTIONAL KEYWORDS:
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
 ;                for the whole detector
@@ -2318,29 +2331,35 @@ END
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_y_vector, window, full_ccd = full_ccd
+FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = time, full_ccd = full_ccd
   ; Returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
 
-  crval = self.get_header_keyword('crval2', window_index)
-  crpix = self.get_header_keyword('crpix2', window_index)
-  cdelt = self.get_header_keyword('cdelt2', window_index)
-  pc2_2 = self.get_header_keyword('PC2_2', window_index)
-  nbin = self.get_spatial_binning(window_index)
+  naxis = self.get_header_keyword('naxis*', window_index)
+
+  prits_tools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
+  prits_tools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
+  prits_tools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
 
   IF keyword_set(full_ccd) THEN BEGIN
+    nbin = self.get_spatial_binning(window_index)
     y_coord_start = (self.get_window_position(window_index, /idl_coord, /debin))[2]
-    crpix = crpix * nbin + y_coord_start
-    naxis = (self.get_ccd_size())[1]
-    cdelt = cdelt / nbin
+    npix = (self.get_ccd_size())[1]
+    pixels = fltarr(4, npix)
+    pixels[1, *] = findgen(npix) / nbin - y_coord_start
   ENDIF ELSE BEGIN
-    naxis = self.get_header_keyword('naxis2', window_index)
+    npix = naxis[1]
+    pixels = fltarr(4, npix)
+    pixels[1, *] = indgen(npix)
   ENDELSE
-  y_vector = crval + cdelt * pc2_2 * (findgen(naxis) + 1.0 - crpix)
-  return, y_vector
+  pixels[0, *] = x
+  pixels[2, *] = lambda
+  pixels[3, *] = time
+
+  return, self.get_wcs_coord(window_index, pixels, /y)
 END
 
 ;+
@@ -2351,6 +2370,11 @@ END
 ; INPUTS:
 ;     window : the index or name of the window
 ;
+; OPTIONAL INPUTS:
+;     x : the index of the x-coordinate of the pixel, default is the middle of the window
+;     y : the index of the y-coordinate of the pixel, default is the middle of the window
+;     time : the index of the time coordinate of the pixel, default is the middle of the window
+;
 ; OPTIONAL KEYWORDS:
 ;     full_ccd : if set, a vector of size CCD-size[0] is returned with lamda values
 ;                for the whole detector
@@ -2358,29 +2382,35 @@ END
 ; OUTPUT:
 ;     float array, wavelength in nm
 ;-
-FUNCTION spice_data::get_lambda_vector, window, full_ccd = full_ccd
+FUNCTION spice_data::get_lambda_vector, window, x = x, y = y, time = time, full_ccd = full_ccd
   ; Returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
 
-  crval = self.get_header_keyword('crval3', window_index)
-  cdelt = self.get_header_keyword('cdelt3', window_index)
-  crpix = self.get_header_keyword('crpix3', window_index)
-  nbin = self.get_spectral_binning(window_index)
+  naxis = self.get_header_keyword('naxis*', window_index)
+
+  prits_tools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
+  prits_tools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
+  prits_tools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
 
   IF keyword_set(full_ccd) THEN BEGIN
-    lambda_coord_start = (self.get_window_position(window_index, /idl_coord, /debin, detector = detector))[0]
-    IF detector EQ 2 THEN lambda_coord_start -= (self.get_ccd_size())[0]
-    crpix = crpix * nbin + lambda_coord_start
-    naxis = (self.get_ccd_size())[0]
-    cdelt = cdelt / nbin
+    nbin = self.get_spectral_binning(window_index)
+    lambda_coord_start = (self.get_window_position(window_index, /idl_coord, /debin))[0]
+    npix = (self.get_ccd_size())[0]
+    pixels = fltarr(4, npix)
+    pixels[2, *] = findgen(npix) / nbin - lambda_coord_start
   ENDIF ELSE BEGIN
-    naxis = self.get_header_keyword('naxis3', window_index)
+    npix = naxis[2]
+    pixels = fltarr(4, npix)
+    pixels[2, *] = indgen(npix)
   ENDELSE
-  lambda_vector = crval + (findgen(naxis) + 1.0 - crpix) * cdelt
-  return, lambda_vector
+  pixels[0, *] = x
+  pixels[1, *] = y
+  pixels[3, *] = time
+
+  return, self.get_wcs_coord(window_index, pixels, /lambda)
 END
 
 ;+
@@ -2390,29 +2420,35 @@ END
 ; INPUTS:
 ;     window : the index or name of the window
 ;
+; OPTIONAL INPUTS:
+;     x : the index of the x-coordinate of the pixel, default is the middle of the window
+;     y : the index of the y-coordinate of the pixel, default is the middle of the window
+;     lambda : the index of the wavelength coordinate of the pixel, default is the middle of the window
+;
 ; OUTPUT:
 ;     float array, time in seconds
 ;-
-FUNCTION spice_data::get_time_vector, window
+FUNCTION spice_data::get_time_vector, window, x = x, y = y, lambda = lambda
   ; Returns a vector containing the time for each pixel in fourth dimension
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
 
-  crval = self.get_header_keyword('crval4', window_index)
-  naxis = self.get_header_keyword('naxis4', window_index)
-  IF naxis EQ 1 THEN BEGIN
-    naxis = self.get_header_keyword('naxis1', window_index)
-    crpix = self.get_header_keyword('crpix1', window_index)
-    factor = self.get_header_keyword('PC4_1', window_index, 1)
-  ENDIF ELSE BEGIN
-    crpix = self.get_header_keyword('crpix4', window_index)
-    factor = 1
-  ENDELSE
-  cdelt = self.get_header_keyword('cdelt4', window_index)
-  time_vector = crval + factor * (findgen(naxis) + 1.0 - crpix) * cdelt
-  return, time_vector
+  naxis = self.get_header_keyword('naxis*', window_index)
+
+  prits_tools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
+  prits_tools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
+  prits_tools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
+
+  npix = self.get_sit_and_stare() ? naxis[3] : naxis[0]
+  pixels = fltarr(4, npix)
+  pixels[0, *] = self.get_sit_and_stare() ? x : indgen(npix)
+  pixels[1, *] = y
+  pixels[2, *] = lambda
+  pixels[3, *] = self.get_sit_and_stare() ? indgen(npix) : 0
+
+  return, self.get_wcs_coord(window_index, pixels, /time)
 END
 
 ;+
