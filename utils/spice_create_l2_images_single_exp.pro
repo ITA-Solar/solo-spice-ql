@@ -33,7 +33,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-27 14:16 CET $
+; $Id: 2025-02-27 14:20 CET $
 
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time
@@ -76,10 +76,11 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
     ENDIF
     l2_object = spice_object(l2_file)
     FOR iwin = 0, l2_object.get_number_windows() - 1 DO BEGIN
-      data = l2_object.get_window_data(iwin, /no_masking)
-      image_data = transpose(reform(data))
+      image_data = l2_object.get_window_data(iwin, /no_masking)
+      image_data = transpose(reform(image_data))
       l2_header = l2_object.get_header(iwin)
-      spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot
+      spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot, oJpg = oJpg_l2
     ENDFOR
   ENDFOREACH
+  IF n_elements(oJpg_l2) NE 0 THEN obj_destroy, oJpg_l2
 END
