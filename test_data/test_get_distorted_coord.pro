@@ -166,10 +166,10 @@ PRO test_get_distorted_coord
   print, ''
 
   pixels = lonarr(4, 10)
-  pixels[0, *] = indgen(10)
+  pixels[0, *] = obj.get_sit_and_stare() ? 0 : indgen(10)
   pixels[1, *] = 0
   pixels[2, *] = 0
-  pixels[3, *] = 0
+  pixels[3, *] = obj.get_sit_and_stare() ? indgen(10) : 0
   cc10 = obj.get_wcs_coord(0, pixels)
   help, cc10
   print, cc10
@@ -183,8 +183,28 @@ PRO test_get_distorted_coord
   help, cc00
 
   print, ''
-  print, cc10 - cc1
-  print, cc20 - cc2
+  print, ''
+
+  pixels = lonarr(4, 10)
+  pixels[0, *] = obj.get_sit_and_stare() ? 0 : indgen(10)
+  pixels[1, *] = 0
+  pixels[2, *] = 0
+  pixels[3, *] = obj.get_sit_and_stare() ? indgen(10) : 0
+  cc11 = obj.get_wcs_coord(0, pixels, /diff_rot)
+  help, cc11
+  print, cc11
+
+  pixels = [0, 1, 0, 0]
+  cc21 = obj.get_wcs_coord(0, pixels, /diff_rot)
+  help, cc21
+  print, cc21
+
+  cc01 = obj.get_wcs_coord(0, /diff_rot)
+  help, cc01
+
+  print, ''
+  print, cc10 - cc11
+  print, cc20 - cc21
 
   ; stop
 END
