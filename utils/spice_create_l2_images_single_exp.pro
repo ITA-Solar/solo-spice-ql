@@ -33,7 +33,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-25 18:31 CET $
+; $Id: 2025-02-27 14:16 CET $
 
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time
@@ -70,7 +70,8 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
     catch, error
     IF error NE 0 THEN BEGIN
       catch, /cancel
-      spcl2im_report_error, l2_file
+      IF getenv("USER") EQ "steinhh" OR getenv("USER") EQ "osdcapps" THEN $
+        spcl2im_report_error, l2_file
       CONTINUE
     ENDIF
     l2_object = spice_object(l2_file)
