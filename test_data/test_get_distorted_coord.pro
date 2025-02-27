@@ -60,81 +60,131 @@ PRO test_get_distorted_coord
   print, x_coords[0 : 9]
   ; plot, x_coords
 
-  print, ''
-
-  y_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[2]
-  print, y_coord_start
-
-  npix += 30
-  pixels = lonarr(4, npix)
-  pixels[0, *] = obj.get_sit_and_stare() ? 0 : indgen(npix) - 10
-  pixels[1, *] = floor(naxis[1] / 2.)
-  pixels[2, *] = floor(naxis[2] / 2.)
-  pixels[3, *] = obj.get_sit_and_stare() ? indgen(npix) - 10 : 0
-
-  x_coords = obj.get_wcs_coord(0, pixels, /x)
-  help, x_coords
-  print, x_coords[8 : 19]
-
-  print, ''
-
-  y0 = obj.get_instr_y_vector(0)
-  help, y0
-  print, y0[0 : 9]
-  y1 = obj.get_instr_y_vector(0, /full_ccd)
-  help, y1
-  print, y1[0 : 9]
-  plot, y1
-  oplot, y0
-  ; stop
-
-  FOREACH l2_file, l2_files DO BEGIN
+  IF 0 THEN BEGIN
     print, ''
-    print, l2_file
-    print, ''
-    obj = spice_object(l2_file)
-    x = obj.get_instr_x_vector(0)
-    y0 = obj.get_instr_y_vector(0)
-    y1 = obj.get_instr_y_vector(0, /full_ccd)
-    lambda0 = obj.get_lambda_vector(0)
-    lambda1 = obj.get_lambda_vector(0, /full_ccd)
-    time = obj.get_time_vector(0)
 
-    help, x
-    help, y0
-    help, y1
-    help, lambda0
-    help, lambda1
-    help, time
-
-    nbin = obj.get_spatial_binning(0)
     y_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[2]
-    npix = (obj.get_ccd_size())[1]
-    pixels = fltarr(4, npix)
-    pixels[1, *] = findgen(npix) / nbin - y_coord_start
+    print, y_coord_start
 
-    plot, pixels[1, *], y1, psym = 4
-    oplot, indgen(n_elements(y0)), y0, psym = 7, symsize = 2
-    IF n_elements(x) GT 1 THEN oplot, x, psym = 2
+    npix += 30
+    pixels = lonarr(4, npix)
+    pixels[0, *] = obj.get_sit_and_stare() ? 0 : indgen(npix) - 10
+    pixels[1, *] = floor(naxis[1] / 2.)
+    pixels[2, *] = floor(naxis[2] / 2.)
+    pixels[3, *] = obj.get_sit_and_stare() ? indgen(npix) - 10 : 0
+
+    x_coords = obj.get_wcs_coord(0, pixels, /x)
+    help, x_coords
+    print, x_coords[8 : 19]
+
+    print, ''
+
+    y0 = obj.get_instr_y_vector(0)
+    help, y0
+    print, y0[0 : 9]
+    y1 = obj.get_instr_y_vector(0, /full_ccd)
+    help, y1
+    print, y1[0 : 9]
+    plot, y1
+    oplot, y0
     ; stop
 
-    nbin = obj.get_spectral_binning(0)
-    lambda_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[0]
-    npix = (obj.get_ccd_size())[0]
-    pixels = fltarr(4, npix)
-    pixels[2, *] = findgen(npix) / nbin - lambda_coord_start
+    FOREACH l2_file, l2_files DO BEGIN
+      print, ''
+      print, l2_file
+      print, ''
+      obj = spice_object(l2_file)
+      x = obj.get_instr_x_vector(0)
+      y0 = obj.get_instr_y_vector(0)
+      y1 = obj.get_instr_y_vector(0, /full_ccd)
+      lambda0 = obj.get_lambda_vector(0)
+      lambda1 = obj.get_lambda_vector(0, /full_ccd)
+      time = obj.get_time_vector(0)
 
-    plot, pixels[2, *], lambda1, psym = 4
-    oplot, indgen(n_elements(lambda0)), lambda0, psym = 7, symsize = 2
+      help, x
+      help, y0
+      help, y1
+      help, lambda0
+      help, lambda1
+      help, time
 
-    IF n_elements(time) GT 1 THEN BEGIN
-      plot, time, psym = 4
-      stop
-    ENDIF ELSE BEGIN
-      print, 'No time vector'
-    ENDELSE
+      nbin = obj.get_spatial_binning(0)
+      y_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[2]
+      npix = (obj.get_ccd_size())[1]
+      pixels = fltarr(4, npix)
+      pixels[1, *] = findgen(npix) / nbin - y_coord_start
 
-    print, '------------'
-    ; stop
-  ENDFOREACH
+      plot, pixels[1, *], y1, psym = 4
+      oplot, indgen(n_elements(y0)), y0, psym = 7, symsize = 2
+      IF n_elements(x) GT 1 THEN oplot, x, psym = 2
+      ; stop
+
+      nbin = obj.get_spectral_binning(0)
+      lambda_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[0]
+      npix = (obj.get_ccd_size())[0]
+      pixels = fltarr(4, npix)
+      pixels[2, *] = findgen(npix) / nbin - lambda_coord_start
+
+      plot, pixels[2, *], lambda1, psym = 4
+      oplot, indgen(n_elements(lambda0)), lambda0, psym = 7, symsize = 2
+
+      IF n_elements(time) GT 1 THEN BEGIN
+        plot, time, psym = 4
+        stop
+      ENDIF ELSE BEGIN
+        print, 'No time vector'
+      ENDELSE
+
+      print, '------------'
+      ; stop
+    ENDFOREACH
+  ENDIF
+
+  print, ''
+
+  data = readfits(file, header, ext = 0)
+  wcs = fitshead2wcs(header, filename = file)
+
+  pixels = lonarr(4, 10)
+  pixels[0, *] = indgen(10)
+  pixels[1, *] = 0
+  pixels[2, *] = 0
+  pixels[3, *] = 0
+  cc1 = wcs_get_coord(wcs, pixels)
+  help, cc1
+  print, cc1
+
+  pixels = [0, 1, 0, 0]
+  cc2 = wcs_get_coord(wcs, pixels)
+  help, cc2
+  print, cc2
+
+  cc0 = wcs_get_coord(wcs)
+  help, cc0
+
+  print, ''
+  print, ''
+
+  pixels = lonarr(4, 10)
+  pixels[0, *] = indgen(10)
+  pixels[1, *] = 0
+  pixels[2, *] = 0
+  pixels[3, *] = 0
+  cc10 = obj.get_wcs_coord(0, pixels)
+  help, cc10
+  print, cc10
+
+  pixels = [0, 1, 0, 0]
+  cc20 = obj.get_wcs_coord(0, pixels)
+  help, cc20
+  print, cc20
+
+  cc00 = obj.get_wcs_coord(0)
+  help, cc00
+
+  print, ''
+  print, cc10 - cc1
+  print, cc20 - cc2
+
+  ; stop
 END
