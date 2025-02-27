@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2025-02-27 12:04 CET $
+; $Id: 2025-02-27 13:00 CET $
 
 ;+
 ; Description:
@@ -2575,8 +2575,8 @@ END
 ;         1D: - 1 pixel provided, no keywords set (4-element vector)
 ;             - Several (n) pixels provided, one of the keywords set (n-element vector)
 ;         2D: Several (n) pixels provided, no keywords set (4 x n array)
-;         4D: No pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
-;         5D: No pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAZIS4 array)
+;         4D: No pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAXIS4 array)
+;         5D: No pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAXIS4 array)
 ;-
 FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambda, time = time, diff_rot = diff_rot
   ; Returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
