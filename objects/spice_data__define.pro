@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2025-02-26 15:36 CET $
+; $Id: 2025-02-27 11:00 CET $
 
 ;+
 ; Description:
@@ -2581,8 +2581,15 @@ FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambd
     coords = wcs_get_coord(*(*self.window_wcs)[window_index])
     spice_diff_rot_coord, *(*self.window_wcs)[window_index], coords
     IF size_pixels[0] GT 0 THEN BEGIN
-      print, 'Differential rotation correction applied to coordinates'
-      ; TODO: Apply differential rotation to pixels
+      IF size_pixels[0] EQ 1 THEN BEGIN
+        coords = coords[*, pixels[0], pixels[1], pixels[2], pixels[3]]
+      ENDIF ELSE BEGIN
+        new_coords = dblarr(4, size_pixels[2])
+        FOR i = 0, size_pixels[2] - 1 DO BEGIN
+          new_coords[*, i] = coords[*, pixels[0, i], pixels[1, i], pixels[2, i], pixels[3, i]]
+        ENDFOR
+        coords = new_coords
+      ENDELSE
     ENDIF
   ENDIF ELSE BEGIN
     coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
