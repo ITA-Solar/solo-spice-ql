@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2025-02-27 11:00 CET $
+; $Id: 2025-02-27 11:03 CET $
 
 ;+
 ; Description:
@@ -2285,10 +2285,14 @@ END
 ;     lambda : the index of the wavelength coordinate of the pixel, default is the middle of the window
 ;     time : the index of the time coordinate of the pixel, default is the middle of the window
 ;
+; OPTIONAL KEYWORDS:
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
+;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = time
+FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = time, diff_rot = diff_rot
   ; Returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
 
@@ -2308,7 +2312,7 @@ FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = 
   pixels[2, *] = lambda
   pixels[3, *] = self.get_sit_and_stare() ? indgen(npix) : time
 
-  return, self.get_wcs_coord(window_index, pixels, /x)
+  return, self.get_wcs_coord(window_index, pixels, /x, diff_rot = diff_rot)
 END
 
 ;+
@@ -2325,13 +2329,15 @@ END
 ;     time : the index of the time coordinate of the pixel, default is the middle of the window
 ;
 ; OPTIONAL KEYWORDS:
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
 ;                for the whole detector
 ;
 ; OUTPUT:
 ;     float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = time, full_ccd = full_ccd
+FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = time, full_ccd = full_ccd, diff_rot = diff_rot
   ; Returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
@@ -2359,7 +2365,7 @@ FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = 
   pixels[2, *] = lambda
   pixels[3, *] = time
 
-  return, self.get_wcs_coord(window_index, pixels, /y)
+  return, self.get_wcs_coord(window_index, pixels, /y, diff_rot = diff_rot)
 END
 
 ;+
