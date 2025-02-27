@@ -65,7 +65,7 @@
 ;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
 ;-
 
-; $Id: 2025-02-27 11:03 CET $
+; $Id: 2025-02-27 12:04 CET $
 
 ;+
 ; Description:
@@ -2278,19 +2278,21 @@ END
 ;     Returns a vector containing the coordinate (instrument x-direction) for each pixel in the first dimension.
 ;
 ; INPUTS:
-;     window : the index or name of the window
+;     window : The index or name of the window
 ;
 ; OPTIONAL INPUTS:
-;     y : the index of the y-coordinate of the pixel, default is the middle of the window
-;     lambda : the index of the wavelength coordinate of the pixel, default is the middle of the window
-;     time : the index of the time coordinate of the pixel, default is the middle of the window
+;     y : The index of the y-coordinate of the pixel, default is the middle of the window
+;     lambda : The index of the wavelength coordinate of the pixel, default is the middle of the window
+;     time : The index of the time coordinate of the pixel, default is the middle of the window
 ;
-; OPTIONAL KEYWORDS:
+; KEYWORDS:
 ;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
 ;              using spice_diff_rot_coord.
+;              If this keyword is set, then y, lambda and time provided must be within
+;              the actual data volume.
 ;
 ; OUTPUT:
-;     float array, coordinate in arcsec
+;     Float array, coordinate in arcsec
 ;-
 FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = time, diff_rot = diff_rot
   ; Returns a vector containing the coordinate for each pixel in instrument x-direction
@@ -2321,21 +2323,24 @@ END
 ;     for the selected window, or the full CCD this window belongs to.
 ;
 ; INPUTS:
-;     window : the index or name of the window
+;     window : The index or name of the window
 ;
 ; OPTIONAL INPUTS:
-;     x : the index of the x-coordinate of the pixel, default is the middle of the window
-;     lambda : the index of the wavelength coordinate of the pixel, default is the middle of the window
-;     time : the index of the time coordinate of the pixel, default is the middle of the window
+;     x : The index of the x-coordinate of the pixel, default is the middle of the window
+;     lambda : The index of the wavelength coordinate of the pixel, default is the middle of the window
+;     time : The index of the time coordinate of the pixel, default is the middle of the window
 ;
-; OPTIONAL KEYWORDS:
+; KEYWORDS:
 ;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
 ;              using spice_diff_rot_coord.
+;              If this keyword is set, then x, lambda and time provided must be within
+;              the actual data volume.
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
-;                for the whole detector
+;              for the whole detector. The data is then debinned. This may give wrong results if
+;              diff_rot is also set.
 ;
 ; OUTPUT:
-;     float array, coordinate in arcsec
+;     Float array, coordinate in arcsec
 ;-
 FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = time, full_ccd = full_ccd, diff_rot = diff_rot
   ; Returns a vector containing the coordinate for each pixel in instrument y-direction
@@ -2374,19 +2379,19 @@ END
 ;     the selected window, or the full CCD this window belongs to.
 ;
 ; INPUTS:
-;     window : the index or name of the window
+;     window : The index or name of the window
 ;
 ; OPTIONAL INPUTS:
-;     x : the index of the x-coordinate of the pixel, default is the middle of the window
-;     y : the index of the y-coordinate of the pixel, default is the middle of the window
-;     time : the index of the time coordinate of the pixel, default is the middle of the window
+;     x : The index of the x-coordinate of the pixel, default is the middle of the window
+;     y : The index of the y-coordinate of the pixel, default is the middle of the window
+;     time : The index of the time coordinate of the pixel, default is the middle of the window
 ;
-; OPTIONAL KEYWORDS:
-;     full_ccd : if set, a vector of size CCD-size[0] is returned with lamda values
-;                for the whole detector
+; KEYWORDS:
+;     full_ccd : If set, a vector of size CCD-size[0] is returned with lamda values
+;                for the whole detector. The data is then debinned.
 ;
 ; OUTPUT:
-;     float array, wavelength in nm
+;     Float array, wavelength in nm
 ;-
 FUNCTION spice_data::get_lambda_vector, window, x = x, y = y, time = time, full_ccd = full_ccd
   ; Returns a vector containing the wavelength for each pixel in third dimension for window or full CCD
@@ -2424,15 +2429,15 @@ END
 ;     Returns a vector containing the time for each pixel in fourth dimension.
 ;
 ; INPUTS:
-;     window : the index or name of the window
+;     window : The index or name of the window
 ;
 ; OPTIONAL INPUTS:
-;     x : the index of the x-coordinate of the pixel, default is the middle of the window
-;     y : the index of the y-coordinate of the pixel, default is the middle of the window
-;     lambda : the index of the wavelength coordinate of the pixel, default is the middle of the window
+;     x : The index of the x-coordinate of the pixel, default is the middle of the window
+;     y : The index of the y-coordinate of the pixel, default is the middle of the window
+;     lambda : The index of the wavelength coordinate of the pixel, default is the middle of the window
 ;
 ; OUTPUT:
-;     float array, time in seconds
+;     Float array, time in seconds
 ;-
 FUNCTION spice_data::get_time_vector, window, x = x, y = y, lambda = lambda
   ; Returns a vector containing the time for each pixel in fourth dimension
@@ -2546,7 +2551,7 @@ END
 ;     for all dimensions or just the one specified.
 ;
 ; INPUTS:
-;     window : the index or name of the window
+;     window : The index or name of the window
 ;
 ; OPTIONAL INPUTS:
 ;     pixels : The pixel for which the coordinates should be returned. Values can be
@@ -2554,16 +2559,18 @@ END
 ;              Must be either a 4-element vector, or a 2D array of the form (4,n)
 ;              where n is the number of desired pixels.
 ;
-; OPTIONAL KEYWORDS:
+; KEYWORDS:
 ;     x : If set, only coordinates of the first dimension (x-direction) are returned.
 ;     y : If set, only coordinates of the second dimension (y-direction) are returned.
 ;     lambda : If set, only coordinates of the third dimension (wavelength) are returned.
 ;     time : If set, only coordinates of the fourth dimension (time) are returned.
 ;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
 ;              using spice_diff_rot_coord.
+;              If this keyword is set, then all pixels provided in the pixels array must be within
+;              the actual data volume. Floating point indices may give wrong results.
 ;
 ; OUTPUT:
-;     float array,
+;     Float array,
 ;         scalar: If one pixel is provided and one of the keywords is set
 ;         1D: - 1 pixel provided, no keywords set (4-element vector)
 ;             - Several (n) pixels provided, one of the keywords set (n-element vector)
