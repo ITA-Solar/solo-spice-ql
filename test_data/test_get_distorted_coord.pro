@@ -13,7 +13,7 @@ PRO test_get_distorted_coord
   x0 = obj.get_instr_x_vector(0)
   print, x0[0 : 9]
 
-  IF 0 THEN BEGIN
+  IF 1 THEN BEGIN
     print, ''
 
     data = readfits(file, header, ext = 0)
@@ -60,7 +60,7 @@ PRO test_get_distorted_coord
   print, x_coords[0 : 9]
   ; plot, x_coords
 
-  IF 0 THEN BEGIN
+  IF 1 THEN BEGIN
     print, ''
 
     y_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[2]
@@ -93,13 +93,13 @@ PRO test_get_distorted_coord
       print, ''
       print, l2_file
       print, ''
-      obj = spice_object(l2_file)
-      x = obj.get_instr_x_vector(0)
-      y0 = obj.get_instr_y_vector(0)
-      y1 = obj.get_instr_y_vector(0, /full_ccd)
-      lambda0 = obj.get_lambda_vector(0)
-      lambda1 = obj.get_lambda_vector(0, /full_ccd)
-      time = obj.get_time_vector(0)
+      obj_for = spice_object(l2_file)
+      x = obj_for.get_instr_x_vector(0)
+      y0 = obj_for.get_instr_y_vector(0)
+      y1 = obj_for.get_instr_y_vector(0, /full_ccd)
+      lambda0 = obj_for.get_lambda_vector(0)
+      lambda1 = obj_for.get_lambda_vector(0, /full_ccd)
+      time = obj_for.get_time_vector(0)
 
       help, x
       help, y0
@@ -108,9 +108,9 @@ PRO test_get_distorted_coord
       help, lambda1
       help, time
 
-      nbin = obj.get_spatial_binning(0)
-      y_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[2]
-      npix = (obj.get_ccd_size())[1]
+      nbin = obj_for.get_spatial_binning(0)
+      y_coord_start = (obj_for.get_window_position(0, /idl_coord, /debin))[2]
+      npix = (obj_for.get_ccd_size())[1]
       pixels = fltarr(4, npix)
       pixels[1, *] = findgen(npix) / nbin - y_coord_start
 
@@ -119,9 +119,9 @@ PRO test_get_distorted_coord
       IF n_elements(x) GT 1 THEN oplot, x, psym = 2
       ; stop
 
-      nbin = obj.get_spectral_binning(0)
-      lambda_coord_start = (obj.get_window_position(0, /idl_coord, /debin))[0]
-      npix = (obj.get_ccd_size())[0]
+      nbin = obj_for.get_spectral_binning(0)
+      lambda_coord_start = (obj_for.get_window_position(0, /idl_coord, /debin))[0]
+      npix = (obj_for.get_ccd_size())[0]
       pixels = fltarr(4, npix)
       pixels[2, *] = findgen(npix) / nbin - lambda_coord_start
 

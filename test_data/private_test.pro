@@ -5,7 +5,7 @@ PRO private_test
   l2_files = ['/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-ras_20231028T001206_V22_218104189-001.fits', $ ; raster
     '/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-sit_20231028T032925_V22_218104192-000.fits', $ ; sit-and-stare
     '/Users/mawiesma/data/spice/level2/2023/01/17/solo_L2_spice-n-exp_20230117T151432_V02_167772346-000.fits', $ ; single exposure, small window
-    '/Users/mawiesma/data/spice/level2/2024/01/01/solo_L2_spice-n-exp_20240101T180040_V01_234881025-000.fits' $ ; single exposure, whole detector
+    '/Users/mawiesma/data/spice/level2/2024/01/01/solo_L2_spice-n-exp_20240101T180040_V02_234881025-000.fits' $ ; single exposure, whole detector
     ] ; list of L2 files
 
   IF create_l3 THEN BEGIN
@@ -21,10 +21,10 @@ PRO private_test
 
     IF use_l2 THEN BEGIN
       l2_topdir = '$HOME/tmp/spice_data/fits/level2'
-      l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
+      ; l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
       l2_file = l2_files[0] ; select the first L3 file
 
-      spice_create_l2_images_single_exp, l2_files[0 : 5], out_dir, show_plot = 0
+      spice_create_l2_images_single_exp, l2_files[0 : 3], out_dir, show_plot = 0
     ENDIF ELSE BEGIN
       l3_files = ['/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20231028T001206_V01_218104189-001.fits', $ ; raster
         '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-sit_20231028T032925_V01_218104192-000.fits', $ ; sit-and-stare
