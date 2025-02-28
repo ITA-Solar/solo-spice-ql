@@ -33,7 +33,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-27 14:20 CET $
+; $Id: 2025-02-28 13:44 CET $
 
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time
@@ -81,6 +81,7 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
       l2_header = l2_object.get_header(iwin)
       spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot, oJpg = oJpg_l2
     ENDFOR
+    obj_destroy, l2_object
   ENDFOREACH
   IF n_elements(oJpg_l2) NE 0 THEN obj_destroy, oJpg_l2
 END
