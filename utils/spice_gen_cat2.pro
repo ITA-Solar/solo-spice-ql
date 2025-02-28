@@ -105,7 +105,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-02-19 17:20 CET $
+; $Id: 2025-02-28 15:14 CET $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -467,19 +467,18 @@ END
 
 ; ;    ----------------------
 
-PRO spice_gen_cat2, spice_data_dir, _extra = extra
-  steinhh = getenv("USER") EQ 'steinhh'
-  have_steinhh_paths = getenv("USE_STEINHH_PATHS") NE ''
-  IF NOT steinhh AND NOT have_steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
+PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old_catalog, ignore_L0 = ignore_L0
+  steinhh_paths = getenv("USER") EQ 'steinhh' || getenv("USE_STEINHH_PATHS") NE ''
+  IF NOT steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
+  prits_tools.default, spice_data_dir, "$HOME/spice_home/fits"
+  IF ~file_test(spice_data_dir, /directory) THEN message, 'Directory does not exist: ' + spice_data_dir
   ON_ERROR, 0
-  o = obj_new('spice_gen_cat2', spice_data_dir, _extra = extra)
-  o.execute
-END
-
-PRO do_spice_gen_cat2_forever
-  WHILE 1 DO BEGIN
-    spice_gen_cat2, '$HOME/spice_home/fits', /use_old_cat, /ignore_l0
-  ENDWHILE
+  REPEAT BEGIN
+    o = obj_new('spice_gen_cat2', spice_data_dir, use_old_catalog = use_old_catalog, ignore_L0 = ignore_l0)
+    o.execute
+    obj_destroy, o
+    use_old_catalog = 1
+  END UNTIL ~keyword_set(forever)
 END
 
 IF getenv("USER") EQ 'steinhh' THEN BEGIN
