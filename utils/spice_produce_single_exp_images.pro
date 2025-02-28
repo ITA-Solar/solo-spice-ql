@@ -41,12 +41,10 @@ PRO spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
     newer = 'FILE EXISTS and is NEWER'
     IF keyword_set(force) THEN box_message, ['', newer, 'but FORCE keyword is set', ''] $
     ELSE BEGIN
-      box_message, ['', newer, 'not processing (but rsyncing)', '']
-      box_message, ['', 'Maybe', '']
+      box_message, ['', newer, 'not processing (but rsyncing if necessary)', '']
       COMMON spsei_process_file, last_rsync
       prits_tools.default, last_rsync, ""
-      IF last_rsync NE outdir THEN spsei_rsync_to_other_server, outdir $
-      ELSE box_message, ['', 'Just kidding, I have rsynced this day before!', '']
+      IF last_rsync NE outdir THEN spsei_rsync_to_other_server, outdir
       last_rsync = outdir
       return
     END
@@ -56,24 +54,49 @@ PRO spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
   spsei_rsync_to_other_server, outdir
 END
 
-PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = force, forever = forever
-  l2_topdir = concat_dir(l2_topdir, date)
-  level3qljpg_f = concat_dir(level3qljpg_f, date)
-  IF ~file_test(l2_topdir, /directory) THEN message, "Input directory does not exist: " + l2_topdir
-  IF ~file_test(level3qljpg_f, /directory) THEN message, "Output directory does not exist: " + level3qljpg_f
-  l2_topdir = prits_tools.physical_path(l2_topdir)
-  level3qljpg_f = prits_tools.physical_path(level3qljpg_f)
+PRO spsei_production_conditions, l2_topdir, level3qljpg_f, date, forever = forever
+  IF getenv("USER") NE "osdcapps" THEN $
+    message, "This is a production script, only to be run by osdcapps"
+  IF getenv("HOST") NE "astro-sdc-fs2.uio.no" THEN $
+    message, "This is a production script, only to be run on astro-sdc-fs2"
+  IF getenv("USE_STEINHH_PATHS") EQ "" THEN $
+    message, "This is a production script, only to be run with steinhh's paths"
+  l2_topdir = '$HOME/spice_home/fits/level2'
+  level3qljpg_f = '$HOME/spice_home/quicklook/level3qljpg_f'
+  prits_tools.default, date, ''
+  forever = 1
+END
+
+PRO check_production_memory_usage
+  mb_memory = memory(/current) / 2L ^ 20
+  print, 'Memory usage: ' + mb_memory.tostring() + ' MB'
+  IF mb_memory GT 500 THEN BEGIN
+    message, 'Memory usage is too high: ' + mb_memory.tostring() + ' MB', /continue
+    exit
+  ENDIF
+END
+
+PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = force, forever = forever, production = production, pattern = pattern
+  IF getenv("IDL_RESET_DONE") NE "yes" THEN message, "RESET IDL, then setenv IDL_RESET_DONE=yes"
+
+  IF keyword_set(production) THEN BEGIN
+    spsei_production_conditions, l2_topdir, level3qljpg_f, date, forever = forever
+  ENDIF
+
+  ; Implicitly checking that directories exist:
+  l2_topdir = prits_tools.physical_path(concat_dir(l2_topdir, date))
+  level3qljpg_f = prits_tools.physical_path(concat_dir(level3qljpg_f, date))
+
   REPEAT BEGIN
-    l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
+    l2_files = file_search(l2_topdir, 'solo_L2*exp*.fits', count = nfiles)
     l2_files = reverse(l2_files) ; Newest first
-    IF nfiles EQ 0 THEN BEGIN
-      message, "No SPICE files found in " + l2_topdir, /continue
-      return
-    ENDIF
-    ; l2_files = l2_files[0 : 2]
+    IF nfiles EQ 0 THEN message, "No SPICE files found in " + l2_topdir
     FOREACH l2_file, l2_files DO BEGIN
+      IF ~stregex(l2_file, pattern) THEN CONTINUE
       spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
+      IF keyword_set(production) THEN check_production_memory_usage
     ENDFOREACH
+    force = 0
   END UNTIL ~keyword_set(forever)
 END
 
@@ -81,18 +104,6 @@ PRO runtest
   IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
     spice_produce_single_exp_images, '$HOME/tmp/spice_data/fits/level2', '$HOME/tmp/spice_data/quicklook/level3qljpg_f', /force
   END
-END
-
-PRO runtest2
-  l2_file = "/mn/sertan/u1/steinhh/tmp/spice_data/fits/level2/2025/01/01/solo_L2_spice-n-exp_20250101T060744_V03_301989908-004.fits"
-  search_pattern = prits_tools.regex_replace(l2_file, ".*([0-9]{8}T[0-9]{6}.*).fits", "$1")
-  stop
-END
-
-PRO spsei_run_forever
-  WHILE 1 DO BEGIN
-    spice_produce_single_exp_images, '$HOME/spice_home/fits/level2', '$HOME/spice_home/quicklook/level3qljpg_f', /force
-  ENDWHILE
 END
 
 runtest
