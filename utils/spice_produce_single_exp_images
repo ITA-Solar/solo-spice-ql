@@ -1,0 +1,18 @@
+#!/bin/tcsh
+
+pattern = ".*"
+
+if ( $#argv != 1 ) then
+   set pattern="$argv[1]"
+endif
+
+sswidl
+
+setenv USE_STEINHH_PATHS yes
+echo ".reset" > /tmp/spice_produce_single_exp_images.com
+echo "pattern = '$pattern'" >> /tmp/spice_produce_single_exp_images.com
+echo "spice_produce_single_exp_images,/production,/forever, pattern=pattern" >> /tmp/spice_produce_single_exp_images.com
+while ( 1 )
+   sswidl < /tmp/spice_produce_single_exp_images.com
+   sleep 60
+end
