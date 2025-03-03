@@ -76,12 +76,15 @@ PRO check_production_memory_usage
   ENDIF
 END
 
-PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = force, forever = forever, production = production, pattern = pattern
+PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = force, forever = forever, production = production, pattern = pattern, on_switch = on_switch
   IF getenv("IDL_RESET_DONE") NE "yes" THEN message, "RESET IDL, then setenv IDL_RESET_DONE=yes"
 
   IF keyword_set(production) THEN BEGIN
     spsei_production_conditions, l2_topdir, level3qljpg_f, date, forever = forever
   ENDIF
+
+  IF ~keyword_set(pattern) THEN pattern = '.*'
+  box_message, "Only processing files matching pattern: " + pattern
 
   ; Implicitly checking that directories exist:
   l2_topdir = prits_tools.physical_path(concat_dir(l2_topdir, date))
@@ -92,7 +95,11 @@ PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = for
     l2_files = reverse(l2_files) ; Newest first
     IF nfiles EQ 0 THEN message, "No SPICE files found in " + l2_topdir
     FOREACH l2_file, l2_files DO BEGIN
-      IF ~stregex(l2_file, pattern) THEN CONTINUE
+      IF ~stregex(l2_file, pattern, /boolean) THEN BEGIN
+        print, 'Skipping ' + l2_file + " because it does not match pattern " + pattern
+        CONTINUE
+      END
+      IF keyword_set(on_switch) THEN pattern = ".*"
       spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
       IF keyword_set(production) THEN check_production_memory_usage
     ENDFOREACH
