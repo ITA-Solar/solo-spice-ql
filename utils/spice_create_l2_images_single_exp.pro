@@ -38,7 +38,8 @@
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time
   prits_tools.default, last_report_time, 0
-  ; spawn, "echo " + l2_file + " >> " + (error_reports_file = '/tmp/spcl2im_error_reports')
+  error_reports_file = '/tmp/spcl2im_error_reports'
+  ; spawn, "echo " + l2_file + " >> " + error_reports_file
   box_message, ['', 'Error reading L2 file!', '', '     ' + l2_file, '', ''], /info
   curr_time = systime(1)
   IF curr_time - last_report_time GT 240 OR keyword_set(force_email) THEN BEGIN
@@ -67,13 +68,12 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
     l3ql_filename = prits_tools.regex_replace(l3ql_filename, 'V[0-9]{2}', 'Vxx')
     filename_base = out_dir + path_sep() + l3ql_filename + '-'
     print, "L3QL filename base: " + filename_base
-    IF getenv("USER") EQ "steinhh" OR getenv("USER") EQ "osdcapps" THEN BEGIN
-      catch, error
-      IF error NE 0 THEN BEGIN
-        catch, /cancel
+    catch, error
+    IF error NE 0 THEN BEGIN
+      catch, /cancel
+      IF getenv("USER") EQ "steinhh" OR getenv("USER") EQ "osdcapps" THEN $
         spcl2im_report_error, l2_file
-        CONTINUE
-      ENDIF
+      CONTINUE
     ENDIF
     l2_object = spice_object(l2_file)
     FOR iwin = 0, l2_object.get_number_windows() - 1 DO BEGIN
