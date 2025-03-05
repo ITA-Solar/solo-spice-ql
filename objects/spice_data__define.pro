@@ -62,10 +62,14 @@
 ;    18-Oct-2024: Terje Fredvik:  ::check_if_already_included: Removed warning
 ;                                 message being always printed, instead print
 ;                                 warning only when reading an old file
-;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower limit
+;    01-Nov-2024: Terje Fredvik:  Updated the calculation of line width lower
+;                                 limit
+;    05-Mar-2025: Terje Fredvik:  ::get_satpixlist: temporary fix to handle
+;                                 L2 files that incorrectly have other
+;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-02-27 13:00 CET $
+; $Id: 2025-03-05 11:24 CET $
 
 ;+
 ; Description:
@@ -1083,7 +1087,17 @@ FUNCTION spice_data::get_satpixlist, window_index
   pixlists = self.get_header_keyword('PIXLISTS', window_index)
 
   IF pixlists EQ !NULL THEN return, !NULL
-
+  
+  ;; Temporary fix to prevent crash when reading faulty L2 files: due to a bug
+  ;; in oslo_fits the PIXLISTS keyword may contain entries that should not be
+  ;; present in L2 files. PIXLISTS should either not be present or contain
+  ;; SATPIXLIST and only SATPIXLIST. For HDUs without any saturated pixels,
+  ;; but with missing telemetry packets, the PIXLISTS keyword may still be present
+  ;; due to this bug, and it may contain e.g. LOSTPLNPIXLIST. The bug has been 
+  ;; fixed in oslo_fits but all L2 files have not yet been reprocessed. When the 
+  ;; reprosessing for DR6 is done, remove this lenghty comment and the following line:
+  IF ~pixlists.contains('SATPIXLIST') THEN return, !NULL 
+  
   n_entries = n_elements(pixlists.indexOf(';'))
   IF n_entries NE 1 THEN message, 'A L2 file may contain only a single entry in the PIXLISTS keyword, i.e. SATPIXLIST'
 
