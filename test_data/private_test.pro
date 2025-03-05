@@ -21,10 +21,12 @@ PRO private_test
 
     IF use_l2 THEN BEGIN
       l2_topdir = '$HOME/tmp/spice_data/fits/level2'
-      ; l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
+      l2_files = file_search(l2_topdir, '*exp*.fits', count = nfiles)
       l2_file = l2_files[0] ; select the first L3 file
 
-      spice_create_l2_images_single_exp, l2_files[2 : 3], out_dir, show_plot = 0
+      start_mem = memory(/CURRENT)
+      spice_create_l2_images_single_exp, l2_files[0 : 1], out_dir, show_plot = 0, start_mem = start_mem
+      print, 'Memory required: ', (memory(/HIGHWATER) - start_mem) / 1024.0 / 1024
     ENDIF ELSE BEGIN
       l3_files = ['/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20231028T001206_V01_218104189-001.fits', $ ; raster
         '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-sit_20231028T032925_V01_218104192-000.fits', $ ; sit-and-stare
