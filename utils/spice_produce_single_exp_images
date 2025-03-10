@@ -19,6 +19,6 @@ echo "pattern = '$pattern'" >> /tmp/spice_produce_single_exp_images.com.$$
 echo "spice_produce_single_exp_images,/production,/forever, pattern=pattern $on_switch" \
       >> /tmp/spice_produce_single_exp_images.com.$$
 while ( 1 )
-   sswidl < /tmp/spice_produce_single_exp_images.com.$$
+   sswidl -arg produce_single_exp_images < /tmp/spice_produce_single_exp_images.com.$$
    sleep 60
 end
