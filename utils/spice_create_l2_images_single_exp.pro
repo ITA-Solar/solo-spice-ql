@@ -33,7 +33,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-03-04 13:50 CET $
+; $Id: 2025-03-10 13:23 CET $
 
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time
@@ -68,11 +68,13 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
     l3ql_filename = prits_tools.regex_replace(l3ql_filename, 'V[0-9]{2}', 'Vxx')
     filename_base = out_dir + path_sep() + l3ql_filename + '-'
     print, "L3QL filename base: " + filename_base
-    catch, error
+    error = 0
+    IF getenv("USER") EQ "osdcapps" THEN BEGIN
+      catch, error
+    END
     IF error NE 0 THEN BEGIN
       catch, /cancel
-      IF getenv("USER") EQ "steinhh" OR getenv("USER") EQ "osdcapps" THEN $
-        spcl2im_report_error, l2_file
+      spcl2im_report_error, l2_file
       CONTINUE
     ENDIF
     l2_object = spice_object(l2_file)
