@@ -54,7 +54,7 @@ PRO spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
   spsei_rsync_to_other_server, outdir
 END
 
-PRO spsei_production_conditions, l2_topdir, level3qljpg_f, date, forever = forever
+PRO spsei_set_production_conditions, l2_topdir, level3qljpg_f, date, forever = forever
   IF getenv("USER") NE "osdcapps" THEN $
     message, "This is a production script, only to be run by osdcapps"
   IF getenv("HOST") NE "astro-sdc-fs2.uio.no" THEN $
@@ -77,10 +77,12 @@ PRO check_production_memory_usage
 END
 
 PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = force, forever = forever, production = production, pattern = pattern, on_switch = on_switch
-  IF getenv("IDL_RESET_DONE") NE "yes" THEN message, "RESET IDL, then setenv IDL_RESET_DONE=yes"
+  ; Weird: without a .reset, IDL starts off making garbled images - looks like a wrong jpeg encoding,
+  ; or like a broken graphics card. So we check here that it has been performed:
+  IF getenv("IDL_RESET_DONE") NE "yes" THEN message, "RESET IDL FIRST, or else something does not work (what???)"
 
   IF keyword_set(production) THEN BEGIN
-    spsei_production_conditions, l2_topdir, level3qljpg_f, date, forever = forever
+    spsei_set_production_conditions, l2_topdir, level3qljpg_f, date, forever = forever
   ENDIF
 
   IF ~keyword_set(pattern) THEN pattern = '.*'
