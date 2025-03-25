@@ -1,4 +1,4 @@
-; $Id: 2025-03-18 08:25 CET $
+; $Id: 2025-03-25 10:09 CET $
 FUNCTION spice_keyword_info_header
   text = inline_text('  ; - END')
   ; NAXIS1  =                    1 /
@@ -43,7 +43,7 @@ FUNCTION spice_keyword_info_header
   ; STP     =                  122 / SoLO Short-Term Plan number
   ; DSUN_AU =       0.521442615073 / [AU] S/C distance from Sun
   ; CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
-  ; SOL_ROT =                    0 / Solar rotation compensation on (1) or off (0)   
+  ; ROT_COMP=                    0 / Solar rotation compensation on (1) or off (0)   
   ; OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID
   ; READMODE= 'Destructive'        / Destructive or non-destructive
   ; OBJECT  = 'Sun     '           / Type of object observed
