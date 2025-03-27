@@ -105,7 +105,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-02-28 15:14 CET $
+; $Id: 2025-03-27 21:48 CET $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -204,8 +204,9 @@ PRO spice_gen_cat2::write_csv, filename
   lines = transpose(lines)
 
   IF ~self.d.quiet THEN print
-  print, "Writing " + filename
+  print, "Writing " + filename + ".tmp"
   write_csv, filename + '.tmp', lines, header = self.d.keyword_array
+  print, "Renaming " + filename + ".tmp to " + filename
   file_move, filename + '.tmp', filename, /overwrite
   self.rsync_file_to_other_servers, filename
 END
