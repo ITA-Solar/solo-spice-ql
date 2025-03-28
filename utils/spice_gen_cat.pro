@@ -95,7 +95,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2024-12-05 11:22 CET $
+; $Id: 2025-03-28 13:39 CET $
 ;-
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -287,8 +287,8 @@ END
 PRO spice_gen_cat::set_filelist
   top_level = ~self.d.spice_datadir.contains('level')
 
-  spice_search_dirs = (top_level AND self.d.ignore_L0) ? self.d.spice_datadir + '/level' + ['1', '2', '3'] + '/' : self.d.spice_datadir
-  ignore_txt = (top_level AND self.d.ignore_L0) ? ', ignoring /level0' : ''
+  spice_search_dirs = (top_level AND ~self.d.include_L0) ? self.d.spice_datadir + '/level' + ['1', '2', '3'] + '/' : self.d.spice_datadir
+  ignore_txt = (top_level AND ~self.d.include_L0) ? ', ignoring /level0' : ''
 
   print, "Finding FITS files on disk" + ignore_txt + '... ', format = '(A,$)'
 
@@ -389,7 +389,7 @@ FUNCTION spice_gen_cat::get_catalog_hash_save_file
 END
 
 FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = use_old_catalog, $
-  new_files = new_files, ignore_L0 = ignore_L0
+                              new_files = new_files, include_L0 = include_L0
   self.d = dictionary()
 
   prits_tools.default, spice_data_dir, getenv("SPICE_DATA")
@@ -416,7 +416,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
   self.d.new_files = (new_files NE !NULL) ? new_files : !NULL
   self.d.ingest_new_files = self.d.new_files NE !NULL
 
-  self.d.ignore_L0 = (keyword_set(ignore_L0))
+  self.d.include_L0 = (keyword_set(include_L0))
 
   self.d.running_as_pipeline = getenv('USER') EQ 'osdcapps'
 

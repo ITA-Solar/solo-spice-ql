@@ -252,6 +252,7 @@ PRO rget_make_list::make_entry, file
     file_info.directory: self.handle_directory, file_info, relative_path
     file_info.regular: self.handle_regular_file, file_info, relative_path
     ELSE: BEGIN
+       stop
       message, "Ooops: Not sure what this is:", /continue
       help, file_info
       ; message, "Stopping"
