@@ -252,7 +252,14 @@ PRO rget_make_list::make_entry, file
     file_info.directory: self.handle_directory, file_info, relative_path
     file_info.regular: self.handle_regular_file, file_info, relative_path
     ELSE: BEGIN
-       stop
+       IF ~file_info.exists THEN BEGIN 
+          spiobsid_rasterno = file.extract('[0-9]+-[0-9]+')
+          dir_name = file_dirname(file)
+          existing_file = file_search(dir_name,'*'+spiobsid_rasterno+'*')
+          print,file_basename(file)+' does not exist!'
+          IF existing_File NE '' THEN print,file_basename(existing_file)+' do exist!'
+       ENDIF
+       
       message, "Ooops: Not sure what this is:", /continue
       help, file_info
       ; message, "Stopping"
