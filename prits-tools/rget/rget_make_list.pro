@@ -260,9 +260,10 @@ PRO rget_make_list::make_entry, file
           IF existing_File NE '' THEN print,file_basename(existing_file)+' do exist!'
        ENDIF
        
-      message, "Ooops: Not sure what this is:", /continue
-      help, file_info
-      ; message, "Stopping"
+      ;message, "Ooops: Not sure what this is:", /continue
+      ; help, file_info
+      ;message, "Stopping"
+       message,'Error detected, ungracefully crashing'
     END
   END
 END
