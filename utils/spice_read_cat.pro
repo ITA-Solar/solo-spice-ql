@@ -1,4 +1,4 @@
-; $Id: 2024-12-05 10:41 CET $
+; $Id: 2025-04-03 18:29 CEST $
 FUNCTION spice_read_cat_txt, catalog_file
   openr, lun, catalog_file, /get_lun
   t = ''
@@ -49,7 +49,7 @@ FUNCTION spice_read_cat, catalog_file
   IF ~file_exist(catalog_file) THEN BEGIN
     print, 'This catalog file does not exist. ' + catalog_file
     print, 'Please generate it by running spice_gen_cat'
-    return, !NULL
+    return, !null
   ENDIF
   dirname = file_dirname(catalog_file)
   basename = file_basename(catalog_file)
@@ -71,8 +71,8 @@ FUNCTION spice_read_cat, catalog_file
       fits_array = spice_read_cat_txt(catalog_file)
     ENDIF
 
-    ; and then create a IDL-save file
-    save, fits_array, filename = file_idl
+    ; and then create an IDL-save file, if possible!
+    IF file_test(dirname, /write) THEN save, fits_array, filename = file_idl
     return, fits_array
   ENDIF
 
@@ -82,5 +82,5 @@ FUNCTION spice_read_cat, catalog_file
   ENDIF
 
   print, 'This is not a catalog file, it must end with .sav, .txt or .csv'
-  return, !NULL
+  return, !null
 END
