@@ -47,13 +47,13 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2024-12-10 14:25 CET $
+; $Id: 2025-04-06 21:02 CEST $
 ;-
-; ;
+;
 PRO spice_cat::_____________UTILITY_FUNCTIONS
 END
 
-; ;
+;
 
 PRO spice_cat::setenv_commands_info
   COMPILE_OPT STATIC
@@ -134,9 +134,9 @@ PRO spice_cat::register_rows_selection, sel, clear = clear
     return
   END
 
-  ; ; STUPID IDL gives selection events based on previous selection,
-  ; ; even after table has been updated (i.e. the selected rows may be
-  ; ; gone!!!!!!)
+  ; STUPID IDL gives selection events based on previous selection,
+  ; even after table has been updated (i.e. the selected rows may be
+  ; gone!!!!!!)
   sel.top = sel.top < n_elements(self.curr.displayed)
   sel.bottom = sel.bottom < n_elements(self.curr.displayed)
 
@@ -152,7 +152,7 @@ FUNCTION spice_cat::selection
 END
 
 PRO spice_cat::safe_struct_assign, source, destination
-  ; ; Builtin STRUCT_ASSIGN BLANKS OUT tags that do not exist in source!!!
+  ; Builtin STRUCT_ASSIGN BLANKS OUT tags that do not exist in source!!!
   source_tag_names = tag_names(source)
   FOREACH destination_tag_name, tag_names(destination), destination_tag_ix DO BEGIN
     source_tag_ix = (where(source_tag_names EQ destination_tag_name))[0]
@@ -166,11 +166,11 @@ PRO spice_cat::send_event, uvalue
   spice_cat_______________catch_all_event_handler, event
 END
 
-; ;
+;
 PRO spice_cat::_____________FILTER_CONVERSION___TEXT_vs_ARRAY
 END
 
-; ;
+;
 
 FUNCTION spice_cat::filter_as_array, filter_as_text
   IF filter_as_text EQ "<filter>" THEN return, ["<filter>"]
@@ -185,14 +185,14 @@ FUNCTION spice_cat::filter_as_text, filter_as_array
   return, "{ " + filter_as_array[0] + " , " + filter_as_array[1] + " }"
 END
 
-; ;
+;
 PRO spice_cat::_____________DATA_LOADING_AND_MANIPULATION
 END
 
-; ;
+;
 
 PRO spice_cat::load_catalog
-  catalog = spice_read_cat(self.d.cat_filename) ; ; Array of orderedhashes()
+  catalog = spice_read_cat(self.d.cat_filename) ; Array of orderedhashes()
 
   self.d.full_list = catalog
   self.d.full_tag_names = tag_names(catalog[0])
@@ -212,8 +212,9 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
     max = filter_as_array[1]
 
     column_name = self.d.full_column_names[full_list_tag_index]
+    column_type = self.d.keyword_info[column_name].type
 
-    IF (self.d.keyword_info[column_name].type) EQ "i" THEN BEGIN
+    IF column_type EQ "i" THEN BEGIN
       IF min NE "" THEN min = min + 0.0d
       IF max NE "" THEN max = max + 0.0d
     END
@@ -221,11 +222,13 @@ FUNCTION spice_cat::apply_filter, filter, full_list_tag_index
     IF filter_as_array[0] EQ "" THEN BEGIN
       mask = replicate(1b, n_elements(self.d.full_list))
     END ELSE BEGIN
-      mask = self.d.full_list[*].(full_list_tag_index).tolower() GE min
+      IF column_type EQ "i" THEN mask = self.d.full_list[*].(full_list_tag_index) GE min $
+      ELSE mask = self.d.full_list[*].(full_list_tag_index).tolower() GE min
     END
 
     IF filter_as_array[1] NE "" THEN BEGIN
-      mask = mask AND self.d.full_list[*].(full_list_tag_index).tolower() LE max
+      IF column_type EQ "i" THEN mask = mask AND self.d.full_list[*].(full_list_tag_index) LE max $
+      ELSE mask = mask AND self.d.full_list[*].(full_list_tag_index).tolower() LE max
     END
   END
   return, mask
@@ -310,11 +313,11 @@ PRO spice_cat::create_displayed_list, column_names
   setenv, "SPICE_CAT_KEYWORDS=" + self.curr.column_names.join(',')
 END
 
-; ;
+;
 PRO spice_cat::_____________TABLE_WIDGET_UTILITIES
 END
 
-; ;
+;
 
 FUNCTION spice_cat::cell_alignments
   num_cols = n_elements(self.curr.column_names)
@@ -352,27 +355,27 @@ FUNCTION spice_cat::baseline_filter_colors, filter_colors, table_selection = tab
   return, filter_colors
 END
 
-; ; TODO: TODO: Only redisplay when list is *actually* changed (keep list of FILENAME?)
-; ;
+; TODO: TODO: Only redisplay when list is *actually* changed (keep list of FILENAME?)
+;
 
 FUNCTION spice_cat::background_colors
   num_table_columns = n_elements(self.curr.column_names)
   num_table_rows = n_elements(self.curr.displayed)
 
-  ; ; Basic:
+  ; Basic:
   background_colors = rebin(self.d.color_table, 3, num_table_columns, num_table_rows)
 
-  ; ; Light green filters:
+  ; Light green filters:
   background_colors = self.baseline_filter_colors(background_colors)
 
-  ; ; Selected rows:
+  ; Selected rows:
   IF self.curr.haskey("selection_beg") && self.curr.selection_beg GT 0 THEN BEGIN
     selection_size = self.curr.selection_end - self.curr.selection_beg + 1
     selection_colors = rebin(self.d.color_selection, 3, num_table_columns, selection_size)
     background_colors[*, *, self.curr.selection_beg : self.curr.selection_end] = selection_colors
   END
 
-  ; ; Sort column. NOTE: Just a brightened version of current colors!!
+  ; Sort column. NOTE: Just a brightened version of current colors!!
   sort_column_ix = (where(self.curr.sort_column EQ self.curr.column_names))[0]
   background_colors[*, sort_column_ix, *] = (background_colors[*, sort_column_ix, *] + 40) < 255
 
@@ -443,15 +446,15 @@ PRO spice_cat::display_displayed_list
   self.scroll_to_top_without_select
 END
 
-; ;
+;
 PRO spice_cat::_____________EVENT_HANDLING_HELPERS
 END
 
-; ;
+;
 
 FUNCTION spice_cat::get_filter_by_column_name, column_name
   column_number = where(self.curr.column_names EQ column_name)
-  filters_as_text = self.curr.filters_as_text ; ; Core-dump if not
+  filters_as_text = self.curr.filters_as_text ; Core-dump if not
   filter_as_text = filters_as_text.(column_number)
   return, self.filter_as_array(filter_as_text)
 END
@@ -465,7 +468,7 @@ PRO spice_cat::set_filter_by_column_name, column_name, filter_as_array
   select = [column_number, 0, column_number, 0]
   widget_control, self.wid.table_id, set_value = filter_as_text, use_table_select = select
 
-  ; ; DON'T CHANGE THIS LINE! Using "self.curr.filters_as_text" DIRECTLY => core dump!
+  ; DON'T CHANGE THIS LINE! Using "self.curr.filters_as_text" DIRECTLY => core dump!
   current_filters_as_text = self.curr.filters_as_text
 
   IF filter_as_text NE current_filters_as_text.(column_number) THEN BEGIN
@@ -506,9 +509,9 @@ PRO spice_cat::deal_with_click_on_filter_cell, column_name
     IF column_type EQ "i" THEN current_filter_as_array = ["", ""] ; range
   END
 
-  ; ; Simulates event with UVALUE = "REBUILD_FILTER`column_name`min`max"
-  ; ;                 or   UVALUE = "REBUILD_FILTER`column_name`text_filter"
-  ; ;
+  ; Simulates event with UVALUE = "REBUILD_FILTER`column_name`min`max"
+  ; or   UVALUE = "REBUILD_FILTER`column_name`text_filter"
+  ;
   self.handle_rebuild_filter, ["REBUILD_FILTER", column_name, current_filter_as_array]
 END
 
@@ -526,11 +529,11 @@ PRO spice_cat::capture_column_widths
   self.save_column_widths
 END
 
-; ;
+;
 PRO spice_cat::_____________EVENT_HANDLERS
 END
 
-; ;
+;
 
 ; RESIZE TABLE ACCORDING TO TLB size change!
 ; Only called when event.id eq event.top
@@ -582,17 +585,17 @@ PRO spice_cat::handle_add_column, event, parts
   ref_col_ix = (where(left_or_right_of EQ self.curr.column_names))[0]
 
   IF left_or_right EQ "RIGHT" THEN BEGIN
-    ; ; What goes on the left is everything up to and *including* ref_col_ix
-    ; ; What goes on the right is the rest... *IF* ANY!
-    ; ;
+    ; What goes on the left is everything up to and *including* ref_col_ix
+    ; What goes on the right is the rest... *IF* ANY!
+    ;
     left = self.curr.column_names[0 : ref_col_ix]
     right = []
     inside_bounds = ref_col_ix LT n_elements(self.curr.column_names) - 1
     IF inside_bounds THEN right = self.curr.column_names[ref_col_ix + 1 : *]
   END
   IF left_or_right EQ "LEFT" THEN BEGIN
-    ; ; What goes on the left, is up to but *excluding* ref_col_ix, *IF* ANY
-    ; ; What goes on the right is the rest, *including* ref_col_ix
+    ; What goes on the left, is up to but *excluding* ref_col_ix, *IF* ANY
+    ; What goes on the right is the rest, *including* ref_col_ix
     left = []
     inside_bounds = ref_col_ix GT 0
     IF inside_bounds THEN left = self.curr.column_names[0 : ref_col_ix - 1]
@@ -651,13 +654,13 @@ FUNCTION spice_cat::handle_range_single_filter_change, text_id, column_name
 
   new_value = value
 
-  ; ; Remove non-digit chars for numeric columns
-  ; ;
+  ; Remove non-digit chars for numeric columns
+  ;
   IF self.d.keyword_info[column_name].type NE "t" THEN BEGIN
     new_value = self.remove_non_digits_or_points(value)
 
-    ; ; Correct cursor position due to deletion of non-digit content:
-    ; ;
+    ; Correct cursor position due to deletion of non-digit content:
+    ;
     text_select = widget_info(text_id, /text_select)
     text_select = text_select[0] - (value.strlen() - new_value.strlen())
     widget_control, text_id, set_value = new_value, set_text_select = text_select
@@ -702,11 +705,11 @@ END
 PRO spice_cat::handle_table_context, event
   IF event.row EQ 0 THEN return ; No context menu for filter row
 
-  ; ; It's tempting to mess with table_select here since IDL doesn't blank out
-  ; ; the previous selection even if the context click was on a different cell,
-  ; ; BUT THIS CAUSES A SCROLL so the new selection (or top-row) is on top
-  ; ; (even though it was already visible)
-  ; ;
+  ; It's tempting to mess with table_select here since IDL doesn't blank out
+  ; the previous selection even if the context click was on a different cell,
+  ; BUT THIS CAUSES A SCROLL so the new selection (or top-row) is on top
+  ; (even though it was already visible)
+  ;
   context_menu_base = widget_base(/CONTEXT_MENU, event.id)
 
   IF event.row EQ -1 THEN self.build_context_menu_heading, context_menu_base, event
@@ -718,17 +721,17 @@ END
 PRO spice_cat::handle_table_cell_sel, event
   sel = {left: event.sel_left, right: event.sel_right, top: event.sel_top, bottom: event.sel_bottom}
 
-  ; ; Ignore nonsensical [-1, -1, -1, -1] events:
+  ; Ignore nonsensical [-1, -1, -1, -1] events:
   IF total([sel.left, sel.top, sel.right, sel.bottom] EQ -1) EQ 4 THEN return
 
   IF sel.top GE 1 THEN self.register_rows_selection, sel
 
-  ; ; Only meaningful actions are:
-  ; ; EITHER to edit the filter:
-  ; ;   a) single cell from first row
-  ; ;   b) header click (selects entire column)
-  ; ; OR just get the full text in the message window by
-  ; ;   c) selecting a single cell anywhere else
+  ; Only meaningful actions are:
+  ; EITHER to edit the filter:
+  ; a) single cell from first row
+  ; b) header click (selects entire column)
+  ; OR just get the full text in the message window by
+  ; c) selecting a single cell anywhere else
 
   single_cell = (sel.top EQ sel.bottom) AND (sel.left EQ sel.right)
 
@@ -749,9 +752,9 @@ PRO spice_cat::handle_table_cell_sel, event
   END
 END
 
-PRO spice_cat::handle_all_table_events, event
-  ; ; We came here because of any table event (uvalue="ALL_TABLE_EVENTS`")
-  ; ;
+PRO spice_cat::handle_all_table_events, event, parts ; idl-disable-line unused-var
+  ; We came here because of any table event (uvalue="ALL_TABLE_EVENTS`")
+  ;
   type = tag_names(event, /structure_name)
 
   IF type EQ "WIDGET_TABLE_COL_WIDTH" THEN BEGIN
@@ -759,12 +762,12 @@ PRO spice_cat::handle_all_table_events, event
     return
   END
 
-  IF type EQ "WIDGET_TABLE_CH" THEN return ; ; Doh! Typing into non-editable cells triggers this!!!
+  IF type EQ "WIDGET_TABLE_CH" THEN return ; Doh! Typing into non-editable cells triggers this!!!
 
   short_event_name = strmid(tag_names(event, /structure_name), 7, 1000)
 
-  ; ; Note that context events within the table come as "WIDGET_CONTEXT"
-  ; ; events, not WIDGET_TABLE_CONTEXT. So we "fix" that:
+  ; Note that context events within the table come as "WIDGET_CONTEXT"
+  ; events, not WIDGET_TABLE_CONTEXT. So we "fix" that:
 
   IF short_event_name EQ "CONTEXT" THEN short_event_name = "TABLE_CONTEXT"
 
@@ -781,11 +784,11 @@ PRO spice_cat::handle_exit, event
   IF NOT self.d.modal THEN obj_destroy, self
 END
 
-; ;
+;
 PRO spice_cat::_____________WIDGET_BUILDERS
 END
 
-; ;
+;
 
 PRO spice_cat::build_text_filter, column_name, filter_as_array
   widget_control, self.wid.filter_base, update = 0
@@ -865,7 +868,7 @@ PRO spice_cat::build_add_column_menu, base, uvalue
   FOREACH column_name, self.d.full_column_names DO BEGIN
     IF total(column_name EQ self.curr.column_names) GT 0 THEN CONTINUE
     full_uvalue = uvalue + "`" + column_name
-    !NULL = widget_button(base, value = column_name, uvalue = full_uvalue)
+    !null = widget_button(base, value = column_name, uvalue = full_uvalue)
   END
 END
 
@@ -878,7 +881,7 @@ PRO spice_cat::build_context_menu_heading, base, event
   column_name = ((tag_names(self.curr.displayed))[event.col]).replace('$', '-')
   num_columns = n_elements(self.curr.displayed)
 
-  ; ; TODO: Add button showing full header name
+  ; TODO: Add button showing full header name
   buttons = [{value: "Column: " + column_name, uvalue: "NULL`", sensitive: 1}, $
     {value: "Sort increasing", uvalue: "SORT`INCREASING`", sensitive: 1}, $
     {value: "Sort decreasing", uvalue: "SORT`DECREASING`", sensitive: 1}, $
@@ -998,7 +1001,7 @@ PRO spice_cat::build_widget
   widget_control, w.top_base, /realize
   prits_tools.center_window, w.top_base
 
-  ; ; Make table fill available space despite /scroll
+  ; Make table fill available space despite /scroll
   widget_control, w.top_base, tlb_get_size = tlb_size
   ; idl-disable-next-line unknown-structure
   resize_event = {widget_base, id: 0l, top: 0l, handler: 0l, x: tlb_size[0], y: tlb_size[1]}
@@ -1008,7 +1011,7 @@ END
 PRO spice_cat_______________CATCH_ALL_EVENT_HANDLER, event
   widget_control, event.top, get_uvalue = selfi
 
-  IF event.id EQ event.top THEN BEGIN ; ; TLB event has ID = TOP
+  IF event.id EQ event.top THEN BEGIN ; TLB event has ID = TOP
     selfi.handle_tlb, event
     return
   END
@@ -1032,9 +1035,9 @@ PRO spice_cat::set_background_colors
 END
 
 FUNCTION spice_cat::parameters, modal = modal, catalog = catalog
-  self.d = dictionary() ; ; "Data"
-  self.curr = dictionary() ; ; Current values
-  self.last = dictionary() ; ; Last values
+  self.d = dictionary() ; "Data"
+  self.curr = dictionary() ; Current values
+  self.last = dictionary() ; Last values
 
   IF NOT keyword_set(catalog) THEN BEGIN
     spice_datadir = getenv("SPICE_DATA")
@@ -1050,7 +1053,7 @@ FUNCTION spice_cat::parameters, modal = modal, catalog = catalog
   self.d.cat_filename = catalog
 
   self.d.modal = keyword_set(modal)
-  self.d.programs = ["help", "print"] ; ; TODO: plug in Martin's routines
+  self.d.programs = ["help", "print"] ; TODO: plug in Martin's routines
   self.d.keyword_info = spice_keyword_info()
 
   column_names = getenv("SPICE_CAT_KEYWORDS")
@@ -1102,19 +1105,19 @@ FUNCTION spice_cat::init, catalog, modal = modal, keywords = keywords, widths = 
 END
 
 PRO spice_cat__define
-  !NULL = {spice_cat, d: dictionary(), wid: dictionary(), curr: dictionary(), last: dictionary()}
+  !null = {spice_cat, d: dictionary(), wid: dictionary(), curr: dictionary(), last: dictionary()}
 END
 
-FUNCTION spice_cat, catalog, keywords = keywords, widths = widths ; ; IDL> selection = spice_cat()
+FUNCTION spice_cat, catalog, keywords = keywords, widths = widths ; IDL> selection = spice_cat()
   cat = obj_new('spice_cat', catalog, /modal, keywords = keywords, widths = widths) ; idl-disable-line unknown-kw
-  IF cat EQ !NULL THEN return, !NULL
+  IF cat EQ !null THEN return, !null
   cat.start ; Blocking
   selection = cat.selection()
   obj_destroy, cat
   return, selection
 END
 
-PRO spice_cat, catalog, output_object = object, keywords = keywords, widths = widths ; ; IDL> spice_cat
+PRO spice_cat, catalog, output_object = object, keywords = keywords, widths = widths ; IDL> spice_cat
   object = obj_new('spice_cat', catalog, keywords = keywords, widths = widths)
   object.start
 END
@@ -1126,15 +1129,15 @@ IF spice_cat_development THEN BEGIN
   IF spice_cat_run_tests THEN setenv, "SPICE_CAT_KEYWORDS=FILENAME,DATE-BEG,COMPRESS,OBS_ID,NWIN" $
   ELSE setenv, "SPICE_CAT_KEYWORDS="
 
-  spice_cat, output_object = o ; ; , keywords="FILENAME,DATE-BEG"
+  spice_cat, output_object = o ; , keywords="FILENAME,DATE-BEG"
 
-  ; ;
-  ; ; The beginnings of unit testing! Can also be used for compoud widgets in
-  ; ; isolation!
-  ; ;
-  ; ; Would be nice with utility functions for creating dummy events (with e.g.
-  ; ; row begin/end for table selection
-  ; ;
+  ;
+  ; The beginnings of unit testing! Can also be used for compoud widgets in
+  ; isolation!
+  ;
+  ; Would be nice with utility functions for creating dummy events (with e.g.
+  ; row begin/end for table selection
+  ;
   IF spice_cat_run_tests THEN BEGIN
     uvals = ["ADD_COLUMN`LEFT`DATE-BEG`STUDY_ID", $
       "ADD_COLUMN`LEFT`FILENAME`STUDYTYP", $
