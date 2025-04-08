@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2025-04-06 21:02 CEST $
+; $Id: 2025-04-08 13:14 CEST $
 ;-
 ;
 PRO spice_cat::_____________UTILITY_FUNCTIONS
@@ -779,7 +779,7 @@ PRO spice_cat::handle_call_program, event, parts
   call_procedure, parts[1], self.selection()
 END
 
-PRO spice_cat::handle_exit, event
+PRO spice_cat::handle_exit, event, parts ; idl-disable-line unused-var
   widget_control, event.top, /destroy
   IF NOT self.d.modal THEN obj_destroy, self
 END
