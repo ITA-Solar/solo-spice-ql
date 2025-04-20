@@ -8,14 +8,14 @@
 ;
 ; Method:
 ;
-;     Foreach path p in !path:
+;     foreach path p in !path:
 ;       check if p/python exists
 ;       if it does, append or prepend p/python to the PYTHONPATH
 ;     end
 ;
 ; Version: 1, SVHH
 ;
-; $Id: $
+; $Id: 2025-04-20 23:14 CEST $
 ;-
 
 PRO prits_tools::add_pythonpaths, prepend = prepend
