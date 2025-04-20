@@ -1,24 +1,28 @@
-#!/bin/sh
+# #!/bin/sh
 
-message=$(cat .git/COMMIT_EDITMSG)
-echo "Commit message is:  $message"
+# Sigh, we are not guaranteed to have the commit message in the pre-commit hook,
+# but we do have it here and could add it to a log section in the file.
+# SUCKER: when the commit-msg hook is run, it's too late, the file is
+# already committed.
 
-if echo "$message" | grep -qE "^Merge branch"; then
-  echo "Commit message matches /^Merge branch/, may skip hook"
-  if echo "$message" | grep -qEi "resolv|conflict|cherry"; then
-    echo "Commit message also matches /resolv | conflict | cherry/i, EXECUTING hook."
-  else
-    echo "Commit message does not contain 'resolv, conflict or cherry', SKIPPING hook."
-    exit 0
-  fi
-fi
+# message=$(cat .git/COMMIT_EDITMSG)
+# echo "Commit message is:  $message"
 
-message1=$(head -n 1 .git/COMMIT_EDITMSG)
-date_string="$(date +"%Y-%m-%d %H:%M %Z")"
-for f in $(git diff --cached --name-only --diff-filter=ACM); do
-  # XXX broken: if space in filename(s)
-  echo "Modifying version date of file" "$f" "$date_string"
-  perl -pi -e 's{^; \$Id: .* \$}{; \$Id: '"$date_string"' \$};' "$f"
-  perl -pi -e 's{^; \$LogAbove\$}{; $message1\n; \$LogAbove\$};' "$f"
-  git add -u -- "$f"
-done
+# if echo "$message" | grep -qE "^Merge branch"; then
+#   echo "Commit message matches /^Merge branch/, may skip hook"
+#   if echo "$message" | grep -qEi "resolv|conflict|cherry"; then
+#     echo "Commit message also matches /resolv | conflict | cherry/i, EXECUTING hook."
+#   else
+#     echo "Commit message does not contain 'resolv, conflict or cherry', SKIPPING hook."
+#     exit 0
+#   fi
+# fi
+
+# message1=$(head -n 1 .git/COMMIT_EDITMSG)
+# date_string="$(date +"%Y-%m-%d %H:%M %Z")"
+# for f in $(git diff --cached --name-only --diff-filter=ACM); do
+#   echo "Modifying version date of file" "$f" "$date_string"
+#   perl -pi -e 's{^; \$Id: .* \$}{; \$Id: '"$date_string"' \$};' "$f"
+#   perl -pi -e 's{^; LogAbove}{; '"$message1"'\n; LogAbove};' "$f"
+#   git add -u -- "$f"
+# done
