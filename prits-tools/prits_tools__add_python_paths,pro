@@ -1,5 +1,5 @@
 ;+
-; Name       : prits_tools::add_pythonpaths
+; Name       : prits_tools::add_python_paths
 ;
 ; Purpose    : Add python subdirectories of IDL directories to $PYTHONPATH
 ;              Paths are appended by default, set prepend=1 to prepend
@@ -15,26 +15,26 @@
 ;
 ; Version: 1, SVHH
 ;
-; $Id: 2025-04-21 14:10 CEST $
+; $Id: 2025-04-21 15:16 CEST $
 ;-
 
-PRO prits_tools::add_pythonpaths, prepend = prepend
+PRO prits_tools::add_python_paths, prepend = prepend
   COMPILE_OPT STATIC
   prepend = keyword_set(prepend)
 
   existing = getenv('PYTHONPATH')
-  IF existing EQ "" THEN pythonpaths = [] $
-  ELSE pythonpaths = strsplit(existing, ':', /extract)
+  IF existing EQ "" THEN python_paths = [] $
+  ELSE python_paths = strsplit(existing, ':', /extract)
 
   paths = strsplit(!path, ':', /extract)
   FOR i = 0, n_elements(paths) - 1 DO BEGIN
     pythonpath = paths[i] + '/python'
     IF file_test(pythonpath, /directory) THEN BEGIN
-      IF prepend THEN pythonpaths = [pythonpath, pythonpaths] $
-      ELSE pythonpaths = [pythonpaths, pythonpath]
+      IF prepend THEN python_paths = [pythonpath, python_paths] $
+      ELSE python_paths = [python_paths, pythonpath]
     ENDIF
   ENDFOR
 
-  setenv, "PYTHONPATH=" + strjoin(pythonpaths, ':')
+  setenv, "PYTHONPATH=" + strjoin(python_paths, ':')
   print, "PYTHONPATH set to: " + getenv('PYTHONPATH')
 END
