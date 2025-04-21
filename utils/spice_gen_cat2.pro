@@ -7,7 +7,16 @@
 ;
 ; Explanation : !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ;               ! THIS IS A TEMPORARY VERSION used because Terje is sick
-;               ! The base file name of the catalog is "spice_catalog2",
+;               !
+;               ! The primary reason for this version is to include the
+;               ! values of L2 header keywords in the catalog file.
+;               !
+;               ! In addition, the logic detecting new files and deciding
+;               ! whether to build catalog from scratch or not is improved,
+;               ! as the previous version always rebuilt the catalog from
+;               ! scratch when used independently of the pipeline.
+;               !
+;               ! The base file name of the catalog is now "spice_catalog2",
 ;               ! to be used by webspice until the regular spice_gen_cat
 ;               ! can be safely updated. Documentation may be off, and some
 ;               ! paths are hardcoded. Note, we've changed the location
@@ -15,10 +24,11 @@
 ;               ! as everything else!
 ;               !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ;
-;               This program creates a file called spice_catalog.csv in the
-;               $SPICE_DATA/ directory (but other paths can be specified),
-;               with various information on the content of the files found in
-;               the directory hierarchy below that path.
+;               This program creates files called spice_catalog2.csv and
+;               spice_catalog2.txt in the $SPICE_DATA/ directory (but other
+;               paths can be specified), with various information on the
+;               content of the files found in the directory hierarchy below
+;               that path.
 ;
 ;               This file is used by SPICE_CAT in order to search/filter
 ;               the list of files for those files that the user wants.
@@ -105,7 +115,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-03-27 21:48 CET $
+; $Id: 2025-04-21 09:48 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
