@@ -15,7 +15,7 @@
 ;
 ; Version: 1, SVHH
 ;
-; $Id: 2025-04-20 23:14 CEST $
+; $Id: 2025-04-21 14:10 CEST $
 ;-
 
 PRO prits_tools::add_pythonpaths, prepend = prepend
@@ -36,4 +36,5 @@ PRO prits_tools::add_pythonpaths, prepend = prepend
   ENDFOR
 
   setenv, "PYTHONPATH=" + strjoin(pythonpaths, ':')
+  print, "PYTHONPATH set to: " + getenv('PYTHONPATH')
 END
