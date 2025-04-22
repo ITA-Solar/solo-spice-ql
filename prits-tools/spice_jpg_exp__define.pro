@@ -1,3 +1,5 @@
+; $Id: 2025-04-22 15:20 CEST $
+
 PRO spice_jpg_exp::_set_filename_related_parameters
   self.d.sit_and_stare = 1
   self.d.parameter = 'int'
