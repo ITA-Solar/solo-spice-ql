@@ -66,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-04-23 14:43 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $
@@ -107,7 +107,7 @@ FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_name
   ENDIF
   mkhdr, hdr, data_array, /image
 
-  fits_util.add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
+  fits_util.add, hdr, 'DATE', fxpar(header_input_data, 'DATE', missing = ''), 'Date and time of parent FITS file creation'
   fits_util.add, hdr, '', ' '
 
   fits_util.add, hdr, 'EXTNAME', extension_names[1], 'Extension name'
