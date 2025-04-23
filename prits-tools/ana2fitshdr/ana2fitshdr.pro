@@ -64,9 +64,9 @@
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
 ;              If this is not provided then default is the dataset indices.
-;      EXT_DATA_PATH: A string array or a string. This contains the relative path to the external extension, which contains
+;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the external extension, which contains
 ;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
-;              The header keyword DATAEXT in the headers will get EXT_DATA_PATH as a prefix to point to the external extension.
+;              The header keyword DATAEXT in the headers will get DATA_EXT_PATH as a prefix to point to the external extension.
 ;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/v3.0.0/generated/appendix-7.html or https://arxiv.org/abs/2011.12139
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
@@ -128,12 +128,12 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-23 14:43 CEST $
+; $Id: 2025-04-23 15:00 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
   data_id = data_id, type_xdim1 = type_xdim1, $
-  ext_data_path = ext_data_path, $
+  DATA_EXT_PATH = DATA_EXT_PATH, $
   is_extension = is_extension, level = level, version = version, creator = creator, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
   xdim1 = xdim1, input_data = input_data, fit = fit, $
@@ -275,12 +275,12 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   ; Create data header
   ; ------
 
-  IF keyword_set(ext_data_path) THEN no_save_data = 1
+  IF keyword_set(DATA_EXT_PATH) THEN no_save_data = 1
   hdr = ana2fitshdr_data(datetime = datetime, extension_names = extension_names, input_data = input_data, $
     header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $
     data_array = data_array)
   all_headers[1] = ptr_new(hdr)
-  IF keyword_set(ext_data_path) THEN extension_names[1] = ext_data_path + ';' + extension_names[1] $
+  IF keyword_set(DATA_EXT_PATH) THEN extension_names[1] = DATA_EXT_PATH + ';' + extension_names[1] $
   ELSE IF hdr[0] EQ '' THEN extension_names[1] = ''
 
   ; ------

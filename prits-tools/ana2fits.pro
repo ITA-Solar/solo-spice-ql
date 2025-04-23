@@ -78,9 +78,9 @@
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
 ;              If this is not provided then default is the window index.
-;      EXT_DATA_PATH: A string array or a string. This contains the relative path to the external extension, which contains
+;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the external extension, which contains
 ;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
-;              The header keyword DATAEXT in the headers will get EXT_DATA_PATH as a prefix to point to the external extension.
+;              The header keyword DATAEXT in the headers will get DATA_EXT_PATH as a prefix to point to the external extension.
 ;              See also Appendix VII aobut External Extensions in https://arxiv.org/abs/2011.12139
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
@@ -169,12 +169,12 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-04-23 14:43 CEST $
+; $Id: 2025-04-23 15:00 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $
   data_id = data_id, type_xdim1 = type_xdim1, $
-  ext_data_path = ext_data_path, $
+  DATA_EXT_PATH = DATA_EXT_PATH, $
   is_extension = is_extension, level = level, version = version, creator = creator, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
   xdim1 = xdim1, input_data = input_data, fit = fit, $
@@ -317,8 +317,8 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
       IF n_elements(no_save_data) EQ 1 THEN NO_SAVE_DATA_use = no_save_data
     IF n_elements(save_xdim1) GT 1 THEN SAVE_XDIM1_use = save_xdim1[iwindow] ELSE $
       IF n_elements(save_xdim1) EQ 1 THEN SAVE_XDIM1_use = save_xdim1
-    IF n_elements(ext_data_path) GT 1 THEN EXT_DATA_PATH_use = ext_data_path[iwindow] ELSE $
-      IF n_elements(ext_data_path) EQ 1 THEN EXT_DATA_PATH_use = ext_data_path
+    IF n_elements(DATA_EXT_PATH) GT 1 THEN DATA_EXT_PATH_use = DATA_EXT_PATH[iwindow] ELSE $
+      IF n_elements(DATA_EXT_PATH) EQ 1 THEN DATA_EXT_PATH_use = DATA_EXT_PATH
 
     extension = keyword_set(is_extension) || iwindow GT 0
 
@@ -326,7 +326,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
       headers = ana2fitshdr(ANA[iwindow], filename_out = filename_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
         data_id = data_id_use, type_xdim1 = TYPE_XDIM1_use, $
-        ext_data_path = EXT_DATA_PATH_use, $
+        DATA_EXT_PATH = DATA_EXT_PATH_use, $
         is_extension = extension, level = level, version = version, creator = creator, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
         xdim1 = xdim1_use, input_data = INPUT_DATA_use, fit = fit_use, $
@@ -340,7 +340,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
       headers = ana2fitshdr(filename_out = filename_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
         data_id = data_id_use, type_xdim1 = TYPE_XDIM1_use, $
-        ext_data_path = EXT_DATA_PATH_use, $
+        DATA_EXT_PATH = DATA_EXT_PATH_use, $
         is_extension = extension, level = level, version = version, creator = creator, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
         xdim1 = xdim1_use, input_data = INPUT_DATA_use, fit = fit_use, $

@@ -28,7 +28,7 @@
 ;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA or
 ;             providing PROGENITOR_DATA as a scalar number.
 ;             This keyword will also be set if data is linked to an external extension, by having
-;             set EXT_DATA_PATH in ANA2FITS.
+;             set DATA_EXT_PATH in ANA2FITS.
 ;
 ; OPTIONAL INPUTS:
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
@@ -66,7 +66,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-23 14:43 CEST $
+; $Id: 2025-04-23 15:00 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $
