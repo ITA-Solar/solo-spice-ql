@@ -77,7 +77,7 @@
 ;              'data_id'+' '+extension_type (='results', 'data', 'xdim1', 'weights', 'includes', 'constants').
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
-;              If this is not provided then default is the dataset indices.
+;              If this is not provided then default is the window index.
 ;      EXT_DATA_PATH: A string array or a string. This contains the relative path to the external extension, which contains
 ;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
 ;              The header keyword DATAEXT in the headers will get EXT_DATA_PATH as a prefix to point to the external extension.
@@ -169,7 +169,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-04-23 14:43 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $

@@ -62,12 +62,12 @@
 ;              along the first dimension. If this data array is provided, it will be saved into the XDIM1 extension instead of INPUT_DATA.
 ;      DATA_ID: A string defining the prefix to the names of the 6 extensions.
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
-;              will have he this EXTNAME (without 'data') as its extension name.
+;              will have this EXTNAME (without 'data') as its extension name.
 ;              If this is not provided then default is the dataset indices.
 ;      EXT_DATA_PATH: A string array or a string. This contains the relative path to the external extension, which contains
 ;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
 ;              The header keyword DATAEXT in the headers will get EXT_DATA_PATH as a prefix to point to the external extension.
-;              See also Appendix VII aobut External Extensions in https://solarnet-metadata.readthedocs.io/en/v3.0.0/generated/appendix-7.html
+;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/v3.0.0/generated/appendix-7.html or https://arxiv.org/abs/2011.12139
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
@@ -128,7 +128,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-23 14:02 CEST $
+; $Id: 2025-04-23 14:43 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
