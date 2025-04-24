@@ -38,13 +38,12 @@
 ;              i.e. this should be set if the FITS file already exists and data should be appended.
 ;              If not set, the first ANA's result array will be the primary header.
 ;      SAVE_XDIM1: If set, then the XDIM1 cube will be saved into the FITS file. Default is
-;              not to save it. This cube can be recalculated using the WCS parameters given either
-;              in HEADER_INPUT_DATA.
+;              not to save it. This cube can be recalculated using the WCS parameters given in HEADER_INPUT_DATA.
 ;              This keyword can also be an array of zeros and ones,
 ;              setting/unsetting this feature separately for each window.
-;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
-;              It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
-;              This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
+;      SAVE_DATA: If set, then the data cube is saved into the data extension.
+;              Default is not to save it and use the external extension mechanism instead.
+;              See description of DATA_EXT_PATH for more details.
 ;              This keyword can also be an array of zeros and ones,
 ;              setting/unsetting this feature separately for each window.
 ;      PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
@@ -53,20 +52,21 @@
 ; OPTIONAL INPUTS:
 ;      N_WINDOWS: Total number of windows that will be included in this FITS file.
 ;              By default, this will be the number of 'ana' structures provided, or 1
-;              in case ana is not provided. But if you call this procedure mutliple times
-;              with the same filepath_out and EXTENSION keyword set, the procedure can not know
+;              in case ana is not provided. But if you call this procedure multiple times
+;              with the same FILEPATH_OUT and IS_EXTENSION keyword set, the procedure can not know
 ;              what the final total number of windows will be, and thus the header keyword 'NWIN' in the result extension
 ;              may have the wrong number. This will NOT cause any problems when reading the FITS file
 ;              with FITS2ANA.
 ;      WINNO: Window number (starting at 0) of the first 'ana' provided within this study in this FITS file.
-;              If you call this procedure mutliple times with the same filepath_out and
-;              EXTENSION keyword set, you can define here what the index of the currently provided
+;              If you call this procedure mutliple times with the same FILEPATH_OUT and
+;              IS_EXTENSION keyword set, you can define here what the index of the currently provided
 ;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
 ;              A wrong number in this keyword won't create any problems when reading the FITS file
 ;              with FITS2ANA. Default is the dataset indices.
 ;      HEADER_INPUT_DATA: A pointer array or string array, containing the headers of the data extensions as string arrays.
 ;              One string array per ANA provided. Can be a string array, if only one ANA is provided.
 ;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
+;              This header will be saved into the data extension even if the data is not saved.
 ;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              along the first dimension. If these data arrays are provided, they will be saved into the XDIM1 extensions instead of INPUT_DATA.
 ;              One data array per ANA provided. Can be a data array, if only one ANA is provided.
@@ -78,10 +78,13 @@
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
 ;              If this is not provided then default is the window index.
-;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the external extension, which contains
-;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
-;              The header keyword DATAEXT in the headers will get DATA_EXT_PATH as a prefix to point to the external extension.
-;              See also Appendix VII aobut External Extensions in https://arxiv.org/abs/2011.12139
+;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the file that contains
+;              the original data cube from which the P-level data was calculated.
+;              The extension name of the original data cube must not be included. This name will be taken from DATA_ID.
+;              The path and extension name will be used in the header keyword PARENEXT.
+;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
+;              point to the external extension.
+;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-7.html
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
@@ -169,7 +172,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-04-23 15:00 CEST $
+; $Id: 2025-04-24 12:04 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $
@@ -182,7 +185,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
   const = const, filename_ana = filename_ana, datasource = datasource, $
   definition = definition, missing = missing, label = label, history = history, $
   progenitor_data = progenitor_data, header_input_data = header_input_data, $
-  save_xdim1 = save_xdim1, no_save_data = no_save_data, print_headers = print_headers, $
+  save_xdim1 = save_xdim1, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
   save_not = save_not, $
   headers_results = headers_results, headers_data = headers_data, $
   headers_xdim1 = headers_xdim1, headers_weights = headers_weights, $
@@ -313,8 +316,8 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
 
     IF keyword_set(data_id) THEN data_id_use = data_id[iwindow]
     IF n_elements(type_xdim1) GT 1 THEN TYPE_XDIM1_use = type_xdim1[iwindow] ELSE TYPE_XDIM1_use = type_xdim1
-    IF n_elements(no_save_data) GT 1 THEN NO_SAVE_DATA_use = no_save_data[iwindow] ELSE $
-      IF n_elements(no_save_data) EQ 1 THEN NO_SAVE_DATA_use = no_save_data
+    IF n_elements(SAVE_DATA) GT 1 THEN SAVE_DATA_use = SAVE_DATA[iwindow] ELSE $
+      IF n_elements(SAVE_DATA) EQ 1 THEN SAVE_DATA_use = SAVE_DATA
     IF n_elements(save_xdim1) GT 1 THEN SAVE_XDIM1_use = save_xdim1[iwindow] ELSE $
       IF n_elements(save_xdim1) EQ 1 THEN SAVE_XDIM1_use = save_xdim1
     IF n_elements(DATA_EXT_PATH) GT 1 THEN DATA_EXT_PATH_use = DATA_EXT_PATH[iwindow] ELSE $
@@ -334,7 +337,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
         const = const_use, filename_ana = filename_ana, datasource = datasource, $
         definition = definition, missing = missing, label = label, history = history, $
         progenitor_data = PROGENITOR_DATA_use, header_input_data = HEADER_INPUT_DATA_use, $
-        save_xdim1 = SAVE_XDIM1_use, no_save_data = NO_SAVE_DATA_use, print_headers = print_headers, $
+        save_xdim1 = SAVE_XDIM1_use, SAVE_DATA = SAVE_DATA_use, print_headers = print_headers, $
         data_array = DATA_ARRAY)
     ENDIF ELSE BEGIN
       headers = ana2fitshdr(filename_out = filename_out, $
@@ -348,7 +351,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
         const = const_use, filename_ana = filename_ana, datasource = datasource, $
         definition = definition, missing = missing, label = label, history = history, $
         progenitor_data = PROGENITOR_DATA_use, header_input_data = HEADER_INPUT_DATA_use, $
-        save_xdim1 = SAVE_XDIM1_use, no_save_data = NO_SAVE_DATA_use, print_headers = print_headers, $
+        save_xdim1 = SAVE_XDIM1_use, SAVE_DATA = SAVE_DATA_use, print_headers = print_headers, $
         data_array = DATA_ARRAY)
     ENDELSE
 

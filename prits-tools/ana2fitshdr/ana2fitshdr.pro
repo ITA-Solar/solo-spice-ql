@@ -32,7 +32,7 @@
 ;           CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
 ;           DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
 ;           PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
-;           SAVE_XDIM1=SAVE_XDIM1, NO_SAVE_DATA=NO_SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
+;           SAVE_XDIM1=SAVE_XDIM1, SAVE_DATA=SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
 ;           DATA_ARRAY=DATA_ARRAY)
 ;
 ; INPUTS:
@@ -50,9 +50,9 @@
 ;                 If not set, this will be the primary header.
 ;      SAVE_XDIM1: If set, then XDIM1 will be saved, otherwise not. XDIM1 can usually be
 ;             calculated from the WCS parameters from the data array.
-;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
-;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
-;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA.
+;      SAVE_DATA: If set, then the data cube is saved into the data extension.
+;              Default is not to save it and use the external extension mechanism instead.
+;              See description of DATA_EXT_PATH for more details.
 ;      PRINT_HEADERS: If set, then all headers created will be printed out.
 ;
 ; OPTIONAL INPUTS:
@@ -64,10 +64,13 @@
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
 ;              If this is not provided then default is the dataset indices.
-;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the external extension, which contains
-;              the data cube. If this is provided the data is not saved in the new FITS file, but the header is.
-;              The header keyword DATAEXT in the headers will get DATA_EXT_PATH as a prefix to point to the external extension.
-;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/v3.0.0/generated/appendix-7.html or https://arxiv.org/abs/2011.12139
+;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the file that contains
+;              the original data cube from which the P-level data was calculated.
+;              The extension name of the original data cube must not be included. This name will be taken from DATA_ID.
+;              The path and extension name will be used in the header keyword PARENEXT.
+;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
+;              point to the external extension.
+;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-7.html
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
@@ -128,7 +131,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-23 15:00 CEST $
+; $Id: 2025-04-24 12:04 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -141,7 +144,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   const = const, filename_ana = filename_ana, datasource = datasource, $
   definition = definition, missing = missing, label = label, history = history, $
   progenitor_data = progenitor_data, header_input_data = header_input_data, $
-  save_xdim1 = save_xdim1, no_save_data = no_save_data, print_headers = print_headers, $
+  save_xdim1 = save_xdim1, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
   data_array = data_array
   prits_tools.parcheck, ana, 1, 'ANA', 'STRUCT', 0, structure_name = 'CFIT_ANALYSIS', /optional
   ana_given = n_elements(ana)
@@ -163,7 +166,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   IF error[0] NE '' THEN BEGIN
     data_id = strtrim(winno, 2)
     IF n_elements(header_input_data) GT 0 THEN data_id = fxpar(header_input_data, 'EXTNAME', missing = data_id) $
-    ELSE data_id = data_id + ' data'
+    ELSE data_id = 'Window ' + data_id
   ENDIF
   prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
@@ -275,9 +278,8 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   ; Create data header
   ; ------
 
-  IF keyword_set(DATA_EXT_PATH) THEN no_save_data = 1
   hdr = ana2fitshdr_data(datetime = datetime, extension_names = extension_names, input_data = input_data, $
-    header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $
+    header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
     data_array = data_array)
   all_headers[1] = ptr_new(hdr)
   IF keyword_set(DATA_EXT_PATH) THEN extension_names[1] = DATA_EXT_PATH + ';' + extension_names[1] $

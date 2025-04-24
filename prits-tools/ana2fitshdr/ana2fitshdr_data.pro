@@ -23,12 +23,8 @@
 ;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
 ;
 ; KEYWORDS:
-;      NO_SAVE_DATA: If set, then the data cube is not saved, only the header.
-;             It is then assumed, that HEADER_INPUT_DATA contains a link to the data.
-;             This is the same as not providing INPUT_DATA nor PROGENITOR_DATA or
-;             providing PROGENITOR_DATA as a scalar number.
-;             This keyword will also be set if data is linked to an external extension, by having
-;             set DATA_EXT_PATH in ANA2FITS.
+;      SAVE_DATA: If set, then the data cube is saved into the data extension.
+;              Default is not to save it and use the external extension mechanism instead.
 ;
 ; OPTIONAL INPUTS:
 ;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
@@ -66,10 +62,10 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-23 15:00 CEST $
+; $Id: 2025-04-24 12:04 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
-  header_input_data = header_input_data, progenitor_data = progenitor_data, no_save_data = no_save_data, $
+  header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
   data_array = data_array
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
   prits_tools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
@@ -87,7 +83,7 @@ FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_name
     data_array = 0
     no_data = 1
   ENDELSE
-  IF keyword_set(no_save_data) THEN BEGIN
+  IF ~keyword_set(SAVE_DATA) THEN BEGIN
     data_array = 0
     no_data = 1
   ENDIF
