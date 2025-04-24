@@ -64,9 +64,9 @@
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
 ;              If this is not provided then default is the dataset indices.
-;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the file that contains
+;      DATA_EXT_PATH: A string array or a string. This contains the relative path to and the name of the file that contains
 ;              the original data cube from which the P-level data was calculated.
-;              The extension name of the original data cube must not be included. This name will be taken from DATA_ID.
+;              The extension name of the original data cube MUST NOT be included. This name will be taken from DATA_ID.
 ;              The path and extension name will be used in the header keyword PARENEXT.
 ;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
 ;              point to the external extension.
@@ -131,7 +131,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-24 12:04 CEST $
+; $Id: 2025-04-24 15:17 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -168,6 +168,12 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     IF n_elements(header_input_data) GT 0 THEN data_id = fxpar(header_input_data, 'EXTNAME', missing = data_id) $
     ELSE data_id = 'Window ' + data_id
   ENDIF
+  prits_tools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0, result = error
+  IF error[0] NE '' THEN BEGIN
+    IF n_elements(header_input_data) GT 0 THEN DATA_EXT_PATH = fxpar(header_input_data, 'FILENAME', missing = '') $
+    ELSE DATA_EXT_PATH = ''
+  ENDIF
+  DATA_EXT_PATH = DATA_EXT_PATH + ';' + data_id
   prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
   prits_tools.parcheck, creator, 0, 'CREATOR', 'STRING', 0, /optional
@@ -266,6 +272,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
 
   hdr = ana2fitshdr_results(result = result, fit = fit, datetime = datetime, $
     filename_out = file_basename(filename_out), n_windows = n_windows, winno = winno, $
+    DATA_EXT_PATH = DATA_EXT_PATH, $
     extension_names = extension_names, is_extension = is_extension, $
     header_input_data = header_input_data, wcs = wcs, $
     level = level, version = version, creator = creator, $
@@ -282,7 +289,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
     data_array = data_array)
   all_headers[1] = ptr_new(hdr)
-  IF keyword_set(DATA_EXT_PATH) THEN extension_names[1] = DATA_EXT_PATH + ';' + extension_names[1] $
+  IF ~keyword_set(SAVE_DATA) THEN extension_names[1] = DATA_EXT_PATH $
   ELSE IF hdr[0] EQ '' THEN extension_names[1] = ''
 
   ; ------

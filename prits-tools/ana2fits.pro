@@ -78,9 +78,9 @@
 ;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
 ;              If this is not provided then default is the window index.
-;      DATA_EXT_PATH: A string array or a string. This contains the relative path to the file that contains
+;      DATA_EXT_PATH: A string array or a string. This contains the relative path to and the name of the file that contains
 ;              the original data cube from which the P-level data was calculated.
-;              The extension name of the original data cube must not be included. This name will be taken from DATA_ID.
+;              The extension name of the original data cube MUST NOT be included. This name will be taken from DATA_ID.
 ;              The path and extension name will be used in the header keyword PARENEXT.
 ;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
 ;              point to the external extension.
@@ -172,7 +172,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-04-24 12:04 CEST $
+; $Id: 2025-04-24 15:17 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $

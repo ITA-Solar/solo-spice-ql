@@ -45,6 +45,13 @@
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
+;      DATA_EXT_PATH: A string array or a string. This contains the relative path to and the name of the file that contains
+;              the original data cube from which the P-level data was calculated.
+;              The extension name of the original data cube MUST NOT be included. This name will be taken from DATA_ID.
+;              The path and extension name will be used in the header keyword PARENEXT.
+;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
+;              point to the external extension.
+;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-7.html
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
 ;              where, xxx123 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
@@ -75,10 +82,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-04-24 15:17 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
+  DATA_EXT_PATH = DATA_EXT_PATH, $
   is_extension = is_extension, $
   header_input_data = header_input_data, wcs = wcs, $
   level = level, version = version, creator = creator, $
@@ -126,9 +134,7 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
 
   IF header_exists THEN BEGIN
-    fits_util.add, hdr, 'PGFILENA', fxpar(header_input_data, 'FILENAME', missing = ''), 'Progenitor filename'
-    fits_util.add, hdr, 'PARENT', fxpar(header_input_data, 'FILENAME', missing = ''), 'Parent filename' ; TODO: Don't need both, which one?
-    fits_util.add, hdr, 'PGEXTNAM', fxpar(header_input_data, 'EXTNAME', missing = ''), 'Extension name in progenitor file'
+    fits_util.add, hdr, 'PARENEXT', DATA_EXT_PATH, 'Parent filename and path;extension name'
     bunit = fxpar(header_input_data, 'BUNIT', missing = '')
   ENDIF ELSE BEGIN
     bunit = ''
