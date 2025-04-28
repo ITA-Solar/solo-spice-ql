@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-04-23 15:00 CEST $
+; $Id: 2025-04-28 11:55 CEST $
 
 ;+
 ; Description:
@@ -533,6 +533,11 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         PROC_STEPS = list(proc_step_1, proc_step_2, /no_copy)
 
         file = (keyword_set(pipeline_dir)) ? pipeline_dir + '/' + filename_l3 : filepath(filename_l3, /tmp)
+
+        spice_ingest, filename_l2, destination = destination, top_dir = top_dir, path_index = path_index, /force, /dry_run
+        temp = destination.split(path_sep())
+        relative_path = ['..', '..', '..', '..', temp[-5 : -1]]
+        relative_path = relative_path.join(path_sep())
       ENDELSE ; iwindow gt 0
 
       creator = keyword_set(pipeline_dir) ? self.get_header_keyword('CREATOR', window_index, '') : getenv("USER")
@@ -540,7 +545,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ana2fits, ana, FILEPATH_OUT = file, $
         N_WINDOWS = n_elements(window), WINNO = iwindow, $
         TYPE_XDIM1 = 'WAVE', $
-        DATA_EXT_PATH = filename_l2, $
+        DATA_EXT_PATH = relative_path, $
         IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', VERSION = number_version_l3, $
         PROC_STEPS = PROC_STEPS, creator = creator, $
         PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = self.get_header(window_index), $
