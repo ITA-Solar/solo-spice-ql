@@ -131,7 +131,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-24 15:17 CEST $
+; $Id: 2025-04-28 11:54 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -164,14 +164,13 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   prits_tools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
   prits_tools.parcheck, data_id, 0, 'DATA_ID', 'STRING', 0, result = error
   IF error[0] NE '' THEN BEGIN
-    data_id = strtrim(winno, 2)
-    IF n_elements(header_input_data) GT 0 THEN data_id = fxpar(header_input_data, 'EXTNAME', missing = data_id) $
-    ELSE data_id = 'Window ' + data_id
+    data_id = 'Window ' + strtrim(winno, 2)
+    IF n_elements(header_input_data) GT 0 THEN data_id = fxpar(header_input_data, 'EXTNAME', missing = data_id)
   ENDIF
   prits_tools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0, result = error
   IF error[0] NE '' THEN BEGIN
-    IF n_elements(header_input_data) GT 0 THEN DATA_EXT_PATH = fxpar(header_input_data, 'FILENAME', missing = '') $
-    ELSE DATA_EXT_PATH = ''
+    DATA_EXT_PATH = ''
+    IF n_elements(header_input_data) GT 0 THEN DATA_EXT_PATH = fxpar(header_input_data, 'FILENAME', missing = DATA_EXT_PATH)
   ENDIF
   DATA_EXT_PATH = DATA_EXT_PATH + ';' + data_id
   prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
