@@ -82,7 +82,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-24 15:17 CEST $
+; $Id: 2025-04-29 10:34 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -126,7 +126,7 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util.add, hdr, '', ' '
 
-  fits_util.add, hdr, 'SOLARNET', 1, 'Fully/Partially/No SOLARNET compliant (1/0.5/-1)'
+  fits_util.add, hdr, 'SOLARNET', 1, 'Fully/Part/Not SOLARNET compliant (1/0.5/-1)'
   fits_util.add, hdr, 'OBS_HDU', 2, 'HDU contains SOLARNET Type P data'
   fits_util.add, hdr, '', ' '
 
