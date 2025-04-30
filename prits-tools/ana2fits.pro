@@ -4,13 +4,13 @@
 ;
 ; PURPOSE:
 ;      This procedure saves the content of one or more ANA structures into one FITS file.
-;      The FITS file will contain up to 6 extensions per ANA, where the first contains the results
+;      The FITS file will contain up to 6 extensions per ANA, where the first contains the results of the fit,
 ;      and the fit components as header keywords. The resulting FITS file can be read and converted
 ;      into one or more ANA structures with the procedure FITS2ANA.
 ;      It is possible to call this procedure multiple times with the same filepath_out,
 ;      if in these cases the EXTENSION keyword is set, the windows will be appended to the
-;      existing FITS file. However, one needs to MAKE SURE THAT THE HEADER KEYWORD "NWIN" IS CORRECTLY SET.
-;      See description of n_windows for more details.
+;      existing FITS file. However, one needs to MAKE SURE THAT THE HEADER KEYWORDS "N_WINDOWS" AND "WINNO" ARE CORRECTLY SET.
+;      See description of N_WINDOWS and WINNO for more details.
 ;
 ; CATEGORY:
 ;      FITS -- utility
@@ -25,13 +25,13 @@
 ;         EXTENSION=EXTENSION]
 ;
 ; INPUTS:
-;      ANA: An ANA object.
+;      ANA: An ANA object. (see also mk_analysis() documentation)
 ;              If this is not provided, then at the least RESULTS and FIT
 ;              must be provided. If more than one ANA should be saved into one FITS file,
-;              then 'ana' must be provided as an array of either file paths or objects.
+;              then 'ana' must be provided as an array of objects.
 ;      FILEPATH_OUT: Full path and filename of the resulting FITS file.
-;      TYPE_XDIM1: CTYPE of the absorbed dimension (e.g. 'WAVE'). A string array, or a scalar, in which case
-;              the same value will be used for all windows.
+;      TYPE_XDIM1: CTYPE of the absorbed dimension. A string array, or a scalar, in which case
+;              the same value will be used for all windows. Default is 'WAVE' (i.e. wavelength).
 ;
 ; KEYWORDS:
 ;      IS_EXTENSION: If set, then the first ANA's result array will be an extension,
@@ -156,13 +156,13 @@
 ;              One string array per ANA provided.
 ;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
-;     headers_xdim1: A pointer array, containing the headers of the xdim1 extensions as string arrays.
-;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
-;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
+;     headers_includes: A pointer array, containing the headers of the include extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
+;     headers_residuals: A pointer array, containing the headers of the xdim1 extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
@@ -172,7 +172,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-04-24 15:17 CEST $
+; $Id: 2025-04-30 14:01 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $
@@ -188,11 +188,11 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
   save_xdim1 = save_xdim1, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
   save_not = save_not, $
   headers_results = headers_results, headers_data = headers_data, $
-  headers_xdim1 = headers_xdim1, headers_weights = headers_weights, $
-  headers_include = headers_include, headers_constants = headers_constants
+  headers_weights = headers_weights, headers_includes = headers_includes, $
+  headers_constants = headers_constants, headers_residuals = headers_residuals
   prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name = 'CFIT_ANALYSIS', /optional
   n_ana = n_elements(ANA)
-  prits_tools.parcheck, type_xdim1, 0, 'TYPE_XDIM1', 'STRING', [0, 1]
+  prits_tools.parcheck, type_xdim1, 0, 'TYPE_XDIM1', 'STRING', [0, 1], default = 'WAVE'
   prits_tools.parcheck, filepath_out, 0, 'FILEPATH_OUT', 'STRING', 0
   prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0, default = max([n_ana, 1])
   prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0, default = 0
@@ -282,20 +282,20 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     headers_data = ptrarr(n_ana)
     get_headers[1] = 1
   ENDIF
-  IF arg_present(headers_xdim1) THEN BEGIN
-    headers_xdim1 = ptrarr(n_ana)
-    get_headers[2] = 1
-  ENDIF
   IF arg_present(headers_weights) THEN BEGIN
     headers_weights = ptrarr(n_ana)
-    get_headers[3] = 1
+    get_headers[2] = 1
   ENDIF
-  IF arg_present(headers_include) THEN BEGIN
-    headers_include = ptrarr(n_ana)
-    get_headers[4] = 1
+  IF arg_present(headers_includes) THEN BEGIN
+    headers_includes = ptrarr(n_ana)
+    get_headers[3] = 1
   ENDIF
   IF arg_present(headers_constants) THEN BEGIN
     headers_constants = ptrarr(n_ana)
+    get_headers[4] = 1
+  ENDIF
+  IF arg_present(headers_residuals) THEN BEGIN
+    headers_residuals = ptrarr(n_ana)
     get_headers[5] = 1
   ENDIF
 
@@ -371,9 +371,9 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
 
     IF get_headers[0] THEN headers_results[iwindow] = ptr_new(*headers[0])
     IF get_headers[1] THEN headers_data[iwindow] = ptr_new(*headers[1])
-    IF get_headers[2] THEN headers_xdim1[iwindow] = ptr_new(*headers[2])
-    IF get_headers[3] THEN headers_weights[iwindow] = ptr_new(*headers[3])
-    IF get_headers[4] THEN headers_include[iwindow] = ptr_new(*headers[4])
-    IF get_headers[5] THEN headers_constants[iwindow] = ptr_new(*headers[5])
+    IF get_headers[2] THEN headers_weights[iwindow] = ptr_new(*headers[3])
+    IF get_headers[3] THEN headers_includes[iwindow] = ptr_new(*headers[4])
+    IF get_headers[4] THEN headers_constants[iwindow] = ptr_new(*headers[5])
+    IF get_headers[5] THEN headers_residuals[iwindow] = ptr_new(*headers[5])
   ENDFOR ; iwindow=0,n_windows-1
 END
