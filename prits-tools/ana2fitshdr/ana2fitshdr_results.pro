@@ -82,7 +82,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-29 10:34 CEST $
+; $Id: 2025-04-30 11:49 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -134,21 +134,20 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
 
   IF header_exists THEN BEGIN
-    fits_util.add, hdr, 'PARENEXT', DATA_EXT_PATH, 'Parent filename and path;extension name'
+    fits_util.add, hdr, 'PARENTXT', DATA_EXT_PATH, 'Parent filename and path;extension name'
     bunit = fxpar(header_input_data, 'BUNIT', missing = '')
   ENDIF ELSE BEGIN
     bunit = ''
   ENDELSE
 
   fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
-  fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
-  fits_util.add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
-  fits_util.add, hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
-  fits_util.add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
-  fits_util.add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
+  fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of original data'
+  fits_util.add, hdr, 'WGTEXT', extension_names[2], 'Extension name of weights'
+  fits_util.add, hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
+  fits_util.add, hdr, 'CONSTEXT', extension_names[4], 'Extension name of constants'
+  fits_util.add, hdr, 'RESIDEXT', extension_names[5], 'Extension name of residuals'
 
   fits_util.add, hdr, '', ' '
-  fits_util.add, hdr, 'NXDIM', 1, 'Number of dimensions absorbed by analysis'
   IF wcs_exists THEN BEGIN
     cunit_absorb = wcs.cunit[0]
     fits_util.add, hdr, 'XDIMTY1', wcs.CTYPE[0], 'Type of 1st dim absorbed by analysis'

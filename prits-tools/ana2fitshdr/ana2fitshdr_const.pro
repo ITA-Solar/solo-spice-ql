@@ -39,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-04-30 11:49 CEST $
 
 FUNCTION ana2fitshdr_const, datetime = datetime, extension_names = extension_names, const = const, wcs = wcs
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
@@ -57,14 +57,14 @@ FUNCTION ana2fitshdr_const, datetime = datetime, extension_names = extension_nam
   fits_util.add, hdr, 'DATE', datetime, 'Date and time of FITS file creation'
   fits_util.add, hdr, '', ' '
 
-  fits_util.add, hdr, 'EXTNAME', extension_names[5], 'Extension name'
+  fits_util.add, hdr, 'EXTNAME', extension_names[4], 'Extension name'
 
   fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
-  fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
-  fits_util.add, hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
-  fits_util.add, hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
-  fits_util.add, hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
-  fits_util.add, hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
+  fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of original data'
+  fits_util.add, hdr, 'WGTEXT', extension_names[2], 'Extension name of weights'
+  fits_util.add, hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
+  fits_util.add, hdr, 'CONSTEXT', extension_names[4], 'Extension name of constants'
+  fits_util.add, hdr, 'RESIDEXT', extension_names[5], 'Extension name of residuals'
 
   hdr = ana2fitshdr_addwcs(hdr, wcs, /const)
 

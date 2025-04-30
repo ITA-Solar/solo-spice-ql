@@ -131,7 +131,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-28 11:54 CEST $
+; $Id: 2025-04-30 11:49 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -256,10 +256,11 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   extension_names = data_id + [ $
     ' results', $
     '', $
-    ' xdim1', $
     ' weights', $
     ' includes', $
-    ' constants']
+    ' constants', $
+    ' residuals']
+  IF ~keyword_set(SAVE_DATA) THEN extension_names[1] = DATA_EXT_PATH
 
   wcs = ana_wcs_get_transform(type_xdim1, header_input_data)
 
@@ -288,39 +289,37 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
     data_array = data_array)
   all_headers[1] = ptr_new(hdr)
-  IF ~keyword_set(SAVE_DATA) THEN extension_names[1] = DATA_EXT_PATH $
-  ELSE IF hdr[0] EQ '' THEN extension_names[1] = ''
-
-  ; ------
-  ; Create xdim header
-  ; ------
-
-  hdr = ana2fitshdr_xdim(datetime = datetime, extension_names = extension_names, xdim1 = xdim1, wcs = wcs, $
-    save_xdim1 = save_xdim1, type_xdim1 = type_xdim1)
-  all_headers[2] = ptr_new(hdr)
-  IF hdr[0] EQ '' THEN extension_names[2] = ''
+  IF hdr[0] EQ '' THEN extension_names[1] = ''
 
   ; ------
   ; Create weights header
   ; ------
 
   hdr = ana2fitshdr_weights(datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs)
-  all_headers[3] = ptr_new(hdr)
-  IF hdr[0] EQ '' THEN extension_names[3] = ''
+  all_headers[2] = ptr_new(hdr)
+  IF hdr[0] EQ '' THEN extension_names[2] = ''
 
   ; ------
   ; Create include header
   ; ------
 
   hdr = ana2fitshdr_include(datetime = datetime, extension_names = extension_names, include = include, wcs = wcs)
-  all_headers[4] = ptr_new(hdr)
-  IF hdr[0] EQ '' THEN extension_names[4] = ''
+  all_headers[3] = ptr_new(hdr)
+  IF hdr[0] EQ '' THEN extension_names[3] = ''
 
   ; ------
   ; Create const header
   ; ------
 
   hdr = ana2fitshdr_const(datetime = datetime, extension_names = extension_names, const = const, wcs = wcs)
+  all_headers[4] = ptr_new(hdr)
+  IF hdr[0] EQ '' THEN extension_names[4] = ''
+
+  ; ------
+  ; Create residual header
+  ; ------
+
+  hdr = ana2fitshdr_residual(datetime = datetime, extension_names = extension_names, residual = residual, wcs = wcs)
   all_headers[5] = ptr_new(hdr)
   IF hdr[0] EQ '' THEN extension_names[5] = ''
 
@@ -329,20 +328,20 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     hdr = all_headers[iext]
     IF (*hdr)[0] NE '' THEN BEGIN
       fxaddpar, *hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
-      fxaddpar, *hdr, 'XDIMXT1', extension_names[2], 'Extension name of 1st dim absorbed by analysis'
-      fxaddpar, *hdr, 'WGTEXT', extension_names[3], 'Extension name of weights'
-      fxaddpar, *hdr, 'INCLEXT', extension_names[4], 'Extension name of includes'
-      fxaddpar, *hdr, 'CONSTEXT', extension_names[5], 'Extension name of constants'
+      fxaddpar, *hdr, 'WGTEXT', extension_names[2], 'Extension name of weights'
+      fxaddpar, *hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
+      fxaddpar, *hdr, 'CONSTEXT', extension_names[4], 'Extension name of constants'
+      fxaddpar, *hdr, 'RESIDEXT', extension_names[5], 'Extension name of residuals'
     ENDIF
     IF keyword_set(print_headers) THEN BEGIN
       print, ''
       CASE iext OF
         0: print, '--- RESULTS ---'
         1: print, '--- DATA ---'
-        2: print, '--- XDIM ---'
-        3: print, '--- WEIGHTS ---'
-        4: print, '--- INCLUDE ---'
-        5: print, '--- CONST ---'
+        2: print, '--- WEIGHTS ---'
+        3: print, '--- INCLUDE ---'
+        4: print, '--- CONST ---'
+        5: print, '--- RESIDUAL ---'
       ENDCASE
       print, ''
       print, *hdr

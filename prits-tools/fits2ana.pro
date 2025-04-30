@@ -22,8 +22,9 @@
 ; CALLING SEQUENCE:
 ;     anas = FITS2ANA(fitsfile [, windows=windows , $
 ;       headers_results=headers_results, headers_data=headers_data, $
-;       headers_xdim1=headers_xdim1, headers_weights=headers_weights, $
+;       headers_weights=headers_weights, $
 ;       headers_include=headers_include, headers_constants=headers_constants, $
+;       headers_residuals=headers_residuals, $
 ;       /headers_only, /create_dummy_data, /loud, /quiet])
 ;
 ; INPUTS:
@@ -51,13 +52,13 @@
 ;              One string array per ANA provided.
 ;     headers_data: A pointer array, containing the headers of the data extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
-;     headers_xdim1: A pointer array, containing the headers of the xdim1 extensions as string arrays.
-;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_weights: A pointer array, containing the headers of the weights extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_include: A pointer array, containing the headers of the include extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
+;              One string array per ANA provided. May be empty strings if this extension was not saved.
+;     headers_residuals: A pointer array, containing the headers of the residuals extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
@@ -73,12 +74,13 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-04-23 15:00 CEST $
+; $Id: 2025-04-30 11:49 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
-  headers_xdim1 = headers_xdim1, headers_weights = headers_weights, $
+  headers_weights = headers_weights, $
   headers_include = headers_include, headers_constants = headers_constants, $
+  headers_residuals = headers_residuals, $
   headers_only = headers_only, create_dummy_data = create_dummy_data, $
   loud = loud, quiet = quiet, debug = debug
   prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
@@ -268,10 +270,10 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
     ENDIF
 
     DATAEXT = fxpar(hdr, 'DATAEXT', missing = '')
-    XDIMXT1 = fxpar(hdr, 'XDIMXT1', missing = '')
     WGTEXT = fxpar(hdr, 'WGTEXT', missing = '')
     INCLEXT = fxpar(hdr, 'INCLEXT', missing = '')
     CONSTEXT = fxpar(hdr, 'CONSTEXT', missing = '')
+    RESIDEXT = fxpar(hdr, 'RESIDEXT', missing = '')
 
     ; DATA extension
 
