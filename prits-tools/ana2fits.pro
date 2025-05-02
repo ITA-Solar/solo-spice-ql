@@ -16,13 +16,22 @@
 ;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;      ana2fits, ana, filepath_out=filepath_out [, data_id=data_id, $
-;         n_windows=n_windows, winno=winno, $
-;         HISTORY=HISTORY, LAMBDA=LAMBDA, INPUT_DATA=INPUT_DATA, WEIGHTS=WEIGHTS, $
-;         FIT=FIT, RESULT=RESULT, RESIDUAL=RESIDUAL, INCLUDE=INCLUDE, $
-;         CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-;         DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, $
-;         EXTENSION=EXTENSION]
+;         ana2fits, ANA, filepath_out = filepath_out, $
+;         n_windows = n_windows, winno = winno, $
+;         data_id = data_id, XTYPE1 = XTYPE1, $
+;         DATA_EXT_PATH = DATA_EXT_PATH, $
+;         is_extension = is_extension, level = level, version = version, creator = creator, $
+;         proc_steps = proc_steps, proj_keywords = proj_keywords, $
+;         xdim1 = xdim1, input_data = input_data, fit = fit, $
+;         result = result, residual = residual, weights = weights, include = include, $
+;         const = const, filename_ana = filename_ana, datasource = datasource, $
+;         definition = definition, missing = missing, label = label, history = history, $
+;         progenitor_data = progenitor_data, header_input_data = header_input_data, $
+;         SAVE_RESIDUALS = SAVE_RESIDUALS, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
+;         save_not = save_not, $
+;         headers_results = headers_results, headers_data = headers_data, $
+;         headers_weights = headers_weights, headers_includes = headers_includes, $
+;         headers_constants = headers_constants, headers_residuals = headers_residuals
 ;
 ; INPUTS:
 ;      ANA: An ANA object. (see also mk_analysis() documentation)
@@ -30,61 +39,73 @@
 ;              must be provided. If more than one ANA should be saved into one FITS file,
 ;              then 'ana' must be provided as an array of objects.
 ;      FILEPATH_OUT: Full path and filename of the resulting FITS file.
-;      TYPE_XDIM1: CTYPE of the absorbed dimension. A string array, or a scalar, in which case
-;              the same value will be used for all windows. Default is 'WAVE' (i.e. wavelength).
 ;
 ; KEYWORDS:
-;      IS_EXTENSION: If set, then the first ANA's result array will be an extension,
+;      IS_EXTENSION: If set, the first ANA's result array will be an extension,
 ;              i.e. this should be set if the FITS file already exists and data should be appended.
 ;              If not set, the first ANA's result array will be the primary header.
-;      SAVE_XDIM1: If set, then the XDIM1 cube will be saved into the FITS file. Default is
-;              not to save it. This cube can be recalculated using the WCS parameters given in HEADER_INPUT_DATA.
-;              This keyword can also be an array of zeros and ones,
-;              setting/unsetting this feature separately for each window.
-;      SAVE_DATA: If set, then the data cube is saved into the data extension.
-;              Default is not to save it and use the external extension mechanism instead.
+;      SAVE_DATA: If set, the data cube is saved into the data extension.
+;              The default is not to save it and to use the external extension mechanism instead.
 ;              See description of DATA_EXT_PATH for more details.
 ;              This keyword can also be an array of zeros and ones,
 ;              setting/unsetting this feature separately for each window.
-;      PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
-;      SAVE_NOT: If set, then the FITS file will not be saved. The optional outputs are created though.
+;      SAVE_RESIDUALS: If set, the residuals will be saved into the FITS file. The default is
+;              not to save it. This cube can be recalculated using the original data and the fit parameter.
+;              To save the residuals can be useful in case the original data may not be available when reading the file.
+;              This keyword can also be an array of zeros and ones,
+;              setting/unsetting this feature separately for each window.
+;      PRINT_HEADERS: If set, all headers created will be printed to the terminal.
+;      SAVE_NOT: If set, the FITS file will not be saved. The optional outputs are created though.
 ;
-; OPTIONAL INPUTS:
+; SEMI-OPTIONAL INPUTS:
+;      HEADER_INPUT_DATA: Strongly recommended.
+;              A pointer array or string array, containing the header(s) of the data extensions as string arrays.
+;              One string array per ANA provided. Can be a string array, if only one ANA is provided.
+;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA or with PROGENITOR_DATA, respectively.
+;              These parameters will be used to create the WCS structure of the data cube and the WCS keywords in the header.
+;              They will also be used to recreate the XDIM1 cube.
+;              This header will be saved into the data extension even if the data is not saved.
+;      DATA_EXT_PATH: Required if SAVE_DATA is NOT set, otherwise recommended.
+;              A string array or a string. This contains the relative path to and the name of the file that contains
+;              the original data cube from which the P-level data was calculated.
+;              The extension name of the original data cube MUST NOT be included. This name will be taken from DATA_ID.
+;              The path and extension name will be used in the header keyword PARENTXT.
+;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
+;              point to the external extension.
+;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-7.html
+;      XTYPE1: CTYPE of the absorbed dimension. A string array, or a scalar, in which case
+;              the same value will be used for all windows. The default is 'WAVE' (i.e. wavelength).
+;      XDIMEN1: The dimension number(s), counting left to right starting with 1, of dimensions
+;              that was absorbed/removed during the fitting process (for SPICE Level 3 P files XDIMEN1=3).
+;              An array of integers, or a scalar, in which case the same value will be used for all windows.
+;              The default is the dimension number that corresponds to XTYPE1 found in HEADER_INPUT_DATA.
 ;      N_WINDOWS: Total number of windows that will be included in this FITS file.
-;              By default, this will be the number of 'ana' structures provided, or 1
-;              in case ana is not provided. But if you call this procedure multiple times
-;              with the same FILEPATH_OUT and IS_EXTENSION keyword set, the procedure can not know
+;              By default, this will be the number of 'ana' structures or the number of RESULT pointers provided, or 1
+;              in case RESULT is an array.
+;              BUT if you call this procedure multiple times with the same FILEPATH_OUT and IS_EXTENSION keyword set, the procedure can not know
 ;              what the final total number of windows will be, and thus the header keyword 'NWIN' in the result extension
 ;              may have the wrong number. This will NOT cause any problems when reading the FITS file
-;              with FITS2ANA.
+;              with FITS2ANA. But you may want to have the correct number in the header.
 ;      WINNO: Window number (starting at 0) of the first 'ana' provided within this study in this FITS file.
-;              If you call this procedure mutliple times with the same FILEPATH_OUT and
+;              If you call this procedure multiple times with the same FILEPATH_OUT and
 ;              IS_EXTENSION keyword set, you can define here what the index of the currently provided
 ;              first 'ana' should be. This will be set in the header keyword 'WINNO' in the result extension.
 ;              A wrong number in this keyword won't create any problems when reading the FITS file
-;              with FITS2ANA. Default is the dataset indices.
-;      HEADER_INPUT_DATA: A pointer array or string array, containing the headers of the data extensions as string arrays.
-;              One string array per ANA provided. Can be a string array, if only one ANA is provided.
-;              This is used to describe the data. WCS parameters should correspond with INPUT_DATA, or with PROGENITOR_DATA respectively.
-;              This header will be saved into the data extension even if the data is not saved.
-;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
-;              along the first dimension. If these data arrays are provided, they will be saved into the XDIM1 extensions instead of INPUT_DATA.
-;              One data array per ANA provided. Can be a data array, if only one ANA is provided.
+;              with FITS2ANA. But you may want to have the correct number in the header. The default is the dataset indices.
+;
+; OPTIONAL INPUTS:
 ;      DATA_ID: A string vector of same length as 'ana', or if 'ana' is not provided, same number of windows provided.
 ;              These strings are used to identify the data, i.e. they will
 ;              be used in the extension names of the FITS file. Each dataset will get up to
 ;              6 extensions, which all have the same ID, but the extension name will be
 ;              'data_id'+' '+extension_type (='results', 'data', 'xdim1', 'weights', 'includes', 'constants').
-;              Default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this is provided then the data extension
+;              The default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this header is provided, then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
-;              If this is not provided then default is the window index.
-;      DATA_EXT_PATH: A string array or a string. This contains the relative path to and the name of the file that contains
-;              the original data cube from which the P-level data was calculated.
-;              The extension name of the original data cube MUST NOT be included. This name will be taken from DATA_ID.
-;              The path and extension name will be used in the header keyword PARENEXT.
-;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
-;              point to the external extension.
-;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-7.html
+;              If this is not provided, then the default is the window index.
+;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
+;              along the first dimension. If these data arrays are provided, they will be saved into the DATA extensions instead of INPUT_DATA
+;              if the keyword SAVE_DATA is set.
+;              One data array per ANA provided. Can be a data array if only one ANA is provided.
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
@@ -121,8 +142,7 @@
 ;              along the first dimension. This is ignored if PROGENITOR_DATA is provided.
 ;              This may also be a pointer array, if more than one window should be saved at a time.
 ;              It must then be of the same size as the RESULT pointer array.
-;      XDIM1: Array of same size as the input data to xcfit_block. It contains the values of the
-;             absorbed dimension for each point (e.g wavelength).
+;      RESIDUAL: Array to contain the residual. Same size as INPUT_DATA.
 ;              This may also be a pointer array, if more than one window should be saved at a time.
 ;              It must then be of the same size as the RESULT pointer array.
 ;      WEIGHTS: Weights to use in the fitting process.
@@ -138,8 +158,9 @@
 ;      The following optional inputs will be ignored.
 ;      If 'ANA' is provided, they will be overwritten and can be used as OPTIONAL OUTPUT.
 ;
-;      RESIDUAL: Array to contain the residual. Same size as INPUT_DATA, this will
-;              be ignored and not saved into the FITS file.
+;      XDIM1: Array of same size as the input data to xcfit_block. It contains the values of the
+;             absorbed dimension for each point (e.g wavelength). This can be calculated by using
+;             the WCS structure of the data cube and is thus not saved in the FITS file.
 ;      FILENAME_ANA: The filename of the ANA-file.
 ;      DATASOURCE: A string.
 ;      DEFINITION: A string.
@@ -162,7 +183,7 @@
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;     headers_constants: A pointer array, containing the headers of the constants extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
-;     headers_residuals: A pointer array, containing the headers of the xdim1 extensions as string arrays.
+;     headers_residuals: A pointer array, containing the headers of the residuals extensions as string arrays.
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
@@ -172,11 +193,11 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-04-30 14:01 CEST $
+; $Id: 2025-05-02 15:14 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $
-  data_id = data_id, type_xdim1 = type_xdim1, $
+  data_id = data_id, XTYPE1 = XTYPE1, $
   DATA_EXT_PATH = DATA_EXT_PATH, $
   is_extension = is_extension, level = level, version = version, creator = creator, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
@@ -185,14 +206,14 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
   const = const, filename_ana = filename_ana, datasource = datasource, $
   definition = definition, missing = missing, label = label, history = history, $
   progenitor_data = progenitor_data, header_input_data = header_input_data, $
-  save_xdim1 = save_xdim1, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
+  SAVE_RESIDUALS = SAVE_RESIDUALS, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
   save_not = save_not, $
   headers_results = headers_results, headers_data = headers_data, $
   headers_weights = headers_weights, headers_includes = headers_includes, $
   headers_constants = headers_constants, headers_residuals = headers_residuals
   prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name = 'CFIT_ANALYSIS', /optional
   n_ana = n_elements(ANA)
-  prits_tools.parcheck, type_xdim1, 0, 'TYPE_XDIM1', 'STRING', [0, 1], default = 'WAVE'
+  prits_tools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', [0, 1], default = 'WAVE'
   prits_tools.parcheck, filepath_out, 0, 'FILEPATH_OUT', 'STRING', 0
   prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0, default = max([n_ana, 1])
   prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0, default = 0
@@ -206,6 +227,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
   weights_ptr = 0
   incl_ptr = 0
   const_ptr = 0
+  residual_ptr = 0
 
   prg_data_ptr = 0
   hdr_in_data_ptr = 0
@@ -245,6 +267,9 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
       prits_tools.parcheck, const, 0, 'CONST', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
       IF error[0] NE '' THEN prits_tools.parcheck, const, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE const_ptr = n_elements(const)
+      prits_tools.parcheck, residual, 0, 'RESIDUAL', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN prits_tools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ELSE residual_ptr = n_elements(residual)
     ENDELSE ; n_ana GT 1
   ENDIF ; ~n_ana
 
@@ -308,6 +333,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     IF weights_ptr THEN weights_use = *weights[iwindow] ELSE IF n_elements(weights) GT 0 THEN weights_use = weights
     IF incl_ptr THEN include_use = *include[iwindow] ELSE IF n_elements(include) GT 0 THEN include_use = include
     IF const_ptr THEN const_use = *const[iwindow] ELSE IF n_elements(const) GT 0 THEN const_use = const
+    IF residual_ptr THEN residual_use = *residual[iwindow] ELSE IF n_elements(residual) GT 0 THEN residual_use = residual
 
     IF prg_data_ptr THEN PROGENITOR_DATA_use = *progenitor_data[iwindow] ELSE IF n_elements(progenitor_data) GT 0 THEN PROGENITOR_DATA_use = progenitor_data
     IF hdr_in_data_ptr THEN HEADER_INPUT_DATA_use = *header_input_data[iwindow] ELSE IF n_elements(header_input_data) GT 0 THEN HEADER_INPUT_DATA_use = header_input_data
@@ -315,11 +341,11 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *proj_keywords[iwindow] ELSE IF n_elements(proj_keywords) GT 0 THEN PROJ_KEYWORDS_use = proj_keywords
 
     IF keyword_set(data_id) THEN data_id_use = data_id[iwindow]
-    IF n_elements(type_xdim1) GT 1 THEN TYPE_XDIM1_use = type_xdim1[iwindow] ELSE TYPE_XDIM1_use = type_xdim1
+    IF n_elements(XTYPE1) GT 1 THEN XTYPE1_use = XTYPE1[iwindow] ELSE XTYPE1_use = XTYPE1
     IF n_elements(SAVE_DATA) GT 1 THEN SAVE_DATA_use = SAVE_DATA[iwindow] ELSE $
       IF n_elements(SAVE_DATA) EQ 1 THEN SAVE_DATA_use = SAVE_DATA
-    IF n_elements(save_xdim1) GT 1 THEN SAVE_XDIM1_use = save_xdim1[iwindow] ELSE $
-      IF n_elements(save_xdim1) EQ 1 THEN SAVE_XDIM1_use = save_xdim1
+    IF n_elements(SAVE_RESIDUALS) GT 1 THEN SAVE_RESIDUALS_use = SAVE_RESIDUALS[iwindow] ELSE $
+      IF n_elements(SAVE_RESIDUALS) EQ 1 THEN SAVE_RESIDUALS_use = SAVE_RESIDUALS
     IF n_elements(DATA_EXT_PATH) GT 1 THEN DATA_EXT_PATH_use = DATA_EXT_PATH[iwindow] ELSE $
       IF n_elements(DATA_EXT_PATH) EQ 1 THEN DATA_EXT_PATH_use = DATA_EXT_PATH
 
@@ -328,21 +354,21 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     IF n_elements(ANA) THEN BEGIN
       headers = ana2fitshdr(ANA[iwindow], filename_out = filename_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
-        data_id = data_id_use, type_xdim1 = TYPE_XDIM1_use, $
+        data_id = data_id_use, XTYPE1 = XTYPE1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
         is_extension = extension, level = level, version = version, creator = creator, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
         xdim1 = xdim1_use, input_data = INPUT_DATA_use, fit = fit_use, $
-        result = result_use, residual = residual, weights = weights_use, include = include_use, $
+        result = result_use, residual = residual_use, weights = weights_use, include = include_use, $
         const = const_use, filename_ana = filename_ana, datasource = datasource, $
         definition = definition, missing = missing, label = label, history = history, $
         progenitor_data = PROGENITOR_DATA_use, header_input_data = HEADER_INPUT_DATA_use, $
-        save_xdim1 = SAVE_XDIM1_use, SAVE_DATA = SAVE_DATA_use, print_headers = print_headers, $
+        SAVE_RESIDUALS = SAVE_RESIDUALS_use, SAVE_DATA = SAVE_DATA_use, print_headers = print_headers, $
         data_array = DATA_ARRAY)
     ENDIF ELSE BEGIN
       headers = ana2fitshdr(filename_out = filename_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
-        data_id = data_id_use, type_xdim1 = TYPE_XDIM1_use, $
+        data_id = data_id_use, XTYPE1 = XTYPE1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
         is_extension = extension, level = level, version = version, creator = creator, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
@@ -351,7 +377,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
         const = const_use, filename_ana = filename_ana, datasource = datasource, $
         definition = definition, missing = missing, label = label, history = history, $
         progenitor_data = PROGENITOR_DATA_use, header_input_data = HEADER_INPUT_DATA_use, $
-        save_xdim1 = SAVE_XDIM1_use, SAVE_DATA = SAVE_DATA_use, print_headers = print_headers, $
+        SAVE_RESIDUALS = SAVE_RESIDUALS_use, SAVE_DATA = SAVE_DATA_use, print_headers = print_headers, $
         data_array = DATA_ARRAY)
     ENDELSE
 
