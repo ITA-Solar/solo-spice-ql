@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-04-30 11:49 CEST $
+; $Id: 2025-05-05 13:22 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -192,7 +192,10 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
     ; history = fxpar(hdr, 'ANA_HIST', missing='')
     ; history = strtrim(strsplit(history,';',/extract,count=count), 2)
     history = ''
-    type_xdim1 = strtrim(fxpar(hdr, 'XDIMTY1', missing = ''), 2)
+    XTYPE1 = strtrim(fxpar(hdr, 'XTYPE1', missing = ''), 2)
+    IF XTYPE1 EQ '' THEN BEGIN
+      XTYPE1 = strtrim(fxpar(hdr, 'XDIMTY1', missing = ''), 2)
+    ENDIF
 
     ; extract fit components
     tag_names = hash()
@@ -327,7 +330,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
           IF ~quiet THEN message, 'Did not find progenitor file: ' + prg_file, /info
         ENDELSE ; prg_file NE ''
       ENDIF ; ~headers_only && size_data[0] EQ 0
-      wcs_data = ana_wcs_get_transform(type_xdim1, hdr, ind_xdim1 = ind_xdim1)
+      wcs_data = ana_wcs_get_transform(XTYPE1, hdr, ind_xdim1 = ind_xdim1)
       wcs_data_exists = n_elements(wcs_data) GT 0
     ENDELSE ; count EQ 0
 

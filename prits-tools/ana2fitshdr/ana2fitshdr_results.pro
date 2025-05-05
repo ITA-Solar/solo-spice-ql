@@ -48,7 +48,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 11:54 CEST $
+; $Id: 2025-05-05 13:22 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -116,10 +116,9 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, '', ' '
   IF wcs_exists THEN BEGIN
     cunit_absorb = wcs.cunit[0]
-    fits_util.add, hdr, 'XDIMTY1', wcs.CTYPE[0], 'Type of 1st dim absorbed by analysis'
+    fits_util.add, hdr, 'XTYPE1', wcs.CTYPE[0], 'Type of 1st dim absorbed by analysis'
   ENDIF ELSE BEGIN
     cunit_absorb = ''
-    fits_util.add, hdr, 'XDIMTY1', 'Original type of absorbed dimension', 'Type of 1st dim absorbed by analysis'
   ENDELSE
 
   fits_util.add, hdr, 'NWIN', n_windows, 'Number of windows'
