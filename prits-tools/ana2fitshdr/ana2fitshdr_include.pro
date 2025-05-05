@@ -4,7 +4,7 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the INCLUDE cube of an ANA object or file.
+;      This function returns a fits header made from the INCLUDE cube of an ANA object.
 ;      It will return an empty string if all values in the INCLUDE cube are one or if
 ;      INCLUDE is not provided.
 ;
@@ -39,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:34 CEST $
+; $Id: 2025-05-05 14:52 CEST $
 
 FUNCTION ana2fitshdr_include, datetime = datetime, extension_names = extension_names, include = include, wcs = wcs
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0

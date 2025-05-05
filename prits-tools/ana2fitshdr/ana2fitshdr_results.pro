@@ -4,7 +4,7 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the results of an ANA object or file.
+;      This function returns a fits header made from the results of an ANA object.
 ;      The fits header contains all fit components as keywords, as well as
 ;      other ANA structure tags.
 ;      It is possible to add project-related keywords or processing steps keywords
@@ -48,7 +48,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:34 CEST $
+; $Id: 2025-05-05 14:52 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $

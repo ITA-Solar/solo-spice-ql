@@ -4,7 +4,7 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITS.
-;      This function returns an array of 6 FITS headers made from an ANA object or file.
+;      This function returns an array of 6 FITS headers made from an ANA object.
 ;      The RESULT FITS header is the main header, and contains all analysis-specific
 ;      information, i.e. fit components and parameters. This header may also contain
 ;      additional project-related keywords.
@@ -53,7 +53,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 11:47 CEST $
+; $Id: 2025-05-05 14:52 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $

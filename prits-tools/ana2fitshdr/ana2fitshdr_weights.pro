@@ -4,8 +4,8 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the WEIGHTS cube of an ANA object or file.
-;      It will return an empty string if all values in the WEIGHTS cube are one or if
+;      This function returns a fits header made from the WEIGHTS cube of an ANA object.
+;      It will return an empty string if all values in the WEIGHTS cube are identical or if
 ;      WEIGHTS is not provided.
 ;
 ; CATEGORY:
@@ -39,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:35 CEST $
+; $Id: 2025-05-05 14:52 CEST $
 
 FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0

@@ -4,12 +4,12 @@
 ;
 ; PURPOSE:
 ;      This is a subfunction of ANA2FITSHDR, which is a subfunction of ANA2FITS.
-;      This function returns a fits header made from the data array of an ANA object or file
+;      This function returns a fits header made from the data array of an ANA object
 ;      and the optionally provided header. If either PROGENITOR_DATA is not provided or
 ;      provided and not a scalar number, then HEADER_INPUT_DATA first will be stripped of
 ;      the keywords that mkhdr populates, and then it will be added to the new header.
 ;      These keywords will be added/updated in the header in any case:
-;      DATE, EXTNAME, RESEXT, DATAEXT, XDIMXT1, WGTEXT, INCLEXT, CONSTEXT
+;      DATE, EXTNAME, RESEXT, DATAEXT, WGTEXT, INCLEXT, CONSTEXT, RESIDEXT.
 ;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:35 CEST $
+; $Id: 2025-05-05 14:52 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
