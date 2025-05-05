@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:00 CEST $
+; $Id: 2025-05-05 14:37 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -345,7 +345,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
             datasize = wcs_result.naxis
             datasize[0] = datasize[0] * 2
             IF hdr[0] NE '' THEN BEGIN
-              prg_naxis = fxpar(hdr, 'XDIMNA*', missing = 0)
+              prg_naxis = fxpar(hdr, 'XNAXIS*', missing = 0)
               IF prg_naxis[0] GT 0 THEN BEGIN
                 datasize = prg_naxis
               ENDIF
