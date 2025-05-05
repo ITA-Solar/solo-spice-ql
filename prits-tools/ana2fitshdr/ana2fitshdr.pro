@@ -53,7 +53,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 11:40 CEST $
+; $Id: 2025-05-05 11:47 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -193,7 +193,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   ; ------
 
   hdr = ana2fitshdr_results(result = result, fit = fit, datetime = datetime, $
-    filename_out = file_basename(filename_out), n_windows = n_windows, winno = winno, $
+    filename_out = filename_out, n_windows = n_windows, winno = winno, $
     DATA_EXT_PATH = DATA_EXT_PATH, $
     extension_names = extension_names, is_extension = is_extension, $
     header_input_data = header_input_data, wcs = wcs, $
