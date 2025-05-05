@@ -23,53 +23,14 @@
 ;           HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
 ;           DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 ;
-; INPUTS:
-;      datetime: Date and time string.
-;      filename_out: The filename the FITS file will/should get.
-;      n_windows: Number of windows to be included in the FITS file.
-;      winno: Window number (starting at 0) within this study in this FITS file
-;      FIT: The component fit structure
-;      RESULT: The array to contain the result parameter values (and
-;              the Chi^2) values. May contain current results.
-;
-; KEYWORDS:
-;      IS_EXTENSION: If set, then this header will be marked to be an extension,
-;                 i.e. if this is not the first window in the FITS file.
-;                 If not set, this will be the primary header.
+; PARAMETERS:
+;     All parameters are described in ANA2FITS.
+;     The only difference is that most of the parameters in ANA2FITS can be arrays, i.e. contain multiple
+;     datasets/windows, whereas the parameters in this function are for one dataset/window only.
 ;
 ; OPTIONAL INPUTS:
-;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
-;            respectively. If not provided a generic header will be created.
 ;      WCS: Structure. The structure from which the WCS parameters
 ;             should be taken. If not provided the header won't include any WCS parameters.
-;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
-;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
-;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
-;      DATA_EXT_PATH: A string array or a string. This contains the relative path to and the name of the file that contains
-;              the original data cube from which the P-level data was calculated.
-;              The extension name of the original data cube MUST NOT be included. This name will be taken from DATA_ID.
-;              The path and extension name will be used in the header keyword PARENEXT.
-;              In case the data cube is not saved into the FITS file, but linked to an external extension, the header keyword DATAEXT in the headers will
-;              point to the external extension.
-;              See also Appendix VII about External Extensions in https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-7.html
-;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
-;              where, xxx123 can be a string or a number. These are additional project-related
-;              keywords that should be added to the header.
-;      PROC_STEPS: A list, each element stands for one processing step, i.e. gets a new number.
-;              Each processing step consists of an array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
-;              where, xxx123 can be a string or a number.
-;              The name can be any of the following:
-;              PRSTEP|PRPROC|PRPVER|PRMODE|PRPARA|PRREF|PRLOG|PRENV|PRVER|PRHSH|PRBRA|PRLIB
-;              PRSTEP should be included. The name and the comment will get the processing step number added.
-;      HISTORY: A string array.
-;      FILENAME_ANA: The filename of the ANA-file. This will be ignored.
-;      DATASOURCE: A string. This will be ignored.
-;      DEFINITION: A string. This will be ignored.
-;      MISSING: The MISSING value, used to flag missing data points,
-;               and parameter values at points where the fit has been
-;               declared as "FAILED". This will be ignored. It is assumed
-;               that missing values is NAN.
-;      LABEL: A string. This will be ignored.
 ;
 ; OUTPUTS:
 ;      a fits header (string array).
@@ -82,7 +43,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-30 11:49 CEST $
+; $Id: 2025-05-05 11:48 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -131,7 +92,7 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, '', ' '
 
   fits_util.add, hdr, 'EXTNAME', extension_names[0], 'Extension name'
-  fits_util.add, hdr, 'FILENAME', filename_out, 'Filename of this FITS file'
+  fits_util.add, hdr, 'FILENAME', file_basename(filename_out), 'Filename of this FITS file'
 
   IF header_exists THEN BEGIN
     fits_util.add, hdr, 'PARENTXT', DATA_EXT_PATH, 'Parent filename and path;extension name'
