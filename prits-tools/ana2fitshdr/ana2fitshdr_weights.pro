@@ -39,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:34 CEST $
+; $Id: 2025-05-05 14:35 CEST $
 
 FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
@@ -49,7 +49,7 @@ FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_n
 
   IF n_elements(weights) EQ 0 THEN return, ''
   min_weights = min(weights, max = max_weights)
-  IF min_weights EQ 1.0 && max_weights EQ 1.0 THEN return, ''
+  IF min_weights EQ max_weights THEN return, ''
 
   fits_util = obj_new('oslo_fits_util')
   mkhdr, hdr, weights, /image
