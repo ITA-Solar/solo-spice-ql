@@ -38,6 +38,9 @@
 ;              If this is not provided, then at the least RESULTS and FIT
 ;              must be provided. If more than one ANA should be saved into one FITS file,
 ;              then 'ana' must be provided as an array of objects.
+;              Alternatively, this procedure can be called multiple times with the same filepath_out
+;              and the IS_EXTENSION keyword set. In this case, the new data will be appended to the
+;              existing FITS file. The first ANA's result array will be the primary header.
 ;      FILEPATH_OUT: Full path and filename of the resulting FITS file.
 ;
 ; KEYWORDS:
@@ -193,7 +196,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 11:31 CEST $
+; $Id: 2025-05-05 11:40 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $
