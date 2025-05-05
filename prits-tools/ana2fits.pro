@@ -193,7 +193,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-05-02 15:14 CEST $
+; $Id: 2025-05-05 11:31 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   n_windows = n_windows, winno = winno, $
@@ -296,8 +296,6 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
 
   prits_tools.parcheck, data_id, 0, 'DATA_ID', 'STRING', [0, 1], valid_nelements = n_ana, /optional
 
-  filename_out = file_basename(filepath_out)
-
   get_headers = bytarr(6)
   IF arg_present(headers_results) THEN BEGIN
     headers_results = ptrarr(n_ana)
@@ -352,7 +350,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     extension = keyword_set(is_extension) || iwindow GT 0
 
     IF n_elements(ANA) THEN BEGIN
-      headers = ana2fitshdr(ANA[iwindow], filename_out = filename_out, $
+      headers = ana2fitshdr(ANA[iwindow], filename_out = filepath_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
         data_id = data_id_use, XTYPE1 = XTYPE1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
@@ -366,7 +364,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
         SAVE_RESIDUALS = SAVE_RESIDUALS_use, SAVE_DATA = SAVE_DATA_use, print_headers = print_headers, $
         data_array = DATA_ARRAY)
     ENDIF ELSE BEGIN
-      headers = ana2fitshdr(filename_out = filename_out, $
+      headers = ana2fitshdr(filename_out = filepath_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
         data_id = data_id_use, XTYPE1 = XTYPE1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
