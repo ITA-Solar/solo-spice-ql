@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-05 13:22 CEST $
+; $Id: 2025-05-05 14:00 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -140,20 +140,20 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
     headers_data = ptrarr(n_windows_process)
     get_headers[1] = 1
   ENDIF
-  IF arg_present(headers_xdim1) THEN BEGIN
-    headers_xdim1 = ptrarr(n_windows_process)
-    get_headers[2] = 1
-  ENDIF
   IF arg_present(headers_weights) THEN BEGIN
     headers_weights = ptrarr(n_windows_process)
-    get_headers[3] = 1
+    get_headers[2] = 1
   ENDIF
   IF arg_present(headers_include) THEN BEGIN
     headers_include = ptrarr(n_windows_process)
-    get_headers[4] = 1
+    get_headers[3] = 1
   ENDIF
   IF arg_present(headers_constants) THEN BEGIN
     headers_constants = ptrarr(n_windows_process)
+    get_headers[4] = 1
+  ENDIF
+  IF arg_present(headers_residuals) THEN BEGIN
+    headers_residuals = ptrarr(n_windows_process)
     get_headers[5] = 1
   ENDIF
 
@@ -167,10 +167,10 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       hdr = ''
       IF get_headers[0] THEN headers_results[iwin] = ptr_new(hdr)
       IF get_headers[1] THEN headers_data[iwin] = ptr_new(hdr)
-      IF get_headers[2] THEN headers_xdim1[iwin] = ptr_new(hdr)
-      IF get_headers[3] THEN headers_weights[iwin] = ptr_new(hdr)
-      IF get_headers[4] THEN headers_include[iwin] = ptr_new(hdr)
-      IF get_headers[5] THEN headers_constants[iwin] = ptr_new(hdr)
+      IF get_headers[2] THEN headers_weights[iwin] = ptr_new(hdr)
+      IF get_headers[3] THEN headers_include[iwin] = ptr_new(hdr)
+      IF get_headers[4] THEN headers_constants[iwin] = ptr_new(hdr)
+      IF get_headers[5] THEN headers_residuals[iwin] = ptr_new(hdr)
       CONTINUE
     ENDIF
     extension = extension[0]
@@ -357,10 +357,10 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
             hdr = ''
             IF get_headers[0] THEN headers_results[iwin] = ptr_new(hdr)
             IF get_headers[1] THEN headers_data[iwin] = ptr_new(hdr)
-            IF get_headers[2] THEN headers_xdim1[iwin] = ptr_new(hdr)
-            IF get_headers[3] THEN headers_weights[iwin] = ptr_new(hdr)
-            IF get_headers[4] THEN headers_include[iwin] = ptr_new(hdr)
-            IF get_headers[5] THEN headers_constants[iwin] = ptr_new(hdr)
+            IF get_headers[2] THEN headers_weights[iwin] = ptr_new(hdr)
+            IF get_headers[3] THEN headers_include[iwin] = ptr_new(hdr)
+            IF get_headers[4] THEN headers_constants[iwin] = ptr_new(hdr)
+            IF get_headers[5] THEN headers_residuals[iwin] = ptr_new(hdr)
             CONTINUE
           ENDELSE
         ENDIF ELSE BEGIN ; size_data[0] EQ 0
@@ -385,7 +385,9 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
 
     ; XDIM1 extension
 
-    extension = where(fits_content.extname EQ XDIMXT1, count)
+    ; extension = where(fits_content.extname EQ XDIMXT1, count)
+    extension = ''
+    count = 0
     IF count EQ 0 THEN BEGIN
       IF loud THEN message, 'Could not find xdim1 extension of window ' + strtrim(wind_ind, 2), /info
       IF headers_only THEN BEGIN
@@ -411,7 +413,6 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       ENDELSE
     ENDELSE
     IF size(xdim1, /type) NE size(data, /type) THEN xdim1 = fix(xdim1, type = size(data, /type))
-    IF get_headers[2] THEN headers_xdim1[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
       print, ''
@@ -443,7 +444,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
         weights = readfits(fitsfile, hdr, ext = extension, silent = quiet)
       ENDELSE
     ENDELSE
-    IF get_headers[3] THEN headers_weights[iwin] = ptr_new(hdr)
+    IF get_headers[2] THEN headers_weights[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
       print, ''
@@ -477,7 +478,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
         include = readfits(fitsfile, hdr, ext = extension, silent = quiet)
       ENDELSE
     ENDELSE
-    IF get_headers[4] THEN headers_include[iwin] = ptr_new(hdr)
+    IF get_headers[3] THEN headers_include[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
       print, ''
@@ -511,7 +512,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
         const = readfits(fitsfile, hdr, ext = extension, silent = quiet)
       ENDELSE
     ENDELSE
-    IF get_headers[5] THEN headers_constants[iwin] = ptr_new(hdr)
+    IF get_headers[4] THEN headers_constants[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
       print, ''
@@ -524,45 +525,65 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
 
     ; RESIDUALS
 
-    residual = data
-    residual[*] = !VALUES.f_nan
+    extension = where(fits_content.extname EQ RESIDEXT, count)
+    IF count EQ 0 THEN BEGIN
+      IF loud THEN message, 'Could not find residuals extension of window ' + strtrim(wind_ind, 2), /info
+      hdr = ''
+      IF headers_only THEN BEGIN
+        residual = 0
+      ENDIF ELSE BEGIN ; headers_only
+        IF loud THEN message, 'Creating residuals cube with calculated values', /info
+        residual = data
+        residual[*] = !VALUES.f_nan
 
-    IF size_data[0] GT 0 THEN BEGIN
-      sfit = make_sfit_stc(fit, /keep_limits)
-      compile_sfit, sfit
+        IF size_data[0] GT 0 THEN BEGIN
+          sfit = make_sfit_stc(fit, /keep_limits)
+          compile_sfit, sfit
 
-      ; ; Convert to 7 dimensions in all cases!
-      szd = size(data)
-      dimen = szd[1 : szd[0]]
-      IF szd[0] LT 7 THEN dimen = [dimen, replicate(1l, 7 - szd[0])]
+          ; ; Convert to 7 dimensions in all cases!
+          szd = size(data)
+          dimen = szd[1 : szd[0]]
+          IF szd[0] LT 7 THEN dimen = [dimen, replicate(1l, 7 - szd[0])]
 
-      ; ;
-      ; ; This works for up to 7-dimensional data
-      ; ;
-      FOR o = 0l, dimen[6] - 1 DO $
-        FOR n = 0l, dimen[5] - 1 DO $
-        FOR m = 0l, dimen[4] - 1 DO $
-        FOR l = 0l, dimen[3] - 1 DO $
-        FOR k = 0l, dimen[2] - 1 DO $
-        FOR j = 0l, dimen[1] - 1 DO BEGIN
-          spec = data[*, j, k, l, m, n, o]
-          ix = where_not_missing(spec, ngood)
+          ; ;
+          ; ; This works for up to 7-dimensional data
+          ; ;
+          FOR o = 0l, dimen[6] - 1 DO $
+            FOR n = 0l, dimen[5] - 1 DO $
+            FOR m = 0l, dimen[4] - 1 DO $
+            FOR l = 0l, dimen[3] - 1 DO $
+            FOR k = 0l, dimen[2] - 1 DO $
+            FOR j = 0l, dimen[1] - 1 DO BEGIN
+              spec = data[*, j, k, l, m, n, o]
+              ix = where_not_missing(spec, ngood)
 
-          IF ngood GT 0 THEN BEGIN
-            lam = xdim1[*, j, k, l, m, n, o]
-            params = result[0 : -2, j, k, l, m, n, o]
-            params = params * sfit.trans_a + sfit.trans_b
-            call_procedure, sfit.compiledfunc, lam[ix], params, yfit
-            residual[ix, j, k, l, m, n, o] = spec[ix] - yfit
-          ENDIF
-        ENDFOR
-    ENDIF ; size_data[0] GT 0
+              IF ngood GT 0 THEN BEGIN
+                lam = xdim1[*, j, k, l, m, n, o]
+                params = result[0 : -2, j, k, l, m, n, o]
+                params = params * sfit.trans_a + sfit.trans_b
+                call_procedure, sfit.compiledfunc, lam[ix], params, yfit
+                residual[ix, j, k, l, m, n, o] = spec[ix] - yfit
+              ENDIF
+            ENDFOR
+        ENDIF ; size_data[0] GT 0
+      ENDELSE ; headers_only
+    ENDIF ELSE BEGIN ; count EQ 0
+      extension = extension[0]
+      IF headers_only THEN BEGIN
+        residual = 0
+        hdr = headfits(fitsfile, ext = extension)
+      ENDIF ELSE BEGIN
+        residual = readfits(fitsfile, hdr, ext = extension, silent = quiet)
+      ENDELSE
+    ENDELSE
+    IF get_headers[5] THEN headers_residuals[iwin] = ptr_new(hdr)
 
     IF debug THEN BEGIN
       print, ''
       print, ''
       print, ' - RESIDUALS -'
       print, ''
+      print, hdr
       help, residual
     ENDIF
 
