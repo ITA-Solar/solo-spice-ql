@@ -16,12 +16,13 @@
 ;
 ; INPUTS:
 ;      DATETIME: Date and time string.
-;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
+;      EXTENSION_NAMES: String array with the names of the 6 other extensions of the same dataset/window.
 ;
 ; KEYWORDS:
 ;
 ; OPTIONAL INPUTS:
-;      WEIGHTS: Weights to use in the fitting process for each point.
+;      WEIGHTS: Weights to use in the fitting process for each point. If not provided, or if
+;             all values are equal, an empty string will be returned.
 ;      WCS: Structure. The structure from which the WCS parameters
 ;             should be taken. If not provided the header won't include any WCS parameters.
 ;
@@ -38,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-30 11:49 CEST $
+; $Id: 2025-05-05 14:34 CEST $
 
 FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0

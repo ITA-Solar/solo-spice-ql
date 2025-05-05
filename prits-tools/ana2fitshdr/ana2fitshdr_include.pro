@@ -16,7 +16,7 @@
 ;
 ; INPUTS:
 ;      DATETIME: Date and time string.
-;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
+;      EXTENSION_NAMES: String array with the names of the 6 other extensions of the same dataset/window.
 ;
 ; KEYWORDS:
 ;
@@ -39,7 +39,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-30 11:49 CEST $
+; $Id: 2025-05-05 14:34 CEST $
 
 FUNCTION ana2fitshdr_include, datetime = datetime, extension_names = extension_names, include = include, wcs = wcs
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0

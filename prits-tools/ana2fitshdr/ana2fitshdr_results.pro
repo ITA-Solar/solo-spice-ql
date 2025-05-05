@@ -30,8 +30,8 @@
 ;     Parameters not described in ANA2FITS are described here.
 ;
 ; INPUTS:
-;      datetime: Date and time string.
-;      EXTENSION_NAMES: String array with the names of the extensions in the FITS file.
+;      DATETIME: Date and time string.
+;      EXTENSION_NAMES: String array with the names of the 6 other extensions of the same dataset/window.
 ;
 ; OPTIONAL INPUTS:
 ;      WCS: Structure. The structure from which the WCS parameters
@@ -48,7 +48,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 13:22 CEST $
+; $Id: 2025-05-05 14:34 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $

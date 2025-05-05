@@ -18,43 +18,23 @@
 ;      header = ana2fitshdr_data(DATETIME=DATETIME, EXTENSION_NAMES=EXTENSION_NAMES, INPUT_DATA=INPUT_DATA, $
 ;        HEADER_INPUT_DATA=HEADER_INPUT_DATA, PROGENITOR_DATA=PROGENITOR_DATA)
 ;
+; PARAMETERS:
+;     Most parameters are described in ANA2FITS.
+;     The only difference is that most of the parameters in ANA2FITS can be arrays, i.e. contain multiple
+;     datasets/windows, whereas the parameters in this function are for one dataset/window only.
+;     Parameters not described in ANA2FITS are described here.
+;
 ; INPUTS:
 ;      DATETIME: Date and time string.
-;      EXTENSION_NAMES: A string array containing the names of the 6 possible extensions.
-;
-; KEYWORDS:
-;      SAVE_DATA: If set, then the data cube is saved into the data extension.
-;              Default is not to save it and use the external extension mechanism instead.
-;
-; OPTIONAL INPUTS:
-;      HEADER_INPUT_DATA: The header (string array), that belongs to either INPUT_DATA or PROGENITOR_DATA,
-;            respectively. If not provided a generic header will be created.
-;      INPUT_DATA: Data Array. Up to 7-dimensional data array.
-;            This is the data array that was used in xcfit_block and comes with the ANA structure or file.
-;            The absorbed dimension (e.g. spectrum) must be in the first dimension.
-;            This input will be ignored if PROGENITOR_DATA is provided.
-;      PROGENITOR_DATA: If this is provided, this data array will be saved into the data extension.
-;            This is used to store the original progenitor data, instead of the possibly transformed
-;            data array, that xcfit_block requires. I.e. the absorbed dimension (e.g. spectrum) does
-;            not need to be in the first dimension.
-;            FITS2ANA will then transform the data cube when read back into memory,
-;            so that it can be used in xcfit_block.
-;
-;            PROGENITOR_DATA may also be a scalar number, in that case, it is assumed that HEADER_INPUT_DATA
-;            contains a link to the data (e.g. url). And the program uses HEADER_INPUT_DATA as it is
-;            and won't create a new header. If PROGENITOR_DATA is a scalar number and HEADER_INPUT_DATA
-;            is not provided, the data extension is not saved at all.
-;      If neither INPUT_DATA nor PROGENITOR_DATA is provided or PROGENITOR_DATA is a scalar number, then
-;      HEADER_INPUT_DATA is assumed to include a link to PROGENITOR_DATA, if this is a scalar number,
-;      or to INPUT_DATA if neither is provided. And only a scalar number will be saved as the data.
-;      In this case the keywords NAXIS and NAXISn will be kept from HEADER_INPUT_DATA.
-;      If none of the optional inputs are provided, the data extension will not be saved.
+;      EXTENSION_NAMES: String array with the names of the 6 other extensions of the same dataset/window.
 ;
 ; OUTPUTS:
 ;      a fits header (string array), may be an empty string.
 ;
 ; OPTIONAL OUTPUTS:
-;      DATA_ARRAY: Contains the data array that should be saved into the data extension, if any.
+;      DATA_ARRAY: Contains the data array that will be saved into the data extension, if any.
+;                  I.e. if SAVE_DATA is set, this will be INPUT_DATA or, if provided, PROGENITOR_DATA.
+;                  This will be zero if neither of these is provided or if SAVE_DATA is not set.
 ;
 ; CALLS:
 ;      prits_tools.parcheck, oslo_fits_util, mkhdr, fxpar
@@ -62,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-04-30 11:49 CEST $
+; $Id: 2025-05-05 14:34 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
