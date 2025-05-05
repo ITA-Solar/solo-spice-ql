@@ -24,9 +24,14 @@
 ;           DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
 ;
 ; PARAMETERS:
-;     All parameters are described in ANA2FITS.
+;     Most parameters are described in ANA2FITS.
 ;     The only difference is that most of the parameters in ANA2FITS can be arrays, i.e. contain multiple
 ;     datasets/windows, whereas the parameters in this function are for one dataset/window only.
+;     Parameters not described in ANA2FITS are described here.
+;
+; INPUTS:
+;      datetime: Date and time string.
+;      EXTENSION_NAMES: String array with the names of the extensions in the FITS file.
 ;
 ; OPTIONAL INPUTS:
 ;      WCS: Structure. The structure from which the WCS parameters
@@ -43,7 +48,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 11:48 CEST $
+; $Id: 2025-05-05 11:54 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
