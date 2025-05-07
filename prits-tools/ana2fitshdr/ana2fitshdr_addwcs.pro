@@ -34,6 +34,8 @@
 ;             first dimension's type. The absorbed dimension is not included.
 ;      CONST: If set, the WCS parameters will have 'FIT PARAMETER' as the
 ;             first dimension's type. The absorbed dimension is not included.
+;      RESIDUAL: If set, the WCS parameters will be correct for residual extension,
+;             i.e. the same as for the DATA extension, but different UCD.
 ;
 ; OUTPUTS:
 ;      String array. The HDR with the added WCS parameters.
@@ -46,16 +48,16 @@
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-07 14:37 CEST $
 
 FUNCTION ana2fitshdr_addwcs, hdr, wcs, $
-  result = result, xdim1 = xdim1, weights = weights, include = include, const = const
+  result = result, xdim1 = xdim1, weights = weights, include = include, const = const, residual = residual
   prits_tools.parcheck, hdr, 1, 'HDR', 'STRING', 1
   prits_tools.parcheck, wcs, 2, 'WCS', 8, 0, /optional
   IF total([keyword_set(result), keyword_set(xdim1), keyword_set(weights), $
-    keyword_set(include), keyword_set(const)]) NE 1 THEN BEGIN
+    keyword_set(include), keyword_set(const), keyword_set(residual)]) NE 1 THEN BEGIN
     message, ['You must set exactly one of the keywords', $
-      'RESULT, XDIM1, WEIGHTS, INCLUDE, CONST'], $
+      'RESULT, XDIM1, WEIGHTS, INCLUDE, CONST, RESIDUAL'], $
       /informational
     return, hdr
   ENDIF
