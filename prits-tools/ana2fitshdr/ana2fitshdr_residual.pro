@@ -37,7 +37,7 @@
 ; HISTORY:
 ;      Ver. 1, 5-May-2025, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:54 CEST $
+; $Id: 2025-05-07 14:34 CEST $
 
 FUNCTION ana2fitshdr_residual, datetime = datetime, extension_names = extension_names, residual = residual, wcs = wcs, SAVE_RESIDUALS = SAVE_RESIDUALS
   prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
@@ -67,7 +67,7 @@ FUNCTION ana2fitshdr_residual, datetime = datetime, extension_names = extension_
 
   fits_util.add, hdr, ' ', ' '
   fits_util.add, hdr, 'BTYPE', 'RESIDUAL', 'Type of data'
-  fits_util.add, hdr, 'UCD', 'stat.weight', 'Unified Content Descriptors v1.23'
+  fits_util.add, hdr, 'UCD', 'stat.fit.residual', 'Unified Content Descriptors v1.23'
   fits_util.add, hdr, 'BUNIT', ' ', 'Units of the data'
 
   fits_util.clean_header, hdr
