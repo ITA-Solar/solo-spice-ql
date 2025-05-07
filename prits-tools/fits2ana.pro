@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:37 CEST $
+; $Id: 2025-05-07 14:03 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -283,15 +283,15 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
     dataext_split = strsplit(DATAEXT, ';', count = count, /extract)
     IF count EQ 1 THEN BEGIN
       DATA_EXT_PATH = ''
-      DATAEXT = dataext_split[0]
+      DATAEXT_prg = dataext_split[0]
     ENDIF ELSE IF count EQ 2 THEN BEGIN
       DATA_EXT_PATH = dataext_split[0]
-      DATAEXT = dataext_split[1]
+      DATAEXT_prg = dataext_split[1]
     ENDIF ELSE BEGIN
       IF loud THEN message, 'Unknown format of external extension: ' + DATAEXT, /info
       IF loud THEN message, 'Only using first and last part', /info
       DATA_EXT_PATH = dataext_split[0]
-      DATAEXT = dataext_split[-1]
+      DATAEXT_prg = dataext_split[-1]
     ENDELSE
 
     extension = where(fits_content.extname EQ DATAEXT, count)
@@ -313,18 +313,18 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       size_data = size(data)
       IF ~headers_only && size_data[0] EQ 0 THEN BEGIN
         IF loud THEN message, 'Loading data cube from external extension', /info
-        prg_file = spice_find_file(DATA_EXT_PATH)
+        prg_file = spice_find_file(DATAEXT)
         prg_file = prg_file[0]
         IF prg_file NE '' && file_exist(prg_file) THEN BEGIN
           IF ~quiet THEN message, 'Reading file : ' + prg_file, /info
           fits_open, prg_file, prg_file_content
           fits_close, prg_file_content
-          ind = where(prg_file_content.extname EQ DATAEXT, count_prg)
+          ind = where(prg_file_content.extname EQ DATAEXT_prg, count_prg)
           IF count_prg GT 0 THEN BEGIN
             data = readfits(prg_file, hdr, ext = ind[0], silent = quiet)
             size_data = size(data)
           ENDIF ELSE BEGIN
-            IF ~quiet THEN message, 'Did not find external extension "' + DATAEXT + '" in the progenitor file.', /info
+            IF ~quiet THEN message, 'Did not find external extension "' + DATAEXT_prg + '" in the progenitor file.', /info
           ENDELSE
         ENDIF ELSE BEGIN ; prg_file NE ''
           IF ~quiet THEN message, 'Did not find progenitor file: ' + prg_file, /info
