@@ -53,7 +53,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:52 CEST $
+; $Id: 2025-05-07 14:35 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -241,8 +241,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   ; Create residual header
   ; ------
 
-  ; hdr = ana2fitshdr_residual(datetime = datetime, extension_names = extension_names, residual = residual, wcs = wcs, SAVE_RESIDUALS = SAVE_RESIDUALS)
-  hdr = ''
+  hdr = ana2fitshdr_residual(datetime = datetime, extension_names = extension_names, residual = residual, wcs = wcs, SAVE_RESIDUALS = SAVE_RESIDUALS)
   all_headers[5] = ptr_new(hdr)
   IF hdr[0] EQ '' THEN extension_names[5] = ''
 
