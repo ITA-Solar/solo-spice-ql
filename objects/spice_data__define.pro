@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-04-28 11:55 CEST $
+; $Id: 2025-05-07 14:01 CEST $
 
 ;+
 ; Description:
@@ -379,9 +379,9 @@ END
 ;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
 ;                 that using the line list when fitting fails in many cases.
 ;
-;     SAVE_XDIM1: If set, then the XDIM1 cube will be saved into the FITS file. Default is
-;                 not to save it. This cube can be recalculated using the WCS parameters given either
-;                 in HEADER_INPUT_DATA.
+;      SAVE_RESIDUALS: If set, the residuals will be saved into the FITS file. The default is
+;                 not to save it. This cube can be recalculated using the original data and the fit parameter.
+;                 To save the residuals can be useful in case the original data may not be available when reading the file.
 ;                 This keyword can also be an array of zeros and ones,
 ;                 setting/unsetting this feature separately for each window.
 ;     PRINT_HEADERS: If set, then all headers created will be printed to the terminal.
@@ -405,7 +405,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   force_version = force_version, top_dir = top_dir, path_index = path_index, save_not = save_not, $
   all_ana = all_ana, all_result_headers = all_result_headers, all_data_headers = all_data_headers, all_proc_steps = all_proc_steps, $
   no_line_list = no_line_list, $
-  SAVE_XDIM1 = SAVE_XDIM1, PRINT_HEADERS = PRINT_HEADERS, $
+  SAVE_RESIDUALS = SAVE_RESIDUALS, PRINT_HEADERS = PRINT_HEADERS, $
   progress_widget = progress_widget, group_leader = group_leader, pipeline_dir = pipeline_dir, quiet = quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
@@ -544,12 +544,11 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
 
       ana2fits, ana, FILEPATH_OUT = file, $
         N_WINDOWS = n_elements(window), WINNO = iwindow, $
-        TYPE_XDIM1 = 'WAVE', $
         DATA_EXT_PATH = relative_path, $
         IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', VERSION = number_version_l3, $
         PROC_STEPS = PROC_STEPS, creator = creator, $
         PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = self.get_header(window_index), $
-        SAVE_XDIM1 = SAVE_XDIM1, PRINT_HEADERS = PRINT_HEADERS, $
+        SAVE_RESIDUALS = SAVE_RESIDUALS, PRINT_HEADERS = PRINT_HEADERS, $
         SAVE_NOT = save_not, $
         headers_results = headers_results, headers_data = headers_data
 
