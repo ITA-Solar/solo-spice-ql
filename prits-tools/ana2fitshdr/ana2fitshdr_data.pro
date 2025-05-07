@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:52 CEST $
+; $Id: 2025-05-07 14:02 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
@@ -100,7 +100,6 @@ FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_name
   IF keyword_set(header_input_data) THEN BEGIN
     hdr_addition = header_input_data
 
-    fits_util.add, hdr, 'EXTNAME', fxpar(header_input_data, 'EXTNAME', missing = ''), 'Extension name'
     fits_util.add, hdr, 'XNAXIS', fxpar(header_input_data, 'NAXIS', missing = 0), 'Number of data axes in external extension'
     naxisn = fxpar(header_input_data, 'NAXIS*', missing = 0)
     FOR i = 0, n_elements(naxisn) - 1 DO fits_util.add, hdr, 'XNAXIS' + strtrim(i + 1, 2), naxisn[i]
