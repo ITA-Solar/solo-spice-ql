@@ -16,22 +16,7 @@
 ;      FITS -- utility
 ;
 ; CALLING SEQUENCE:
-;         ana2fits, ANA, filepath_out = filepath_out, $
-;         n_windows = n_windows, winno = winno, $
-;         data_id = data_id, XTYPE1 = XTYPE1, $
-;         DATA_EXT_PATH = DATA_EXT_PATH, $
-;         is_extension = is_extension, level = level, version = version, creator = creator, $
-;         proc_steps = proc_steps, proj_keywords = proj_keywords, $
-;         xdim1 = xdim1, input_data = input_data, fit = fit, $
-;         result = result, residual = residual, weights = weights, include = include, $
-;         const = const, filename_ana = filename_ana, datasource = datasource, $
-;         definition = definition, missing = missing, label = label, history = history, $
-;         progenitor_data = progenitor_data, header_input_data = header_input_data, $
-;         SAVE_RESIDUALS = SAVE_RESIDUALS, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
-;         save_not = save_not, $
-;         headers_results = headers_results, headers_data = headers_data, $
-;         headers_weights = headers_weights, headers_includes = headers_includes, $
-;         headers_constants = headers_constants, headers_residuals = headers_residuals
+;         see procedure definition
 ;
 ; INPUTS:
 ;      ANA: An ANA object. (see also mk_analysis() documentation)
@@ -196,21 +181,23 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 11:40 CEST $
+; $Id: 2025-05-08 11:43 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
-  n_windows = n_windows, winno = winno, $
-  data_id = data_id, XTYPE1 = XTYPE1, $
+  header_input_data = header_input_data, $
   DATA_EXT_PATH = DATA_EXT_PATH, $
-  is_extension = is_extension, level = level, version = version, creator = creator, $
+  XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, data_id = data_id, $
+  is_extension = is_extension, n_windows = n_windows, winno = winno, $
+  level = level, version = version, creator = creator, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
-  xdim1 = xdim1, input_data = input_data, fit = fit, $
-  result = result, residual = residual, weights = weights, include = include, $
-  const = const, filename_ana = filename_ana, datasource = datasource, $
-  definition = definition, missing = missing, label = label, history = history, $
-  progenitor_data = progenitor_data, header_input_data = header_input_data, $
   SAVE_RESIDUALS = SAVE_RESIDUALS, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
   save_not = save_not, $
+  result = result, fit = fit, $
+  progenitor_data = progenitor_data, input_data = input_data, $
+  xdim1 = xdim1, residual = residual, weights = weights, $
+  include = include, const = const, $
+  filename_ana = filename_ana, datasource = datasource, $
+  definition = definition, missing = missing, label = label, history = history, $
   headers_results = headers_results, headers_data = headers_data, $
   headers_weights = headers_weights, headers_includes = headers_includes, $
   headers_constants = headers_constants, headers_residuals = headers_residuals
