@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-08 11:17 CEST $
+; $Id: 2025-05-08 11:23 CEST $
 
 ;+
 ; Description:
@@ -404,7 +404,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
-  version = 5 ; PLEASE increase this number when editing the code
+  version = 6 ; PLEASE increase this number when editing the code
 
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name = 'spice_create_l3_progress', /optional
   IF n_elements(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget = spice_create_l3_progress(1, group_leader = group_leader)
