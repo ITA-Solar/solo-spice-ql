@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-07 14:01 CEST $
+; $Id: 2025-05-08 11:17 CEST $
 
 ;+
 ; Description:
@@ -370,14 +370,8 @@ END
 ;     position: If set, then the line position is NOT represented by the velocity
 ;                 relative to a lab wavelength, but as the wavelength.
 ;     no_line_list: If set, then no predefined line list will be used to define gaussian fit components.
+;                 Instead of the line list, the function spice_gt_peaks() will be used to find peaks.
 ;                 By default, the list returned by the function spice_line_list() will be used.
-;
-;                 IMPORTANT NOTE: For now, this keyword is set by default. One has to set it explicitly to zero
-;                 if one wants to use the predefined line list. This implementation may change in the future.
-;
-;                 Due to instrument temperature variations the wavelength scale changes significantly during
-;                 the Solar Orbiter orbit, and this variation is not accounted for in L2 files. The wavelength shift is so large
-;                 that using the line list when fitting fails in many cases.
 ;
 ;      SAVE_RESIDUALS: If set, the residuals will be saved into the FITS file. The default is
 ;                 not to save it. This cube can be recalculated using the original data and the fit parameter.
@@ -415,8 +409,6 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name = 'spice_create_l3_progress', /optional
   IF n_elements(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget = spice_create_l3_progress(1, group_leader = group_leader)
   prits_tools.parcheck, force_version, 0, "force_version", 'integers', 0, minval = 0, maxval = 99, /optional
-
-  IF n_elements(no_line_list) EQ 0 THEN no_line_list = 1 ; See note for this keyword in documentation
 
   IF n_elements(window) EQ 0 THEN window = indgen(self.get_number_windows())
   IF arg_present(all_ana) THEN collect_ana = 1 ELSE collect_ana = 0
