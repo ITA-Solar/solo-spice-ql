@@ -7,24 +7,23 @@
 ;      [level P FITS file](https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-9.html).
 ;      The FITS file will contain up to 6 extensions per ANA, where the first contains the results and
 ;      the fit components as header keywords. The resulting FITS file can be converted into one or more
-;      ANA structures with the procedure [[FITS2ANA|FITS2ANA]].
+;      ANA structures with the procedure FITS2ANA.
 ;
 ;      The input can be either an ANA structure (see also mk_analysis() documentation), or an array of such
 ;      structures, or the input can be provided as separate data cubes,
-;      see [[this paragraph|ANA2FITS#optional-inputsoutputs]] for more details.
+;      see paragraph 'OPTIONAL INPUTS/OUTPUTS' for more details.
 ;
 ;      It is strongly recommended that the input [[HEADER_INPUT_DATA|ANA2FITS#HEADER_INPUT_DATA]] is provided.
 ;      This is needed to get the WCS parameters of the original data. The WCS is required to recreate the
 ;      XDIM1 cube, which contains the values of the absorbed dimension (i.e. the wavelength) for each pixel
 ;      of the data cube. This, in turn, is required for the CFIT routines. Without this cube, any adjustments
 ;       to the fit components or further fitting won't be possible.
-
+;
 ;      By default, the original data cube is not saved into the level P FITS file, but referenced to as an
 ;      external extension. See also [Solarnet recommendations](https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-7.html).
 ;      The keyword DATA_EXT_PATH must be provided if the data is not saved in this FITS file. This saves disk space,
 ;      but makes the user of the level P FITS file dependent on having the original data available. The data cube
 ;      can be saved into the FITS file by setting the keyword SAVE_DATA.
-
 ;
 ;      It is possible to call this procedure multiple times with the same filepath_out. The windows will then be
 ;      appended to the existing FITS file, if the keyword IS_EXTENSION is set, otherwise the FITS file will be
@@ -203,7 +202,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-05-08 14:41 CEST $
+; $Id: 2025-05-08 14:51 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $
