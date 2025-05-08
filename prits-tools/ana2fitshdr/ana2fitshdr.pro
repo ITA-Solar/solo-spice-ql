@@ -21,18 +21,7 @@
 ;      FITS -- utility -- ANA2FITS
 ;
 ; CALLING SEQUENCE:
-;      headers = ana2fitshdr(ANA, FILENAME_OUT=FILENAME_OUT, $
-;           N_WINDOWS=N_WINDOWS, WINNO=WINNO, $
-;           DATA_ID=DATA_ID, XTYPE1=XTYPE1, $
-;           IS_EXTENSION=IS_EXTENSION, LEVEL=LEVEL, VERSION=VERSION, $
-;           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-;           XDIM1=XDIM1, INPUT_DATA=INPUT_DATA, FIT=FIT, $
-;           RESULT=RESULT, RESIDUAL=RESIDUAL, WEIGHTS=WEIGHTS, INCLUDE=INCLUDE, $
-;           CONST=CONST, FILENAME_ANA=FILENAME_ANA, DATASOURCE=DATASOURCE, $
-;           DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL, HISTORY=HISTORY, $
-;           PROGENITOR_DATA=PROGENITOR_DATA, HEADER_INPUT_DATA=HEADER_INPUT_DATA, $
-;           SAVE_RESIDUALS=SAVE_RESIDUALS, SAVE_DATA=SAVE_DATA, PRINT_HEADERS=PRINT_HEADERS, $
-;           DATA_ARRAY=DATA_ARRAY)
+;      see function definition
 ;
 ; PARAMETERS:
 ;     All parameters are described in ANA2FITS.
@@ -53,11 +42,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-07 14:35 CEST $
+; $Id: 2025-05-08 12:49 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
-  data_id = data_id, XTYPE1 = XTYPE1, $
+  data_id = data_id, XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, $
   DATA_EXT_PATH = DATA_EXT_PATH, $
   is_extension = is_extension, level = level, version = version, creator = creator, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
@@ -83,6 +72,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0
   prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0
   prits_tools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', 0
+  prits_tools.parcheck, XDIMEN1, 0, 'XDIMEN1', 'STRING', 0, /optional
   prits_tools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
   prits_tools.parcheck, data_id, 0, 'DATA_ID', 'STRING', 0, result = error
   IF error[0] NE '' THEN BEGIN
@@ -184,7 +174,11 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     ' residuals']
   IF ~keyword_set(SAVE_DATA) THEN extension_names[1] = DATA_EXT_PATH
 
-  wcs = ana_wcs_get_transform(XTYPE1, header_input_data)
+  wcs = ana_wcs_get_transform(XTYPE1, header_input_data, ind_xdim1 = ind_xdim1)
+  IF n_elements(XDIMEN1) EQ 0 THEN BEGIN
+    XDIMEN1 = ind_xdim1
+    IF XDIMEN1 GE 0 THEN XDIMEN1 += 1
+  ENDIF
 
   all_headers = ptrarr(6)
 
@@ -194,7 +188,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
 
   hdr = ana2fitshdr_results(result = result, fit = fit, datetime = datetime, $
     filename_out = filename_out, n_windows = n_windows, winno = winno, $
-    DATA_EXT_PATH = DATA_EXT_PATH, $
+    DATA_EXT_PATH = DATA_EXT_PATH, XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, $
     extension_names = extension_names, is_extension = is_extension, $
     header_input_data = header_input_data, wcs = wcs, $
     level = level, version = version, creator = creator, $

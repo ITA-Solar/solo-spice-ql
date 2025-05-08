@@ -14,14 +14,7 @@
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
 ; CALLING SEQUENCE:
-;      header = ana2fitshdr_results(RESULT=RESULT, FIT=FIT, datetime=datetime, $
-;           filename_out=filename_out, n_windows=n_windows, winno=winno, EXTENSION_NAMES=EXTENSION_NAMES, $
-;           /IS_EXTENSION, $
-;           HEADER_INPUT_DATA=HEADER_INPUT_DATA, WCS=WCS, $
-;           LEVEL=LEVEL, VERSION=VERSION, CREATOR=CREATOR, $
-;           PROC_STEPS=PROC_STEPS, PROJ_KEYWORDS=PROJ_KEYWORDS, $
-;           HISTORY=HISTORY, FILENAME_ANA=FILENAME_ANA, $
-;           DATASOURCE=DATASOURCE, DEFINITION=DEFINITION, MISSING=MISSING, LABEL=LABEL)
+;      see function definition
 ;
 ; PARAMETERS:
 ;     Most parameters are described in ANA2FITS.
@@ -48,11 +41,11 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-05 14:52 CEST $
+; $Id: 2025-05-08 12:49 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
-  DATA_EXT_PATH = DATA_EXT_PATH, $
+  DATA_EXT_PATH = DATA_EXT_PATH, XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, $
   is_extension = is_extension, $
   header_input_data = header_input_data, wcs = wcs, $
   level = level, version = version, creator = creator, $
@@ -99,12 +92,7 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'EXTNAME', extension_names[0], 'Extension name'
   fits_util.add, hdr, 'FILENAME', file_basename(filename_out), 'Filename of this FITS file'
 
-  IF header_exists THEN BEGIN
-    fits_util.add, hdr, 'PARENTXT', DATA_EXT_PATH, 'Parent filename and path;extension name'
-    bunit = fxpar(header_input_data, 'BUNIT', missing = '')
-  ENDIF ELSE BEGIN
-    bunit = ''
-  ENDELSE
+  fits_util.add, hdr, 'PARENTXT', DATA_EXT_PATH, 'Parent filename and path;extension name'
 
   fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
   fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of original data'
@@ -114,12 +102,8 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'RESIDEXT', extension_names[5], 'Extension name of residuals'
 
   fits_util.add, hdr, '', ' '
-  IF wcs_exists THEN BEGIN
-    cunit_absorb = wcs.cunit[0]
-    fits_util.add, hdr, 'XTYPE1', wcs.CTYPE[0], 'Type of 1st dim absorbed by analysis'
-  ENDIF ELSE BEGIN
-    cunit_absorb = ''
-  ENDELSE
+  fits_util.add, hdr, 'XTYPE1', XTYPE1, 'Type of 1st dim absorbed by analysis'
+  fits_util.add, hdr, 'XDIMEN1', XDIMEN1, 'Number (starting at 1) of 1st dim absorbed by analysis'
 
   fits_util.add, hdr, 'NWIN', n_windows, 'Number of windows'
   fits_util.add, hdr, 'WINNO', winno, 'Win no (starting at 0) within this study in this FITS file'
@@ -135,8 +119,16 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
     IF instrume NE '' THEN fits_util.add, hdr, 'INSTRUME', instrume, 'Instrument name'
     OBSRVTRY = fxpar(header_input_data, 'OBSRVTRY', missing = '')
     IF OBSRVTRY NE '' THEN fits_util.add, hdr, 'OBSRVTRY', OBSRVTRY, 'Observatory name'
+    bunit = fxpar(header_input_data, 'BUNIT', missing = '')
   ENDIF ELSE BEGIN
     fits_util.add, hdr, 'DATE-BEG', '', 'Beginning of data acquisition'
+    bunit = ''
+  ENDELSE
+
+  IF wcs_exists THEN BEGIN
+    cunit_absorb = wcs.cunit[0]
+  ENDIF ELSE BEGIN
+    cunit_absorb = ''
   ENDELSE
 
   IF keyword_set(creator) THEN $

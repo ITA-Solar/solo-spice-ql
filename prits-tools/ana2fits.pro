@@ -181,7 +181,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-05-08 11:43 CEST $
+; $Id: 2025-05-08 12:49 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $
@@ -328,8 +328,9 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     IF proc_st_ptr THEN PROC_STEPS_use = *proc_steps[iwindow] ELSE IF n_elements(proc_steps) GT 0 THEN PROC_STEPS_use = proc_steps
     IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *proj_keywords[iwindow] ELSE IF n_elements(proj_keywords) GT 0 THEN PROJ_KEYWORDS_use = proj_keywords
 
-    IF keyword_set(data_id) THEN data_id_use = data_id[iwindow]
+    IF keyword_set(data_id) THEN IF n_elements(data_id) GT 1 THEN data_id_use = data_id[iwindow] ELSE data_id_use = data_id
     IF n_elements(XTYPE1) GT 1 THEN XTYPE1_use = XTYPE1[iwindow] ELSE XTYPE1_use = XTYPE1
+    IF keyword_set(XDIMEN1) THEN IF n_elements(XDIMEN1) GT 1 THEN XDIMEN1_use = XDIMEN1[iwindow] ELSE XDIMEN1_use = XDIMEN1
     IF n_elements(SAVE_DATA) GT 1 THEN SAVE_DATA_use = SAVE_DATA[iwindow] ELSE $
       IF n_elements(SAVE_DATA) EQ 1 THEN SAVE_DATA_use = SAVE_DATA
     IF n_elements(SAVE_RESIDUALS) GT 1 THEN SAVE_RESIDUALS_use = SAVE_RESIDUALS[iwindow] ELSE $
@@ -342,7 +343,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     IF n_elements(ANA) THEN BEGIN
       headers = ana2fitshdr(ANA[iwindow], filename_out = filepath_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
-        data_id = data_id_use, XTYPE1 = XTYPE1_use, $
+        data_id = data_id_use, XTYPE1 = XTYPE1_use, XDIMEN1 = XDIMEN1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
         is_extension = extension, level = level, version = version, creator = creator, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
@@ -356,7 +357,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     ENDIF ELSE BEGIN
       headers = ana2fitshdr(filename_out = filepath_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
-        data_id = data_id_use, XTYPE1 = XTYPE1_use, $
+        data_id = data_id_use, XTYPE1 = XTYPE1_use, XDIMEN1 = XDIMEN1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
         is_extension = extension, level = level, version = version, creator = creator, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
