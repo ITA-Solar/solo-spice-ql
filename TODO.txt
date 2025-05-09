@@ -1,4 +1,4 @@
-Review routines for inclusion in prits_tools (or other prits_xxx classes):
+Review routines for inclusion in ptools (or other prits_xxx classes):
 
 spice_*
 sdc_*

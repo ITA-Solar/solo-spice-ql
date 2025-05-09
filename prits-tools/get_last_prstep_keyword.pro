@@ -40,13 +40,13 @@
 ; HISTORY:
 ;     22-Jun-2023: Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION get_last_prstep_keyword, header, count = count, pr_keywords = pr_keywords, ind_pr_keywords = ind_pr_keywords, $
   pr_versions = pr_versions, pr_types = pr_types
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, header, 1, "header", 'string', 1
+  ptools.parcheck, header, 1, "header", 'string', 1
 
   pr_keywords = header.extract('^PR(STEP|PROC|PVER|MODE|PARA|REF|LOG|ENV|VER|HSH|BRA|LIB)[1-9][0-9]{0,1}[^ =]?')
   ind_pr_keywords = where(pr_keywords NE '', count)

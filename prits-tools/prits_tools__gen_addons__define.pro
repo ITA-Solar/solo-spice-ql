@@ -1,7 +1,7 @@
-FUNCTION prits_tools::concat_dirs, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10
+FUNCTION ptools::concat_dirs, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10
   COMPILE_OPT STATIC
   result = concat_dir(x1, x2)
-  IF exist(x3) THEN return, prits_tools.concat_dirs(result, x3, x4, x5, x6, x7, x8, x9, x10)
+  IF exist(x3) THEN return, ptools.concat_dirs(result, x3, x4, x5, x6, x7, x8, x9, x10)
   return, result
 END
 
@@ -19,7 +19,7 @@ END
 ; ; from = "..[to c]/..[to b]/..[to a]]/x/y", i.e. "../../../x/y"
 ; ;
 ; ;
-FUNCTION prits_tools::shorten_symlink, link_to_input, link_from_input, verbose = verbose
+FUNCTION ptools::shorten_symlink, link_to_input, link_from_input, verbose = verbose
   link_to = file_expand_path(link_to_input)
   link_from = file_expand_path(link_from_input)
 
@@ -65,20 +65,20 @@ FUNCTION prits_tools::shorten_symlink, link_to_input, link_from_input, verbose =
   return, link
 END
 
-PRO prits_tools::gen_addons_init
+PRO ptools::gen_addons_init
   ; Nothing to do
 END
 
-PRO prits_tools__gen_addons__define
+PRO ptools__gen_addons__define
   COMPILE_OPT STATIC
-  !NULL = {prits_tools__gen_addons, $
+  !NULL = {ptools__gen_addons, $
     dummy: 0b $
     }
 END
 
 IF getenv("USER") EQ 'steinhh' THEN BEGIN
-  COMMON prits_tools, gen_addons_pt
-  IF n_elements(gen_addons_pt) EQ 0 THEN gen_addons_pt = prits_tools()
+  COMMON ptools, gen_addons_pt
+  IF n_elements(gen_addons_pt) EQ 0 THEN gen_addons_pt = ptools()
   pt = gen_addons_pt
   cd, '$HOME/tmp/link-test'
   ff = pt.shorten_symlink('A/a', 'A/a', /verbose)

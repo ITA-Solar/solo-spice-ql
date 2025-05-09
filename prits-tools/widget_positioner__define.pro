@@ -32,7 +32,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 ;+
 ; Description:
@@ -51,8 +51,8 @@
 FUNCTION widget_positioner::init, widget, parent = parent
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, widget, 1, "widget", ['integers'], 0, minval = 0
-  prits_tools.parcheck, parent, 0, "parent", ['integers'], 0, minval = 0, /optional
+  ptools.parcheck, widget, 1, "widget", ['integers'], 0, minval = 0
+  ptools.parcheck, parent, 0, "parent", ['integers'], 0, minval = 0, /optional
   self.widget = widget
   IF n_elements(parent) EQ 1 THEN self.parent = parent ELSE self.parent = -1
   self.monitor = obj_new('IDLsysMonitorInfo')
@@ -114,9 +114,9 @@ PRO widget_positioner::position, xoffset = xoffset, yoffset = yoffset, $
   ; Positions the widget relative to parent or screen if no parent given
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, xoffset, 0, "xoffset", ['numeric'], 0, default = 50
-  prits_tools.parcheck, yoffset, 0, "yoffset", ['numeric'], 0, default = 50
-  prits_tools.parcheck, n_subplot, 0, "n_subplot", ['integers'], 0, default = 0
+  ptools.parcheck, xoffset, 0, "xoffset", ['numeric'], 0, default = 50
+  ptools.parcheck, yoffset, 0, "yoffset", ['numeric'], 0, default = 50
+  ptools.parcheck, n_subplot, 0, "n_subplot", ['integers'], 0, default = 0
 
   IF self.widget LT 0 THEN BEGIN
     message, 'No widget provided. Doing nothing.', /informational
@@ -216,7 +216,7 @@ PRO widget_positioner::set_widget, widget
   ; Sets a new widget that can be positioned.
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, widget, 1, "widget", ['integers'], 0, minval = 0
+  ptools.parcheck, widget, 1, "widget", ['integers'], 0, minval = 0
   self.widget = widget
 END
 
@@ -231,7 +231,7 @@ PRO widget_positioner::set_parent, parent
   ; Sets a new parent widget to which the widget should be relatively positioned. Set to a negative value to remove parent.
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, parent, 1, "parent", ['integers'], 0
+  ptools.parcheck, parent, 1, "parent", ['integers'], 0
   self.parent = parent
 END
 

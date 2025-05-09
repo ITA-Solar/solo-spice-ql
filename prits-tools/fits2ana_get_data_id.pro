@@ -21,7 +21,7 @@
 ;     String array. The data_ids of the different windows.
 ;
 ; CALLS:
-;     prits_tools.parcheck
+;     ptools.parcheck
 ;
 ; COMMON BLOCKS:
 ;
@@ -32,10 +32,10 @@
 ; HISTORY:
 ;     2-Nov-2023: Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION fits2ana_get_data_id, fits_content
-  prits_tools.parcheck, fits_content, 1, "fits_content", 8, 0, /optional
+  ptools.parcheck, fits_content, 1, "fits_content", 8, 0, /optional
   IF n_elements(fits_content) EQ 0 THEN return, ['']
 
   ind_results = where(fits_content.extname.Contains(' results'), count)

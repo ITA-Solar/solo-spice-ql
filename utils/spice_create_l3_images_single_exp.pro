@@ -29,20 +29,20 @@
 ;      filename: The filename of the png file.
 ;
 ; CALLS:
-;      fxpar, fitshead2wcs, prits_tools.write_image_real_size
+;      fxpar, fitshead2wcs, ptools.write_image_real_size
 ;
 ; HISTORY:
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-02-27 14:20 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 PRO spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot, filename = filename, $
   oJpg = oJpg
-  prits_tools.parcheck, image_data, 1, "image_data", 'numeric', 2
-  prits_tools.parcheck, l2_header, 2, "l2_header", 'string', 1
-  prits_tools.parcheck, filename_base, 3, "filename_base", 'string', 0
-  prits_tools.parcheck, oJpg, 0, "oJpg", 11, 0, object_name = 'spice_jpg_exp', default = spice_jpg_exp()
+  ptools.parcheck, image_data, 1, "image_data", 'numeric', 2
+  ptools.parcheck, l2_header, 2, "l2_header", 'string', 1
+  ptools.parcheck, filename_base, 3, "filename_base", 'string', 0
+  ptools.parcheck, oJpg, 0, "oJpg", 11, 0, object_name = 'spice_jpg_exp', default = spice_jpg_exp()
 
   wcs = fitshead2wcs(l2_header)
 
@@ -72,7 +72,7 @@ PRO spice_create_l3_images_single_exp, image_data, l2_header, filename_base, sho
 
   filename = filename.replace('-int.jpg', '-int-thumb.png')
   format = 'PNG'
-  prits_tools.write_image_real_size, image_data, filename, $
+  ptools.write_image_real_size, image_data, filename, $
     remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, fit_trend = fit_trend, $
     value_max = value_max, value_min = value_min, colortable = colortable, format = format, $
     height = 64, border = 0, reverse_colortable = reverse_colortable, /no_axis, $

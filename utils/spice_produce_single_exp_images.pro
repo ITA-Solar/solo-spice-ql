@@ -25,8 +25,8 @@ END
 FUNCTION spsei_test_for_existing_images, l2_file, l2_topdir, level3qljpg_f
   outdir = spsei_get_outdir(l2_file, l2_topdir, level3qljpg_f)
   ; Match from date up to but not including .fits
-  search_pattern = prits_tools.regex_replace(l2_file, ".*([0-9]{8}T[0-9]{6}.*).fits", "*$1*.jpg")
-  search_pattern = prits_tools.regex_replace(search_pattern, "_V[0-9]{2}_", "_Vxx_")
+  search_pattern = ptools.regex_replace(l2_file, ".*([0-9]{8}T[0-9]{6}.*).fits", "*$1*.jpg")
+  search_pattern = ptools.regex_replace(search_pattern, "_V[0-9]{2}_", "_Vxx_")
   files = file_search(outdir + '/' + search_pattern, count = nfiles)
   IF nfiles EQ 0 THEN return, 0
   info_l2 = file_info(l2_file)
@@ -43,7 +43,7 @@ PRO spsei_process_file, l2_file, l2_topdir, level3qljpg_f, force = force
     ELSE BEGIN
       box_message, ['', newer, 'not processing (but rsyncing if necessary)', '']
       COMMON spsei_process_file, last_rsync
-      prits_tools.default, last_rsync, ""
+      ptools.default, last_rsync, ""
       IF last_rsync NE outdir THEN spsei_rsync_to_other_server, outdir
       last_rsync = outdir
       return
@@ -63,7 +63,7 @@ PRO spsei_set_production_conditions, l2_topdir, level3qljpg_f, date, forever = f
     message, "This is a production script, only to be run with steinhh's paths"
   l2_topdir = '$HOME/spice_home/fits/level2'
   level3qljpg_f = '$HOME/spice_home/quicklook/level3qljpg_f'
-  prits_tools.default, date, ''
+  ptools.default, date, ''
   forever = 1
 END
 
@@ -89,8 +89,8 @@ PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = for
   box_message, "Only processing files matching pattern: " + pattern
 
   ; Implicitly checking that directories exist:
-  l2_topdir = prits_tools.physical_path(concat_dir(l2_topdir, date))
-  level3qljpg_f = prits_tools.physical_path(concat_dir(level3qljpg_f, date))
+  l2_topdir = ptools.physical_path(concat_dir(l2_topdir, date))
+  level3qljpg_f = ptools.physical_path(concat_dir(level3qljpg_f, date))
 
   REPEAT BEGIN
     l2_files = file_search(l2_topdir, 'solo_L2*exp*.fits', count = nfiles)

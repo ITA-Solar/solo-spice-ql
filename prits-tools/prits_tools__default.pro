@@ -1,14 +1,14 @@
 ;+
 ; Project     : PRITS-TOOLS
 ;
-; Name        : PRITS_TOOLS.DEFAULT
+; Name        : PTOOLS.DEFAULT
 ;
 ; Purpose     : Supply default values for variables
 ;
 ; Explanation : If the first parameter is not defined, it is
 ;		set to the value of the second parameter.
 ;
-; Use         : PRITS_TOOLS.DEFAULT,VARIABLE,DEFAULT_VALUE
+; Use         : PTOOLS.DEFAULT,VARIABLE,DEFAULT_VALUE
 ;
 ; Inputs      : VARIABLE : The variable that could take on the default value
 ;
@@ -41,7 +41,7 @@
 ; Version     : 2, 2023-04-07
 ;-
 
-PRO prits_tools::default, VAR, VAL
+PRO ptools::default, VAR, VAL
   COMPILE_OPT STATIC
 
   IF n_params() LT 2 THEN message, "Use: DEFAULT,VARIABLE,DEFAULT_VALUE"

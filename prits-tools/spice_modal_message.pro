@@ -1,5 +1,5 @@
 ; ; TODO: documentation & get better fonts
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 PRO spice_modal_message__event_handler, event
   widget_control, event.top, /destroy
@@ -25,7 +25,7 @@ PRO spice_modal_message, parent_base, messages, timer = timer
   text = widget_text(center, value = "    Hit any key or click to dismiss    ", /all_events)
   label = widget_label(middle, value = ' ')
   widget_control, base, /realize
-  prits_tools.center_overlay_window, base, parent_base
+  ptools.center_overlay_window, base, parent_base
   IF keyword_set(timer) THEN widget_control, base, timer = timer
   widget_control, text, /input_focus
   xmanager, "spice_modal_message", base, event_handler = "spice_modal_message__event_handler"

@@ -62,7 +62,7 @@
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
-;     SPICE library: prits_tools.parcheck, fits2ana_get_data_id, ana_wcs_get_transform, ana_wcs_transform_vector
+;     SPICE library: ptools.parcheck, fits2ana_get_data_id, ana_wcs_get_transform, ana_wcs_transform_vector
 ;     GEN library: fits_open, fits_close, readfits, fxpar, mk_analysis, mk_component_stc, fitshead2wcs, wcs_get_coord
 ;
 ; COMMON BLOCKS:
@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-07 14:03 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -83,8 +83,8 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_residuals = headers_residuals, $
   headers_only = headers_only, create_dummy_data = create_dummy_data, $
   loud = loud, quiet = quiet, debug = debug
-  prits_tools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
-  prits_tools.parcheck, windows, 0, "windows", ['integers', 'string'], [0, 1], /optional
+  ptools.parcheck, fitsfile, 1, "fitsfile", 'string', 0
+  ptools.parcheck, windows, 0, "windows", ['integers', 'string'], [0, 1], /optional
 
   headers_only = keyword_set(headers_only)
   loud = keyword_set(loud)

@@ -15,7 +15,7 @@
 ;               end up with an infinite recursion if e.g. the pattern matches
 ;                the replacement.
 ;
-; Use         : result = prits_tools.regex_replace(original,pattern,replacement)
+; Use         : result = ptools.regex_replace(original,pattern,replacement)
 ;
 ; Inputs      : See "Use". Original may be an array of strings
 ;
@@ -45,23 +45,23 @@
 ;
 ; Contact     : prits-group@astro.uio.no
 ;-
-FUNCTION prits_tools::regex_replace_arr, string_in, regex, replacement, global = global
+FUNCTION ptools::regex_replace_arr, string_in, regex, replacement, global = global
   COMPILE_OPT STATIC
   result = string_in
   FOR i = 0, n_elements(string_in) - 1 DO BEGIN
-    result[i] = prits_tools.regex_replace(string_in[i], regex, replacement, global = global)
+    result[i] = ptools.regex_replace(string_in[i], regex, replacement, global = global)
   END
   return, result
 END
 
-FUNCTION prits_tools::regex_replace, string, regex, replacement, global = global
+FUNCTION ptools::regex_replace, string, regex, replacement, global = global
   COMPILE_OPT STATIC
-  prits_tools.parcheck, string, 1, "string", 'STRing', 0
-  prits_tools.parcheck, regex, 2, "regex", 'STRing', 0
-  prits_tools.parcheck, replacement, 3, "replacement", 'STRing', 0
+  ptools.parcheck, string, 1, "string", 'STRing', 0
+  ptools.parcheck, regex, 2, "regex", 'STRing', 0
+  ptools.parcheck, replacement, 3, "replacement", 'STRing', 0
 
   IF size(string, /n_dim) GT 0 THEN $
-    return, prits_tools.regex_replace_strarr(string, regex, replacement, global = global)
+    return, ptools.regex_replace_strarr(string, regex, replacement, global = global)
 
   replace_with = replacement
   match = [stregex(string, regex, /extract, /subexpr)]
@@ -78,12 +78,12 @@ FUNCTION prits_tools::regex_replace, string, regex, replacement, global = global
   ending = strmid(string, start_replace + strlen(match[0]), 10000000)
   final = start_string + replace_with + ending
   IF keyword_set(global) THEN BEGIN
-    return, prits_tools.regex_replace(final, regex, replacement, global = global)
+    return, ptools.regex_replace(final, regex, replacement, global = global)
   END
   return, final
 END
 
-PRO prits_tools::regexp_test, in, expected
+PRO ptools::regexp_test, in, expected
   COMPILE_OPT STATIC
   IF in NE expected THEN BEGIN
     print, in + " !!!!= " + expected
@@ -95,12 +95,12 @@ PRO prits_tools::regexp_test, in, expected
   END
 END
 
-prits_tools.regexp_test, prits_tools.regex_replace("abaa", "b.*", "-"), "a-"
-prits_tools.regexp_test, prits_tools.regex_replace("aba", "a(b)a", "aa$1"), "aab"
-prits_tools.regexp_test, prits_tools.regex_replace("abaaba", "a(b)a", "aa$1"), "aababa"
-prits_tools.regexp_test, prits_tools.regex_replace("abaaba", "a(b)a", "aa$1", /global), "aaabba"
-prits_tools.regexp_test, prits_tools.regex_replace("1234567", "(((1)(2)(3)))", "$5 $4 $3 $2 $1"), '3 2 1 123 1234567'
+ptools.regexp_test, ptools.regex_replace("abaa", "b.*", "-"), "a-"
+ptools.regexp_test, ptools.regex_replace("aba", "a(b)a", "aa$1"), "aab"
+ptools.regexp_test, ptools.regex_replace("abaaba", "a(b)a", "aa$1"), "aababa"
+ptools.regexp_test, ptools.regex_replace("abaaba", "a(b)a", "aa$1", /global), "aaabba"
+ptools.regexp_test, ptools.regex_replace("1234567", "(((1)(2)(3)))", "$5 $4 $3 $2 $1"), '3 2 1 123 1234567'
 ; Should never terminate:
 print, "The final test will never terminate, you'll have to stop it manually."
-prits_tools.regexp_test, prits_tools.regex_replace("1234567", "(((1)(2)(3)))", "$5 $4 $3 $2 $1", /global)
+ptools.regexp_test, ptools.regex_replace("1234567", "(((1)(2)(3)))", "$5 $4 $3 $2 $1", /global)
 END

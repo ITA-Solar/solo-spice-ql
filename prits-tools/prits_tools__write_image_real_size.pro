@@ -14,7 +14,7 @@
 ;      IMAGES -- writing image files.
 ;
 ; CALLING SEQUENCE:
-;     prits_tools.write_image_real_size, IMAGE_DATA [, FILENAME] $
+;     ptools.write_image_real_size, IMAGE_DATA [, FILENAME] $
 ;       [, /REMOVE_TRENDS] [,SMOOTH_WIDTH=SMOOTH_WIDTH] [, COLORTABLE=COLORTABLE] [, FORMAT=FORMAT] $
 ;       [, XRANGE1=XRANGE1] [, XRANGE2=XRANGE2] [, YRANGE1=YRANGE1] [, YRANGE2=YRANGE2] $
 ;       [, XTITLE1=XTITLE1] [, XTITLE2=XTITLE2] [, YTITLE1=YTITLE1] [, YTITLE2=YTITLE2] $
@@ -103,7 +103,7 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; EXAMPLE:
-; See prits_tools::write_image_real_size_test
+; See ptools::write_image_real_size_test
 ;
 ; CALLS:
 ; PIH, EIS_COLORS
@@ -129,9 +129,9 @@
 ;     2 pixels to prevent crash
 ;
 ;-
-; $Id: 2025-02-25 12:00 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
-PRO prits_tools::write_image_real_size, image_data, filename, $
+PRO ptools::write_image_real_size, image_data, filename, $
   remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, $
   fit_trend = fit_trend, smooth_width = smooth_width, $
   value_max = value_max, value_min = value_min, $
@@ -148,31 +148,31 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   _extra = _extra
   COMPILE_OPT IDL2, STATIC
 
-  prits_tools.parcheck, image_data, 1, "image_data", 'NUMERIC', 2
-  prits_tools.parcheck, filename, 2, "filename", 'STRING', 0, default = ''
-  prits_tools.parcheck, colortable, 0, "colortable", 'INTEGERS', 0, minval = 0, default = 0
-  prits_tools.parcheck, format, 0, "format", 'STRING', 0, default = 'JPEG'
-  prits_tools.parcheck, xrange1, 0, "xrange1", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
-  prits_tools.parcheck, xrange2, 0, "xrange2", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
-  prits_tools.parcheck, yrange1, 0, "yrange1", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
-  prits_tools.parcheck, yrange2, 0, "yrange2", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
-  prits_tools.parcheck, xtitle1, 0, "xtitle1", ['STRING', 'undefined'], 0
-  prits_tools.parcheck, xtitle2, 0, "xtitle2", ['STRING', 'undefined'], 0
-  prits_tools.parcheck, ytitle1, 0, "ytitle1", ['STRING', 'undefined'], 0
-  prits_tools.parcheck, ytitle2, 0, "ytitle2", ['STRING', 'undefined'], 0
-  prits_tools.parcheck, title, 0, "title", ['STRING', 'undefined'], 0
-  prits_tools.parcheck, background_color, 0, "background_color", 'INTEGERS', 1, valid_nelements = 3, $
+  ptools.parcheck, image_data, 1, "image_data", 'NUMERIC', 2
+  ptools.parcheck, filename, 2, "filename", 'STRING', 0, default = ''
+  ptools.parcheck, colortable, 0, "colortable", 'INTEGERS', 0, minval = 0, default = 0
+  ptools.parcheck, format, 0, "format", 'STRING', 0, default = 'JPEG'
+  ptools.parcheck, xrange1, 0, "xrange1", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
+  ptools.parcheck, xrange2, 0, "xrange2", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
+  ptools.parcheck, yrange1, 0, "yrange1", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
+  ptools.parcheck, yrange2, 0, "yrange2", ['NUMERIC', 'undefined'], 1, valid_nelements = 2
+  ptools.parcheck, xtitle1, 0, "xtitle1", ['STRING', 'undefined'], 0
+  ptools.parcheck, xtitle2, 0, "xtitle2", ['STRING', 'undefined'], 0
+  ptools.parcheck, ytitle1, 0, "ytitle1", ['STRING', 'undefined'], 0
+  ptools.parcheck, ytitle2, 0, "ytitle2", ['STRING', 'undefined'], 0
+  ptools.parcheck, title, 0, "title", ['STRING', 'undefined'], 0
+  ptools.parcheck, background_color, 0, "background_color", 'INTEGERS', 1, valid_nelements = 3, $
     minval = 0, maxval = 255, default = [255, 255, 255]
-  prits_tools.parcheck, text_color, 0, "text_color", 'INTEGERS', 1, valid_nelements = 3, $
+  ptools.parcheck, text_color, 0, "text_color", 'INTEGERS', 1, valid_nelements = 3, $
     minval = 0, maxval = 255, default = [0, 0, 0]
-  prits_tools.parcheck, border, 0, "border", 'INTEGERS', 0, minval = 0, default = 5
-  prits_tools.parcheck, scale_factor, 0, "scale_factor", 'numeric', 0, minval = 1e-6, /optional
-  prits_tools.parcheck, height, 0, "height", 'INTEGERS', 0, minval = 2, /optional
-  prits_tools.parcheck, width, 0, "width", 'INTEGERS', 0, minval = 2, /optional
-  prits_tools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval = 0, maxval = 1, default = 0.02
-  prits_tools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
-  prits_tools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval = 0, maxval = 100, default = 75
-  prits_tools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
+  ptools.parcheck, border, 0, "border", 'INTEGERS', 0, minval = 0, default = 5
+  ptools.parcheck, scale_factor, 0, "scale_factor", 'numeric', 0, minval = 1e-6, /optional
+  ptools.parcheck, height, 0, "height", 'INTEGERS', 0, minval = 2, /optional
+  ptools.parcheck, width, 0, "width", 'INTEGERS', 0, minval = 2, /optional
+  ptools.parcheck, cutoff_threshold, 0, "cutoff_threshold", 'NUMERIC', 0, minval = 0, maxval = 1, default = 0.02
+  ptools.parcheck, color_center_value, 0, "color_center_value", 'NUMERIC', 0, /optional
+  ptools.parcheck, jpeg_quality, 0, "jpeg_quality", 'numeric', 0, minval = 0, maxval = 100, default = 75
+  ptools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
 
   show_plot = keyword_set(show_plot)
 
@@ -308,7 +308,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   IF line_vel THEN image_data -= median(image_data)
   IF line_wid THEN image_data -= min(image_data)
 
-  image_data = prits_tools.remove_trends(image_data, value_min = value_min, value_max = value_max, $
+  image_data = ptools.remove_trends(image_data, value_min = value_min, value_max = value_max, $
     remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend)
 
   image_data_use = (cutoff_threshold GT 0) ? histo_opt(image_data, cutoff_threshold) : image_data
@@ -388,7 +388,7 @@ PRO prits_tools::write_image_real_size, image_data, filename, $
   set_plot, 'x'
 END
 
-PRO prits_tools::write_image_real_size_test
+PRO ptools::write_image_real_size_test
   COMPILE_OPT STATIC
   print, ''
   print, 'write_image_real_size_test'
@@ -434,14 +434,14 @@ PRO prits_tools::write_image_real_size_test
     ENDFOR
   ENDFOR
 
-  prits_tools.write_image_real_size, image_data, filename, colortable = colortable, format = format, $
+  ptools.write_image_real_size, image_data, filename, colortable = colortable, format = format, $
     xrange1 = xrange1, xrange2 = xrange2, yrange1 = yrange1, yrange2 = yrange2, $
     xtitle1 = xtitle1, ytitle1 = ytitle1
 END
 
 IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
   IF getenv("USER") EQ "steinhh" THEN add_path, "$HOME/idl/solo-spice-ql", /expand
-  prits_tools.write_image_real_size_test
+  ptools.write_image_real_size_test
 ENDIF
 
 END

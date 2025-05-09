@@ -1,4 +1,4 @@
-FUNCTION prits_tools::make_true_color, image, rr, gg, bb
+FUNCTION ptools::make_true_color, image, rr, gg, bb
   COMPILE_OPT STATIC
   r = rr[image]
   g = gg[image]

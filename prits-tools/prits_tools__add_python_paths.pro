@@ -1,5 +1,5 @@
 ;+
-; Name       : prits_tools::add_python_paths
+; Name       : ptools::add_python_paths
 ;
 ; Purpose    : Add python subdirectories of IDL directories to $PYTHONPATH
 ;              Paths are appended by default, set prepend=1 to prepend
@@ -15,10 +15,10 @@
 ;
 ; Version: 1, SVHH
 ;
-; $Id: 2025-04-21 15:29 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 ;-
 
-PRO prits_tools::add_python_paths, prepend = prepend
+PRO ptools::add_python_paths, prepend = prepend
   COMPILE_OPT STATIC
   prepend = keyword_set(prepend)
 

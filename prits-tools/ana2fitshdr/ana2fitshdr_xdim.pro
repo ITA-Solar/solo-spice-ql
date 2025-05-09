@@ -36,21 +36,21 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      oslo_fits_util, mkhdr, prits_tools.parcheck, ana2fitshdr_addwcs
+;      oslo_fits_util, mkhdr, ptools.parcheck, ana2fitshdr_addwcs
 ;
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;      Ver. 1.1, 9-Feb-2024, Terje Fredvik - fixed typo in TYPE_XDIM1 parcheck
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana2fitshdr_xdim, datetime = datetime, extension_names = extension_names, xdim1 = xdim1, wcs = wcs, $
   save_xdim1 = save_xdim1, type_xdim1 = type_xdim1
-  prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
-  prits_tools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
-  prits_tools.parcheck, xdim1, 0, 'XDIM', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
-  prits_tools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
-  prits_tools.parcheck, type_xdim1, 0, 'TYPE_XDIM1', 'STRING', 0, /optional
+  ptools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
+  ptools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
+  ptools.parcheck, xdim1, 0, 'XDIM', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  ptools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
+  ptools.parcheck, type_xdim1, 0, 'TYPE_XDIM1', 'STRING', 0, /optional
 
   IF ~keyword_set(save_xdim1) || (n_elements(xdim1) EQ 0 && n_elements(wcs) EQ 0) THEN return, ''
   IF n_elements(xdim1) EQ 0 THEN xdim_array = fltarr(wcs.naxis, /nozero) $

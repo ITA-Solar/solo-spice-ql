@@ -1,6 +1,6 @@
-FUNCTION prits_tools::julday2iso, juldays, time_zone = time_zone, decimals = decimals, delimiter = delimiter
+FUNCTION ptools::julday2iso, juldays, time_zone = time_zone, decimals = decimals, delimiter = delimiter
   COMPILE_OPT STATIC
-  pt = prits_tools.singleton_instance()
+  pt = ptools.singleton_instance()
   pt.default, time_zone, 'Z'
   pt.default, decimals, 0
   pt.default, delimiter, '-'
@@ -22,35 +22,35 @@ FUNCTION prits_tools::julday2iso, juldays, time_zone = time_zone, decimals = dec
   return, iso
 END
 
-FUNCTION prits_tools::anytim2julday, anytim
+FUNCTION ptools::anytim2julday, anytim
   COMPILE_OPT STATIC
   jd = anytim2jd(anytim)
   return, jd.int + jd.frac
 END
 
-FUNCTION prits_tools::list_of_days, start, final, reverse_list = reverse_list, delimiter = delimiter
+FUNCTION ptools::list_of_days, start, final, reverse_list = reverse_list, delimiter = delimiter
   COMPILE_OPT STATIC
 
   addon = strpos(start, 'T') EQ -1 ? 'T12:00' : ''
 
-  start_jd = prits_tools.anytim2julday(start + addon)
-  final_jd = prits_tools.anytim2julday(final + addon)
+  start_jd = ptools.anytim2julday(start + addon)
+  final_jd = ptools.anytim2julday(final + addon)
 
   julian_days = timegen(start = start_jd, final = final_jd, units = 'days')
   IF keyword_set(reverse_list) THEN julian_days = reverse(julian_days)
 
-  dates = prits_tools.julday2iso(julian_days, delimiter = delimiter)
+  dates = ptools.julday2iso(julian_days, delimiter = delimiter)
 
   return, strmid(dates, 0, 10)
 END
 
-PRO prits_tools::date_addons_init
+PRO ptools::date_addons_init
   ; Nothing to do
 END
 
-PRO prits_tools__date_addons__define
+PRO ptools__date_addons__define
   COMPILE_OPT STATIC
-  !NULL = {prits_tools__date_addons, $
+  !NULL = {ptools__date_addons, $
     dummy: 0b $
     }
 END

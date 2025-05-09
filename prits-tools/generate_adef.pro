@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
@@ -65,11 +65,11 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
 
   version = 1 ; PLEASE increase this number when editing the code
 
-  prits_tools.parcheck, data, 1, "data", 'NUMERIC', [2, 3, 4]
-  prits_tools.parcheck, lam, 2, "lam", 'NUMERIC', [2, 3, 4]
-  prits_tools.parcheck, widmin, 0, "widmin", 'NUMERIC', 0, minval = 0, /optional
-  prits_tools.parcheck, velocity, 0, "velocity", 'NUMERIC', 0, /optional
-  prits_tools.parcheck, line_list, 0, "line_list", 'OBJREF', 1, object_name = 'hash', /optional
+  ptools.parcheck, data, 1, "data", 'NUMERIC', [2, 3, 4]
+  ptools.parcheck, lam, 2, "lam", 'NUMERIC', [2, 3, 4]
+  ptools.parcheck, widmin, 0, "widmin", 'NUMERIC', 0, minval = 0, /optional
+  ptools.parcheck, velocity, 0, "velocity", 'NUMERIC', 0, /optional
+  ptools.parcheck, line_list, 0, "line_list", 'OBJREF', 1, object_name = 'hash', /optional
 
   use_list = keyword_set(line_list)
   blue_means_negative_velocity = 1

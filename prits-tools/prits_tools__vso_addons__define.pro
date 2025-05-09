@@ -1,4 +1,4 @@
-FUNCTION prits_tools::vso_cached_search_use_savefile_or_not, savefile, redo_recent_days
+FUNCTION ptools::vso_cached_search_use_savefile_or_not, savefile, redo_recent_days
   fileInfo = file_info(savefile)
   IF NOT fileInfo.exists THEN return, 0
 
@@ -12,7 +12,7 @@ FUNCTION prits_tools::vso_cached_search_use_savefile_or_not, savefile, redo_rece
   return, file_is_old_enough
 END
 
-FUNCTION prits_tools::vso_cached_search, date_beg, date_end, instrument, wave_str_in, sample, include_urls, $
+FUNCTION ptools::vso_cached_search, date_beg, date_end, instrument, wave_str_in, sample, include_urls, $
   accept_failure = accept_failure, $
   redo_recent_days = redo_recent_days, $
   retry = retry, $
@@ -82,7 +82,7 @@ FUNCTION prits_tools::vso_cached_search, date_beg, date_end, instrument, wave_st
   return, results
 END
 
-FUNCTION prits_tools::vso_cached_get, result, quiet = quiet
+FUNCTION ptools::vso_cached_get, result, quiet = quiet
   quiet = keyword_set(quiet)
 
   ; We don't know file name until we've gotten the file, so construct the name
@@ -109,7 +109,7 @@ FUNCTION prits_tools::vso_cached_get, result, quiet = quiet
   return, fileid_link_name
 END
 
-PRO prits_tools::vso_rename_cache_entries_ad_hoc
+PRO ptools::vso_rename_cache_entries_ad_hoc
   f = file_search(self.vso.cache_dir, '*-aia-195-*.sav')
   IF f[0] NE '' THEN BEGIN
     FOREACH file, f DO BEGIN
@@ -178,7 +178,7 @@ END
 ; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-PRO prits_tools::vso_fill_day_cache, results, hours
+PRO ptools::vso_fill_day_cache, results, hours
   results = results[sort(results.time.start)]
   day = strmid(results[0].time.start, 0, 10)
   FOREACH hour, hours DO BEGIN
@@ -190,7 +190,7 @@ PRO prits_tools::vso_fill_day_cache, results, hours
   END
 END
 
-PRO prits_tools::vso_fill_cache, start, final, reverse_list = reverse_list, waves_str = waves_str, $
+PRO ptools::vso_fill_cache, start, final, reverse_list = reverse_list, waves_str = waves_str, $
   instruments = instruments, hours = hours, retry = retry, quiet = quiet
   self.default, start, '2006/10/18' ; ; First Hinode obs
   self.default, final, 'today' ; ; Calculated later
@@ -232,7 +232,7 @@ PRO prits_tools::vso_fill_cache, start, final, reverse_list = reverse_list, wave
   END
 END
 
-PRO prits_tools::vso_addons_init, quiet = quiet
+PRO ptools::vso_addons_init, quiet = quiet
   vso_cache_dir = getenv("VSO_CACHE_DIR")
   IF vso_cache_dir EQ "" THEN vso_cache_dir = "$HOME/vso-cache"
   IF NOT file_test(vso_cache_dir, /directory) THEN BEGIN
@@ -249,13 +249,13 @@ PRO prits_tools::vso_addons_init, quiet = quiet
   IF ~keyword_set(quiet) THEN box_message, 'VSO CACHE DIRECTORY: ' + self.vso.cache_dir
 END
 
-PRO prits_tools__vso_addons__define
+PRO ptools__vso_addons__define
   COMPILE_OPT STATIC
-  !NULL = {prits_tools__vso_addons, $
+  !NULL = {ptools__vso_addons, $
     cache_dir: "" $
     }
 END
 
-; pt = prits_tools()
+; pt = ptools()
 ; pt.rename_cache_entries_ad_hoc
 ; END

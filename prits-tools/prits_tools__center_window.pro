@@ -1,5 +1,5 @@
 ;+
-;  FILE: prits_tools__center_window
+;  FILE: ptools__center_window
 ;
 ;  PURPOSE:
 ;       Center a top-level base on the screen
@@ -8,7 +8,7 @@
 ;       Widgets
 ;
 ;  CONTENTS:
-;       prits_tools::center_window
+;       ptools::center_window
 ;
 ;  NAMED STRUCTURES:
 ;       none.
@@ -26,10 +26,10 @@
 ;
 ; Keywords: None
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-09 13:28 CEST $
 ; -
 
-PRO prits_tools::center_window, top_base
+PRO ptools::center_window, top_base
   COMPILE_OPT IDL2, STATIC
   screen_size = spice_get_screen_size()
 

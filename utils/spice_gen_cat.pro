@@ -95,7 +95,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-03-28 13:39 CET $
+; $Id: 2025-05-09 13:28 CEST $
 ;-
 
 FUNCTION spice_gen_cat::extract_filename, line
@@ -392,9 +392,9 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
                               new_files = new_files, include_L0 = include_L0
   self.d = dictionary()
 
-  prits_tools.default, spice_data_dir, getenv("SPICE_DATA")
+  ptools.default, spice_data_dir, getenv("SPICE_DATA")
 
-  prits_tools.default, use_old_catalog, 1
+  ptools.default, use_old_catalog, 1
 
   self.d.quiet = keyword_set(quiet)
   self.d.use_old_catalog = use_old_catalog

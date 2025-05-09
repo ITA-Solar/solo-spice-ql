@@ -196,13 +196,13 @@
 ;              One string array per ANA provided. May be empty strings if this extension was not saved.
 ;
 ; CALLS:
-;     SPICE library: prits_tools.parcheck, ana2fitshdr
+;     SPICE library: ptools.parcheck, ana2fitshdr
 ;     GEN library: writefits
 ;
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-05-08 14:51 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $
@@ -222,14 +222,14 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
   headers_results = headers_results, headers_data = headers_data, $
   headers_weights = headers_weights, headers_includes = headers_includes, $
   headers_constants = headers_constants, headers_residuals = headers_residuals
-  prits_tools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name = 'CFIT_ANALYSIS', /optional
+  ptools.parcheck, ANA, 1, 'ANA', 'STRUCT', [0, 1], structure_name = 'CFIT_ANALYSIS', /optional
   n_ana = n_elements(ANA)
-  prits_tools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', [0, 1], default = 'WAVE'
-  prits_tools.parcheck, filepath_out, 0, 'FILEPATH_OUT', 'STRING', 0
-  prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0, default = max([n_ana, 1])
-  prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0, default = 0
-  prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  ptools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', [0, 1], default = 'WAVE'
+  ptools.parcheck, filepath_out, 0, 'FILEPATH_OUT', 'STRING', 0
+  ptools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0, default = max([n_ana, 1])
+  ptools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0, default = 0
+  ptools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
+  ptools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
 
   result_ptr = 0
   fit_ptr = 0
@@ -246,66 +246,66 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
   proj_kwd_ptr = 0
 
   IF ~n_ana THEN BEGIN
-    prits_tools.parcheck, result, 0, 'RESULT', 'POINTER', [0, 1], result = error
-    IF error[0] NE '' THEN prits_tools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7] $
+    ptools.parcheck, result, 0, 'RESULT', 'POINTER', [0, 1], result = error
+    IF error[0] NE '' THEN ptools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7] $
     ELSE result_ptr = n_elements(result)
     IF result_ptr GT 0 THEN n_ana = result_ptr ELSE n_ana = 1
 
     IF n_ana GT 1 THEN BEGIN
-      prits_tools.parcheck, fit, 0, 'FIT', 'POINTER', 1, valid_nelements = n_ana
-      prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
-      prits_tools.parcheck, xdim1, 0, 'XDIM1', 'POINTER', 1, /optional, valid_nelements = n_ana
-      prits_tools.parcheck, weights, 0, 'WEIGHTS', 'POINTER', 1, /optional, valid_nelements = n_ana
-      prits_tools.parcheck, include, 0, 'INCLUDE', 'POINTER', 1, /optional, valid_nelements = n_ana
-      prits_tools.parcheck, const, 0, 'CONST', 'POINTER', 1, /optional, valid_nelements = n_ana
+      ptools.parcheck, fit, 0, 'FIT', 'POINTER', 1, valid_nelements = n_ana
+      ptools.parcheck, input_data, 0, 'INPUT_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
+      ptools.parcheck, xdim1, 0, 'XDIM1', 'POINTER', 1, /optional, valid_nelements = n_ana
+      ptools.parcheck, weights, 0, 'WEIGHTS', 'POINTER', 1, /optional, valid_nelements = n_ana
+      ptools.parcheck, include, 0, 'INCLUDE', 'POINTER', 1, /optional, valid_nelements = n_ana
+      ptools.parcheck, const, 0, 'CONST', 'POINTER', 1, /optional, valid_nelements = n_ana
     ENDIF ELSE BEGIN ; n_ana GT 1
 
-      prits_tools.parcheck, fit, 0, 'FIT', 'POINTER', [0, 1], valid_nelements = n_ana, result = error
-      IF error[0] NE '' THEN prits_tools.parcheck, fit, 0, 'FIT', 'STRUCT', 0 $
+      ptools.parcheck, fit, 0, 'FIT', 'POINTER', [0, 1], valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN ptools.parcheck, fit, 0, 'FIT', 'STRUCT', 0 $
       ELSE fit_ptr = n_elements(fit)
-      prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-      IF error[0] NE '' THEN prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ptools.parcheck, input_data, 0, 'INPUT_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN ptools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE in_data_ptr = n_elements(input_data)
-      prits_tools.parcheck, xdim1, 0, 'XDIM1', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-      IF error[0] NE '' THEN prits_tools.parcheck, xdim1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], /optional $
+      ptools.parcheck, xdim1, 0, 'XDIM1', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN ptools.parcheck, xdim1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], /optional $
       ELSE xdim1_ptr = n_elements(xdim1)
-      prits_tools.parcheck, weights, 0, 'WEIGHTS', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-      IF error[0] NE '' THEN prits_tools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ptools.parcheck, weights, 0, 'WEIGHTS', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN ptools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE weights_ptr = n_elements(weights)
-      prits_tools.parcheck, include, 0, 'INCLUDE', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-      IF error[0] NE '' THEN prits_tools.parcheck, include, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ptools.parcheck, include, 0, 'INCLUDE', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN ptools.parcheck, include, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE incl_ptr = n_elements(include)
-      prits_tools.parcheck, const, 0, 'CONST', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-      IF error[0] NE '' THEN prits_tools.parcheck, const, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ptools.parcheck, const, 0, 'CONST', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN ptools.parcheck, const, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE const_ptr = n_elements(const)
-      prits_tools.parcheck, residual, 0, 'RESIDUAL', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-      IF error[0] NE '' THEN prits_tools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+      ptools.parcheck, residual, 0, 'RESIDUAL', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+      IF error[0] NE '' THEN ptools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
       ELSE residual_ptr = n_elements(residual)
     ENDELSE ; n_ana GT 1
   ENDIF ; ~n_ana
 
   IF n_ana GT 1 THEN BEGIN
-    prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
+    ptools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
     prg_data_ptr = n_elements(progenitor_data)
-    prits_tools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
+    ptools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'POINTER', 1, /optional, valid_nelements = n_ana
     hdr_in_data_ptr = n_elements(header_input_data)
   ENDIF ELSE BEGIN ; n_ana GT 1
-    prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-    IF error[0] NE '' THEN prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
+    ptools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+    IF error[0] NE '' THEN ptools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional $
     ELSE prg_data_ptr = n_elements(progenitor_data)
-    prits_tools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
-    IF error[0] NE '' THEN prits_tools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional $
+    ptools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'POINTER', [0, 1], /optional, valid_nelements = n_ana, result = error
+    IF error[0] NE '' THEN ptools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional $
     ELSE hdr_in_data_ptr = n_elements(header_input_data)
   ENDELSE ; n_ana GT 1
 
-  prits_tools.parcheck, proc_steps, 0, 'PROC_STEPS', 'POINTER', 1, /optional, valid_nelements = n_ana, result = error
-  IF error[0] NE '' THEN prits_tools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional $
+  ptools.parcheck, proc_steps, 0, 'PROC_STEPS', 'POINTER', 1, /optional, valid_nelements = n_ana, result = error
+  IF error[0] NE '' THEN ptools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional $
   ELSE proc_st_ptr = n_elements(proc_steps)
-  prits_tools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', 'POINTER', 1, /optional, valid_nelements = n_ana, result = error
-  IF error[0] NE '' THEN prits_tools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
+  ptools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', 'POINTER', 1, /optional, valid_nelements = n_ana, result = error
+  IF error[0] NE '' THEN ptools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional $
   ELSE proj_kwd_ptr = n_elements(proj_keywords)
 
-  prits_tools.parcheck, data_id, 0, 'DATA_ID', 'STRING', [0, 1], valid_nelements = n_ana, /optional
+  ptools.parcheck, data_id, 0, 'DATA_ID', 'STRING', [0, 1], valid_nelements = n_ana, /optional
 
   get_headers = bytarr(6)
   IF arg_present(headers_results) THEN BEGIN

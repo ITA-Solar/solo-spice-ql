@@ -39,16 +39,16 @@
 ;      ind_xdim1: The index of the absorbed dimension before transformation.
 ;
 ; CALLS:
-;      prits_tools.parcheck, fxpar, fitshead2wcs, ana_wcs_transform, spice_fitshead2struct
+;      ptools.parcheck, fxpar, fitshead2wcs, ana_wcs_transform, spice_fitshead2struct
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana_wcs_get_transform, xdim1_type, headers_input_data, ind_xdim1 = ind_xdim1
-  prits_tools.parcheck, xdim1_type, 1, 'XDIM1_TYPE', 'STRING', 0
-  prits_tools.parcheck, headers_input_data, 2, 'HEADERS_INPUT_DATA', 'STRING', 1, /optional
+  ptools.parcheck, xdim1_type, 1, 'XDIM1_TYPE', 'STRING', 0
+  ptools.parcheck, headers_input_data, 2, 'HEADERS_INPUT_DATA', 'STRING', 1, /optional
 
   IF n_elements(headers_input_data) EQ 0 THEN return, !NULL
   naxis = fxpar(headers_input_data, 'NAXIS', missing = 0)

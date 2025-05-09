@@ -43,17 +43,17 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      oslo_fits_util, prits_tools.parcheck
+;      oslo_fits_util, ptools.parcheck
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;-
-; $Id: 2025-05-07 14:37 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana2fitshdr_addwcs, hdr, wcs, $
   result = result, xdim1 = xdim1, weights = weights, include = include, const = const, residual = residual
-  prits_tools.parcheck, hdr, 1, 'HDR', 'STRING', 1
-  prits_tools.parcheck, wcs, 2, 'WCS', 8, 0, /optional
+  ptools.parcheck, hdr, 1, 'HDR', 'STRING', 1
+  ptools.parcheck, wcs, 2, 'WCS', 8, 0, /optional
   IF total([keyword_set(result), keyword_set(xdim1), keyword_set(weights), $
     keyword_set(include), keyword_set(const), keyword_set(residual)]) NE 1 THEN BEGIN
     message, ['You must set exactly one of the keywords', $

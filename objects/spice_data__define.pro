@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-08 11:23 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 ;+
 ; Description:
@@ -87,7 +87,7 @@
 FUNCTION spice_data::init, file, quiet = quiet
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, file, 1, "file", 'string', 0
+  ptools.parcheck, file, 1, "file", 'string', 0
   file_info = spice_file2info(file)
   IF ~file_info.is_spice_file THEN BEGIN
     IF ~keyword_set(quiet) THEN print, 'File is not a SPICE file: ' + file
@@ -406,9 +406,9 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
 
   version = 6 ; PLEASE increase this number when editing the code
 
-  prits_tools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name = 'spice_create_l3_progress', /optional
+  ptools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name = 'spice_create_l3_progress', /optional
   IF n_elements(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget = spice_create_l3_progress(1, group_leader = group_leader)
-  prits_tools.parcheck, force_version, 0, "force_version", 'integers', 0, minval = 0, maxval = 99, /optional
+  ptools.parcheck, force_version, 0, "force_version", 'integers', 0, minval = 0, maxval = 99, /optional
 
   IF n_elements(window) EQ 0 THEN window = indgen(self.get_number_windows())
   IF arg_present(all_ana) THEN collect_ana = 1 ELSE collect_ana = 0
@@ -2313,9 +2313,9 @@ FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = 
 
   naxis = self.get_header_keyword('naxis*', window_index)
 
-  prits_tools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
-  prits_tools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
-  prits_tools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
+  ptools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
+  ptools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
+  ptools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
 
   npix = self.get_sit_and_stare() ? naxis[3] : naxis[0]
   pixels = fltarr(4, npix)
@@ -2361,9 +2361,9 @@ FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = 
 
   naxis = self.get_header_keyword('naxis*', window_index)
 
-  prits_tools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
-  prits_tools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
-  prits_tools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
+  ptools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
+  ptools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
+  ptools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
 
   IF keyword_set(full_ccd) THEN BEGIN
     nbin = self.get_spatial_binning(window_index)
@@ -2412,9 +2412,9 @@ FUNCTION spice_data::get_lambda_vector, window, x = x, y = y, time = time, full_
 
   naxis = self.get_header_keyword('naxis*', window_index)
 
-  prits_tools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
-  prits_tools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
-  prits_tools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
+  ptools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
+  ptools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
+  ptools.parcheck, time, 0, "time", 'numeric', 0, default = naxis[3] / 2.
 
   IF keyword_set(full_ccd) THEN BEGIN
     nbin = self.get_spectral_binning(window_index)
@@ -2458,9 +2458,9 @@ FUNCTION spice_data::get_time_vector, window, x = x, y = y, lambda = lambda
 
   naxis = self.get_header_keyword('naxis*', window_index)
 
-  prits_tools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
-  prits_tools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
-  prits_tools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
+  ptools.parcheck, x, 0, "x", 'numeric', 0, default = naxis[0] / 2.
+  ptools.parcheck, y, 0, "y", 'numeric', 0, default = naxis[1] / 2.
+  ptools.parcheck, lambda, 0, "lambda", 'numeric', 0, default = naxis[2] / 2.
 
   npix = self.get_sit_and_stare() ? naxis[3] : naxis[0]
   pixels = fltarr(4, npix)
@@ -2791,7 +2791,7 @@ FUNCTION spice_data::return_extension_index, extension, check_window_index = che
   ; Returns the index of the extension if input is a valid extension index or name, -1 otherwise
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result = result
+  ptools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result = result
   IF n_elements(result) GT 1 || result NE '' THEN BEGIN
     message, result, /info
     print, 'Call comes from:'

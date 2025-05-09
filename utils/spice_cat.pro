@@ -47,7 +47,7 @@
 ; Version     : Version 2, SVHH, 9 September 2020
 ;
 ;
-; $Id: 2025-04-08 13:14 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 ;-
 ;
 PRO spice_cat::_____________UTILITY_FUNCTIONS
@@ -273,7 +273,7 @@ FUNCTION spice_cat::sort, list
 END
 
 PRO spice_cat::update_current_filters, keywords
-  prits_tools.default, keywords, self.curr.column_names
+  ptools.default, keywords, self.curr.column_names
 
   IF self.curr.haskey("filters_as_text") THEN BEGIN
     inited_current_filters_as_text = self.curr.filters_as_text
@@ -999,7 +999,7 @@ PRO spice_cat::build_widget
   self.build_table
 
   widget_control, w.top_base, /realize
-  prits_tools.center_window, w.top_base
+  ptools.center_window, w.top_base
 
   ; Make table fill available space despite /scroll
   widget_control, w.top_base, tlb_get_size = tlb_size

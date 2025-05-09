@@ -33,18 +33,18 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      prits_tools.parcheck
+;      ptools.parcheck
 ;
 ; HISTORY:
 ;      Ver. 1, 16-Nov-2023, Martin Wiesmann
 ;      Ver. 2, 25-Jan-2023, Terje Fredvik - update wcs.ix and wcs.iy if needed
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana_wcs_transform, wcs, move_dim, dest_dim
-  prits_tools.parcheck, wcs, 1, 'wcs', 8, 0
-  prits_tools.parcheck, move_dim, 2, 'move_dim', 'INTEGERS', 0
-  prits_tools.parcheck, dest_dim, 3, 'dest_dim', 'INTEGERS', 0
+  ptools.parcheck, wcs, 1, 'wcs', 8, 0
+  ptools.parcheck, move_dim, 2, 'move_dim', 'INTEGERS', 0
+  ptools.parcheck, dest_dim, 3, 'dest_dim', 'INTEGERS', 0
 
   IF move_dim EQ dest_dim THEN return, wcs
   naxis = n_elements(wcs.naxis)

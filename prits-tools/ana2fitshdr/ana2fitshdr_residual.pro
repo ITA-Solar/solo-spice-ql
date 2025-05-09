@@ -32,18 +32,18 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      oslo_fits_util, mkhdr, prits_tools.parcheck, ana2fitshdr_addwcs
+;      oslo_fits_util, mkhdr, ptools.parcheck, ana2fitshdr_addwcs
 ;
 ; HISTORY:
 ;      Ver. 1, 5-May-2025, Martin Wiesmann
 ;-
-; $Id: 2025-05-07 14:34 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana2fitshdr_residual, datetime = datetime, extension_names = extension_names, residual = residual, wcs = wcs, SAVE_RESIDUALS = SAVE_RESIDUALS
-  prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
-  prits_tools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
-  prits_tools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
-  prits_tools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
+  ptools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
+  ptools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
+  ptools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  ptools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
 
   IF ~SAVE_RESIDUALS THEN return, ''
   IF n_elements(residual) EQ 0 THEN return, ''

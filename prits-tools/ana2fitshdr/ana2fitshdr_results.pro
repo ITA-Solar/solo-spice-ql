@@ -41,7 +41,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-08 14:42 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -52,31 +52,31 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
   history = history, filename_ana = filename_ana, $
   datasource = datasource, definition = definition, missing = missing, label = label
-  prits_tools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7]
-  prits_tools.parcheck, fit, 0, 'FIT', 'STRUCT', 0
+  ptools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7]
+  ptools.parcheck, fit, 0, 'FIT', 'STRUCT', 0
 
-  prits_tools.parcheck, datetime, 0, 'datetime', 'STRING', 0
-  prits_tools.parcheck, filename_out, 0, 'FILENAME_OUT', 'STRING', 0
-  prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0
-  prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0
-  prits_tools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
-  prits_tools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', 0
-  prits_tools.parcheck, XDIMEN1, 0, 'XDIMEN1', ['NUMERIC', 'STRING'], 0
-  prits_tools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0
+  ptools.parcheck, datetime, 0, 'datetime', 'STRING', 0
+  ptools.parcheck, filename_out, 0, 'FILENAME_OUT', 'STRING', 0
+  ptools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0
+  ptools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0
+  ptools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
+  ptools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', 0
+  ptools.parcheck, XDIMEN1, 0, 'XDIMEN1', ['NUMERIC', 'STRING'], 0
+  ptools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0
 
-  prits_tools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
-  prits_tools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
-  prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional
-  prits_tools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
+  ptools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
+  ptools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
+  ptools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
+  ptools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  ptools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional
+  ptools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
 
-  prits_tools.parcheck, history, 0, 'HISTORY', 'STRING', [0, 1], optional = 1
-  prits_tools.parcheck, filename_ana, 0, 'FILENAME_ANA', 'STRING', 0, optional = 1
-  prits_tools.parcheck, datasource, 0, 'DATASOURCE', 'STRING', 0, optional = 1
-  prits_tools.parcheck, definition, 0, 'DEFINITION', 'STRING', 0, optional = 1
-  prits_tools.parcheck, missing, 0, 'MISSING', 'NUMERIC', 0, optional = 1
-  prits_tools.parcheck, label, 0, 'LABEL', 'STRING', 0, optional = 1
+  ptools.parcheck, history, 0, 'HISTORY', 'STRING', [0, 1], optional = 1
+  ptools.parcheck, filename_ana, 0, 'FILENAME_ANA', 'STRING', 0, optional = 1
+  ptools.parcheck, datasource, 0, 'DATASOURCE', 'STRING', 0, optional = 1
+  ptools.parcheck, definition, 0, 'DEFINITION', 'STRING', 0, optional = 1
+  ptools.parcheck, missing, 0, 'MISSING', 'NUMERIC', 0, optional = 1
+  ptools.parcheck, label, 0, 'LABEL', 'STRING', 0, optional = 1
 
   header_exists = keyword_set(header_input_data)
   wcs_exists = keyword_set(wcs)

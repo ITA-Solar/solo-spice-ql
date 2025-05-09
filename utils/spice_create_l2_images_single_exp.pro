@@ -27,17 +27,17 @@
 ; OPTIONAL OUTPUTS:
 ;
 ; CALLS:
-;      prits_tools.parcheck, spice_object, spice_create_l3_images_single_exp
+;      ptools.parcheck, spice_object, spice_create_l3_images_single_exp
 ;
 ; HISTORY:
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann
 ;
 ;-
-; $Id: 2025-03-10 13:23 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time
-  prits_tools.default, last_report_time, 0
+  ptools.default, last_report_time, 0
   error_reports_file = '/tmp/spcl2im_error_reports'
   ; spawn, "echo " + l2_file + " >> " + error_reports_file
   box_message, ['', 'Error reading L2 file!', '', '     ' + l2_file, '', ''], /info
@@ -54,8 +54,8 @@ PRO spcl2im_report_error, l2_file, force_email = force_email
 END
 
 PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
-  prits_tools.parcheck, l2_files, 1, "l2_files", 'STRing', [0, 1]
-  prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
+  ptools.parcheck, l2_files, 1, "l2_files", 'STRing', [0, 1]
+  ptools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
 
   spawn, "truncate -s 0 /tmp/spcl2im_error_reports"
 
@@ -63,9 +63,9 @@ PRO spice_create_l2_images_single_exp, l2_files, out_dir, show_plot = show_plot
 
   FOREACH l2_file, l2_files DO BEGIN
     l2_filename = file_basename(l2_file)
-    l2_filename = prits_tools.regex_replace(l2_filename, '\..*', '')
-    l3ql_filename = prits_tools.regex_replace(l2_filename, 'solo_L2_spice-', 'solo_L3_spice-ql-')
-    l3ql_filename = prits_tools.regex_replace(l3ql_filename, 'V[0-9]{2}', 'Vxx')
+    l2_filename = ptools.regex_replace(l2_filename, '\..*', '')
+    l3ql_filename = ptools.regex_replace(l2_filename, 'solo_L2_spice-', 'solo_L3_spice-ql-')
+    l3ql_filename = ptools.regex_replace(l3ql_filename, 'V[0-9]{2}', 'Vxx')
     filename_base = out_dir + path_sep() + l3ql_filename + '-'
     print, "L3QL filename base: " + filename_base
     error = 0

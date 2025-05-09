@@ -1,6 +1,6 @@
-FUNCTION prits_tools::have_python, raise_error = raise_error
+FUNCTION ptools::have_python, raise_error = raise_error
   COMPILE_OPT STATIC
-  COMMON prits_tools__add_pythonpaths, previous_result
+  COMMON ptools__add_pythonpaths, previous_result
 
   IF n_elements(previous_result) EQ 1 THEN BEGIN
     IF previous_result EQ -1 THEN message, "Python not available"
@@ -16,6 +16,6 @@ FUNCTION prits_tools::have_python, raise_error = raise_error
     END
     return, 0
   END
-  !null = python.import('numpy')
+  !null = Python.import('numpy')
   return, 1
 END

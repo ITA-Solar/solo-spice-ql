@@ -35,14 +35,14 @@
 ;      DATA_ARRAY: Contains the data array that should be saved into the data extension, if any.
 ;
 ; CALLS:
-;     prits_tools.parcheck, caldat, ana_wcs_get_transform
+;     ptools.parcheck, caldat, ana_wcs_get_transform
 ;     ana2fitshdr_results, ana2fitshdr_data, ana2fitshdr_residual,
 ;     ana2fitshdr_weights, ana2fitshdr_include, ana2fitshdr_const
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-08 12:49 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -57,47 +57,47 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   progenitor_data = progenitor_data, header_input_data = header_input_data, $
   SAVE_RESIDUALS = SAVE_RESIDUALS, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
   data_array = data_array
-  prits_tools.parcheck, ana, 1, 'ANA', 'STRUCT', 0, structure_name = 'CFIT_ANALYSIS', /optional
+  ptools.parcheck, ana, 1, 'ANA', 'STRUCT', 0, structure_name = 'CFIT_ANALYSIS', /optional
   ana_given = n_elements(ana)
-  prits_tools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = ana_given
-  prits_tools.parcheck, fit, 0, 'FIT', 'STRUCT', 0, optional = ana_given
-  prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
-  prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], optional = 1
-  prits_tools.parcheck, xdim1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional = 1
-  prits_tools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
-  prits_tools.parcheck, include, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
-  prits_tools.parcheck, const, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  ptools.parcheck, result, 0, 'RESULT', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = ana_given
+  ptools.parcheck, fit, 0, 'FIT', 'STRUCT', 0, optional = ana_given
+  ptools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  ptools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], optional = 1
+  ptools.parcheck, xdim1, 0, 'XDIM1', 'NUMERIC', [0, 1, 2, 3, 4, 5, 6, 7], optional = 1
+  ptools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  ptools.parcheck, include, 0, 'INCLUDE', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  ptools.parcheck, const, 0, 'CONST', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
 
-  prits_tools.parcheck, filename_out, 0, 'FILENAME_OUT', 'STRING', 0
-  prits_tools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0
-  prits_tools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0
-  prits_tools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', 0
-  prits_tools.parcheck, XDIMEN1, 0, 'XDIMEN1', 'STRING', 0, /optional
-  prits_tools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
-  prits_tools.parcheck, data_id, 0, 'DATA_ID', 'STRING', 0, result = error
+  ptools.parcheck, filename_out, 0, 'FILENAME_OUT', 'STRING', 0
+  ptools.parcheck, n_windows, 0, 'N_WINDOWS', 'INTEGERS', 0
+  ptools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0
+  ptools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', 0
+  ptools.parcheck, XDIMEN1, 0, 'XDIMEN1', 'STRING', 0, /optional
+  ptools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
+  ptools.parcheck, data_id, 0, 'DATA_ID', 'STRING', 0, result = error
   IF error[0] NE '' THEN BEGIN
     data_id = 'Window ' + strtrim(winno, 2)
     IF n_elements(header_input_data) GT 0 THEN data_id = fxpar(header_input_data, 'EXTNAME', missing = data_id)
   ENDIF
-  prits_tools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0, result = error
+  ptools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0, result = error
   IF error[0] NE '' THEN BEGIN
     DATA_EXT_PATH = ''
     IF n_elements(header_input_data) GT 0 THEN DATA_EXT_PATH = fxpar(header_input_data, 'FILENAME', missing = DATA_EXT_PATH)
   ENDIF
   DATA_EXT_PATH = DATA_EXT_PATH + ';' + data_id
-  prits_tools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
-  prits_tools.parcheck, creator, 0, 'CREATOR', 'STRING', 0, /optional
-  prits_tools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional
-  prits_tools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
+  ptools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
+  ptools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  ptools.parcheck, creator, 0, 'CREATOR', 'STRING', 0, /optional
+  ptools.parcheck, proc_steps, 0, 'PROC_STEPS', 11, 1, /optional
+  ptools.parcheck, proj_keywords, 0, 'PROJ_KEYWORDS', [8, 11], [0, 1], /optional
 
-  prits_tools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
-  prits_tools.parcheck, history, 0, 'HISTORY', 'STRING', [0, 1], optional = 1
-  prits_tools.parcheck, filename_ana, 0, 'FILENAME_ANA', 'STRING', 0, optional = 1
-  prits_tools.parcheck, datasource, 0, 'DATASOURCE', 'STRING', 0, optional = 1
-  prits_tools.parcheck, definition, 0, 'DEFINITION', 'STRING', 0, optional = 1
-  prits_tools.parcheck, missing, 0, 'MISSING', 'NUMERIC', 0, optional = 1
-  prits_tools.parcheck, label, 0, 'LABEL', 'STRING', 0, optional = 1
+  ptools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], optional = 1
+  ptools.parcheck, history, 0, 'HISTORY', 'STRING', [0, 1], optional = 1
+  ptools.parcheck, filename_ana, 0, 'FILENAME_ANA', 'STRING', 0, optional = 1
+  ptools.parcheck, datasource, 0, 'DATASOURCE', 'STRING', 0, optional = 1
+  ptools.parcheck, definition, 0, 'DEFINITION', 'STRING', 0, optional = 1
+  ptools.parcheck, missing, 0, 'MISSING', 'NUMERIC', 0, optional = 1
+  ptools.parcheck, label, 0, 'LABEL', 'STRING', 0, optional = 1
 
   input_type = size(ana, /type)
   CASE input_type OF

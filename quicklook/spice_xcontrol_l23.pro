@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-05-09 13:28 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -500,8 +500,8 @@ END
 ; -----------------------------------------------------------------------
 
 PRO spice_xcontrol_l23, file, group_leader = group_leader
-  prits_tools.parcheck, file, 1, "file", 'string', 0
-  prits_tools.parcheck, group_leader, 0, "group_leader", 'integers', 0, /optional
+  ptools.parcheck, file, 1, "file", 'string', 0
+  ptools.parcheck, group_leader, 0, "group_leader", 'integers', 0, /optional
 
   IF n_params() LT 1 THEN BEGIN
     message, 'Usage: spice_xcontrol_l23, file [, group_leader=group_leader]', /cont

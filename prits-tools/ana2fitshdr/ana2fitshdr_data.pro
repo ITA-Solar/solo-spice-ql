@@ -37,21 +37,21 @@
 ;                  This will be zero if neither of these is provided or if SAVE_DATA is not set.
 ;
 ; CALLS:
-;      prits_tools.parcheck, oslo_fits_util, mkhdr, fxpar
+;      ptools.parcheck, oslo_fits_util, mkhdr, fxpar
 ;
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-07 14:02 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
   data_array = data_array
-  prits_tools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
-  prits_tools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
-  prits_tools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
-  prits_tools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], /optional
-  prits_tools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional
+  ptools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
+  ptools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
+  ptools.parcheck, input_data, 0, 'INPUT_DATA', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
+  ptools.parcheck, progenitor_data, 0, 'PROGENITOR_DATA', 'NUMERIC', [0, 2, 3, 4, 5, 6, 7], /optional
+  ptools.parcheck, header_input_data, 0, 'HEADER_INPUT_DATA', 'STRING', 1, /optional
 
   IF n_elements(progenitor_data) GT 0 THEN BEGIN
     data_array = progenitor_data

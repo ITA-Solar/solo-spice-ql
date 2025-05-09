@@ -46,7 +46,7 @@
 ;
 ; CALLS:
 ;      fits2ana, fitshead2struct, fxpar, fitshead2wcs, wcs_get_coord,
-;      prits_tools.write_image_real_size
+;      ptools.write_image_real_size
 ;
 ; HISTORY:
 ;      Ver. 1,   23-Jun-2022, Martin Wiesmann
@@ -54,7 +54,7 @@
 ;                             header (instead of l2winno which no longer
 ;                             exists)
 ;      Ver. 1.2, 22-Jan-2024, Terje Fredvik - New keyword show_plot handed over
-;      to prits_tools__write_image_real_size. Set colortable keyword to 100
+;      to ptools__write_image_real_size. Set colortable keyword to 100
 ;      for velocity images to signal that special eis_colors,/velocity color
 ;      table should be restored. Added "ql" in the filename.
 ;      Ver. 2, 24-Jan-2024, TF - New keyword VERSION, to set the version
@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-02-27 14:20 CET $
+; $Id: 2025-05-09 13:28 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -155,11 +155,11 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
   version = version, remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend, $
   value_max = value_max, value_min = value_min, no_background_images = no_background_images, strongest_lines = strongest_lines, $
   reverse_colortable = reverse_colortable, no_tree_struct = no_tree_struct, show_plot = show_plot, quiet = quiet
-  prits_tools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
-  prits_tools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
-  prits_tools.parcheck, version, 0, "version", 'STRing', 0, default = 'xx'
-  prits_tools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
-  prits_tools.parcheck, reverse_colortable, 0, 'reverse_colortable', 'int', 0, default = 0
+  ptools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
+  ptools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
+  ptools.parcheck, version, 0, "version", 'STRing', 0, default = 'xx'
+  ptools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
+  ptools.parcheck, reverse_colortable, 0, 'reverse_colortable', 'int', 0, default = 0
 
   l3_filename = file_basename(l3_file)
 
@@ -280,7 +280,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
 
         filename = filename_base2 + '-thumb.png'
         format = 'PNG'
-        prits_tools.write_image_real_size, image_data, filename, $
+        ptools.write_image_real_size, image_data, filename, $
           remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, fit_trend = fit_trend, smooth_width = smooth_width, $
           value_max = value_max, value_min = value_min, colortable = colortable, format = format, interpolation = interpolation, $
           height = 64, border = 0, reverse_colortable = reverse_colortable, $

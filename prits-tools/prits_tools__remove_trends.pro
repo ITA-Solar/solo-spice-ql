@@ -1,4 +1,4 @@
-FUNCTION prits_tools::remove_trends, image, value_min = value_min, value_max = value_max, $
+FUNCTION ptools::remove_trends, image, value_min = value_min, value_max = value_max, $
   remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend
   COMPILE_OPT IDL2, STATIC
 

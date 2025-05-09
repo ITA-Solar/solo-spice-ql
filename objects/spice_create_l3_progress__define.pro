@@ -61,7 +61,7 @@
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 ;+
 ; Description:
@@ -79,9 +79,9 @@
 FUNCTION spice_create_l3_progress::init, n_files, files = files, group_leader = group_leader
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, files, 0, "files", 'string', [0, 1], /optional
+  ptools.parcheck, files, 0, "files", 'string', [0, 1], /optional
   n_files_in = n_elements(files)
-  prits_tools.parcheck, n_files, 1, "n_files", 'INTEGERS', 0, MINVAL = 1, optional = n_files_in
+  ptools.parcheck, n_files, 1, "n_files", 'INTEGERS', 0, MINVAL = 1, optional = n_files_in
 
   IF n_files_in GT 0 THEN BEGIN
     self.n_files = n_files_in
@@ -153,8 +153,8 @@ END
 PRO spice_create_l3_progress::next_file, n_windows, filename = filename, halt = halt
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, n_windows, 1, "n_windows", 'INTEGERS', 0, MINVAL = 1
-  prits_tools.parcheck, filename, 0, "filename", 'string', 0, /optional
+  ptools.parcheck, n_windows, 1, "n_windows", 'INTEGERS', 0, MINVAL = 1
+  ptools.parcheck, filename, 0, "filename", 'string', 0, /optional
 
   event = widget_event(self.stop_button, /nowait)
   IF event.id NE 0l THEN BEGIN
@@ -209,7 +209,7 @@ END
 PRO spice_create_l3_progress::next_window, window_name = window_name, halt = halt
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, window_name, 0, "window_name", 'string', 0, /optional
+  ptools.parcheck, window_name, 0, "window_name", 'string', 0, /optional
 
   event = widget_event(self.stop_button, /nowait)
   IF event.id NE 0l THEN BEGIN

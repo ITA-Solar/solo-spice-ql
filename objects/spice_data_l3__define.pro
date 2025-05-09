@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-05-09 13:28 CEST $
 
 ;+
 ; Description:
@@ -54,7 +54,7 @@
 FUNCTION spice_data_l3::init, file, quiet = quiet
   COMPILE_OPT IDL2
 
-  prits_tools.parcheck, file, 1, "file", 'string', 0
+  ptools.parcheck, file, 1, "file", 'string', 0
   file_info = spice_file2info(file)
   IF ~file_info.is_spice_file THEN BEGIN
     IF ~keyword_set(quiet) THEN print, 'File is not a SPICE file: ' + file

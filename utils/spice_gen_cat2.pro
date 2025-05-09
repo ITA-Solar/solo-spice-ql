@@ -115,7 +115,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-04-21 09:48 CEST $
+; $Id: 2025-05-09 13:28 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -439,9 +439,9 @@ FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = 
   new_files_manual = new_files_manual, ignore_L0 = ignore_L0
   self.d = dictionary()
 
-  prits_tools.default, spice_data_dir, getenv("SPICE_DATA")
-  prits_tools.default, use_old_catalog, 1
-  prits_tools.default, new_files_manual, !null
+  ptools.default, spice_data_dir, getenv("SPICE_DATA")
+  ptools.default, use_old_catalog, 1
+  ptools.default, new_files_manual, !null
 
   self.d.quiet = keyword_set(quiet)
   self.d.use_old_catalog = use_old_catalog
@@ -481,7 +481,7 @@ END
 PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old_catalog, ignore_L0 = ignore_L0
   steinhh_paths = getenv("USER") EQ 'steinhh' || getenv("USE_STEINHH_PATHS") NE ''
   IF NOT steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
-  prits_tools.default, spice_data_dir, "$HOME/spice_home/fits"
+  ptools.default, spice_data_dir, "$HOME/spice_home/fits"
   IF ~file_test(spice_data_dir, /directory) THEN message, 'Directory does not exist: ' + spice_data_dir
   ON_ERROR, 0
   REPEAT BEGIN
