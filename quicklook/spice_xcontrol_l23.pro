@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-05-12 10:06 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -192,7 +192,6 @@ PRO spice_xcontrol_l23_save_file, event
     IF iwindow GT 0 THEN IS_EXTENSION = 1 ELSE IS_EXTENSION = 0
     ana2fits, ana_l3[iwindow], FILEPATH_OUT = file_l3, $
       N_WINDOWS = nwin_l3, WINNO = iwindow, $
-      TYPE_XDIM1 = 'WAVE', $
       IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', $
       PROC_STEPS = PROC_STEPS, $
       PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = (*info).object_l2.get_header(winno_l3[iwindow]), $
