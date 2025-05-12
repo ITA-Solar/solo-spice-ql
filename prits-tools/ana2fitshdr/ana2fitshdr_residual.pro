@@ -37,7 +37,7 @@
 ; HISTORY:
 ;      Ver. 1, 5-May-2025, Martin Wiesmann
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-05-12 09:58 CEST $
 
 FUNCTION ana2fitshdr_residual, datetime = datetime, extension_names = extension_names, residual = residual, wcs = wcs, SAVE_RESIDUALS = SAVE_RESIDUALS
   ptools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
@@ -45,7 +45,7 @@ FUNCTION ana2fitshdr_residual, datetime = datetime, extension_names = extension_
   ptools.parcheck, residual, 0, 'RESIDUAL', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
   ptools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
 
-  IF ~SAVE_RESIDUALS THEN return, ''
+  IF ~keyword_set(SAVE_RESIDUALS) THEN return, ''
   IF n_elements(residual) EQ 0 THEN return, ''
 
   fits_util = obj_new('oslo_fits_util')
