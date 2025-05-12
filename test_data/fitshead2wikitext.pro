@@ -1,5 +1,5 @@
 ; Convert FITS header to wikitext format
-; $Id: 2025-05-12 13:29 CEST $
+; $Id: 2025-05-12 13:31 CEST $
 
 PRO fitshead2wikitext, fitsfile, extension = extension
   level = 3
@@ -19,12 +19,7 @@ PRO fitshead2wikitext, fitsfile, extension = extension
   help, hdr
 
   openw, unit, outfile, /get_lun
-  FOR i = 0, n_elements(hdr) - 1 DO BEGIN
-    ; print, i, hdr[i]
-    printf, unit, hdr[i]
-  ENDFOR
+  FOR i = 0, n_elements(hdr) - 1 DO printf, unit, hdr[i]
   close, unit
   free_lun, unit
-  ; stop
-  ; print, hdr
 END
