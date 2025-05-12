@@ -41,7 +41,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-05-12 10:22 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -95,6 +95,9 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'EXTNAME', extension_names[0], 'Extension name'
   fits_util.add, hdr, 'FILENAME', file_basename(filename_out), 'Filename of this FITS file'
 
+  parent = header_exists ? fxpar(header_input_data, 'FILENAME', missing = '') : ''
+  IF parent EQ '' THEN parent = file_basename((DATA_EXT_PATH.split(';'))[0])
+  fits_util.add, hdr, 'PARENT', parent, 'Parent filename'
   fits_util.add, hdr, 'PARENTXT', DATA_EXT_PATH, 'Parent filename and path;extension name'
 
   fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
