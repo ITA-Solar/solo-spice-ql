@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-13 14:35 CEST $
+; $Id: 2025-05-13 14:38 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -288,8 +288,8 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       DATA_EXT_PATH = dataext_split[0]
       DATA_EXTNAME = dataext_split[1]
     ENDIF ELSE BEGIN
-      IF loud THEN message, 'Unknown format of external extension: ' + DATAEXT, /info
-      IF loud THEN message, 'Only using first and last part', /info
+      IF ~quiet THEN message, 'Unknown format of external extension: ' + DATAEXT, /info
+      IF ~quiet THEN message, 'Only using first and last part', /info
       DATA_EXT_PATH = dataext_split[0]
       DATA_EXTNAME = dataext_split[-1]
     ENDELSE
