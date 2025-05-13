@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-05-13 12:52 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -313,7 +313,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       size_data = size(data)
       IF ~headers_only && size_data[0] EQ 0 THEN BEGIN
         IF loud THEN message, 'Loading data cube from external extension', /info
-        prg_file = spice_find_file(DATAEXT)
+        prg_file = spice_find_file(DATA_EXT_PATH)
         prg_file = prg_file[0]
         IF prg_file NE '' && file_exist(prg_file) THEN BEGIN
           IF ~quiet THEN message, 'Reading file : ' + prg_file, /info
