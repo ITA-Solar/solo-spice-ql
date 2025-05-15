@@ -1,4 +1,4 @@
-; $Id: 2025-03-25 10:09 CET $
+; $Id: 2025-05-15 11:44 CEST $
 FUNCTION spice_keyword_info_header
   text = inline_text('  ; - END')
   ; NAXIS1  =                    1 /
@@ -40,7 +40,9 @@ FUNCTION spice_keyword_info_header
   ; PXCOV3  = '46-109, 209-240, 626-689, 695-726, 752-783, 914-977, 1137-1168, 171'
   ;
   ; AUTHOR  = 'Tim Grundy'         / Author of study
+  ; LTP     =                   19 / SoLO Long-Term Plan number 
   ; STP     =                  122 / SoLO Short-Term Plan number
+  ; 
   ; DSUN_AU =       0.521442615073 / [AU] S/C distance from Sun
   ; CROTA   =       -1.38515696166 / [deg] S/C counter-clockwise roll rel to Solar N
   ; ROT_COMP=                    0 / Solar rotation compensation on (1) or off (0)   
