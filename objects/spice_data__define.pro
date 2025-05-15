@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-05-15 10:47 CEST $
 
 ;+
 ; Description:
@@ -2300,11 +2300,14 @@ END
 ;              using spice_diff_rot_coord.
 ;              If this keyword is set, then y, lambda and time provided must be within
 ;              the actual data volume.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;              then the keyword DIFF_ROT is set.
 ;
 ; OUTPUT:
 ;     Float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = time, diff_rot = diff_rot
+FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = time, $
+  diff_rot = diff_rot, auto_diff_rot = auto_diff_rot
   ; Returns a vector containing the coordinate for each pixel in instrument x-direction
   COMPILE_OPT IDL2
 
@@ -2324,7 +2327,7 @@ FUNCTION spice_data::get_instr_x_vector, window, y = y, lambda = lambda, time = 
   pixels[2, *] = lambda
   pixels[3, *] = self.get_sit_and_stare() ? indgen(npix) : time
 
-  return, self.get_wcs_coord(window_index, pixels, /x, diff_rot = diff_rot)
+  return, self.get_wcs_coord(window_index, pixels, /x, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
 END
 
 ;+
@@ -2345,6 +2348,8 @@ END
 ;              using spice_diff_rot_coord.
 ;              If this keyword is set, then x, lambda and time provided must be within
 ;              the actual data volume.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;              then the keyword DIFF_ROT is set.
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
 ;              for the whole detector. The data is then debinned. This may give wrong results if
 ;              diff_rot is also set.
@@ -2352,7 +2357,8 @@ END
 ; OUTPUT:
 ;     Float array, coordinate in arcsec
 ;-
-FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = time, full_ccd = full_ccd, diff_rot = diff_rot
+FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = time, full_ccd = full_ccd, $
+  diff_rot = diff_rot, auto_diff_rot = auto_diff_rot
   ; Returns a vector containing the coordinate for each pixel in instrument y-direction
   COMPILE_OPT IDL2
 
@@ -2380,7 +2386,7 @@ FUNCTION spice_data::get_instr_y_vector, window, x = x, lambda = lambda, time = 
   pixels[2, *] = lambda
   pixels[3, *] = time
 
-  return, self.get_wcs_coord(window_index, pixels, /y, diff_rot = diff_rot)
+  return, self.get_wcs_coord(window_index, pixels, /y, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
 END
 
 ;+
@@ -2578,6 +2584,8 @@ END
 ;              using spice_diff_rot_coord.
 ;              If this keyword is set, then all pixels provided in the pixels array must be within
 ;              the actual data volume. Floating point indices may give wrong results.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;              then the keyword DIFF_ROT is set.
 ;
 ; OUTPUT:
 ;     Float array,
@@ -2588,7 +2596,8 @@ END
 ;         4D: No pixels provided, one of the keywords set (NAXIS1 x NAXIS2 x NAXIS3 x NAXIS4 array)
 ;         5D: No pixels provided, no keywords set (4 x NAXIS1 x NAXIS2 x NAXIS3 x NAXIS4 array)
 ;-
-FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambda, time = time, diff_rot = diff_rot
+FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambda, time = time, $
+  diff_rot = diff_rot, auto_diff_rot = auto_diff_rot
   ; Returns the coordinate(s) of one or more specified pixels, or all if pixels not provided
   COMPILE_OPT IDL2
 
@@ -2600,7 +2609,18 @@ FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambd
     return, !NULL
   ENDIF
 
-  IF keyword_set(diff_rot) THEN BEGIN
+  rot_comp = self.get_header_keyword('rot_comp', window_index, -1)
+  IF keyword_set(diff_rot) || (keyword_set(auto_diff_rot) && rot_comp EQ 0) THEN BEGIN
+    CASE rot_comp OF
+      -1: box_message, ['ROT_COMP undefined. I.e., it is unknown whether feature tracking was on.', $
+        'Differential rotation correction may give wrong results.', $
+        'You may want to reconsider setting the keyword DIFF_ROT in call to', $
+        'spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+      0:
+      1: box_message, ['ROT_COMP=1. I.e., feature tracking was probably on.', $
+        'Differential rotation correction may give wrong results, it is therefore not recommended to set the keyword DIFF_ROT.', $
+        'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+    ENDCASE
     coords = wcs_get_coord(*(*self.window_wcs)[window_index])
     spice_diff_rot_coord, *(*self.window_wcs)[window_index], coords
     IF size_pixels[0] GT 0 THEN BEGIN
@@ -2615,6 +2635,13 @@ FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambd
       ENDELSE
     ENDIF
   ENDIF ELSE BEGIN
+    CASE rot_comp OF
+      -1:
+      0: box_message, ['ROT_COMP=0. I.e., feature tracking was probably off.', $
+        'Differential rotation correction may give better results, you may want to set the keyword (AUTO_)DIFF_ROT.', $
+        'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+      1:
+    ENDCASE
     coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
   ENDELSE
 
