@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-15 10:47 CEST $
+; $Id: 2025-05-15 11:08 CEST $
 
 ;+
 ; Description:
@@ -2300,6 +2300,7 @@ END
 ;              using spice_diff_rot_coord.
 ;              If this keyword is set, then y, lambda and time provided must be within
 ;              the actual data volume.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
 ;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;
@@ -2348,6 +2349,7 @@ END
 ;              using spice_diff_rot_coord.
 ;              If this keyword is set, then x, lambda and time provided must be within
 ;              the actual data volume.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
 ;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
@@ -2584,6 +2586,7 @@ END
 ;              using spice_diff_rot_coord.
 ;              If this keyword is set, then all pixels provided in the pixels array must be within
 ;              the actual data volume. Floating point indices may give wrong results.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
 ;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;
