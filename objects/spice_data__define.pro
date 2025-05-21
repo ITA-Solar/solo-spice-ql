@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-21 15:54 CEST $
+; $Id: 2025-05-21 15:58 CEST $
 
 ;+
 ; Description:
@@ -633,7 +633,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
     LAMBDA = reform(LAMBDA, [naxis1, naxis2, naxis3])
     LAMBDA = transpose(LAMBDA, [2, 0, 1])
     DATA = transpose(DATA, [2, 0, 1])
-    WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], value = 1.0)
+    ; WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], value = 1.0)
   ENDELSE
   type_data = size(DATA, /type)
   LAMBDA = fix(LAMBDA, type = type_data)
