@@ -56,7 +56,13 @@ help,d
 help,didl
 help,dpy
 
-didl=transpose(didl,[1,2,0])
+if file.contains('spice-n-sit') then begin
+  didl=transpose(didl,[2,0,1])
+  sdidl=size(didl)
+  didl=reform(didl,1,sdidl[1],sdidl[2],sdidl[3])
+endif else begin
+  didl=transpose(didl,[1,2,0])
+endelse
 
 help,didl
 
