@@ -26,5 +26,11 @@ PRO test_spice_errors_idl
   maxrel_err = max(rel_err, min = minrel_err)
   print, 'RELATIVE ERRORS min: ', minrel_err, ' max: ', maxrel_err
 
+  ind = where(WEIGHTS EQ WEIGHTS, countw)
+  ind = where(DATA EQ DATA, countd)
+  print, 'WEIGHTS == WEIGHTS: ', countw
+  print, 'DATA == DATA: ', countd
+  print, 'DIFFERENCE: ', countw - countd
+
   a = obj.xcfit_block(0)
 END
