@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-22 14:01 CEST $
+; $Id: 2025-05-22 15:04 CEST $
 
 ;+
 ; Description:
@@ -615,10 +615,10 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   ; ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda)
   WINDATA = spice_getwindata(self, window_index)
-  ERRORS = WINDATA.err
+  ERRORS = WINDATA.err * 100
   index = where(ERRORS LT -99.9, count)
-  IF count GT 0 THEN ERRORS[index] = !values.f_nan
-  WEIGHTS = 1.0 / (ERRORS / 1000) ^ 2.0
+  IF count GT 0 THEN ERRORS[index] = 0
+  WEIGHTS = 1.0 / ERRORS ^ 2.0
 
   size_data = size(DATA)
   IF self.get_sit_and_stare() THEN BEGIN
