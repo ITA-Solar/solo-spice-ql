@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-22 15:05 CEST $
+; $Id: 2025-05-22 15:41 CEST $
 
 ;+
 ; Description:
@@ -619,6 +619,8 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   index = where(ERRORS LT -99.9, count)
   IF count GT 0 THEN ERRORS[index] = 0
   WEIGHTS = 1.0 / ERRORS ^ 2.0
+  index = where(~finite(WEIGHTS), count)
+  IF count GT 0 THEN WEIGHTS[index] = 0.0
 
   size_data = size(DATA)
   IF self.get_sit_and_stare() THEN BEGIN
