@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-15 11:08 CEST $
+; $Id: 2025-05-22 15:06 CEST $
 
 ;+
 ; Description:
@@ -208,7 +208,7 @@ FUNCTION spice_data::xcfit_block, window, no_masking = no_masking, approximated_
     no_line_list = no_line_list, /init_all_cubes)
   IF size(ana, /type) EQ 8 THEN BEGIN
     origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index))[0], (self.get_instr_y_vector(window_index))[0]]
-    scale = [self.get_resolution(/lambda), self.get_resolution(/x), self.get_resolution(/y)]
+    scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
     spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2]
   ENDIF ELSE BEGIN
     print, 'Something went wrong when trying to produce an ANA structure.'
