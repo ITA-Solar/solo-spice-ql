@@ -18,6 +18,9 @@ PRO test_spice_errors_idl
   help, WEIGHTS
   maxweights = max(WEIGHTS, min = minweights)
   errors = 1.0 / sqrt(WEIGHTS)
+  ind = where(~finite(errors), nbad)
+  IF nbad GT 0 THEN errors[ind] = 0.0001
+
   maxerrors = max(errors, min = minerrors)
   print, 'ERRORS      min: ', minerrors, ' max: ', maxerrors
   print, 'DATA        min: ', min(DATA), ' max: ', max(DATA)
@@ -32,5 +35,5 @@ PRO test_spice_errors_idl
   print, 'DATA == DATA: ', countd
   print, 'DIFFERENCE: ', countw - countd
 
-  a = obj.xcfit_block(0)
+  ; a = obj.xcfit_block(0)
 END
