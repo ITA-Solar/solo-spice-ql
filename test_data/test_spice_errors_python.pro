@@ -1,8 +1,8 @@
 pro test_spice_errors_python
 
 file = 'solo_L2_spice-n-ras_20230405T165232_V02_184549674-000'
-file = 'solo_L2_spice-n-exp_20230216T032801_V22_167772583-007'
-file = 'solo_L2_spice-n-sit_20250327T044323_V03_318767233-000'
+;file = 'solo_L2_spice-n-exp_20230216T032801_V22_167772583-007'
+;file = 'solo_L2_spice-n-sit_20250327T044323_V03_318767233-000'
 file = spice_find_file(file)
 file = file[0]
 
@@ -40,6 +40,46 @@ result = spice_uncertainties.spice_error(hdul[0])
 help,result
 print,result[0]
 print,result[1]
+
+
+dpy=(result[1])['Total']
+
+
+
+;help, WEIGHTS
+;maxweights = max(WEIGHTS, min = minweights)
+;errors = 1.0 / sqrt(WEIGHTS)
+;ind = where(~finite(dpy), nbad)
+;IF nbad GT 0 THEN dpy[ind] = 0.0001
+
+maxerrors = max(dpy, min = minerrors)
+print, 'ERRORS      min: ', minerrors, ' max: ', maxerrors
+;print, 'DATA        min: ', min(DATA), ' max: ', max(DATA)
+;print, 'WEIGHTS     min: ', minweights, ' max: ', maxweights
+;rel_err = dpy / DATA * 100
+;maxrel_err = max(rel_err, min = minrel_err)
+;print, 'RELATIVE ERRORS min: ', minrel_err, ' max: ', maxrel_err
+
+;ind = where(WEIGHTS EQ WEIGHTS, countw)
+;ind = where(DATA EQ DATA, countd)
+;print, 'WEIGHTS == WEIGHTS: ', countw
+;print, 'DATA == DATA: ', countd
+;print, 'DIFFERENCE: ', countw - countd
+
+
+
+
+print,''
+print,'  ----------- '
+print,''
+
+
+test_spice_errors_idl, file
+
+
+print,''
+print,'  ----------- '
+print,''
 
 
 residl = spice_getwindata(file,0)

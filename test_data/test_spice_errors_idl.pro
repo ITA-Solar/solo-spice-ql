@@ -1,4 +1,5 @@
-PRO test_spice_errors_idl
+PRO test_spice_errors_idl, file
+if n_elements(file) eq 0 then $
   file = 'solo_L2_spice-n-ras_20231028T001206_V22_218104189-001.fits'
   file = spice_find_file(file)
   file = file[0]
@@ -35,5 +36,5 @@ PRO test_spice_errors_idl
   print, 'DATA == DATA: ', countd
   print, 'DIFFERENCE: ', countw - countd
 
-  ; a = obj.xcfit_block(0)
+   a = obj.xcfit_block(0)
 END
