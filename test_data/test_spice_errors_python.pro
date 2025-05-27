@@ -1,7 +1,7 @@
 pro test_spice_errors_python
 
 n=1
-window_index=3
+window_index=0
 
 case n of
   1: begin
@@ -41,9 +41,9 @@ print,file
 obj=spice_data(file)
 
 
-a=obj.get_header_keyword('radcal',window_index,variable_values = variable_values)
-help,a
-help,variable_values
+;a=obj.get_header_keyword('radcal',window_index,variable_values = variable_values)
+;help,a
+;help,variable_values
 ;stop
 
 
@@ -56,7 +56,7 @@ help,variable_values
 
 
 
-ptools.add_python_paths ;; Skal automatisk legge solo-spice-ql/utils/python i $PYTHONPATH
+;ptools.add_python_paths ;; Skal automatisk legge solo-spice-ql/utils/python i $PYTHONPATH
 
 clip = python.import('spice_sigma_clip')
 a=clip.sigma_clip(dist(50),3)
@@ -98,7 +98,7 @@ print,result[1]
 
 dpy=(result[1])['Total']
 
-
+;stop
 
 ;help, WEIGHTS
 ;maxweights = max(WEIGHTS, min = minweights)
@@ -130,7 +130,16 @@ print,''
 
 ;test_spice_errors_idl, file
 
+dpy_new = test_spice_error_python(file,window_index)
+help,dpy_new
+help,dpy
 
+diff_new = dpy-dpy_new
+print,min(diff_new)
+print,max(diff_new)
+
+;stop
+dpy=dpy_new
 print,''
 print,'  ----------- '
 print,''
@@ -143,7 +152,7 @@ residl = spice_getwindata(file,window_index)
 help,residl
 
 
-dpy=(result[1])['Total']
+;dpy=(result[1])['Total']
 maxdpy=max(dpy,min=mindpy)
 
 didl=residl.err
@@ -152,7 +161,7 @@ print,''
 help,data
 help,didl
 help,dpy
-
+stop
 if file.contains('spice-n-sit') then begin
   ;for cfit
   ;didl=transpose(didl,[0,2,1])
