@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-22 15:06 CEST $
+; $Id: 2025-05-27 10:08 CEST $
 
 ;+
 ; Description:
@@ -3088,6 +3088,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only = values_only, exten
     ttypes = self.get_bintable_ttypes()
   ENDIF
   ttypes_use = self.expand_ttypes(ttypes, column_indices = column_indices, extension = extension)
+  IF n_elements(ttypes_use) EQ 0 THEN return, !NULL
 
   result = make_array(n_elements(ttypes_use), value = temp_column)
   file_open = 0
