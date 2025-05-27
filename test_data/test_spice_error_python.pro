@@ -25,15 +25,23 @@ FUNCTION test_spice_error_python, file, window_index
   wd = obj.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
 
   sigma_dark = sqrt(i_dark * t * npx * npy) * sqrt(2)
+  ; IDL : sigma_dark = np * i_dark * t
+  print, 'sigma_dark: ', sigma_dark
 
   background_instr = 0
   sigma_Background = sqrt(background_instr * quantum_efficiency * t * npx * npy * g * g)
+  ; IDL : sigma_Background = 0
+  print, 'sigma_Background: ', sigma_Background
 
   sigma_read = sig_read * sqrt(npx * npy) * sqrt(2)
+  ; IDL : sigma_read = np * sig_read ^ 2
+  print, 'sigma_read: ', sigma_read
 
   sigma_signal = sqrt(wd * alpha * g) * f
+  ; IDL : sigma_signal = f ^ 2 * alpha * wd[ind_good] * g
 
   constant_noise = sqrt(sigma_dark * sigma_dark + sigma_Background * sigma_Background + sigma_read * sigma_read)
+
   sigma_total = sqrt(sigma_signal * sigma_signal + constant_noise * constant_noise)
 
   return, sigma_total
