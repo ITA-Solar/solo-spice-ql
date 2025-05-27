@@ -3,7 +3,7 @@ FUNCTION test_spice_error_python, file, window_index
   ; Set various calibration parameters:
   alpha = obj.get_header_keyword('radcal', window_index)
   np = obj.get_header_keyword('nbin', window_index)
-  npx = obj.get_header_keyword('nbin1', window_index)
+  npx = obj.get_header_keyword('nbin3', window_index)
   npy = obj.get_header_keyword('nbin2', window_index)
   t = obj.get_header_keyword('xposure', window_index)
 
