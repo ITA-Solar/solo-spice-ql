@@ -25,16 +25,16 @@ FUNCTION test_spice_error_python, file, window_index
 
   sigma_dark = sqrt(i_dark * t * npx * npy) * sqrt(2)
   ; IDL : sigma_dark = np * i_dark * t
-  print, 'sigma_dark: ', sigma_dark
+  print, ' -- sigma_dark: ', sigma_dark
 
   background_instr = 0
   sigma_Background = sqrt(background_instr * quantum_efficiency * t * npx * npy * g * g)
   ; IDL : sigma_Background = 0
-  print, 'sigma_Background: ', sigma_Background
+  print, ' -- sigma_Background: ', sigma_Background
 
   sigma_read = sig_read * sqrt(npx * npy) * sqrt(2)
   ; IDL : sigma_read = np * sig_read ^ 2
-  print, 'sigma_read: ', sigma_read
+  print, ' -- sigma_read: ', sigma_read
 
   wd = obj.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
   sigma_signal = sqrt(wd * alpha * g) * f
@@ -44,6 +44,16 @@ FUNCTION test_spice_error_python, file, window_index
 
   sigma_total = sqrt(sigma_signal * sigma_signal + constant_noise * constant_noise)
   ; IDL : sigma_total = sqrt(sigma_dark + sigma_read + sigma_signal) / alpha
+  ;print, ' -- sigma_total: ', sigma_total
 
-  return, sigma_total
+  sigma_dark /= alpha
+  sigma_Background /= alpha
+  sigma_read /= alpha
+  sigma_total /= alpha
+  
+  print, ' -- sigma_dark: ', sigma_dark
+  print, ' -- sigma_Background: ', sigma_Background
+  print, ' -- sigma_read: ', sigma_read
+  ;print, ' -- sigma_total: ', sigma_total
+ return, sigma_total
 END
