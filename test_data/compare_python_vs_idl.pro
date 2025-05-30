@@ -43,8 +43,51 @@ python = sqrt( $
 
 
 I looked at the IDL code and the Python code, and they are not exactly the same. 
+
+By IDL code, I mean the code in the IDL function `SPICE_GETWINDATA`, in which Peter Young has implemented the
+algorithm described in the article by Huang et al. (2023) (https://arxiv.org/pdf/2303.15979).
+
+idl = sqrt( $
+  noise_factor ^ 2 * alpha * data * gain + $
+  read_noise ^ 2 * nbin_total + $
+  i_dark * t * nbin_total) $
+  / alpha
+
+By Python code, I mean the code in the Python function `SPICE_ERROR` in the file `uncertainties.py` of the SOSPICE package.
+This function was written by Eric Buchlin, as far as I can tell.
+
+This is the Python code, translated to IDL syntax for comparison:
+python = sqrt( $
+  noise_factor ^ 2 * alpha * data * gain + $
+  read_noise ^ 2 * nbin_total * 2 + $
+  i_dark * t * nbin_total * 2) $
+  / alpha
+
+See at the end of the mail for an explanation of the variables.
+
+The differences between the IDL and Python code are as follows:
+
+1) The IDL code follows the algorithm given in the article by Huang et al. (2023) (https://arxiv.org/pdf/2303.15979)
 The python code multiplies the read noise and dark current with `sqrt(2)`.
 This results in slightly higher noise values in the Python code compared to the IDL code.
 This difference is less significant for pixels with high signal values, but it can be noticeable for low signal values.
 
-The IDL code follows the algorithm given in the article by Huang et al. (2023) (https://arxiv.org/pdf/2303.15979)
+2) The python code has a 'Background' term that is not present in the IDL code. However, this term is set to zero in the Python code, 
+so it does not affect the final noise values. Is the background noise eventually non-zero in the Python code?
+
+3) The IDL codes treats negative values as missing, whereas the python code states:
+
+Negative values of the signal are considered to be 0 for the purpose of
+    computing the noise on the signal. However, the total uncertainty is
+    then set to |signal_mean| + RSS (other noises), to ensure that the
+    error bars are still compatible with expected fitted functions.
+    We suggest users to replace large negative values of the signal
+    (e.g. < -3 * RSS(other noises)) by NaNs.
+
+    selecting only above-zero pixels inevitably forces the fit to end up higher than it would otherwise be. 
+    Sure, negative values are not *real*, but there is noise which becomes negative when subtracting dark etc. 
+    The continuum is obviously not negative, though, but we can deal with that by having a minimum value during 
+    the line fitting. However... to be a nitpick... if one is to handle errors absolutely correct: for some 
+    spatial pixels, after dark subtraction, the continuum should be negative! So a picture of the continuum 
+    (the constant coefficient in the line fit) where it has been forced to be negative won't have the "correct" 
+    noise properties - and same as for the NaN pixels, the average background will be forced up.
