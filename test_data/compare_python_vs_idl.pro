@@ -84,7 +84,7 @@ Negative values of the signal are considered to be 0 for the purpose of
     We suggest users to replace large negative values of the signal
     (e.g. < -3 * RSS(other noises)) by NaNs.
 
-    selecting only above-zero pixels inevitably forces the fit to end up higher than it would otherwise be. 
+    Selecting only above-zero pixels inevitably forces the fit to end up higher than it would otherwise be. 
     Sure, negative values are not *real*, but there is noise which becomes negative when subtracting dark etc. 
     The continuum is obviously not negative, though, but we can deal with that by having a minimum value during 
     the line fitting. However... to be a nitpick... if one is to handle errors absolutely correct: for some 
