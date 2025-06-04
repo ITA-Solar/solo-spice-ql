@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-27 10:08 CEST $
+; $Id: 2025-06-04 15:09 CEST $
 
 ;+
 ; Description:
@@ -2760,6 +2760,34 @@ FUNCTION spice_data::get_spectral_binning, window
   ENDFOR
   IF n_elements(bin3) EQ 1 THEN bin3 = bin3[0]
   return, bin3
+END
+
+;+
+; Description:
+;     Returns the calibration factor for the specified window
+;
+; INPUTS:
+;     window : the index or name of the window to be checked
+;
+; OUTPUT:
+;     boolean, True if input is a valid window index or name
+;
+; OPTIONAL OUTPUT:
+;     variable_values : array, contains the variable values for this keyword, if this keyword is present
+;                       in the binary table extension 'VARIABLE-KEYWORDS', otherwise !NULL.
+;-
+FUNCTION spice_data::get_calibration_factor, window, variable_values = variable_values
+  ; Returns the calibration factor for the specified window
+  COMPILE_OPT IDL2
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
+  calibration_factor = self.get_header_keyword('radcal', window_index, variable_values = variable_values, /values_only)
+  return, calibration_factor
+
+  CASE trim(self.get_header_keyword('DETECTOR', window_index)) OF
+    'SW': self.add_window, all_data_SW, data, window_index, included_winnos
+    'LW': self.add_window, all_data_LW, data, window_index, included_winnos
+  ENDCASE
 END
 
 ;+
