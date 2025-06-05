@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-04 15:09 CEST $
+; $Id: 2025-06-05 14:15 CEST $
 
 ;+
 ; Description:
@@ -2760,6 +2760,29 @@ FUNCTION spice_data::get_spectral_binning, window
   ENDFOR
   IF n_elements(bin3) EQ 1 THEN bin3 = bin3[0]
   return, bin3
+END
+
+;+
+; Description:
+;     Returns the total binning factor, spectral * spatial direction.
+;     If window is not provided a vector with binning factors for all
+;     windows is returned.
+;
+; OPTIONAL INPUTS:
+;     window : the index or name of the window (can be a list of indices or names)
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_total_binning, window
+  ; Returns the binning factor in the spectral direction (vector if window not provided)
+  COMPILE_OPT IDL2
+
+  spatial_binning = self.get_spatial_binning(window)
+  spectral_binning = self.get_spectral_binning(window)
+  total_binning = spatial_binning * spectral_binning
+  IF n_elements(total_binning) EQ 1 THEN total_binning = total_binning[0]
+  return, total_binning
 END
 
 ;+
