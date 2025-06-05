@@ -2806,11 +2806,6 @@ FUNCTION spice_data::get_calibration_factor, window, variable_values = variable_
   IF window_index LT 0 THEN return, !NULL
   calibration_factor = self.get_header_keyword('radcal', window_index, variable_values = variable_values, /values_only)
   return, calibration_factor
-
-  CASE trim(self.get_header_keyword('DETECTOR', window_index)) OF
-    'SW': self.add_window, all_data_SW, data, window_index, included_winnos
-    'LW': self.add_window, all_data_LW, data, window_index, included_winnos
-  ENDCASE
 END
 
 ;+
