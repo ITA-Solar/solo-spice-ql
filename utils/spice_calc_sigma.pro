@@ -33,7 +33,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-06-04 15:09 CEST $
+; $Id: 2025-06-05 14:32 CEST $
 
 FUNCTION spice_calc_sigma, file, window_index, $
   iwin = 0, no_masking = 0, approximated_slit = 0, $
@@ -45,7 +45,7 @@ FUNCTION spice_calc_sigma, file, window_index, $
 
   ; Set various calibration parameters:
   calibration_factor = obj.get_calibration_factor(window_index, variable_values = calibration_factor_var)
-  nbin = obj.get_binning(window_index)
+  nbin = obj.get_total_binning(window_index)
   xposure = obj.get_exposure_time(window_index)
   noise_factor = obj.get_noise_factor(window_index)
   gain = obj.get_gain(window_index)
