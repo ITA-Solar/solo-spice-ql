@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-05 14:15 CEST $
+; $Id: 2025-06-05 14:22 CEST $
 
 ;+
 ; Description:
@@ -2793,7 +2793,7 @@ END
 ;     window : the index or name of the window to be checked
 ;
 ; OUTPUT:
-;     boolean, True if input is a valid window index or name
+;     scalar number, the average calibration factor for the specified window.
 ;
 ; OPTIONAL OUTPUT:
 ;     variable_values : array, contains the variable values for this keyword, if this keyword is present
@@ -2811,6 +2811,33 @@ FUNCTION spice_data::get_calibration_factor, window, variable_values = variable_
     'SW': self.add_window, all_data_SW, data, window_index, included_winnos
     'LW': self.add_window, all_data_LW, data, window_index, included_winnos
   ENDCASE
+END
+
+;+
+; Description:
+;     Returns the noise factor for the specified window
+;
+; INPUTS:
+;     window : the index or name of the window to be checked
+;
+; OUTPUT:
+;     scalar number, the noise factor for the specified window.
+;-
+FUNCTION spice_data::get_noise_factor, window
+  ; Returns the noise factor for the specified window
+  COMPILE_OPT IDL2
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
+  CASE trim(self.get_header_keyword('DETECTOR', window_index)) OF
+    'SW': noise_factor = 1.0
+    'LW': noise_factor = 1.6
+    ELSE: BEGIN
+      message, 'Unknown detector type in window ' + string(window_index) + ': ' + $
+        self.get_header_keyword('DETECTOR', window_index), /info
+      return, !NULL
+    END
+  ENDCASE
+  return, noise_factor
 END
 
 ;+
