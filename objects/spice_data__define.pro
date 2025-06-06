@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-06 13:24 CEST $
+; $Id: 2025-06-06 13:36 CEST $
 
 ;+
 ; Description:
@@ -2778,11 +2778,15 @@ FUNCTION spice_data::get_total_binning, window
   ; Returns the binning factor in the spectral direction (vector if window not provided)
   COMPILE_OPT IDL2
 
-  spatial_binning = self.get_spatial_binning(window)
-  spectral_binning = self.get_spectral_binning(window)
-  total_binning = spatial_binning * spectral_binning
-  IF n_elements(total_binning) EQ 1 THEN total_binning = total_binning[0]
-  return, total_binning
+  IF n_elements(window) EQ 0 THEN window = indgen(self.get_number_windows())
+  bin = intarr(n_elements(window))
+  FOR i = 0, n_elements(window) - 1 DO BEGIN
+    window_index = self.return_extension_index(window[i], /check_window_index)
+    IF window_index GE 0 THEN $
+      bin[i] = self.get_header_keyword('NBIN', window_index, self.get_spatial_binning(window_index) * self.get_spectral_binning(window_index))
+  ENDFOR
+  IF n_elements(bin) EQ 1 THEN bin = bin[0]
+  return, bin
 END
 
 ;+
