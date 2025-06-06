@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-05 14:22 CEST $
+; $Id: 2025-06-06 13:24 CEST $
 
 ;+
 ; Description:
@@ -2810,29 +2810,30 @@ END
 
 ;+
 ; Description:
-;     Returns the noise factor for the specified window
+;     Returns the noise factors for the specified window
 ;
 ; INPUTS:
 ;     window : the index or name of the window to be checked
 ;
 ; OUTPUT:
-;     scalar number, the noise factor for the specified window.
+;     structure, the noise factors for the specified window.
+;     {noise_factor, gain, read_noise, i_dark}
 ;-
-FUNCTION spice_data::get_noise_factor, window
-  ; Returns the noise factor for the specified window
+FUNCTION spice_data::get_noise_factors, window
+  ; Returns the noise factors for the specified window
   COMPILE_OPT IDL2
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, !NULL
   CASE trim(self.get_header_keyword('DETECTOR', window_index)) OF
-    'SW': noise_factor = 1.0
-    'LW': noise_factor = 1.6
+    'SW': noise_factors = {noise_factor: 1.0, gain: 3.58, read_noise: 6.9, i_dark: 0.89}
+    'LW': noise_factors = {noise_factor: 1.6, gain: 0.57, read_noise: 6.9, i_dark: 0.54}
     ELSE: BEGIN
       message, 'Unknown detector type in window ' + string(window_index) + ': ' + $
         self.get_header_keyword('DETECTOR', window_index), /info
       return, !NULL
     END
   ENDCASE
-  return, noise_factor
+  return, noise_factors
 END
 
 ;+
