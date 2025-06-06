@@ -33,7 +33,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-06-05 14:32 CEST $
+; $Id: 2025-06-06 13:24 CEST $
 
 FUNCTION spice_calc_sigma, file, window_index, $
   iwin = 0, no_masking = 0, approximated_slit = 0, $
@@ -47,25 +47,11 @@ FUNCTION spice_calc_sigma, file, window_index, $
   calibration_factor = obj.get_calibration_factor(window_index, variable_values = calibration_factor_var)
   nbin = obj.get_total_binning(window_index)
   xposure = obj.get_exposure_time(window_index)
-  noise_factor = obj.get_noise_factor(window_index)
-  gain = obj.get_gain(window_index)
-  read_noise = obj.get_read_noise(window_index)
-  i_dark = obj.get_dark_current_noise(window_index)
-
-  lambda = obj.get_lambda_vector(window_index)
-  IF mean(lambda) GT 900. THEN BEGIN
-    noise_factor = 1.6 ; noise factor
-    gain = 0.57 ; gain
-    read_noise = 6.9 ; read noise
-    i_dark = 0.54 ; dark current noise
-    quantum_efficiency = 0.25
-  ENDIF ELSE BEGIN
-    noise_factor = 1.0 ; noise factor
-    gain = 3.58 ; gain
-    read_noise = 6.9 ; read noise
-    i_dark = 0.89 ; dark current noise
-    IF mean(lambda) LT 740. THEN quantum_efficiency = 0.12 ELSE quantum_efficiency = 0.1 ; not perfectly consistent with Python code
-  ENDELSE
+  noise_factors = obj.get_noise_factors(window_index)
+  noise_factor = noise_factors.noise_factor
+  gain = noise_factors.gain
+  read_noise = noise_factors.read_noise
+  i_dark = noise_factors.i_dark
 
   data = obj.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
   missing_val = -100.
