@@ -111,11 +111,14 @@
 ;              Version 17, TF, 17.04.2024. New method
 ;                          ::rsync_file_to_other_servers, rsyncs file to any
 ;                          server returned by spice_get_other_servers()
-;              VErsion 18, SH, 04.09.2024. Change keyword_info.json -> spice_keyword_info.json
+;              Version 18, SH, 04.09.2024. Change keyword_info.json ->
+;                          spice_keyword_info.json
+;              Version 19, SH, 10.05.2025
+;                          MANY changes, see Explanation above.
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-05-29 19:48 CEST $
+; $Id: 2025-06-10 17:37 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -366,7 +369,8 @@ END
 PRO spice_gen_cat2::write_hash_save_file
   print, 'Writing ' + self.d.catalog_hash_save_file
   file_hash = self.d.file_hash
-  save, file = self.d.catalog_hash_save_file, file_hash
+  save, file = self.d.catalog_hash_save_file + '.tmp', file_hash
+  file_move, self.d.catalog_hash_save_file + '.tmp', self.d.catalog_hash_save_file, /overwrite
   self.rsync_file_to_other_servers, self.d.catalog_hash_save_file
 END
 
