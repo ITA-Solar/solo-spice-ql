@@ -185,7 +185,7 @@
 ;               MODAL : If set, XCFIT_BLOCK will be called as a modal widget, i.e. blocks the parent widget.
 ;                       This requires a group_leader.
 ;
-; Calls       : spice_cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(), cw_pselect(), cwf_status(), 
+; Calls       : cw_cubeview(), cw_flipswitch(), cw_loadct(), cw_plotz(), cw_pselect(), cwf_status(), 
 ;               default, exist(), dimreform(), dimrebin(), delvarx
 ;               handle_killer_hookup, mk_analysis(), mk_comp_poly(), make_sfit_stc()
 ;               update_cfit, eval_cfit, cfit_bpatch, cfit(), xcfit
@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-10 14:39 CEST $
+; $Id: 2025-06-10 15:32 CEST $
 ;-
 
 
@@ -1461,9 +1461,9 @@ PRO xcfit_block_event,ev
   if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $  ; An event from cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'CW_LOADCT' || $    ; An event from an unofficial cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
-    spice_cw_cubeview_force_redraw, info.int.data_id
-    spice_cw_cubeview_force_redraw, info.int.residual_id
-    IF info.int.show_result THEN spice_cw_cubeview_force_redraw, info.int.result_id
+    cw_cubeview_force_redraw, info.int.data_id
+    cw_cubeview_force_redraw, info.int.residual_id
+    IF info.int.show_result THEN cw_cubeview_force_redraw, info.int.result_id
 
     if tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
       handle_value,info.int.a.fit_h,orgfit
@@ -2198,14 +2198,14 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
 
 ;  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
 
-  info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
+  info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
                                  title='Original data',origin=origin, $
                                  scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                  sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
 
-  info.int.residual_id = spice_cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
+  info.int.residual_id = cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
                                      missing=missing,$
                                      uvalue="RESIDUAL",dimnames=dimnames,$
                                      title='Residual',origin=origin, $
@@ -2216,7 +2216,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
   IF keyword_set(scale) THEN r_scale = scale[1:*]
   IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale[1:*]
 
-  IF show_result THEN info.int.result_id = spice_cw_cubeview(result_b,value=this_result,$
+  IF show_result THEN info.int.result_id = cw_cubeview(result_b,value=this_result,$
                                    missing=missing,$
                                    uvalue="RESULT",dimnames=dimnames[1:*],$
                                    title=title, origin=r_origin, $
