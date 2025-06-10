@@ -1,9 +1,9 @@
 ;+
 ; NAME:
-;     WIDGET_POSITIONER_TEST
+;     WIDGET_POSITION_TEST
 ;
 ; PURPOSE:
-;     This procedure tests the class widget_positioner
+;     This procedure tests the procedure widget_position
 ;
 ; CATEGORY:
 ;     PRITS - Tools.
@@ -25,7 +25,7 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2025-06-10 13:51 CEST $
+; $Id: 2025-06-10 13:59 CEST $
 
 PRO widget_position_test
   parent = widget_base(/column, title = 'Parent Widget', xsize = 300, ysize = 400)
