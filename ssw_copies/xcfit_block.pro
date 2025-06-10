@@ -194,7 +194,7 @@
 ;               restore_analysis, delete_analysis, save_analysis
 ;               since_version(), xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
-;               spice_cfit_block, spice_get_screen_size(),
+;               spice_cfit_block, get_screen_size(),
 ;               widget_position
 ;
 ; Common      : None.
@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-10 14:29 CEST $
+; $Id: 2025-06-10 14:31 CEST $
 ;-
 
 
@@ -1895,7 +1895,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
 
   sml = {xpad:1,ypad:1,space:1}
 
-  screen = spice_get_screen_size()
+  screen = get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
     base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
       /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(modal))
