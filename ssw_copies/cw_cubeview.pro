@@ -70,10 +70,10 @@
 ;               TITLE : The title of the data column.
 ;               
 ;               SIGRANGE : If set then the sigrange function is run on data before display.
-;                          Used in spice_xtvscale. This keyword is set by default.
+;                          Used in xtvscale. This keyword is set by default.
 ;               
 ;               FRACTION : Fraction of data to consider most significant.
-;                          Used in spice_xtvscale. Default is 0.9. Ignored if SIGRANGE is unset.
+;                          Used in xtvscale. Default is 0.9. Ignored if SIGRANGE is unset.
 ;
 ; Calls       : cw_flipswitch(), cw_plotz(), cw_pzoom(), default,
 ;               handle_create(), since_version(), trim(), xplotscale(),
@@ -116,12 +116,12 @@
 ;               Version 8, Martin Wiesmann, 7 June 2023
 ;                       Extended cw_cubeview_force_redraw to redraw also plot
 ;               Version 9, Martin Wiesmann, 19. Januar 2024
-;                       Adds keyword signal to call to (spice_)xtvscale
+;                       Adds keyword signal to call to xtvscale
 ;                       Adds 'else' to case in event procedure
-;                       New keywords SIGRANGE and FRACTION, which are passed to spice_xtvscale.
+;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-10 14:59 CEST $
+; $Id: 2025-06-10 15:31 CEST $
 ;-
 
 ;;
@@ -441,7 +441,7 @@ FUNCTION cw_cubeview_event,ev
      ENDCASE
 
   'XTVSCALER':BEGIN
-     dummy = spice_xtvscale(info.int.xtvscaler,/map,iconify=0,/show)
+     dummy = xtvscale(info.int.xtvscaler,/map,iconify=0,/show)
      GOTO,skip_event
      ENDCASE
 
@@ -742,7 +742,7 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   ;;
   im_base = widget_base(ibase,/column,/frame,_extra=tight,map=nmulti GT 1)
 
-  info.int.xtvscaler = spice_xtvscale(group=mybase,map=0,missing=missing,$
+  info.int.xtvscaler = xtvscale(group=mybase,map=0,missing=missing,$
                                 sigrange=sigrange, fraction=fraction,$
                                 signal=mybase)
   dummy = cw_flipswitch(im_base,value='Adjust color scaling'+["",""],$
