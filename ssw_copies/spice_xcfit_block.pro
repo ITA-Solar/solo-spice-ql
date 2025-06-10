@@ -195,7 +195,7 @@
 ;               since_version(), xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
 ;               spice_cfit_block, spice_get_screen_size(),
-;               widget_positioner
+;               widget_position
 ;
 ; Common      : None.
 ;               
@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2024-12-10 13:59 CET $
+; $Id: 2025-06-10 13:59 CEST $
 ;-
 
 
@@ -2227,8 +2227,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   spice_xcfit_block_sensitize,info,title
 
   xrealize, base, group=group_leader, /center
-  wp = widget_positioner(fit_plot_widget, parent=base)
-  wp->position, /left_align
+  widget_position,fit_plot_widget, parent=base, /left_align
   widget_control, fit_plot_widget, map=0
 
   spice_xcfit_block_visitp,info
