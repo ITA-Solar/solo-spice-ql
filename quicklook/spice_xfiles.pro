@@ -63,7 +63,7 @@
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
 ;                    spice_xfiles
 ;
-; $Id: 2024-11-27 10:44 CET $
+; $Id: 2025-06-10 13:44 CEST $
 ;-
 
 ; xfiles exit:
@@ -657,9 +657,7 @@ PRO spice_xfiles
   widget_control, foundfiles, scr_ysize = space * 3
 
   ; realize the top level base widget
-  wp = widget_positioner(tlb)
-  wp.position, xoffset = offset_widget[0], yoffset = offset_widget[1]
-  ; widget_control, tlb, /realize
+  widget_position, tlb, xoffset = offset_widget[0], yoffset = offset_widget[1]
 
   ; Define the info structure, used to send information around
   info = {tlb: tlb, $

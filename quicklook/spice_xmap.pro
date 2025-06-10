@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-10 13:44 CEST $
 ;-
 ;
 ; save as postscript file
@@ -1132,8 +1132,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; ;                               frame       = 1)
 
   ; realize main window:
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
   widget_control, tlb, tlb_get_size = tlb_sz
 
   ; define size of widget and the menu column

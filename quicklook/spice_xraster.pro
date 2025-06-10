@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-10 13:44 CEST $
 ;-
 ;
 ; save as postscript file
@@ -620,8 +620,7 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
     event_pro = 'spice_xraster_destroy')
   ; realize main window:
 
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
   widget_control, tlb, tlb_get_size = tlb_sz
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0] ; xsize of whole widget in pixels

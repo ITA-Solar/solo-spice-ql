@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-10 13:44 CEST $
 
 ; save as postscript file
 PRO spice_xwhisker_ps, event
@@ -794,8 +794,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     event_pro = 'spice_xwhisker_destroy')
 
   ; realize main window:
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
   widget_control, tlb, tlb_get_size = tlb_sz
 
   ; define size of widget and the menu column
