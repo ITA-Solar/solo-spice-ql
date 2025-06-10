@@ -194,7 +194,7 @@
 ;               restore_analysis, delete_analysis, save_analysis
 ;               since_version(), xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
-;               spice_cfit_block, get_screen_size(),
+;               cfit_block, get_screen_size(),
 ;               widget_position
 ;
 ; Common      : None.
@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-10 14:36 CEST $
+; $Id: 2025-06-10 14:39 CEST $
 ;-
 
 
