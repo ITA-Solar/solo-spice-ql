@@ -178,17 +178,17 @@
 ;                       Whenever variables are checked for 'missing' values, it uses now
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
-; $Id: 2025-06-10 14:39 CEST $
+; $Id: 2025-06-10 14:40 CEST $
 ;-            
 
-PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
+PRO cfit_block_point,lambda,data,weights,fit,missing,$
                      result,residual,include,const,$
                      j,k,l,m,n,o,lam,new_lam,npar,sfit,$
                      double=double,quiet=quiet,$
                      sigma=sigm,make_sigma=make_sigma,$
                      error_only=error_only,$
                      restart=restart
-  
+
   nvary = total(const[*,j,k,l,m,n,o] EQ 0)
   IF nvary GT 0 THEN BEGIN
      ;;
@@ -196,7 +196,7 @@ PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
      ;;
      spec = data[*,j,k,l,m,n,o]
      ix = where_not_missing(spec, ngood, missing=missing)
-     
+
      ;;
      ;; No dice if we have too few good points
      ;;
@@ -205,13 +205,13 @@ PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
         result[*,j,k,l,m,n,o] = missing
      END ELSE BEGIN
 restart_point:
-        
+
         IF new_lam THEN lam = lambda[*,j,k,l,m,n,o]
         const_here = const[*,j,k,l,m,n,o]
         include_here = include[*,j,k,l,m,n,o]
         a_nom = result[0:npar-2,j,k,l,m,n,o]
         weights_here = weights[ix,j,k,l,m,n,o]
-        IF NOT make_sigma THEN BEGIN 
+        IF NOT make_sigma THEN BEGIN
            ff = cfit(lam[ix],spec[ix],a_nom,fit,$
                      /noupdate,chi2=chi2,quiet=quiet,$
                      sfit=sfit,const=const_here,include=include_here,$
@@ -225,10 +225,10 @@ restart_point:
                      error_only=error_only)
            sigm[0,j,k,l,m,n,o] = sigma_here
         END
-        
+
         residual[ix,j,k,l,m,n,o] = spec[ix]-ff
         failed = total(ftype EQ [1,3,4,5]) NE 0  ;; Ignore loss of prec.
-        
+
         IF failed THEN BEGIN
            IF n_elements(restart) GT 0 THEN BEGIN
               result[0,j,k,l,m,o] = restart
@@ -237,7 +237,7 @@ restart_point:
            END
            chi2 = 0.0
         END
-        
+
         result[0,j,k,l,m,n,o] = [a_nom,chi2]
         IF failed AND NOT quiet THEN BEGIN
            message,"Failed at ("+trim(j)+","+trim(k)+","+trim(l)+","+$
@@ -245,19 +245,19 @@ restart_point:
               /continue
            print,string(7b)
         END
-        
+
      END
   END ELSE BEGIN
-     
+
      ;;
      ;; If no parameters variable - check if parameters are flagged
      ;;
-     
+
      IF total(is_missing(result[0:npar-2,j,k,l,m,n,o], missing=missing)) NE npar-1 THEN BEGIN
         spec = data[*,j,k,l,m,n,o]
         ix = where_not_missing(spec, ngood, missing=missing)
-        
-        IF ngood NE 0 THEN BEGIN 
+
+        IF ngood NE 0 THEN BEGIN
            IF new_lam THEN lam = lambda[*,j,k,l,m,n,o]
            a_act = reform(result[0:npar-2,j,k,l,m,n,o])*sfit.trans_a $
               +sfit.trans_b
@@ -267,15 +267,15 @@ restart_point:
            residual[ix,j,k,l,m,n,o] = spec[ix]-ff
         END $
         ELSE residual[*,j,k,l,m,n,o] = missing
-        
+
      END ELSE residual[*,j,k,l,m,n,o] = missing
-     
+
   END
-  
+
   IF n_elements(restart) GT 0 THEN delvarx,restart
 END
 
-PRO spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,interrupt_id,halt,$
+PRO cfit_block_progress,pct,lastpct,pctage,pct_slider_id,interrupt_id,halt,$
                         quiet
   IF pct GE lastpct+pctage THEN BEGIN
      WHILE pct GT lastpct DO lastpct = lastpct+pctage
@@ -291,15 +291,15 @@ PRO spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,interrupt_id,halt
   ENDIF
 END
 
-     
-PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
+
+PRO cfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                double=double,use_result=use_result,quiet=quiet,$
                pct_slider_id=pct_slider_id,x_face=x_face,smart=smart,$
                analysis=ana,$
                make_sigma=make_sigma,sigma=sigma,error_only=error_only,$
                fill_only=fill_only
-  
-  IF NOT exist(ana) THEN BEGIN 
+
+  IF NOT exist(ana) THEN BEGIN
      IF n_params() LT 7 THEN BEGIN
         message,"Use: CFIT_BLOCK,LAMBDA,DATA,WEIGHTS,FIT,MISSING," + $
            "RESULT,RESIDUAL [,INCLUDE,CONST]"
@@ -319,7 +319,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      IF error NE 0 THEN BEGIN
         print,!err_string
         print,"Caught error, putting back data blocks.."
-        
+
         handle_value,ana.lambda_h,lambda,/no_copy,/set
         handle_value,ana.data_h,data,/no_copy,/set
         handle_value,ana.weights_h,weights,/no_copy,/set
@@ -331,25 +331,25 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
         return
      END
   END
-  
+
   quiet = keyword_set(quiet)
   t = systime(1)
-  
-  
+
+
   make_sigma = keyword_set(make_sigma)
-  
+
   szd = size(data)
   szl = size(lambda)
-  
+
   ;; Convert to 7 dimensions in all cases!
   dimen = szd[1:szd[0]]
   IF szd[0] LT 7 THEN dimen = [dimen,replicate(1L,7-szd[0])]
-  
+
   parcheck,data,   2,typ(/rea),[2,3,4,5,6,7] ,"DATA"
   parcheck,lambda, 1,typ(/rea),[1,szd[0]],      "LAMBDA"
   parcheck,weights,3,typ(/rea),szd[0],          "WEIGHTS"
   parcheck,fit,    1,typ(/stc),1,               "FIT"
-  
+
   ;;
   ;; If LAMBDA has same number of dims as data, it must have exact same size
   ;;
@@ -357,32 +357,32 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      OR szl[1] NE szd[1] THEN BEGIN
      message,"LAMBDA and DATA have incompatible sizes"
   END
-  
+
   ;;
   ;; We could cope with an undfined missing value
   ;;
   default,missing,min(data)-1
-  
+
   parcheck,missing,5,typ(/rea),0,               "MISSING"
-  
-  
+
+
   ;;
   ;; Make the short-fit structure - for more info.., but ignore "global" const
   ;; status when setting the min/max limits!
   ;;
   sfit = make_sfit_stc(fit,double=double,/keep_limits)
-  
+
 
   ;;
   ;; How many parameters (including chi2) ? 
   ;; 
   npar = n_elements(sfit.a_act)+1
-  
+
   ;;
   ;; This is the correct size of RESULT
   ;; 
   res_dim = [npar,szd[2:szd[0]]]
-  
+
   ;;
   ;; If RESULT is already supplied, test size etc.
   ;;
@@ -390,7 +390,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      szr = size(result)
      IF szr[0] NE szd[0] OR szr[1] NE res_dim[0] THEN $
         message,"Suggested RESULT has incompatible size"
-     
+
      IF total(szr[2:szr[0]] NE szd[2:szr[0]]) GT 0 THEN $
         message,"Suggested RESULT has incompatible size"
      default,use_result,1
@@ -399,7 +399,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      result = make_array(dimension=res_dim,/float,double=double)
      use_result = 0
   END
-  
+
   IF NOT use_result THEN BEGIN
      ;;
      ;; Don't use the current result - make up new array with initial values
@@ -409,31 +409,31 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      res_dim1[1:*] = 1
      result = $
         dimrebin(dimreform([a_nom,0.0],res_dim1),res_dim)
-     
+
      ;;
      ;; Result now has initial values, so...
      ;;
      use_result = 1
   END
-  
+
   default,smart,0
-  
+
   ;;
   ;; The residual is always same size as data - discard any input unless
   ;; SMART=2 is set
   ;;
   IF NOT (smart EQ 2 AND n_elements(residual) NE 0) THEN residual = data
-  
+
   ;;
   ;; How many components?
   ;;
   ncomp = n_elements(sfit.include)
-  
+
   ;;
   ;; This is the correct size of INCLUDE
   ;;
   inc_dim = [ncomp,szd[2:szd[0]]]
-  
+
   ;;
   ;; If INCLUDE already supplied, test size
   ;;
@@ -441,7 +441,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      szi = size(include)
      IF szi[0] NE szd[0] OR szi[1] NE inc_dim[0] THEN $
         message,"INCLUDE array has incompatible size"
-     
+
      IF total(szi[2:szi[0]] NE szd[2:szi[0]]) GT 0 THEN $
         message,"INCLUDE array has incompatible size"
   END ELSE BEGIN
@@ -450,7 +450,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      ;;
      include = make_array(dimension=inc_dim,/byte,value=1b)
   END
-  
+
   ;;
   ;; If CONST is supplied, test size (should be (almost) same as RESULT)
   ;;
@@ -460,7 +460,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      szc = size(const)
      IF szc[0] NE szd[0] OR szc[1] NE const_dim[0] THEN $
         message,"CONST array has incompatible size"
-     
+
      IF total(szc[2:szc[0]] NE szd[2:szc[0]]) GT 0 THEN $
         message,"CONST array has incompatible size"
   END ELSE BEGIN
@@ -470,21 +470,21 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      const = make_array(dimension=const_dim,/byte,value=0b)
      FOR j = 0,const_dim[0]-1 DO const[j,*,*,*,*,*,*] = sfit.const[j]
   END
-  
+
   ;;
   ;; Now we're getting there....except abort here if no action
   ;;
   IF keyword_set(FILL_ONLY) THEN GOTO,halt
-  
+
   new_lam = 0
   IF szl[0] EQ 1 THEN lam = lambda ELSE new_lam = 1
-  
+
   pctage = 2
   ndo = dimen[6]*dimen[5]*dimen[4]*dimen[3]*dimen[2]*dimen[1]
   ndone = 0L
   lastpct = -pctage
   halt = 0
-  
+
   ;;
   ;; Create a widget to inform about progress if X_FACE is set
   ;;
@@ -495,16 +495,16 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      interrupt_id = widget_button(base,value='Press here to halt calculation')
      xrealize,base,/center
   END
-  
-  
+
+
   default,smart,0
-  
+
   IF smart NE 0 && ~quiet THEN print,"Smart: "+trim(smart)
-  
+
   IF make_sigma THEN sigma = make_array(dimension=const_dim,/float)
-  
-  CASE smart OF 
-  0:BEGIN 
+
+  CASE smart OF
+  0:BEGIN
      ;;
      ;; This works for up to 7-dimensional data
      ;;
@@ -517,8 +517,8 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
         ;;
         ;; Only touch results with one or more non-constant parameters
         ;; 
-        
-        spice_cfit_block_point,lambda,data,weights,fit,missing,$
+
+        cfit_block_point,lambda,data,weights,fit,missing,$
            result,residual,include,const,$
            j,k,l,m,n,o,lam,new_lam,npar,sfit,$
            double=double,quiet=quiet,$
@@ -528,12 +528,12 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
         ;; 
         ndone = ndone+1L
         pct = (100*ndone)/ndo
-        spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
+        cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
            interrupt_id,halt,quiet
         IF halt THEN GOTO,halt
      ENDFOR 
      ENDCASE
-     
+
   1:BEGIN
      ;; "SMART" option
      avdata = average(data,1,missing=missing)
@@ -551,27 +551,27 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
            restart = result[*,j,k,l,m,n,o]
            result[*,j,k,l,m,n,o] = last_result
         END
-        spice_cfit_block_point,lambda,data,weights,fit,missing,$
+        cfit_block_point,lambda,data,weights,fit,missing,$
            result,residual,include,const,$
            j,k,l,m,n,o,lam,new_lam,npar,sfit,$
            double=double,quiet=quiet,restart=restart,$
            make_sigma=make_sigma,sigma=sigma,error_only=error_only
         last_result = result[*,j,k,l,m,n,o]
-        
+
         ;;
         ;; Keep user informed about the progress
         ;; 
         ndone = ndone+1L
         pct = (100*ndone)/ndo
-        spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
+        cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
            interrupt_id,halt,quiet
         IF halt THEN GOTO,halt
      END
-     ENDCASE 
-     
+     ENDCASE
+
   2:BEGIN
      ;; "SMART" option #2 - only those with chi^2 equal to zero
-     
+
      doix = where(result[npar-1,*,*,*,*,*,*] EQ 0.0,ndo)
      if ~quiet then print,"Doing "+trim(ndo)+" points"
      ;; Start with highest S/N ration
@@ -583,37 +583,37 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
         m = ix MOD dimen[4] & ix = ix/dimen[4]
         n = ix MOD dimen[5] & ix = ix/dimen[5]
         o = ix MOD dimen[6]
-        spice_cfit_block_point,lambda,data,weights,fit,missing,$
+        cfit_block_point,lambda,data,weights,fit,missing,$
            result,residual,include,const,$
            j,k,l,m,n,o,lam,new_lam,npar,sfit,$
            double=double,quiet=quiet,restart=restart,$
            make_sigma=make_sigma,sigma=sigma
         last_result = result[*,j,k,l,m,n,o]
-        
+
         ;;
         ;; Keep user informed about the progress
         ;; 
         ndone = ndone+1L
         pct = (100*ndone)/ndo
-        spice_cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
+        cfit_block_progress,pct,lastpct,pctage,pct_slider_id,$
            interrupt_id,halt,quiet
         IF halt THEN GOTO,halt
      END
-     ENDCASE 
-     
+     ENDCASE
+
   END
-  
+
 halt:
-  
+
   IF n_elements(interrupt_id) EQ 1 THEN $
      ev = widget_event(interrupt_id,/nowait,save_hourglass=0)
   IF NOT quiet THEN print,string(7b)
   xkill,base
   IF NOT quiet THEN print,string(7b)
- 
+
   print,trim(systime(1)-t)+" seconds used"
   failix = where(result(npar-1,*,*,*,*,*,*) EQ 0,nfailed)
-  
+
   IF exist(ana) THEN BEGIN
         handle_value,ana.lambda_h,lambda,/no_copy,/set
         handle_value,ana.data_h,data,/no_copy,/set
@@ -624,5 +624,5 @@ halt:
         handle_value,ana.include_h,include,/no_copy,/set
         handle_value,ana.const_h,const,/no_copy,/set
   END
-  
+
 END
