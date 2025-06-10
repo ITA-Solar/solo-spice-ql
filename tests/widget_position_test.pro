@@ -25,9 +25,9 @@
 ; HISTORY:
 ;     11-May-2023: Martin Wiesmann
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-06-10 13:51 CEST $
 
-PRO widget_positioner_test
+PRO widget_position_test
   parent = widget_base(/column, title = 'Parent Widget', xsize = 300, ysize = 400)
   widget_control, parent, /realize
 
@@ -43,58 +43,53 @@ PRO widget_positioner_test
   print, 'IDLsysMonitorInfo::GetResolutions   ', monitor.GetResolutions()
   print, 'IDLsysMonitorInfo::IsExtendedDesktop   ', monitor.IsExtendedDesktop()
 
-  wp = widget_positioner(new_window, parent = parent)
-
   print, ''
   print, 'test 1'
   wait, 5
-  wp.position
+  widget_position, new_window, parent = parent
   widget_control, new_window, /realize
   wait, 3
 
   new_window = widget_base(/row, title = 'New Widget 2', xsize = 500, ysize = 500, group_leader = parent) ; , xoffset=50, yoffset=50)
-  wp = widget_positioner(new_window, parent = parent)
   print, ''
   print, 'test 1 b'
-  wp.position, xoffset = 200, yoffset = 300
+  widget_position, new_window, parent = parent, xoffset = 200, yoffset = 300
   widget_control, new_window, /realize
   wait, 3
   print, 'test 1 c'
-  wp.position, xoffset = 2000, yoffset = 800
+  widget_position, new_window, parent = parent, xoffset = 2000, yoffset = 800
   wait, 3
 
   print, ''
   print, 'test 2'
   widget_control, parent, TLB_SET_XOFFSET = 1000, TLB_SET_YOFFSET = 600
-  wp.position
+  widget_position, new_window, parent = parent
   wait, 3
 
   print, ''
   print, 'test 3'
   widget_control, parent, TLB_SET_XOFFSET = 3000, TLB_SET_YOFFSET = 600
-  wp.position
+  widget_position, new_window, parent = parent
   print, 'move parent window manually'
   wait, 6
 
   print, ''
   print, 'test 4'
-  wp.position
+  widget_position, new_window, parent = parent
   wait, 5
 
   print, ''
   print, 'test 5'
   widget_control, parent, TLB_SET_XOFFSET = 3900, TLB_SET_YOFFSET = 600
-  wp.position, xoffset = -90, yoffset = -200
+  widget_position, new_window, parent = parent, xoffset = -90, yoffset = -200
   wait, 3
 
   widget_control, parent, /destroy
 
   new_window = widget_base(/row, title = 'New Widget', xsize = 4000, ysize = 300)
-  wp.set_widget, new_window
-  wp.set_parent, -1
   print, ''
   print, 'test 6'
-  wp.position, yoffset = 200
+  widget_position, new_window, yoffset = 200
   widget_control, new_window, /realize
   wait, 3
 
@@ -115,11 +110,9 @@ PRO widget_positioner_test
   print, 'IDLsysMonitorInfo::GetResolutions   ', monitor.GetResolutions()
   print, 'IDLsysMonitorInfo::IsExtendedDesktop   ', monitor.IsExtendedDesktop()
 
-  wp = widget_positioner(new_window, parent = parent)
-
   print, ''
   print, 'test 7'
-  wp.position, xoffset = 2000
+  widget_position, new_window, parent = parent, xoffset = 2000
   widget_control, new_window, /realize
 
   wait, 3
@@ -128,32 +121,32 @@ PRO widget_positioner_test
   widget_control, parent, TLB_SET_XOFFSET = 1000, TLB_SET_YOFFSET = 600
   print, ''
   print, 'test 8  --  LEFT'
-  wp.position, /left_align
+  widget_position, new_window, parent = parent, /left_align
   wait, 3
 
   print, ''
   print, 'test 9  --  RIGHT'
-  wp.position, /right_align
+  widget_position, new_window, parent = parent, /right_align
   wait, 3
 
   print, ''
   print, 'test 10  --  TOP'
-  wp.position, /top_align
+  widget_position, new_window, parent = parent, /top_align
   wait, 3
 
   print, ''
   print, 'test 11  --  BOTTOM'
-  wp.position, /bottom_align
+  widget_position, new_window, parent = parent, /bottom_align
   wait, 3
 
   print, ''
   print, 'test 12  --  BOTTOM LEFT'
-  wp.position, /bottom_align, /left_align
+  widget_position, new_window, parent = parent, /bottom_align, /left_align
   wait, 3
 
   print, ''
   print, 'test 12  --  TOP RIGHT'
-  wp.position, /top_align, /right_align
+  widget_position, new_window, parent = parent, /top_align, /right_align
   wait, 3
 
   widget_control, parent, /destroy
