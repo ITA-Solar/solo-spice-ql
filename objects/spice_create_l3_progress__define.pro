@@ -61,7 +61,7 @@
 ; HISTORY:
 ;     06-Dec-2022: Martin Wiesmann, UIO, ITA.
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-06-10 13:39 CEST $
 
 ;+
 ; Description:
@@ -117,8 +117,7 @@ FUNCTION spice_create_l3_progress::init, n_files, files = files, group_leader = 
 
   self.list_files = widget_list(self.base, value = file_basename(files), /frame, xsize = 75, scr_ysize = 200)
   self.stop_button = widget_button(self.base, value = 'Stop creation of level 3 files')
-  wp = widget_positioner(self.base, parent = group_leader)
-  wp.position, /left_align
+  widget_position, self.base, parent = group_leader, /left_align
 
   return, 1
 END

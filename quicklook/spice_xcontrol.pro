@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-10 13:39 CEST $
 ;-
 ;
 ;
@@ -551,9 +551,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   widget_control, tlb, set_uvalue = info
 
   ; realize the top level base widget
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
-  ; widget_control, tlb, /realize
+  widget_position, tlb, parent = group_leader
 
   spice_xcontrol_get_data_info, info
   widget_control, data_info, set_value = (*info).data_textdump, /append

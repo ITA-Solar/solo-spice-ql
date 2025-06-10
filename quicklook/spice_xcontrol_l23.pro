@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2025-05-12 10:06 CEST $
+; $Id: 2025-06-10 13:39 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -804,8 +804,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
   widget_control, tlb, set_uvalue = info
 
   ; realize the top level base widget
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
 
   xmanager, 'spice_xcontrol_l23', tlb, /no_block, $
     group_leader = group_leader, cleanup = 'spice_xcontrol_l23_cleanup'
