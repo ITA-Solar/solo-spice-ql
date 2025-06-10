@@ -256,13 +256,13 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-10 14:31 CEST $
+; $Id: 2025-06-10 14:36 CEST $
 ;-
 
 
 ;; Getting/setting all data blocks
 
-PRO spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
+PRO xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,$
                       set=set,copy=copy
   set = keyword_set(set)
   no_copy = 1-keyword_set(copy)
@@ -281,7 +281,7 @@ END
 ; 
 ; Extracting the current result "image"
 ;
-PRO spice_xcfit_block_get_result,info,showres,title
+PRO xcfit_block_get_result,info,showres,title
   handle_value,info.int.a.result_h,result,/no_copy
   handle_value,info.int.titles_h,titles,/no_copy
 
@@ -307,10 +307,10 @@ END
 ;
 ; Extract the fit structure with values and const/include status taken from
 ; corresponding arrays at the current point - leaves a *copy* of the original
-; global values, which will be conserved by spice_xcfit_block_set_fit!
+; global values, which will be conserved by xcfit_block_set_fit!
 ;
-PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const 
+PRO xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
+  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const 
 
   orgf = fit  ;; *COPY*
 
@@ -344,7 +344,7 @@ PRO spice_xcfit_block_get_fit,info,lam,spec,weight,ix,fit,failed
   update_cfit,fit,this_result,inc=inc,const=cons
 
   ;; *COPY* of original fit put back..
-  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,$
+  xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const,$
      /set
 END
 
@@ -356,9 +356,9 @@ END
 ; If there is a fit structure present at the handle, leave it intact
 ; (assume it's the original global values)
 ;
-PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochange
+PRO xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochange
 
-  spice_xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const
+  xcfit_block_gs,info,lambda,data,weights,orgf,result,residual,include,const
 
   ;; Set the change flag
   info.int.changed = 1b
@@ -468,7 +468,7 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
   ;;
   ;; Put data blocks back
   ;;
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
+  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
 
   ;; Leave the original fit intact (if present)
@@ -493,7 +493,7 @@ PRO spice_xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochan
   ;; Give the new result array to the result viewer (assumes result at handle)
   ;;
   IF NOT keyword_set(nochange) THEN BEGIN
-     spice_xcfit_block_get_result,info,showres
+     xcfit_block_get_result,info,showres
      IF info.int.show_result THEN widget_control,info.int.result_id,set_value=showres
   END
 END
@@ -505,8 +505,8 @@ END
 ; Register (possibly new) fit, (re-)create result/residual/inc/const data
 ; arrays when necessary, rebuild result choice menu
 ;
-PRO spice_xcfit_block_register,info
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
+PRO xcfit_block_register,info
+  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
 
   ;; Get the initial values etc.
   sfit = make_sfit_stc(fit)
@@ -625,7 +625,7 @@ PRO spice_xcfit_block_register,info
   ;; Update status (const/include)
   ;;widget_control,info.int.status2_id,set_value=fit
 
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
+  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
 
 END
@@ -635,8 +635,8 @@ END
 ;;;; The following section deals with pixel grabbing/manipulation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION spice_xcfit_block_pix_defprog
-  COMMON  spice_xcfit_block_pix_edit,lastprog
+FUNCTION xcfit_block_pix_defprog
+  COMMON  xcfit_block_pix_edit,lastprog
   IF exist(lastprog) THEN return,lastprog
   return,$
      ['a = sqrt(1./(weights>1e-6))          ; Noise, if the weights ' + $
@@ -650,7 +650,7 @@ FUNCTION spice_xcfit_block_pix_defprog
       'mask = c gt 1.5*b                    ;Decide...']
 END
 
-FUNCTION spice_xcfit_block_pix_explain
+FUNCTION xcfit_block_pix_explain
 
   return,'  '+$
      ['',$
@@ -723,7 +723,7 @@ END
 ;
 ; Execute the grabbing program - make sure data etc. are available
 ;
-PRO spice_xcfit_block_pix_exec,program,lambda,data,weights,fit,missing,$
+PRO xcfit_block_pix_exec,program,lambda,data,weights,fit,missing,$
                          result,residual,include,const,mask
 
   sz = size(const[0,*,*,*,*,*,*])
@@ -766,18 +766,18 @@ errorcatch:
   mask = reform(mask)
 END
 
-PRO spice_xcfit_block_pix_getmask,info,mask,recalculate=recalculate
+PRO xcfit_block_pix_getmask,info,mask,recalculate=recalculate
 
   handle_value,info.int.pix_mask_h,mask
 
   IF NOT exist(mask) OR keyword_set(recalculate) THEN BEGIN
      handle_value,info.int.pix_prog_h,prog
 
-     spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/copy
+     xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/copy
 
      missing = info.int.a.missing
 
-     spice_xcfit_block_pix_exec,prog,lam,da,wts,fit,missing,result,residual,$
+     xcfit_block_pix_exec,prog,lam,da,wts,fit,missing,result,residual,$
         include,const,mask
 
      handle_value,info.int.pix_mask_h,mask,/set
@@ -785,13 +785,13 @@ PRO spice_xcfit_block_pix_getmask,info,mask,recalculate=recalculate
 END
 
 
-PRO spice_xcfit_block_pix_wmask,info,mask
+PRO xcfit_block_pix_wmask,info,mask
 
   IF NOT exist(mask) THEN BEGIN
 
      ;; Get the mask
 
-     spice_xcfit_block_pix_getmask,info,mask
+     xcfit_block_pix_getmask,info,mask
 
      ;; Find which fits have been flagged as failed.
 
@@ -818,16 +818,16 @@ PRO spice_xcfit_block_pix_wmask,info,mask
 END
 
 
-PRO spice_xcfit_block_pix_flicker,info
+PRO xcfit_block_pix_flicker,info
 
   IF ~info.int.show_result THEN return
-  spice_xcfit_block_pix_getmask,info,mask
+  xcfit_block_pix_getmask,info,mask
 
   ix = where(mask)
 
   IF ix[0] EQ -1L THEN return
 
-  spice_xcfit_block_get_result,info,showres
+  xcfit_block_get_result,info,showres
 
   shres = showres
   shres[ix] = max(showres)
@@ -840,25 +840,25 @@ PRO spice_xcfit_block_pix_flicker,info
   END
 END
 
-PRO spice_xcfit_block_pix_edit_setv,id,value
+PRO xcfit_block_pix_edit_setv,id,value
   widget_control,id,get_uvalue=top
   widget_control,top,get_uvalue=info
   handle_value,info.int.pix_prog_h,value,/set
 
-  spice_xcfit_block_pix_getmask,info,/recalculate
-  spice_xcfit_block_pix_flicker,info
+  xcfit_block_pix_getmask,info,/recalculate
+  xcfit_block_pix_flicker,info
 END
 
 
 
-PRO spice_xcfit_block_pix_edit,info
-  COMMON spice_xcfit_block_pix_edit,lastprog
+PRO xcfit_block_pix_edit,info
+  COMMON xcfit_block_pix_edit,lastprog
 
   handle_value,info.int.pix_prog_h,prog
 
-  defprog = spice_xcfit_block_pix_defprog()
+  defprog = xcfit_block_pix_defprog()
 
-  expl = spice_xcfit_block_pix_explain()
+  expl = xcfit_block_pix_explain()
 
   default,prog,defprog
 
@@ -873,9 +873,9 @@ PRO spice_xcfit_block_pix_edit,info
 END
 
 
-PRO spice_xcfit_block_pix_setconst,info,mask=mask,novisit=novisit,one=one
+PRO xcfit_block_pix_setconst,info,mask=mask,novisit=novisit,one=one
 
-  spice_xcfit_block_pix_wmask,info,mask
+  xcfit_block_pix_wmask,info,mask
 
   ix = where(mask)
 
@@ -896,14 +896,14 @@ PRO spice_xcfit_block_pix_setconst,info,mask=mask,novisit=novisit,one=one
   handle_value,info.int.a.const_h,const,/set,/no_copy   ;; That's it!
 
   ;; Revisit point to update local status
-  IF NOT keyword_set(novisit) THEN spice_xcfit_block_visitp,info
+  IF NOT keyword_set(novisit) THEN xcfit_block_visitp,info
 
 END
 
-PRO spice_xcfit_block_exclude_patch,info
+PRO xcfit_block_exclude_patch,info
   ;; Make sure parameter values for non-included components are set to
   ;; missing
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
+  xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
 
   sfit = make_sfit_stc(fit)
 
@@ -918,12 +918,12 @@ PRO spice_xcfit_block_exclude_patch,info
         END
      END
   END
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
+  xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
 END
 
-PRO spice_xcfit_block_pix_setinclude,info,mask=mask,novisit=novisit,one=one
+PRO xcfit_block_pix_setinclude,info,mask=mask,novisit=novisit,one=one
 
-  spice_xcfit_block_pix_wmask,info,mask
+  xcfit_block_pix_wmask,info,mask
 
   ix = where(mask)
 
@@ -950,16 +950,16 @@ PRO spice_xcfit_block_pix_setinclude,info,mask=mask,novisit=novisit,one=one
 
   handle_value,info.int.a.include_h,include,/set,/no_copy   ;; That's it!
 
-  spice_xcfit_block_exclude_patch,info
+  xcfit_block_exclude_patch,info
 
   ;; Revisit point to update local status
-  IF NOT keyword_set(novisit) THEN spice_xcfit_block_visitp,info
+  IF NOT keyword_set(novisit) THEN xcfit_block_visitp,info
 
 END
 
-PRO spice_xcfit_block_pix_reset,info,mask=mask,novisit=novisit,one=one
+PRO xcfit_block_pix_reset,info,mask=mask,novisit=novisit,one=one
 
-  spice_xcfit_block_pix_wmask,info,mask
+  xcfit_block_pix_wmask,info,mask
 
   ix = where(mask)
 
@@ -980,14 +980,14 @@ PRO spice_xcfit_block_pix_reset,info,mask=mask,novisit=novisit,one=one
   handle_value,info.int.a.result_h,result,/set,/no_copy   ;; That's it!
 
   ;; Revisit point to update local status
-  IF NOT keyword_set(novisit) THEN spice_xcfit_block_visitp,info
+  IF NOT keyword_set(novisit) THEN xcfit_block_visitp,info
 
 END
 
 
-PRO spice_xcfit_block_pix_recalc,info,mask=mask,novisit=novisit
+PRO xcfit_block_pix_recalc,info,mask=mask,novisit=novisit
 
-  spice_xcfit_block_pix_wmask,info,mask
+  xcfit_block_pix_wmask,info,mask
 
   ix = where(mask)
 
@@ -1000,15 +1000,15 @@ PRO spice_xcfit_block_pix_recalc,info,mask=mask,novisit=novisit
   cfit_bpatch,result,ix,n_elements(result[*,0,0,0,0,0,0])-1,0.0
   handle_value,info.int.a.result_h,result,/set,/no_copy   ;; That's it!
 
-  spice_xcfit_block_calculate,info,smart=2
+  xcfit_block_calculate,info,smart=2
 END
 
 
-PRO spice_xcfit_block_pix_fail,info,restore=restore
+PRO xcfit_block_pix_fail,info,restore=restore
 
   ;; Note - we should *not* take away failed, so use getmask insted of wmask
 
-  spice_xcfit_block_pix_getmask,info,mask
+  xcfit_block_pix_getmask,info,mask
 
   ix = where(mask)
 
@@ -1016,7 +1016,7 @@ PRO spice_xcfit_block_pix_fail,info,restore=restore
   sfit = make_sfit_stc(globfit)
   handle_value,info.int.a.fit_h,globfit,/set,/no_copy
 
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
+  xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const
 
   IF restore THEN BEGIN
      resultv = [sfit.a_nom,0.0]
@@ -1037,33 +1037,33 @@ PRO spice_xcfit_block_pix_fail,info,restore=restore
   FOR j = 0,(size(da))[1]-1 DO $
      cfit_bpatch,residual,ix,j,info.int.a.missing
 
-  spice_xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
+  xcfit_block_gs,info,lam,da,wts,fit,result,residual,include,const,/set
 
-  spice_xcfit_block_visitp,info
+  xcfit_block_visitp,info
 
 END
 
-PRO spice_xcfit_block_pix_apply_all,info,one=one
-  spice_xcfit_block_pix_reset,info,mask=mask,/novisit,one=one
-  spice_xcfit_block_pix_setconst,info,mask=mask,/novisit,one=one
-  spice_xcfit_block_pix_setinclude,info,mask=mask,/novisit,one=one
-  spice_xcfit_block_pix_recalc,info,mask=mask,/novisit
-  spice_xcfit_block_visitp,info
+PRO xcfit_block_pix_apply_all,info,one=one
+  xcfit_block_pix_reset,info,mask=mask,/novisit,one=one
+  xcfit_block_pix_setconst,info,mask=mask,/novisit,one=one
+  xcfit_block_pix_setinclude,info,mask=mask,/novisit,one=one
+  xcfit_block_pix_recalc,info,mask=mask,/novisit
+  xcfit_block_visitp,info
 END
 
 ;;
 ;; Calculate results for the whole block
 ;;
-PRO spice_xcfit_block_calculate,info,smart=smart
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
+PRO xcfit_block_calculate,info,smart=smart
+  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
 
-  spice_cfit_block,lambda,data,weights,fit,info.int.a.missing,result,residual,$
+  cfit_block,lambda,data,weights,fit,info.int.a.missing,result,residual,$
      include,const,/double,/x_face,smart=smart
 
   ;;
   ;; Put back data.
   ;;
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
+  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set
 
   ;;
@@ -1074,7 +1074,7 @@ PRO spice_xcfit_block_calculate,info,smart=smart
   ;;
   ;; Display new results
   ;;
-  spice_xcfit_block_get_result,info,showres
+  xcfit_block_get_result,info,showres
   IF info.int.show_result THEN widget_control,info.int.result_id,set_value=showres
 END
 
@@ -1086,7 +1086,7 @@ END
 ;
 ; : 
 ;
-PRO spice_xcfit_block_visitp,info,recalculate=recalculate,restart=restart
+PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
 
   ;; Need result to get chi2 (or to recalculate from current value)
   ;; Need const to verify that a fit can be made (or recalculate)
@@ -1106,9 +1106,9 @@ PRO spice_xcfit_block_visitp,info,recalculate=recalculate,restart=restart
   chi2 = this_p_result[nres-1]
 
   ;; Extract the fit from this point (original fit structure is preserved
-  ;; by spice_xcfit_block_get_fit/set_fit calls)
+  ;; by xcfit_block_get_fit/set_fit calls)
 
-  spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
+  xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
 
   restart = keyword_set(restart)
   recalculate = keyword_set(recalculate)
@@ -1118,7 +1118,7 @@ PRO spice_xcfit_block_visitp,info,recalculate=recalculate,restart=restart
   IF is_not_missing(chi2, missing=info.int.a.missing) $
      AND NOT recalculate AND NOT restart THEN BEGIN
 
-     spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed,/nochange
+     xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed,/nochange
      return
   END
 
@@ -1160,14 +1160,14 @@ PRO spice_xcfit_block_visitp,info,recalculate=recalculate,restart=restart
      failed = 1
   END
 
-  spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed
+  xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed
 
   IF NOT recalculate THEN BEGIN
      info.int.changed = changed
   END
 END
 
-PRO spice_xcfit_block_sensitize,info,title
+PRO xcfit_block_sensitize,info,title
   IF title EQ 'Chi^2' THEN BEGIN
      widget_control,info.int.initval_id,sensitive=0
      FOR j = 0,n_elements(info.int.pix_reset1_id)-1 DO  $
@@ -1180,7 +1180,7 @@ PRO spice_xcfit_block_sensitize,info,title
 END
 
 
-PRO spice_xcfit_block_adjustfit,info
+PRO xcfit_block_adjustfit,info
   ;; The user clicked on the ADJUST button 
 
   ;; First of all, take note of the original global value (copy)
@@ -1188,8 +1188,8 @@ PRO spice_xcfit_block_adjustfit,info
 
   ;; This one fills in the current values & const status at *this* point
   ;; 
-  spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
-  spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed ;; *No* change
+  xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
+  xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed ;; *No* change
 
   ;; But we want the *global* values for the const/include..etc..
   ;; Allow editing - of the original fit, but with the data from this point
@@ -1204,17 +1204,17 @@ PRO spice_xcfit_block_adjustfit,info
   ;; Update component pulldown menu with any new names (and rebuild
   ;; CONST array if desired).
 
-  spice_xcfit_block_register,info
-  spice_xcfit_block_get_result,info,this_result,title
+  xcfit_block_register,info
+  xcfit_block_get_result,info,this_result,title
   IF info.int.show_result THEN widget_control,info.int.result_id,set_value={title:title}
   widget_control,info.int.initval_id,set_value=title
-  spice_xcfit_block_sensitize,info,title
+  xcfit_block_sensitize,info,title
 END
 
 
 
-PRO spice_xcfit_block_alterfit,info
-  spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
+PRO xcfit_block_alterfit,info
+  xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
   orgfit = fit
   xcfit,lambda,spec,fit,weights=weights,/use_current_value,failed=failed
   handle_value,info.int.a.fit_h,fit,/set
@@ -1227,13 +1227,13 @@ PRO spice_xcfit_block_alterfit,info
      handle_value,info.int.a.include_h,result,/no_copy
      info.ext.result_no = 0
      ;; Regenerate result/residual arrays
-     spice_xcfit_block_register,info
+     xcfit_block_register,info
      ;; Update global status display
      widget_control,info.int.status1_id,set_value=fit
      ;; Visit this point
-     spice_xcfit_block_visitp,info
+     xcfit_block_visitp,info
      ;; Extract new result "image" and show it
-     spice_xcfit_block_get_result,info,this_result,title
+     xcfit_block_get_result,info,this_result,title
      IF info.int.show_result THEN BEGIN
       widget_control,info.int.result_id,set_value=this_result
       widget_control,info.int.result_id,set_value={title:title}
@@ -1241,13 +1241,13 @@ PRO spice_xcfit_block_alterfit,info
      widget_control,info.int.initval_id,set_value=title
      ;; Make residual display aware that a change has occurred
      widget_control,info.int.residual_id,set_value=info.int.a.residual_h
-     spice_xcfit_block_sensitize,info,title
+     xcfit_block_sensitize,info,title
   END
 END
 
 
 
-PRO spice_xcfit_block_save_as,info
+PRO xcfit_block_save_as,info
   break_file,info.int.a.filename,disk,dir,fnam,ext
 
   file = bigpickfile(/write,path=disk+dir,file=fnam+ext,$
@@ -1264,7 +1264,7 @@ END
 
 
 
-PRO spice_xcfit_block_restore,info,other=other
+PRO xcfit_block_restore,info,other=other
 
   other = keyword_set(other) OR info.int.a.filename EQ ''
 
@@ -1306,8 +1306,8 @@ PRO spice_xcfit_block_restore,info,other=other
   END
 
   ;; Update pulldown menus etc in case fit changed
-  spice_xcfit_block_register,info
-  spice_xcfit_block_visitp,info
+  xcfit_block_register,info
+  xcfit_block_visitp,info
 
   ;; Change flag, find first/next status
   info.int.changed = 0b
@@ -1329,7 +1329,7 @@ PRO spice_xcfit_block_restore,info,other=other
   widget_control,info.int.data_id,set_value=set_data_resid
   widget_control,info.int.residual_id,set_value=set_data_resid
 
-  spice_xcfit_block_get_result,info,this_result,title
+  xcfit_block_get_result,info,this_result,title
 
   set_result = {focus:info.ext.focus[1:*],$
                 origin:origin[1:*],$
@@ -1341,11 +1341,11 @@ PRO spice_xcfit_block_restore,info,other=other
     widget_control,info.int.result_id,set_value=set_result
   ENDIF
   widget_control,info.int.initval_id,set_value=title
-  spice_xcfit_block_sensitize,info,title
+  xcfit_block_sensitize,info,title
 END
 
 
-PRO spice_xcfit_block_findspot,info,what_to_find
+PRO xcfit_block_findspot,info,what_to_find
   handle_value,info.int.a.result_h,result,/no_copy
 
   handle_value,info.int.find_h,ix,/no_copy
@@ -1393,13 +1393,13 @@ PRO spice_xcfit_block_findspot,info,what_to_find
   handle_value,info.int.a.result_h,result,/set,/no_copy
   handle_value,info.int.find_h,ix,/set,/no_copy
 
-  spice_xcfit_block_visitp,info
+  xcfit_block_visitp,info
 END
 
 
-PRO spice_xcfit_block_set_initial,info,average=average_flag
+PRO xcfit_block_set_initial,info,average=average_flag
 
-  spice_xcfit_block_get_result,info,this_result
+  xcfit_block_get_result,info,this_result
   handle_value,info.int.a.fit_h,globfit,/no_copy
 
   handle_value,info.int.a.result_h,res,/no_copy
@@ -1438,7 +1438,7 @@ PRO spice_xcfit_block_set_initial,info,average=average_flag
   handle_value,info.int.a.fit_h,globfit,/set,/no_copy
 END
 
-PRO spice_xcfit_block_event_fit_widget, ev
+PRO xcfit_block_event_fit_widget, ev
   widget_control,ev.top,get_uvalue=base
   widget_control,base,get_uvalue=info
   if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then begin
@@ -1454,7 +1454,7 @@ PRO spice_xcfit_block_event_fit_widget, ev
 
 END
 
-PRO spice_xcfit_block_event,ev
+PRO xcfit_block_event,ev
   widget_control,/hourglass
   widget_control,ev.top,get_uvalue=info,/no_copy
   widget_control,ev.id,get_uvalue=uvalue
@@ -1505,11 +1505,11 @@ PRO spice_xcfit_block_event,ev
     ;; Make sure changes (like RESTORE operations) are reflected.
 
      IF ~info.int.ana_set THEN BEGIN
-       spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
+       xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const
        FOR h = 0,n_elements(h_to_kill)-1 DO handle_free,h_to_kill[h]
      END ELSE BEGIN
        IF info.ext.signals GT 0 THEN BEGIN
-         event = {spice_xcfit_block_event,ID:0L,TOP:0L,HANDLER:0L,SIGNAL_ID:info.ext.signal_id}
+         event = {xcfit_block_event,ID:0L,TOP:0L,HANDLER:0L,SIGNAL_ID:info.ext.signal_id}
          event.id = info.ext.signals
          WIDGET_CONTROL, event.id, send_event=event, bad_id=bad
          IF bad NE 0 THEN MESSAGE,"BAD widget ID encountered",/continue
@@ -1522,7 +1522,7 @@ PRO spice_xcfit_block_event,ev
      ENDCASE
 
   'SAVE':BEGIN
-     IF mark THEN spice_xcfit_block_save_as,info $
+     IF mark THEN xcfit_block_save_as,info $
      ELSE BEGIN
         save_analysis,info.int.a
         info.int.changed = 0b
@@ -1530,7 +1530,7 @@ PRO spice_xcfit_block_event,ev
      ENDCASE
 
   'RESTORE':BEGIN
-     spice_xcfit_block_restore,info,other = mark
+     xcfit_block_restore,info,other = mark
      ENDCASE
 
   'EDIT_HISTORY':BEGIN
@@ -1547,7 +1547,7 @@ PRO spice_xcfit_block_event,ev
         info.ext.focus = ev.focus
         widget_control,info.int.residual_id,set_value={focus:ev.focus}
         IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:ev.focus[1:*]}
-        spice_xcfit_block_visitp,info
+        xcfit_block_visitp,info
      END
      ENDCASE
 
@@ -1556,7 +1556,7 @@ PRO spice_xcfit_block_event,ev
         info.ext.focus = ev.focus
         IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:ev.focus[1:*]}
         widget_control,info.int.data_id,set_value={focus:ev.focus}
-        spice_xcfit_block_visitp,info
+        xcfit_block_visitp,info
      END
      ENDCASE
 
@@ -1565,7 +1565,7 @@ PRO spice_xcfit_block_event,ev
         info.ext.focus[1:*] = ev.focus
         widget_control,info.int.data_id,set_value={focus:info.ext.focus}
         widget_control,info.int.residual_id,set_value={focus:info.ext.focus}
-        spice_xcfit_block_visitp,info
+        xcfit_block_visitp,info
      END
      ENDCASE
 ;
@@ -1574,22 +1574,22 @@ PRO spice_xcfit_block_event,ev
   'FIND':BEGIN
      ;; Restart find operation
      handle_value,info.int.find_h,dummy,/no_copy
-     spice_xcfit_block_findspot,info,uvalue[1]
+     xcfit_block_findspot,info,uvalue[1]
      ENDCASE
 
   'FIND_AGAIN':BEGIN
-     spice_xcfit_block_findspot,info,info.int.what_found
+     xcfit_block_findspot,info,info.int.what_found
      ENDCASE
 
   'RESULT#':BEGIN
      info.ext.result_no = fix(uvalue[1])
-     spice_xcfit_block_get_result,info,this_result,title
+     xcfit_block_get_result,info,this_result,title
      IF info.int.show_result THEN BEGIN
       widget_control,info.int.result_id,set_value=this_result
       widget_control,info.int.result_id,set_value={title:title}
      ENDIF
      widget_control,info.int.initval_id,set_value=title
-     spice_xcfit_block_sensitize,info,title
+     xcfit_block_sensitize,info,title
      handle_value,info.int.find_h,dummy,/no_copy
      ENDCASE
 
@@ -1603,7 +1603,7 @@ PRO spice_xcfit_block_event,ev
 
   'STATUS2':BEGIN
      ;; Update include/const status for one component (local value)
-     spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
+     xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
      sfit0 = make_sfit_stc(fit,/values)
      update_cfit,fit,const=ev.const,include=ev.include
      sfit1 = make_sfit_stc(fit)
@@ -1614,8 +1614,8 @@ PRO spice_xcfit_block_event,ev
         sfit0.a_nom(freezix) = sfit1.a_nom(freezix) ;; sfit1 has initial values
         update_cfit,fit,sfit0.a_nom
      END 
-     spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed
-     IF 1 THEN spice_xcfit_block_visitp,info,/recalculate
+     xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed
+     IF 1 THEN xcfit_block_visitp,info,/recalculate
      ENDCASE
 
   'MICROPLOT':BEGIN
@@ -1658,48 +1658,48 @@ PRO spice_xcfit_block_event,ev
      info.ext.fit_plot_show = (uvalue[1] EQ 'Hide')     
      widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
      ;; Replot bigger microplot if shown
-     IF info.ext.fit_plot_show THEN spice_xcfit_block_visitp,info
+     IF info.ext.fit_plot_show THEN xcfit_block_visitp,info
    ENDCASE
 
 
   'FAILFIT':BEGIN
      handle_value,info.int.a.fit_h,orgfit
-     spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
-     spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,1
+     xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
+     xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,1
      handle_value,info.int.a.fit_h,orgfit,/set,/no_copy
-     spice_xcfit_block_visitp,info
+     xcfit_block_visitp,info
      ENDCASE
 
   'REFIT':BEGIN
-     spice_xcfit_block_visitp,info,/recalculate,/restart
+     xcfit_block_visitp,info,/recalculate,/restart
      ENDCASE
 
   'VIEWFIT':BEGIN
      handle_value,info.int.a.fit_h,orgfit
-     spice_xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
+     xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
      currentfit = fit
      xcfit,lambda,spec,fit,weights=weights,/use_current_value,/no_change,$
         failed=failed
      IF NOT match_struct(currentfit,fit) OR failed THEN $
-        spice_xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed
+        xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed
      handle_value,info.int.a.fit_h,orgfit,/set,/no_copy
      ENDCASE
 
      ;; This is the "Adjust" button 
   'ADJUSTFIT':BEGIN
-     spice_xcfit_block_adjustfit,info
+     xcfit_block_adjustfit,info
      ENDCASE
 
      ;; Set initial value of result to the current median or average
   'SET_INITIAL':BEGIN
-     spice_xcfit_block_set_initial,info,average = mark
+     xcfit_block_set_initial,info,average = mark
      ENDCASE
 
 ;
 ;
 ;
   'ALTERFIT':BEGIN
-     spice_xcfit_block_alterfit,info
+     xcfit_block_alterfit,info
      ENDCASE
 
   'RECALCULATE':BEGIN
@@ -1709,50 +1709,50 @@ PRO spice_xcfit_block_event,ev
         handle_value,info.int.a.residual_h,result,/no_copy
         handle_value,info.int.a.const_h,result,/no_copy
         handle_value,info.int.a.include_h,result,/no_copy
-        spice_xcfit_block_register,info
+        xcfit_block_register,info
      END 
-     spice_xcfit_block_calculate,info
+     xcfit_block_calculate,info
      ENDCASE
 ;
 ; Mask/modify options
 ;
   'PIX_EDIT':BEGIN
-     spice_xcfit_block_pix_edit,info
-     spice_xcfit_block_pix_getmask,info,/recalculate
-     spice_xcfit_block_pix_flicker,info
+     xcfit_block_pix_edit,info
+     xcfit_block_pix_getmask,info,/recalculate
+     xcfit_block_pix_flicker,info
      ENDCASE
 
   'PIX_EXECUTE':BEGIN
-     spice_xcfit_block_pix_getmask,info,/recalculate
-     spice_xcfit_block_pix_flicker,info
+     xcfit_block_pix_getmask,info,/recalculate
+     xcfit_block_pix_flicker,info
      ENDCASE
 
   'PIX_FLICKER':BEGIN
-     spice_xcfit_block_pix_flicker,info
+     xcfit_block_pix_flicker,info
      ENDCASE
 
   'PIX_SETCONST':BEGIN
-     spice_xcfit_block_pix_setconst,info,one = mark
+     xcfit_block_pix_setconst,info,one = mark
      ENDCASE
 
   'PIX_SETINCLUDE':BEGIN
-     spice_xcfit_block_pix_setinclude,info,one = mark
+     xcfit_block_pix_setinclude,info,one = mark
      ENDCASE
 
   'PIX_RESET':BEGIN
-     spice_xcfit_block_pix_reset,info,one = mark
+     xcfit_block_pix_reset,info,one = mark
      ENDCASE
 
   'PIX_APPLY_ALL':BEGIN
-     spice_xcfit_block_pix_apply_all,info,one = mark
+     xcfit_block_pix_apply_all,info,one = mark
      ENDCASE
 
   'PIX_RECALC':BEGIN
-     spice_xcfit_block_pix_recalc,info
+     xcfit_block_pix_recalc,info
      ENDCASE
 
   'PIX_FAIL':BEGIN
-     spice_xcfit_block_pix_fail,info,restore=mark
+     xcfit_block_pix_fail,info,restore=mark
      ENDCASE
 
   else: BEGIN
@@ -1766,7 +1766,7 @@ PRO spice_xcfit_block_event,ev
 END
 
 
-PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
+PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
                 display_treshold=display_threshold, no_save_option=no_save_option,$
@@ -1897,10 +1897,10 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
 
   screen = get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
+    base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
       /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(modal))
   ENDIF ELSE BEGIN
-    base = widget_base(/row,title='SPICE_XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(modal))
+    base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(modal))
   ENDELSE
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
@@ -1940,7 +1940,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
           find_h       : handle_create(),$
           pix_id       : 0L,$
           pix_reset1_id: lonarr(4),$
-          pix_prog_h   : handle_create(value=spice_xcfit_block_pix_defprog()),$
+          pix_prog_h   : handle_create(value=xcfit_block_pix_defprog()),$
           pix_mask_h   : handle_create(),$
           what_found   : 'ZERO',$
           titles_h     : titles_h,$
@@ -2083,7 +2083,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   ;; It needs the uvalue to point to the top base (to get at the info stc).
 
   info.int.pix_id = widget_base(gbase,pro_set_value=$
-                                 'spice_xcfit_block_pix_edit_setv')
+                                 'xcfit_block_pix_edit_setv')
   widget_control,info.int.pix_id,set_uvalue=base
 
   ;;
@@ -2174,7 +2174,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   info.int.microplot_id = microplot_id
 
   fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
-    uvalue=base, event_pro='spice_xcfit_block_event_fit_widget', group_leader=base)
+    uvalue=base, event_pro='xcfit_block_event_fit_widget', group_leader=base)
   fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
     xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
     origo=[0,0],psym=10)
@@ -2190,13 +2190,13 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   no_copy = 0
 
   ;; Put data blocks into their handles  
-  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
+  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
      /set,/copy
 
-  spice_xcfit_block_register,info
-  spice_xcfit_block_get_result,info,this_result,title
+  xcfit_block_register,info
+  xcfit_block_get_result,info,this_result,title
 
-;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
+;  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
 
   info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
@@ -2224,23 +2224,23 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                                    sigrange=threshold[2] GT 0, fraction=1.0-threshold[2])
 
   widget_control,info.int.initval_id,set_value=title
-  spice_xcfit_block_sensitize,info,title
+  xcfit_block_sensitize,info,title
 
   xrealize, base, group=group_leader, /center
   widget_position,fit_plot_widget, parent=base, /left_align
   widget_control, fit_plot_widget, map=0
 
-  spice_xcfit_block_visitp,info
+  xcfit_block_visitp,info
 
   widget_control,base,set_uvalue=info
 
-  xmanager,"spice_xcfit_block",base
+  xmanager,"xcfit_block",base
 
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
    ana = restore_analysis("$HOME/idl/solo-spice-ql/test_data/eis_l1_20210806_105401_0.ana")
-   spice_xcfit_block, ana=ana
+   xcfit_block, ana=ana
 END
 
 END
