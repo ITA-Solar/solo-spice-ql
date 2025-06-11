@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-11 10:38 CEST $
+; $Id: 2025-06-11 14:39 CEST $
 
 ;+
 ; Description:
@@ -93,10 +93,10 @@ FUNCTION spice_data::init, file, quiet = quiet
     IF ~keyword_set(quiet) THEN print, 'File is not a SPICE file: ' + file
     return, 0
   ENDIF
-  IF file_info.level NE 2 THEN BEGIN
-    IF ~keyword_set(quiet) THEN print, 'This is not a SPICE level 2 file: ' + file
-    return, 0
-  ENDIF
+  ; IF file_info.level NE 2 THEN BEGIN
+  ; IF ~keyword_set(quiet) THEN print, 'This is not a SPICE level 2 file: ' + file
+  ; return, 0
+  ; ENDIF
   self.title = 'SPICE'
   self.ccd_size = [1024, 1024]
   self.read_file, file
@@ -541,7 +541,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         PROC_STEPS = PROC_STEPS, creator = creator, $
         PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = self.get_header(window_index), $
         SAVE_RESIDUALS = SAVE_RESIDUALS, PRINT_HEADERS = PRINT_HEADERS, $
-        SAVE_NOT = save_not, $
+        SAVE_NOT = save_not, /SAVE_DATA, $
         headers_results = headers_results, headers_data = headers_data
 
       IF collect_ana THEN BEGIN
@@ -612,6 +612,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   IF window_index LT 0 THEN return
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
+  DATA = fix(DATA, type = 4)
   ; ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
 
