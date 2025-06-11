@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-11 10:38 CEST $
 
 ; save as postscript file
 PRO spice_xwhisker_ps, event
@@ -124,7 +124,7 @@ PRO spice_xwhisker_draw, event
     ypos = indgen(sz[2])
   ENDIF ELSE BEGIN
     IF sit_and_stare THEN ypos = *(*info).data.get_time_vector((*info).line) $
-    ELSE ypos = *(*info).data.get_instr_x_vector((*info).line)
+    ELSE ypos = *(*info).data.get_instr_x_vector((*info).line, /auto_diff_rot)
   ENDELSE
   yscale = ypos
   IF sz[0] EQ 1 THEN BEGIN
@@ -261,10 +261,10 @@ PRO spice_xwhisker_slitslider, event
   rot = round(*(*info).data.get_satellite_rotation())
   IF rot < 0 THEN rot = 360 + rot
   IF rot EQ 90 OR rot EQ 270 THEN BEGIN
-    pzty = *(*info).data.get_instr_x_vector((*info).line)
+    pzty = *(*info).data.get_instr_x_vector((*info).line, /auto_diff_rot)
     slittxt = 'X: '
   ENDIF ELSE BEGIN
-    pzty = *(*info).data.get_instr_y_vector((*info).line)
+    pzty = *(*info).data.get_instr_y_vector((*info).line, /auto_diff_rot)
     slittxt = 'Y: '
   ENDELSE
   widget_control, (*info).fmirrytext, $
@@ -749,10 +749,10 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
   rot = round(rot)
   IF rot LT 0 THEN rot = 360 + rot
   IF rot EQ 90 OR rot EQ 270 THEN BEGIN
-    pzty = data.get_instr_x_vector(line)
+    pzty = data.get_instr_x_vector(line, /auto_diff_rot)
     slittxt = 'X: '
   ENDIF ELSE BEGIN
-    pzty = data.get_instr_y_vector(line)
+    pzty = data.get_instr_y_vector(line, /auto_diff_rot)
     slittxt = 'Y: '
   ENDELSE
   fmirrytext = widget_label(exposurebase, $

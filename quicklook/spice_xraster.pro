@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-11 10:38 CEST $
 ;-
 ;
 ; save as postscript file
@@ -169,7 +169,7 @@ PRO spice_xraster_draw, event
     IF ~(*info).ydim_unit THEN BEGIN
       ypos = indgen(sz[2])
     ENDIF ELSE BEGIN
-      ypos = *(*info).data.get_instr_y_vector(j)
+      ypos = *(*info).data.get_instr_y_vector(j, /auto_diff_rot)
     ENDELSE
     xscale = interpol(lambda, xpix)
     yscale = interpol(ypos, ypix)
