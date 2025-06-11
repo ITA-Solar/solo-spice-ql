@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2025-06-10 13:39 CEST $
+; $Id: 2025-06-11 15:34 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -100,7 +100,7 @@ PRO spice_xcontrol_l23_event, event
       widget_control, event.top, /destroy
     END
 
-    'SPICE_XCFIT_BLOCK_EVENT': BEGIN
+    'XCFIT_BLOCK_EVENT': BEGIN
       IF event.signal_id GE 100 THEN BEGIN
         winno = event.signal_id - 100
         state_l3 = (*info).state_l3_official
@@ -182,7 +182,7 @@ PRO spice_xcontrol_l23_save_file, event
     IF (*info).state_l3_user[iwindow].edited THEN BEGIN
       proc_step_new = [ $
         hash('name', 'PRSTEP', 'value', 'MANUAL-LINE-FITTING', 'comment', 'Processing step type, step '), $
-        hash('name', 'PRPROC', 'value', 'spice_xcfit_block, spice_xcontrol_l23', 'comment', 'Name of procedure performing PRSTEP'), $
+        hash('name', 'PRPROC', 'value', 'xcfit_block, spice_xcontrol_l23', 'comment', 'Name of procedure performing PRSTEP'), $
         hash('name', 'PRLIB', 'value', 'solarsoft/so/spice/idl/quicklook', 'comment', 'Software library containing PRPROC'), $
         hash('name', 'PRPARA', 'value', 'POSSIBLE_MANUAL_EDITING = 1', 'comment', 'Parameters for PRPROC') $
         ]
@@ -444,7 +444,7 @@ PRO spice_xcontrol_l23_open_l3, event
   scale = [1, 1, 1]
   phys_scale = [0, 0, 0]
   spice_data_L3.get_plot_variables, *hdr_l3_data, origin = origin, scale = scale, phys_scale = phys_scale
-  spice_xcfit_block, ana = ana_l3, title = title, origin = origin, scale = scale, phys_scale = phys_scale, group_leader = (*info).tlb, $
+  xcfit_block, ana = ana_l3, title = title, origin = origin, scale = scale, phys_scale = phys_scale, group_leader = (*info).tlb, $
     signal_id = signal_id, /no_save_option, image_dim = [1, 2]
 END
 
