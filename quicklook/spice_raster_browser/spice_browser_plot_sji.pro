@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-28 15:09 CET $
+; $Id: 2025-06-11 10:38 CEST $
 
 PRO spice_browser_plot_sji, state
   ;
@@ -242,7 +242,7 @@ PRO spice_browser_plot_sji, state
     ;
     ; origin=[ xcen - ( (crpix1-xr[0])*cdelt1), $
     ; ycen - ( (crpix2-yr[0])*cdelt2) ]
-    origin = [state.data.get_wcs_coord(window_index, [0, 0, 0, 0], /x), $
+    origin = [state.data.get_wcs_coord(window_index, [0, 0, 0, 0], /x, /auto_diff_rot), $
       ycen - ((crpix2 - yr[0]) * cdelt2)]
 
     ;

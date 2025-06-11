@@ -73,7 +73,7 @@ FUNCTION spice_make_image, file, wvl, image_only = image_only
       IF d.get_sit_AND_stare() THEN BEGIN
         solar_x = d.get_time_vector(i)
       ENDIF ELSE BEGIN
-        solar_x = d.get_instr_x_vector(i)
+        solar_x = d.get_instr_x_vector(i, /auto_diff_rot)
       ENDELSE
 
       xcen = d.get_xcen(i)

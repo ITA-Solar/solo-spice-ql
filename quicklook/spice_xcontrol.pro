@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-11 10:38 CEST $
 ;-
 ;
 ;
@@ -76,8 +76,8 @@ PRO spice_xcontrol_get_data_info, info
   line[8] = 'CROTA   : ' + string(*(*info).d.get_satellite_rotation(), format = '(F9.2)')
   line[9] = 'XCEN    : ' + string(*(*info).d.get_xcen(0), format = '(F8.1)') + '   ' + $
     'YCEN    : ' + string(*(*info).d.get_ycen(0), format = '(F8.1)')
-  line[10] = 'FOVX    : ' + string(*(*info).d.get_fovx(0), format = '(F8.1)') + '   ' + $
-    'FOVY    : ' + string(*(*info).d.get_fovx(0), format = '(F8.1)')
+  line[10] = 'FOVX    : ' + string(*(*info).d.get_fovx(0, /auto_diff_rot), format = '(F8.1)') + '   ' + $
+    'FOVY    : ' + string(*(*info).d.get_fovx(0, /auto_diff_rot), format = '(F8.1)')
   line[11] = '========================================================'
   line[12] = 'Number of windows         : ' + strtrim(string(*(*info).d.get_number_windows()), 2)
   line[13] = 'Number of raster positions: ' + strtrim(string(*(*info).d.get_number_exposures()), 2)
@@ -626,8 +626,8 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
       x = limb.r0 * sin(phi)
       y = limb.r0 * cos(phi)
       ; compute corners of raster
-      dx = data.get_fovx()
-      dy = data.get_fovy()
+      dx = data.get_fovx(/auto_diff_rot)
+      dy = data.get_fovy(/auto_diff_rot)
       theta = data.get_satellite_rotation()
       coord = sdo.raster_coords(xcen, ycen, dx, dy, theta)
       plot_image, sdo.getim(), true = 1, pos = [0, 0, 1, 1], xstyle = 5, ystyle = 5
@@ -642,8 +642,8 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     xcen = data.get_xcen(0)
     ycen = data.get_ycen(0)
     solar_radius = 960.
-    dx = data.get_fovx(0)
-    dy = data.get_fovy(0)
+    dx = data.get_fovx(0, /auto_diff_rot)
+    dy = data.get_fovy(0, /auto_diff_rot)
     xraster = xcen
     yraster = ycen
     theta = data.get_satellite_rotation() / 360.0 * !pi
