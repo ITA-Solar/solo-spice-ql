@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-11 14:39 CEST $
+; $Id: 2025-06-12 10:18 CEST $
 
 ;+
 ; Description:
