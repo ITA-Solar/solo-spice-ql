@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-13 14:38 CEST $
+; $Id: 2025-06-12 11:52 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -330,6 +330,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
           IF ~quiet THEN message, 'Did not find progenitor file: ' + prg_file, /info
         ENDELSE ; prg_file NE ''
       ENDIF ; ~headers_only && size_data[0] EQ 0
+      data = fix(data, type = 4)
       wcs_data = ana_wcs_get_transform(XTYPE1, hdr, ind_xdim1 = ind_xdim1)
       wcs_data_exists = n_elements(wcs_data) GT 0
     ENDELSE ; count EQ 0
