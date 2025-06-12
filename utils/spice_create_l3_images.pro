@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-06-12 11:53 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -160,6 +160,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
   ptools.parcheck, version, 0, "version", 'STRing', 0, default = 'xx'
   ptools.parcheck, smooth_width, 0, "smooth_width", 'numeric', 0, minval = 0, /optional
   ptools.parcheck, reverse_colortable, 0, 'reverse_colortable', 'int', 0, default = 0
+  show_plot = keyword_set(show_plot)
 
   l3_filename = file_basename(l3_file)
 
@@ -266,8 +267,8 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
           END
         ENDCASE
 
-        this_remove_horizontal_trend = (param.name EQ 'velocity') ? remove_horizontal_trend : 0
-        this_remove_vertical_trend = (param.name EQ 'velocity') ? remove_vertical_trend : 0
+        this_remove_horizontal_trend = (param.name EQ 'velocity') ? keyword_set(remove_horizontal_trend) : 0
+        this_remove_vertical_trend = (param.name EQ 'velocity') ? keyword_set(remove_vertical_trend) : 0
 
         filename = filename_base2 + '.jpg'
 
