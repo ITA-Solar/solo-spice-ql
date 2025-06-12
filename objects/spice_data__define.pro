@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-12 13:10 CEST $
+; $Id: 2025-06-12 13:26 CEST $
 
 ;+
 ; Description:
@@ -602,7 +602,7 @@ END
 ;-
 PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approximated_slit = approximated_slit, $
   debug_plot = debug_plot, $
-  DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version
+  DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version, res_earlier = res_earlier
   ; Transforms data so that it can be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
@@ -612,7 +612,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   IF window_index LT 0 THEN return
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
-  DATA = spice_remove_hot_pix(DATA, self.get_start_time(), self.get_header_keyword('DETECTOR', window_index), self.get_exposure_time())
+  DATA = spice_remove_hot_pix(DATA, self.get_start_time(), self.get_header_keyword('DETECTOR', window_index), self.get_exposure_time(), res_earlier = res_earlier)
   ; ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
 
@@ -697,7 +697,7 @@ FUNCTION spice_data::mk_analysis, window, no_masking = no_masking, approximated_
 
   self.transform_data_for_ana, window_index, no_masking = no_masking, approximated_slit = approximated_slit, $
     debug_plot = debug_plot, $
-    DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version_add
+    DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version_add, res_earlier = res_earlier
   version += version_add
 
   ; ; Earlier: widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
@@ -779,7 +779,11 @@ FUNCTION spice_data::mk_analysis, window, no_masking = no_masking, approximated_
       print, 'data cube has wrong number of dimensions.'
       stop
     ENDELSE
-    handle_value, ana.result_h, result, /no_copy, /set
+    IF n_elements(res_earlier) GT 0 THEN BEGIN
+      handle_value, ana.result_h, res_earlier, /no_copy, /set
+    ENDIF ELSE BEGIN
+      handle_value, ana.result_h, result, /no_copy, /set
+    ENDELSE
     handle_value, ana.residual_h, residual, /no_copy, /set
     handle_value, ana.include_h, include, /no_copy, /set
     handle_value, ana.const_h, const, /no_copy, /set

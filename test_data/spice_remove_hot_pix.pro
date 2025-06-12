@@ -1,7 +1,7 @@
-FUNCTION spice_remove_hot_pix, data, date_beg, detector, xposure
+FUNCTION spice_remove_hot_pix, data, date_beg, detector, xposure, res_earlier = res_earlier
   COMMON spice_remove_hot_pix, hotpix_obj
 
-  Limit_Median_Neighbor = 100.0
+  Limit_Median_Neighbor = 10.0
   Limit_Fraction_To_Signal = 50.0
 
   data = fix(data, type = 4)
@@ -27,6 +27,12 @@ FUNCTION spice_remove_hot_pix, data, date_beg, detector, xposure
   ind = where(hotmap GT Limit_Median_Neighbor AND $
     data_norm LT Limit_Fraction_To_Signal, count)
   IF count GT 0 THEN data[ind] = !values.f_nan
+
+  IF arg_present(res_earlier) THEN BEGIN
+    file = spice_find_file("solo_L1_spice-n-ras_20250331T160031_V02_318767282-000.fits", /user, level = 1)
+    file = file[0]
+    res_earlier = readfits(file, h)
+  ENDIF
 
   return, data
 END
