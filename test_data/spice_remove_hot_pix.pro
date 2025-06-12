@@ -1,8 +1,8 @@
 FUNCTION spice_remove_hot_pix, data, date_beg, detector, xposure, res_earlier = res_earlier
   COMMON spice_remove_hot_pix, hotpix_obj
 
-  Limit_Median_Neighbor = 10.0
-  Limit_Fraction_To_Signal = 50.0
+  Limit_Median_Neighbor = 6.0
+  Limit_Fraction_To_Signal = 150.0
 
   data = fix(data, type = 4)
 
@@ -24,10 +24,20 @@ FUNCTION spice_remove_hot_pix, data, date_beg, detector, xposure, res_earlier = 
   ENDELSE
   data_norm = data / (xposure / 10.0) / hotmap
 
+  window, 0
+  pih, data[*, *, 5], 0.01
+
   ind = where(hotmap GT Limit_Median_Neighbor AND $
     data_norm LT Limit_Fraction_To_Signal, count)
   IF count GT 0 THEN data[ind] = !values.f_nan
+  print, 'Number of hot pixels removed: ', count
+  help, data
+  ; stop
+  ; print, data[ind]
+  window, 1
+  pih, data[*, *, 5], 0.01
 
+  stop
   IF arg_present(res_earlier) THEN BEGIN
     file = spice_find_file("solo_L1_spice-n-ras_20250331T160031_V02_318767282-000.fits", /user, level = 1)
     file = file[0]

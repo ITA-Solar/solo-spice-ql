@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-12 13:26 CEST $
+; $Id: 2025-06-12 14:22 CEST $
 
 ;+
 ; Description:
@@ -486,6 +486,11 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
           print, 'this may take a while'
           print, '====================='
         ENDIF
+        handle_value, ana.data_h, d
+        help, d
+        ind = where(d NE d)
+        help, ind
+        stop
         spice_cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
       ENDIF
 
@@ -613,6 +618,9 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
   DATA = spice_remove_hot_pix(DATA, self.get_start_time(), self.get_header_keyword('DETECTOR', window_index), self.get_exposure_time(), res_earlier = res_earlier)
+  help, DATA
+  ind = where(DATA NE DATA)
+  help, ind
   ; ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
 
@@ -633,6 +641,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   type_data = size(DATA, /type)
   LAMBDA = fix(LAMBDA, type = type_data)
   MISSING = self.get_missing_value()
+  help, MISSING
 END
 
 ;+
@@ -699,7 +708,9 @@ FUNCTION spice_data::mk_analysis, window, no_masking = no_masking, approximated_
     debug_plot = debug_plot, $
     DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version_add, res_earlier = res_earlier
   version += version_add
-
+  help, DATA
+  ind = where(DATA NE DATA)
+  help, ind
   ; ; Earlier: widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
   ; ; After fitting tests, this lower line width limit seems to be too
   ; ; high. In a calibration e-mail discussion Tim gave some other numbers:
@@ -741,9 +752,16 @@ FUNCTION spice_data::mk_analysis, window, no_masking = no_masking, approximated_
   IF keyword_set(no_line_list) THEN proc_find_line = {proc: 'spice_gt_peaks', version: version_gt_peaks}
   badix = where(DATA NE DATA, n_bad)
   IF n_bad GT 0 THEN DATA[badix] = MISSING
+  help, DATA
+  ind = where(DATA NE DATA)
+  help, ind
 
   ana = mk_analysis(LAMBDA, DATA, WEIGHTS, adef, MISSING)
-
+  handle_value, ana.data_h, d
+  help, d
+  ind = where(d NE d)
+  help, ind
+  ; stop
   IF keyword_set(init_all_cubes) THEN BEGIN
     handle_value, ana.fit_h, fit
     n_components = n_tags(fit)
@@ -2097,6 +2115,7 @@ FUNCTION spice_data::get_missing_value
 
   missing = self.get_header_keyword('BLANK', 0)
   IF n_elements(missing) EQ 0 && self.get_level() EQ 2 THEN missing = !values.f_nan
+  missing = !values.f_nan
   return, missing
 END
 

@@ -8,6 +8,7 @@ PRO test_new_sigma, file = filename
   files = [files, "$SPICE_DATA/level1/2025/03/31/solo_L1_spice-n-ras_20250331T160031_V04_318767282-000.fits"]
   files = [files, "$SPICE_DATA/level1/2025/04/01/solo_L1_spice-n-ras_20250401T050032_V03_318767283-000.fits"]
   files = [files, "solo_L1_spice-n-ras_20250331T160031_V02_318767282-000.fits"] ; level 3 from level 1
+  files = [files, "solo_L1_spice-n-ras_20250331T160031_V06_318767282-000.fits"] ; level 3 from level 1 - with hot pixels removed
 
   out_dir = '/Users/mawiesma/Documents/spice/level3-tests/'
 
@@ -16,7 +17,7 @@ PRO test_new_sigma, file = filename
     obj = spice_data(file)
     l3 = obj.create_l3_file([0, 1, 2])
     print, "Created L3 file: ", l3
-  ENDIF ELSE IF 0 THEN BEGIN
+  ENDIF ELSE IF 1 THEN BEGIN
     file = files[3]
     print, file
     ; file = file.replace('_L1_', '_L2_')
