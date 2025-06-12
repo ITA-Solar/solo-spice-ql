@@ -12,12 +12,15 @@ PRO test_new_sigma, file = filename
 
   out_dir = '/Users/mawiesma/Documents/spice/level3-tests/'
 
-  IF 0 THEN BEGIN
+  create_l3_from_l2 = 0
+  create_l3_from_l1 = 0
+
+  IF create_l3_from_l2 THEN BEGIN
     file = files[0]
     obj = spice_data(file)
     l3 = obj.create_l3_file([0, 1, 2])
     print, "Created L3 file: ", l3
-  ENDIF ELSE IF 1 THEN BEGIN
+  ENDIF ELSE IF create_l3_from_l1 THEN BEGIN
     file = files[3]
     print, file
     ; file = file.replace('_L1_', '_L2_')
@@ -30,7 +33,9 @@ PRO test_new_sigma, file = filename
     file = spice_find_file(files[5], /user, level = 1)
     file = file[0]
     print, file
+    spice_create_l3_images, file, out_dir, /no_background_images, /no_tree_struct
 
+    return
     d = readfits(file, h)
     help, d
     ; h = fitshead2struct(h)
@@ -50,8 +55,6 @@ PRO test_new_sigma, file = filename
 
     ana = fits2ana(file)
     help, ana
-
-    spice_create_l3_images, file, out_dir, /no_background_images, /no_tree_struct
 
     spice_xcfit_block, ana = ana[0]
     ; spice_xcfit_block, ana = ana[1]
