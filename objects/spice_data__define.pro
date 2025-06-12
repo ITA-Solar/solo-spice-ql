@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-12 10:18 CEST $
+; $Id: 2025-06-12 13:10 CEST $
 
 ;+
 ; Description:
@@ -612,7 +612,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   IF window_index LT 0 THEN return
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
-  DATA = fix(DATA, type = 4)
+  DATA = spice_remove_hot_pix(DATA, self.get_start_time(), self.get_header_keyword('DETECTOR', window_index), self.get_exposure_time())
   ; ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
 
