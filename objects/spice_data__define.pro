@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-13 14:35 CEST $
+; $Id: 2025-06-13 15:40 CEST $
 
 ;+
 ; Description:
@@ -479,6 +479,11 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ENDFOR
       handle_value, ana.history_h, history, /set, /no_copy
 
+      handle_value, ana.data_h, original_data
+      help, original_data
+      original_data_ind = where(original_data NE original_data)
+      help, original_data_ind
+      ; stop
       IF ~keyword_set(no_fitting) THEN BEGIN
         IF ~keyword_set(quiet) THEN BEGIN
           print, '====================='
@@ -486,11 +491,6 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
           print, 'this may take a while'
           print, '====================='
         ENDIF
-        handle_value, ana.data_h, d
-        help, d
-        ind = where(d NE d)
-        help, ind
-        ; stop
         spice_cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
       ENDIF
 
@@ -500,7 +500,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
       ENDIF
 
-      original_data = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
+      ; original_data = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
       IF iwindow GT 0 THEN IS_EXTENSION = 1 ELSE BEGIN
         IS_EXTENSION = 0
         IF n_elements(velocity) EQ 0 THEN vel = -999 ELSE vel = velocity
