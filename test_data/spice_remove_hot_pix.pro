@@ -1,8 +1,8 @@
 FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_earlier
   COMMON spice_remove_hot_pix, hotpix_obj
 
-  Limit_Median_Neighbor = 10.0
-  Limit_Fraction_To_Signal = 100.0
+  Limit_Median_Neighbor = 5.0
+  Limit_Fraction_To_Signal = 50.0
 
   data = fix(data, type = 4)
 
@@ -26,6 +26,9 @@ FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_ear
   hotpix_obj.darks, lw_map, sw_map ; Get "dark maps" for LW/SW detector
   help, lw_map, sw_map
 
+  window, 0
+  pih, data[*, *, 5], 0.01
+
   IF detector EQ 'SW' THEN BEGIN
     hotmap = lw_map - fmedian(lw_map, 3, 3)
   ENDIF ELSE IF detector EQ 'LW' THEN BEGIN
@@ -42,26 +45,43 @@ FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_ear
   IF nbin2 GT 1 || nbin3 GT 1 THEN hotmap = rebin(hotmap, xsize, ysize) * nbin2 * nbin3
   help, hotmap
   ; stop
-  hotmap = rebin(reform(hotmap, 1, xsize, ysize, 1), naxis1, naxis2, naxis3, naxis4)
-  help, hotmap
-  data_norm = data / (xposure / 10.0) / hotmap
-  help, data_norm
-  ; stop
+  do_it_the_complicated_way = 1
+  IF do_it_the_complicated_way THEN BEGIN
+    data_norm = data / (xposure / 10.0)
+    IF object.get_sit_and_stare() THEN BEGIN
+      ; TODO ?
+    ENDIF ELSE BEGIN
+      FOR i = 0, naxis3 - 1 DO BEGIN
+        data_norm_temp = data_norm[*, *, i] / hotmap
+        ind = where(hotmap GT Limit_Median_Neighbor AND $
+          data_norm_temp LT Limit_Fraction_To_Signal, count)
+        IF count GT 0 THEN BEGIN
+          data_temp = data[*, *, i]
+          data_temp[ind] = !values.f_nan
+          data[*, *, i] = data_temp
+          print, 'Number of hot pixels removed in slice ', i, ': ', count
+        ENDIF
+      ENDFOR
+    ENDELSE
+  ENDIF ELSE BEGIN
+    hotmap = rebin(reform(hotmap, 1, xsize, ysize, 1), naxis1, naxis2, naxis3, naxis4)
+    help, hotmap
+    data_norm = data / (xposure / 10.0) / hotmap
+    help, data_norm
+    ; stop
+    ind = where(hotmap GT Limit_Median_Neighbor AND $
+      data_norm LT Limit_Fraction_To_Signal, count)
+    IF count GT 0 THEN data[ind] = !values.f_nan
+    print, 'Number of hot pixels removed: ', count
+  ENDELSE
 
-  window, 0
-  pih, data[*, *, 5], 0.01
-
-  ind = where(hotmap GT Limit_Median_Neighbor AND $
-    data_norm LT Limit_Fraction_To_Signal, count)
-  IF count GT 0 THEN data[ind] = !values.f_nan
-  print, 'Number of hot pixels removed: ', count
   help, data
   ; stop
   ; print, data[ind]
   window, 1
   pih, data[*, *, 5], 0.01
 
-  ; stop
+  stop
   IF arg_present(res_earlier) THEN BEGIN
     file = spice_find_file("solo_L1_spice-n-ras_20250331T160031_V02_318767282-000.fits", /user, level = 1)
     file = file[0]
