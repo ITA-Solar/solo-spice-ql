@@ -44,7 +44,7 @@ FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_ear
   ; stop
   hotmap = rebin(reform(hotmap, 1, xsize, ysize, 1), naxis1, naxis2, naxis3, naxis4)
   help, hotmap
-  data_norm = data / (xposure / 10.0)
+  data_norm = data / (xposure / 10.0) / hotmap
   help, data_norm
   stop
 
