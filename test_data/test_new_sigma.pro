@@ -7,10 +7,11 @@ PRO test_new_sigma, file = filename
   files = [files, "solo_L3_spice-n-ras_20250331T160031_V03_318767282-000.fits"]
   files = [files, "$SPICE_DATA/level1/2025/03/31/solo_L1_spice-n-ras_20250331T160031_V04_318767282-000.fits"]
   files = [files, "$SPICE_DATA/level1/2025/04/01/solo_L1_spice-n-ras_20250401T050032_V03_318767283-000.fits"]
+  files = [files, 'solo_L1_spice-n-ras_20250325T122943_V03_318767226-002.fits'] ; 5: new, smaller test file
 
-  files = [files, "solo_L1_spice-n-ras_20250331T160031_V02_318767282-000.fits"] ; 5: level 3 from level 1
-  files = [files, "solo_L1_spice-n-ras_20250331T160031_V06_318767282-000.fits"] ; 6: level 3 from level 1 - with hot pixels removed
-  files = [files, "solo_L1_spice-n-ras_20250331T160031_V08_318767282-000.fits"] ; 7: level 3 from level 1 - with hot pixels removed
+  files = [files, "solo_L1_spice-n-ras_20250331T160031_V02_318767282-000.fits"] ; 6: level 3 from level 1
+  files = [files, "solo_L1_spice-n-ras_20250331T160031_V06_318767282-000.fits"] ; 7: level 3 from level 1 - with hot pixels removed
+  files = [files, "solo_L1_spice-n-ras_20250331T160031_V08_318767282-000.fits"] ; 8: level 3 from level 1 - with hot pixels removed
   ; Limit_Median_Neighbor = 6.0
   ; Limit_Fraction_To_Signal = 150.0
   ; Fri 14:38
@@ -31,7 +32,7 @@ PRO test_new_sigma, file = filename
     l3 = obj.create_l3_file([0, 1, 2])
     print, "Created L3 file: ", l3
   ENDIF ELSE IF create_l3_from_l1 THEN BEGIN
-    file = spice_find_file(files[3], level = 1)
+    file = spice_find_file(files[5], level = 1)
     file = file[0]
     print, file
     ; file = file.replace('_L1_', '_L2_')
