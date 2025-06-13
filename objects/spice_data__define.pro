@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-13 12:43 CEST $
+; $Id: 2025-06-13 14:35 CEST $
 
 ;+
 ; Description:
@@ -490,7 +490,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         help, d
         ind = where(d NE d)
         help, ind
-        stop
+        ; stop
         spice_cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
       ENDIF
 
