@@ -8,7 +8,15 @@ FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_ear
 
   date_beg = object.get_start_time()
   detector = object.get_header_keyword('DETECTOR', window_index)
-  xposure = object.get_exposure_time()
+  xposure = object.get_exposure_time(window_index)
+  window_pos = object.get_window_position_level_1(window_index, /idl_coord)
+  window_pos[0 : 1] = window_pos[0 : 1] MOD 1024
+  naxis1 = object.get_header_keyword('naxis1', window_index)
+  naxis2 = object.get_header_keyword('naxis2', window_index)
+  naxis3 = object.get_header_keyword('naxis3', window_index)
+  naxis4 = object.get_header_keyword('naxis4', window_index)
+  nbin2 = object.get_spatial_binning(window_index)
+  nbin3 = object.get_spectral_binning(window_index)
 
   IF n_elements(hotpix_obj) EQ 0 THEN hotpix_obj = obj_new('hotpix')
   hotpix_obj.set, date_beg
@@ -26,7 +34,19 @@ FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_ear
     message, 'Unknown detector: ' + detector
     return, data
   ENDELSE
-  data_norm = data / (xposure / 10.0) / hotmap
+  help, hotmap
+  hotmap = hotmap[window_pos[0] : window_pos[1], window_pos[2] : window_pos[3]]
+  help, hotmap
+  xsize = (window_pos[1] - window_pos[0] + 1) / nbin3
+  ysize = (window_pos[3] - window_pos[2] + 1) / nbin2
+  IF nbin2 GT 1 || nbin3 GT 1 THEN hotmap = rebin(hotmap, xsize, ysize)
+  help, hotmap
+  ; stop
+  hotmap = rebin(reform(hotmap, 1, xsize, ysize, 1), naxis1, naxis2, naxis3, naxis4)
+  help, hotmap
+  data_norm = data / (xposure / 10.0)
+  help, data_norm
+  stop
 
   window, 0
   pih, data[*, *, 5], 0.01
