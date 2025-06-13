@@ -1,8 +1,8 @@
 FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_earlier
   COMMON spice_remove_hot_pix, hotpix_obj
 
-  Limit_Median_Neighbor = 6.0
-  Limit_Fraction_To_Signal = 150.0
+  Limit_Median_Neighbor = 10.0
+  Limit_Fraction_To_Signal = 100.0
 
   data = fix(data, type = 4)
 
@@ -39,14 +39,14 @@ FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_ear
   help, hotmap
   xsize = (window_pos[1] - window_pos[0] + 1) / nbin3
   ysize = (window_pos[3] - window_pos[2] + 1) / nbin2
-  IF nbin2 GT 1 || nbin3 GT 1 THEN hotmap = rebin(hotmap, xsize, ysize)
+  IF nbin2 GT 1 || nbin3 GT 1 THEN hotmap = rebin(hotmap, xsize, ysize) * nbin2 * nbin3
   help, hotmap
   ; stop
   hotmap = rebin(reform(hotmap, 1, xsize, ysize, 1), naxis1, naxis2, naxis3, naxis4)
   help, hotmap
   data_norm = data / (xposure / 10.0) / hotmap
   help, data_norm
-  stop
+  ; stop
 
   window, 0
   pih, data[*, *, 5], 0.01
@@ -61,7 +61,7 @@ FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_ear
   window, 1
   pih, data[*, *, 5], 0.01
 
-  stop
+  ; stop
   IF arg_present(res_earlier) THEN BEGIN
     file = spice_find_file("solo_L1_spice-n-ras_20250331T160031_V02_318767282-000.fits", /user, level = 1)
     file = file[0]
