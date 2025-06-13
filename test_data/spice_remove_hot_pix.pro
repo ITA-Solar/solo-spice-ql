@@ -1,10 +1,14 @@
-FUNCTION spice_remove_hot_pix, data, date_beg, detector, xposure, res_earlier = res_earlier
+FUNCTION spice_remove_hot_pix, data, object, window_index, res_earlier = res_earlier
   COMMON spice_remove_hot_pix, hotpix_obj
 
   Limit_Median_Neighbor = 6.0
   Limit_Fraction_To_Signal = 150.0
 
   data = fix(data, type = 4)
+
+  date_beg = object.get_start_time()
+  detector = object.get_header_keyword('DETECTOR', window_index)
+  xposure = object.get_exposure_time()
 
   IF n_elements(hotpix_obj) EQ 0 THEN hotpix_obj = obj_new('hotpix')
   hotpix_obj.set, date_beg
