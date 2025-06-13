@@ -13,7 +13,7 @@ PRO test_new_sigma, file = filename
   out_dir = '/Users/mawiesma/Documents/spice/level3-tests/'
 
   create_l3_from_l2 = 0
-  create_l3_from_l1 = 0
+  create_l3_from_l1 = 1
 
   IF create_l3_from_l2 THEN BEGIN
     file = files[0]
