@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-13 15:40 CEST $
+; $Id: 2025-06-13 15:50 CEST $
 
 ;+
 ; Description:
@@ -480,6 +480,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       handle_value, ana.history_h, history, /set, /no_copy
 
       handle_value, ana.data_h, original_data
+      original_data = transpose(original_data, [1, 2, 0])
       help, original_data
       original_data_ind = where(original_data NE original_data)
       help, original_data_ind
