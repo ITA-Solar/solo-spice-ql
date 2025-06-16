@@ -61,5 +61,5 @@ PRO test_new_sigma2, file = filename
   spice_xcfit_block, ana = ana[0]
 END
 
-test_new_sigma
+test_new_sigma2
 END

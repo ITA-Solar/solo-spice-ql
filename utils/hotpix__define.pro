@@ -135,12 +135,21 @@ PRO hotpix::darks_process_file, f, lw_map, sw_map
 END
 
 PRO hotpix::darks, lw_map, sw_map
+  ; self.d.lw_map/sw_map will be removed if 
+  ; new files have to be read
+  IF self.d.haskey('lw_map') THEN BEGIN
+     lw_map = self.d.lw_map
+     sw_map = self.d.sw_map
+     return
+  END
   f = self.files()
   sw_map = fltarr(1024, 1024) + 2L ^ 30
   lw_map = sw_map
   FOR i = 0, n_elements(f) - 1 DO BEGIN
-    self.darks_process_file, f[i], lw_map, sw_map
+     self.darks_process_file, f[i], lw_map, sw_map
   END
+  self.d.sw_map = sw_map
+  self.d.lw_map = lw_map
 END
 
 PRO hotpix::find_files
@@ -153,6 +162,8 @@ PRO hotpix::find_files
   ix = where(self.d.dates GE min_date AND self.d.dates LE max_date, count)
   self.d.files_to_use_ix = ix
   print, "Files to use: ", n_elements(ix)
+  IF self.d.haskey('lw_map') THEN self.d.remove, 'lw_map'
+  IF self.d.haskey('sw_map') THEN self.d.remove, 'sw_map'
 END
 
 
@@ -264,17 +275,15 @@ PRO hotpix::churn, sw=sw, lw=lw, limit=limit, date=date, days_window=days_window
 
   diff = showmap - fmedian(showmap, median_size, median_size)
 
-  nodataix = where(nodata_mask, nbad, complement=goodix, ncomplement=ngood)
-  ngood = double(ngood)
-  nbad = double(nbad)
+  nodataix = where(nodata_mask, nnodata, complement=dataix, ncomplement=ndata)
 
   diff[nodataix] = 0.0
   showmap[nodataix] =  0.0
 
-  print, "Number of good pixels " + trim(ngood)
-  print, "Number of bad pixels " + trim(nbad)
+  print, "Number of good pixels " + trim(ndata)
+  print, "Number of nodata pixels " + trim(nnodata)
 
-  ncut_pixels = total(diff[goodix] GE limit, /double)
+  ncut_pixels = total(diff[dataix] GE limit, /double)
 
   
   window, 2, xsize=1000, ysize=1000
@@ -286,19 +295,20 @@ PRO hotpix::churn, sw=sw, lw=lw, limit=limit, date=date, days_window=days_window
   window, 3, xsize=1000, ysize=1000
   plot_image, punched_showmap
 
-  thresholded_good = diff[goodix] < limit
-  h = histogram(thresholded_good, omin=omin, omax=omax)
-  nhist = n_elements(h)
-  x = omin + findgen(nhist)/(nhist-1) * (omax-omin)
-  
   window, 6, xsize=1000, ysize=1000
-  plot, x, h, /ylog, /ynozero, xstyle=2 OR 8, ystyle=8
- 
+  
+  thresholded_data = diff[dataix] < limit
+  thresholded_data >= -10
+  h = histogram(thresholded_data, omin=omin, omax=omax)
+  nhist = n_elements(h)
+  plot, (x = omin + findgen(nhist)/(nhist-1) * (omax-omin)), $
+         h, /ylog, /ynozero, xstyle=2 OR 8, ystyle=8
+  oplot, x, h, psym=2
 
-  print, "Data pixels:     " + trim(ngood)
+  print, "Data pixels:     " + trim(ndata)
   print, "Cut pixels:      " + trim(ncut_pixels)
-  print, "Fraction cut:    " + trim(ncut_pixels/ngood)
-  print, "Pixels/line fit: " + trim(ncut_pixels/ngood*16)
+  print, "Fraction cut:    " + trim(ncut_pixels/ndata)
+  print, "Pixels/line fit: " + trim(ncut_pixels/ndata*16)
 END
 
 

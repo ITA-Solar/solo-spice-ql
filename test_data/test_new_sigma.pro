@@ -73,3 +73,6 @@ PRO test_new_sigma, file = filename
     ; spice_xcfit_block, ana = ana[2]
   ENDELSE
 END
+
+test_new_sigma
+END
