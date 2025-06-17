@@ -1,9 +1,9 @@
 ;+
 ; NAME:
-;       SPICE_XZOOM
+;       ZOOM
 ;
 ; PURPOSE:
-;	The purpose of spice_xzoom is to display a zoomed image of some 
+;	The purpose of zoom is to display a zoomed image of some 
 ;	portion of an original image. The zoomed in area is selected 
 ;	using the mouse to draw a box on the original image. The area 
 ;	inside the box is displayed in a new window, using a zoom factor
@@ -13,7 +13,7 @@
 ;       Hansteen/Wikstol Data analysis SW
 ;
 ; CALLING SEQUENCE:
-;       spice_xzoom, image, xscale, yscale, xtitle = xtitle, ytitle = ytitle, $
+;       zoom, image, xscale, yscale, xtitle = xtitle, ytitle = ytitle, $
 ;       xrange = xrange, yrange = yrange, group_leader = groupleader
 ;
 ; INPUTS:
@@ -54,12 +54,12 @@
 ;        1-Dec-2008: A. Gardini     - Addition of x/yrange to preserve axes' 
 ;                                     scales.  
 ;        21-Feb-2020: Martin Wiesmann - Added keyword /NAN to calls of bytscl()
-;                                     - fixed bug, x/yscale was not defined in spice_xzoom_ps
-;        16-May-2023: Martin Wiesmann - Renamed it to spice_xzoom and uses widget_position
+;                                     - fixed bug, x/yscale was not defined in zoom_ps
+;        16-May-2023: Martin Wiesmann - Uses widget_position now
 ;-
 ; save as postscript file
-pro spice_xzoom_ps, event
-  thisfile=dialog_pickfile(/write,file='spice_xzoom.ps')
+pro zoom_ps, event
+  thisfile=dialog_pickfile(/write,file='zoom.ps')
   if thisfile eq '' then return
   widget_control,event.top,get_uvalue=info
 ;  keywords=pswindow()
@@ -85,8 +85,8 @@ pro spice_xzoom_ps, event
 end
 
 ; save as jpeg file
-pro spice_xzoom_jpeg,event
-  thisfile=dialog_pickfile(/write,file='spice_xzoom.jpg')
+pro zoom_jpeg,event
+  thisfile=dialog_pickfile(/write,file='zoom.jpg')
   if thisfile eq '' then return
   widget_control,event.top,get_uvalue=info
   wset,(*info).wid
@@ -100,7 +100,7 @@ pro spice_xzoom_jpeg,event
   write_jpeg,thisfile,image24,true=1,quality=75
 end
 
-pro spice_xzoom_cleanup,tlb
+pro zoom_cleanup,tlb
   widget_control,tlb,get_uvalue=info
   wdelete, (*info).pixid
   ptr_free,(*info).image
@@ -109,7 +109,7 @@ pro spice_xzoom_cleanup,tlb
   ptr_free,info
 end
 
-pro spice_xzoom_draw_events,event
+pro zoom_draw_events,event
   widget_control,event.top,get_uvalue=info
   events=['down','up','motion']
   thisevent=events[event.type]
@@ -157,7 +157,7 @@ pro spice_xzoom_draw_events,event
             image=congrid(image,s[1]*2 < xmax, s[2]*2 < ymax)
             xscale = interpol(xscale, s[1]*2 < xmax)
             yscale = interpol(yscale, s[2]*2 < ymax)
-            spice_xzoom, image, xscale, yscale, $
+            zoom, image, xscale, yscale, $
                    xtitle = (*info).xtitle, ytitle = (*info).ytitle, $
                    xrange = xrange, yrange = yrange, $
                    group_leader = event.top
@@ -178,7 +178,7 @@ pro spice_xzoom_draw_events,event
   endcase
 end
 
-pro spice_xzoom_resize, event
+pro zoom_resize, event
   widget_control, event.top ,get_uvalue = info
   widget_control, (*info).drawid, draw_xsize = event.x, draw_ysize = event.y
   (*info).xsize = event.x
@@ -220,18 +220,18 @@ pro spice_xzoom_resize, event
 
 end
 
-pro spice_xzoom_destroy, event
+pro zoom_destroy, event
  widget_control, event.top,/destroy
 end
 
-pro spice_xzoom, image, xscale, yscale, xtitle = xtitle, ytitle = ytitle, $
+pro zoom, image, xscale, yscale, xtitle = xtitle, ytitle = ytitle, $
            xrange = xrange, yrange = yrange, group_leader=group, n_subplot=n_subplot
 
 if n_params() eq 0 then begin
-  print,'spice_xzoom: No image specified!'
+  print,'zoom: No image specified!'
 endif
 
-; xrange, yrange are passed by spice_xzoom and not passed by xdetector, xmap, etc.
+; xrange, yrange are passed by zoom and not passed by xdetector, xmap, etc.
 if n_elements(xrange) eq 0 then begin
   dx = (max(xscale)-min(xscale))/(n_elements(xscale)-2)
   xrange = [min(xscale)-dx, max(xscale)+dx]
@@ -248,15 +248,15 @@ s=size(image)
 xsize=s[1]
 ysize=s[2]
 
-tlb = widget_base(title='spice_xzoom', /column, mbar = menubar, $
+tlb = widget_base(title='zoom', /column, mbar = menubar, $
       tlb_size_events=1)
   lcol = widget_base(tlb) ;left column.
   rcol = widget_base(tlb) ;medium column.
   filemenu=widget_button(menubar, value='File',/menu, uvalue='file')
   savemenu=widget_button(filemenu, value='Save as', uvalue='save', /menu)
-  psmenu=widget_button(savemenu, value='Postscript', event_pro = 'spice_xzoom_ps')
-  jpgmenu=widget_button(savemenu, value='JPG', event_pro = 'spice_xzoom_jpeg')
-  exitmenu=widget_button(filemenu, value='Close', event_pro='spice_xzoom_destroy')
+  psmenu=widget_button(savemenu, value='Postscript', event_pro = 'zoom_ps')
+  jpgmenu=widget_button(savemenu, value='JPG', event_pro = 'zoom_jpeg')
+  exitmenu=widget_button(filemenu, value='Close', event_pro='zoom_destroy')
 
 window,/pixmap,/free, xsize=xsize,ysize=ysize
 imagepos = [0.10, 0.15, 0.95, 0.9]
@@ -266,11 +266,11 @@ plot, xrange , yrange, /nodata, xstyle =1, ystyle =1,  $
       position = imagepos, /noerase
 pixid=!d.window
 drawid=widget_draw(rcol,xsize=xsize,ysize=ysize,/button_events, $
-                   retain = 2, event_pro='spice_xzoom_draw_events')
+                   retain = 2, event_pro='zoom_draw_events')
 
 closearea = widget_base(lcol, /row)
 closebutton = widget_button(closearea, value = 'Close', $
-                              event_pro = 'spice_xzoom_destroy')
+                              event_pro = 'zoom_destroy')
 widget_position, tlb, parent=group, /left_align, n_subplot=n_subplot
 widget_control,drawid,get_value=wid
 wset,wid
@@ -307,8 +307,8 @@ info=ptr_new(info,/no_copy)
 
 widget_control,tlb,set_uvalue=info
 
-xmanager,'spice_xzoom',tlb,/no_block, $
-  event_handler='spice_xzoom_resize',cleanup='spice_xzoom_cleanup', $
+xmanager,'zoom',tlb,/no_block, $
+  event_handler='zoom_resize',cleanup='zoom_cleanup', $
   group_leader=group
 
 end
