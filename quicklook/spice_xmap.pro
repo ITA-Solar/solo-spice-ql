@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2025-06-10 13:44 CEST $
+; $Id: 2025-06-17 11:35 CEST $
 ;-
 ;
 ; save as postscript file
@@ -439,7 +439,7 @@ PRO spice_xmap_zoom, event
             image = congrid(image, sz[1] * 2 < xmax, sz[2] * 2 < ymax)
             xscale = interpol(xscale, sz[1] * 2 < xmax)
             yscale = interpol(yscale, sz[2] * 2 < ymax)
-            spice_xzoom, image, xscale, yscale, xtitle = (*info).xtitle, $
+            zoom, image, xscale, yscale, xtitle = (*info).xtitle, $
               ytitle = (*info).ytitle, group_leader = event.top, n_subplot = (*info).n_subplot
           ENDIF
         END
