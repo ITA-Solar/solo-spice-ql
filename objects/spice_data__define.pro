@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-11 15:09 CEST $
+; $Id: 2025-06-17 11:04 CEST $
 
 ;+
 ; Description:
@@ -3287,7 +3287,7 @@ PRO spice_data::read_file, file
       hdr = headfits(file, exten = iwin)
     ENDIF
     headers_string[iwin] = ptr_new(hdr)
-    hdr = spice_fitshead2struct(hdr, /multivalue, /silent)
+    hdr = fitshead2struct(hdr, /multivalue, /silent)
     headers[iwin] = ptr_new(hdr)
     IF iwin LT self.nwin THEN BEGIN
       wcs[iwin] = ptr_new(fitshead2wcs(hdr, filename = file))
