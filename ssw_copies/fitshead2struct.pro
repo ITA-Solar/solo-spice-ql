@@ -1,4 +1,4 @@
-function spice_fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore, $
+function fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore, $
 	   ncomment=ncomment, nhistory=nhistory, add_standard=add_standard, $
            debug=debug,nofill=nofill, wcs=wcs, SILENT=silent, MULTIVALUE=MULTIVALUE, _extra=_extra
 ;+
