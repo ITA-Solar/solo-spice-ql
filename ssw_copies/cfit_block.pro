@@ -178,8 +178,8 @@
 ;                       Whenever variables are checked for 'missing' values, it uses now
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
-; $Id: 2025-06-10 14:40 CEST $
-;-            
+; Version 7, 25-May-2023
+;-
 
 PRO cfit_block_point,lambda,data,weights,fit,missing,$
                      result,residual,include,const,$
