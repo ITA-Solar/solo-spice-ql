@@ -382,7 +382,7 @@ PRO xtvscale_event,ev
   handle_value,stash,info,/no_copy,/set
 
   IF N_ELEMENTS(eventarr) gt 0 THEN BEGIN
-     event = {xtvscale_EVENT,ID:0L,TOP:0L,HANDLER:0L,XTVSCALE_ID:stash}
+     event = {XTVSCALE_EVENT,ID:0L,TOP:0L,HANDLER:0L,XTVSCALE_ID:stash}
      FOR call = 0L,N_ELEMENTS(eventarr)-1 DO BEGIN
         event.id = eventarr[call]
         WIDGET_CONTROL,event.id,send_event = event,bad_id = bad
@@ -1100,7 +1100,7 @@ NEW_WIDGET:
   IF xalive(info.int.group) THEN group_leader = info.int.group $
   ELSE group_leader = 0L
 
-  base = WIDGET_BASE(/column,title='xtvscale',uvalue=SCALE_ID, $
+  base = WIDGET_BASE(/column,title='XTVSCALE',uvalue=SCALE_ID, $
                      xoffset=xoffset,yoffset=yoffset, $
                      group_leader=group_leader)
   info.int.wid = base
@@ -1216,7 +1216,7 @@ NEW_WIDGET:
   WIDGET_CONTROL,base,show=show
   WIDGET_CONTROL,base,map=map
 
-  XMANAGER,'xtvscale',base,/just_reg
+  XMANAGER,'XTVSCALE',base,/just_reg
 
 DONT_REGISTER:
 
