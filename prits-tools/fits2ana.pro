@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-05-13 14:38 CEST $
+; $Id: 2025-06-19 11:11 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -295,6 +295,8 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
     ENDELSE
 
     extension = where(fits_content.extname EQ DATAEXT, count)
+    IF count EQ 0 THEN $
+      extension = where(fits_content.extname EQ DATA_EXTNAME, count)
     IF count EQ 0 THEN BEGIN
       IF loud THEN message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATAEXT, /info
       hdr = ''
