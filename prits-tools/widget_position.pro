@@ -55,7 +55,7 @@
 ;     11-May-2023: Martin Wiesmann
 ;     10-Jun-2025: Martin Wiesmann, Refactored code to be a procedure instead of a class method
 ;
-; $Id: 2025-06-10 13:33 CEST $
+; $Id: 2025-06-19 09:35 CEST $
 ;
 ;-
 
@@ -85,11 +85,11 @@ PRO widget_position, widget, parent = parent, xoffset = xoffset, yoffset = yoffs
   ; Positions the widget relative to parent or screen if no parent given
   COMPILE_OPT IDL2
 
-  ptools.parcheck, widget, 1, "widget", ['integers'], 0, minval = 0, default = -1
-  ptools.parcheck, parent, 0, "parent", ['integers'], 0, minval = 0, default = -1
-  ptools.parcheck, xoffset, 0, "xoffset", ['numeric'], 0, default = 50
-  ptools.parcheck, yoffset, 0, "yoffset", ['numeric'], 0, default = 50
-  ptools.parcheck, n_subplot, 0, "n_subplot", ['integers'], 0, default = 0
+  If n_elements(widget) EQ 0 THEN widget = -1
+  if n_elements(parent) EQ 0 THEN parent = -1
+  if n_elements(xoffset) EQ 0 then xoffset = 50
+  if n_elements(yoffset) EQ 0 then yoffset = 50
+  if n_elements(n_subplot) EQ 0 then n_subplot = 0
 
   IF widget LT 0 THEN BEGIN
     message, 'No widget provided. Doing nothing.', /informational
