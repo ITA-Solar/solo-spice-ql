@@ -1,11 +1,33 @@
-pro xcfit_test
+PRO xcfit_test
+  IF 0 THEN BEGIN
+    file = '/Users/mawiesma/data/spice/user/level3/2023/10/28/solo_L3_spice-n-ras_20231028T005506_V22_218104189-003.fits'
+    ana = fits2ana(file)
+    save_analysis, ana[0]
+  ENDIF ELSE BEGIN
+    path = routine_dir()
+    paths = strsplit(path, path_sep(), /extract)
+    filepath = path_sep() + strjoin([paths[0 : -2], 'ancillary', 'xcfit_test_file.ana'], path_sep())
+    ana = restore_analysis(filepath)
 
-if 0 then begin
-file = '/Users/mawiesma/data/spice/user/level3/2024/01/01/solo_L3_spice-n-exp_20240101T180040_V02_234881025-000.fits'
-ana=fits2ana(file)
-save_analysis,ana[0]
-endif else begin
-file = '../ancillary/xcftit_test_file.ana'
-ana=restore_analysis(file)
-endelse
-end
+    handle_value, ana.result_h, result
+    handle_value, ana.data_h, data
+    handle_value, ana.lambda_h, lambda
+    handle_value, ana.weights_h, weights
+    handle_value, ana.residual_h, residual
+    handle_value, ana.include_h, include
+    handle_value, ana.const_h, const
+    handle_value, ana.fit_h, fit
+
+    help, ana
+    help, result
+    help, data
+    help, lambda
+    help, weights
+    help, residual
+    help, include
+    help, const
+    help, fit
+
+    xcfit_block, analysis = ana
+  ENDELSE
+END
