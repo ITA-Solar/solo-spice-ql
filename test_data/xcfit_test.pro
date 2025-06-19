@@ -28,6 +28,14 @@ PRO xcfit_test
     help, const
     help, fit
 
+    tic
+
+    cfit_block, analysis = ana, /quiet, /double, x_face = 1, smart = 1
+
+    time = toc()
+    print, 'Time used in cfit_block : ', time, ' seconds'
+    stop
+
     xcfit_block, analysis = ana
   ENDELSE
 END
