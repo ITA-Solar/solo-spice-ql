@@ -28,6 +28,8 @@ PRO xcfit_test
     help, const
     help, fit
 
+    !exception = 0
+
     box_message, 'Click on stop, This runs just to compile all procedures and functions in the xcfit package.'
     cfit_block, analysis = ana, /quiet, /double, x_face = 1, smart = 1
 
