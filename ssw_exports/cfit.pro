@@ -145,6 +145,7 @@
 ; Version     : 6, 08-Oct-2015
 ;-            
 
+
 FUNCTION cfit,x,y,a_nom,fit,sigmaa,weights=wt,$
               double=double,tol=tol,itmax=itmax,$
               sfit=sfit,values=values,failed=failed,fail_type=fail_type,$
@@ -245,14 +246,14 @@ FUNCTION cfit,x,y,a_nom,fit,sigmaa,weights=wt,$
   
   IF NOT use_compiled THEN BEGIN
      IF n_params() EQ 5 THEN $
-        yfit = mcurvefit(x,y,wt,aa,private=sfit,function_name='eval_sfit',$
+        yfit = cfit_mcurvefit(x,y,wt,aa,private=sfit,function_name='eval_sfit',$
                          maxarr = sfit.max_arr, $
                          minarr = sfit.min_arr, $
                          error_only=error_only,$
                          tol=tol,itmax=itmax,fail_type=fail_type,$
                          chi2=chi2,sigmaa,failed=failed,quiet=quiet) $
      ELSE $
-        yfit = mcurvefit(x,y,wt,aa,private=sfit,function_name='eval_sfit',$
+        yfit = cfit_mcurvefit(x,y,wt,aa,private=sfit,function_name='eval_sfit',$
                          maxarr = sfit.max_arr, $
                          minarr = sfit.min_arr, $
                          error_only = error_only,$
@@ -260,14 +261,14 @@ FUNCTION cfit,x,y,a_nom,fit,sigmaa,weights=wt,$
                          chi2=chi2,failed=failed,quiet=quiet)  
   END ELSE BEGIN
      IF n_params() EQ 5 THEN $
-        yfit = mcurvefit(x,y,wt,aa,function_name=compfunc,$
+        yfit = cfit_mcurvefit(x,y,wt,aa,function_name=compfunc,$
                          maxarr = sfit.max_arr, $
                          minarr = sfit.min_arr, $
                          error_only = error_only,$
                          tol=tol,itmax=itmax,fail_type=fail_type,$
                          chi2=chi2,sigmaa,failed=failed,quiet=quiet) $
      ELSE $
-        yfit = mcurvefit(x,y,wt,aa,function_name=compfunc,$
+        yfit = cfit_mcurvefit(x,y,wt,aa,function_name=compfunc,$
                          maxarr = sfit.max_arr, $
                          minarr = sfit.min_arr, $
                          error_only = error_only,$
