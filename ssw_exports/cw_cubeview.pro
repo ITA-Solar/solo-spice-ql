@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-21 20:58 CEST $
+; $Id: 2025-06-21 21:15 CEST $
 ;-
 
 ;;
@@ -722,13 +722,13 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   ;; This base is the one to put buttons etc. on, as well as storing the
   ;; info structure on
 
-  heading_id=widget_base(mybase,/row,_extra=tight)
   IF keyword_set(title) THEN BEGIN
-     storage = widget_label(heading_id,value=title+' HERE ',/align_left)
+     storage = widget_label(mybase,value=title)
      info.int.title_id = storage
   END
 
-  focustx_id = widget_label(heading_id,value=' ',/align_center)
+
+  focustx_id = widget_label(mybase,value=' ')
 
   default,storage,focustx_id
 
