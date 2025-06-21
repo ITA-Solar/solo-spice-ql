@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-21 19:13 CEST $
+; $Id: 2025-06-21 19:43 CEST $
 ;-
 
 
@@ -2198,8 +2198,6 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
      xcfit_block_register,info
      xcfit_block_get_result,info,this_result,title
 
-;  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
-     
      xsize = 400 * widget_size_scaling
      ysize = 400 * widget_size_scaling
      info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a.data_h,$
