@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-10 15:32 CEST $
+; $Id: 2025-06-21 19:06 CEST $
 ;-
 
 
@@ -1770,7 +1770,10 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
                 analysis=ana, title=title, group_leader=group_leader, $
                 display_treshold=display_threshold, no_save_option=no_save_option,$
-                signal_id=signal_id, modal=modal, image_dim=image_dim
+                signal_id=signal_id, modal=modal, image_dim=image_dim, $
+                widget_size_scaling=widget_size_scaling
+  
+  default, widget_size_scaling, 1.5
 
   ;on_error,2
 
@@ -1796,16 +1799,16 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
      handle_value,ana.result_h,result,/no_copy
      handle_value,ana.residual_h,residual,/no_copy
      IF ~keyword_set(include) THEN $
-       handle_value,ana.include_h,include,/no_copy
+        handle_value,ana.include_h,include,/no_copy
      IF ~keyword_set(const) THEN $
-       handle_value,ana.const_h,const,/no_copy
+        handle_value,ana.const_h,const,/no_copy
 
      IF ~keyword_set(origin) THEN $
-       handle_value,ana.origin_h,origin
+        handle_value,ana.origin_h,origin
      IF ~keyword_set(scale) THEN $
-       handle_value,ana.scale_h,scale
+        handle_value,ana.scale_h,scale
      IF ~keyword_set(phys_scale) THEN $
-       handle_value,ana.phys_scale_h,phys_scale
+        handle_value,ana.phys_scale_h,phys_scale
      handle_value,ana.dimnames_h,dimnames
 
 ;     catch,error
@@ -1828,7 +1831,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
 
      IF n_params() LT 7 THEN BEGIN
         message,"Use: XCFIT_BLOCK,LAMBDA,DATA,WEIGHTS,FIT,MISSING," + $
-           "RESULT,RESIDUAL [,INCLUDE,CONST]"
+                "RESULT,RESIDUAL [,INCLUDE,CONST]"
      END
 
   END
@@ -1847,23 +1850,23 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
   size_temp = size(result)
   ind = where(size_temp[1:size_temp[0]] GT 1, count)
   IF count LT 2 THEN BEGIN
-    box_message, 'Result has too few dimensions, cannot display this, returning.'
-    IF keyword_set(ana) THEN BEGIN
-      handle_value,ana.lambda_h,lambda,/set,/no_copy
-      handle_value,ana.data_h,data,/set,/no_copy
-      handle_value,ana.weights_h,weights,/set,/no_copy
-      handle_value,ana.result_h,result,/set,/no_copy
-      handle_value,ana.residual_h,residual,/set,/no_copy
-      handle_value,ana.include_h,include,/set,/no_copy
-      handle_value,ana.const_h,const,/set,/no_copy
-    ENDIF ELSE BEGIN
-      delete_analysis, iana
-    ENDELSE
-    return
+     box_message, 'Result has too few dimensions, cannot display this, returning.'
+     IF keyword_set(ana) THEN BEGIN
+        handle_value,ana.lambda_h,lambda,/set,/no_copy
+        handle_value,ana.data_h,data,/set,/no_copy
+        handle_value,ana.weights_h,weights,/set,/no_copy
+        handle_value,ana.result_h,result,/set,/no_copy
+        handle_value,ana.residual_h,residual,/set,/no_copy
+        handle_value,ana.include_h,include,/set,/no_copy
+        handle_value,ana.const_h,const,/set,/no_copy
+     ENDIF ELSE BEGIN
+        delete_analysis, iana
+     ENDELSE
+     return
   ENDIF ELSE IF count eq 2 THEN BEGIN
     ; one exposure only
-    image_dim = ind
-    show_result = 0
+     image_dim = ind
+     show_result = 0
   ENDIF ELSE show_result = 1
 
 
@@ -1897,10 +1900,10 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   screen = get_screen_size()
   IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
-    base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
-      /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(modal))
+     base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
+                        /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(modal))
   ENDIF ELSE BEGIN
-    base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(modal))
+     base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(modal))
   ENDELSE
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
@@ -1909,123 +1912,123 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
   rightside_col = widget_base(base,/column,_extra=sml)
 
   CASE N_ELEMENTS(display_threshold) OF
-    0: threshold = [0.02, 0.02, 0.02]
-    1: threshold = make_array(3, value=display_threshold)
-    2: threshold = [display_threshold, 0.02]
-    3: threshold = display_threshold
-    ELSE: threshold = display_threshold[0:2]
-  ENDCASE
+     0: threshold = [0.02, 0.02, 0.02]
+     1: threshold = make_array(3, value=display_threshold)
+     2: threshold = [display_threshold, 0.02]
+     3: threshold = display_threshold
+     ELSE: threshold = display_threshold[0:2]
+     ENDCASE
 
 
-  titles_h = handle_create()
-  handle_killer_hookup,titles_h,group_leader=base
+     titles_h = handle_create()
+     handle_killer_hookup,titles_h,group_leader=base
 
-  IF NOT keyword_set(ana) THEN BEGIN
-     h_to_kill = [iana.lambda_h,iana.data_h,iana.weights_h,iana.fit_h,$
-                  iana.result_h,iana.residual_h,iana.include_h,iana.const_h]
-  END
+     IF NOT keyword_set(ana) THEN BEGIN
+        h_to_kill = [iana.lambda_h,iana.data_h,iana.weights_h,iana.fit_h,$
+                     iana.result_h,iana.residual_h,iana.include_h,iana.const_h]
+     END
 
-  int = { top_id       : base,$
-          a            : iana,$
-          ana_set      : keyword_set(ana),$
-          status1_id   : 0L,$
-          status2_id   : 0L,$
-          microplot_id : 0L,$
-          fit_plot_id  : 0L,$
-          fit_window_button: 0L,$
-          microfine_h  : handle_create(),$ 
-          errplot_h    : handle_create(),$
-          changed      : 0b,$                    ;; Change flag
-          find_ix      : -1L,$                   ;; Find first/next status
-          find_h       : handle_create(),$
-          pix_id       : 0L,$
-          pix_reset1_id: lonarr(4),$
-          pix_prog_h   : handle_create(value=xcfit_block_pix_defprog()),$
-          pix_mask_h   : handle_create(),$
-          what_found   : 'ZERO',$
-          titles_h     : titles_h,$
-          store_info_h : handle_create(),$
-          data_id      : 0L,$
-          residual_id  : 0L,$
-          result_pdb   : 0L,$
-          initval_id   : 0L,$
-          result_id    : 0L,$
-          show_result  : show_result}
+     int = { top_id       : base,$
+             a            : iana,$
+             ana_set      : keyword_set(ana),$
+             status1_id   : 0L,$
+             status2_id   : 0L,$
+             microplot_id : 0L,$
+             fit_plot_id  : 0L,$
+             fit_window_button: 0L,$
+             microfine_h  : handle_create(),$ 
+             errplot_h    : handle_create(),$
+             changed      : 0b,$                    ;; Change flag
+             find_ix      : -1L,$                   ;; Find first/next status
+             find_h       : handle_create(),$
+             pix_id       : 0L,$
+             pix_reset1_id: lonarr(4),$
+             pix_prog_h   : handle_create(value=xcfit_block_pix_defprog()),$
+             pix_mask_h   : handle_create(),$
+             what_found   : 'ZERO',$
+             titles_h     : titles_h,$
+             store_info_h : handle_create(),$
+             data_id      : 0L,$
+             residual_id  : 0L,$
+             result_pdb   : 0L,$
+             initval_id   : 0L,$
+             result_id    : 0L,$
+             show_result  : show_result}
 
-  handle_killer_hookup,int.store_info_h   ;; Note: Don't kill when base dies
+     handle_killer_hookup,int.store_info_h   ;; Note: Don't kill when base dies
 
-  handle_killer_hookup,group_leader=base,$
-     [int.microfine_h,int.find_h,int.pix_prog_h,int.errplot_h,$
-      int.pix_mask_h]
+     handle_killer_hookup,group_leader=base,$
+                          [int.microfine_h,int.find_h,int.pix_prog_h,int.errplot_h,$
+                           int.pix_mask_h]
 
-  info = { int:int,$
-           ext:ext }
+     info = { int:int,$
+              ext:ext }
 
-  upper = widget_base(center_col,/row,_extra=sml)
+     upper = widget_base(center_col,/row,_extra=sml)
 
   ;; Switched to make microplot go *left*
 
-  upper_right_c = widget_base(upper,/column,_extra=sml)
-  upper_left_c = widget_base(upper,/column,_extra=sml)
+     upper_right_c = widget_base(upper,/column,_extra=sml)
+     upper_left_c = widget_base(upper,/column,_extra=sml)
 
-  microplot_base = widget_base(upper_right_c)
+     microplot_base = widget_base(upper_right_c)
 
-  buttons_n_colors_r = widget_base(upper_left_c,/row,_extra=sml)
+     buttons_n_colors_r = widget_base(upper_left_c,/row,_extra=sml)
 
-  buttons_col = widget_base(buttons_n_colors_r,/column,_extra=sml)
+     buttons_col = widget_base(buttons_n_colors_r,/column,_extra=sml)
 
   ;; Color table selector: CW_LOADCT
-  color_selector = widget_base(buttons_n_colors_r, /row, _extra=sml)
-  colors = cw_loadct(color_selector,/frame)
+     color_selector = widget_base(buttons_n_colors_r, /row, _extra=sml)
+     colors = cw_loadct(color_selector,/frame)
 
-  buttons1 = widget_base(buttons_col,/row,_extra=sml)
-  buttons2 = widget_base(buttons_col,/row,_extra=sml)
-  buttons3 = widget_base(buttons_col,/row,_extra=sml)
-  buttons4 = widget_base(upper_left_c,/row,_extra=sml,/frame) ;; Note base!
+     buttons1 = widget_base(buttons_col,/row,_extra=sml)
+     buttons2 = widget_base(buttons_col,/row,_extra=sml)
+     buttons3 = widget_base(buttons_col,/row,_extra=sml)
+     buttons4 = widget_base(upper_left_c,/row,_extra=sml,/frame) ;; Note base!
 
-  disp_b = widget_base(center_col,/row,_extra=sml)
+     disp_b = widget_base(center_col,/row,_extra=sml)
 
   ;; Local/Global status
 
-  sta = widget_base(leftside_col,/row,_extra=sml)
-  gstatus = widget_base(sta,/column,_extra=sml,frame = 0)
-  lstatus = widget_base(sta,/column,_extra=sml,frame = 0)
+     sta = widget_base(leftside_col,/row,_extra=sml)
+     gstatus = widget_base(sta,/column,_extra=sml,frame = 0)
+     lstatus = widget_base(sta,/column,_extra=sml,frame = 0)
 
   ;;lstatus = widget_base(lefttside_col,/column,_extra=sml,/frame)
   ;;gstatus = widget_base(rightside_col,/column,_extra=sml,/frame)
 
 
-  label1 = widget_label(widget_base(lstatus),value='Local') 
-  label2 = widget_label(widget_base(lstatus),value='status')
+     label1 = widget_label(widget_base(lstatus),value='Local') 
+     label2 = widget_label(widget_base(lstatus),value='status')
 
-  label1 = widget_label(widget_base(gstatus),value='Global') 
-  label2 = widget_label(widget_base(gstatus),value='status')
+     label1 = widget_label(widget_base(gstatus),value='Global') 
+     label2 = widget_label(widget_base(gstatus),value='status')
 
-  xsize = 35
-  lstatusx = widget_base(lstatus,/column,xpad=1,ypad=1,space=5,ysize=6000,$
-                         x_scroll_size=xsize,y_scroll_size=750)
+     xsize = 35
+     lstatusx = widget_base(lstatus,/column,xpad=1,ypad=1,space=5,ysize=6000,$
+                            x_scroll_size=xsize,y_scroll_size=750)
 
-  gstatusx = widget_base(gstatus,/column,xpad=1,ypad=1,space=5,ysize=6000,$
-                         x_scroll_size=xsize,y_scroll_size=750)
+     gstatusx = widget_base(gstatus,/column,xpad=1,ypad=1,space=5,ysize=6000,$
+                            x_scroll_size=xsize,y_scroll_size=750)
 
   ;; Switched - makes local left, global right
-  status2 = lstatusx ;; widget_base(lstatusx,/column,_extra=sml,/frame)
-  status1 = gstatusx ;; widget_base(gstatusx,/column,_extra=sml,/frame)
+     status2 = lstatusx ;; widget_base(lstatusx,/column,_extra=sml,/frame)
+     status1 = gstatusx ;; widget_base(gstatusx,/column,_extra=sml,/frame)
 
   ;; File menu
   ;;
-  file_m = widget_button(buttons1,value='File/exit',menu=2)
-  IF ~keyword_set(no_save_option) THEN BEGIN
-    save_b = widget_button(file_m,value='Save',uvalue='SAVE')
-    save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
-    restore_last = widget_button(file_m,value='Restore last saved',$
-                                 uvalue='RESTORE')
-    restore_other = widget_button(file_m,value='Restore other',$
-                                  uvalue='RESTORE:OTHER')
-  ENDIF
-  edit_hist = widget_button(file_m,value='View/edit History',$
-                            uvalue='EDIT_HISTORY')
-  dummy = widget_button(file_m,value='Exit',uvalue='EXIT')
+     file_m = widget_button(buttons1,value='File/exit',menu=2)
+     IF ~keyword_set(no_save_option) THEN BEGIN
+        save_b = widget_button(file_m,value='Save',uvalue='SAVE')
+        save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
+        restore_last = widget_button(file_m,value='Restore last saved',$
+                                     uvalue='RESTORE')
+        restore_other = widget_button(file_m,value='Restore other',$
+                                      uvalue='RESTORE:OTHER')
+     ENDIF
+     edit_hist = widget_button(file_m,value='View/edit History',$
+                               uvalue='EDIT_HISTORY')
+     dummy = widget_button(file_m,value='Exit',uvalue='EXIT')
 
   ;;
   ;; Adjust, Redesign, Calculate buttons (Global action line)
@@ -2033,214 +2036,218 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   ;; Adjust fit, including update of initial values
   ;;
-  adjust = widget_button(buttons1,value='Adjust',menu=2)
-  dummy = widget_button(adjust, uvalue='ADJUSTFIT', $
-                        value='Adjust (global) MIN/MAX values, names etc')
-  initval = widget_button(adjust,value='Update (global) initial value for ', $
-                          menu=2)
-  initval_id = widget_button(initval,value=' ',menu=2)
-  info.int.initval_id = initval_id
-  dummy = widget_button(initval_id,value='Use *median* of free result',$
-                        uvalue='SET_INITIAL')
-  dummy = widget_button(initval_id,value='Use *average* of free result',$
-                        uvalue='SET_INITIAL:AVERAGE')
+     adjust = widget_button(buttons1,value='Adjust',menu=2)
+     dummy = widget_button(adjust, uvalue='ADJUSTFIT', $
+                           value='Adjust (global) MIN/MAX values, names etc')
+     initval = widget_button(adjust,value='Update (global) initial value for ', $
+                             menu=2)
+     initval_id = widget_button(initval,value=' ',menu=2)
+     info.int.initval_id = initval_id
+     dummy = widget_button(initval_id,value='Use *median* of free result',$
+                           uvalue='SET_INITIAL')
+     dummy = widget_button(initval_id,value='Use *average* of free result',$
+                           uvalue='SET_INITIAL:AVERAGE')
 
   ;; Redesign (discard)
   ;;
-  dummy = widget_button(buttons1,value='Redesign',menu=2)
-  dummy = widget_button(dummy,$
-                        value='Discard all results, redesign fit structure',$
-                        uvalue='ALTERFIT')
+     dummy = widget_button(buttons1,value='Redesign',menu=2)
+     dummy = widget_button(dummy,$
+                           value='Discard all results, redesign fit structure',$
+                           uvalue='ALTERFIT')
 
   ;; Calculate (from current or scratch)
   ;;
-  dummy = widget_button(buttons1,value='Calculate',menu=2)
-  dummy2 = widget_button(dummy,value='Recalculate based on current result',$
-                         uvalue='RECALCULATE')
-  dummy2 = widget_button(dummy,value='Recalculate from global initial values',$
-                         uvalue='RECALCULATE:SCRATCH')
+     dummy = widget_button(buttons1,value='Calculate',menu=2)
+     dummy2 = widget_button(dummy,value='Recalculate based on current result',$
+                            uvalue='RECALCULATE')
+     dummy2 = widget_button(dummy,value='Recalculate from global initial values',$
+                            uvalue='RECALCULATE:SCRATCH')
 
 
   ;;
   ;; Second row - Find-buttons and Mask/modify
   ;;
-  find_base = buttons2 ;; widget_base(buttons3,/row,_extra=sml,/frame)
-  fmenu = [{pselect_s,btext:'zero',mtext:'Find zero',uvalue:'FIND:ZERO',$
-            flags:0},$
-           {pselect_s,'missing','Find missing','FIND:MISS',0},$
-           {pselect_s,'max','Find max value','FIND:MAX',0},$
-           {pselect_s,'min','Find min value','FIND:MIN',0}]
-  dummy = cw_pselect(find_base,'Find: ',fmenu)
-  find_again = widget_button(widget_base(find_base,/column),$
-                             value='..next',uvalue='FIND_AGAIN')
+     find_base = buttons2 ;; widget_base(buttons3,/row,_extra=sml,/frame)
+     fmenu = [{pselect_s,btext:'zero',mtext:'Find zero',uvalue:'FIND:ZERO',$
+               flags:0},$
+              {pselect_s,'missing','Find missing','FIND:MISS',0},$
+              {pselect_s,'max','Find max value','FIND:MAX',0},$
+              {pselect_s,'min','Find min value','FIND:MIN',0}]
+     dummy = cw_pselect(find_base,'Find: ',fmenu)
+     find_again = widget_button(widget_base(find_base,/column),$
+                                value='..next',uvalue='FIND_AGAIN')
 
   ;;
   ;; Pixel grabbing/manipulation
   ;;
-  gbase = widget_base(buttons2)
+     gbase = widget_base(buttons2)
 
   ;; This is the base to which the program text is sent for testing.
   ;; It needs the uvalue to point to the top base (to get at the info stc).
 
-  info.int.pix_id = widget_base(gbase,pro_set_value=$
-                                 'xcfit_block_pix_edit_setv')
-  widget_control,info.int.pix_id,set_uvalue=base
+     info.int.pix_id = widget_base(gbase,pro_set_value=$
+                                   'xcfit_block_pix_edit_setv')
+     widget_control,info.int.pix_id,set_uvalue=base
 
   ;;
   ;; This is the pixel grabbing/manipulation menu
   ;;
-  pix = widget_button(gbase,value='Mask/patch points',menu=2)
-  flick = widget_button(pix,value='Edit masking program',$
-                        uvalue='PIX_EDIT')
-  grab = widget_button(pix,value='Re-execute masking program',$
-                       uvalue='PIX_EXECUTE')
-  zhonk = widget_button(pix,value='Show masked points',$
-                        uvalue='PIX_FLICKER')
-  sub1 = widget_button(pix,value='Patch masked points',menu=2)
+     pix = widget_button(gbase,value='Mask/patch points',menu=2)
+     flick = widget_button(pix,value='Edit masking program',$
+                           uvalue='PIX_EDIT')
+     grab = widget_button(pix,value='Re-execute masking program',$
+                          uvalue='PIX_EXECUTE')
+     zhonk = widget_button(pix,value='Show masked points',$
+                           uvalue='PIX_FLICKER')
+     sub1 = widget_button(pix,value='Patch masked points',menu=2)
 
-  all = '..ALL parameters'
-  one = '..THIS parameter'
-  allc = '..ALL components'
-  onec = '..THIS component'
-  mark = ':ONE'
-  oni = 0L
+     all = '..ALL parameters'
+     one = '..THIS parameter'
+     allc = '..ALL components'
+     onec = '..THIS component'
+     mark = ':ONE'
+     oni = 0L
 
-  v = ['Patch CONST status from global status','PIX_SETCONST']
-  zhonk = widget_button(sub1,value=v[0],menu=2)
-  ali = widget_button(zhonk,value=all,uvalue=v[1])
-  oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
+     v = ['Patch CONST status from global status','PIX_SETCONST']
+     zhonk = widget_button(sub1,value=v[0],menu=2)
+     ali = widget_button(zhonk,value=all,uvalue=v[1])
+     oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
 
-  v = ['Patch INCLUDE status from global status','PIX_SETINCLUDE']
-  zhonk = widget_button(sub1,value=v[0],menu=2)
-  ali = widget_button(zhonk,value=allc,uvalue=v[1])
-  oni = [oni,widget_button(zhonk,value=onec,uvalue=v[1]+mark)]
+     v = ['Patch INCLUDE status from global status','PIX_SETINCLUDE']
+     zhonk = widget_button(sub1,value=v[0],menu=2)
+     ali = widget_button(zhonk,value=allc,uvalue=v[1])
+     oni = [oni,widget_button(zhonk,value=onec,uvalue=v[1]+mark)]
 
-  v = ['Patch RESULT from global initial value','PIX_RESET']
-  zhonk = widget_button(sub1,value=v[0],menu=2)
-  ali = widget_button(zhonk,value=all,uvalue=v[1])
-  oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
+     v = ['Patch RESULT from global initial value','PIX_RESET']
+     zhonk = widget_button(sub1,value=v[0],menu=2)
+     ali = widget_button(zhonk,value=all,uvalue=v[1])
+     oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
 
-  zhonk = widget_button(sub1,value='Recalc. masked points ' + $
-                        '(from curr. values)',uvalue='PIX_RECALC')
+     zhonk = widget_button(sub1,value='Recalc. masked points ' + $
+                           '(from curr. values)',uvalue='PIX_RECALC')
 
-  v = ['Patch all from global status, then recalc.','PIX_APPLY_ALL']
-  zhonk = widget_button(sub1,value=v[0],menu=2)
-  ali = widget_button(zhonk,value=all,uvalue=v[1])
-  oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
+     v = ['Patch all from global status, then recalc.','PIX_APPLY_ALL']
+     zhonk = widget_button(sub1,value=v[0],menu=2)
+     ali = widget_button(zhonk,value=all,uvalue=v[1])
+     oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
 
-  zhonk = widget_button(sub1,value='Fail masked points',uvalue='PIX_FAIL')
-  zhonk = widget_button(sub1,value='UNFail masked points',uvalue='PIX_FAIL:0')
+     zhonk = widget_button(sub1,value='Fail masked points',uvalue='PIX_FAIL')
+     zhonk = widget_button(sub1,value='UNFail masked points',uvalue='PIX_FAIL:0')
 
-  info.int.pix_reset1_id = oni[1:*]
+     info.int.pix_reset1_id = oni[1:*]
 
-  show_fit = ["Show","Hide"]
-  onoff = ["OFF","ON"]
+     show_fit = ["Show","Hide"]
+     onoff = ["OFF","ON"]
 
   ;; Second row of buttons (Find-buttons,View/tweak,Refit,Fail)
   ;;
-  viewtweak = buttons3 ;; widget_base(buttons3,/column,_extra=sml)
-  fit_window_button = cw_flipswitch(viewtweak,value=show_fit+' fit',$
-    uvalue='FITWINDOW:'+show_fit)
-  info.int.fit_window_button = fit_window_button
-  dummy = cw_flipswitch(viewtweak,value='Errplot:'+onoff,$
-                        uvalue='ERRPLOT:'+onoff)
-  dummy = cw_flipswitch(viewtweak,value='View/tweak',uvalue='VIEWFIT')
-  dummy = cw_flipswitch(viewtweak,value='Redo fit',uvalue='REFIT')
-  dummy = cw_flipswitch(viewtweak,value='FAIL',uvalue='FAILFIT')
-
-
+     viewtweak = buttons3 ;; widget_base(buttons3,/column,_extra=sml)
+     fit_window_button = cw_flipswitch(viewtweak,value=show_fit+' fit',$
+                                       uvalue='FITWINDOW:'+show_fit)
+     info.int.fit_window_button = fit_window_button
+     dummy = cw_flipswitch(viewtweak,value='Errplot:'+onoff,$
+                           uvalue='ERRPLOT:'+onoff)
+     dummy = cw_flipswitch(viewtweak,value='View/tweak',uvalue='VIEWFIT')
+     dummy = cw_flipswitch(viewtweak,value='Redo fit',uvalue='REFIT')
+     dummy = cw_flipswitch(viewtweak,value='FAIL',uvalue='FAILFIT')
 
   ;;
   ;; Third row - pulldown menu for displayed result 
   ;;
-  result_pdb = widget_base(buttons4,_extra=sml)
+     result_pdb = widget_base(buttons4,_extra=sml)
   ;; 
 
   ;; const/include status (global value)
   ;;
-  info.int.status1_id = cwf_status(status1,value=fit,uvalue='STATUS1',/column)
+     info.int.status1_id = cwf_status(status1,value=fit,uvalue='STATUS1',/column)
   ;; const/include status (current point)
   ;;
-  info.int.status2_id = cwf_status(status2,value=fit,uvalue='STATUS2',/column)
+     info.int.status2_id = cwf_status(status2,value=fit,uvalue='STATUS2',/column)
 
 
   ;;
   ;; Micro-plot..
   ;;
-  mx = 195 & my = 160
-  microplot_id = cw_plotz(microplot_base,uvalue='MICROPLOT',$
-                          xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
-                          origo=[0,0],psym=10)
-  info.int.microplot_id = microplot_id
+     mx = 400 * widget_size_scaling
+     my = 150 * widget_size_scaling
+     microplot_id = cw_plotz(microplot_base,uvalue='MICROPLOT',$
+                             xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
+                             origo=[0,0],psym=10)
+     info.int.microplot_id = microplot_id
 
-  fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
-    uvalue=base, event_pro='xcfit_block_event_fit_widget', group_leader=base)
-  fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
-    xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
-    origo=[0,0],psym=10)
-  info.int.fit_plot_id = fit_plot_id
-  info.ext.fit_plot_widget = fit_plot_widget
+     fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
+                                   uvalue=base, event_pro='xcfit_block_event_fit_widget', group_leader=base)
+     fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
+                            xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
+                            origo=[0,0],psym=10)
+     info.int.fit_plot_id = fit_plot_id
+     info.ext.fit_plot_widget = fit_plot_widget
 
-  data_b = widget_base(disp_b,/column,_extra=sml)
-  result_b = widget_base(disp_b,/column,_extra=sml)
-  residual_b = widget_base(disp_b,/column,_extra=sml)
+     data_b = widget_base(disp_b,/column,_extra=sml)
+     result_b = widget_base(disp_b,/column,_extra=sml)
+     residual_b = widget_base(disp_b,/column,_extra=sml)
 
-  info.int.result_pdb = result_pdb
+     info.int.result_pdb = result_pdb
 
-  no_copy = 0
+     no_copy = 0
 
   ;; Put data blocks into their handles  
-  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
-     /set,/copy
+     xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,$
+                    /set,/copy
 
-  xcfit_block_register,info
-  xcfit_block_get_result,info,this_result,title
+     xcfit_block_register,info
+     xcfit_block_get_result,info,this_result,title
 
 ;  xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
+     
+     xsize = 400 * widget_size_scaling
+     ysize = 400 * widget_size_scaling
+     info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a.data_h,$
+                                    missing=missing,$
+                                    xsize=xsize, ysize=ysize, $
+                                    uvalue="DATA",dimnames=dimnames,$
+                                    title='Original data',origin=origin, $
+                                    scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
+                                    sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
 
-  info.int.data_id = cw_cubeview(data_b,hvalue=info.int.a.data_h,$
-                                 missing=missing,$
-                                 uvalue="DATA",dimnames=dimnames,$
-                                 title='Original data',origin=origin, $
-                                 scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
-                                 sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
+     info.int.residual_id = cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
+                                        missing=missing,$
+                                        xsize=xsize, ysize=ysize, $
+                                        uvalue="RESIDUAL",dimnames=dimnames,$
+                                        title='Residual',origin=origin, $
+                                        scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
+                                        sigrange=threshold[1] GT 0, fraction=1.0-threshold[1])
 
-  info.int.residual_id = cw_cubeview(residual_b,hvalue=info.int.a.residual_h,$
-                                     missing=missing,$
-                                     uvalue="RESIDUAL",dimnames=dimnames,$
-                                     title='Residual',origin=origin, $
-                                     scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
-                                     sigrange=threshold[1] GT 0, fraction=1.0-threshold[1])
+     IF keyword_set(origin) THEN r_origin = origin[1:*]
+     IF keyword_set(scale) THEN r_scale = scale[1:*]
+     IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale[1:*]
 
-  IF keyword_set(origin) THEN r_origin = origin[1:*]
-  IF keyword_set(scale) THEN r_scale = scale[1:*]
-  IF keyword_set(phys_scale) THEN r_phys_scale = phys_scale[1:*]
+     IF show_result THEN $
+        info.int.result_id = cw_cubeview(result_b,value=this_result,$
+                                         missing=missing,$
+                                         xsize=xsize, ysize=ysize, $
+                                         uvalue="RESULT",dimnames=dimnames[1:*],$
+                                         title=title, origin=r_origin, $
+                                         scale=r_scale,phys_scale=r_phys_scale,$
+                                         sigrange=threshold[2] GT 0, fraction=1.0-threshold[2])
 
-  IF show_result THEN info.int.result_id = cw_cubeview(result_b,value=this_result,$
-                                   missing=missing,$
-                                   uvalue="RESULT",dimnames=dimnames[1:*],$
-                                   title=title, origin=r_origin, $
-                                   scale=r_scale,phys_scale=r_phys_scale,$
-                                   sigrange=threshold[2] GT 0, fraction=1.0-threshold[2])
+     widget_control,info.int.initval_id,set_value=title
+     xcfit_block_sensitize,info,title
 
-  widget_control,info.int.initval_id,set_value=title
-  xcfit_block_sensitize,info,title
+     xrealize, base, group=group_leader, /center
+     widget_position,fit_plot_widget, parent=base, /left_align
+     widget_control, fit_plot_widget, map=0
 
-  xrealize, base, group=group_leader, /center
-  widget_position,fit_plot_widget, parent=base, /left_align
-  widget_control, fit_plot_widget, map=0
+     xcfit_block_visitp,info
 
-  xcfit_block_visitp,info
+     widget_control,base,set_uvalue=info
 
-  widget_control,base,set_uvalue=info
+     xmanager,"xcfit_block",base
 
-  xmanager,"xcfit_block",base
+  END
 
-END
-
-IF getenv("USER") EQ "steinhh" THEN BEGIN
-   ana = restore_analysis("$HOME/idl/solo-spice-ql/test_data/eis_l1_20210806_105401_0.ana")
-   xcfit_block, ana=ana
-END
-
-END
+;IF getenv("USER") EQ "steinhh" THEN BEGIN
+;   ana = restore_analysis("$HOME/idl/solo-spice-ql/test_data/eis_l1_20210806_105401_0.ana")
+;   xcfit_block, ana=ana
+;END
+;END
