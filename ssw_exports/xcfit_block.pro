@@ -192,7 +192,7 @@
 ;               ndim_indices(), parcheck, typ(), match_struct(), bigpickfile(), break_file
 ;               oploterr
 ;               restore_analysis, delete_analysis, save_analysis
-;               since_version(), xack, xtextedit, average()
+;               xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
 ;               cfit_block, get_screen_size(),
 ;               widget_position
@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-21 19:43 CEST $
+; $Id: 2025-06-21 20:57 CEST $
 ;-
 
 
@@ -292,7 +292,7 @@ PRO xcfit_block_get_result,info,showres,title
   ;; showres = reform(result(info.ext.result_no,*,*,*,*,*,*))
   title = titles[info.ext.result_no]
 
-  mx = 25
+  mx = 60
   IF strlen(title) GT mx THEN title = "..."+strmid(title,strlen(title)-mx,mx)
 
   widget_control,info.int.status1_id,$
@@ -614,13 +614,13 @@ PRO xcfit_block_register,info
   last_id = widget_info(info.int.result_pdb,/child)
   IF last_id NE 0L THEN widget_control,last_id,/destroy
 
-  IF since_version('4.0.1') THEN widget_control,info.int.result_pdb,update=0
+  widget_control,info.int.result_pdb,update=0
 
-  dummy = cw_pselect(info.int.result_pdb,'Result:',menu)
+  dummy = cw_pselect(info.int.result_pdb,'Result: ',menu)
 
   widget_control,dummy,set_value='RESULT#:'+trim(info.ext.result_no)
 
-  IF since_version('4.0.1') THEN widget_control,info.int.result_pdb,update=1
+  widget_control,info.int.result_pdb,update=1
 
   ;; Update status (const/include)
   ;;widget_control,info.int.status2_id,set_value=fit
@@ -2204,7 +2204,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                                     missing=missing,$
                                     xsize=xsize, ysize=ysize, $
                                     uvalue="DATA",dimnames=dimnames,$
-                                    title='Original data',origin=origin, $
+                                    title='Original data               ',$origin=origin, $
                                     scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                     sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
 
@@ -2212,7 +2212,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                                         missing=missing,$
                                         xsize=xsize, ysize=ysize, $
                                         uvalue="RESIDUAL",dimnames=dimnames,$
-                                        title='Residual',origin=origin, $
+                                        title='Residual                ',origin=origin, $
                                         scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                         sigrange=threshold[1] GT 0, fraction=1.0-threshold[1])
 
