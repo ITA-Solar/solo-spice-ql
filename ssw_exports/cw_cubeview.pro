@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-21 17:41 CEST $
+; $Id: 2025-06-21 19:06 CEST $
 ;-
 
 ;;
@@ -580,7 +580,6 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
                      sigrange=sigrange,fraction=fraction,$
                      uvalue=uvalue,image_dim=image_dim,plot_dim=plot_dim,$
                      title=title,hvalue=hvalue,row=row,all_events=all_events
-
   value_hpass = 0
 
   IF n_elements(hvalue) EQ 1 THEN BEGIN
@@ -745,21 +744,23 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   info.int.xtvscaler = xtvscale(group=mybase,map=0,missing=missing,$
                                 sigrange=sigrange, fraction=fraction,$
                                 signal=mybase)
-  dummy = cw_flipswitch(im_base,value='Adjust color scaling'+["",""],$
+  im_heading_base = widget_base(im_base, /row, _extra=tight)
+  dummy = cw_flipswitch(im_heading_base,value='Adjust color scaling'+["",""],$
                         uvalue='XTVSCALER'+["",""])
 
-  imdim_base = widget_base(im_base,/row,_extra=tight)
-  image_dim1_id = cw_flipswitch(imdim_base,value=dimnames(multix),$
+  !null = widget_label(im_heading_base, value='           ')
+
+  image_dim1_id = cw_flipswitch(im_heading_base,value=dimnames(multix),$
                                 uvalue='IMAGE_DIM:0:'+dimstr(multix))
-  dummy = widget_label(imdim_base,value='x')
-  image_dim2_id = cw_flipswitch(imdim_base,value=dimnames(multix),$
+  dummy = widget_label(im_heading_base,value='x')
+  image_dim2_id = cw_flipswitch(im_heading_base,value=dimnames(multix),$
                                 uvalue='IMAGE_DIM:1:'+dimstr(multix))
 
   widget_control,image_dim1_id,set_value='IMAGE_DIM:0:'+trim(image_dim(0))
   widget_control,image_dim2_id,set_value='IMAGE_DIM:1:'+trim(image_dim(1))
 
-  dummy = widget_label(imdim_base,value=':')
-  imagetx_id = widget_label(imdim_base,value=' ')
+  dummy = widget_label(im_heading_base,value=':')
+  imagetx_id = widget_label(im_heading_base,value=' ')
 
   squarepix = total(iphys_scale(image_dim) NE 0) NE 2
 
@@ -781,11 +782,14 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   plot_base = widget_base(ibase,/column,/frame,_extra=tight)
 
   info.int.xplotscaler = xplotscale(group=mybase,map=0,missing=missing)
-
-  dummy = cw_flipswitch(plot_base,value='Adjust plot scaling'+["",""],$
+  
+  plot_heading_base = widget_base(plot_base, /row, _extra=tight)
+  
+  dummy = cw_flipswitch(plot_heading_base,value='Adjust plot scaling'+["",""],$
                         uvalue='XPLOTSCALER'+["",""])
-
-  plotdim_base = widget_base(plot_base,/row,_extra=tight)
+  
+  !null = widget_label(plot_heading_base, value='           ')
+  plotdim_base = widget_base(plot_heading_base,/row,_extra=tight)
   plotdim_id = cw_flipswitch(plotdim_base,value=dimnames(multix),$
                              uvalue='PLOT_DIM:'+dimstr(multix))
 
@@ -794,7 +798,7 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   dummy = widget_label(plotdim_base,value=' : ')
   plottx_id = widget_label(plotdim_base,value=' ')
 
-  plot_id = cw_plotz(plot_base,xwsize=xsize,ywsize=ysize,$
+  plot_id = cw_plotz(plot_base,xwsize=xsize,ywsize=ysize*0.5,$
                      value=plt,uvalue='PLOT',missing=missing,$
                      xtitle=dimnames(plot_dim),psym=10,$
                      xplotscale=info.int.xplotscaler)
