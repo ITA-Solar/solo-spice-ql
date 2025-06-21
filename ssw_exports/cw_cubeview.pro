@@ -76,7 +76,7 @@
 ;                          Used in xtvscale. Default is 0.9. Ignored if SIGRANGE is unset.
 ;
 ; Calls       : cw_flipswitch(), cw_plotz(), cw_pzoom(), default,
-;               handle_create(), since_version(), trim(), xplotscale(),
+;               handle_create(),trim(), xplotscale(),
 ;               xtvscale()
 ;
 ; Common      : None.
@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-21 19:06 CEST $
+; $Id: 2025-06-21 19:43 CEST $
 ;-
 
 ;;
@@ -299,7 +299,7 @@ END
 ;;
 PRO cw_cubeview_upd_info,info
 
-  IF since_version('4.0.1') THEN widget_control,info.int.mybase,update=0
+  widget_control,info.int.mybase,update=0
 
   IF info.int.title_id NE 0L THEN $
      widget_control,info.int.title_id,set_value=info.ext.title
@@ -312,7 +312,7 @@ PRO cw_cubeview_upd_info,info
   widget_control,info.int.imagetx_id,set_value=txim
   widget_control,info.int.plottx_id,set_value=txplot
 
-  IF since_version('4.0.1') THEN widget_control,info.int.mybase,update=1
+  widget_control,info.int.mybase,update=1
 END
 
 ;;
@@ -813,12 +813,10 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
 
   info.int.image_dim_id = [image_dim1_id,image_dim2_id]
 
-  IF since_version('4.0.1') THEN BEGIN
-     widget_control,info.int.title_id,/dynamic_resize,bad_id=bad
-     widget_control,focustx_id,/dynamic_resize
-     widget_control,imagetx_id,/dynamic_resize
-     widget_control,plottx_id,/dynamic_resize
-  END
+  widget_control,info.int.title_id,/dynamic_resize,bad_id=bad
+  widget_control,focustx_id,/dynamic_resize
+  widget_control,imagetx_id,/dynamic_resize
+  widget_control,plottx_id,/dynamic_resize
 
   cw_cubeview_upd_info,info
 
