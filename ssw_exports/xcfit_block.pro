@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-21 19:06 CEST $
+; $Id: 2025-06-21 19:13 CEST $
 ;-
 
 
@@ -2168,17 +2168,17 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
   ;;
   ;; Micro-plot..
   ;;
-     mx = 400 * widget_size_scaling
-     my = 150 * widget_size_scaling
+     mpxsize = 500 * widget_size_scaling
+     mpysize = 120 * widget_size_scaling
      microplot_id = cw_plotz(microplot_base,uvalue='MICROPLOT',$
-                             xwsize=mx,ywsize=my,xdsize=mx,ydsize=my, $
+                             xwsize=mpxsize,ywsize=mpysize,xdsize=mpxsize,ydsize=mpysize, $
                              origo=[0,0],psym=10)
      info.int.microplot_id = microplot_id
 
      fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
                                    uvalue=base, event_pro='xcfit_block_event_fit_widget', group_leader=base)
      fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
-                            xwsize=4*mx,ywsize=4*my,xdsize=4*mx,ydsize=4*my, $
+                            xwsize=4*mpxsize,ywsize=4*mpysize,xdsize=4*mpxsize,ydsize=4*mpysize, $
                             origo=[0,0],psym=10)
      info.int.fit_plot_id = fit_plot_id
      info.ext.fit_plot_widget = fit_plot_widget
