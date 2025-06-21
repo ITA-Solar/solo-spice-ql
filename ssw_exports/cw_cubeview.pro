@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-10 15:31 CEST $
+; $Id: 2025-06-21 17:41 CEST $
 ;-
 
 ;;
@@ -890,3 +890,4 @@ PRO cw_cubeview_test_hpass,h
 
   xmanager,"cw_cubeview_test",base,/modal
 END
+
