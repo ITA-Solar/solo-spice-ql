@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-21 21:15 CEST $
+; $Id: 2025-06-21 21:46 CEST $
 ;-
 
 ;;
@@ -308,7 +308,8 @@ PRO cw_cubeview_upd_info,info
   txim = cw_cubeview_slicetext(info,info.ext.image_dim)
   txplot = cw_cubeview_slicetext(info,[-1,info.ext.plot_dim])
 
-  widget_control,info.int.focustx_id,set_value=txfocus
+  title_and_focus = info.ext.title + " @ " + txfocus
+  widget_control,info.int.focustx_id,set_value=title_and_focus
   widget_control,info.int.imagetx_id,set_value=txim
   widget_control,info.int.plottx_id,set_value=txplot
 
@@ -719,18 +720,11 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   IF n_elements(uvalue) NE 0 THEN widget_control,mybase,set_uvalue=uvalue
 
 
-  ;; This base is the one to put buttons etc. on, as well as storing the
+  ;; This widget id is the one to put buttons etc. on, as well as storing the
   ;; info structure on
 
-  IF keyword_set(title) THEN BEGIN
-     storage = widget_label(mybase,value=title)
-     info.int.title_id = storage
-  END
-
-
   focustx_id = widget_label(mybase,value=' ')
-
-  default,storage,focustx_id
+  storage = focustx_id
 
   IF keyword_set(row) THEN ibase = widget_base(mybase,/row,_extra=tight) $
   ELSE                     ibase = mybase
