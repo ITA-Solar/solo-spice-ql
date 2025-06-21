@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-21 20:57 CEST $
+; $Id: 2025-06-21 21:36 CEST $
 ;-
 
 
@@ -1964,7 +1964,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
      info = { int:int,$
               ext:ext }
 
-     upper = widget_base(center_col,/row,_extra=sml)
+     upper = widget_base(center_col,/row,_extra=sml,/frame)
 
   ;; Switched to make microplot go *left*
 
@@ -2204,7 +2204,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                                     missing=missing,$
                                     xsize=xsize, ysize=ysize, $
                                     uvalue="DATA",dimnames=dimnames,$
-                                    title='Original data               ',$origin=origin, $
+                                    title='Original data',$origin=origin, $
                                     scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                     sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
 
@@ -2212,7 +2212,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                                         missing=missing,$
                                         xsize=xsize, ysize=ysize, $
                                         uvalue="RESIDUAL",dimnames=dimnames,$
-                                        title='Residual                ',origin=origin, $
+                                        title='Residual',origin=origin, $
                                         scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                         sigrange=threshold[1] GT 0, fraction=1.0-threshold[1])
 
