@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-10 13:59 CEST $
+; $Id: 2025-06-23 12:04 CEST $
 ;-
 
 
@@ -2195,8 +2195,6 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
 
   spice_xcfit_block_register,info
   spice_xcfit_block_get_result,info,this_result,title
-
-;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
 
   info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
