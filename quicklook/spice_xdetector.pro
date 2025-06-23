@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2025-06-18 12:58 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event
@@ -954,7 +954,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ymax = max(win_positions[*, 3])
   win_positions[*, 2 : 3] = win_positions[*, 2 : 3] - ymin
   yscale_pixels = indgen(ymax - ymin + 1) + 1 + ymin
-  yscale_physical = (data.get_instr_y_vector(lindx[0], /full_ccd))[ymin : ymax]
+  yscale_physical = (data.get_instr_y_vector(lindx[0], /full_ccd, /auto_diff_rot))[ymin : ymax]
 
   ; x and y titles for axis plots:
   xdim = 2 ; wavelength

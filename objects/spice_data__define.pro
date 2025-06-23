@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-17 11:04 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 
 ;+
 ; Description:
@@ -207,7 +207,7 @@ FUNCTION spice_data::xcfit_block, window, no_masking = no_masking, approximated_
   ana = self.mk_analysis(window_index, no_masking = no_masking, approximated_slit = approximated_slit, position = position, velocity = velocity, $
     no_line_list = no_line_list, /init_all_cubes)
   IF size(ana, /type) EQ 8 THEN BEGIN
-    origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index))[0], (self.get_instr_y_vector(window_index))[0]]
+    origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
     scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
     xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2]
   ENDIF ELSE BEGIN
@@ -490,7 +490,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ENDIF
 
       IF ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) THEN BEGIN
-        origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index))[0], (self.get_instr_y_vector(window_index))[0]]
+        origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
         scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
         xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
       ENDIF
@@ -613,7 +613,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
   ; ; Only do fit on the spectral part of the window!
-  LAMBDA = self.get_wcs_coord(window_index, /lambda)
+  LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
 
   size_data = size(DATA)
   IF self.get_sit_and_stare() THEN BEGIN
@@ -2301,7 +2301,7 @@ END
 ;              If this keyword is set, then y, lambda and time provided must be within
 ;              the actual data volume.
 ;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
-;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;
 ; OUTPUT:
@@ -2350,7 +2350,7 @@ END
 ;              If this keyword is set, then x, lambda and time provided must be within
 ;              the actual data volume.
 ;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
-;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
 ;              for the whole detector. The data is then debinned. This may give wrong results if
@@ -2439,7 +2439,7 @@ FUNCTION spice_data::get_lambda_vector, window, x = x, y = y, time = time, full_
   pixels[1, *] = y
   pixels[3, *] = time
 
-  return, self.get_wcs_coord(window_index, pixels, /lambda)
+  return, self.get_wcs_coord(window_index, pixels, /lambda, /auto_diff_rot)
 END
 
 ;+
@@ -2477,7 +2477,7 @@ FUNCTION spice_data::get_time_vector, window, x = x, y = y, lambda = lambda
   pixels[2, *] = lambda
   pixels[3, *] = self.get_sit_and_stare() ? indgen(npix) : 0
 
-  return, self.get_wcs_coord(window_index, pixels, /time)
+  return, self.get_wcs_coord(window_index, pixels, /time, /auto_diff_rot)
 END
 
 ;+
@@ -2527,16 +2527,23 @@ END
 ; OPTONAL INPUTS:
 ;     window : the index or name of the window
 ;
+; KEYWORDS:
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
+;              then the keyword DIFF_ROT is set.
+;
 ; OUTPUT:
 ;     float : fovx in arcseconds
 ;-
-FUNCTION spice_data::get_fovx, window
+FUNCTION spice_data::get_fovx, window, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot
   ; Returns FOV in solar x direction, in arcsec
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
-  x_coords = self.get_wcs_coord(window_index, /x)
+  x_coords = self.get_wcs_coord(window_index, /x, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
   minx = min(x_coords, max = maxx)
   return, maxx - minx
 END
@@ -2548,16 +2555,23 @@ END
 ; OPTONAL INPUTS:
 ;     window : the index or name of the window
 ;
+; KEYWORDS:
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
+;              then the keyword DIFF_ROT is set.
+;
 ; OUTPUT:
 ;     float : fovy in arcseconds
 ;-
-FUNCTION spice_data::get_fovy, window
+FUNCTION spice_data::get_fovy, window, auto_diff_rot = auto_diff_rot
   ; Returns FOV in solar y direction, in arcsec
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
-  y_coords = self.get_wcs_coord(window_index, /y)
+  y_coords = self.get_wcs_coord(window_index, /y, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
   miny = min(y_coords, max = maxy)
   return, maxy - miny
 END
@@ -2587,7 +2601,7 @@ END
 ;              If this keyword is set, then all pixels provided in the pixels array must be within
 ;              the actual data volume. Floating point indices may give wrong results.
 ;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
-;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;
 ; OUTPUT:

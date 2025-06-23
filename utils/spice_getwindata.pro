@@ -48,6 +48,11 @@
 ;       PERANG:    If set, the intensities are returned in units of
 ;                  erg/cm2/s/sr/Angstrom. To be used in conjunction
 ;                  with /CALIB; ignored otherwise.
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
+;              then the keyword DIFF_ROT is set.
 ;     no_masking: If set, then SPICE_DATA::mask_regions_outside_slit will NOT be called on the data.
 ;                 This procedure masks any y regions in a narrow slit data cube that don't contain
 ;                 slit data, i.e. pixels with contributions from parts of the
@@ -153,12 +158,13 @@
 ;         Added hdr.date_end and hdr.tdetx to the output structure for
 ;         compatibility with EIS software.
 ;-
-; $Id: 2024-11-29 14:28 CET $
+; $Id: 2025-06-23 13:07 CEST $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $ ; idl-disable-line unused-var
   clean = clean, wrange = wrange, verbose = verbose, $
   ixrange = ixrange, normalize = normalize, quiet = quiet, $
-  calib = calib, perang = perang, no_masking = no_masking, approximated_slit = approximated_slit
+  calib = calib, perang = perang, no_masking = no_masking, approximated_slit = approximated_slit, $
+  diff_rot = diff_rot, auto_diff_rot = auto_diff_rot
   IF n_params() EQ 0 THEN BEGIN
     print, 'Use:  IDL> wd=spice_getwindata( filename, i)'
     print, '               where i is the index of the window'
@@ -439,8 +445,8 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $ ; idl-
   ; TODO: use wcs to get xpos and ypos?
   ;
   IF abs(roll_angle) LT 5.0 THEN BEGIN
-    xpos = d.get_instr_x_vector(iwin)
-    ypos = d.get_instr_y_vector(iwin)
+    xpos = d.get_instr_x_vector(iwin, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
+    ypos = d.get_instr_y_vector(iwin, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
     IF d.get_sit_AND_stare() EQ 1 THEN xscale = 1.0 ELSE BEGIN
       IF nx GT 1 THEN BEGIN
         xscale = median(xpos[1 : nx - 1] - xpos[0 : nx - 2])

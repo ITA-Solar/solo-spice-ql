@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2025-06-18 12:58 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 ;-
 ;
 ; save as postscript file
@@ -841,8 +841,8 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     ENDIF
     ; (data->getaux())->setwscale,'arcsec'
     ; (data->getaux())->setxytitle,sscale='arcsec'
-    xscale = data.get_instr_x_vector(line)
-    yscale = data.get_instr_y_vector(line)
+    xscale = data.get_instr_x_vector(line, /auto_diff_rot)
+    yscale = data.get_instr_y_vector(line, /auto_diff_rot)
     aspect = (max(xscale) - min(xscale)) / (max(yscale) - min(yscale))
     ; if sx.rot eq 3 or sx.rot eq 1 then begin
     xdim = 0
@@ -882,11 +882,11 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     angle = round(data.get_satellite_rotation())
     IF angle LT 0 THEN angle = 360 + angle
     IF angle EQ 90 OR angle EQ 270 THEN BEGIN
-      yscale = data.get_instr_x_vector(line)
-    ENDIF ELSE yscale = data.get_instr_y_vector(line)
+      yscale = data.get_instr_x_vector(line, /auto_diff_rot)
+    ENDIF ELSE yscale = data.get_instr_y_vector(line, /auto_diff_rot)
   ENDIF ELSE BEGIN
-    xscale = data.get_instr_x_vector(line)
-    yscale = data.get_instr_y_vector(line)
+    xscale = data.get_instr_x_vector(line, /auto_diff_rot)
+    yscale = data.get_instr_y_vector(line, /auto_diff_rot)
   ENDELSE
   xscale_pixels = findgen(n_elements(xscale))
   xscale_physical = xscale

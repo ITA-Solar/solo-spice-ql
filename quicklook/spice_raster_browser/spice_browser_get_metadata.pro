@@ -35,11 +35,11 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-28 15:09 CET $
+; $Id: 2025-06-23 13:07 CEST $
 
 FUNCTION spice_browser_get_metadata, data
-  xpos = data.get_instr_x_vector(0)
-  ypos = data.get_instr_y_vector(0)
+  xpos = data.get_instr_x_vector(0, /auto_diff_rot)
+  ypos = data.get_instr_y_vector(0, /auto_diff_rot)
 
   scale = data.get_resolution(0)
   scale = scale[0 : 1]
