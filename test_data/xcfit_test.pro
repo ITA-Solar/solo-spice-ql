@@ -28,7 +28,7 @@ PRO xcfit_test
     help, const
     help, fit
 
-    !except = 0
+     !except = 2
 
     box_message, 'Click on stop, This runs just to compile all procedures and functions in the xcfit package.'
     cfit_block, analysis = ana, /quiet, /double, x_face = 1, smart = 1
@@ -38,7 +38,7 @@ PRO xcfit_test
     profiler, /system
     tic
 
-    cfit_block, analysis = ana, /quiet, /double, x_face = 1, smart = 1
+    cfit_block, analysis = ana, /double, x_face = 1, smart = 1
 
     time = toc()
     print, 'Time used in cfit_block : ', time, ' seconds'
