@@ -6,6 +6,12 @@ FUNCTION get_test_ana
   return, ana
 END
 
+PRO make_test_ana
+  file = '/Users/mawiesma/data/spice/user/level3/2023/10/28/solo_L3_spice-n-ras_20231028T005506_V22_218104189-003.fits'
+  ana = fits2ana(file)
+  save_analysis, ana[0]
+END
+
 PRO xcfit_test
   ana = get_test_ana()
 
@@ -17,8 +23,7 @@ PRO xcfit_test
   handle_value, ana.include_h, include
   handle_value, ana.const_h, const
   handle_value, ana.fit_h, fit
-
-  !except = 2
+  !except = 0
 
   box_message, 'Click on stop, This runs just to compile all procedures and functions in the xcfit package.'
   cfit_block, analysis = ana, /quiet, /double, x_face = 1, smart = 1
@@ -28,7 +33,7 @@ PRO xcfit_test
   profiler, /system
   tic
 
-  cfit_block, analysis = ana, /double, x_face = 1, smart = 1
+  cfit_block, analysis = ana, /quiet, /double, x_face = 1, smart = 1
 
   time = toc()
   print, 'Time used in cfit_block : ', time, ' seconds'
@@ -41,8 +46,10 @@ END
 
 PRO xcfit_block_test
   ana = get_test_ana()
-  xcfit_block, ana=ana, phys_scale=[2, 1, 1]
+  handle_value, ana.scale_h, [1,4,1],/set
+  xcfit_block, ana=ana
 END
 
 xcfit_block_test
+; xcfit_test
 END
