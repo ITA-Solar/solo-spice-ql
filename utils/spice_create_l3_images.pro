@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-06-12 11:53 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)

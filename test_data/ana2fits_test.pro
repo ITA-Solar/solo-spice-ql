@@ -53,6 +53,6 @@ PRO ana2fits_test
     print, ''
     ; print, hdr1
     ; stop
-    spice_xcfit_block, ana = ana[i]
+    xcfit_block, ana = ana[i]
   ENDFOR
 END

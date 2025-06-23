@@ -87,7 +87,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-10 13:39 CEST $
 ;-
 ;
 ;
@@ -340,8 +340,7 @@ FUNCTION spice_create_l3_widget, l2_object, group_leader, window_index = window_
   spice_create_l3_widget_calc_l3_dir, info
 
   widget_control, base, set_Uvalue = info, /No_Copy
-  wp = widget_positioner(base, parent = group_leader)
-  wp.position
+  widget_position, base, parent = group_leader
   xmanager, 'spice_create_l3_widget', base, event_handler = 'spice_create_l3_widget_event', $
     cleanup = 'spice_create_l3_widget_cleanup'
 

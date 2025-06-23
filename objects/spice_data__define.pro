@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-11 10:38 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 
 ;+
 ; Description:
@@ -209,7 +209,7 @@ FUNCTION spice_data::xcfit_block, window, no_masking = no_masking, approximated_
   IF size(ana, /type) EQ 8 THEN BEGIN
     origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
     scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
-    spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2]
+    xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2]
   ENDIF ELSE BEGIN
     print, 'Something went wrong when trying to produce an ANA structure.'
   ENDELSE
@@ -486,13 +486,13 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
           print, 'this may take a while'
           print, '====================='
         ENDIF
-        spice_cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
+        cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
       ENDIF
 
       IF ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) THEN BEGIN
         origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
         scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
-        spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
+        xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
       ENDIF
 
       original_data = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
@@ -3301,7 +3301,7 @@ PRO spice_data::read_file, file
       hdr = headfits(file, exten = iwin)
     ENDIF
     headers_string[iwin] = ptr_new(hdr)
-    hdr = spice_fitshead2struct(hdr, /multivalue, /silent)
+    hdr = fitshead2struct(hdr, /multivalue, /silent)
     headers[iwin] = ptr_new(hdr)
     IF iwin LT self.nwin THEN BEGIN
       wcs[iwin] = ptr_new(fitshead2wcs(hdr, filename = file))

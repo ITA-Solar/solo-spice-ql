@@ -35,7 +35,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2025-06-11 10:38 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 
 FUNCTION spice_browser_get_metadata, data
   xpos = data.get_instr_x_vector(0, /auto_diff_rot)

@@ -195,7 +195,7 @@
 ;               since_version(), xack, xtextedit, average()
 ;               where_not_missing(),  where_missing(), is_missing(), is_not_missing(), 
 ;               spice_cfit_block, spice_get_screen_size(),
-;               widget_positioner
+;               widget_position
 ;
 ; Common      : None.
 ;               
@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2024-12-10 13:59 CET $
+; $Id: 2025-06-23 12:04 CEST $
 ;-
 
 
@@ -2196,8 +2196,6 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   spice_xcfit_block_register,info
   spice_xcfit_block_get_result,info,this_result,title
 
-;  spice_xcfit_block_gs,info,lambda,data,weights,fit,result,residual,include,const,
-
   info.int.data_id = spice_cw_cubeview(data_b,hvalue=info.int.a.data_h,$
                                  missing=missing,$
                                  uvalue="DATA",dimnames=dimnames,$
@@ -2227,8 +2225,7 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
   spice_xcfit_block_sensitize,info,title
 
   xrealize, base, group=group_leader, /center
-  wp = widget_positioner(fit_plot_widget, parent=base)
-  wp->position, /left_align
+  widget_position,fit_plot_widget, parent=base, /left_align
   widget_control, fit_plot_widget, map=0
 
   spice_xcfit_block_visitp,info

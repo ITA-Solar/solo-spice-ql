@@ -34,7 +34,7 @@
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2025-06-11 10:38 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 
 PRO spice_browser_plot_sji, state
   ;

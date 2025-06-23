@@ -34,7 +34,7 @@
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
 ;
-; $Id: 2025-06-11 10:38 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 ;-
 ;
 ;
@@ -551,9 +551,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   widget_control, tlb, set_uvalue = info
 
   ; realize the top level base widget
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
-  ; widget_control, tlb, /realize
+  widget_position, tlb, parent = group_leader
 
   spice_xcontrol_get_data_info, info
   widget_control, data_info, set_value = (*info).data_textdump, /append
@@ -565,7 +563,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   wset, drawID1
   bad = where(finite(detector1) EQ 0, nbad)
   IF nbad NE 0 THEN detector1[bad] = -999
-  deticon_min = min(iris_histo_opt(detector1, 0.005, missing = -999) > 1.e-4, max = deticon_max, /nan)
+  deticon_min = min(spice_histo_opt(detector1, 0.005, missing = -999) > 1.e-4, max = deticon_max, /nan)
   loadct, 9
   tvscl, alog10(detector1 > deticon_min < deticon_max), /nan
 
@@ -573,7 +571,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   wset, drawID2
   bad = where(finite(detector2) EQ 0, nbad)
   IF nbad NE 0 THEN detector2[bad] = -999
-  deticon_min = min(iris_histo_opt(detector2, 0.005, missing = -999) > 1.e-4, max = deticon_max, /nan)
+  deticon_min = min(spice_histo_opt(detector2, 0.005, missing = -999) > 1.e-4, max = deticon_max, /nan)
   loadct, 3
   tvscl, alog10(detector2 > deticon_min < deticon_max), /nan
 
