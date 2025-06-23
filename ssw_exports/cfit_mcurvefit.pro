@@ -1,4 +1,4 @@
-; $Id: 2025-06-21 00:35 CEST $
+; $Id: 2025-06-24 00:29 CEST $
 ;;
 ;; Auxiliary routine
 ;;
@@ -400,13 +400,19 @@ function cfit_mcurvefit, x, y, w, a, sigmaa, corr=corr, covar=covar, $
 ;	Richard.Schwartz@nasa.gov, 3-Jul-2012, added protection against undefined minarr or maxarr
 ;		It is highly recommended that mcurvefit be used with minarr and maxarr but it won't
 ;		crash now without them.
+; Stein Haugan (steinhh@astro.ui.no), June 2025, "forked" off a version that uses
+;   cfit_f_div, and does not *report* math errors that have accumulated outside
+;   this routine.
 ;
 ;-
        on_error,2             ;Return to caller if error
        IF !debug NE 0 THEN on_error,0
 
-       ;; Print any pending math errors, and then shut up!
-       matherr = check_math(1,1)
+       ; Print any pending math errors, and then shut up!
+       ; SVHH: No, we don't want math errors printed here, it takes too much time
+       ; SVHH: Note to self - illegal operand is likely sqrt(-x)
+       ;  matherr = check_math(1,1)
+       matherr = check_math(0,1) ; Clear but don't print, and shut up
        matherr = 0 ;; Accumulate new math errors here...
 
        failed = 0
@@ -618,6 +624,7 @@ done:
 
        chi2 = chisqr            ; Return chi-squared
 
+       ; Get status without printing, then open up for reporting
        matherr = matherr OR check_math(0,0)
 
        IF NOT quiet THEN BEGIN
