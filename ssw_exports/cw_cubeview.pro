@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-21 21:46 CEST $
+; $Id: 2025-06-24 23:47 CEST $
 ;-
 
 ;;
@@ -739,10 +739,8 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
                                 sigrange=sigrange, fraction=fraction,$
                                 signal=mybase)
   im_heading_base = widget_base(im_base, /row, _extra=tight)
-  dummy = cw_flipswitch(im_heading_base,value='Adjust color scaling'+["",""],$
+  dummy = cw_flipswitch(im_heading_base,value='Adj. color scaling'+["",""],$
                         uvalue='XTVSCALER'+["",""])
-
-  !null = widget_label(im_heading_base, value='           ')
 
   image_dim1_id = cw_flipswitch(im_heading_base,value=dimnames(multix),$
                                 uvalue='IMAGE_DIM:0:'+dimstr(multix))
@@ -779,10 +777,9 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   
   plot_heading_base = widget_base(plot_base, /row, _extra=tight)
   
-  dummy = cw_flipswitch(plot_heading_base,value='Adjust plot scaling'+["",""],$
+  dummy = cw_flipswitch(plot_heading_base,value='Adj. plot scaling'+["",""],$
                         uvalue='XPLOTSCALER'+["",""])
   
-  !null = widget_label(plot_heading_base, value='           ')
   plotdim_base = widget_base(plot_heading_base,/row,_extra=tight)
   plotdim_id = cw_flipswitch(plotdim_base,value=dimnames(multix),$
                              uvalue='PLOT_DIM:'+dimstr(multix))
