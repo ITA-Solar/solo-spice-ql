@@ -28,16 +28,16 @@
 ; PROGRAMMING NOTES:
 ;
 ; CALLS:
-;       IRIS_GET_CALIB, SPICE_OBJ, NEW_SPIKE
+;       spice_object
 ;
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-06-06 13:24 CEST $
+; $Id: 2025-06-24 14:37 CEST $
 
-FUNCTION spice_calc_sigma, file, window_index, $
-  iwin = 0, no_masking = 0, approximated_slit = 0, $
-  sig_read = 6.9, err = err, ind_good = ind_good, ind_miss = ind_miss
+FUNCTION spice_calc_sigma, file, window_index ; , $
+  ; iwin = 0, no_masking = 0, approximated_slit = 0, $
+  ; sig_read = 6.9, err = err, ind_good = ind_good, ind_miss = ind_miss
   obj = spice_object(file, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return, !NULL
 
@@ -52,8 +52,20 @@ FUNCTION spice_calc_sigma, file, window_index, $
   gain = noise_factors.gain
   read_noise = noise_factors.read_noise
   i_dark = noise_factors.i_dark
+  dark_subtraction_factor = noise_factors.dark_subtraction_factor
 
   data = obj.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
+
+  sigma = sqrt( $
+    noise_factor ^ 2 * calibration_factor * (data > 0) * gain $ ; signal noise
+    + dark_subtraction_factor * nbin * $
+    (read_noise ^ 2 $ ; read noise
+      + i_dark * xposure)) $ ; dark current noise
+    / calibration_factor
+
+  IF object_created THEN obj_destroy, obj
+  return, sigma
+
   missing_val = -100.
   k = where(~finite(data) OR data LE 0., nk)
   IF nk NE 0 THEN data[k] = missing_val
@@ -77,7 +89,4 @@ FUNCTION spice_calc_sigma, file, window_index, $
     print, 'Unknown code: ', code
     return, -1
   END
-
-  IF object_created THEN obj_destroy, obj
-  return, sigma
 END
