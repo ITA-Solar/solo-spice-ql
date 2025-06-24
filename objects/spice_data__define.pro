@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-06-24 11:51 CEST $
 
 ;+
 ; Description:
@@ -2842,9 +2842,16 @@ FUNCTION spice_data::get_noise_factors, window
   COMPILE_OPT IDL2
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, !NULL
+  prstep_ind = where(self.get_header_keyword('PRSTEP*', window_index) EQ "DARK-SUBTRACTION", count)
+  IF count GT 1 THEN BEGIN
+    prref = (self.get_header_keyword('PRREF*', window_index, ''))[prstep_ind]
+    dark_subtraction_factor = total(prref.contains('combined_dark')) GT 0 ? 1 : 2
+  ENDIF ELSE BEGIN
+    dark_subtraction_factor = 2
+  ENDELSE
   CASE trim(self.get_header_keyword('DETECTOR', window_index)) OF
-    'SW': noise_factors = {noise_factor: 1.0, gain: 3.58, read_noise: 6.9, i_dark: 0.89}
-    'LW': noise_factors = {noise_factor: 1.6, gain: 0.57, read_noise: 6.9, i_dark: 0.54}
+    'SW': noise_factors = {noise_factor: 1.0, gain: 3.58, read_noise: 6.9, i_dark: 0.89, dark_subtraction_factor: dark_subtraction_factor}
+    'LW': noise_factors = {noise_factor: 1.6, gain: 0.57, read_noise: 6.9, i_dark: 0.54, dark_subtraction_factor: dark_subtraction_factor}
     ELSE: BEGIN
       message, 'Unknown detector type in window ' + string(window_index) + ': ' + $
         self.get_header_keyword('DETECTOR', window_index), /info
@@ -2864,7 +2871,7 @@ END
 ; OUTPUT:
 ;     boolean, True if input is a valid window index or name
 ;-
-FUNCTION spice_data::check_window_index, window
+FUNCTION SPICE_DATA::check_window_index, window
   ; Returns 1 if input is a valid window index or name
   COMPILE_OPT IDL2
 
