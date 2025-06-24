@@ -238,7 +238,7 @@
 ;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
 ;               Version 13, Martin Wiesmann, 19. Januar 2024
 ;                       Does no longer set the keyword 'modal' when calling xmanager
-;               Version 14, Martin Wiesmann, 4. Juni 2024
+;               Version 14, Martin Wiesmann, 4. June 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;                       Added keyword no_save_option
 ;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
@@ -254,9 +254,11 @@
 ;                       Calls sigrange() if DISPLAY_THRESHOLD is greater than zero, and uses 1.0-DISPLAY_THRESHOLD as fraction.
 ;                       Undid most changes in Version 12. SPICE_HISTO_OPT is no longer used. display_xxx cubes removed again.
 ;                       Changed all brackets to square brackets where necessary.
+;               Version 15, Stein Haugan, 24. June 
+;                       Size of images and plots adapt to screen size
 ;
-; Version     : 14
-; $Id: 2025-06-24 23:51 CEST $
+; Version     : 15
+; $Id: 2025-06-24 23:57 CEST $
 ;-
 
 
