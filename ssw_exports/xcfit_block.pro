@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-21 21:36 CEST $
+; $Id: 2025-06-24 23:51 CEST $
 ;-
 
 
@@ -1765,6 +1765,16 @@ PRO xcfit_block_event,ev
   widget_control,ev.top,set_uvalue=info,/no_copy
 END
 
+function xcfit_block_default_widget_scaling
+  monitor = obj_new('IDLsysMonitorInfo')
+  rectangles = monitor.GetRectangles()
+  min_x_size = min(rectangles[2, *] - rectangles[0, *])
+  min_y_size = min(rectangles[3, *] - rectangles[1, *])
+  xscaling = min_x_size / 1000.
+  yscaling = min_y_size / 1000.
+  scaling = min([xscaling, yscaling])
+  return,scaling
+end
 
 PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 origin=origin,scale=scale,phys_scale=phys_scale,$
@@ -1773,8 +1783,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 signal_id=signal_id, modal=modal, image_dim=image_dim, $
                 widget_size_scaling=widget_size_scaling
   
-  default, widget_size_scaling, 1.5
-
+  default, widget_size_scaling, xcfit_block_default_widget_scaling()
   ;on_error,2
 
   IF !debug NE 0 THEN on_error,0
@@ -1898,13 +1907,12 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   sml = {xpad:1,ypad:1,space:1}
 
-  screen = get_screen_size()
-  IF screen[0] LT 1000 || screen[1] LT 900 THEN BEGIN
-     base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
-                        /scroll, x_scroll_size=min([1000,screen[0]]), y_scroll_size=min([900,screen[1]]), modal=keyword_set(modal))
-  ENDIF ELSE BEGIN
-     base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, modal=keyword_set(modal))
-  ENDELSE
+
+  x_scroll_size = 1200 * widget_size_scaling + 200
+  y_scroll_size = 800 * widget_size_scaling + 100
+
+  base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
+                      /scroll, x_scroll_size=x_scroll_size, y_scroll_size=y_scroll_size, modal=keyword_set(modal))
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
 
   leftside_col = widget_base(base,/column,_extra=sml)
