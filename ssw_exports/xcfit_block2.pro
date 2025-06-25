@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-25 20:27 CEST $
+; $Id: 2025-06-25 21:03 CEST $
 ;-
 
 
@@ -1910,8 +1910,8 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   sml = {xpad:1,ypad:1,space:1}
 
 
-  x_scroll_size = 1200 * widget_size_scaling + 200
-  y_scroll_size = 800 * widget_size_scaling + 100
+  x_scroll_size = 1200 * widget_size_scaling + 150
+  y_scroll_size = 700 * widget_size_scaling + 200
 
   base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
                      /scroll, x_scroll_size=x_scroll_size, y_scroll_size=y_scroll_size, modal=keyword_set(modal))
@@ -2002,8 +2002,8 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   ;; Local/Global status
 
   sta = widget_base(leftside_col,/row,_extra=sml)
-  gstatus = widget_base(sta,/column,_extra=sml,frame = 0)
-  lstatus = widget_base(sta,/column,_extra=sml,frame = 0)
+  gstatus = widget_base(sta,/column,_extra=sml,frame = 1)
+  lstatus = widget_base(sta,/column,_extra=sml,frame = 1)
 
   label1 = widget_label(widget_base(lstatus),value='Local') 
   label2 = widget_label(widget_base(lstatus),value='status')
@@ -2248,13 +2248,21 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
 
 END
   
-PRO xcfit_block_test
-  ana = get_test_ana()
+FUNCTION get_test_ana2
+  path = routine_dir()
+  paths = strsplit(path, path_sep(), /extract)
+  filepath = path_sep() + strjoin([paths[0 : -2], 'ancillary', 'xcfit_test_file.ana'], path_sep())
+  ana = restore_analysis(filepath)
+  return, ana
+END
+
+PRO xcfit_block_test2
+  ana = get_test_ana2()
   handle_value, ana.scale_h, [1,4,1],/set
   xcfit_block2, ana=ana
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-   xcfit_block_test
+   xcfit_block_test2
 END
 END
