@@ -33,15 +33,13 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-06-24 14:37 CEST $
+; $Id: 2025-06-25 15:05 CEST $
 
 FUNCTION spice_calc_sigma, file, window_index ; , $
   ; iwin = 0, no_masking = 0, approximated_slit = 0, $
   ; sig_read = 6.9, err = err, ind_good = ind_good, ind_miss = ind_miss
   obj = spice_object(file, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return, !NULL
-
-  code = 'python' ; default code
 
   ; Set various calibration parameters:
   calibration_factor = obj.get_calibration_factor(window_index, variable_values = calibration_factor_var)
@@ -66,6 +64,30 @@ FUNCTION spice_calc_sigma, file, window_index ; , $
   IF object_created THEN obj_destroy, obj
   return, sigma
 
+  ; data = [W m-2 sr-1 nm-1]
+  ; noise_factor = []
+  ; calibration_factor = [DN/(W m-2 sr-1 nm-1)]
+  ; gain = [dn/photon]
+  ; read_noise = [DN]
+  ; i_dark = [DN/s]
+  ; dark_subtraction_factor = []
+  ; xposure = [s]
+  ; nbin = []
+  ; 
+  ; sigma = sqrt( $
+  ;   DN * DN/photon $ ; signal noise
+  ;   + DN^2 $ ; read noise
+  ;   + DN $ ; dark current noise
+  ;   ) / [DN/(W m-2 sr-1 nm-1)]
+  ;    
+  ;    from python code:
+  ;    read_noise = [DN/pixel]
+  ;    gain = [DN/photon]
+  ;    i_dark = [DN/s/pixel]
+  ;    xposure = [s]
+  ;    noise_factor = []
+
+  code = 'python' ; default code
   missing_val = -100.
   k = where(~finite(data) OR data LE 0., nk)
   IF nk NE 0 THEN data[k] = missing_val
