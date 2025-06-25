@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-24 23:57 CEST $
+; $Id: 2025-06-25 13:21 CEST $
 ;-
 
 
@@ -1770,8 +1770,8 @@ END
 function xcfit_block_default_widget_scaling
   monitor = obj_new('IDLsysMonitorInfo')
   rectangles = monitor.GetRectangles()
-  min_x_size = min(rectangles[2, *] - rectangles[0, *])
-  min_y_size = min(rectangles[3, *] - rectangles[1, *])
+  min_x_size = min(rectangles[2, *])
+  min_y_size = min(rectangles[3, *])
   xscaling = min_x_size / 1000.
   yscaling = min_y_size / 1000.
   scaling = min([xscaling, yscaling])
@@ -1784,7 +1784,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 display_treshold=display_threshold, no_save_option=no_save_option,$
                 signal_id=signal_id, modal=modal, image_dim=image_dim, $
                 widget_size_scaling=widget_size_scaling
-  
+
   default, widget_size_scaling, xcfit_block_default_widget_scaling()
   ;on_error,2
 
