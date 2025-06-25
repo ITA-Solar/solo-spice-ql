@@ -33,7 +33,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-06-25 15:05 CEST $
+; $Id: 2025-06-25 15:11 CEST $
 
 FUNCTION spice_calc_sigma, file, window_index ; , $
   ; iwin = 0, no_masking = 0, approximated_slit = 0, $
@@ -75,10 +75,12 @@ FUNCTION spice_calc_sigma, file, window_index ; , $
   ; nbin = []
   ; 
   ; sigma = sqrt( $
-  ;   DN * DN/photon $ ; signal noise
-  ;   + DN^2 $ ; read noise
-  ;   + DN $ ; dark current noise
+  ;     DN^2 / photon $ ; signal noise
+  ;   + DN^2          $ ; read noise
+  ;   + DN            $ ; dark current noise
   ;   ) / [DN/(W m-2 sr-1 nm-1)]
+  ;   = W m-2 sr-1 nm-1 = [data]
+  ;    IF we ignore [photon] and that the dark current noise is DN and not DN^2
   ;    
   ;    from python code:
   ;    read_noise = [DN/pixel]
