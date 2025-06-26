@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-26 15:49 CEST $
+; $Id: 2025-06-26 18:25 CEST $
 ;-
 
 
@@ -1459,10 +1459,30 @@ PRO xcfit_block_event_fit_widget, ev
 
 END
 
+PRO xcfit_block_shortcuts, info, ev
+  handle_value, info.int.a.data_h, data, /no_copy
+  dims = size(data, /dimensions)
+  handle_value, info.int.a.data_h, data, /set, /no_copy
+  clamps = dims - 1
+  print, info.ext.focus
+  CASE ev.key OF
+     'LEFT ': info.ext.focus[0] = info.ext.focus[0] - 1 > 0
+     'RIGHT': info.ext.focus[0] = info.ext.focus[0] + 1 < clamps[0]
+     'UP   ': info.ext.focus[1] = info.ext.focus[1] + 1 < clamps[1]
+     'DOWN ': info.ext.focus[1] = info.ext.focus[1] - 1 > 0
+  END
+  xcfit_block_distribute_focus, info
+  print, info.ext.focus
+  print, ev.key
+END
+
 PRO xcfit_block_event,ev
   widget_control,/hourglass
   widget_control,ev.top,get_uvalue=info,/no_copy
   widget_control,ev.id,get_uvalue=uvalue
+  
+  widget_control, info.int.shortcuts_id, set_value="to grab keyboard focus"
+
   if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $  ; An event from cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'CW_LOADCT' || $    ; An event from an unofficial cw_loadct.pro
     tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
@@ -1761,10 +1781,7 @@ PRO xcfit_block_event,ev
      ENDCASE
      
   'SHORTCUTS':BEGIN
-     IF ev.key EQ 'LEFT!' THEN info.ext.focus[0] = info.ext.focus[0]-1 > 0
-     IF ev.key EQ 'RIGHT!' THEN info.ext.focus[0] = info.ext.focus[0] + 1 < 
-     xcfit_block_distribute_focus, info
-     message, "Shortcut key: " + ev.key, /info
+     xcfit_block_shortcuts, info, ev
   END
 
   else: BEGIN
@@ -2251,8 +2268,6 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   widget_position,fit_plot_widget, parent=base, /left_align
   widget_control, fit_plot_widget, map=0
   
-  widget_control, info.int.shortcuts_id, set_value=0
-
   xcfit_block_visitp,info
 
   widget_control,base,set_uvalue=info
