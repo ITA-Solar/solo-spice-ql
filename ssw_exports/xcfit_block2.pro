@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-26 18:25 CEST $
+; $Id: 2025-06-26 20:07 CEST $
 ;-
 
 
@@ -1447,16 +1447,56 @@ PRO xcfit_block_event_fit_widget, ev
   widget_control,ev.top,get_uvalue=base
   widget_control,base,get_uvalue=info
   if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then begin
-    info.ext.fit_plot_show = 0
-    widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
-    widget_control, info.int.fit_window_button, SET_VALUE='FITWINDOW:Show'
+     info.ext.fit_plot_show = 0
+     widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
+     widget_control, info.int.fit_window_button, SET_VALUE='FITWINDOW:Show'
   endif else begin
     ; This doesn't work like this. I think the event should be sent to
     ; info.int.draw widget within cw_plotz, but I don't know how to do that.
     ; TODO
     ; WIDGET_CONTROL, info.int.fit_plot_id, send_event=ev, bad_id=bad
   endelse
+END
 
+FUNCTION xcfit_block_handle_colortable_and_resize_ev, ev, info
+  type = tag_names(ev, /structure_name)
+  is_colortable_or_resize =  total(type eq ['CW_LOADCT_NEW_CT', 'CW_LOADCT', 'WIDGET_BASE'])
+  IF NOT is_colortable_or_resize THEN return, 0
+  
+  ; This is not "idiomatic", the right thing to do would be to
+  ; use set_value=something to trigger it
+  ;
+  cw_cubeview_force_redraw, info.int.data_id
+  cw_cubeview_force_redraw, info.int.residual_id
+  IF info.int.show_result THEN cw_cubeview_force_redraw, info.int.result_id
+
+  IF type EQ 'WIDGET_BASE' THEN BEGIN
+     handle_value,info.int.a.fit_h,orgfit
+     widget_control,info.int.status1_id,set_value=orgfit
+     widget_control,info.int.status2_id,$
+                    set_value={SET_HILIT,hilit:info.ext.result_no}
+      ;; Replot microplot
+     widget_control,info.int.microplot_id,set_value={replot:1}
+
+      ;; Overplot
+     handle_value,info.int.microfine_h,microfine
+     IF exist(microfine) THEN oplot,microfine[*,0],microfine[*,1]
+     handle_value,info.int.errplot_h,errp
+     IF exist(errp) AND info.ext.plot_err THEN $
+        oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+
+      ;; Replot bigger microplot if shown
+     IF info.ext.fit_plot_show THEN BEGIN
+        widget_control,info.int.fit_plot_id,set_value={replot:1}
+        ;; Overplot
+        IF exist(microfine) THEN oplot,microfine[*,0],microfine[*,1]
+        IF exist(errp) AND info.ext.plot_err THEN $
+           oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
+     ENDIF
+  ENDIF
+
+  widget_control,ev.top,set_uvalue=info,/no_copy
+  return, 1
 END
 
 PRO xcfit_block_shortcuts, info, ev
@@ -1482,42 +1522,9 @@ PRO xcfit_block_event,ev
   widget_control,ev.id,get_uvalue=uvalue
   
   widget_control, info.int.shortcuts_id, set_value="to grab keyboard focus"
-
-  if tag_names(ev, /Structure_name) eq 'CW_LOADCT_NEW_CT' || $  ; An event from cw_loadct.pro
-    tag_names(ev, /Structure_name) eq 'CW_LOADCT' || $    ; An event from an unofficial cw_loadct.pro
-    tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin   ; A resize event
-    cw_cubeview_force_redraw, info.int.data_id
-    cw_cubeview_force_redraw, info.int.residual_id
-    IF info.int.show_result THEN cw_cubeview_force_redraw, info.int.result_id
-
-    if tag_names(ev, /Structure_name) eq 'WIDGET_BASE' then begin
-      handle_value,info.int.a.fit_h,orgfit
-      widget_control,info.int.status1_id,set_value=orgfit
-      widget_control,info.int.status2_id,$
-        set_value={SET_HILIT,hilit:info.ext.result_no}
-      ;; Replot microplot
-      widget_control,info.int.microplot_id,set_value={replot:1}
-
-      ;; Overplot
-      handle_value,info.int.microfine_h,microfine
-      IF exist(microfine) THEN oplot,microfine[*,0],microfine[*,1]
-      handle_value,info.int.errplot_h,errp
-      IF exist(errp) AND info.ext.plot_err THEN $
-        oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
-
-      ;; Replot bigger microplot if shown
-      IF info.ext.fit_plot_show THEN BEGIN
-        widget_control,info.int.fit_plot_id,set_value={replot:1}
-        ;; Overplot
-        IF exist(microfine) THEN oplot,microfine[*,0],microfine[*,1]
-        IF exist(errp) AND info.ext.plot_err THEN $
-          oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
-      ENDIF
-    endif
-
-    widget_control,ev.top,set_uvalue=info,/no_copy
-    return
-  endif
+  
+  was_colortable_or_resize = xcfit_block_handle_colortable_and_resize_ev(ev, info)
+  IF was_colortable_or_resize THEN return
 
   if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then uvalue='EXIT'
   uvalue = str_sep(uvalue,':')
