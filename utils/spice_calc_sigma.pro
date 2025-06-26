@@ -9,21 +9,18 @@
 ;       d = spice_calc_sigma(file, iwin)
 ;
 ; INPUTS:
-;       FILE: input SPICE fits file or data object. See restrictions.
+;       FILE: input SPICE fits file or data object.
+;       WINDOW_INDEX: scalar with the index of the desired window.
+;             This can also be a wavelength or a string that
+;             matches one of the window ids.
 ;
 ; OPT. INPUT:
-;       IWIN: scalar with the index of the desired window. This can
-;             also be a wavelength or a string that
-;             matches one of the window ids.
 ;
 ; KEYWORDS:
 ;
 ; OUTPUTS:
 ;
 ; EXAMPLES:
-;       Get window containing Si IV 1393 line:
-;
-;       IDL> wd = spice_getwindata(file,1393)
 ;
 ; PROGRAMMING NOTES:
 ;
@@ -33,11 +30,11 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-06-25 15:11 CEST $
+; $Id: 2025-06-26 11:08 CEST $
 
-FUNCTION spice_calc_sigma, file, window_index ; , $
-  ; iwin = 0, no_masking = 0, approximated_slit = 0, $
-  ; sig_read = 6.9, err = err, ind_good = ind_good, ind_miss = ind_miss
+FUNCTION spice_calc_sigma, file, window_index
+  COMPILE_OPT IDL2
+
   obj = spice_object(file, is_spice = is_spice, object_created = object_created)
   IF ~is_spice THEN return, !NULL
 
@@ -73,15 +70,15 @@ FUNCTION spice_calc_sigma, file, window_index ; , $
   ; dark_subtraction_factor = []
   ; xposure = [s]
   ; nbin = []
-  ; 
+  ;
   ; sigma = sqrt( $
-  ;     DN^2 / photon $ ; signal noise
+  ; DN^2 / photon $ ; signal noise
   ;   + DN^2          $ ; read noise
   ;   + DN            $ ; dark current noise
   ;   ) / [DN/(W m-2 sr-1 nm-1)]
   ;   = W m-2 sr-1 nm-1 = [data]
   ;    IF we ignore [photon] and that the dark current noise is DN and not DN^2
-  ;    
+  ;
   ;    from python code:
   ;    read_noise = [DN/pixel]
   ;    gain = [DN/photon]
