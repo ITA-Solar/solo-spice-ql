@@ -47,7 +47,7 @@ END
 PRO xcfit_block_test
   ana = get_test_ana()
   handle_value, ana.scale_h, [1,4,1],/set
-  xcfit_block, ana=ana
+  xcfit_block2, ana=ana
 END
 
 xcfit_block_test

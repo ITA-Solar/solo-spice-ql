@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-25 21:03 CEST $
+; $Id: 2025-06-26 15:49 CEST $
 ;-
 
 
@@ -501,7 +501,12 @@ PRO xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochange
 END
 
 
-
+PRO xcfit_block_distribute_focus, info, focus
+  widget_control,info.int.data_id,set_value={focus:info.ext.focus}
+  IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:info.ext.focus[1:*]}
+  widget_control,info.int.residual_id,set_value={focus:info.ext.focus}
+END
+  
 
 ;
 ; Register (possibly new) fit, (re-)create result/residual/inc/const data
@@ -1386,10 +1391,8 @@ PRO xcfit_block_findspot,info,what_to_find
   END ELSE BEGIN
 
      info.ext.focus = ndim_indices(thisresult,ix[info.int.find_ix])
-
-     widget_control,info.int.data_id,set_value={focus:info.ext.focus}
-     IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:info.ext.focus[1:*]}
-     widget_control,info.int.residual_id,set_value={focus:info.ext.focus}
+     
+     xcfit_block_distribute_focus, info
   END
 
   handle_value,info.int.a.result_h,result,/set,/no_copy
@@ -1540,7 +1543,7 @@ PRO xcfit_block_event,ev
      xtextedit,history,group=ev.top
      handle_value,info.int.a.history_h,history,/set
      ENDCASE
-
+     
 ;
 ; Events from the display draw windows.
 ;
@@ -1756,6 +1759,13 @@ PRO xcfit_block_event,ev
   'PIX_FAIL':BEGIN
      xcfit_block_pix_fail,info,restore=mark
      ENDCASE
+     
+  'SHORTCUTS':BEGIN
+     IF ev.key EQ 'LEFT!' THEN info.ext.focus[0] = info.ext.focus[0]-1 > 0
+     IF ev.key EQ 'RIGHT!' THEN info.ext.focus[0] = info.ext.focus[0] + 1 < 
+     xcfit_block_distribute_focus, info
+     message, "Shortcut key: " + ev.key, /info
+  END
 
   else: BEGIN
     print, 'ERROR!!!: unknown case : ', uvalue
@@ -1822,7 +1832,6 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
         handle_value,ana.phys_scale_h,phys_scale
      handle_value,ana.dimnames_h,dimnames
 
-;     catch,error
      error = 0
      IF error NE 0 THEN BEGIN
         catch,/cancel
@@ -1945,7 +1954,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           status2_id   : 0L,$
           microplot_id : 0L,$
           fit_plot_id  : 0L,$
-          shortcut_id  : 0L, $
+          shortcuts_id : 0L, $
           fit_window_button: 0L,$
           microfine_h  : handle_create(),$ 
           errplot_h    : handle_create(),$
@@ -2167,8 +2176,10 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   ;; const/include status (current point)
   ;;
   info.int.status2_id = cwf_status(status2,value=fit,uvalue='STATUS2',/column)
-
-
+  
+  ;; Keyboard nav:
+  info.int.shortcuts_id = cw_shortcuts(status1, uvalue='SHORTCUTS:')
+  
   ;;
   ;; Micro-plot..
   ;;
@@ -2239,6 +2250,8 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   xrealize, base, group=group_leader, /center
   widget_position,fit_plot_widget, parent=base, /left_align
   widget_control, fit_plot_widget, map=0
+  
+  widget_control, info.int.shortcuts_id, set_value=0
 
   xcfit_block_visitp,info
 
