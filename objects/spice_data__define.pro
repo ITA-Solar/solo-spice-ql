@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-26 11:22 CEST $
+; $Id: 2025-06-26 13:43 CEST $
 
 ;+
 ; Description:
@@ -612,15 +612,16 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   IF window_index LT 0 THEN return
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
-  ; ; Only do fit on the spectral part of the window!
+  ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
   sigma = spice_calc_sigma(self, window_index)
   WEIGHTS = 1.0 / sigma ^ 2
 
-  size_data = size(DATA)
+  ; size_data = size(DATA)
   IF self.get_sit_and_stare() THEN BEGIN
     LAMBDA = transpose(LAMBDA, [2, 0, 1, 3])
     DATA = transpose(DATA, [2, 0, 1, 3])
+    WEIGHTS = transpose(WEIGHTS, [2, 0, 1, 3])
     ; WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value = 1.0)
   ENDIF ELSE BEGIN
     naxis1 = self.get_header_keyword('naxis1', window_index)
@@ -629,6 +630,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
     LAMBDA = reform(LAMBDA, [naxis1, naxis2, naxis3])
     LAMBDA = transpose(LAMBDA, [2, 0, 1])
     DATA = transpose(DATA, [2, 0, 1])
+    WEIGHTS = transpose(WEIGHTS, [2, 0, 1])
     ; WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], value = 1.0)
   ENDELSE
   type_data = size(DATA, /type)
