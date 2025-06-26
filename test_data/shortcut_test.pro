@@ -12,12 +12,15 @@ PRO shortcut_test_event, event
   
   CASE uvalue OF
     'TEXT_FIELD': BEGIN
-      help,event
-      if event.offset eq 1 then print,"UP!"
-      if event.offset eq 7 then print,"DOWN!"
-      if event.offset eq 3 then print,"LEFT!"
-      if event.offset eq 5 then print,"RIGHT!"
+       dir = "? " + trim(event.offset) + " ?"
+       offset = event.offset
+      if offset eq 1 OR offset EQ 0 then dir = "UP!"
+      if offset eq 7 OR offset EQ 6 then dir = "DOWN!"
+      if offset eq 3 then dir = "LEFT!"
+      if offset eq 5 then dir = "RIGHT!"
+      widget_control, event.id, set_value=['0','1x3','4']
       widget_control, event.id, set_text_select=[3,1]
+      widget_control, info.message_id, set_value=dir
     END
 
     'TEXT_FIELD2': BEGIN
@@ -33,7 +36,7 @@ PRO shortcut_test_event, event
     'CLEAR_BUTTON': BEGIN
       ; Clear the text field
       print, 'Clearing text field'
-      widget_control, info.text_id, set_value=''
+      widget_control, info.text_id, set_value=['0','1x3','4']
       widget_control, info.text_id, /input_focus
     END
     
@@ -59,27 +62,23 @@ PRO shortcut_test
   
   ; Create a label with instructions
   instructions = 'Keyboard Shortcut Test Application'
-  
   !null = widget_label(base, value=instructions, /align_left)
+  
   ; Create the editable text field
   ; Use /all_events to capture keyboard events
   text_field = widget_text(base, $
                           value=['0','1x3','4'], $
                           /editable, $
                           /all_events, $
-                          xsize=50, $
-                          ysize=5, $
+                          xsize=5, $
+                           ysize=5, $
+                           scr_xsize=1, scr_ysize=1, $
                           uvalue='TEXT_FIELD')
-  !null = widget_text(base, $
-                         value=['1','2x3','4'], $
-                          /editable, $
-                          /all_events, $
-                          xsize=50, $
-                          ysize=5, $
-                          uvalue='TEXT_FIELD2')
-                          
-  ; Create a button row
+  
+  ; Create a button row (+message)
   button_base = widget_base(base, row=1, /align_center)
+  
+  message_id = widget_label(button_base, value='Use arrow keys')
   
   ; Create buttons
   !null = widget_button(button_base, $
@@ -96,6 +95,7 @@ PRO shortcut_test
   
   ; Create info structure to pass widget IDs
   info = {text_id: text_field, $
+          message_id: message_id, $
           base_id: base}
   
   ; Store the info structure in the base widget
