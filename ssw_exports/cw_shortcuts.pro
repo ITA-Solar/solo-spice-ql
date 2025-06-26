@@ -5,56 +5,25 @@
 ;               
 ; Purpose     : Implements a pusbutton status switch (e.g., On/Off)
 ;               
-; Explanation : This compound widget is designed to produce a button for
-;               switching between e.g., modes of operation, switching
-;               something on/off etc.
-;
-;               The VALUE is an array of texts representing different modes,
-;               and the UVALUE should be an array of texts with the same
-;               number of elements.
-;
-;               EVENTS
+; Explanation : Compound widget to generate keyboard shortcut events
 ;               
-;               When the user pushes a flipswitch button, the state (and the
-;               text displayed) of the flipswitch changes. Likewise, the
-;               uvalue of the flipswitch widget changes to the one
-;               corresponding to the new status text. Then the button event is
-;               sent on to the caller, with the ID set to the ID of the
-;               flipswitch widget.
-;
-;               The user program determines the current state by simply
-;               retrieving the UVALUE of the EVENT.ID.
-;
-;               READING/SETTING THE STATE
-;
-;               The state of the flipswitch may be read by either checking the
-;               UVALUE of the widget ID, or through the WIDGET_CONTROL
-;               GET_VALUE mechanism (this actually returns the UVALUE, not the
-;               displayed text).
-;
-;               To set the state of the flipswitch, use the WIDGET_CONTROL
-;               SET_VALUE=<uvalue of desired state> mechanism.
-;
-;               It is also possible to use this routine to implement a "small"
-;               button (since the ysize is fixed).
-;               
-; Use         : ID=CW_SHORTCUTS(BASE,VALUE=<string_arr>,uvalue=<string_arr>)
+; Use         : ID=CW_SHORTCUTS(BASE,uvalue=<...>)
 ;    
-; Inputs      : BASE : The base to put the flipswitch on.
+; Inputs      : BASE : The base to put the widget on.
 ;               
 ; Opt. Inputs : 
 ;               
-; Outputs     : 
+; Outputs     : Creates events with ev.key information
 ;               
 ; Opt. Outputs: 
 ;               
-; Keywords    : VALUE, UVALUE : Text arrays.
+; Keywords    : UVALUE, the usual value
 ;
-; Calls       : default, since_version(), xupdate
+; Calls       : 
 ;
 ; Common      : None.
 ;               
-; Restrictions: Arrays VALUE/UVALUE must have same number of elements > 1
+; Restrictions: 
 ;               
 ; Side effects: None known.
 ;               
@@ -62,22 +31,18 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S. V. H. Haugan, UiO, 4 January 1997
+; Written     : S. V. H. Haugan, UiO, 27 June 2025
 ;               
-; Modified    : Version 2, SVHH, 15 September 1997
-;                       Added support for call mode with only one
-;                       value/uvalue (faking a normal button).
-;               Version 3, SVHH, 15 December 1997
-;                       Added update on/off to avoid growing parent.
+; Modified    : 
 ;                       
-; Version     : 3, 15 December 1997
+; Version     : 1, 27 June 2025
 ;-            
 
 
 FUNCTION cw_shortcuts_getv,id
   storage = widget_info(id,/child)
   widget_control,storage,get_uvalue=info
-  return,info.uvalue(info.i)
+  return,0
 END
 
 
@@ -85,78 +50,69 @@ PRO cw_shortcuts_setv,id,uval
   storage = widget_info(id,/child)
   widget_control,storage,get_uvalue=info
   
-  i = where(info.uvalue EQ uval(0))
-  IF i(0) GT -1 THEN BEGIN
-     info.i = i(0)
-     widget_control,id,set_uvalue=info.uvalue(i(0))
-     widget_control,info.txt_id,set_value=info.value(info.i)
-  END ELSE print,"Cannot find uvalue:"+uval
+  widget_control, info.text_id, set_value=['0','1x3','4']
+  widget_control, info.text_id, set_text_select=[3,1]
+  widget_control, info.text_id, /input_focus
+  
   widget_control,storage,set_uvalue=info
 END
 
 
 FUNCTION cw_shortcuts_event,ev
+  storage = widget_info(ev.handler, /child)
+  widget_control,storage,get_uvalue = info
   
-  ;; Storage == id here..
+  offset = ev.offset
+  dir = '? ' + trim(offset) + ' ?'
+  if offset eq 1 OR offset EQ 0 then dir = "UP"
+  if offset eq 7 OR offset EQ 6 then dir = "DOWN"
+  if offset eq 3 then dir = "LEFT"
+  if offset eq 5 then dir = "RIGHT"
   
-  widget_control,ev.id,get_uvalue = info
+  event = {cw_shortcuts, $
+           id:ev.handler, $
+           top:ev.top, $
+           handler:0L, $
+           key: dir $
+          }
   
-  info.i = (info.i+1) MOD n_elements(info.value)
-  xupdate,info.txt_id,0
-  widget_control,info.txt_id,set_value=info.value(info.i)
-  xupdate,info.txt_id,1
-  widget_control,ev.handler,set_uvalue=info.uvalue(info.i)
-  widget_control,ev.id,set_uvalue=info
-  
-  ;; Prepare event
-  ev.id = ev.handler
-  ev.handler = 0L
-  
-  return,ev
-  
+  widget_control, info.text_id, set_value=['0','1x3','4']
+  widget_control, info.text_id, set_text_select=[3,1]
+  widget_control, info.text_id, /input_focus
+
+  return,event
 END
 
 
-FUNCTION cw_shortcuts,on_base,value=value,uvalue=uvalue
+FUNCTION cw_shortcuts,on_base,uvalue=uvalue
   
-  default,value,''
   default,uvalue,'CW_SHORTCUTS'
   default,instruct,'Enter value'
   
-  IF since_version('4.0') THEN sml = 1 ELSE sml = 0
-  small = {xpad:sml,ypad:sml,space:sml}
+  small = {xpad:1,ypad:1,space:1}
   
-  IF n_elements(value) EQ 1 THEN value = replicate(value(0),2)
-  
-  IF n_elements(uvalue) EQ 1 THEN uvalue = replicate(uvalue(0),2)
-  
-  IF n_elements(value) NE n_elements(uvalue) THEN $
-     message,"Value and uvalue must have same number of elements"
-  
-  base = widget_base(on_base,uvalue=uvalue,$
+  my_base = widget_base(on_base,uvalue=uvalue,$
                      event_func='cw_shortcuts_event',$
                      pro_set_value='cw_shortcuts_setv',$
                      func_get_value='cw_shortcuts_getv')
   
-  txt_id = widget_button(base,value=value(0),xoffset=0,yoffset=0,$
-                         uvalue=uvalue(0))
+  text_id = widget_text(my_base, value=['0','1x3','4'], /editable, /all_events, $
+                        xsize=5, ysize=5, scr_xsize=1, scr_ysize=1, uvalue='TEXT_FIELD')
+
+
+  storage = text_id
   
-  IF since_version('4.0') THEN widget_control,txt_id,scr_ysize = 25
-  
-  storage = txt_id
-  
-  i = 0L
-  
-  info = {txt_id:txt_id,value:value,uvalue:uvalue,i:i}
-  
-  IF since_version('4.0.1') THEN widget_control,txt_id,/dynamic_resize
+  info = {text_id:text_id, uvalue:uvalue}
   
   widget_control,storage,set_uvalue=info,/no_copy
-  
-  return,base
-  
+  return,my_base
 END
 
+IF getenv("USER") EQ "steinhh" THEN BEGIN
+   xcfit_block_test2
+END
+
+END
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End of 'cw_shortcuts.pro'.
