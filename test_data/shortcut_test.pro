@@ -9,47 +9,46 @@ PRO shortcut_test_event, event
   ; Get the widget information
   widget_control, event.top, get_uvalue=info
   widget_control, event.id, get_uvalue=uvalue
-  
   CASE uvalue OF
-    'TEXT_FIELD': BEGIN
-       dir = "? " + trim(event.offset) + " ?"
-       offset = event.offset
-      if offset eq 1 OR offset EQ 0 then dir = "UP!"
-      if offset eq 7 OR offset EQ 6 then dir = "DOWN!"
-      if offset eq 3 then dir = "LEFT!"
-      if offset eq 5 then dir = "RIGHT!"
-      widget_control, event.id, set_value=['0','1x3','4']
-      widget_control, event.id, set_text_select=[3,1]
-      widget_control, info.message_id, set_value=dir
-    END
+     'TEXT_FIELD':BEGIN
+        dir = "? " + trim(event.offset) + " ?"
+        CASE event.offset OF 
+           0: dir = '0 = UP'
+           1: dir = '1 = UP'
+           2: dir = '2 = LEFT'
+           3: dir = '3 = RIGHT'
+           4: dir = '4 = RIGHT'
+           5: dir = '5 = DOWN'
+        END
+        print, dir
+        widget_control, info.message_id, set_value=dir
+        widget_control, event.id, set_text_select=[2,1]
+        END
 
-    'TEXT_FIELD2': BEGIN
-      print,"TEXT_FIELD2 event"
-    END
-    
-    'FOCUS_BUTTON': BEGIN
-      ; Set focus to the text field
-      print, 'Setting focus to text field'
-      widget_control, info.text_id, /input_focus
-    END
-    
-    'CLEAR_BUTTON': BEGIN
-      ; Clear the text field
-      print, 'Clearing text field'
-      widget_control, info.text_id, set_value=['0','1x3','4']
-      widget_control, info.text_id, /input_focus
-    END
-    
-    'QUIT_BUTTON': BEGIN
-      ; Quit the application
-      print, 'Quit button pressed'
-      widget_control, event.top, /destroy
-    END
-    
-    ELSE: ; Do nothing for other events
-  ENDCASE
+     'TEXT_FIELD2':BEGIN
+        print,"TEXT_FIELD2 event"
+        END
+        
+     'FOCUS_BUTTON':BEGIN
+        print, 'Setting focus to text field'
+        widget_control, info.text_id, /input_focus
+        ENDCASE
+        
+     'CLEAR_BUTTON':BEGIN
+        print, 'Clearing text field'
+        widget_control, info.text_id, set_value=['U','X','D']
+        widget_control, info.text_id, /input_focus
+     ENDCASE
+     
+     'QUIT_BUTTON': BEGIN
+        print, 'Quit button pressed'
+        widget_control, event.top, /destroy
+     END
+     
+     ELSE: ; Do nothing for other events
+     ENDCASE
 
-END
+  END
 
 PRO shortcut_test
 
@@ -66,13 +65,13 @@ PRO shortcut_test
   
   ; Create the editable text field
   ; Use /all_events to capture keyboard events
-  text_field = widget_text(base, $
-                          value=['0','1x3','4'], $
-                          /editable, $
+  tfbase = widget_base(base, frame=0, xpad=0, ypad=0, scr_xsize=1, scr_ysize=1, xsize=1, ysize=1)
+  text_field = widget_text(tfbase, $
+                          value=['U','X','D'], $
                           /all_events, $
-                          xsize=5, $
-                           ysize=5, $
-                           scr_xsize=1, scr_ysize=1, $
+                          xsize=3, $
+                           ysize=4, $
+                           frame=0, $
                           uvalue='TEXT_FIELD')
   
   ; Create a button row (+message)
@@ -104,7 +103,7 @@ PRO shortcut_test
   ; Realize the widget
   widget_control, base, /realize
   widget_control, text_field, /input_focus
-  widget_control, text_field, set_text_select=[3,1]
+  widget_control, text_field, set_text_select=[2,1]
   
   ; Set initial focus to the text field
   widget_control, text_field, /input_focus
