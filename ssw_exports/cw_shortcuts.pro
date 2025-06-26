@@ -42,44 +42,43 @@
 FUNCTION cw_shortcuts_getv,id
   storage = widget_info(id,/child)
   widget_control,storage,get_uvalue=info
-  return,0
+  return,info
 END
 
 
-PRO cw_shortcuts_setv,id,uval
+PRO cw_shortcuts_setv,id,dummy
   storage = widget_info(id,/child)
   widget_control,storage,get_uvalue=info
   
-  widget_control, info.text_id, set_value=['0','1x3','4']
-  widget_control, info.text_id, set_text_select=[3,1]
+  widget_control, info.text_id, set_value=['U','X','D']
+  widget_control, info.text_id, set_text_select=[2,1]
   widget_control, info.text_id, /input_focus
-  
-  widget_control,storage,set_uvalue=info
 END
 
 
 FUNCTION cw_shortcuts_event,ev
+  ; Reset text widget first thing:
+  cw_shortcuts_setv, ev.handler
+  
   storage = widget_info(ev.handler, /child)
   widget_control,storage,get_uvalue = info
   
-  offset = ev.offset
-  dir = '? ' + trim(offset) + ' ?'
-  if offset eq 1 OR offset EQ 0 then dir = "UP"
-  if offset eq 7 OR offset EQ 6 then dir = "DOWN"
-  if offset eq 3 then dir = "LEFT"
-  if offset eq 5 then dir = "RIGHT"
-  
+  CASE ev.offset OF 
+     0: dir = 'UP   '
+     1: dir = 'UP   '
+     2: dir = 'LEFT '
+     3: dir = 'RIGHT'
+     4: dir = 'RIGHT'
+     5: dir = 'DOWN '
+  END
+  print, dir
   event = {cw_shortcuts, $
            id:ev.handler, $
            top:ev.top, $
            handler:0L, $
            key: dir $
           }
-  
-  widget_control, info.text_id, set_value=['0','1x3','4']
-  widget_control, info.text_id, set_text_select=[3,1]
-  widget_control, info.text_id, /input_focus
-
+  ; 
   return,event
 END
 
@@ -92,12 +91,14 @@ FUNCTION cw_shortcuts,on_base,uvalue=uvalue
   small = {xpad:1,ypad:1,space:1}
   
   my_base = widget_base(on_base,uvalue=uvalue,$
-                     event_func='cw_shortcuts_event',$
-                     pro_set_value='cw_shortcuts_setv',$
-                     func_get_value='cw_shortcuts_getv')
+                        frame=0, xpad=0, ypad=0, scr_xsize=1, scr_ysize=1, xsize=1, ysize=1, $
+                        event_func='cw_shortcuts_event',$
+                        pro_set_value='cw_shortcuts_setv',$
+                        func_get_value='cw_shortcuts_getv', $
+                        notify_realize='cw_shortcuts_setv')
   
-  text_id = widget_text(my_base, value=['0','1x3','4'], /editable, /all_events, $
-                        xsize=5, ysize=5, scr_xsize=1, scr_ysize=1, uvalue='TEXT_FIELD')
+  text_id = widget_text(my_base, value=['U','X','D'], /all_events, /editable, $
+                        xsize=3, ysize=4, uvalue='TEXT_FIELD')
 
 
   storage = text_id
