@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-26 20:07 CEST $
+; $Id: 2025-06-27 08:52 CEST $
 ;-
 
 
@@ -501,10 +501,11 @@ PRO xcfit_block_set_fit,info,lam,spec,weight,ix,fit,failed,nochange=nochange
 END
 
 
-PRO xcfit_block_distribute_focus, info, focus
+PRO xcfit_block_distribute_focus, info
   widget_control,info.int.data_id,set_value={focus:info.ext.focus}
   IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:info.ext.focus[1:*]}
   widget_control,info.int.residual_id,set_value={focus:info.ext.focus}
+  xcfit_block_visitp,info
 END
   
 
@@ -2243,7 +2244,8 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
                                  missing=missing,$
                                  xsize=xsize, ysize=ysize, $
                                  uvalue="DATA",dimnames=dimnames,$
-                                 title='Original data',$origin=origin, $
+                                 title='Original data',$
+                                 origin=origin, $
                                  scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                  sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
 
