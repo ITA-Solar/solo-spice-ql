@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-25 13:21 CEST $
+; $Id: 2025-06-27 08:48 CEST $
 ;-
 
 
@@ -1919,7 +1919,6 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   leftside_col = widget_base(base,/column,_extra=sml)
   center_col = widget_base(base,/column,_extra=sml)
-  rightside_col = widget_base(base,/column,_extra=sml)
 
   CASE N_ELEMENTS(display_threshold) OF
      0: threshold = [0.02, 0.02, 0.02]
@@ -2003,10 +2002,6 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
      sta = widget_base(leftside_col,/row,_extra=sml)
      gstatus = widget_base(sta,/column,_extra=sml,frame = 0)
      lstatus = widget_base(sta,/column,_extra=sml,frame = 0)
-
-  ;;lstatus = widget_base(lefttside_col,/column,_extra=sml,/frame)
-  ;;gstatus = widget_base(rightside_col,/column,_extra=sml,/frame)
-
 
      label1 = widget_label(widget_base(lstatus),value='Local') 
      label2 = widget_label(widget_base(lstatus),value='status')
