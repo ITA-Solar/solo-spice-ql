@@ -46,23 +46,31 @@ FUNCTION cw_shortcuts_getv,id
 END
 
 
-PRO cw_shortcuts_setv,id,dummy
+PRO cw_shortcuts_setv,id,message
   storage = widget_info(id,/child)
   widget_control,storage,get_uvalue=info
   
   widget_control, info.text_id, set_value=['U','X','D']
   widget_control, info.text_id, set_text_select=[2,1]
   widget_control, info.text_id, /input_focus
+  widget_control, id, timer = 0.25
 END
 
 
 FUNCTION cw_shortcuts_event,ev
   ; Reset text widget first thing:
   cw_shortcuts_setv, ev.handler
-  
-  storage = widget_info(ev.handler, /child)
-  widget_control,storage,get_uvalue = info
-  
+
+  type = tag_names(ev,/structure_name)
+
+  if type eq 'WIDGET_TIMER' then begin
+    cw_shortcuts_setv, ev.handler
+    return, 0
+  endif
+
+  ; Ignore anything but arrow keys for now
+  if type ne 'WIDGET_TEXT_SEL' then return,0
+
   CASE ev.offset OF 
      0: dir = 'UP   '
      1: dir = 'UP   '
@@ -98,7 +106,7 @@ FUNCTION cw_shortcuts,on_base,uvalue=uvalue
                         notify_realize='cw_shortcuts_setv')
   
   text_id = widget_text(my_base, value=['U','X','D'], /all_events, /editable, $
-                        xsize=3, ysize=4, uvalue='TEXT_FIELD')
+                        xsize=2, ysize=3, uvalue='TEXT_FIELD')
 
 
   storage = text_id

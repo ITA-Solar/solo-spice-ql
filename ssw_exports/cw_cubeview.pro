@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-24 23:47 CEST $
+; $Id: 2025-06-27 15:25 CEST $
 ;-
 
 ;;
@@ -319,9 +319,7 @@ END
 ;;
 ;; Redraw the widgets with the images
 ;;
-pro cw_cubeview_force_redraw, id
-  stash = widget_info(id,/child)
-  widget_control,stash,get_uvalue=info,/no_copy
+pro cw_cubeview_force_redraw, info
   ;; Update plot
   cw_cubeview_get_plot,info,arr,set
   widget_control,info.int.plot_id,set_value=set
@@ -334,7 +332,6 @@ pro cw_cubeview_force_redraw, id
     IF n_elements(im_arr) GT 0 THEN $
       widget_control,info.int.image_id,set_value=im_arr
   END
-  widget_control,stash,set_uvalue=info,/no_copy
 end
 
 ;;
@@ -346,6 +343,16 @@ PRO cw_cubeview_setv,id,value
 
   stat_changed = 0b ;; Defaults
   data_changed = 0b ;;
+
+  if datatype(value) eq "STR" then begin
+    case value of 
+      "REDRAW": cw_cubeview_force_redraw,info
+      "HIGHLIGHT": widget_control,info.int.focustx_id,background_color=[255,255,80]
+      "UNHIGHLIGHT": widget_control,info.int.focustx_id,background_color=[190,190,190]
+    end
+    widget_control,stash,set_uvalue=info,/no_copy
+    return
+  end
 
   IF datatype(value) EQ 'STC' THEN BEGIN
      ext = info.ext
@@ -413,7 +420,6 @@ FUNCTION cw_cubeview_event,ev
   event = 0
 
   CASE uvalue(0) OF
-
   'IMAGE':BEGIN
      ;;
      ;; A keyclick or similar in the IMAGE - change *plot*
@@ -694,7 +700,8 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
          plot_id:0L,$
          plottx_id:0L,$
          image_dim_id:[0L,0L],$
-         plot_dim_id:0L $
+         plot_dim_id:0L, $
+         last_active_cw_cube:"" $
         }
 
   info = { ext : ext,$
@@ -723,7 +730,7 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
   ;; This widget id is the one to put buttons etc. on, as well as storing the
   ;; info structure on
 
-  focustx_id = widget_label(mybase,value=' ')
+  focustx_id = widget_label(mybase,value=' xxxxxxxxxxx ')
   storage = focustx_id
 
   IF keyword_set(row) THEN ibase = widget_base(mybase,/row,_extra=tight) $
@@ -884,3 +891,9 @@ PRO cw_cubeview_test_hpass,h
   xmanager,"cw_cubeview_test",base,/modal
 END
 
+
+IF getenv("USER") EQ "steinhh" THEN BEGIN
+   xcfit_block_test2
+END
+
+END

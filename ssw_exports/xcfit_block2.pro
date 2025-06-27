@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-27 08:52 CEST $
+; $Id: 2025-06-27 15:25 CEST $
 ;-
 
 
@@ -1463,13 +1463,14 @@ FUNCTION xcfit_block_handle_colortable_and_resize_ev, ev, info
   type = tag_names(ev, /structure_name)
   is_colortable_or_resize =  total(type eq ['CW_LOADCT_NEW_CT', 'CW_LOADCT', 'WIDGET_BASE'])
   IF NOT is_colortable_or_resize THEN return, 0
-  
-  ; This is not "idiomatic", the right thing to do would be to
-  ; use set_value=something to trigger it
+
+  ; Martin: this is the idiomatic way of forcing a redraw (not calling a cw_cubeview
+  ; routine directly). I had to add handling of value="REDRAW" in cw_cubeview_setv for it
+  ; to work.
   ;
-  cw_cubeview_force_redraw, info.int.data_id
-  cw_cubeview_force_redraw, info.int.residual_id
-  IF info.int.show_result THEN cw_cubeview_force_redraw, info.int.result_id
+  widget_control,info.int.data_id,set_value="REDRAW"
+  widget_control,info.int.residual_id,set_value="REDRAW"
+  IF info.int.show_result THEN widget_control,info.int.result_id,set_value="REDRAW"
 
   IF type EQ 'WIDGET_BASE' THEN BEGIN
      handle_value,info.int.a.fit_h,orgfit
@@ -1506,16 +1507,26 @@ PRO xcfit_block_shortcuts, info, ev
   handle_value, info.int.a.data_h, data, /set, /no_copy
   clamps = dims - 1
   print, info.ext.focus
+  widget_control, info.int.data_id, get_value=data_info
+  help,data_info
+  x_dim_ix = data_info.image_dim[0]
+  y_dim_ix = data_info.image_dim[1]
   CASE ev.key OF
-     'LEFT ': info.ext.focus[0] = info.ext.focus[0] - 1 > 0
-     'RIGHT': info.ext.focus[0] = info.ext.focus[0] + 1 < clamps[0]
-     'UP   ': info.ext.focus[1] = info.ext.focus[1] + 1 < clamps[1]
-     'DOWN ': info.ext.focus[1] = info.ext.focus[1] - 1 > 0
+     'LEFT ': info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] - 1 > 0
+     'RIGHT': info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] + 1 < clamps[x_dim_ix]
+     'UP   ': info.ext.focus[y_dim_ix] = info.ext.focus[y_dim_ix] + 1 < clamps[y_dim_ix]
+     'DOWN ': info.ext.focus[y_dim_ix] = info.ext.focus[y_dim_ix] - 1 > 0
   END
   xcfit_block_distribute_focus, info
   print, info.ext.focus
   print, ev.key
 END
+
+pro xcfit_block_highlight_cw_cube, info, element
+  widget_control,info.int.residual_id,set_value= element eq "RESIDUAL" ? "HIGHLIGHT" : "UNHIGHLIGHT"
+  widget_control,info.int.data_id,set_value= element eq "DATA" ? "HIGHLIGHT" : "UNHIGHLIGHT"
+  widget_control,info.int.result_id,set_value= element eq "RESULT" ? "HIGHLIGHT" : "UNHIGHLIGHT"
+end
 
 PRO xcfit_block_event,ev
   widget_control,/hourglass
@@ -1529,8 +1540,6 @@ PRO xcfit_block_event,ev
 
   if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then uvalue='EXIT'
   uvalue = str_sep(uvalue,':')
-  evtype = tag_names(ev,/structure_name)
-
   mark = n_elements(uvalue) GT 1
 
   CASE uvalue[0] OF
@@ -1576,6 +1585,7 @@ PRO xcfit_block_event,ev
 ; Events from the display draw windows.
 ;
   'DATA':BEGIN
+     xcfit_block_highlight_cw_cube, info, "DATA"
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN
         info.ext.focus = ev.focus
         widget_control,info.int.residual_id,set_value={focus:ev.focus}
@@ -1585,6 +1595,7 @@ PRO xcfit_block_event,ev
      ENDCASE
 
   'RESIDUAL':BEGIN
+     xcfit_block_highlight_cw_cube, info, "RESIDUAL"
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN
         info.ext.focus = ev.focus
         IF info.int.show_result THEN widget_control,info.int.result_id,set_value={focus:ev.focus[1:*]}
@@ -1594,6 +1605,7 @@ PRO xcfit_block_event,ev
      ENDCASE
 
   'RESULT':BEGIN
+     xcfit_block_highlight_cw_cube, info, "RESULT"
      IF total([info.ext.focus[1:*] NE ev.focus]) GT 0 THEN BEGIN
         info.ext.focus[1:*] = ev.focus
         widget_control,info.int.data_id,set_value={focus:info.ext.focus}
@@ -2282,7 +2294,6 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   widget_control,base,set_uvalue=info
 
   xmanager,"xcfit_block",base
-
 END
   
 FUNCTION get_test_ana2
@@ -2296,10 +2307,11 @@ END
 PRO xcfit_block_test2
   ana = get_test_ana2()
   handle_value, ana.scale_h, [1,4,1],/set
-  xcfit_block2, ana=ana
+  xcfit_block2, ana=ana,title='Test XCFIT_BLOCK2'
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
+  resolve_routine,'xcfit_block2'
    xcfit_block_test2
 END
 END
