@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-27 08:48 CEST $
+; $Id: 2025-06-27 15:19 CEST $
 ;-
 
 
@@ -2247,10 +2247,25 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
 
      xmanager,"xcfit_block",base
 
-  END
+END
 
-;IF getenv("USER") EQ "steinhh" THEN BEGIN
-;   ana = restore_analysis("$HOME/idl/solo-spice-ql/test_data/eis_l1_20210806_105401_0.ana")
-;   xcfit_block, ana=ana
-;END
-;END
+FUNCTION get_test_ana
+  path = routine_dir()
+  paths = strsplit(path, path_sep(), /extract)
+  filepath = path_sep() + strjoin([paths[0 : -2], 'ancillary', 'xcfit_test_file.ana'], path_sep())
+  ana = restore_analysis(filepath)
+  return, ana
+END
+
+PRO xcfit_block_test
+  ana = get_test_ana()
+  handle_value, ana.scale_h, [1,4,1],/set
+  xcfit_block2, ana=ana
+END
+
+IF getenv("USER") EQ "steinhh" THEN BEGIN
+  resolve_routine,'xcfit_block'
+   xcfit_block_test
+END
+
+END
