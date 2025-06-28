@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-27 15:25 CEST $
+; $Id: 2025-06-28 09:10 CEST $
 ;-
 
 ;;
@@ -647,7 +647,7 @@ FUNCTION cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
      image_dim = multix(0:1 < (n_elements(multix)-1))
   ENDIF
 
-  IF nmulti GT 2 THEN default,plot_dim,multix(2) $
+  IF nmulti GT 2 THEN default,plot_dim,multix(0) $
   ELSE                default,plot_dim,multix(0)
 
   IF n_elements(origin) NE 0 THEN iorigin = origin
