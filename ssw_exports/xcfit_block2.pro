@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-28 09:46 CEST $
+; $Id: 2025-06-28 09:52 CEST $
 ;-
 
 
@@ -1522,11 +1522,11 @@ PRO xcfit_block_shortcuts, info, ev
   print, ev.key
 END
 
-pro xcfit_block_highlight_cw_cube, info, element
-    info.ext.highlighted_element = element
-  widget_control,info.int.residual_id,set_value= element eq "RESIDUAL" ? "HIGHLIGHT" : "UNHIGHLIGHT"
-  widget_control,info.int.data_id,set_value= element eq "DATA" ? "HIGHLIGHT" : "UNHIGHLIGHT"
-  widget_control,info.int.result_id,set_value= element eq "RESULT" ? "HIGHLIGHT" : "UNHIGHLIGHT"
+pro xcfit_block_highlight_cw_cube, info, cube_name
+  info.ext.highlighted_cube_name = cube_name
+  widget_control,info.int.residual_id,set_value= cube_name eq "RESIDUAL" ? "HIGHLIGHT" : "UNHIGHLIGHT"
+  widget_control,info.int.data_id,set_value= cube_name eq "DATA" ? "HIGHLIGHT" : "UNHIGHLIGHT"
+  widget_control,info.int.result_id,set_value= cube_name eq "RESULT" ? "HIGHLIGHT" : "UNHIGHLIGHT"
 end
 
 PRO xcfit_block_event,ev
@@ -1951,7 +1951,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           fit_plot_widget: 0L,$
           fit_plot_show : 0b,$
           focus : focus,$
-          highlighted_element : "DATA",$
+          highlighted_cube_name : "DATA",$
           signals : signals,$
           signal_id : signal_id}
 
