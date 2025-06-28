@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-27 15:25 CEST $
+; $Id: 2025-06-28 09:10 CEST $
 ;-
 
 
@@ -1523,6 +1523,7 @@ PRO xcfit_block_shortcuts, info, ev
 END
 
 pro xcfit_block_highlight_cw_cube, info, element
+    info.ext.highlighted_element = element
   widget_control,info.int.residual_id,set_value= element eq "RESIDUAL" ? "HIGHLIGHT" : "UNHIGHLIGHT"
   widget_control,info.int.data_id,set_value= element eq "DATA" ? "HIGHLIGHT" : "UNHIGHLIGHT"
   widget_control,info.int.result_id,set_value= element eq "RESULT" ? "HIGHLIGHT" : "UNHIGHLIGHT"
@@ -1950,11 +1951,11 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           fit_plot_widget: 0L,$
           fit_plot_show : 0b,$
           focus : focus,$
+          highlighted_element : 'DATA',$
           signals : signals,$
           signal_id : signal_id}
 
   sml = {xpad:1,ypad:1,space:1}
-
 
   x_scroll_size = 1200 * widget_size_scaling + 150
   y_scroll_size = 700 * widget_size_scaling + 200
@@ -1965,7 +1966,6 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   
   leftside_col = widget_base(base,/column,_extra=sml)
   center_col = widget_base(base,/column,_extra=sml)
-  rightside_col = widget_base(base,/column,_extra=sml)
 
   CASE N_ELEMENTS(display_threshold) OF
      0: threshold = [0.02, 0.02, 0.02]
