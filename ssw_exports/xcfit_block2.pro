@@ -227,7 +227,7 @@
 ;                       handles new event from cw_loadct and calls cw_cubeview_force_redraw
 ;                       in xcfit_block_event
 ;               Version 10, Martin Wiesmann, 25 May 2023
-;                       Whenever variables are checked for 'missing' values, it uses now
+;                       Whenever variables are checked for "missing" values, it uses now
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;               Version 11, Martin Wiesmann, 10 October 2023
 ;                       INCLUDE, CONST, ORIGIN, SCALE, PHYS_SCALE input variables will now
@@ -237,13 +237,13 @@
 ;                       data being displayed (data, result, residual) without altering the 
 ;                       original cubes. SPICE_HISTO_OPT because HISTO_OPT does not handle NAN correctly.
 ;               Version 13, Martin Wiesmann, 19. Januar 2024
-;                       Does no longer set the keyword 'modal' when calling xmanager
+;                       Does no longer set the keyword "modal" when calling xmanager
 ;               Version 14, Martin Wiesmann, 4. June 2024
 ;                       Returns if result array only has 1 dimension, apart from first one, with size GT 1.
 ;                       Added keyword no_save_option
-;                       Sets errorbars in microplot to 'OFF' by default. May want to change that when
+;                       Sets errorbars in microplot to "OFF" by default. May want to change that when
 ;                       error is correct.
-;                       Added new toggle button 'Show/Hide fit', which shows/hides a new window that shows
+;                       Added new toggle button "Show/Hide fit", which shows/hides a new window that shows
 ;                       the microplot in a bigger version. Kill events are handled from this new window,
 ;                       but not other events (yet).
 ;                       New keyword MODAL, which if set, makes widget modal, requires group_leader.
@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-28 09:10 CEST $
+; $Id: 2025-06-28 09:46 CEST $
 ;-
 
 
@@ -596,12 +596,12 @@ PRO xcfit_block_register,info
   ;;
   ;; Build pulldown menu for choosing the result to be displayed
   ;;
-  menu = {PSELECT_S,btext:'',mtext:'',uvalue:'',flags:0}
+  menu = {PSELECT_S,btext:"",mtext:"",uvalue:"",flags:0}
 
   p_no = 0
   FOR c = 0,n_elements(tag_names(fit))-1 DO BEGIN
      cname = fit.(c).name
-     menu = [menu,{PSELECT_S,cname,cname,'NEVER',1}]
+     menu = [menu,{PSELECT_S,cname,cname,"NEVER",1}]
      np = n_elements(fit.(c).param)
      FOR p = 0,np-1 DO BEGIN
         IF p EQ np-1 THEN flag = 2 ELSE flag = 0
@@ -611,7 +611,7 @@ PRO xcfit_block_register,info
      END
   END
 
-  menu = [menu,{PSELECT_S,'Chi^2','Chi^2','RESULT#:'+trim(p_no),0}]
+  menu = [menu,{PSELECT_S,"Chi^2","Chi^2","RESULT#:"+trim(p_no),0}]
 
   menu = menu[1:*]
 
@@ -624,9 +624,9 @@ PRO xcfit_block_register,info
 
   widget_control,info.int.result_pdb,update=0
 
-  dummy = cw_pselect(info.int.result_pdb,'Result: ',menu)
+  dummy = cw_pselect(info.int.result_pdb,"Result: ",menu)
 
-  widget_control,dummy,set_value='RESULT#:'+trim(info.ext.result_no)
+  widget_control,dummy,set_value="RESULT#:"+trim(info.ext.result_no)
 
   widget_control,info.int.result_pdb,update=1
 
@@ -647,85 +647,85 @@ FUNCTION xcfit_block_pix_defprog
   COMMON  xcfit_block_pix_edit,lastprog
   IF exist(lastprog) THEN return,lastprog
   return,$
-     ['a = sqrt(1./(weights>1e-6))          ; Noise, if the weights ' + $
-      'are right',$
-      'ix = where(data eq missing or weights eq missing) ' + $
-      '; Bad points - take''em out',$
-      'if ix(0) ne -1L then a(ix) = missing',$
-      '',$
-      'b = average(a,1,missing=missing)     ;Average/total noise level',$
-      'c = average(data,1,missing=missing)  ;Average/total signal level',$
-      'mask = c gt 1.5*b                    ;Decide...']
+     ["a = sqrt(1./(weights>1e-6))          ; Noise, if the weights " + $
+      "are right",$
+      "ix = where(data eq missing or weights eq missing) " + $
+      "; Bad points - take""em out",$
+      "if ix(0) ne -1L then a(ix) = missing",$
+      "",$
+      "b = average(a,1,missing=missing)     ;Average/total noise level",$
+      "c = average(data,1,missing=missing)  ;Average/total signal level",$
+      "mask = c gt 1.5*b                    ;Decide..."]
 END
 
 FUNCTION xcfit_block_pix_explain
 
-  return,'  '+$
-     ['',$
-      'This widget allows editing a sequence of one-line statements that',$
-      'are executed in order to calculate a "point mask" - a logical (byte)',$
-      'array with one point per "spatial" pixel.',$
-      '',$
-      'The mask is then used by XCFIT_BLOCK to do things like',$
-      '',$
-      '     ix = where(mask)',$
-      '     cfit_bpatch,result,ix,parameter,value', $
-      '',$
-      'I.e., it''s used to patch the result/const/include arrays of the',$
-      'analysis with values taken from the global fit structure.',$
-      '',$
-      '(Scroll down to see several examples of valid scripts with comments)',$ 
-      '',$
-      'If your data block has dimensions (25,50,147), the sequence',$
-      'of statements should produce a MASK which has dimensions (50,147)',$
-      '(although e.g., (1,50,147) is also accepted).',$
-      '',$
-      'The following variables are declared when the execution starts:',$
-      '',$
-      '  LAMBDA,DATA,WEIGHTS,FIT,MISSING,RESULT,RESIDUAL,INCLUDE,CONST',$
-      '',$
-      'i.e., all variables normally associated with a block fit.',$
-      'The meaning and dimensionality of all the variables are as in calls',$
-      'to e.g., CFIT_BLOCK.',$
-      '',$
-      'Since the statements are processed by IDL''s EXECUTE() function, they',$
-      'should not try to define any *new* variables - so the following',$
-      'variable names have already been "defined" (and may be thus be used):',$
-      '',$
-      '  A,B,C,D,E,F,IX,MASK',$
-      '',$
-      'In addition, of course, you may write a completely general *function*',$
-      'or *procedure* of your own, that may be called as a one-line',$
-      'statement from the script.',$
-      '',$
-      'The program must be written such that it ultimately calculates',$
-      'a point mask, stored in the variable MASK.',$
-      '',$
-      'The resulting MASK will be REFORM''ed to remove any dangling singular',$
-      'dimensions.',$
-      '',$
-      'Examples:',$
-      '----------------------------------------------------',$
-      '; Flag all points having one or more parameter(s) kept constant',$
-      '',$
-      ' MASK = total(const,1) gt 0b',$
-      '----------------------------------------------------',$
-      '; Flag all points having parameter number two kept constant',$
-      '',$
-      ' MASK = const(1,*,*)',$
-      '----------------------------------------------------',$
-      '; Flag all points with more than a certain amount of total flux',$
-      '',$
-      ' MASK = total(data,1) gt 10.5',$
-      '',$
-      ';(note that it''s really better to work with AVERAGE(), since',$
-      ';TOTAL() does not recognize MISSING values). To specify exactly',$
-      ';the same criterion as above use e.g.:',$
-      '',$
-      ' MASK=average(data,1,missing=missing) gt 10.5/n_elements(data(*,0,0))',$
-      '----------------------------------------------------',$
-      '',$
-      '']
+  return,"  "+$
+     ["",$
+      "This widget allows editing a sequence of one-line statements that",$
+      "are executed in order to calculate a 'point mask' - a logical (byte)",$
+      "array with one point per 'spatial' pixel.",$
+      "",$
+      "The mask is then used by XCFIT_BLOCK to do things like",$
+      "",$
+      "     ix = where(mask)",$
+      "     cfit_bpatch,result,ix,parameter,value", $
+      "",$
+      "I.e., it""s used to patch the result/const/include arrays of the",$
+      "analysis with values taken from the global fit structure.",$
+      "",$
+      "(Scroll down to see several examples of valid scripts with comments)",$ 
+      "",$
+      "If your data block has dimensions (25,50,147), the sequence",$
+      "of statements should produce a MASK which has dimensions (50,147)",$
+      "(although e.g., (1,50,147) is also accepted).",$
+      "",$
+      "The following variables are declared when the execution starts:",$
+      "",$
+      "  LAMBDA,DATA,WEIGHTS,FIT,MISSING,RESULT,RESIDUAL,INCLUDE,CONST",$
+      "",$
+      "i.e., all variables normally associated with a block fit.",$
+      "The meaning and dimensionality of all the variables are as in calls",$
+      "to e.g., CFIT_BLOCK.",$
+      "",$
+      "Since the statements are processed by IDL""s EXECUTE() function, they",$
+      "should not try to define any *new* variables - so the following",$
+      "variable names have already been 'defined' (and may be thus be used):",$
+      "",$
+      "  A,B,C,D,E,F,IX,MASK",$
+      "",$
+      "In addition, of course, you may write a completely general *function*",$
+      "or *procedure* of your own, that may be called as a one-line",$
+      "statement from the script.",$
+      "",$
+      "The program must be written such that it ultimately calculates",$
+      "a point mask, stored in the variable MASK.",$
+      "",$
+      "The resulting MASK will be REFORM""ed to remove any dangling singular",$
+      "dimensions.",$
+      "",$
+      "Examples:",$
+      "----------------------------------------------------",$
+      "; Flag all points having one or more parameter(s) kept constant",$
+      "",$
+      " MASK = total(const,1) gt 0b",$
+      "----------------------------------------------------",$
+      "; Flag all points having parameter number two kept constant",$
+      "",$
+      " MASK = const(1,*,*)",$
+      "----------------------------------------------------",$
+      "; Flag all points with more than a certain amount of total flux",$
+      "",$
+      " MASK = total(data,1) gt 10.5",$
+      "",$
+      ";(note that it""s really better to work with AVERAGE(), since",$
+      ";TOTAL() does not recognize MISSING values). To specify exactly",$
+      ";the same criterion as above use e.g.:",$
+      "",$
+      " MASK=average(data,1,missing=missing) gt 10.5/n_elements(data(*,0,0))",$
+      "----------------------------------------------------",$
+      "",$
+      ""]
 END
 
 ;
@@ -746,10 +746,10 @@ errorcatch:
      catch,/cancel
      msg = ["The following error occured:","",!err_string,""]
      IF exist(done_sofar) THEN BEGIN
-        msg = [msg,'The following statements had been/was being processed',$
+        msg = [msg,"The following statements had been/was being processed",$
                done_sofar]
      END
-     msg = [msg,'',"A blank mask will be returned"]
+     msg = [msg,"","A blank mask will be returned"]
 
      xack,msg
      mask = make_array(size=sz)
@@ -767,8 +767,8 @@ errorcatch:
 
   IF NOT exist(mask) THEN BEGIN
 
-     xack,['MASK was not defined by the program - ' + $
-           'a blank mask will be returned']
+     xack,["MASK was not defined by the program - " + $
+           "a blank mask will be returned"]
      mask = make_array(size=sz)
   ENDIF
   mask = reform(mask)
@@ -810,14 +810,14 @@ PRO xcfit_block_pix_wmask,info,mask
 
      nfail = total(failed)
      IF nfail GT 0 THEN BEGIN
-        xack,trim(nfail)+' points are flagged as FAILED' + $
-           ' - will not touch them',/turn_off
+        xack,trim(nfail)+" points are flagged as FAILED" + $
+           " - will not touch them",/turn_off
      END
 
      mask = mask AND (1b-reform(failed,/overwrite))
 
      IF total(mask) EQ 0 THEN BEGIN
-        xack,'No points were masked'
+        xack,"No points were masked"
         return
      END
 
@@ -874,7 +874,7 @@ PRO xcfit_block_pix_edit,info
   widget_control,info.int.top_id,set_uvalue=info 
 
   xtextedit,prog,explanation=expl,setv_id=info.int.pix_id,$
-     setv_text='Test program'
+     setv_text="Test program"
 
   handle_value,info.int.pix_prog_h,prog,/set
   lastprog = prog
@@ -901,7 +901,7 @@ PRO xcfit_block_pix_setconst,info,mask=mask,novisit=novisit,one=one
      cfit_bpatch,const,ix,j,sfit.const(j)
   END
 
-  handle_value,info.int.a.const_h,const,/set,/no_copy   ;; That's it!
+  handle_value,info.int.a.const_h,const,/set,/no_copy   ;; That"s it!
 
   ;; Revisit point to update local status
   IF NOT keyword_set(novisit) THEN xcfit_block_visitp,info
@@ -956,7 +956,7 @@ PRO xcfit_block_pix_setinclude,info,mask=mask,novisit=novisit,one=one
      cfit_bpatch,include,ix,j,sfit.include(j)
   END
 
-  handle_value,info.int.a.include_h,include,/set,/no_copy   ;; That's it!
+  handle_value,info.int.a.include_h,include,/set,/no_copy   ;; That"s it!
 
   xcfit_block_exclude_patch,info
 
@@ -985,7 +985,7 @@ PRO xcfit_block_pix_reset,info,mask=mask,novisit=novisit,one=one
      cfit_bpatch,result,ix,j,sfit.a_nom(j)
   END
 
-  handle_value,info.int.a.result_h,result,/set,/no_copy   ;; That's it!
+  handle_value,info.int.a.result_h,result,/set,/no_copy   ;; That"s it!
 
   ;; Revisit point to update local status
   IF NOT keyword_set(novisit) THEN xcfit_block_visitp,info
@@ -1006,7 +1006,7 @@ PRO xcfit_block_pix_recalc,info,mask=mask,novisit=novisit
 
   handle_value,info.int.a.result_h,result,/no_copy
   cfit_bpatch,result,ix,n_elements(result[*,0,0,0,0,0,0])-1,0.0
-  handle_value,info.int.a.result_h,result,/set,/no_copy   ;; That's it!
+  handle_value,info.int.a.result_h,result,/set,/no_copy   ;; That"s it!
 
   xcfit_block_calculate,info,smart=2
 END
@@ -1121,7 +1121,7 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
   restart = keyword_set(restart)
   recalculate = keyword_set(recalculate)
 
-  ;; If chi2==missing, the point should be done (unless it's failed)
+  ;; If chi2==missing, the point should be done (unless it"s failed)
 
   IF is_not_missing(chi2, missing=info.int.a.missing) $
      AND NOT recalculate AND NOT restart THEN BEGIN
@@ -1142,8 +1142,8 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
 
   IF recalculate THEN BEGIN
      ;;
-     ;; If it's the chi2 that's missing, we should start from initial values,
-     ;; if it's the recalculate flag, we should start from current values.
+     ;; If it"s the chi2 that"s missing, we should start from initial values,
+     ;; if it"s the recalculate flag, we should start from current values.
      ;;
      ;; Unless, of course, the /restart flag is set...
      ;; 
@@ -1164,7 +1164,7 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
   END
 
   IF fail_type NE 0 AND fail_type NE 2 THEN BEGIN
-     xack,['CFIT failed']
+     xack,["CFIT failed"]
      failed = 1
   END
 
@@ -1176,7 +1176,7 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
 END
 
 PRO xcfit_block_sensitize,info,title
-  IF title EQ 'Chi^2' THEN BEGIN
+  IF title EQ "Chi^2" THEN BEGIN
      widget_control,info.int.initval_id,sensitive=0
      FOR j = 0,n_elements(info.int.pix_reset1_id)-1 DO  $
         widget_control,info.int.pix_reset1_id(j),sensitive=0
@@ -1260,9 +1260,9 @@ PRO xcfit_block_save_as,info
 
   file = bigpickfile(/write,path=disk+dir,file=fnam+ext,$
                      group=info.int.top_id,$
-                     filter='*.ana',get_path=path)
+                     filter="*.ana",get_path=path)
 
-  IF file EQ '' THEN return
+  IF file EQ "" THEN return
 
   break_file,file,disk,dir,fnam,ext
   info.int.a.filename = path+fnam+ext
@@ -1274,7 +1274,7 @@ END
 
 PRO xcfit_block_restore,info,other=other
 
-  other = keyword_set(other) OR info.int.a.filename EQ ''
+  other = keyword_set(other) OR info.int.a.filename EQ ""
 
   IF NOT other THEN BEGIN
      info.int.a = restore_analysis(info.int.a)
@@ -1283,9 +1283,9 @@ PRO xcfit_block_restore,info,other=other
 
      file = bigpickfile(/write,path=disk+dir,file=fnam+ext,$
                         group=info.int.top_id,$
-                        filter='*.ana',get_path=path,/must_exist)
+                        filter="*.ana",get_path=path,/must_exist)
 
-     IF file EQ '' THEN return
+     IF file EQ "" THEN return
      break_file,file,disk,dir,fnam,ext
      new_ana = restore_analysis(path+fnam+ext)
 
@@ -1298,8 +1298,8 @@ PRO xcfit_block_restore,info,other=other
      handle_value,info.int.a.data_h,data,/set,/no_copy
 
      IF total(szn EQ szd) NE n_elements(szd) THEN BEGIN
-        xack,['Cannot change the dimensionality of the data' + $
-              ' with a restore operation']
+        xack,["Cannot change the dimensionality of the data" + $
+              " with a restore operation"]
         delete_analysis,new_ana
         return 
      END
@@ -1309,7 +1309,7 @@ PRO xcfit_block_restore,info,other=other
      info.int.a = mk_analysis(source_analysis=new_ana,destination=info.int.a)
      delete_analysis,new_ana
 
-     ;; We don't know how many results we have...
+     ;; We don"t know how many results we have...
      info.ext.result_no = 0
   END
 
@@ -1365,21 +1365,21 @@ PRO xcfit_block_findspot,info,what_to_find
 
   thisresult = result[info.ext.result_no,*,*,*,*,*,*]
 
-  IF what_to_find EQ 'MAX' OR what_to_find EQ 'MIN' THEN BEGIN
+  IF what_to_find EQ "MAX" OR what_to_find EQ "MIN" THEN BEGIN
      missix = where_missing(thisresult, missing=info.int.a.missing)
      IF missix[0] NE -1L THEN BEGIN
         mini = min(thisresult,max=maxi)
-        IF what_to_find EQ 'MAX' THEN thisresult[missix] = mini $
+        IF what_to_find EQ "MAX" THEN thisresult[missix] = mini $
         ELSE                          thisresult[missix] = maxi
      END
   END
 
   IF info.int.find_ix EQ -1L THEN BEGIN
      CASE what_to_find OF
-        'ZERO': ix = where(thisresult EQ 0)
-        'MISS': ix = where_missing(thisresult, missing=info.int.a.missing)
-        'MAX': ix = reverse(sort(thisresult))
-        'MIN': ix = sort(thisresult)
+        "ZERO": ix = where(thisresult EQ 0)
+        "MISS": ix = where_missing(thisresult, missing=info.int.a.missing)
+        "MAX": ix = reverse(sort(thisresult))
+        "MIN": ix = sort(thisresult)
      END
   END
 
@@ -1430,7 +1430,7 @@ PRO xcfit_block_set_initial,info,average=average_flag
      ix = where_not_missing(this_result, missing=info.int.a.missing)
      IF ix[0] NE -1 THEN new_init = median(this_result[ix]) $
      ELSE BEGIN
-        xack,['No non-missing points! - No new initial value set']
+        xack,["No non-missing points! - No new initial value set"]
         handle_value,info.int.a.fit_h,globfit,/no_copy
      END
   END
@@ -1447,13 +1447,13 @@ END
 PRO xcfit_block_event_fit_widget, ev
   widget_control,ev.top,get_uvalue=base
   widget_control,base,get_uvalue=info
-  if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then begin
+  if tag_names(ev, /structure) eq "WIDGET_KILL_REQUEST" then begin
      info.ext.fit_plot_show = 0
      widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
-     widget_control, info.int.fit_window_button, SET_VALUE='FITWINDOW:Show'
+     widget_control, info.int.fit_window_button, SET_VALUE="FITWINDOW:Show"
   endif else begin
-    ; This doesn't work like this. I think the event should be sent to
-    ; info.int.draw widget within cw_plotz, but I don't know how to do that.
+    ; This doesn"t work like this. I think the event should be sent to
+    ; info.int.draw widget within cw_plotz, but I don"t know how to do that.
     ; TODO
     ; WIDGET_CONTROL, info.int.fit_plot_id, send_event=ev, bad_id=bad
   endelse
@@ -1461,7 +1461,7 @@ END
 
 FUNCTION xcfit_block_handle_colortable_and_resize_ev, ev, info
   type = tag_names(ev, /structure_name)
-  is_colortable_or_resize =  total(type eq ['CW_LOADCT_NEW_CT', 'CW_LOADCT', 'WIDGET_BASE'])
+  is_colortable_or_resize =  total(type eq ["CW_LOADCT_NEW_CT", "CW_LOADCT", "WIDGET_BASE"])
   IF NOT is_colortable_or_resize THEN return, 0
 
   ; Martin: this is the idiomatic way of forcing a redraw (not calling a cw_cubeview
@@ -1472,7 +1472,7 @@ FUNCTION xcfit_block_handle_colortable_and_resize_ev, ev, info
   widget_control,info.int.residual_id,set_value="REDRAW"
   IF info.int.show_result THEN widget_control,info.int.result_id,set_value="REDRAW"
 
-  IF type EQ 'WIDGET_BASE' THEN BEGIN
+  IF type EQ "WIDGET_BASE" THEN BEGIN
      handle_value,info.int.a.fit_h,orgfit
      widget_control,info.int.status1_id,set_value=orgfit
      widget_control,info.int.status2_id,$
@@ -1512,10 +1512,10 @@ PRO xcfit_block_shortcuts, info, ev
   x_dim_ix = data_info.image_dim[0]
   y_dim_ix = data_info.image_dim[1]
   CASE ev.key OF
-     'LEFT ': info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] - 1 > 0
-     'RIGHT': info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] + 1 < clamps[x_dim_ix]
-     'UP   ': info.ext.focus[y_dim_ix] = info.ext.focus[y_dim_ix] + 1 < clamps[y_dim_ix]
-     'DOWN ': info.ext.focus[y_dim_ix] = info.ext.focus[y_dim_ix] - 1 > 0
+     "LEFT ": info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] - 1 > 0
+     "RIGHT": info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] + 1 < clamps[x_dim_ix]
+     "UP   ": info.ext.focus[y_dim_ix] = info.ext.focus[y_dim_ix] + 1 < clamps[y_dim_ix]
+     "DOWN ": info.ext.focus[y_dim_ix] = info.ext.focus[y_dim_ix] - 1 > 0
   END
   xcfit_block_distribute_focus, info
   print, info.ext.focus
@@ -1539,12 +1539,12 @@ PRO xcfit_block_event,ev
   was_colortable_or_resize = xcfit_block_handle_colortable_and_resize_ev(ev, info)
   IF was_colortable_or_resize THEN return
 
-  if tag_names(ev, /structure) eq 'WIDGET_KILL_REQUEST' then uvalue='EXIT'
-  uvalue = str_sep(uvalue,':')
+  if tag_names(ev, /structure) eq "WIDGET_KILL_REQUEST" then uvalue="EXIT"
+  uvalue = str_sep(uvalue,":")
   mark = n_elements(uvalue) GT 1
 
   CASE uvalue[0] OF
-  'EXIT':BEGIN
+  "EXIT":BEGIN
     ;; Make sure changes (like RESTORE operations) are reflected.
 
      IF ~info.int.ana_set THEN BEGIN
@@ -1564,7 +1564,7 @@ PRO xcfit_block_event,ev
      return
      ENDCASE
 
-  'SAVE':BEGIN
+  "SAVE":BEGIN
      IF mark THEN xcfit_block_save_as,info $
      ELSE BEGIN
         save_analysis,info.int.a
@@ -1572,11 +1572,11 @@ PRO xcfit_block_event,ev
      END 
      ENDCASE
 
-  'RESTORE':BEGIN
+  "RESTORE":BEGIN
      xcfit_block_restore,info,other = mark
      ENDCASE
 
-  'EDIT_HISTORY':BEGIN
+  "EDIT_HISTORY":BEGIN
      handle_value,info.int.a.history_h,history
      xtextedit,history,group=ev.top
      handle_value,info.int.a.history_h,history,/set
@@ -1585,7 +1585,7 @@ PRO xcfit_block_event,ev
 ;
 ; Events from the display draw windows.
 ;
-  'DATA':BEGIN
+  "DATA":BEGIN
      xcfit_block_highlight_cw_cube, info, "DATA"
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN
         info.ext.focus = ev.focus
@@ -1595,7 +1595,7 @@ PRO xcfit_block_event,ev
      END
      ENDCASE
 
-  'RESIDUAL':BEGIN
+  "RESIDUAL":BEGIN
      xcfit_block_highlight_cw_cube, info, "RESIDUAL"
      IF total([info.ext.focus NE ev.focus]) GT 0 THEN BEGIN
         info.ext.focus = ev.focus
@@ -1605,7 +1605,7 @@ PRO xcfit_block_event,ev
      END
      ENDCASE
 
-  'RESULT':BEGIN
+  "RESULT":BEGIN
      xcfit_block_highlight_cw_cube, info, "RESULT"
      IF total([info.ext.focus[1:*] NE ev.focus]) GT 0 THEN BEGIN
         info.ext.focus[1:*] = ev.focus
@@ -1617,17 +1617,17 @@ PRO xcfit_block_event,ev
 ;
 ;
 ;
-  'FIND':BEGIN
+  "FIND":BEGIN
      ;; Restart find operation
      handle_value,info.int.find_h,dummy,/no_copy
      xcfit_block_findspot,info,uvalue[1]
      ENDCASE
 
-  'FIND_AGAIN':BEGIN
+  "FIND_AGAIN":BEGIN
      xcfit_block_findspot,info,info.int.what_found
      ENDCASE
 
-  'RESULT#':BEGIN
+  "RESULT#":BEGIN
      info.ext.result_no = fix(uvalue[1])
      xcfit_block_get_result,info,this_result,title
      IF info.int.show_result THEN BEGIN
@@ -1639,7 +1639,7 @@ PRO xcfit_block_event,ev
      handle_value,info.int.find_h,dummy,/no_copy
      ENDCASE
 
-  'STATUS1':BEGIN
+  "STATUS1":BEGIN
      ;; Update include/const status for one component (global value)
      handle_value,info.int.a.fit_h,orgfit
      update_cfit,orgfit,const=ev.const,include=ev.include
@@ -1647,7 +1647,7 @@ PRO xcfit_block_event,ev
      handle_value,info.int.a.fit_h,orgfit,/set,/no_copy
      ENDCASE
 
-  'STATUS2':BEGIN
+  "STATUS2":BEGIN
      ;; Update include/const status for one component (local value)
      xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
      sfit0 = make_sfit_stc(fit,/values)
@@ -1664,7 +1664,7 @@ PRO xcfit_block_event,ev
      IF 1 THEN xcfit_block_visitp,info,/recalculate
      ENDCASE
 
-  'MICROPLOT':BEGIN
+  "MICROPLOT":BEGIN
      ;; Acknowledge event - replot
      widget_control,ev.id,set_value=ev.set
 
@@ -1676,8 +1676,8 @@ PRO xcfit_block_event,ev
         oploterr,errp.x,errp.y,errp.err,max_value=min(errp.y)-1
      ENDCASE
 
-  'ERRPLOT':BEGIN
-     info.ext.plot_err = (uvalue[1] EQ 'ON')
+  "ERRPLOT":BEGIN
+     info.ext.plot_err = (uvalue[1] EQ "ON")
 
      ;; Replot microplot
      widget_control,info.int.microplot_id,set_value={replot:1}
@@ -1700,15 +1700,15 @@ PRO xcfit_block_event,ev
    ENDCASE
 
 
-   'FITWINDOW':BEGIN
-     info.ext.fit_plot_show = (uvalue[1] EQ 'Hide')     
+   "FITWINDOW":BEGIN
+     info.ext.fit_plot_show = (uvalue[1] EQ "Hide")     
      widget_control, info.ext.fit_plot_widget, map=info.ext.fit_plot_show
      ;; Replot bigger microplot if shown
      IF info.ext.fit_plot_show THEN xcfit_block_visitp,info
    ENDCASE
 
 
-  'FAILFIT':BEGIN
+  "FAILFIT":BEGIN
      handle_value,info.int.a.fit_h,orgfit
      xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
      xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,1
@@ -1716,11 +1716,11 @@ PRO xcfit_block_event,ev
      xcfit_block_visitp,info
      ENDCASE
 
-  'REFIT':BEGIN
+  "REFIT":BEGIN
      xcfit_block_visitp,info,/recalculate,/restart
      ENDCASE
 
-  'VIEWFIT':BEGIN
+  "VIEWFIT":BEGIN
      handle_value,info.int.a.fit_h,orgfit
      xcfit_block_get_fit,info,lambda,spec,weights,ix,fit
      currentfit = fit
@@ -1732,23 +1732,23 @@ PRO xcfit_block_event,ev
      ENDCASE
 
      ;; This is the "Adjust" button 
-  'ADJUSTFIT':BEGIN
+  "ADJUSTFIT":BEGIN
      xcfit_block_adjustfit,info
      ENDCASE
 
      ;; Set initial value of result to the current median or average
-  'SET_INITIAL':BEGIN
+  "SET_INITIAL":BEGIN
      xcfit_block_set_initial,info,average = mark
      ENDCASE
 
 ;
 ;
 ;
-  'ALTERFIT':BEGIN
+  "ALTERFIT":BEGIN
      xcfit_block_alterfit,info
      ENDCASE
 
-  'RECALCULATE':BEGIN
+  "RECALCULATE":BEGIN
      IF mark THEN BEGIN
         ;; Delete result/residual/const/include when starting from scratch
         handle_value,info.int.a.result_h,result,/no_copy
@@ -1762,52 +1762,52 @@ PRO xcfit_block_event,ev
 ;
 ; Mask/modify options
 ;
-  'PIX_EDIT':BEGIN
+  "PIX_EDIT":BEGIN
      xcfit_block_pix_edit,info
      xcfit_block_pix_getmask,info,/recalculate
      xcfit_block_pix_flicker,info
      ENDCASE
 
-  'PIX_EXECUTE':BEGIN
+  "PIX_EXECUTE":BEGIN
      xcfit_block_pix_getmask,info,/recalculate
      xcfit_block_pix_flicker,info
      ENDCASE
 
-  'PIX_FLICKER':BEGIN
+  "PIX_FLICKER":BEGIN
      xcfit_block_pix_flicker,info
      ENDCASE
 
-  'PIX_SETCONST':BEGIN
+  "PIX_SETCONST":BEGIN
      xcfit_block_pix_setconst,info,one = mark
      ENDCASE
 
-  'PIX_SETINCLUDE':BEGIN
+  "PIX_SETINCLUDE":BEGIN
      xcfit_block_pix_setinclude,info,one = mark
      ENDCASE
 
-  'PIX_RESET':BEGIN
+  "PIX_RESET":BEGIN
      xcfit_block_pix_reset,info,one = mark
      ENDCASE
 
-  'PIX_APPLY_ALL':BEGIN
+  "PIX_APPLY_ALL":BEGIN
      xcfit_block_pix_apply_all,info,one = mark
      ENDCASE
 
-  'PIX_RECALC':BEGIN
+  "PIX_RECALC":BEGIN
      xcfit_block_pix_recalc,info
      ENDCASE
 
-  'PIX_FAIL':BEGIN
+  "PIX_FAIL":BEGIN
      xcfit_block_pix_fail,info,restore=mark
      ENDCASE
      
-  'SHORTCUTS':BEGIN
+  "SHORTCUTS":BEGIN
      xcfit_block_shortcuts, info, ev
   END
 
   else: BEGIN
-    print, 'ERROR!!!: unknown case : ', uvalue
-    print, 'Please report to prits-group@astro.uio.no'
+    print, "ERROR!!!: unknown case : ", uvalue
+    print, "Please report to prits-group@astro.uio.no"
     ENDCASE
 
   END
@@ -1816,7 +1816,7 @@ PRO xcfit_block_event,ev
 END
 
 function xcfit_block_default_widget_scaling
-  monitor = obj_new('IDLsysMonitorInfo')
+  monitor = obj_new("IDLsysMonitorInfo")
   rectangles = monitor.GetRectangles()
   min_x_size = min(rectangles[2, *])
   min_y_size = min(rectangles[3, *])
@@ -1894,7 +1894,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   END
 
-  IF N_ELEMENTS(title) EQ 0 THEN title=''
+  IF N_ELEMENTS(title) EQ 0 THEN title=""
   IF NOT exist(fit) THEN fit = {bg:mk_comp_poly([median(data)])}
 
   szd = size(data)
@@ -1908,7 +1908,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   size_temp = size(result)
   ind = where(size_temp[1:size_temp[0]] GT 1, count)
   IF count LT 2 THEN BEGIN
-     box_message, 'Result has too few dimensions, cannot display this, returning.'
+     box_message, "Result has too few dimensions, cannot display this, returning."
      IF keyword_set(ana) THEN BEGIN
         handle_value,ana.lambda_h,lambda,/set,/no_copy
         handle_value,ana.data_h,data,/set,/no_copy
@@ -1928,11 +1928,11 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   ENDIF ELSE show_result = 1
 
 
-  ;; Make sure we're not taking things for granted here (Thanks to
+  ;; Make sure we"re not taking things for granted here (Thanks to
   ;; Anja Czaykowska)
   iana.missing = missing 
 
-  default,dimnames,(['Lambda','X','Y','T','A','B','C'])[0:szd[0]-1]
+  default,dimnames,(["Lambda","X","Y","T","A","B","C"])[0:szd[0]-1]
 
   result_no = 0
 
@@ -1951,7 +1951,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           fit_plot_widget: 0L,$
           fit_plot_show : 0b,$
           focus : focus,$
-          highlighted_element : 'DATA',$
+          highlighted_element : "DATA",$
           signals : signals,$
           signal_id : signal_id}
 
@@ -1960,7 +1960,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   x_scroll_size = 1200 * widget_size_scaling + 150
   y_scroll_size = 700 * widget_size_scaling + 200
 
-  base = widget_base(/row,title='XCFIT_BLOCK '+title,_extra=sml, group_leader=group_leader, $
+  base = widget_base(/row,title="XCFIT_BLOCK "+title,_extra=sml, group_leader=group_leader, $
                      /scroll, x_scroll_size=x_scroll_size, y_scroll_size=y_scroll_size, modal=keyword_set(modal))
   widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
   
@@ -2002,7 +2002,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           pix_reset1_id: lonarr(4),$
           pix_prog_h   : handle_create(value=xcfit_block_pix_defprog()),$
           pix_mask_h   : handle_create(),$
-          what_found   : 'ZERO',$
+          what_found   : "ZERO",$
           titles_h     : titles_h,$
           store_info_h : handle_create(),$
           data_id      : 0L,$
@@ -2012,7 +2012,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           result_id    : 0L,$
           show_result  : show_result}
 
-  handle_killer_hookup,int.store_info_h   ;; Note: Don't kill when base dies
+  handle_killer_hookup,int.store_info_h   ;; Note: Don"t kill when base dies
 
   handle_killer_hookup,group_leader=base,$
                        [int.microfine_h,int.find_h,int.pix_prog_h,int.errplot_h,$
@@ -2051,11 +2051,11 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   gstatus = widget_base(sta,/column,_extra=sml,frame = 1)
   lstatus = widget_base(sta,/column,_extra=sml,frame = 1)
 
-  label1 = widget_label(widget_base(lstatus),value='Local') 
-  label2 = widget_label(widget_base(lstatus),value='status')
+  label1 = widget_label(widget_base(lstatus),value="Local") 
+  label2 = widget_label(widget_base(lstatus),value="status")
 
-  label1 = widget_label(widget_base(gstatus),value='Global') 
-  label2 = widget_label(widget_base(gstatus),value='status')
+  label1 = widget_label(widget_base(gstatus),value="Global") 
+  label2 = widget_label(widget_base(gstatus),value="status")
 
   xsize = 35
   lstatusx = widget_base(lstatus,/column,xpad=1,ypad=1,space=5)
@@ -2067,18 +2067,18 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   ;; File menu
   ;;
-  file_m = widget_button(buttons1,value='File/exit',menu=2)
+  file_m = widget_button(buttons1,value="File/exit",menu=2)
   IF ~keyword_set(no_save_option) THEN BEGIN
-     save_b = widget_button(file_m,value='Save',uvalue='SAVE')
-     save_q = widget_button(file_m,value='Save as..',uvalue='SAVE:AS')
-     restore_last = widget_button(file_m,value='Restore last saved',$
-                                  uvalue='RESTORE')
-     restore_other = widget_button(file_m,value='Restore other',$
-                                   uvalue='RESTORE:OTHER')
+     save_b = widget_button(file_m,value="Save",uvalue="SAVE")
+     save_q = widget_button(file_m,value="Save as..",uvalue="SAVE:AS")
+     restore_last = widget_button(file_m,value="Restore last saved",$
+                                  uvalue="RESTORE")
+     restore_other = widget_button(file_m,value="Restore other",$
+                                   uvalue="RESTORE:OTHER")
   ENDIF
-  edit_hist = widget_button(file_m,value='View/edit History',$
-                            uvalue='EDIT_HISTORY')
-  dummy = widget_button(file_m,value='Exit',uvalue='EXIT')
+  edit_hist = widget_button(file_m,value="View/edit History",$
+                            uvalue="EDIT_HISTORY")
+  dummy = widget_button(file_m,value="Exit",uvalue="EXIT")
 
   ;;
   ;; Adjust, Redesign, Calculate buttons (Global action line)
@@ -2086,46 +2086,46 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   ;; Adjust fit, including update of initial values
   ;;
-  adjust = widget_button(buttons1,value='Adjust',menu=2)
-  dummy = widget_button(adjust, uvalue='ADJUSTFIT', $
-                        value='Adjust (global) MIN/MAX values, names etc')
-  initval = widget_button(adjust,value='Update (global) initial value for ', $
+  adjust = widget_button(buttons1,value="Adjust",menu=2)
+  dummy = widget_button(adjust, uvalue="ADJUSTFIT", $
+                        value="Adjust (global) MIN/MAX values, names etc")
+  initval = widget_button(adjust,value="Update (global) initial value for ", $
                           menu=2)
-  initval_id = widget_button(initval,value=' ',menu=2)
+  initval_id = widget_button(initval,value=" ",menu=2)
   info.int.initval_id = initval_id
-  dummy = widget_button(initval_id,value='Use *median* of free result',$
-                        uvalue='SET_INITIAL')
-  dummy = widget_button(initval_id,value='Use *average* of free result',$
-                        uvalue='SET_INITIAL:AVERAGE')
+  dummy = widget_button(initval_id,value="Use *median* of free result",$
+                        uvalue="SET_INITIAL")
+  dummy = widget_button(initval_id,value="Use *average* of free result",$
+                        uvalue="SET_INITIAL:AVERAGE")
 
   ;; Redesign (discard)
   ;;
-  dummy = widget_button(buttons1,value='Redesign',menu=2)
+  dummy = widget_button(buttons1,value="Redesign",menu=2)
   dummy = widget_button(dummy,$
-                        value='Discard all results, redesign fit structure',$
-                        uvalue='ALTERFIT')
+                        value="Discard all results, redesign fit structure",$
+                        uvalue="ALTERFIT")
 
   ;; Calculate (from current or scratch)
   ;;
-  dummy = widget_button(buttons1,value='Calculate',menu=2)
-  dummy2 = widget_button(dummy,value='Recalculate based on current result',$
-                         uvalue='RECALCULATE')
-  dummy2 = widget_button(dummy,value='Recalculate from global initial values',$
-                         uvalue='RECALCULATE:SCRATCH')
+  dummy = widget_button(buttons1,value="Calculate",menu=2)
+  dummy2 = widget_button(dummy,value="Recalculate based on current result",$
+                         uvalue="RECALCULATE")
+  dummy2 = widget_button(dummy,value="Recalculate from global initial values",$
+                         uvalue="RECALCULATE:SCRATCH")
 
 
   ;;
   ;; Second row - Find-buttons and Mask/modify
   ;;
   find_base = buttons2 ;; widget_base(buttons3,/row,_extra=sml,/frame)
-  fmenu = [{pselect_s,btext:'zero',mtext:'Find zero',uvalue:'FIND:ZERO',$
+  fmenu = [{pselect_s,btext:"zero",mtext:"Find zero",uvalue:"FIND:ZERO",$
             flags:0},$
-           {pselect_s,'missing','Find missing','FIND:MISS',0},$
-           {pselect_s,'max','Find max value','FIND:MAX',0},$
-           {pselect_s,'min','Find min value','FIND:MIN',0}]
-  dummy = cw_pselect(find_base,'Find: ',fmenu)
+           {pselect_s,"missing","Find missing","FIND:MISS",0},$
+           {pselect_s,"max","Find max value","FIND:MAX",0},$
+           {pselect_s,"min","Find min value","FIND:MIN",0}]
+  dummy = cw_pselect(find_base,"Find: ",fmenu)
   find_again = widget_button(widget_base(find_base,/column),$
-                             value='..next',uvalue='FIND_AGAIN')
+                             value="..next",uvalue="FIND_AGAIN")
 
   ;;
   ;; Pixel grabbing/manipulation
@@ -2136,53 +2136,53 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   ;; It needs the uvalue to point to the top base (to get at the info stc).
 
   info.int.pix_id = widget_base(gbase,pro_set_value=$
-                                'xcfit_block_pix_edit_setv')
+                                "xcfit_block_pix_edit_setv")
   widget_control,info.int.pix_id,set_uvalue=base
 
   ;;
   ;; This is the pixel grabbing/manipulation menu
   ;;
-  pix = widget_button(gbase,value='Mask/patch points',menu=2)
-  flick = widget_button(pix,value='Edit masking program',$
-                        uvalue='PIX_EDIT')
-  grab = widget_button(pix,value='Re-execute masking program',$
-                       uvalue='PIX_EXECUTE')
-  zhonk = widget_button(pix,value='Show masked points',$
-                        uvalue='PIX_FLICKER')
-  sub1 = widget_button(pix,value='Patch masked points',menu=2)
+  pix = widget_button(gbase,value="Mask/patch points",menu=2)
+  flick = widget_button(pix,value="Edit masking program",$
+                        uvalue="PIX_EDIT")
+  grab = widget_button(pix,value="Re-execute masking program",$
+                       uvalue="PIX_EXECUTE")
+  zhonk = widget_button(pix,value="Show masked points",$
+                        uvalue="PIX_FLICKER")
+  sub1 = widget_button(pix,value="Patch masked points",menu=2)
 
-  all = '..ALL parameters'
-  one = '..THIS parameter'
-  allc = '..ALL components'
-  onec = '..THIS component'
-  mark = ':ONE'
+  all = "..ALL parameters"
+  one = "..THIS parameter"
+  allc = "..ALL components"
+  onec = "..THIS component"
+  mark = ":ONE"
   oni = 0L
 
-  v = ['Patch CONST status from global status','PIX_SETCONST']
+  v = ["Patch CONST status from global status","PIX_SETCONST"]
   zhonk = widget_button(sub1,value=v[0],menu=2)
   ali = widget_button(zhonk,value=all,uvalue=v[1])
   oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
 
-  v = ['Patch INCLUDE status from global status','PIX_SETINCLUDE']
+  v = ["Patch INCLUDE status from global status","PIX_SETINCLUDE"]
   zhonk = widget_button(sub1,value=v[0],menu=2)
   ali = widget_button(zhonk,value=allc,uvalue=v[1])
   oni = [oni,widget_button(zhonk,value=onec,uvalue=v[1]+mark)]
 
-  v = ['Patch RESULT from global initial value','PIX_RESET']
+  v = ["Patch RESULT from global initial value","PIX_RESET"]
   zhonk = widget_button(sub1,value=v[0],menu=2)
   ali = widget_button(zhonk,value=all,uvalue=v[1])
   oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
 
-  zhonk = widget_button(sub1,value='Recalc. masked points ' + $
-                        '(from curr. values)',uvalue='PIX_RECALC')
+  zhonk = widget_button(sub1,value="Recalc. masked points " + $
+                        "(from curr. values)",uvalue="PIX_RECALC")
 
-  v = ['Patch all from global status, then recalc.','PIX_APPLY_ALL']
+  v = ["Patch all from global status, then recalc.","PIX_APPLY_ALL"]
   zhonk = widget_button(sub1,value=v[0],menu=2)
   ali = widget_button(zhonk,value=all,uvalue=v[1])
   oni = [oni,widget_button(zhonk,value=one,uvalue=v[1]+mark)]
 
-  zhonk = widget_button(sub1,value='Fail masked points',uvalue='PIX_FAIL')
-  zhonk = widget_button(sub1,value='UNFail masked points',uvalue='PIX_FAIL:0')
+  zhonk = widget_button(sub1,value="Fail masked points",uvalue="PIX_FAIL")
+  zhonk = widget_button(sub1,value="UNFail masked points",uvalue="PIX_FAIL:0")
 
   info.int.pix_reset1_id = oni[1:*]
 
@@ -2192,14 +2192,14 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   ;; Second row of buttons (Find-buttons,View/tweak,Refit,Fail)
   ;;
   viewtweak = buttons3 ;; widget_base(buttons3,/column,_extra=sml)
-  fit_window_button = cw_flipswitch(viewtweak,value=show_fit+' fit',$
-                                    uvalue='FITWINDOW:'+show_fit)
+  fit_window_button = cw_flipswitch(viewtweak,value=show_fit+" fit",$
+                                    uvalue="FITWINDOW:"+show_fit)
   info.int.fit_window_button = fit_window_button
-  dummy = cw_flipswitch(viewtweak,value='Errplot:'+onoff,$
-                        uvalue='ERRPLOT:'+onoff)
-  dummy = cw_flipswitch(viewtweak,value='View/tweak',uvalue='VIEWFIT')
-  dummy = cw_flipswitch(viewtweak,value='Redo fit',uvalue='REFIT')
-  dummy = cw_flipswitch(viewtweak,value='FAIL',uvalue='FAILFIT')
+  dummy = cw_flipswitch(viewtweak,value="Errplot:"+onoff,$
+                        uvalue="ERRPLOT:"+onoff)
+  dummy = cw_flipswitch(viewtweak,value="View/tweak",uvalue="VIEWFIT")
+  dummy = cw_flipswitch(viewtweak,value="Redo fit",uvalue="REFIT")
+  dummy = cw_flipswitch(viewtweak,value="FAIL",uvalue="FAILFIT")
 
   ;;
   ;; Third row - pulldown menu for displayed result 
@@ -2209,27 +2209,27 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   ;; const/include status (global value)
   ;;
-  info.int.status1_id = cwf_status(status1,value=fit,uvalue='STATUS1',/column)
+  info.int.status1_id = cwf_status(status1,value=fit,uvalue="STATUS1",/column)
   ;; const/include status (current point)
   ;;
-  info.int.status2_id = cwf_status(status2,value=fit,uvalue='STATUS2',/column)
+  info.int.status2_id = cwf_status(status2,value=fit,uvalue="STATUS2",/column)
   
   ;; Keyboard nav:
-  info.int.shortcuts_id = cw_shortcuts(status1, uvalue='SHORTCUTS:')
+  info.int.shortcuts_id = cw_shortcuts(status1, uvalue="SHORTCUTS:")
   
   ;;
   ;; Micro-plot..
   ;;
   mpxsize = 500 * widget_size_scaling
   mpysize = 120 * widget_size_scaling
-  microplot_id = cw_plotz(microplot_base,uvalue='MICROPLOT',$
+  microplot_id = cw_plotz(microplot_base,uvalue="MICROPLOT",$
                           xwsize=mpxsize,ywsize=mpysize,xdsize=mpxsize,ydsize=mpysize, $
                           origo=[0,0],psym=10)
   info.int.microplot_id = microplot_id
 
-  fit_plot_widget = widget_base(/row, title='FIT plot', map=0, /TLB_KILL_REQUEST_EVENTS, $
-                                uvalue=base, event_pro='xcfit_block_event_fit_widget', group_leader=base)
-  fit_plot_id = cw_plotz(fit_plot_widget,uvalue='FITPLOT',$
+  fit_plot_widget = widget_base(/row, title="FIT plot", map=0, /TLB_KILL_REQUEST_EVENTS, $
+                                uvalue=base, event_pro="xcfit_block_event_fit_widget", group_leader=base)
+  fit_plot_id = cw_plotz(fit_plot_widget,uvalue="FITPLOT",$
                          xwsize=4*mpxsize,ywsize=4*mpysize,xdsize=4*mpxsize,ydsize=4*mpysize, $
                          origo=[0,0],psym=10)
   info.int.fit_plot_id = fit_plot_id
@@ -2256,7 +2256,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
                                  missing=missing,$
                                  xsize=xsize, ysize=ysize, $
                                  uvalue="DATA",dimnames=dimnames,$
-                                 title='Original data',$
+                                 title="Original data",$
                                  origin=origin, $
                                  scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                  sigrange=threshold[0] GT 0, fraction=1.0-threshold[0])
@@ -2265,7 +2265,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
                                      missing=missing,$
                                      xsize=xsize, ysize=ysize, $
                                      uvalue="RESIDUAL",dimnames=dimnames,$
-                                     title='Residual',origin=origin, $
+                                     title="Residual",origin=origin, $
                                      scale=scale,phys_scale=phys_scale, image_dim=image_dim,$
                                      sigrange=threshold[1] GT 0, fraction=1.0-threshold[1])
 
@@ -2299,7 +2299,7 @@ END
 FUNCTION get_test_ana2
   path = routine_dir()
   paths = strsplit(path, path_sep(), /extract)
-  filepath = path_sep() + strjoin([paths[0 : -2], 'ancillary', 'xcfit_test_file.ana'], path_sep())
+  filepath = path_sep() + strjoin([paths[0 : -2], "ancillary", "xcfit_test_file.ana"], path_sep())
   ana = restore_analysis(filepath)
   return, ana
 END
@@ -2307,11 +2307,11 @@ END
 PRO xcfit_block_test2
   ana = get_test_ana2()
   handle_value, ana.scale_h, [1,4,1],/set
-  xcfit_block2, ana=ana,title='Test XCFIT_BLOCK2'
+  xcfit_block2, ana=ana,title="Test XCFIT_BLOCK2"
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-  resolve_routine,'xcfit_block2'
+  resolve_routine,"xcfit_block2"
    xcfit_block_test2
 END
 END
