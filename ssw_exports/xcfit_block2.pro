@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-29 10:08 CEST $
+; $Id: 2025-06-29 15:42 CEST $
 ;-
 
 
@@ -2332,11 +2332,12 @@ END
 PRO xcfit_block_test2
   ana = get_test_ana2()
   handle_value, ana.scale_h, [1,4,1],/set
-  xcfit_block2, ana=ana,title="Test XCFIT_BLOCK2",/no_kill_requests
+  xcfit_block2, ana=ana,title="Test XCFIT_BLOCK2",/no_kill_requests, widget_size_scaling=1.0
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
   resolve_routine,"xcfit_block2"
    xcfit_block_test2
 END
+
 END
