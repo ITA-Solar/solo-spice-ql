@@ -34,7 +34,7 @@ END
   rm_path, ssw + '/vobs', /expand
   rm_path, ssw + '/spartan', /expand
  
-  add_path, '$HOME/solo-spice-ql/ssw_export', /prepend
+  add_path, '$HOME/solo-spice-ql/ssw_exports', /prepend
   add_path, '$HOME/idl/solo-spice-ql/ssw_exports', /prepend
   
   print, "", "", "", format='(a)'
