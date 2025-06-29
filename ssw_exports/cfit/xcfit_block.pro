@@ -1784,7 +1784,9 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
                 display_treshold=display_threshold, no_save_option=no_save_option,$
                 signal_id=signal_id, modal=modal, image_dim=image_dim, $
                 widget_size_scaling=widget_size_scaling
-
+  
+  help, group_leader
+  
   default, widget_size_scaling, xcfit_block_default_widget_scaling()
   ;on_error,2
 
