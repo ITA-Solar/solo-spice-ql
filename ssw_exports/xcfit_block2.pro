@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-28 09:52 CEST $
+; $Id: 2025-06-29 10:08 CEST $
 ;-
 
 
@@ -523,20 +523,20 @@ PRO xcfit_block_register,info
   na = n_elements(a_nom)
   ni = n_elements(sfit.include)
 
-  szd = size(data)
-  szr = size(result)
-  szi = size(include)
-  szc = size(const)
+  data_size = size(data)
+  result_size = size(result)
+  include_size = size(include)
+  const_size = size(const)
 
 
   ;; If RESULT has wrong number of dimensions, wrong number of parameters
   ;; (including Chi^2) or wrong size in other dimensions, then discard and
   ;; rebuild
 
-  res_dim = [na+1,szd[2:szd[0]]]
+  res_dim = [na+1,data_size[2:data_size[0]]]
 
-  IF szr[0] NE szd[0] OR szr[1] NE na+1 OR $
-     total(szr[2 : szr[0] > 2] NE szd[2 : szd[0] > 2]) NE 0 THEN BEGIN
+  IF result_size[0] NE data_size[0] OR result_size[1] NE na+1 OR $
+     total(result_size[2 : result_size[0] > 2] NE data_size[2 : data_size[0] > 2]) NE 0 THEN BEGIN
 
      message,"Making new RESULT array",/continue
 
@@ -550,10 +550,10 @@ PRO xcfit_block_register,info
   ;; If INCLUDE has wrong number of dimensions, wrong number of components, or
   ;; wrong size in other dimensions, then discard and rebuild
 
-  inc_dim = [n_elements(sfit.include),szd[2:szd[0]]]
+  inc_dim = [n_elements(sfit.include),data_size[2:data_size[0]]]
 
-  IF szi[0] NE szd[0] OR szi[1] NE ni OR $
-     total(szi[2 : szi[0] > 2] NE szd[2 : szd[0] > 2]) NE 0 THEN BEGIN
+  IF include_size[0] NE data_size[0] OR include_size[1] NE ni OR $
+     total(include_size[2 : include_size[0] > 2] NE data_size[2 : data_size[0] > 2]) NE 0 THEN BEGIN
 
      message,"Making new INCLUDE array",/continue
 
@@ -566,10 +566,10 @@ PRO xcfit_block_register,info
   ;; If CONST has: wrong number of dimensions, wrong number of components, or
   ;;               wrong size in other dimensions, then discard and rebuild
 
-  con_dim = [n_elements(sfit.const),szd[2:szd[0]]]
+  con_dim = [n_elements(sfit.const),data_size[2:data_size[0]]]
 
-  IF szc[0] NE szd[0] OR szc[1] NE na OR $
-     total(szc[2 : szc[0] > 2] NE szd[2 : szd[0] > 2]) NE 0 THEN BEGIN
+  IF const_size[0] NE data_size[0] OR const_size[1] NE na OR $
+     total(const_size[2 : const_size[0] > 2] NE data_size[2 : data_size[0] > 2]) NE 0 THEN BEGIN
 
      message,"Making new CONST array",/continue
 
@@ -588,9 +588,9 @@ PRO xcfit_block_register,info
   ;;
   ;; Residual should always have same size as data
   ;;
-  IF total(size(residual) NE szd) NE 0 THEN BEGIN
+  IF total(size(residual) NE data_size) NE 0 THEN BEGIN
      message,"Making new RESIDUAL array",/continue
-     residual = make_array(size=szd,value=info.int.a.missing)
+     residual = make_array(size=data_size,value=info.int.a.missing)
   END
 
   ;;
@@ -1095,18 +1095,20 @@ END
 ; : 
 ;
 PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
+  restart = keyword_set(restart)
+  recalculate = keyword_set(recalculate)
 
   ;; Need result to get chi2 (or to recalculate from current value)
   ;; Need const to verify that a fit can be made (or recalculate)
 
-  f = info.ext.focus
-  nf = n_elements(f)
-  IF nf LT 7 THEN f = [f,replicate(0L,7-nf)]
+  focus = info.ext.focus
+  nfocus = n_elements(focus)
+  IF nfocus LT 7 THEN focus = [focus,replicate(0L,7-nfocus)]
 
   handle_value,info.int.a.result_h,result,/no_copy
   handle_value,info.int.a.const_h,const,/no_copy
-  this_p_result = reform(result[*,f[1],f[2],f[3],f[4],f[5],f[6]])
-  this_p_const = reform(const[*,f[1],f[2],f[3],f[4],f[5],f[6]])
+  this_p_result = reform(result[*,focus[1],focus[2],focus[3],focus[4],focus[5],focus[6]])
+  this_p_const = reform(const[*,focus[1],focus[2],focus[3],focus[4],focus[5],focus[6]])
   handle_value,info.int.a.result_h,result,/no_copy,/set
   handle_value,info.int.a.const_h,const,/no_copy,/set
 
@@ -1118,14 +1120,10 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
 
   xcfit_block_get_fit,info,lambda,spec,weights,ix,fit,failed
 
-  restart = keyword_set(restart)
-  recalculate = keyword_set(recalculate)
 
-  ;; If chi2==missing, the point should be done (unless it"s failed)
-
-  IF is_not_missing(chi2, missing=info.int.a.missing) $
-     AND NOT recalculate AND NOT restart THEN BEGIN
-
+  chi2_is_missing = is_missing(chi2, missing=info.int.a.missing)
+  finished = NOT chi2_is_missing AND NOT recalculate AND NOT restart
+  IF finished THEN BEGIN
      xcfit_block_set_fit,info,lambda,spec,weights,ix,fit,failed,/nochange
      return
   END
@@ -1136,9 +1134,8 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
   ;; If chi2 is missing, or the recalculate flag is set, and if at least one
   ;; parameter is not constant, then calculate best fit
   ;;
-  some_variable = total(this_p_const EQ 0b) NE 0
-  recalculate = (recalculate OR is_missing(chi2, missing=info.int.a.missing)) $
-     AND some_variable OR restart
+  any_variable_points = total(this_p_const EQ 0b) NE 0
+  recalculate = recalculate and any_variable_points or restart
 
   IF recalculate THEN BEGIN
      ;;
@@ -1147,8 +1144,8 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
      ;;
      ;; Unless, of course, the /restart flag is set...
      ;; 
-     IF is_missing(chi2, missing=info.int.a.missing) THEN delvarx,start_aa $
-     ELSE                               start_aa = this_p_result[0:nres-2]
+     IF chi2_is_missing THEN delvarx,start_aa $
+     ELSE                    start_aa = this_p_result[0:nres-2]
 
      IF keyword_set(restart) THEN BEGIN
         delvarx,start_aa
@@ -1156,7 +1153,7 @@ PRO xcfit_block_visitp,info,recalculate=recalculate,restart=restart
      END
 
      IF exist(start_aa) THEN print,"Starting from:",start_aa
-     thisfit = cfit(lambda,spec,start_aa,fit,/double,weights=weights,$
+     !null = cfit(lambda,spec,start_aa,fit,/double,weights=weights,$
                     fail_type=fail_type)
      failed = 0
   END ELSE BEGIN
@@ -1292,12 +1289,12 @@ PRO xcfit_block_restore,info,other=other
      ;; Check for valid sizes
      handle_value,new_ana.data_h,new_data,/no_copy
      handle_value,info.int.a.data_h,data,/no_copy
-     szd = size(data)
+     data_size = size(data)
      szn = size(new_data)
      handle_value,new_ana.data_h,new_data,/set,/no_copy
      handle_value,info.int.a.data_h,data,/set,/no_copy
 
-     IF total(szn EQ szd) NE n_elements(szd) THEN BEGIN
+     IF total(szn EQ data_size) NE n_elements(data_size) THEN BEGIN
         xack,["Cannot change the dimensionality of the data" + $
               " with a restore operation"]
         delete_analysis,new_ana
@@ -1501,16 +1498,41 @@ FUNCTION xcfit_block_handle_colortable_and_resize_ev, ev, info
   return, 1
 END
 
-PRO xcfit_block_shortcuts, info, ev
-  handle_value, info.int.a.data_h, data, /no_copy
+function xcfit_block_get_cube_dimensions, info, cube_name
+  case cube_name of
+     "DATA":      handle = info.int.a.data_h
+     "RESIDUAL":  handle = info.int.a.residual_h
+     "RESULT":    handle = info.int.a.result_h
+  end
+  handle_value,handle,data,/no_copy
   dims = size(data, /dimensions)
-  handle_value, info.int.a.data_h, data, /set, /no_copy
+  handle_value,handle,data,/set,/no_copy
+  if cube_name eq "RESULT" then begin
+     dims = dims[1:*]  ; Remove the first dimension, which is the result number
+  end
+  return, dims
+end 
+
+pro xcfit_block_get_cube_image_dim_ix,info, cube_name, x_dim_ix, y_dim_ix
+  case cube_name of
+     "DATA":      widget_control, info.int.data_id, get_value=value
+     "RESIDUAL":  widget_control, info.int.residual_id, get_value=value
+     "RESULT":    widget_control, info.int.result_id, get_value=value
+  end
+  x_dim_ix = value.image_dim[0]
+  y_dim_ix = value.image_dim[1]
+  if cube_name eq "RESULT" then begin
+     x_dim_ix = x_dim_ix + 1  
+     y_dim_ix = y_dim_ix + 1 
+  end
+end
+
+PRO xcfit_block_shortcuts, info, ev
+  cube_name = info.int.highlighted_cube_name
+  dims = xcfit_block_get_cube_dimensions(info, "DATA")
   clamps = dims - 1
   print, info.ext.focus
-  widget_control, info.int.data_id, get_value=data_info
-  help,data_info
-  x_dim_ix = data_info.image_dim[0]
-  y_dim_ix = data_info.image_dim[1]
+  xcfit_block_get_cube_image_dim_ix, info, cube_name, x_dim_ix, y_dim_ix
   CASE ev.key OF
      "LEFT ": info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] - 1 > 0
      "RIGHT": info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] + 1 < clamps[x_dim_ix]
@@ -1523,7 +1545,7 @@ PRO xcfit_block_shortcuts, info, ev
 END
 
 pro xcfit_block_highlight_cw_cube, info, cube_name
-  info.ext.highlighted_cube_name = cube_name
+  info.int.highlighted_cube_name = cube_name
   widget_control,info.int.residual_id,set_value= cube_name eq "RESIDUAL" ? "HIGHLIGHT" : "UNHIGHLIGHT"
   widget_control,info.int.data_id,set_value= cube_name eq "DATA" ? "HIGHLIGHT" : "UNHIGHLIGHT"
   widget_control,info.int.result_id,set_value= cube_name eq "RESULT" ? "HIGHLIGHT" : "UNHIGHLIGHT"
@@ -1831,7 +1853,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
                  analysis=ana, title=title, group_leader=group_leader, $
                  display_treshold=display_threshold, no_save_option=no_save_option,$
                  signal_id=signal_id, modal=modal, image_dim=image_dim, $
-                 widget_size_scaling=widget_size_scaling
+                 widget_size_scaling=widget_size_scaling, no_kill_requests=no_kill_requests
   
   default, widget_size_scaling, xcfit_block_default_widget_scaling()
   ;on_error,2
@@ -1897,12 +1919,12 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   IF N_ELEMENTS(title) EQ 0 THEN title=""
   IF NOT exist(fit) THEN fit = {bg:mk_comp_poly([median(data)])}
 
-  szd = size(data)
+  data_size = size(data)
   szl = size(lambda)
 
   parcheck,data,   2,typ(/rea),[2,3,4,5,6,7] ,"DATA"
-  parcheck,lambda, 1,typ(/rea),[1,szd[0]],    "LAMBDA"
-  parcheck,weights,3,typ(/rea),[szd[0]],      "WEIGHTS"
+  parcheck,lambda, 1,typ(/rea),[1,data_size[0]],    "LAMBDA"
+  parcheck,weights,3,typ(/rea),[data_size[0]],      "WEIGHTS"
   parcheck,fit,    4,typ(/stc),1,             "FIT"
   parcheck,missing,5,typ(/rea),0,             "MISSING"
   size_temp = size(result)
@@ -1932,16 +1954,16 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   ;; Anja Czaykowska)
   iana.missing = missing 
 
-  default,dimnames,(["Lambda","X","Y","T","A","B","C"])[0:szd[0]-1]
+  default,dimnames,(["Lambda","X","Y","T","A","B","C"])[0:data_size[0]-1]
 
   result_no = 0
 
-  IF szl[0] EQ szd[0] AND total(szl NE szd) NE 0 $
-     OR szl[1] NE szd[1] THEN BEGIN
+  IF szl[0] EQ data_size[0] AND total(szl NE data_size) NE 0 $
+     OR szl[1] NE data_size[1] THEN BEGIN
      message,"LAMBDA and DATA have incompatible sizes"
   END
 
-  focus = szd[1:szd[0]]/2
+  focus = data_size[1:data_size[0]]/2
 
   IF keyword_set(group_leader) THEN signals=group_leader ELSE signals=0L
   IF ~keyword_set(signal_id) THEN signal_id=0L
@@ -1951,7 +1973,6 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           fit_plot_widget: 0L,$
           fit_plot_show : 0b,$
           focus : focus,$
-          highlighted_cube_name : "DATA",$
           signals : signals,$
           signal_id : signal_id}
 
@@ -1962,8 +1983,8 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   base = widget_base(/row,title="XCFIT_BLOCK "+title,_extra=sml, group_leader=group_leader, $
                      /scroll, x_scroll_size=x_scroll_size, y_scroll_size=y_scroll_size, modal=keyword_set(modal))
-  widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
-  
+   if ~keyword_set(no_kill_requests) then widget_control, base, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS
+   widget_control, base, /tlb_size_events
   leftside_col = widget_base(base,/column,_extra=sml)
   center_col = widget_base(base,/column,_extra=sml)
 
@@ -1986,6 +2007,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
 
   int = { top_id       : base,$
           a            : iana,$
+          data_size    : data_size,$
           ana_set      : keyword_set(ana),$
           status1_id   : 0L,$
           status2_id   : 0L,$
@@ -2010,7 +2032,9 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
           result_pdb   : 0L,$
           initval_id   : 0L,$
           result_id    : 0L,$
-          show_result  : show_result}
+          show_result  : show_result, $
+          highlighted_cube_name : "DATA" $
+          }
 
   handle_killer_hookup,int.store_info_h   ;; Note: Don"t kill when base dies
 
@@ -2292,6 +2316,7 @@ PRO xcfit_block2,lambda,data,weights,fit,missing,result,residual,include,const,$
   xcfit_block_visitp,info
 
   widget_control,base,set_uvalue=info
+  xcfit_block_highlight_cw_cube, info, "DATA"
 
   xmanager,"xcfit_block",base
 END
@@ -2307,7 +2332,7 @@ END
 PRO xcfit_block_test2
   ana = get_test_ana2()
   handle_value, ana.scale_h, [1,4,1],/set
-  xcfit_block2, ana=ana,title="Test XCFIT_BLOCK2"
+  xcfit_block2, ana=ana,title="Test XCFIT_BLOCK2",/no_kill_requests
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
