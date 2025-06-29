@@ -46,7 +46,7 @@ FUNCTION cw_shortcuts_getv,id
 END
 
 
-PRO cw_shortcuts_setv,id,message
+PRO cw_shortcuts_setv,id,dummy
   storage = widget_info(id,/child)
   widget_control,storage,get_uvalue=info
   
