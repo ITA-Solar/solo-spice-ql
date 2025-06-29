@@ -53,7 +53,8 @@ PRO cw_shortcuts_setv,id,message
   widget_control, info.text_id, set_value=['U','X','D']
   widget_control, info.text_id, set_text_select=[2,1]
   widget_control, info.text_id, /input_focus
-  widget_control, id, timer = 0.25
+  ; Would make problems with ability to click e.g., buttons/menus:
+  ; widget_control, id, timer = 0.25
 END
 
 
