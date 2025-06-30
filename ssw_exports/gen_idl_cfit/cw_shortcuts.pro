@@ -77,7 +77,6 @@ FUNCTION cw_shortcuts_event, ev
     4: dir = 'RIGHT'
     5: dir = 'DOWN '
   END
-  print, dir
   event = {cw_shortcuts, $
     id: ev.handler, $
     top: ev.top, $
