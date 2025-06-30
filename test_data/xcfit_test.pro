@@ -7,7 +7,7 @@ FUNCTION get_test_ana
 END
 
 PRO make_test_ana
-  file = '/Users/mawiesma/data/spice/user/level3/2023/10/28/solo_L3_spice-n-ras_20231028T005506_V22_218104189-003.fits'
+  file = '$SPICE_DATA/level3/2023/10/28/solo_L3_spice-n-ras_20231028T005506_V22_218104189-003.fits'
   ana = fits2ana(file)
   save_analysis, ana[0]
 END
