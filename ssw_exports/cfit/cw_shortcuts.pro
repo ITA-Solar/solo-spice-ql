@@ -119,8 +119,7 @@ FUNCTION cw_shortcuts,on_base,uvalue=uvalue
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-  resolve_routine,'xcfit_block2'
-   xcfit_block_test2
+   xcfit_block_test
 END
 
 END
