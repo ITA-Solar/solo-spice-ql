@@ -1,0 +1,15 @@
+CC          = cc
+F77         = g77
+LD          = /usr/ccs/bin/ld
+
+# To make shareable objects:
+
+#cc %X -c -xtarget=ultra -xarch=v9 -G -D_POSIX_C_SOURCE=199506L -D__EXTENSIONS__ -K pic -I"/usr/local/rsi/idl/external/include" %C -o %O
+#ld -o %L -M %E -Bsymbolic -znodefs -G %O %X}
+
+X_CFLAGS   = -K PIC -G -O -xtarget=ultra -xarch=v9 -D_POSIX_C_SOURCE=199506L
+X_LD_FLAGS = -B symbolic -z nodefs -G
+SO_EXT     = so
+
+
+#C_LD_POST = -lg2c -lgcc -lc

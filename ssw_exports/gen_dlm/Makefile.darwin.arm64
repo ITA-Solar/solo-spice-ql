@@ -1,0 +1,7 @@
+CC    = gcc
+F77   = f77
+LD	  = gcc
+
+X_CFLAGS   = -arch arm64 -fPIC -dynamic -O3
+X_LD_FLAGS = -arch arm64 -bundle -flat_namespace -undefined suppress
+SO_EXT = so
