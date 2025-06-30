@@ -1,6 +1,6 @@
 ; Test program for cw_shortcuts
 
-PRO shortcut_test_event, ev
+PRO cw_keyboard_shortcuts_test_event, ev
   ; Get the widget information
   widget_control, ev.top, get_uvalue = info
   widget_control, ev.id, get_uvalue = uvalue
@@ -17,7 +17,7 @@ PRO shortcut_test_event, ev
   ENDCASE
 END
 
-PRO shortcut_test
+PRO cw_keyboard_shortcuts_test
   ; Create the main base widget
   base = widget_base(title = 'IDL Keyboard Shortcut Test', /column, xsize = 400, ysize = 400)
 
@@ -34,8 +34,8 @@ PRO shortcut_test
   ; Store the info structure in the base widget
   widget_control, base, set_uvalue = info
   widget_control, base, /realize
-  xmanager, 'shortcut_test', base, /no_block
+  xmanager, 'cw_keyboard_shortcuts_test', base, /no_block
 END
 
-shortcut_test
+cw_keyboard_shortcuts_test
 END
