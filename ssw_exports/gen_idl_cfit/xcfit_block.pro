@@ -261,7 +261,7 @@
 ;                       No auto-refit when navigating to a new focus
 ;
 ; Version     : 15
-; $Id: 2025-06-30 17:16 CEST $
+; $Id: 2025-06-30 18:06 CEST $
 ;-
 
 ; Getting/setting all data blocks
@@ -1465,6 +1465,7 @@ PRO xcfit_block_get_cube_image_dim_ix, info, cube_name, x_dim_ix, y_dim_ix
   x_dim_ix = value.image_dim[0]
   y_dim_ix = value.image_dim[1]
   IF cube_name EQ "RESULT" THEN BEGIN
+    ; Compensate for the missing lambda dimension
     x_dim_ix = x_dim_ix + 1
     y_dim_ix = y_dim_ix + 1
   END
