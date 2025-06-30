@@ -47,11 +47,10 @@ END
 PRO cw_shortcuts_setv, id, dummy
   storage = widget_info(id, /child)
   widget_control, storage, get_uvalue = info
-
   widget_control, info.text_id, set_value = ['U', 'X', 'D']
   widget_control, info.text_id, set_text_select = [2, 1]
   widget_control, info.text_id, /input_focus
-  ; Would make problems with ability to click e.g., buttons/menus:
+  ; Don't try this (messes up interaction w/other widgets):
   ; widget_control, id, timer = 0.25
 END
 
