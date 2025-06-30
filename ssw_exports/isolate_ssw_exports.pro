@@ -1,9 +1,12 @@
+; To be used for testing that SSW exports will work WITHOUT any of our own repos. 
+; I.e., that exports will work with only existing SSW + our exports
+; 
+
 PRO nuke_path, path
   paths = str_sep(!path, ':')
   ix = where(paths NE path)
   !path = strjoin(paths[ix], ':')
 END
-!quiet = 1
   
   rm_path, '$HOME/sf', /expand
   rm_path, '$HOME/solo-spice-ql', /expand
@@ -39,7 +42,7 @@ END
   
   print, "", "", "", format='(a)'
   print,"  " + str_sep(!PATH,':'),format='(a)'
-  
-  resolve_routine, "xcfit_block2", /compile_full_file
-  xcfit_block_test2
+
+  print,"THE ABOVE PATHS SHOULD NOT CONTAIN ANYTHING FROM OUR OWN REPOS"
+  print,"except ssw_exports. Please amend as necessary for your system."
 END
