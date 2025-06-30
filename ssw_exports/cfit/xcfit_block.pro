@@ -258,7 +258,7 @@
 ;                       Size of images and plots adapt to screen size
 ;
 ; Version     : 15
-; $Id: 2025-06-30 09:40 CEST $
+; $Id: 2025-06-30 09:50 CEST $
 ;-
 
 
@@ -1556,7 +1556,10 @@ PRO xcfit_block_event,ev
   widget_control,ev.top,get_uvalue=info,/no_copy
   widget_control,ev.id,get_uvalue=uvalue
   
-  widget_control, info.int.shortcuts_id, set_value="to grab keyboard focus"
+  ; Prevent endless, useless iterations where info is not found
+  if n_elements(info) eq 0 then begin 
+    widget_control, ev.top, /destroy
+  end
   
   was_colortable_or_resize = xcfit_block_handle_colortable_and_resize_ev(ev, info)
   IF was_colortable_or_resize THEN return
