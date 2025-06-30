@@ -21,8 +21,8 @@ PRO shortcut_test
   ; Create the main base widget
   base = widget_base(title = 'IDL Keyboard Shortcut Test', /column, xsize = 400, ysize = 400)
 
-  !null = widget_label(base, value = "CW_SHORTCUTS test")
-  shortcuts_id = cw_shortcuts(base, uvalue = "SHORTCUTS")
+  !null = widget_label(base, value = "CW_KEYBOARD_SHORTCUTS test")
+  shortcuts_id = cw_keyboard_shortcuts(base, uvalue = "SHORTCUTS")
 
   message_id = widget_label(base, value = 'Use arrow keys')
   !null = widget_button(base, value = 'Quit', uvalue = 'QUIT_BUTTON')

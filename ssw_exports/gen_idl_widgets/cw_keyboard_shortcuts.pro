@@ -1,13 +1,13 @@
 ;+
 ; Project     : XCFIT_BLOCK
 ;
-; Name        : CW_SHORTCUTS
+; Name        : CW_KEYBOARD_SHORTCUTS
 ;
 ; Purpose     : Captures & reports keyboard input
 ;
 ; Explanation : Compound widget to generate keyboard shortcut events
 ;
-; Use         : ID=CW_SHORTCUTS(BASE,uvalue=<...>)
+; Use         : ID=CW_KEYBOARD_SHORTCUTS(BASE,uvalue=<...>)
 ;
 ; Inputs      : BASE : The base to put the widget on.
 ;
@@ -38,13 +38,13 @@
 ; Version     : 1, 27 June 2025
 ;-
 
-FUNCTION cw_shortcuts_getv, id
+FUNCTION cw_keyboard_shortcuts_getv, id
   storage = widget_info(id, /child)
   widget_control, storage, get_uvalue = info
   return, info
 END
 
-PRO cw_shortcuts_setv, id, dummy
+PRO cw_keyboard_shortcuts_setv, id, dummy
   storage = widget_info(id, /child)
   widget_control, storage, get_uvalue = info
   widget_control, info.text_id, set_value = ['U', 'X', 'D']
@@ -54,14 +54,14 @@ PRO cw_shortcuts_setv, id, dummy
   ; widget_control, id, timer = 0.25
 END
 
-FUNCTION cw_shortcuts_event, ev
+FUNCTION cw_keyboard_shortcuts_event, ev
   ; Reset text widget first thing:
-  cw_shortcuts_setv, ev.handler
+  cw_keyboard_shortcuts_setv, ev.handler
 
   type = tag_names(ev, /structure_name)
 
   IF type EQ 'WIDGET_TIMER' THEN BEGIN
-    cw_shortcuts_setv, ev.handler
+    cw_keyboard_shortcuts_setv, ev.handler
     return, 0
   ENDIF
 
@@ -76,7 +76,7 @@ FUNCTION cw_shortcuts_event, ev
     4: dir = 'RIGHT'
     5: dir = 'DOWN '
   END
-  event = {cw_shortcuts, $
+  event = {cw_keyboard_shortcuts, $
     id: ev.handler, $
     top: ev.top, $
     handler: 0L, $
@@ -86,18 +86,18 @@ FUNCTION cw_shortcuts_event, ev
   return, event
 END
 
-FUNCTION cw_shortcuts, on_base, uvalue = uvalue
-  default, uvalue, 'CW_SHORTCUTS'
+FUNCTION cw_keyboard_shortcuts, on_base, uvalue = uvalue
+  default, uvalue, 'cw_keyboard_shortcuts'
   default, instruct, 'Enter value'
 
   small = {xpad: 1, ypad: 1, space: 1}
 
   my_base = widget_base(on_base, uvalue = uvalue, $
     frame = 0, xpad = 0, ypad = 0, scr_xsize = 1, scr_ysize = 1, xsize = 1, ysize = 1, $
-    event_func = 'cw_shortcuts_event', $
-    pro_set_value = 'cw_shortcuts_setv', $
-    func_get_value = 'cw_shortcuts_getv', $
-    notify_realize = 'cw_shortcuts_setv')
+    event_func = 'cw_keyboard_shortcuts_event', $
+    pro_set_value = 'cw_keyboard_shortcuts_setv', $
+    func_get_value = 'cw_keyboard_shortcuts_getv', $
+    notify_realize = 'cw_keyboard_shortcuts_setv')
 
   text_id = widget_text(my_base, value = ['U', 'X', 'D'], /all_events, /editable, $
     xsize = 2, ysize = 3, uvalue = 'TEXT_FIELD')

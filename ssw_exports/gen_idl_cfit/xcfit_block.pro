@@ -261,7 +261,7 @@
 ;                       No auto-refit when navigating to a new focus
 ;
 ; Version     : 15
-; $Id: 2025-06-30 20:19 CEST $
+; $Id: 2025-06-30 21:29 CEST $
 ;-
 
 ; Getting/setting all data blocks
@@ -1501,10 +1501,10 @@ PRO xcfit_block_event, ev
   IF n_elements(info) EQ 0 THEN BEGIN
     widget_control, ev.top, /destroy
   END
-  
-  ; Let cw_shortcuts grap keyboard forcus if necessary:
-  widget_control, info.int.shortcuts_id, set_value=0
-  
+
+  ; Let cw_keyboard_shortcuts grap keyboard forcus if necessary:
+  widget_control, info.int.shortcuts_id, set_value = 0
+
   was_colortable_or_resize = xcfit_block_handle_colortable_and_resize_ev(ev, info)
   IF was_colortable_or_resize THEN return
 
@@ -1902,13 +1902,13 @@ PRO xcfit_block, lambda, data, weights, fit, missing, result, residual, include,
   END
 
   focus = data_size[1 : data_size[0]] / 2
-  
+
   ; Check for *valid* group leader:
   IF n_elements(group_leader) GT 0 THEN BEGIN
-     valid_group_leader = widget_info(group_leader, /valid_id)
-     IF ~valid_group_leader THEN !null = temporary(group_leader)
+    valid_group_leader = widget_info(group_leader, /valid_id)
+    IF ~valid_group_leader THEN !null = temporary(group_leader)
   END
-  
+
   group_lead = keyword_set(group_leader) ? group_leader : 0L
   signal_id = keyword_set(signal_id) ? signal_id : 0L
 
@@ -2181,7 +2181,7 @@ PRO xcfit_block, lambda, data, weights, fit, missing, result, residual, include,
   info.int.status2_id = cwf_status(status2, value = fit, uvalue = "STATUS2", /column)
 
   ; Keyboard nav:
-  info.int.shortcuts_id = cw_shortcuts(status1, uvalue = "SHORTCUTS:")
+  info.int.shortcuts_id = cw_keyboard_shortcuts(status1, uvalue = "SHORTCUTS:")
 
   ;
   ; Micro-plot..
