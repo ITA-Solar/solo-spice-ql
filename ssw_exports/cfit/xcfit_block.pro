@@ -261,7 +261,7 @@
 ;                       No auto-refit when navigating to a new focus
 ;                       
 ; Version     : 15
-; $Id: 2025-06-30 09:52 CEST $
+; $Id: 2025-06-30 10:15 CEST $
 ;-
 
 
@@ -2327,22 +2327,7 @@ PRO xcfit_block,lambda,data,weights,fit,missing,result,residual,include,const,$
   xmanager,"xcfit_block",base
 END
   
-FUNCTION get_test_ana
-  path = routine_dir()
-  paths = strsplit(path, path_sep(), /extract)
-  filepath = path_sep() + strjoin([paths[0 : -2], "ancillary", "xcfit_test_file.ana"], path_sep())
-  ana = restore_analysis(filepath)
-  return, ana
-END
-
-PRO xcfit_block_test
-  ana = get_test_ana()
-  handle_value, ana.scale_h, [1,4,1],/set
-  xcfit_block, ana=ana,title="XCFIT_BLOCK shortcuts",/no_kill_requests, widget_size_scaling=1.0
-END
-
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-  resolve_routine,"xcfit_block"
    xcfit_block_test
 END
 
