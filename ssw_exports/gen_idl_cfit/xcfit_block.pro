@@ -261,7 +261,7 @@
 ;                       No auto-refit when navigating to a new focus
 ;
 ; Version     : 15
-; $Id: 2025-06-30 18:06 CEST $
+; $Id: 2025-06-30 20:16 CEST $
 ;-
 
 ; Getting/setting all data blocks
@@ -1475,7 +1475,6 @@ PRO xcfit_block_shortcuts, info, ev
   cube_name = info.int.highlighted_cube_name
   dims = xcfit_block_get_cube_dimensions(info, "DATA")
   clamps = dims - 1
-  print, info.ext.focus
   xcfit_block_get_cube_image_dim_ix, info, cube_name, x_dim_ix, y_dim_ix
   CASE ev.key OF
     "LEFT ": info.ext.focus[x_dim_ix] = info.ext.focus[x_dim_ix] - 1 > 0
@@ -1484,8 +1483,6 @@ PRO xcfit_block_shortcuts, info, ev
     "DOWN ": info.ext.focus[y_dim_ix] = info.ext.focus[y_dim_ix] - 1 > 0
   END
   xcfit_block_distribute_focus, info
-  print, info.ext.focus
-  print, ev.key
 END
 
 PRO xcfit_block_highlight_cw_cube, info, cube_name
