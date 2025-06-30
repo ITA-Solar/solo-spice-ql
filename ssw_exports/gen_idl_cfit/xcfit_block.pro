@@ -261,7 +261,7 @@
 ;                       No auto-refit when navigating to a new focus
 ;
 ; Version     : 15
-; $Id: 2025-06-30 20:16 CEST $
+; $Id: 2025-06-30 20:19 CEST $
 ;-
 
 ; Getting/setting all data blocks
@@ -1501,7 +1501,10 @@ PRO xcfit_block_event, ev
   IF n_elements(info) EQ 0 THEN BEGIN
     widget_control, ev.top, /destroy
   END
-
+  
+  ; Let cw_shortcuts grap keyboard forcus if necessary:
+  widget_control, info.int.shortcuts_id, set_value=0
+  
   was_colortable_or_resize = xcfit_block_handle_colortable_and_resize_ev(ev, info)
   IF was_colortable_or_resize THEN return
 
@@ -1517,9 +1520,9 @@ PRO xcfit_block_event, ev
         xcfit_block_gs, info, lambda, data, weights, fit, result, residual, include, const
         FOR h = 0, n_elements(h_to_kill) - 1 DO handle_free, h_to_kill[h]
       END ELSE BEGIN
-        IF info.ext.signals GT 0 THEN BEGIN
+        IF info.ext.group_leader GT 0 THEN BEGIN
           event = {xcfit_block_event, ID: 0L, TOP: 0L, HANDLER: 0L, SIGNAL_ID: info.ext.signal_id}
-          event.id = info.ext.signals
+          event.id = info.ext.group_leader
           WIDGET_CONTROL, event.id, send_event = event, bad_id = bad
           IF bad NE 0 THEN MESSAGE, "BAD widget ID encountered", /continue
         ENDIF
@@ -1899,16 +1902,22 @@ PRO xcfit_block, lambda, data, weights, fit, missing, result, residual, include,
   END
 
   focus = data_size[1 : data_size[0]] / 2
-
-  IF keyword_set(group_leader) THEN signals = group_leader ELSE signals = 0L
-  IF ~keyword_set(signal_id) THEN signal_id = 0L
+  
+  ; Check for *valid* group leader:
+  IF n_elements(group_leader) GT 0 THEN BEGIN
+     valid_group_leader = widget_info(group_leader, /valid_id)
+     IF ~valid_group_leader THEN !null = temporary(group_leader)
+  END
+  
+  group_lead = keyword_set(group_leader) ? group_leader : 0L
+  signal_id = keyword_set(signal_id) ? signal_id : 0L
 
   ext = {result_no: result_no, $
     plot_err: 0b, $
     fit_plot_widget: 0L, $
     fit_plot_show: 0b, $
     focus: focus, $
-    signals: signals, $
+    group_leader: group_lead, $
     signal_id: signal_id}
 
   sml = {xpad: 1, ypad: 1, space: 1}
