@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2025-06-28 09:10 CEST $
+; $Id: 2025-06-30 10:21 CEST $
 ;-
 
 ;;
@@ -869,31 +869,8 @@ PRO cw_cubeview_test,value
   xmanager,"cw_cubeview_test",base,/modal
 END
 
-
-
-PRO cw_cubeview_test_hpass,h
-  xkill,/all
-
-  base = widget_base(/column)
-
-  phys_scale = [0,1,1]
-  origin = [0,0,0]
-  scale = [1,1,1]
-  dimnames = ['LAMBDA','SOLAR_X','SOLAR_Y']
-  cube = cw_cubeview(base,dimnames=dimnames,uvalue='CUBEVIEW',$
-                     phys_scale=phys_scale,origin=origin,scale=scale,$
-                     hvalue=h)
-
-  quit = widget_button(base,value='Exit',uvalue='EXIT')
-
-  widget_control,base,/realize
-
-  xmanager,"cw_cubeview_test",base,/modal
-END
-
-
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-   xcfit_block_test2
+   xcfit_block_test
 END
 
 END
