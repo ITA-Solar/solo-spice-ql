@@ -256,9 +256,12 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;               Version 15, Stein Haugan, 24. June 
 ;                       Size of images and plots adapt to screen size
-;
+;               Version 16, Stein Haugan, 30. June
+;                       Added keyboard shortcuts - use arrow keys to move around in image windows!
+;                       No auto-refit when navigating to a new focus
+;                       
 ; Version     : 15
-; $Id: 2025-06-30 09:50 CEST $
+; $Id: 2025-06-30 09:52 CEST $
 ;-
 
 
