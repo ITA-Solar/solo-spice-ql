@@ -1,23 +1,25 @@
 ; Simple utility to display a message with a dismiss button
 
 FUNCTION xcfit_announce_text
-  txt = inline_text("  ;-")
-  ;***********************************************************************
-  ;                XCFIT_BLOCK has gotten a facelift!
-  ;***********************************************************************
+  txt = inline_text("  ; -")
+  ; ***********************************************************************
+  ; XCFIT_BLOCK has gotten a facelift!
+  ; ***********************************************************************
   ;
-  ; If you experience problems, send an email to prits-group@astro.uio.no
+  ; First: if you experience problems with XCFIT_BLOCK, send an email to
+  ; prits-group@astro.uio.no. This message
   ;
   ; For new users (existing users look below for news)
   ;
-  ; 1. Please read the documentation. It's a powerful program but has a 
-  ; steep learning curve. 
+  ; 1. Please read the documentation. It's a powerful program but has a
+  ; steep learning curve.
   ;
   ; 2. Navigating inside the data cube is done by mouse clicks and arrow
   ; keys:
-  ;        Left click:   zoom out
-  ;        Middle click: set focus
-  ;        Right click:  zoom in
+  ;
+  ; Left click  : zoom out
+  ; Middle click: set focus
+  ; Right click : zoom in
   ;
   ; 3. On laptops with no mouse, right-click is usually a tap with two
   ; fingers. Middle-click is more difficult, you'll have to find out what
@@ -43,97 +45,64 @@ FUNCTION xcfit_announce_text
   ; The currently focused data cube is the one where the image has been
   ; clicked last. I.e., you switch by clicking on the image.
   ;
-  ; Sometimes (like when pressing certain buttons) the keyboard focus 
+  ; Sometimes (like when pressing certain buttons) the keyboard focus
   ; disappears from the hidden text widget that captures the arrow key clicks.
   ; This is fixed by clicking a data image again.
   ;
   ; In some situations, XCFIT_BLOCK will erroneously sense certain mouse
   ; movements from other windows even when the application window does
   ; not have input focus. No idea why...
-  ;
-  ;
-  ;
-  ;
-  
-  
-  
-  ;
-  ;
-  ;
-  
-  
-  
-  
-  
-  ;
-  ;
-  ;
-  ;
-  
-  
-  
-  
-  ;
-  ;
-  ;
-  ;
-  
-  
-  
-  ; HELLO
-  ;
-  ;-
+  ; -
   txt = strmid(txt, 3, 1000)
   return, txt
 END
-
 
 PRO xcfit_announce_event, ev
   widget_control, ev.top, /destroy
 END
 
-FUNCTION xcfit_announce_show_it, text, once_key=once_key
+FUNCTION xcfit_announce_show_it, text, once_key = once_key
   COMMON xcfit_announce, once_texts
-;  catch, err
-;  IF err NE 0 THEN return, 1
-  
+  ; catch, err
+  ; IF err NE 0 THEN return, 1
+
   IF n_elements(once_texts) EQ 0 THEN BEGIN
-     once_texts = !null
+    once_texts = !null
   END
-  
+
   IF NOT keyword_set(once_key) THEN return, 1
-  
+
   already_seen = "Text " + once_key + " already seen, not showing"
-  
+
   user_preferences, once_key, value, /get
   IF value EQ "seen" THEN BEGIN
-     print, already_seen
-     return, 0
+    print, "User preferences: " + already_seen
+    return, 0
   END
-  
-  FOR i=0, n_elements(once_texts)-1 DO BEGIN
-     IF array_equal(*once_texts[i], text) THEN BEGIN
-        print, already_seen
-        return, 0
-     END
+
+  FOR i = 0, n_elements(once_texts) - 1 DO BEGIN
+    IF array_equal(*once_texts[i], text) THEN BEGIN
+      print, already_seen
+      return, 0
+    END
   END
-  
+
   once_texts = [once_texts, ptr_new(text)]
   user_preferences, once_key, "seen", /set
   return, 1
 END
 
-PRO xcfit_announce, text, once_key=once_key
-  IF NOT xcfit_announce_show_it(text, once_key=once_key) THEN return
+PRO xcfit_announce, text, once_key = once_key
+  IF n_elements(text) EQ 0 THEN text = xcfit_announce_text()
+  IF NOT xcfit_announce_show_it(text, once_key = once_key) THEN return
   ; Build widget
-  base = widget_base(/column, xoffset=300, yoffset=300)
-  dismiss_id = widget_button(base, value='DISMISS', uvalue="QUIT")
-  ysize = min([80, n_elements(text)])
-  text_id = widget_text(base, value=text, ysize=ysize)
+  base = widget_base(/column, xoffset = 150, yoffset = 150)
+  !null = widget_button(base, value = 'DISMISS', uvalue = "QUIT")
+  ysize = min([45, n_elements(text)])
+  !null = widget_text(base, value = text, ysize = ysize, /scroll)
   widget_control, base, /realize
   xmanager, 'XCFIT_ANNOUNCE', base
 END
 
-text = xcfit_announce_text()
-xcfit_announce, text
+xcfit_announce, once_key = 'xcfit_announce_text2'
 END
