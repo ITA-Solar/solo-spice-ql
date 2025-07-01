@@ -32,7 +32,7 @@
 ; Modified    : Version 1, SVHH, 30. June 2025
 ;
 ; Version     : 1
-; $Id: 2025-06-30 16:13 CEST $
+; $Id: 2025-07-01 18:16 CEST $
 ;-
 
 PRO user_preferences, key, value, set = set, get = get
@@ -54,7 +54,7 @@ PRO user_preferences, key, value, set = set, get = get
 
   on_error, 0
   ; First make sure we fail gracefully, like if there is no pref.
-  IF keyword_set(get) THEN !null = temporary(value)
+  IF keyword_set(get) THEN value = !null
   err = 0
   ; catch,err
   IF err NE 0 THEN BEGIN
