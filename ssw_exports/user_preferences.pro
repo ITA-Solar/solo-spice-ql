@@ -65,7 +65,7 @@ PRO user_preferences, key, value, set = set, get = get
   path = [getenv("HOME"), '.idl', pref_get("IDL_PREF_DIR"), "user_preferences.sav"]
   savefile = strjoin(path, path_sep())
   IF file_test(savefile) EQ 0 THEN BEGIN
-    preferences = dictionary()
+    preferences = hash()
     save, preferences, filename = savefile
   END
   restore, savefile
