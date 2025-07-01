@@ -38,8 +38,8 @@ PRO isolate_ssw_exports
   rm_path, ssw + '/vobs', /expand
   rm_path, ssw + '/spartan', /expand
 
-  add_path, '$HOME/solo-spice-ql/ssw_exports', /prepend
-  add_path, '$HOME/idl/solo-spice-ql/ssw_exports', /prepend
+  add_path, '$HOME/solo-spice-ql/ssw_exports', /expand, /prepend
+  add_path, '$HOME/idl/solo-spice-ql/ssw_exports', /expand, /prepend
 
   print, "", "", "", format = '(a)'
   print, "  " + str_sep(!path, ':'), format = '(a)'
