@@ -1,13 +1,13 @@
 ;
 ;
 FUNCTION get_test_ana
-  filepath = ptools.find_repo_closest_matching_files("xcfit_test_file.ana")
+  filepath = ptools.find_nearest_matching_files_in_repo("xcfit_test_file.ana")
   ana = restore_analysis(filepath)
   return, ana
 END
 
 PRO make_test_ana
-  file = ptools.find_repo_closest_matching_files("solo_L3_spice-n-ras_20231028T005506_V*_218104189-003.fits")
+  file = ptools.find_nearest_matching_files_in_repo("solo_L3_spice-n-ras_20231028T005506_V*_218104189-003.fits")
   ana = fits2ana(file)
   save_analysis, ana[0]
 END
@@ -60,6 +60,6 @@ PRO xcfit_block_test
   xcfit_block, ana=ana
 END
 
-; xcfit_block_test
+ xcfit_block_test
 xcfit_test
 END
