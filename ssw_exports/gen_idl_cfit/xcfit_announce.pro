@@ -1,0 +1,139 @@
+; Simple utility to display a message with a dismiss button
+
+FUNCTION xcfit_announce_text
+  txt = inline_text("  ;-")
+  ;***********************************************************************
+  ;                XCFIT_BLOCK has gotten a facelift!
+  ;***********************************************************************
+  ;
+  ; If you experience problems, send an email to prits-group@astro.uio.no
+  ;
+  ; For new users (existing users look below for news)
+  ;
+  ; 1. Please read the documentation. It's a powerful program but has a 
+  ; steep learning curve. 
+  ;
+  ; 2. Navigating inside the data cube is done by mouse clicks and arrow
+  ; keys:
+  ;        Left click:   zoom out
+  ;        Middle click: set focus
+  ;        Right click:  zoom in
+  ;
+  ; 3. On laptops with no mouse, right-click is usually a tap with two
+  ; fingers. Middle-click is more difficult, you'll have to find out what
+  ; is right for your machine. On MacOS, XQuartz has a setting to emulate
+  ; a third button with Alt or Cmd. I can also recommend BetterTouchTool which
+  ; allows you to do a middle-click in many different ways.
+  ;
+  ; 4. Warning: This line fitting tool forces you to look at residuals. Please
+  ; don't ignore them. Also, you can choose to show chi^2 from the
+  ; result (pulldown menu at bottom of buttons area). Please have
+  ; a look, it can tell you if your data is systematically wrong.
+  ;
+  ; NEWS:
+  ;
+  ; XCFIT_BLOCK will now adjust the size of the plot and image windows based
+  ; on your screen size.
+  ;
+  ; You can now navigate from pixel to pixel using arrow keys! The
+  ; movement direction inside the data cubes is given by the dimensions
+  ; displayed in the "currently focused data cube". The currently focused
+  ; data cube is indicated with a yellow header.
+  ;
+  ; The currently focused data cube is the one where the image has been
+  ; clicked last. I.e., you switch by clicking on the image.
+  ;
+  ; Sometimes (like when pressing certain buttons) the keyboard focus 
+  ; disappears from the hidden text widget that captures the arrow key clicks.
+  ; This is fixed by clicking a data image again.
+  ;
+  ; In some situations, XCFIT_BLOCK will erroneously sense certain mouse
+  ; movements from other windows even when the application window does
+  ; not have input focus. No idea why...
+  ;
+  ;
+  ;
+  ;
+  
+  
+  
+  ;
+  ;
+  ;
+  
+  
+  
+  
+  
+  ;
+  ;
+  ;
+  ;
+  
+  
+  
+  
+  ;
+  ;
+  ;
+  ;
+  
+  
+  
+  ; HELLO
+  ;
+  ;-
+  txt = strmid(txt, 3, 1000)
+  return, txt
+END
+
+
+PRO xcfit_announce_event, ev
+  widget_control, ev.top, /destroy
+END
+
+FUNCTION xcfit_announce_show_it, text, once_key=once_key
+  COMMON xcfit_announce, once_texts
+;  catch, err
+;  IF err NE 0 THEN return, 1
+  
+  IF n_elements(once_texts) EQ 0 THEN BEGIN
+     once_texts = !null
+  END
+  
+  IF NOT keyword_set(once_key) THEN return, 1
+  
+  already_seen = "Text " + once_key + " already seen, not showing"
+  
+  user_preferences, once_key, value, /get
+  IF value EQ "seen" THEN BEGIN
+     print, already_seen
+     return, 0
+  END
+  
+  FOR i=0, n_elements(once_texts)-1 DO BEGIN
+     IF array_equal(*once_texts[i], text) THEN BEGIN
+        print, already_seen
+        return, 0
+     END
+  END
+  
+  once_texts = [once_texts, ptr_new(text)]
+  user_preferences, once_key, "seen", /set
+  return, 1
+END
+
+PRO xcfit_announce, text, once_key=once_key
+  IF NOT xcfit_announce_show_it(text, once_key=once_key) THEN return
+  ; Build widget
+  base = widget_base(/column, xoffset=300, yoffset=300)
+  dismiss_id = widget_button(base, value='DISMISS', uvalue="QUIT")
+  ysize = min([80, n_elements(text)])
+  text_id = widget_text(base, value=text, ysize=ysize)
+  widget_control, base, /realize
+  xmanager, 'XCFIT_ANNOUNCE', base
+END
+
+text = xcfit_announce_text()
+xcfit_announce, text
+END
