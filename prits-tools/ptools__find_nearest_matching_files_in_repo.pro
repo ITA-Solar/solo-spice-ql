@@ -1,6 +1,6 @@
 ;+
 ; NAME:
-;     FIND_REPO_CLOSEST_MATCHING_FILES
+;     FIND_NEAREST_MATCHING_FILES_IN_REPO
 ;
 ; PURPOSE:
 ;     Recursive search for "closest" files matching a pattern, starting in the
@@ -13,7 +13,7 @@
 ;     matching the pattern have been found under the top of the repository.
 ;
 ; CALLING SEQUENCE:
-;     FILES = PTOOLS.FIND_REPO_CLOSEST_MATCHING_FILES(pattern [, start_directory])
+;     FILES = PTOOLS.FIND_NEAREST_MATCHING_FILES_IN_REPO(pattern [, start_directory])
 ;
 ; INPUTS:
 ;     PATTERN: File matching pattern (as in FILE_SEARCH)
@@ -29,9 +29,9 @@
 ; MODIFICATION HISTORY:
 ;     Ver.1, 2025-07-01 Stein Haugan
 ;-
-; $Id: 2025-07-01 15:33 CEST $
+; $Id: 2025-07-01 18:14 CEST $
 
-FUNCTION ptools::find_repo_closest_matching_files, pattern, start_dir
+FUNCTION ptools::find_nearest_matching_files_in_repo, pattern, start_dir
   compile_opt static
   
   dir = keyword_set(start_dir) ? start_dir : routine_dir()
@@ -45,7 +45,9 @@ FUNCTION ptools::find_repo_closest_matching_files, pattern, start_dir
      files = file_search(dir, pattern)
      IF files[0] NE "" THEN return, files
      lastdir = dir
-     IF file_test(dir + path_sep() + ".git/config") THEN BEGIN
+     git_top = file_test(dir + path_sep() + ".git/config")
+     svn_top = file_test(dir + path_sep() + ".svn/format")
+     IF git_top OR svn_top THEN BEGIN
         print, "Repo top " + dir + " reached and no files matching " + pattern
         return, ""
      END
