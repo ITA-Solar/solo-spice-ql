@@ -261,7 +261,7 @@
 ;                       No auto-refit when navigating to a new focus
 ;
 ; Version     : 15
-; $Id: 2025-06-30 21:29 CEST $
+; $Id: 2025-07-02 13:55 CEST $
 ;-
 
 ; Getting/setting all data blocks
@@ -1798,11 +1798,9 @@ PRO xcfit_block, lambda, data, weights, fit, missing, result, residual, include,
   display_treshold = display_threshold, no_save_option = no_save_option, $
   signal_id = signal_id, modal = modal, image_dim = image_dim, $
   widget_size_scaling = widget_size_scaling, no_kill_requests = no_kill_requests, help = help
-  IF keyword_set(help) THEN BEGIN
-    xcfit_announce
-    return
-  END
-  xcfit_announce, once_key = "xcfit_block v2"
+  
+  xcfit_announce, help=help
+  IF keyword_set(help) THEN return
 
   default, widget_size_scaling, xcfit_block_default_widget_scaling()
   ; on_error,2
