@@ -63,7 +63,6 @@ void make_pder_array(IDL_VPTR x_vptr, IDL_VPTR a_vptr, IDL_VPTR pder)
 /*; Use         : COMP_POLY,X,A,F [,PDER]*/
 static void COMP_POLY(int argc, IDL_VPTR Argv[], char *argk)
 {
-  info("COMP_POLY: Compiling polynomial coefficients to evaluate polynomial");
   check_numeric_array_params(argc, Argv);
   IDL_VPTR x_vptr = IDL_CvtDbl(1, Argv);
   IDL_VPTR a_vptr = IDL_CvtDbl(1, Argv + 1);
@@ -315,17 +314,10 @@ static void cf_Ng_p0_(int argc, IDL_VPTR Argv[], int Ngauss)
     a += 3;
     pder = pder ? pder + 3 * Nx : NULL;
   }
-  info("here");
 
   char IDL_MSG_BUFFER[256];
   int params_used = Ngauss * 3;
   int degree = a_vptr->value.arr->n_elts - params_used - 1;
-  sprintf(IDL_MSG_BUFFER, "cf_Ng_p0_: %d Gaussians", Ngauss);
-  info(IDL_MSG_BUFFER);
-  sprintf(IDL_MSG_BUFFER, "cf_Ng_p0_: %d coefficients", degree + 1);
-  info(IDL_MSG_BUFFER);
-  info("here");
-
   cf_poly0(x_vptr, a, f_vptr, pder);
 
   IDL_DELTMP(x_vptr);
@@ -339,7 +331,6 @@ static void cf_g_(int argc, IDL_VPTR Argv[], char *argk)
 }
 static void cf_p0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  info("cf_p0_: Calling COMP_POLY");
   COMP_POLY(argc, Argv, argk);
 }
 static void cf_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
@@ -468,9 +459,6 @@ static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_
 }
 int IDL_Load(void)
 {
-  info("HERE");
-#define entry(name) {(IDL_SYSRTN_GENERIC) name, #name, 3, 4, 0, 0}
-
   static IDL_SYSFUN_DEF2 pro_def[] = {
       {(IDL_SYSRTN_GENERIC) COMP_POLY, "COMP_POLY", 3, 4, 0, 0},
       {(IDL_SYSRTN_GENERIC) COMP_GAUSS, "COMP_GAUSS", 3, 4, 0, 0},
