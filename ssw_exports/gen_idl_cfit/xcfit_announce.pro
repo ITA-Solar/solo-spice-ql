@@ -36,7 +36,9 @@ FUNCTION xcfit_announce_text
   ; NEWS:
   ;
   ; XCFIT_BLOCK will now adjust the size of the plot and image windows based
-  ; on your screen size.
+  ; on your screen size. It has also gotten a lot faster - in fact about
+  ; twice as fast ASSUMING YOU HAVE ALSO INSTALLED THE CFIT DLM, see
+  ; $SSW/gen/dlm/AAA-README.txt
   ;
   ; And you can now navigate from pixel to pixel using arrow keys! The
   ; movement direction inside the data cubes is given by the dimensions
@@ -65,9 +67,7 @@ FUNCTION xcfit_announce_show_it, text, once_key = once_key
   ; catch, err
   ; IF err NE 0 THEN return, 1
 
-  IF n_elements(once_texts) EQ 0 THEN BEGIN
-    once_texts = !null
-  END
+  IF n_elements(once_texts) EQ 0 THEN once_texts = !null
 
   IF NOT keyword_set(once_key) THEN return, 1
 
@@ -91,8 +91,7 @@ FUNCTION xcfit_announce_show_it, text, once_key = once_key
   return, 1
 END
 
-PRO xcfit_announce, text, once_key = once_key
-  IF n_elements(text) EQ 0 THEN text = xcfit_announce_text()
+PRO xcfit_announce_widget, text, once_key = once_key
   IF NOT xcfit_announce_show_it(text, once_key = once_key) THEN return
   ; Build widget
   base = widget_base(/column, xoffset = 150, yoffset = 150)
@@ -103,5 +102,22 @@ PRO xcfit_announce, text, once_key = once_key
   xmanager, 'XCFIT_ANNOUNCE', base
 END
 
-xcfit_announce, once_key = 'xcfit_announce_text2'
+PRO xcfit_announce, help=help
+  ; Main announcement:
+  ;
+  once_key = keyword_set(help) ? !null : "XCFIT_BLOCK V2"
+  text = xcfit_announce_text()
+  xcfit_announce_widget, text, once_key=once_key
+  
+  help, /dlm, out=out
+  installed = grep("CFIT - DLM", out)
+  IF installed[0] NE "" THEN return
+  text = ["NOTE: You do not have the CFIT DLM installed", $
+          "", $
+          "Installing it will make XCFIT_BLOCK about 30% faster", $
+          "", $
+          "See $SSW/gen/dlm/AAA-README.txt for instructions on", $
+          "how to install it. Good luck :)" $
+         ]
+  xcfit_announce_widget, text, once_key="CFIT DLM"
 END
