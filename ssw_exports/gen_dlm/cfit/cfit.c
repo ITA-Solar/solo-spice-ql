@@ -63,6 +63,7 @@ void make_pder_array(IDL_VPTR x_vptr, IDL_VPTR a_vptr, IDL_VPTR pder)
 /*; Use         : COMP_POLY,X,A,F [,PDER]*/
 static void COMP_POLY(int argc, IDL_VPTR Argv[], char *argk)
 {
+  info("COMP_POLY: Compiling polynomial coefficients to evaluate polynomial");
   check_numeric_array_params(argc, Argv);
   IDL_VPTR x_vptr = IDL_CvtDbl(1, Argv);
   IDL_VPTR a_vptr = IDL_CvtDbl(1, Argv + 1);
@@ -72,6 +73,7 @@ static void COMP_POLY(int argc, IDL_VPTR Argv[], char *argk)
 
   make_arr_0_from_template(x_vptr, f_vptr);
 
+  int degree = a_vptr->value.arr->n_elts - 1;
   double *x = (void *) x_vptr->value.arr->data;
   double *a = (void *) a_vptr->value.arr->data;
   double *f = (void *) f_vptr->value.arr->data;
@@ -85,7 +87,7 @@ static void COMP_POLY(int argc, IDL_VPTR Argv[], char *argk)
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
   for (IDL_MEMINT ix = 0; ix < x_vptr->value.arr->n_elts; ix++) {
     f[ix] = 0.0;
-    for (IDL_MEMINT aix = 0; aix < a_vptr->value.arr->n_elts; aix++) {
+    for (IDL_MEMINT aix = 0; aix <= degree; aix++) {
       f[ix] += a[aix] * pow(x[ix], aix);
       if (pder_vptr) {
         // Partial derivative of f with respect to coefficient a[aix]:
@@ -475,26 +477,26 @@ int IDL_Load(void)
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
       {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
-      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+       "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
   };
 
   return IDL_SysRtnAdd(pro_def, FALSE, 22);
