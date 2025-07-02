@@ -7,7 +7,8 @@ FUNCTION xcfit_announce_text
   ; ***********************************************************************
   ;
   ; First: if you experience problems with XCFIT_BLOCK, send an email to
-  ; prits-group@astro.uio.no. This message
+  ; prits-group@astro.uio.no. This message is meant to be shown only
+  ; once, but can be displayed again with "xcfit_block,/help"
   ;
   ; For new users (existing users look below for news)
   ;
@@ -37,20 +38,18 @@ FUNCTION xcfit_announce_text
   ; XCFIT_BLOCK will now adjust the size of the plot and image windows based
   ; on your screen size.
   ;
-  ; You can now navigate from pixel to pixel using arrow keys! The
+  ; And you can now navigate from pixel to pixel using arrow keys! The
   ; movement direction inside the data cubes is given by the dimensions
   ; displayed in the "currently focused data cube". The currently focused
-  ; data cube is indicated with a yellow header.
-  ;
-  ; The currently focused data cube is the one where the image has been
-  ; clicked last. I.e., you switch by clicking on the image.
+  ; data cube is indicated with a yellow header, and is the one with the
+  ; image that was clicked last. I.e., you switch by clicking on the image.
   ;
   ; Sometimes (like when pressing certain buttons) the keyboard focus
   ; disappears from the hidden text widget that captures the arrow key clicks.
   ; This is fixed by clicking a data image again.
   ;
-  ; In some situations, XCFIT_BLOCK will erroneously sense certain mouse
-  ; movements from other windows even when the application window does
+  ; In some situations, XCFIT_BLOCK will erroneously sense some keyboard
+  ; events from other windows even when the application window does
   ; not have input focus. No idea why...
   ; -
   txt = strmid(txt, 3, 1000)
