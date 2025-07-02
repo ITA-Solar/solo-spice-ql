@@ -323,6 +323,10 @@ static void cf_Ng_p0_(int argc, IDL_VPTR Argv[], int Ngauss)
   IDL_DELTMP(a_vptr);
 }
 
+static void cf_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 0); // Call with Ngauss = 0
+}
 static void cf_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
 {
   cf_Ng_p0_(argc, Argv, 1); // Call with Ngauss = 1
