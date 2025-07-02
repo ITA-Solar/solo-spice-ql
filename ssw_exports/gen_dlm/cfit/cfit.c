@@ -88,7 +88,7 @@ static void COMP_POLY(int argc, IDL_VPTR Argv[], char *argk)
     for (IDL_MEMINT aix = 0; aix < a_vptr->value.arr->n_elts; aix++) {
       f[ix] += a[aix] * pow(x[ix], aix);
       if (pder_vptr) {
-        // \frac{\partial}{\partial a[aix]} a[aix] * pow(...) = pow(...)
+        // Partial derivative of f with respect to coefficient a[aix]:
         pder[ix + aix * Nx] = pow(x[ix], aix);
       }
     }
@@ -401,7 +401,50 @@ static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Ar
 {
   cf_Ng_p0_(argc, Argv, 20); // Call with Ngauss = 14
 }
-
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 20); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 21); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 22); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 23); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 24); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 25); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 26); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 27); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 28); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 29); // Call with Ngauss = 14
+}
+static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+{
+  cf_Ng_p0_(argc, Argv, 30); // Call with Ngauss = 14
+}
 int IDL_Load(void)
 {
   static IDL_SYSFUN_DEF2 pro_def[] = {
@@ -432,6 +475,26 @@ int IDL_Load(void)
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
       {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      // {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      //  "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
   };
 
   return IDL_SysRtnAdd(pro_def, FALSE, 22);
