@@ -32,7 +32,7 @@
 ; Modified    : Version 1, SVHH, 30. June 2025
 ;
 ; Version     : 1
-; $Id: 2025-07-01 18:16 CEST $
+; $Id: 2025-07-03 18:11 CEST $
 ;-
 
 PRO user_preferences, key, value, set = set, get = get
@@ -61,9 +61,9 @@ PRO user_preferences, key, value, set = set, get = get
     message, /info, "ERROR: user_preferences failed with error code: ", err
     return
   END
-
-  path = [getenv("HOME"), '.idl', pref_get("IDL_PREF_DIR"), "user_preferences.sav"]
-  savefile = strjoin(path, path_sep())
+  
+  file_mkdir, !make_dll.compile_directory
+  savefile = !make_dll.compile_directory + path_sep() + ".." + path_sep() + "user_preferences.sav"
   IF file_test(savefile) EQ 0 THEN BEGIN
     preferences = hash()
     save, preferences, filename = savefile
