@@ -34,7 +34,9 @@ PRO load_gen_dlms, redo = redo, retry = retry, test_failure = test_failure
     END
 
     IF tried_gcc THEN BEGIN
-      box_message, ["ERROR LOADING DLMs from $SSW/gen/dlm", "Please see $SSW/gen/dlm/AAA-README.txt for instructions"]
+      box_message, ["ERROR LOADING DLMs from $SSW/gen/dlm", $
+        "Please see $SSW/gen/dlm/AAA-README.txt for instructions", $
+        "Do you have a C compiler installed? Native or at least gcc?"]
       return
     END
 
@@ -86,8 +88,8 @@ PRO load_gen_dlms_test
   ;
   IF load_gen_dlms_loaded() THEN BEGIN
     print
-    box_message, "DLMs loaded already - RESTART IDL"
-    message, "DLM was loaded before tests - RESTART IDL"
+    box_message, "DLMs already loaded, can't test - RESTART IDL"
+    message, "DLMs already loaded, can't test - RESTART IDL"
   END
 
   box_message, "Testing load_gen_dlms"
