@@ -11,14 +11,11 @@ PRO load_gen_dlms, redo = redo, retry = retry, test_failure = test_failure
   ; Ok so we will try:
   loaded = 0
 
-  ; First attempt, o3_flag will be set
-  ; Second attempt, o3_flag not set
-  ; Third attempt, o3_flag not set and cc = "gcc ..." (including -O3)
-
   cc = !make_dll.cc
   tried_gcc = 0
   o3_flag = "-O3"
 
+  TRY_NATIVE_COMPILER_WITH_O3_FLAG:
   TRY_NATIVE_COMPILER_WITHOUT_O3_FLAG:
   TRY_WITH_GCC:
 
