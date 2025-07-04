@@ -288,6 +288,94 @@ static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
   }
 }
 
+// Non-IDL-callable, used to set up calls to COMP_POLY (which is callable)
+// *a points to first param (offset has been applied)
+// *pder points to first "row" of pders for for our params (offset has been applied)
+static void cf_polyN(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder, int degree)
+{
+  double *f = (void *) f_vptr->value.arr->data;
+  IDL_VPTR comp_f_vptr = IDL_Gettmp(); // For receiving result f from component
+  IDL_VPTR comp_pder_vptr = pder ? IDL_Gettmp() : NULL; // For receiving pder from component
+  IDL_VPTR comp_a_vptr = IDL_Gettmp(); // For gauss params
+
+  double *comp_a = make_a_param_vector(comp_a_vptr, degree + 1);
+
+  for (int i = 0; i <= degree; i++) {
+    comp_a[i] = a[i]; // Copy coefficients for polynomial
+  }
+
+  IDL_VPTR comp_args[4]; // For sending args to component
+  comp_args[0] = x_vptr; // Input array
+  comp_args[1] = comp_a_vptr; // Coefficients for polynomial
+  comp_args[2] = comp_f_vptr; // Output array for polynomial
+  comp_args[3] = comp_pder_vptr; // Partial derivatives for polynomial, NULL or undef. temp. var
+  int argc = pder ? 4 : 3; // 3 or 4 args to COMP_POLY
+  COMP_POLY(argc, comp_args, NULL);
+
+  // Copy component result:
+  double *comp_f = (void *) comp_f_vptr->value.arr->data;
+  IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
+  for (int i = 0; i < Nx; i++) {
+    f[i] += comp_f[i];
+  }
+
+  // Copy partial derivatives from comp_gauss to our pder
+  // Our pder = array[Nx,  Na] and all pder[*,i] are consecutive,
+  // i.e....
+  //   comp_pder = array[Nx, cNa] and cNa = 3 (comp. has 3 parms)
+  if (pder) {
+    double *comp_pder = (void *) comp_pder_vptr->value.arr->data;
+    for (int param = 0; param <= degree; param++) {
+      for (int ix = 0; ix < Nx; ix++) {
+        pder[ix + param * Nx] = comp_pder[ix + param * Nx];
+      }
+    }
+  }
+
+  IDL_DELTMP(comp_a_vptr);
+  IDL_DELTMP(comp_f_vptr);
+  if (comp_pder_vptr) {
+    IDL_DELTMP(comp_pder_vptr);
+  }
+}
+
+// Non-IDL-callable, used to set up calls to N * cf_gauss and cf_polyN (which is callable)
+static void cf_Ng_pN(int argc, IDL_VPTR Argv[], int Ngauss, int degree)
+{
+  char msg[256];
+  check_numeric_array_params(argc, Argv);
+
+  IDL_VPTR x_vptr = IDL_CvtDbl(1, Argv);
+  IDL_VPTR a_vptr = IDL_CvtDbl(1, Argv + 1);
+  IDL_VPTR f_vptr = Argv[2]; /* Pointer to var to store output */
+  IDL_VPTR pder_vptr = argc > 3 ? Argv[3] : NULL; // Partial derivatives, optional
+
+  make_arr_0_from_template(x_vptr, f_vptr); // Also permanent, we'll return it
+
+  double *a = (void *) a_vptr->value.arr->data;
+  double *pder = NULL;
+
+  if (pder_vptr) {
+    make_pder_array(x_vptr, a_vptr, pder_vptr);
+    pder = (void *) pder_vptr->value.arr->data;
+  }
+
+  IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
+  for (int i = 0; i < Ngauss; i++) {
+    cf_gauss(x_vptr, a, f_vptr, pder);
+    a += 3;
+    pder = pder ? pder + 3 * Nx : NULL;
+  }
+
+  char IDL_MSG_BUFFER[256];
+  int params_used = Ngauss * 3;
+  cf_polyN(x_vptr, a, f_vptr, pder, degree);
+
+  IDL_DELTMP(x_vptr);
+  IDL_DELTMP(a_vptr);
+}
+
+// Non-IDL-callable, used to set up calls to N * cf_gauss and cf_polyN (which is callable)
 static void cf_Ng_p0(int argc, IDL_VPTR Argv[], int Ngauss)
 {
   char msg[256];
@@ -317,8 +405,7 @@ static void cf_Ng_p0(int argc, IDL_VPTR Argv[], int Ngauss)
 
   char IDL_MSG_BUFFER[256];
   int params_used = Ngauss * 3;
-  int degree = a_vptr->value.arr->n_elts - params_used - 1;
-  cf_poly0(x_vptr, a, f_vptr, pder);
+  cf_polyN(x_vptr, a, f_vptr, pder, 0);
 
   IDL_DELTMP(x_vptr);
   IDL_DELTMP(a_vptr);
@@ -334,7 +421,7 @@ static void CF_P0_(int argc, IDL_VPTR Argv[], char *argk)
 }
 static void CF_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0(argc, Argv, 1);
+  cf_Ng_pN(argc, Argv, 1, 0);
 }
 static void CF_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
