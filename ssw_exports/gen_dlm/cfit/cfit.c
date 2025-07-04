@@ -56,6 +56,14 @@ void make_pder_array(IDL_VPTR x_vptr, IDL_VPTR a_vptr, IDL_VPTR pder)
   }
 }
 
+double *make_a_param_vector(IDL_VPTR vptr, IDL_LONG64 n_elts)
+{
+  IDL_VPTR tmp;
+  IDL_MakeTempArray(IDL_TYP_DOUBLE, 1, &n_elts, IDL_ARR_INI_NOP, &tmp);
+  IDL_VarCopy(tmp, vptr);
+  return (double *) vptr->value.arr->data;
+}
+
 // ****************************************************************************************************
 // ******************************************* COMP_POLY **********************************************
 // ****************************************************************************************************
@@ -179,14 +187,6 @@ oplot,x,pder[*,1]/10.
 oplot,x,pder[*,2]/20.
 */
 
-double *make_a_vector(IDL_VPTR vptr, IDL_LONG64 n_elts)
-{
-  IDL_VPTR tmp;
-  IDL_MakeTempArray(IDL_TYP_DOUBLE, 1, &n_elts, IDL_ARR_INI_NOP, &tmp);
-  IDL_VarCopy(tmp, vptr);
-  return (double *) vptr->value.arr->data;
-}
-
 // Non-IDL-callable, used to set up calls to COMP_GAUSS (which is callable)
 // *a points to first param (offset has been applied)
 // *pder points to first "row" of pders for for our params (offset has been applied)
@@ -198,7 +198,7 @@ static void cf_gauss(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
   IDL_VPTR comp_pder_vptr = pder ? IDL_Gettmp() : NULL; // For receiving pder from component
   IDL_VPTR comp_a_vptr = IDL_Gettmp(); // For gauss params
 
-  double *comp_a = make_a_vector(comp_a_vptr, 3); // a0, a1, a2
+  double *comp_a = make_a_param_vector(comp_a_vptr, 3); // a0, a1, a2
   comp_a[0] = a[0]; // a0 is the height
   comp_a[1] = a[1]; // a1 is the center
   comp_a[2] = a[2]; // a2 is the width
@@ -248,7 +248,7 @@ static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
   IDL_VPTR comp_pder_vptr = pder ? IDL_Gettmp() : NULL; // For receiving pder from component
   IDL_VPTR comp_a_vptr = IDL_Gettmp(); // For gauss params
 
-  double *comp_a = make_a_vector(comp_a_vptr, 1);
+  double *comp_a = make_a_param_vector(comp_a_vptr, 1);
   // Only zero-order polynomials so far
   comp_a[0] = a[0];
   //
