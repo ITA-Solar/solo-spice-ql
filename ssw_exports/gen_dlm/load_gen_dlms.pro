@@ -127,6 +127,8 @@ PRO load_gen_dlms_test
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-  load_gen_dlms_test
+  ; load_gen_dlms_test
+  load_gen_dlms
+  load_gen_dlms_func_test
 END
 END

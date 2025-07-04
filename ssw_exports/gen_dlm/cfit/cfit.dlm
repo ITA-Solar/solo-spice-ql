@@ -1,6 +1,6 @@
 # $Id:$
 MODULE CFIT
-DESCRIPTION DLM implementation of comp_poly.pro
+DESCRIPTION DLM implementation of cfit functions
 VERSION $Revision: 1.0$
 BUILD_DATE $Date: 2025/06/17 $
 SOURCE S.V.H.HAUGAN

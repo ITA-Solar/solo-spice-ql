@@ -25,7 +25,6 @@ pro load_gen_dlms_func_test
   window,3
   plot,x,y, title='cf_g_g_g_g_g_p1_', xstyle=3, ystyle=3
 end
-
-  load_gen_dlms,/redo
-load_gen_dlms_func_test
+message,/info,"Can't run test here, dlms must be loaded before compilation"
+message,/info,"or else cf_g_g_g_g_g_p1_ will not be defined, huh???"
 end
