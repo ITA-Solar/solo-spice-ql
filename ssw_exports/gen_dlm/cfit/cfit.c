@@ -411,18 +411,27 @@ static void cf_Ng_p0(int argc, IDL_VPTR Argv[], int Ngauss)
   IDL_DELTMP(a_vptr);
 }
 
-static void CF_G_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  COMP_GAUSS(argc, Argv, argk);
-}
-static void CF_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  COMP_POLY(argc, Argv, argk);
-}
-static void CF_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_pN(argc, Argv, 1, 0);
-}
+#define FUNC(name, Ng, degree)                                                                                         \
+  static void name(int argc, IDL_VPTR Argv[], char *argk)                                                              \
+  {                                                                                                                    \
+    cf_Ng_pN(argc, Argv, Ng, degree);                                                                                  \
+  }
+
+// static void CF_G_(int argc, IDL_VPTR Argv[], char *argk)
+// {
+//   cf_Ng_pN(argc, Argv, 1, -1);
+// }
+FUNC(CF_G_, 1, -1);
+// static void CF_P0_(int argc, IDL_VPTR Argv[], char *argk)
+// {
+//   cf_Ng_pN(argc, Argv, 0, 0);
+// }
+FUNC(CF_P0_, 0, 0);
+// static void CF_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
+// {
+//   cf_Ng_pN(argc, Argv, 1, 0);
+// }
+FUNC(CF_G_P0_, 1, 0);
 static void CF_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
   cf_Ng_p0(argc, Argv, 2);
