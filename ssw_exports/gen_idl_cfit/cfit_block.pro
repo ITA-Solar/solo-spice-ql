@@ -286,10 +286,9 @@ END
 PRO cfit_block, lambda, data, weights, fit, missing, result, residual, include, const, double = double, $
   use_result = use_result, quiet = quiet, pct_slider_id = pct_slider_id, x_face = x_face, smart = smart, $
   analysis = ana, make_sigma = make_sigma, sigma = sigma, error_only = error_only, fill_only = fill_only
-
-
+  
   COMMON load_gen_dlms, gen_dlms_loaded
-  IF n_elements(gen_dlms_loaded) EQ 0 THEN load_gen_dlms
+  IF n_elements(gen_dlms_loaded) EQ 0 THEN cfit_block_load_gen_dlms
   ;
   IF NOT exist(ana) THEN BEGIN
     IF n_params() LT 7 THEN BEGIN

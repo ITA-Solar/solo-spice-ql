@@ -1802,6 +1802,9 @@ PRO xcfit_block, lambda, data, weights, fit, missing, result, residual, include,
   xcfit_announce, help=help
   IF keyword_set(help) THEN return
 
+  COMMON load_gen_dlms, gen_dlms_loaded
+  IF n_elements(gen_dlms_loaded) EQ 0 THEN load_gen_dlms
+
   default, widget_size_scaling, xcfit_block_default_widget_scaling()
   ; on_error,2
 
