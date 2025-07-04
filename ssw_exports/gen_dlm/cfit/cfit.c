@@ -417,141 +417,71 @@ static void cf_Ng_p0(int argc, IDL_VPTR Argv[], int Ngauss)
     cf_Ng_pN(argc, Argv, Ng, degree);                                                                                  \
   }
 
-// static void CF_G_(int argc, IDL_VPTR Argv[], char *argk)
-// {
-//   cf_Ng_pN(argc, Argv, 1, -1);
-// }
 FUNC(CF_G_, 1, -1);
-// static void CF_P0_(int argc, IDL_VPTR Argv[], char *argk)
-// {
-//   cf_Ng_pN(argc, Argv, 0, 0);
-// }
 FUNC(CF_P0_, 0, 0);
-// static void CF_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-// {
-//   cf_Ng_pN(argc, Argv, 1, 0);
-// }
 FUNC(CF_G_P0_, 1, 0);
-static void CF_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 2);
-}
-static void CF_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 3);
-}
-static void CF_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 4);
-}
-static void CF_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 5);
-}
-static void CF_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 6);
-}
-static void CF_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 7);
-}
-static void CF_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 8);
-}
-static void CF_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 9);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 10);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 11);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 12);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 13);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 14);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 15);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 16);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 17);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 18);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 19);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 20);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 21);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 22);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 23);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 24);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 25);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 26);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 27);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 28);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 29);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 30);
-}
-static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
-{
-  cf_Ng_p0(argc, Argv, 31);
-}
+FUNC(CF_G_G_P0_, 2, 0);
+FUNC(CF_G_G_G_P0_, 3, 0);
+FUNC(CF_G_G_G_G_P0_, 4, 0);
+FUNC(CF_G_G_G_G_G_P0_, 5, 0);
+FUNC(CF_G_G_G_G_G_G_P0_, 6, 0);
+FUNC(CF_G_G_G_G_G_G_G_P0_, 7, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_P0_, 8, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_P0_, 9, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_P0_, 10, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_P0_, 11, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 12, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 13, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 14, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 15, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 16, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 17, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 18, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 19, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 20, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 21, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 22, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 23, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 24, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 25, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 26, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 27, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 28, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 29, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 30, 0);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, 31, 0);
+FUNC(CF_P1_, 0, 1);
+FUNC(CF_G_P1_, 1, 1);
+FUNC(CF_G_G_P1_, 2, 1);
+FUNC(CF_G_G_G_P1_, 3, 1);
+FUNC(CF_G_G_G_G_P1_, 4, 1);
+FUNC(CF_G_G_G_G_G_P1_, 5, 1);
+FUNC(CF_G_G_G_G_G_G_P1_, 6, 1);
+FUNC(CF_G_G_G_G_G_G_G_P1_, 7, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_P1_, 8, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_P1_, 9, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_P1_, 10, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_P1_, 11, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 12, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 13, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 14, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 15, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 16, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 17, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 18, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 19, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 20, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 21, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 22, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 23, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 24, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 25, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 26, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 27, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 28, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 29, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 30, 1);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 31, 1);
 
 #define ENTRY(name) {(IDL_SYSRTN_GENERIC) name, #name, 3, 4, 0, 0}
 
@@ -593,7 +523,39 @@ int IDL_Load(void)
       ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_),
       ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_),
       ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_),
+      ENTRY(CF_P1_),
+      ENTRY(CF_G_P1_),
+      ENTRY(CF_G_G_P1_),
+      ENTRY(CF_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
   };
 
-  return IDL_SysRtnAdd(pro_def, FALSE, 35);
+  return IDL_SysRtnAdd(pro_def, FALSE, sizeof(pro_def) / sizeof(IDL_SYSFUN_DEF2));
 }

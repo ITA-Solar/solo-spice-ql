@@ -1,5 +1,4 @@
 pro load_gen_dlms_func_test
-  load_gen_dlms,/redo
   x=findgen(100)/20 - 2.5
 
   
@@ -20,12 +19,13 @@ pro load_gen_dlms_func_test
   a = [a, 1, -1, 0.2]
   a = [a, 1, 0, 0.2]
   a = [a, 1, 1, 0.2]
-  a = [a, 1, 1, 0.2]
+  a = [a, 1, 2, 0.2]
   a = [a, 1,1]
   cf_g_g_g_g_g_p1_,x,a,y
   window,3
-  plot,x,y, title='cf_g_g_g_g_g_p1', xstyle=3, ystyle=3
+  plot,x,y, title='cf_g_g_g_g_g_p1_', xstyle=3, ystyle=3
 end
 
+  load_gen_dlms,/redo
 load_gen_dlms_func_test
 end
