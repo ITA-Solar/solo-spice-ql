@@ -288,7 +288,7 @@ static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
   }
 }
 
-static void cf_Ng_p0_(int argc, IDL_VPTR Argv[], int Ngauss)
+static void cf_Ng_p0(int argc, IDL_VPTR Argv[], int Ngauss)
 {
   char msg[256];
   check_numeric_array_params(argc, Argv);
@@ -324,192 +324,191 @@ static void cf_Ng_p0_(int argc, IDL_VPTR Argv[], int Ngauss)
   IDL_DELTMP(a_vptr);
 }
 
-static void cf_g_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  // Call cf_Ng_p0_ with Ngauss = 1
   COMP_GAUSS(argc, Argv, argk);
 }
-static void cf_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
   COMP_POLY(argc, Argv, argk);
 }
-static void cf_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 1);
+  cf_Ng_p0(argc, Argv, 1);
 }
-static void cf_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 2);
+  cf_Ng_p0(argc, Argv, 2);
 }
-static void cf_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 3);
+  cf_Ng_p0(argc, Argv, 3);
 }
-static void cf_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 4);
+  cf_Ng_p0(argc, Argv, 4);
 }
-static void cf_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 5);
+  cf_Ng_p0(argc, Argv, 5);
 }
-static void cf_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 6);
+  cf_Ng_p0(argc, Argv, 6);
 }
-static void cf_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 7);
+  cf_Ng_p0(argc, Argv, 7);
 }
-static void cf_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 8);
+  cf_Ng_p0(argc, Argv, 8);
 }
-static void cf_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 9);
+  cf_Ng_p0(argc, Argv, 9);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 10);
+  cf_Ng_p0(argc, Argv, 10);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 11);
+  cf_Ng_p0(argc, Argv, 11);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 12);
+  cf_Ng_p0(argc, Argv, 12);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 13);
+  cf_Ng_p0(argc, Argv, 13);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 14);
+  cf_Ng_p0(argc, Argv, 14);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 15);
+  cf_Ng_p0(argc, Argv, 15);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 16);
+  cf_Ng_p0(argc, Argv, 16);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 17);
+  cf_Ng_p0(argc, Argv, 17);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 18);
+  cf_Ng_p0(argc, Argv, 18);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 19);
+  cf_Ng_p0(argc, Argv, 19);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 20);
+  cf_Ng_p0(argc, Argv, 20);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 21);
+  cf_Ng_p0(argc, Argv, 21);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 22);
+  cf_Ng_p0(argc, Argv, 22);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 23);
+  cf_Ng_p0(argc, Argv, 23);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 24);
+  cf_Ng_p0(argc, Argv, 24);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 25);
+  cf_Ng_p0(argc, Argv, 25);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 26);
+  cf_Ng_p0(argc, Argv, 26);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 27);
+  cf_Ng_p0(argc, Argv, 27);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 28);
+  cf_Ng_p0(argc, Argv, 28);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 29);
+  cf_Ng_p0(argc, Argv, 29);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 30);
+  cf_Ng_p0(argc, Argv, 30);
 }
-static void cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_(int argc, IDL_VPTR Argv[], char *argk)
+static void CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_(int argc, IDL_VPTR Argv[], char *argk)
 {
-  cf_Ng_p0_(argc, Argv, 31);
+  cf_Ng_p0(argc, Argv, 31);
 }
 int IDL_Load(void)
 {
   static IDL_SYSFUN_DEF2 pro_def[] = {
       {(IDL_SYSRTN_GENERIC) COMP_POLY, "COMP_POLY", 3, 4, 0, 0},
       {(IDL_SYSRTN_GENERIC) COMP_GAUSS, "COMP_GAUSS", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_, "CF_G_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_p0_, "CF_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_p0_, "CF_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_p0_, "CF_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_p0_, "CF_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_p0_, "CF_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_p0_, "CF_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0,
+      {(IDL_SYSRTN_GENERIC) CF_G_, "CF_G_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_P0_, "CF_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_P0_, "CF_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_P0_, "CF_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_P0_, "CF_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_P0_, "CF_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_P0_, "CF_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0,
        0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4,
        0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_, "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3,
        4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
-      {(IDL_SYSRTN_GENERIC) cf_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_g_p0_,
+      {(IDL_SYSRTN_GENERIC) CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_,
        "CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P0_", 3, 4, 0, 0},
   };
 
