@@ -137,7 +137,8 @@ PRO load_gen_dlms_test
     box_message, "cfit.dlm not loaded after repeat call - OK"
     print, "."
   END ELSE BEGIN
-    box_message, "cfit.dlm was loaded after repeat call - NOT OK"
+     box_message, "cfit.dlm was loaded after repeat call - NOT OK"
+     box_message, "If the version has been updated (or not registered), do that first"
     message, "cfit.dlm was loaded after repeat call - NOT OK"
   END
 
@@ -156,8 +157,8 @@ PRO load_gen_dlms_test
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-  ; load_gen_dlms_test
+  load_gen_dlms_test
   load_gen_dlms
-  ; load_gen_dlms_func_test
+  load_gen_dlms_func_test
 END
 END
