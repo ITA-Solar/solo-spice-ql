@@ -108,16 +108,18 @@ PRO xcfit_announce, help=help
   once_key = keyword_set(help) ? !null : "XCFIT_BLOCK V2"
   text = xcfit_announce_text()
   xcfit_announce_widget, text, once_key=once_key
-  
-  help, /dlm, out=out
-  installed = grep("CFIT - DLM", out)
-  IF installed[0] NE "" THEN return
-  text = ["NOTE: You do not have the CFIT DLM installed", $
-          "", $
-          "Installing it will make XCFIT_BLOCK about 30% faster", $
+
+  help, /dlm, 'cfit', out=out
+  IF n_elements(out) GT 1 THEN return ; All ok
+
+  text = ["NOTE: You do not have the CFIT DLM installed, and", $
+          "an automated attempt to install it seems to have failed.", $
+          "",$
+          "Without the CFIT DLM, line fitting is 30% slower.", $
           "", $
           "See $SSW/gen/dlm/AAA-README.txt for instructions on", $
-          "how to install it. Good luck :)" $
+          "how to install it manually. Contact prits-group@astro.uio.no", $
+          "if you have problems with the installation" $
          ]
   xcfit_announce_widget, text, once_key="CFIT DLM"
 END
