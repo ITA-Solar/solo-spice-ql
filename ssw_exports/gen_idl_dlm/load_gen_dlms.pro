@@ -1,15 +1,42 @@
-PRO load_gen_dlms, redo = redo, retry = retry, test_failure = test_failure
+
+
+
+function load_gen_dlms_version_file, version_filename
+  return, !make_dll.compile_directory + path_sep() + version_filename
+end
+
+function load_gen_dlms_must_update, version_filename
+  version_file = load_gen_dlms_version_file(version_filename)
+  must_update = ~file_test(version_file)
+  return, must_update
+end
+
+pro load_gen_dlms_touch_version_file, version_filename
+  version_file = load_gen_dlms_version_file(version_filename)
+  openw, lun, version_file, /get_lun
+  printf, lun, version_filename
+  close,lun
+  free_lun, lun
+end
+
+PRO load_gen_dlms, success=success, redo = redo, retry = retry, test_failure = test_failure
   COMPILE_OPT IDL3
   COMMON load_gen_dlms, loaded
 
+  ; If update not needed, can we short-circuit?
+  version="gen_idl_dlms_v1.01"
+  must_update = load_gen_dlms_must_update(version)
+  reuse_existing = ~must_update
+ 
   prior_failure = n_elements(loaded) EQ 1 && loaded EQ 0
-  IF prior_failure AND NOT keyword_set(retry) THEN return
+  IF NOT must_update AND prior_failure AND NOT keyword_set(retry) THEN return
 
   prior_success = n_elements(loaded) EQ 1 && loaded EQ 1
-  IF prior_success AND NOT keyword_set(redo) THEN return
+  IF NOT must_update AND prior_success AND NOT keyword_set(redo) THEN return
 
   ; Ok so we will try:
   loaded = 0
+  success = 0
 
   cc = !make_dll.cc
   tried_gcc = 0
@@ -57,7 +84,7 @@ PRO load_gen_dlms, redo = redo, retry = retry, test_failure = test_failure
 
     box_message, "LOAD_GEN_DLMS trying MAKE_DLL with O3_FLAG=" + o3_flag + " and CC=" + cc
     make_dll, dlm, "IDL_Load", input_directory = source_dir, output_directory = !make_dll.compile_directory, $
-      /nocleanup, EXTRA_CFLAGS = o3_flag, cc = cc
+      EXTRA_CFLAGS = o3_flag, cc = cc, reuse_existing = reuse_existing
 
     IF keyword_set(test_failure) THEN BEGIN
       IF o3_flag THEN message, "Simulating -O3 failure" ; => Catch
@@ -68,6 +95,8 @@ PRO load_gen_dlms, redo = redo, retry = retry, test_failure = test_failure
     DLM_LOAD, !make_dll.compile_directory + path_sep() + dlm + ".dlm"
   END
   loaded = 1
+  success = 1
+  load_gen_dlms_touch_version_file, version
 END
 
 FUNCTION load_gen_dlms_loaded
@@ -129,6 +158,6 @@ END
 IF getenv("USER") EQ "steinhh" THEN BEGIN
   ; load_gen_dlms_test
   load_gen_dlms
-  load_gen_dlms_func_test
+  ; load_gen_dlms_func_test
 END
 END
