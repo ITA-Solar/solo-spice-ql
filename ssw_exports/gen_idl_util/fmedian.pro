@@ -89,10 +89,22 @@
 ;               Modified, 14-Feb-07, Zarro (ADNET) - commented out !DEBUG
 ;               Version 4, S.V.H.Haugan, UiO, 9 January 2008
 ;                       Added ONLY_MISSING keyword, passed on to fmedian_slow
+;               Version 5, Stein Haugan, ITA/UiO 7 July 2025
+;                       Calling LOAD_GEN_DLMS when appropriate to try to get
+;                       the DLM version (effective next invocation)
 ;-            
           
 ;       ON_ERROR,2
 ;       IF !DEBUG NE 0 THEN ON_ERROR,0
+
+;  Try ONCE (loaded = undefined) to get the DLM version instead
+        COMMON load_gen_dlms, loaded
+        if n_elements(loaded) eq 0 then begin
+          box_message,["FMEDIAN.PRO is very slow, trying once to load the DLM version.",$
+                       "This will take a few seconds, but will speed up subsequent calls.",$
+                       "If the DLM version fails to load, see AAA-README.txt in $SSW/gen/dlm"]
+          load_gen_dlms
+        end
 ;
 ;  Check the number of dimensions.
 ;
