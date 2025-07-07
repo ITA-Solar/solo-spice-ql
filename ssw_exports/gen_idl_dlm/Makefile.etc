@@ -15,7 +15,5 @@ neat : clean
 .c.o:
 	$(CC) $(CFLAGS) $(X_CFLAGS) $*.c
 
-# We grep away confusing warnings about deprecated use of suppress,
-# applies only to Darwin builds
 .o.$(SO_EXT): 
 	$(LD) $(X_LD_FLAGS) -o $@ $?
