@@ -44,26 +44,21 @@ FUNCTION cw_keyboard_shortcuts_getv, id
   return, info
 END
 
-PRO cw_keyboard_shortcuts_setv, id, dummy
+PRO cw_keyboard_shortcuts_reset_state, id, dummy
   storage = widget_info(id, /child)
   widget_control, storage, get_uvalue = info
   widget_control, info.text_id, set_value = ['U', 'X', 'D']
   widget_control, info.text_id, set_text_select = [2, 1]
   widget_control, info.text_id, /input_focus
   ; Don't try this (messes up interaction w/other widgets):
+  ; Keep this note!
   ; widget_control, id, timer = 0.25
 END
 
 FUNCTION cw_keyboard_shortcuts_event, ev
-  ; Reset text widget first thing:
-  cw_keyboard_shortcuts_setv, ev.handler
+  cw_keyboard_shortcuts_reset_state, ev.handler
 
   type = tag_names(ev, /structure_name)
-
-  IF type EQ 'WIDGET_TIMER' THEN BEGIN
-    cw_keyboard_shortcuts_setv, ev.handler
-    return, 0
-  ENDIF
 
   ; Ignore anything but arrow keys for now
   IF type NE 'WIDGET_TEXT_SEL' THEN return, 0
@@ -75,6 +70,7 @@ FUNCTION cw_keyboard_shortcuts_event, ev
     3: dir = 'RIGHT'
     4: dir = 'RIGHT'
     5: dir = 'DOWN '
+    ELSE: return, 0
   END
   event = {cw_keyboard_shortcuts, $
     id: ev.handler, $
@@ -95,9 +91,9 @@ FUNCTION cw_keyboard_shortcuts, on_base, uvalue = uvalue
   my_base = widget_base(on_base, uvalue = uvalue, $
     frame = 0, xpad = 0, ypad = 0, scr_xsize = 1, scr_ysize = 1, xsize = 1, ysize = 1, $
     event_func = 'cw_keyboard_shortcuts_event', $
-    pro_set_value = 'cw_keyboard_shortcuts_setv', $
+    pro_set_value = 'cw_keyboard_shortcuts_reset_state', $
     func_get_value = 'cw_keyboard_shortcuts_getv', $
-    notify_realize = 'cw_keyboard_shortcuts_setv')
+    notify_realize = 'cw_keyboard_shortcuts_reset_state')
 
   text_id = widget_text(my_base, value = ['U', 'X', 'D'], /all_events, /editable, $
     xsize = 2, ysize = 3, uvalue = 'TEXT_FIELD')
