@@ -129,10 +129,16 @@ PRO load_gen_dlms, success = success, redo = redo, retry = retry, test_failure =
   COMMON load_gen_dlms, loaded
 
   prior_failure = n_elements(loaded) EQ 1 && loaded EQ 0
-  IF prior_failure AND NOT keyword_set(retry) THEN return
+  IF prior_failure AND NOT keyword_set(retry) THEN BEGIN
+    success = 0
+    return
+  END
 
   prior_success = n_elements(loaded) EQ 1 && loaded EQ 1
-  IF prior_success AND NOT keyword_set(redo) THEN return
+  IF prior_success AND NOT keyword_set(redo) THEN BEGIN
+    success = 1
+    return
+  END
 
   ; Ok so we will try:
   loaded = 0
