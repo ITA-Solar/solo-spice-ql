@@ -1,9 +1,17 @@
 Dynamically Loadable Modules (DLMs), or "plugins" for IDL
 *********************************************************
 
-NOTE: Using makefiles to install DLMs is outdated, use the
-LOAD_GEN_DLMS IDL routine instead. This material is hanging around in
-case of problems with IDL's own MAKE_DLL routine.
+NOTE: Although it doesn't hurt to follow these instructions, you
+should not need to do so if the IDL routine LOAD_GEN_DLMS succeeds.
+If that fails, the instructions below might help, but there is
+probably "something wrong". Maybe you don't have a compiler
+installed?
+
+Note that if you follow these instructions, LOAD_GEN_DLMS may still
+override the DLMs you compile and install here, if they have outdated
+versions compared to the ones in the SSW repository.
+
+*********************************************************
 
 DLMs are dynamically loadable modules that can be used to add native,
 compiled functions or procedures to  IDL.
