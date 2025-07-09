@@ -1798,8 +1798,7 @@ PRO xcfit_block, lambda, data, weights, fit, missing, result, residual, include,
   display_treshold = display_threshold, no_save_option = no_save_option, $
   signal_id = signal_id, modal = modal, image_dim = image_dim, $
   widget_size_scaling = widget_size_scaling, no_kill_requests = no_kill_requests, help = help
-  
-  xcfit_announce, help=help
+  xcfit_announce, help = help
   IF keyword_set(help) THEN return
 
   load_gen_dlms
