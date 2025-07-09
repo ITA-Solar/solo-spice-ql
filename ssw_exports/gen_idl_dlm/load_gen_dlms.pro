@@ -1,25 +1,13 @@
-; * User might not have compiler, so we can't rely on auto-making.
-; * I.e., distribute precompiled versions + Makefile
-;
-; Check presence & loading of both, and correct version:
-; cfit: "Version: 1.0,", goto next if ok
-; fmedian: "Version: $Revision: 1.0$", stop if ok
-;
-; DLM file MUST be copied into site/dlm, so it's possible to override any
-; copies in gen/idl/dlm (let's say there's a new architecture?)
-;
 ; * If we can pick up a site installation *and* it has the correct versions,
-; it takes precedence b/c it seems like the user knows what she/he is doing
+; that takes precedence b/c it seems like the user knows what she/he is doing
 ;
 ; * If not, we try the distribution version (which may or may not exist for
 ; this architecture!)
 ;
-; * If still no dice, we try compilation on the fly
+; * If still no dice, we try compilation on the fly. We reuse earlier compilation
+; unless /retry is set
 ;
-; * Assuming compilation worked, we *attempt* to put the result into the
-; site directory ($SSW/gen_dlm/!version.os/!version.arch)
-;
-FUNCTION load_gen_dlms_check_if_ok, dlm, version, distribution_path
+FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
   COMPILE_OPT IDL3
   ; Check presence (we'v already added fallback distrib. path to !dlm_path)
   help, /dlm, dlm, out = out
@@ -46,7 +34,7 @@ FUNCTION load_gen_dlms_check_if_ok, dlm, version, distribution_path
   return, !true
 END
 
-FUNCTION load_gen_dlms_find_dlms_to_do, dlms_to_check, versions
+FUNCTION lgdlms_find_dlms_to_do, dlms_to_check, versions
   COMPILE_OPT IDL3
   ; We add distribution DLM path at *end* of !dlm_path once to pick up
   ; first fall-back source right away
@@ -56,7 +44,7 @@ FUNCTION load_gen_dlms_find_dlms_to_do, dlms_to_check, versions
 
   lacking_dlms = []
   FOR i = 0, n_elements(dlms_to_check) - 1 DO BEGIN
-    IF NOT load_gen_dlms_check_if_ok(dlms_to_check[i], versions[i], distribution_path) THEN BEGIN
+    IF NOT lgdlms_check_if_ok(dlms_to_check[i], versions[i], distribution_path) THEN BEGIN
       print, "DLM " + dlms_to_check[i] + " not found or version mismatch"
       lacking_dlms = [lacking_dlms, dlms_to_check[i]]
     END
@@ -64,7 +52,7 @@ FUNCTION load_gen_dlms_find_dlms_to_do, dlms_to_check, versions
   return, lacking_dlms
 END
 
-PRO load_gen_dlms_try_single_compilation, dlm, cc = cc, o3_flag = o3_flag, $
+PRO lgdlms_try_single_compilation, dlm, cc = cc, o3_flag = o3_flag, $
   redo = redo, test_failure = test_failure, tried_gcc = tried_gcc
   ;
   source_dir = routine_dir() + "/" + dlm
@@ -86,7 +74,7 @@ PRO load_gen_dlms_try_single_compilation, dlm, cc = cc, o3_flag = o3_flag, $
   DLM_LOAD, !make_dll.compile_directory + "/" + dlm + ".dlm"
 END
 
-PRO load_gen_dlms_try_compilations, dlms_to_do, $
+PRO lgdlms_try_compilations, dlms_to_do, $
   success = success, redo = redo, test_failure = test_failure
   COMMON load_gen_dlms, loaded
 
@@ -128,7 +116,7 @@ PRO load_gen_dlms_try_compilations, dlms_to_do, $
   file_mkdir, !make_dll.compile_directory
 
   FOREACH dlm, dlms_to_do DO BEGIN
-    load_gen_dlms_try_single_compilation, dlm, cc = cc, o3_flag = o3_flag, test_failure = test_failure, redo = redo, tried_gcc = tried_gcc
+    lgdlms_try_single_compilation, dlm, cc = cc, o3_flag = o3_flag, test_failure = test_failure, redo = redo, tried_gcc = tried_gcc
   END
   loaded = 1
   success = 1
@@ -153,7 +141,7 @@ PRO load_gen_dlms, success = success, redo = redo, retry = retry, test_failure =
   dlms_to_check = ["cfit", "fmedian"]
   versions = ["1.0", "1.0"]
 
-  dlms_to_do = load_gen_dlms_find_dlms_to_do(dlms_to_check, versions)
+  dlms_to_do = lgdlms_find_dlms_to_do(dlms_to_check, versions)
 
   IF keyword_set(redo) THEN dlms_to_do = dlms_to_check
 
@@ -164,10 +152,10 @@ PRO load_gen_dlms, success = success, redo = redo, retry = retry, test_failure =
     return
   END
 
-  load_gen_dlms_try_compilations, dlms_to_do, redo = redo, success = success, test_failure = test_failure
+  lgdlms_try_compilations, dlms_to_do, redo = redo, success = success, test_failure = test_failure
 END
 
-FUNCTION load_gen_dlms_loaded
+FUNCTION lgdlms_loaded
   help, /dlm, "cfit", out = out1
   help, /dlm, "fmedian", out = out2
   return, n_elements(out1) GT 1 AND n_elements(out2) GT 1
@@ -176,11 +164,11 @@ END
 ;
 ; Tests:
 ;
-PRO load_gen_dlms_test
+PRO lgdlms_test
   ;
   ; Test if restart is needed for testing:
   ;
-  IF load_gen_dlms_loaded() THEN BEGIN
+  IF lgdlms_loaded() THEN BEGIN
     print
     box_message, "DLMs already loaded, can't test - RESTART IDL"
     message, "DLMs already loaded, can't test - RESTART IDL"
@@ -191,7 +179,7 @@ PRO load_gen_dlms_test
   ; Try failing (to ensure it does not load)
   ;
   load_gen_dlms, /test_failure
-  IF NOT load_gen_dlms_loaded() THEN BEGIN
+  IF NOT lgdlms_loaded() THEN BEGIN
     box_message, "cfit.dlm *not* loaded with /test_failure - OK"
     print
   END ELSE BEGIN
@@ -201,7 +189,7 @@ PRO load_gen_dlms_test
 
   ; Try loading after failure (should not load)
   load_gen_dlms
-  IF NOT load_gen_dlms_loaded() THEN BEGIN
+  IF NOT lgdlms_loaded() THEN BEGIN
     box_message, "cfit.dlm not loaded after repeat call - OK"
     print, "."
   END ELSE BEGIN
@@ -212,7 +200,7 @@ PRO load_gen_dlms_test
 
   ; Try loading with /retry (should load)
   load_gen_dlms, /retry
-  IF load_gen_dlms_loaded() THEN BEGIN
+  IF lgdlms_loaded() THEN BEGIN
     box_message, "cfit.dlm and fmedian.dlm loaded with /retry - OK"
     print
   END ELSE BEGIN
@@ -225,8 +213,8 @@ PRO load_gen_dlms_test
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-  load_gen_dlms_test
+  lgdlms_test
   load_gen_dlms
-  load_gen_dlms_func_test
+  lgdlms_func_test
 END
 END
