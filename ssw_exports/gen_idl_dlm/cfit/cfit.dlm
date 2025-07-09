@@ -1,4 +1,3 @@
-# $Id:$
 MODULE CFIT
 DESCRIPTION DLM implementation of cfit functions
 VERSION 1
