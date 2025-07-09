@@ -41,13 +41,13 @@ FUNCTION xcfit_announce_text
   ; data cube is indicated with a yellow header, and is the one with the
   ; image that was clicked last. I.e., you switch by clicking on the image.
   ;
-  ; 2. THE KEYBOARD FOCUS SOMETIMES GOES AWAY from the hidden text widget
+  ; 2. NOTE: XCFIT_BLOCK WILL SOMETIMES ERRONEOUSLY INTERFERE WITH KEYBOARD 
+  ; SELECTION IN OTHER WINDOWS. It can be very confusing, and the only way to 
+  ; stop the interference is to quit XCFIT_BLOCK. Sorry, no idea why this happens!
+  ;
+  ; 3. THE KEYBOARD FOCUS SOMETIMES GOES AWAY from the hidden text widget
   ; that captures the arrow key strokes. This is fixed by clicking a data
   ; image again.
-  ;
-  ; 3. In some situations, XCFIT_BLOCK will erroneously sense some keyboard
-  ; events from other windows even when the application window does
-  ; not have input focus. No idea why...
   ;
   ; 4. It has gotten A LOT FASTER - in fact about twice as fast ASSUMING
   ; YOU HAVE ALSO INSTALLED THE CFIT DLM. If it is not installed, an automatic
