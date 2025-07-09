@@ -1,12 +1,54 @@
-; * If we can pick up a site installation *and* it has the correct versions,
-; that takes precedence b/c it seems like the user knows what she/he is doing
+;+
+; Project     : GEN_DLMS
 ;
-; * If not, we try the distribution version (which may or may not exist for
-; this architecture!)
+; Name        : LOAD_GEN_DLMS
 ;
-; * If still no dice, we try compilation on the fly. We reuse earlier compilation
-; unless /retry is set
+; Purpose     : Load DLMs contained in $SSW/gen/idl/dlm
 ;
+; Explanation : DLMs need to be compiled, and this routine will try to do it
+;               automatically if needed.
+;
+;               * If we can pick up a site installation *and* it has the correct versions,
+;               that takes precedence b/c it seems like the user knows what she/he is doing
+;
+;               * If not, we try the distribution version (which may or may not exist for
+;               this architecture!)
+;
+;               * If still no dice, we try compilation on the fly. We reuse earlier compilation
+;               unless /retry is set
+;
+;
+; Use         : LOAD_GEN_DLMS
+;
+; Inputs      : None.
+;
+; Keywords    : SUCCESS: Will be set to 1 on success, 0 otherwise
+;               RETRY: Try again if it failed last time
+;               REDO: Do over even if it succeeded last time
+;               TEST_FAILURE: Pretend everything goes wrong (for testing)
+;
+; Common      : COMMON load_gen_dlms, loaded
+;
+;               The variable loaded will be undefined if LOAD_GEN_DLMS has not
+;               been run. It will be 1 if last call succeeded, and 0 if last
+;               call failed. Can be used for a superfast check of whether there
+;               is any point in calling LOAD_GEN_DLMS or not
+;
+; Restrictions: None.
+;
+; Side effects: None.
+;
+; Category    : DLM utility
+;
+; Prev. Hist. : None.
+;
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), 9. July 2025
+;
+; Modified    :
+;
+; $Id: 2025-07-02 13:55 CEST $
+;-
+
 FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
   COMPILE_OPT IDL3
   ; Check presence (we'v already added fallback distrib. path to !dlm_path)
