@@ -12,6 +12,6 @@ PRO xcfit_block_test
   handle_value, ana.scale_h, [1, 4, 1], /set
   xcfit_block, ana = ana, title = "XCFIT_BLOCK shortcuts", /no_kill_requests, widget_size_scaling = 1.0
 END
-
+isolate_ssw_exports
 xcfit_block_test
 END
