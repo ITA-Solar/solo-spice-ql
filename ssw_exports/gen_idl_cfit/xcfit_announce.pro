@@ -35,28 +35,28 @@ FUNCTION xcfit_announce_text
   ;
   ; NEWS:
   ;
-  ; 1. XCFIT_BLOCK will now adjust the size of the plot and image windows based
-  ; on your screen size.
-  ;
-  ; 2. It has gotten A LOT FASTER - in fact about twice as fast ASSUMING
-  ; YOU HAVE ALSO INSTALLED THE CFIT DLM. If it is not installed, an automatic
-  ; installation will be attempted (LOAD_GEN_DLMS), see also
-  ; $SSW/gen/dlm/AAA-README.txt
-  ;
-  ;
-  ; 3. You can now navigate from pixel to pixel using arrow keys! The
+  ; 1. You can now navigate from pixel to pixel using arrow keys! The
   ; movement direction inside the data cubes is given by the dimensions
   ; displayed in the "currently focused data cube". The currently focused
   ; data cube is indicated with a yellow header, and is the one with the
   ; image that was clicked last. I.e., you switch by clicking on the image.
   ;
-  ; Sometimes (like when pressing certain buttons) the keyboard focus
-  ; disappears from the hidden text widget that captures the arrow key clicks.
-  ; This is fixed by clicking a data image again.
+  ; 2. THE KEYBOARD FOCUS SOMETIMES GOES AWAY from the hidden text widget
+  ; that captures the arrow key strokes. This is fixed by clicking a data
+  ; image again.
   ;
-  ; In some situations, XCFIT_BLOCK will erroneously sense some keyboard
+  ; 3. In some situations, XCFIT_BLOCK will erroneously sense some keyboard
   ; events from other windows even when the application window does
   ; not have input focus. No idea why...
+  ;
+  ; 4. It has gotten A LOT FASTER - in fact about twice as fast ASSUMING
+  ; YOU HAVE ALSO INSTALLED THE CFIT DLM. If it is not installed, an automatic
+  ; installation will be attempted (LOAD_GEN_DLMS), see also
+  ; $SSW/gen/dlm/AAA-README.txt
+  ;
+  ; 5. XCFIT_BLOCK will now adjust the size of the plot and image windows based
+  ; on your screen size.
+  ;
   ; -
   txt = strmid(txt, 3, 1000)
   return, txt
