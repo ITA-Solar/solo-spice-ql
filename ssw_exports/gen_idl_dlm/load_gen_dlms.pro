@@ -50,7 +50,6 @@
 ;-
 
 FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
-  COMPILE_OPT IDL3
   ; Check presence (we'v already added fallback distrib. path to !dlm_path)
   help, /dlm, dlm, out = out
   IF n_elements(out) EQ 1 THEN return, !false
@@ -78,7 +77,6 @@ FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
 END
 
 FUNCTION lgdlms_find_dlms_to_do, dlms_to_check, versions
-  COMPILE_OPT IDL3
   ; We add distribution DLM path at *end* of !dlm_path once to pick up
   ; first fall-back source right away
   ssw_binary_type = !version.os + "." + !version.arch
@@ -169,7 +167,6 @@ END
 ;
 ;
 PRO load_gen_dlms, success = success, redo = redo, retry = retry, test_failure = test_failure
-  COMPILE_OPT IDL3
   COMMON load_gen_dlms, loaded
 
   prior_failure = n_elements(loaded) EQ 1 && loaded EQ 0
