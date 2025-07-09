@@ -7,8 +7,6 @@
 # Object files
 *.o
 # Shared objects (inc. Windows DLLs)
-*.dll
-*.so
 
 # Executables
 
