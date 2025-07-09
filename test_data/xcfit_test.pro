@@ -59,7 +59,8 @@ PRO xcfit_block_test
   handle_value, ana.scale_h, [1,4,1],/set
   xcfit_block, ana=ana
 END
-
- xcfit_block_test
+isolate_ssw_exports
+add_path, '$HOME/solo-spice-ql/prits-tools', /expand
+; xcfit_block_test
 xcfit_test
 END
