@@ -254,11 +254,13 @@
 ;                       Calls sigrange() if DISPLAY_THRESHOLD is greater than zero, and uses 1.0-DISPLAY_THRESHOLD as fraction.
 ;                       Undid most changes in Version 12. SPICE_HISTO_OPT is no longer used. display_xxx cubes removed again.
 ;                       Changed all brackets to square brackets where necessary.
-;               Version 15, Stein Haugan, 24. June
+;               Version 15, Stein Haugan, 24. June 2025
 ;                       Size of images and plots adapt to screen size
-;               Version 16, Stein Haugan, 30. June
+;               Version 16, Stein Haugan (prits-group@astro.uio.no), 30. June 2025
 ;                       Added keyboard shortcuts - use arrow keys to move around in image windows!
 ;                       No auto-refit when navigating to a new focus
+;               Version 17, Stein Haugan (prits-group@astro.uio.no), 9. July 2025
+;                       Add call to xcfit_announce.pro
 ;
 ; Version     : 15
 ; $Id: 2025-07-02 13:55 CEST $
