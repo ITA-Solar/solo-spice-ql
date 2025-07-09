@@ -14,7 +14,6 @@ FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
   IF n_elements(out) EQ 1 THEN return, !false
 
   ; Check version:
-  stop
   IF NOT (out[1].toupper()).startsWith("VERSION: " + version + ",") THEN return, !false
 
   ; DLM found, but is it loadable without errors? Could be architecture mismatch.
@@ -82,8 +81,9 @@ PRO lgdlms_try_compilations, dlms_to_do, $
   tried_gcc = 0
   o3_flag = "-O3"
 
-  ; On error we jump back here so we can try the entire process (incl. error catching)
-  ; over again with different settings
+  ; On error we jump back here so we can try the entire process including
+  ; error catching over again with different settings. First label simply
+  ; explains what we are doing the first time around
   ;
   TRY_NATIVE_COMPILER_WITH_O3_FLAG:
   TRY_NATIVE_COMPILER_WITHOUT_O3_FLAG:
@@ -164,7 +164,7 @@ END
 ;
 ; Tests:
 ;
-PRO lgdlms_test
+PRO load_gen_dlms_test
   ;
   ; Test if restart is needed for testing:
   ;
@@ -213,8 +213,8 @@ PRO lgdlms_test
 END
 
 IF getenv("USER") EQ "steinhh" THEN BEGIN
-  lgdlms_test
+  load_gen_dlms_test
   load_gen_dlms
-  lgdlms_func_test
+  load_gen_dlms_func_test
 END
 END
