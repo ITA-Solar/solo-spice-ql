@@ -14,7 +14,9 @@ FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
   IF n_elements(out) EQ 1 THEN return, !false
 
   ; Check version:
-  IF NOT (out[1].toupper()).startsWith("VERSION: " + version + ",") THEN return, !false
+  version_string = (out[1].toupper()).trim()
+  match_against = "VERSION: " + version + ","
+  IF ~version_string.startsWith(match_against) THEN return, !false
 
   ; DLM found, but is it loadable without errors? Could be architecture mismatch.
   catch, err
@@ -37,13 +39,13 @@ FUNCTION lgdlms_find_dlms_to_do, dlms_to_check, versions
   COMPILE_OPT IDL3
   ; We add distribution DLM path at *end* of !dlm_path once to pick up
   ; first fall-back source right away
-  ssw_binary_type = !version.os + "/" + !version.arch
-  distribution_path = "$SSW/gen/dlm/" + ssw_binary_type
-  !dlm_path = !dlm_path + "/" + distribution_path
-
+  ssw_binary_type = !version.os + "." + !version.arch
+  distribution_path = routine_dir() + "/binaries/" + ssw_binary_type
+  !dlm_path = !dlm_path + ":" + distribution_path
   lacking_dlms = []
   FOR i = 0, n_elements(dlms_to_check) - 1 DO BEGIN
-    IF NOT lgdlms_check_if_ok(dlms_to_check[i], versions[i], distribution_path) THEN BEGIN
+    ok = lgdlms_check_if_ok(dlms_to_check[i], versions[i], distribution_path)
+    IF ~ok THEN BEGIN
       print, "DLM " + dlms_to_check[i] + " not found or version mismatch"
       lacking_dlms = [lacking_dlms, dlms_to_check[i]]
     END
@@ -145,19 +147,20 @@ PRO load_gen_dlms, success = success, redo = redo, retry = retry, test_failure =
   success = 0
 
   dlms_to_check = ["cfit", "fmedian"]
+  dlms_to_do = dlms_to_check
   versions = ["1.0", "1.0"]
+  IF ~keyword_set(test_failure) THEN BEGIN
+    dlms_to_do = lgdlms_find_dlms_to_do(dlms_to_check, versions)
 
-  dlms_to_do = lgdlms_find_dlms_to_do(dlms_to_check, versions)
+    IF keyword_set(redo) THEN dlms_to_do = dlms_to_check
 
-  IF keyword_set(redo) THEN dlms_to_do = dlms_to_check
-
-  IF n_elements(dlms_to_do) EQ 0 THEN BEGIN
-    box_message, "DLMs already loaded, no need to load again"
-    loaded = 1
-    success = 1
-    return
+    IF n_elements(dlms_to_do) EQ 0 THEN BEGIN
+      box_message, "DLMs already loaded, no need to load again"
+      loaded = 1
+      success = 1
+      return
+    END
   END
-
   lgdlms_try_compilations, dlms_to_do, redo = redo, success = success, test_failure = test_failure
 END
 
