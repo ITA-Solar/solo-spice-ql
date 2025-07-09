@@ -35,12 +35,16 @@ FUNCTION xcfit_announce_text
   ;
   ; NEWS:
   ;
-  ; XCFIT_BLOCK will now adjust the size of the plot and image windows based
-  ; on your screen size. It has also gotten a lot faster - in fact about
-  ; twice as fast ASSUMING YOU HAVE ALSO INSTALLED THE CFIT DLM, see
+  ; 1. XCFIT_BLOCK will now adjust the size of the plot and image windows based
+  ; on your screen size.
+  ;
+  ; 2. It has gotten A LOT FASTER - in fact about twice as fast ASSUMING
+  ; YOU HAVE ALSO INSTALLED THE CFIT DLM. If it is not installed, an automatic
+  ; installation will be attempted (LOAD_GEN_DLMS), see also
   ; $SSW/gen/dlm/AAA-README.txt
   ;
-  ; And you can now navigate from pixel to pixel using arrow keys! The
+  ;
+  ; 3. You can now navigate from pixel to pixel using arrow keys! The
   ; movement direction inside the data cubes is given by the dimensions
   ; displayed in the "currently focused data cube". The currently focused
   ; data cube is indicated with a yellow header, and is the one with the
@@ -105,7 +109,7 @@ END
 PRO xcfit_announce, help = help
   ; Main announcement:
   ;
-  once_key = keyword_set(help) ? !null : "XCFIT_BLOCK V2"
+  once_key = keyword_set(help) ? !null : "XCFIT_BLOCK V2 announcement"
   text = xcfit_announce_text()
   xcfit_announce_widget, text, once_key = once_key
 
@@ -116,9 +120,9 @@ PRO xcfit_announce, help = help
     "", $
     "Without the CFIT DLM, line fitting is 30% slower.", $
     "", $
-    "See $SSW/gen/dlm/AAA-README.txt for instructions on", $
-    "how to install it manually. Contact prits-group@astro.uio.no", $
-    "if you have problems with the installation" $
+    "See $SSW/gen/dlm/AAA-README.txt for instructions on how to", $
+    "install it manually. Contact prits-group@astro.uio.no if you", $
+    "have problems with the installation" $
     ]
-  xcfit_announce_widget, text, once_key = "CFIT DLM"
+  xcfit_announce_widget, text, once_key = "CFIT DLM announcement"
 END
