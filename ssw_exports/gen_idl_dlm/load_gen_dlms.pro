@@ -96,7 +96,7 @@ END
 PRO lgdlms_try_single_compilation, dlm, cc = cc, o3_flag = o3_flag, $
   redo = redo, test_failure = test_failure, tried_gcc = tried_gcc
   ;
-  source_dir = routine_dir() + "/" + dlm
+  source_dir = routine_dir() + "/sources/" + dlm
 
   dlm_file = source_dir + "/" + dlm + ".dlm"
   dlm_dest_file = !make_dll.compile_directory + "/" + dlm + ".dlm"
@@ -143,9 +143,9 @@ PRO lgdlms_try_compilations, dlms_to_do, $
     END
 
     IF tried_gcc THEN BEGIN
-      box_message, ["***** ERROR LOADING DLMs from $SSW/gen/dlm *****", $
-        "Please see $SSW/gen/dlm/AAA-README.txt for instructions", $
-        "Do you have a C compiler installed? Native or at least gcc?"]
+      box_message, ["***** ERROR LOADING DLMs *****", $
+        "Please see " + routine_dir() + "/sources/AAA-README.txt for instructions", $
+        "Do you have a C compiler installed? Native, or at least gcc?"]
       return
     END
 

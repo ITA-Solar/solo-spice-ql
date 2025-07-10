@@ -102,7 +102,7 @@
         if n_elements(loaded) eq 0 then begin
           box_message,["FMEDIAN.PRO is very slow - trying once to load the DLM version.",$
                        "This will take a few seconds, but will speed up subsequent calls.",$
-                       "If the DLM version fails to load, see AAA-README.txt in $SSW/gen/dlm"]
+                       "If the DLM version fails to load, see $SSW/gen/idl/dlm/sources/AAA-README.txt"]
           load_gen_dlms
         end
 ;

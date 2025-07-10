@@ -41,8 +41,8 @@ FUNCTION xcfit_announce_text
   ; data cube is indicated with a yellow header, and is the one with the
   ; image that was clicked last. I.e., you switch by clicking on the image.
   ;
-  ; 2. NOTE: XCFIT_BLOCK WILL SOMETIMES ERRONEOUSLY INTERFERE WITH KEYBOARD 
-  ; SELECTION IN OTHER WINDOWS. It can be very confusing, and the only way to 
+  ; 2. NOTE: XCFIT_BLOCK WILL SOMETIMES ERRONEOUSLY INTERFERE WITH KEYBOARD
+  ; SELECTION IN OTHER WINDOWS. It can be very confusing, and the only way to
   ; stop the interference is to quit XCFIT_BLOCK. Sorry, no idea why this happens!
   ;
   ; 3. THE KEYBOARD FOCUS SOMETIMES GOES AWAY from the hidden text widget
@@ -52,7 +52,7 @@ FUNCTION xcfit_announce_text
   ; 4. It has gotten A LOT FASTER - in fact about twice as fast ASSUMING
   ; YOU HAVE ALSO INSTALLED THE CFIT DLM. If it is not installed, an automatic
   ; installation will be attempted (LOAD_GEN_DLMS), see also
-  ; $SSW/gen/dlm/AAA-README.txt
+  ; $SSW/gen/idl/dlm/sources/AAA-README.txt
   ;
   ; 5. XCFIT_BLOCK will now adjust the size of the plot and image windows based
   ; on your screen size.
@@ -120,7 +120,7 @@ PRO xcfit_announce, help = help
     "", $
     "Without the CFIT DLM, line fitting is 30% slower.", $
     "", $
-    "See $SSW/gen/dlm/AAA-README.txt for instructions on how to", $
+    "See $SSW/gen/idl/dlm/sources/AAA-README.txt for instructions on how to", $
     "install it manually. Contact prits-group@astro.uio.no if you", $
     "have problems with the installation" $
     ]
