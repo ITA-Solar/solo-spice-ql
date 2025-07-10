@@ -8,8 +8,8 @@ probably "something wrong". Maybe you don't have a compiler
 installed?
 
 Note that if you follow these instructions, LOAD_GEN_DLMS may still
-override the DLMs you compile and install here, if they have outdated
-versions compared to the ones in the SSW repository.
+override the DLMs you compile and install here if/when they have been
+superseded by newer versions.
 
 *********************************************************
 
