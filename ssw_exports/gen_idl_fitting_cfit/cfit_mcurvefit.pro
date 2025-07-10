@@ -1,4 +1,10 @@
 ; $Id: 2025-06-24 00:29 CEST $
+;+
+; Stein Vidar Haugan (prits-group@astro.uio.no)
+; 
+; Copied from mcurvefit.pro, just a few tweaks to run much faster after some
+; profiling - including commenting out some dprint statements(!)
+;-
 ;;
 ;; Auxiliary routine
 ;;

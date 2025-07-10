@@ -207,7 +207,7 @@
 ;
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO, 21 January 1997
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 21 January 1997
 ;
 ; Modified    : Version 2, SVHH, 15 December 1997
 ;                       Circumventing IDL v 5 bug with scrollable bases.

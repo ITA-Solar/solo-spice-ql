@@ -46,6 +46,9 @@
 ;		if changed.
 ;	1-APR-2009, richard.schwartz@nasa.gov, modify copies of inputs to ensure that
 ;		these values are unchanged by the code as was possible before.
+; 10. July 2025, Stein Haugan (prits-group@astro.uio.no)
+;   Stolen and optimised for use by cfit_mcurvefit.pro (some special cases never
+;   occurs in this usage)
 ;-
 
 FUNCTION CFIT_F_DIV, NUMERATOR, DENOMINATOR, DEFAULT = DEFAULT

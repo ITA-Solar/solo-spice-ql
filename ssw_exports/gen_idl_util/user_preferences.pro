@@ -27,7 +27,7 @@
 ;
 ; Keywords    : GET/SET: One and only one must be set
 ;
-; Written     : S.V.H.Haugan, UiO, 30. June 2025
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 30. June 2025
 ;
 ; Modified    : Version 1, SVHH, 30. June 2025
 ;

@@ -66,7 +66,7 @@
 ;               
 ; Prev. Hist. : None
 ;
-; Written     : SVH Haugan, UiO, 13 October 1997
+; Written     : SVH Haugan (prits-group@astro.uio.no), UiO, 13 October 1997
 ;               
 ; Modified    : Version 2, 08-Oct-2015, WTT, use [] for array indices
 

@@ -39,7 +39,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO, 21 January 1997
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 21 January 1997
 ;               
 ; Modified    : Not yet.
 ;

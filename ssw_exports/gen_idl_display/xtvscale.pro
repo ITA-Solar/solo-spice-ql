@@ -159,7 +159,7 @@
 ;		Version 9, William Thompson, GSFC, 8 April 1998
 ;			Changed !D.N_COLORS to !D.TABLE_SIZE for 24-bit displays
 ;               Version 10, William Thompson, GSFC, 24 Sep 2010, use [] indexing
-;               Version 11, Martin Wiesmann, 19. Januar 2024
+;               Version 11, Martin Wiesmann (prits-group@astro.uio.no), 19. Januar 2024
 ;                       Fixed a typo (info.int.events -> info.int.signals)
 ;                       Added 'else' in case in event procedure.
 ;

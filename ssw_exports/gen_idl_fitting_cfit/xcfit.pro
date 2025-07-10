@@ -291,7 +291,7 @@
 ; Prev. Hist. : The component based fitting scheme is inspired by the program
 ;               XSPEC.
 ;
-; Written     : S.V.H. Haugan, UiO, 20 January 1997
+; Written     : S.V.H. Haugan (prits-group@astro.uio.no), UiO, 20 January 1997
 ;               
 ; Modified    : Version 2, SVHH, 10 February 1997
 ;                       Minor modifications in xcfit_remake to minimize
@@ -308,7 +308,7 @@
 ;			Added BGauss and Voigt profiles.
 ;		Version 7, 11-Feb-2000, William Thompson
 ;			Allow sorting of BGauss and Voigt profiles.
-;               Version 8, Martin Wiesmann, 25 August 2021
+;               Version 8, Martin Wiesmann (prits-group@astro.uio.no), 25 August 2021
 ;                       Initialises now with color table 0 (loadct,0)
 ;
 ; Version     :

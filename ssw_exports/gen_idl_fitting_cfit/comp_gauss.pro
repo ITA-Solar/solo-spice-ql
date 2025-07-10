@@ -34,7 +34,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO, 21 January 1997
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 21 January 1997
 ;               
 ; Modified    : Version 2, SVHH, 27 May 1997
 ;                       Calculating only points where z2 < 1000, to avoid

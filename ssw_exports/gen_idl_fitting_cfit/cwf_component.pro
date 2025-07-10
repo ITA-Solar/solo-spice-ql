@@ -40,7 +40,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO, 21 January 1997
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 21 January 1997
 ;               
 ; Modified    : Version 2, SVHH, 5 February 1997
 ;                       Made values and trans_b DOUBLE before trim()'ing them,

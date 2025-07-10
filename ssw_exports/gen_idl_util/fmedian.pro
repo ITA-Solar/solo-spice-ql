@@ -89,7 +89,7 @@
 ;               Modified, 14-Feb-07, Zarro (ADNET) - commented out !DEBUG
 ;               Version 4, S.V.H.Haugan, UiO, 9 January 2008
 ;                       Added ONLY_MISSING keyword, passed on to fmedian_slow
-;               Version 5, Stein Haugan, ITA/UiO 7 July 2025
+;               Version 5, Stein Haugan (prits-group@astro.uio.no), ITA/UiO 7 July 2025
 ;                       Calling LOAD_GEN_DLMS when appropriate to try to get
 ;                       the DLM version (effective next invocation)
 ;-            

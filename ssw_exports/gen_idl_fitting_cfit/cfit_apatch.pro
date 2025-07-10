@@ -91,7 +91,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H. Haugan, 1998
+; Written     : S.V.H. Haugan (prits-group@astro.uio.no), 1998
 ;               
 ; Modified    : Version 2, 8-Oct-2015, WTT, use [] for array indices
 ;                       

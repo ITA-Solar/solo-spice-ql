@@ -52,7 +52,7 @@
 ; the widget was realised.
 ;
 ; HISTORY:
-;     11-May-2023: Martin Wiesmann
+;     11-May-2023: Martin Wiesmann (prits-group@astro.uio.no)
 ;     10-Jun-2025: Martin Wiesmann, Refactored code to be a procedure instead of a class method
 ;
 ; $Id: 2025-06-19 09:35 CEST $

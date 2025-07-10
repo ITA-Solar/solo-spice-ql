@@ -53,7 +53,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : SVH Haugan, UiO, 25 September 1997
+; Written     : SVH Haugan (prits-group@astro.uio.no), UiO, 25 September 1997
 ;               
 ; Modified    : Not yet. 
 ;

@@ -72,7 +72,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO, 1998
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 1998
 ;               
 ; Modified    : Version 2, 3 February 1999
 ;                       Added test for have_windows() before using xack.

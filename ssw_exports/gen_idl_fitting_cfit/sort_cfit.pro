@@ -52,7 +52,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO,
+; Written     : S.V.H.Haugan, UiO, prits-group@astro.uio.no
 ;               
 ; Modified    : Not yet
 ;

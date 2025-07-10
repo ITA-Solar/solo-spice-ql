@@ -43,9 +43,9 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO,
+; Written     : S.V.H.Haugan, UiO, prits-group@astro.uio.no
 ;               
-; Modified    : Version 2, SVHH, 15 September 1997
+; Modified    : Version 2, SVHH (prits-group@astro.uio.no), 15 September 1997
 ;                       Added calling mode without AA_NOM defined.
 ;
 ; Version     : 2, 15 September 1997

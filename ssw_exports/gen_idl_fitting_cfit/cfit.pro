@@ -123,7 +123,7 @@
 ;               
 ; Prev. Hist. : Component based fitting inspired by XSPEC
 ;
-; Written     : S.V.H.Haugan, UiO, 20 January 1997
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 20 January 1997
 ;               
 ; Modified    : Version 2, 6 February 1997
 ;                       Added KEEP_LIMITS in call to MAKE_SFIT_STC, to avoid

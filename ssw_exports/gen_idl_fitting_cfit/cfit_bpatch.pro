@@ -48,7 +48,7 @@
 ;               
 ; Prev. Hist. : None.
 ;
-; Written     : S.V.H.Haugan, UiO, 5 February 1997
+; Written     : S.V.H.Haugan (prits-group@astro.uio.no), UiO, 5 February 1997
 ;               
 ; Modified    : Version 2, 18 September 1997
 ;                       Added "Use" message.
