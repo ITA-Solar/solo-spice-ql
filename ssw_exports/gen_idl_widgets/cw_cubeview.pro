@@ -115,12 +115,16 @@
 ;                       Implemented method cw_cubeview_force_redraw
 ;               Version 8, Martin Wiesmann, 7 June 2023
 ;                       Extended cw_cubeview_force_redraw to redraw also plot
-;               Version 9, Martin Wiesmann, 19. Januar 2024
+;               Version 9, Martin Wiesmann, 19. January 2024
 ;                       Adds keyword signal to call to xtvscale
 ;                       Adds 'else' to case in event procedure
 ;                       New keywords SIGRANGE and FRACTION, which are passed to xtvscale.
+;               Version 10, Stein Haugan (prits-group@astro.uio.no), 10. July 2025
+;                       Numerous cosmetic changes
+;                       Add set_value "commands" HIGHLIGHT, UNHIGHLIGHT and REDRAW
+;                       
 ;
-; Version     : 9, 19 January 2024
+; Version     : 10, 10. July 2025
 ; $Id: 2025-06-30 17:16 CEST $
 ;-
 
@@ -537,7 +541,7 @@ FUNCTION cw_cubeview_event, ev
     ENDCASE
 
     ELSE: BEGIN
-      ; Event from XTVScale, we don't have to do anything.
+      cw_cubeview_force_redraw, info
     ENDCASE
   END
 
@@ -686,8 +690,7 @@ FUNCTION cw_cubeview, base, value = value, xsize = xsize, ysize = ysize, $
     plot_id: 0L, $
     plottx_id: 0L, $
     image_dim_id: [0L, 0L], $
-    plot_dim_id: 0L, $
-    last_active_cw_cube: "" $
+    plot_dim_id: 0L $
     }
 
   info = {ext: ext, $
