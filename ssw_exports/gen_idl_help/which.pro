@@ -85,9 +85,14 @@ PRO WHICH, name, all=all, search=search, outfile=outfile,quiet=quiet
 ;       19-Feb-2016, Zarro (ADNET) 
 ;        - replaced OPENR test by FILE_TEST
 ;        - changed () to []
+;       Version 12, 10-Jul-2025, Stein Haugan (prits-group@astro.uio.no)
+;          - Using documented routine_info(/system) instead of undocumented
+;            routine_names() to get internal routines
+;          - Look up internal routines each call, in case new DLMs have
+;            added new routines, and drop common block
+;               
 ;-
 
-   COMMON which, internal
    ON_ERROR,2
    loud=~keyword_set(quiet)
 
@@ -128,11 +133,9 @@ outfile = ''
 ;  undocumented IDL function called ROUTINE_NAMES to get all names of
 ;  the IDL built-in function and procedure names.
 ;----------------------------------------------------------------------
-   IF N_ELEMENTS(internal) EQ 0 THEN BEGIN
-      f_name = ROUTINE_NAMES(/s_functions)
-      p_name = ROUTINE_NAMES(/s_procedures)
-      internal = [f_name, p_name]
-   ENDIF
+   pro_names = routine_info(/system)
+   func_names = routine_info(/system, /functions)
+   internal =  [pro_names, func_names]
    IF KEYWORD_SET(search) THEN BEGIN
       exact = 0
       all = 1
