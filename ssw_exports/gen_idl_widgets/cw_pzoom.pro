@@ -212,7 +212,7 @@
 ; Keywords    : Too many to justify updating a separate list. See the KEYWORD
 ;               DEFAULTS section inside the routine.
 ;
-; Calls       : clipbox, copy_tag_values, cw_pzoom_plot,
+; Calls       : cdscongrid(), clipbox, copy_tag_values, cw_pzoom_plot,
 ;               cw_pzoom_scaleval, datatype(), default, handle_killer_hookup,
 ;               parcheck, pconvert(), prestore, pstore(), tick_vec(), typ(),
 ;               xtvscale()
@@ -244,65 +244,10 @@
 ;               Version 5, SVHH, 15 September 1997
 ;                       Modified automatic handling of max-zoom limit to make
 ;                       more sense. 
-;               Version 6, SVHH (prits-group@astro.uio.no)
-;                       Made independent of CDSCONGRID
 ;                       
 ; Version     : 5, 15 September 1997
 ;-            
 
-;
-; Stolen from CDSCONGRID, want to make code independent of CDS package!
-;
-FUNCTION cwpz_round,a
-  return,fix(a+.5d)
-END
-
-
-FUNCTION cwpz_congrid, arr, x, y,	z, Interp=int, Minus_One=m1, Cubic = cubic
-  
-  On_Error, 2		  ;Return to caller if error
-  s = Size(arr)
-  
-  IF ((s(0) EQ 0) OR (s(0) GT 3)) THEN $
-     Message, 'Array must have 1, 2, or 3 dimensions.'
-  
-;  Supply defaults = no interpolate, and no minus_one.
-  IF N_elements(int) le	0 THEN int = 0 ELSE int	= Keyword_SET(int)
-  IF N_elements(m1) le 0 THEN m1 = 0 ELSE m1 = Keyword_SET(m1)
-  cub =	Keyword_SET(cubic)
-  IF cub THEN int = 1	  ;Cubic implies interpolate
-  
-  
-  CASE s(0) OF
-      1: BEGIN				   ; *** ONE DIMENSIONAL ARRAY
-	  srx =	float(s(1) - m1)/(x-m1)	* findgen(x)  ;subscripts
-	  IF int THEN $
-	     RETURN, INTERPOLATE(arr, srx, CUBIC = cub)	ELSE $
-	     RETURN, arr(cdsROUND(srx))
-      EndCASE
-      2: BEGIN ; *** TWO DIMENSIONAL ARRAY
-	  IF int THEN BEGIN
-	      srx = float(s(1) - m1) / (x-m1) *	findgen(x) - .5	 ; CDS Hack SVHH
-	      sry = float(s(2) - m1) / (y-m1) *	findgen(y) - .5	 ; 
-	      IF strmid(!version.release,2,1) gt '0' THEN $
-		   RETURN, INTERPOLATE(arr, srx, sry, /GRID, CUBIC=cub)	$
-	      ELSE RETURN, INTERPOLATE(arr, srx, sry, /GRID) ; Cubic's not allowed
-	  EndIF	ELSE $
-	    RETURN, POLY_2D(arr, $
-		  [[0,0],[(s(1)-m1)/float(x-m1),0]], $ ;Use poly_2d
-		  [[0,(s(2)-m1)/float(y-m1)],[0,0]],int,x,y)
-	  
-      EndCASE
-      3: BEGIN ; *** THREE DIMENSIONAL ARRAY
-	  srx =	float(s(1) - m1) / (x-m1) * findgen(x)
-	  sry =	float(s(2) - m1) / (y-m1) * findgen(y)
-	  srz =	float(s(3) - m1) / (z-m1) * findgen(z)
-	  RETURN, interpolate(arr, srx,	sry, srz, /grid)
-      EndCASE
-  EndCASE
-  
-  RETURN, arr_r
-END
 
 ;
 ; Scaling the image into a byte array
@@ -506,7 +451,7 @@ PRO cw_pzoom_plot,info
      
      xstart = round(float(offsetx)*info.int.dsize(0)/xnpix)
      ystart = round(float(offsety)*info.int.dsize(1)/ynpix)
-     im(xstart,ystart) = cwpz_congrid(scaledval,xsize,ysize)
+     im(xstart,ystart) = cdscongrid(scaledval,xsize,ysize)
   END
   
   endx = (startx+xnpix-1-offsetx) < (info.int.asize(0)-1)
@@ -515,7 +460,7 @@ PRO cw_pzoom_plot,info
   IF info.ext.zoom GT 1 THEN BEGIN 
      IF info.ext.replot THEN BEGIN
         im(offsetx,offsety) = scaledval(startx:endx,starty:endy) ;; grab
-        plim = cwpz_congrid(im,info.int.dsize(0),info.int.dsize(1))
+        plim = cdscongrid(im,info.int.dsize(0),info.int.dsize(1))
      END
   END ELSE BEGIN
      plim = temporary(im) ;; No memory copying
