@@ -383,7 +383,7 @@ PRO cfit_block, lambda, data, weights, fit, missing, result, residual, include, 
     default, use_result, 1
     IF use_result && ~quiet THEN print, "Using previous result array"
   END ELSE BEGIN
-    result = make_array(dimension = res_dim, /float, double = double)
+    result = make_array(dimension = res_dim, float=1-keyword_set(double), double = double)
     use_result = 0
   END
 
