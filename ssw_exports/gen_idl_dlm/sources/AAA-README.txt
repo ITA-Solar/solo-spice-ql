@@ -4,8 +4,9 @@ Dynamically Loadable Modules (DLMs), or "plugins" for IDL
 NOTE: Although it doesn't hurt to follow these instructions, you
 should not need to do so if the IDL routine LOAD_GEN_DLMS succeeds.
 If that fails, the instructions below might help, but there is
-probably "something wrong". Maybe you don't have a compiler
-installed?
+probably "something wrong". 
+
+Maybe you don't have any compiler installed?
 
 Note that if you follow these instructions, LOAD_GEN_DLMS may still
 override the DLMs you compile and install here if/when they have been
