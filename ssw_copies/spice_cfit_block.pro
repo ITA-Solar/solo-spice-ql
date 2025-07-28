@@ -178,7 +178,7 @@
 ;                       Whenever variables are checked for 'missing' values, it uses now
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
-; $Id: 2023-06-15 11:12 CEST $
+; $Id: 2025-07-15 21:06 CEST $
 ;-            
 
 PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
@@ -396,7 +396,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
      default,use_result,1
      IF use_result && ~quiet THEN print,"Using previous result array"
   END ELSE BEGIN
-     result = make_array(dimension=res_dim,/float,double=double)
+     result = make_array(dimension=res_dim,float=1-keyword_set(double),double=double)
      use_result = 0
   END
   

@@ -62,7 +62,7 @@
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-23 13:07 CEST $
 ;-
 ;
 ; save as postscript file
@@ -146,8 +146,8 @@ PRO spice_xraster_draw, event
     j = (*info).windows[i]
     FOR it = 0, min([5, nr - 1]) DO BEGIN
       var = *(*info).data.get_one_image(j, it, no_masking = (*info).no_masking)
-      wdmin[i] = min([min(iris_histo_opt(var, 0.01, /bot_only, missing = missing), /nan), wdmin[i]], /nan)
-      wdmax[i] = max([max(iris_histo_opt(var, 0.001, /top_only, missing = missing), /nan), wdmax[i]], /nan)
+      wdmin[i] = min([min(spice_histo_opt(var, 0.01, /bot_only, missing = missing), /nan), wdmin[i]], /nan)
+      wdmax[i] = max([max(spice_histo_opt(var, 0.001, /top_only, missing = missing), /nan), wdmax[i]], /nan)
     ENDFOR
     IF wdmin[i] GT wdmax[i] THEN BEGIN
       wdmin[i] = min(var, max = maxtemp)
@@ -169,7 +169,7 @@ PRO spice_xraster_draw, event
     IF ~(*info).ydim_unit THEN BEGIN
       ypos = indgen(sz[2])
     ENDIF ELSE BEGIN
-      ypos = *(*info).data.get_instr_y_vector(j)
+      ypos = *(*info).data.get_instr_y_vector(j, /auto_diff_rot)
     ENDELSE
     xscale = interpol(lambda, xpix)
     yscale = interpol(ypos, ypix)
@@ -298,7 +298,7 @@ PRO spice_xraster_anim, event
   ; ;     return
   ; ;   endif
   ; ; ; bytscale data to save time in animation tool
-  ; ; ;  wdb = bytscl(iris_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
+  ; ; ;  wdb = bytscl(spice_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
   ; ; ; write data to assoc file if not already existing:
   ; ;   ct=0
   ; ;   repeat begin
@@ -620,8 +620,7 @@ PRO spice_xraster, input_data, windows, ncolors = ncolors, group_leader = group_
     event_pro = 'spice_xraster_destroy')
   ; realize main window:
 
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
   widget_control, tlb, tlb_get_size = tlb_sz
   ; define size of widget and the menu column
   tlb_xsz = tlb_sz[0] ; xsize of whole widget in pixels

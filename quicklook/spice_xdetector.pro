@@ -28,7 +28,7 @@
 ;       None
 ;
 ; CALLS:
-;       xzoom, iris_ximovie
+;       iris_ximovie, mplot_image, hw_colorbar, spice_histo_opt
 ;
 ; COMMON BLOCKS:
 ;
@@ -47,7 +47,7 @@
 ;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
 ;
 ;-
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-23 13:07 CEST $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event
@@ -98,7 +98,7 @@ PRO spice_xdetector_draw, event
   ELSE missing = *(*info).data.get_missing_value()
   IF (*info).log THEN BEGIN
     ; im_min=*(*info).data->datamin()>1.
-    ymin = alog10(min(iris_histo_opt(*(*info).drawimage, missing = missing, low_limit = 0.5), max = ymax, /nan))
+    ymin = alog10(min(spice_histo_opt(*(*info).drawimage, missing = missing, low_limit = 0.5), max = ymax, /nan))
     ymax = alog10(ymax)
     mplot_image, alog10(*(*info).drawimage), $
       * (*info).xscale, *(*info).yscale, $
@@ -107,7 +107,7 @@ PRO spice_xdetector_draw, event
       xtitle = (*info).xtitle, ytitle = (*info).ytitle, bgblack = bgblack, ticklen = ticklen
   ENDIF ELSE BEGIN
     ; im_min=*(*info).data->datamin()
-    ymin = min(iris_histo_opt(*(*info).drawimage, missing = missing), max = ymax, /nan)
+    ymin = min(spice_histo_opt(*(*info).drawimage, missing = missing), max = ymax, /nan)
     mplot_image, *(*info).drawimage, $
       * (*info).xscale, *(*info).yscale, $
       min = ymin, max = ymax, $
@@ -326,7 +326,7 @@ PRO spice_xdetector_zoom, event
   ELSE missing = *(*info).data.get_missing_value()
   IF (*info).log THEN BEGIN
     ; im_min=*(*info).data->datamin()>1.
-    ymin = alog10(min(iris_histo_opt(*(*info).drawimage, missing = missing, low_limit = 0.5), max = ymax, /nan))
+    ymin = alog10(min(spice_histo_opt(*(*info).drawimage, missing = missing, low_limit = 0.5), max = ymax, /nan))
     ymax = alog10(ymax)
     mplot_image, alog10(*(*info).drawimage), $
       * (*info).xscale, *(*info).yscale, $
@@ -335,7 +335,7 @@ PRO spice_xdetector_zoom, event
       xtitle = (*info).xtitle, ytitle = (*info).ytitle, /bgblack, ticklen = ticklen
   ENDIF ELSE BEGIN
     ; im_min=*(*info).data->datamin()
-    ymin = min(iris_histo_opt(*(*info).drawimage, missing = missing), max = ymax, /nan)
+    ymin = min(spice_histo_opt(*(*info).drawimage, missing = missing), max = ymax, /nan)
     mplot_image, *(*info).drawimage, $
       * (*info).xscale, *(*info).yscale, $
       min = ymin, max = ymax, $
@@ -529,7 +529,7 @@ PRO spice_xdetector_anim, event
   ; ;   endif
 
   ; ;   ; bytscale data to save time in animation tool
-  ; ; ;  wdb = bytscl(iris_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
+  ; ; ;  wdb = bytscl(spice_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
 
   ; ;   ; write data to assoc file:
   ; ;   ct=0
@@ -954,7 +954,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ymax = max(win_positions[*, 3])
   win_positions[*, 2 : 3] = win_positions[*, 2 : 3] - ymin
   yscale_pixels = indgen(ymax - ymin + 1) + 1 + ymin
-  yscale_physical = (data.get_instr_y_vector(lindx[0], /full_ccd))[ymin : ymax]
+  yscale_physical = (data.get_instr_y_vector(lindx[0], /full_ccd, /auto_diff_rot))[ymin : ymax]
 
   ; x and y titles for axis plots:
   xdim = 2 ; wavelength
@@ -1176,8 +1176,7 @@ PRO spice_xdetector, input_data, lindx, group_leader = group_leader, $
   ; ;                               frame       = 1)
 
   ; realize main window:
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
   widget_control, tlb, tlb_get_size = tlb_sz
 
   ; set realsizebutton to de-select:

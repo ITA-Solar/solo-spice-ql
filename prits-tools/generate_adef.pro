@@ -56,14 +56,14 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-06-23 13:43 CEST $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
   ; ; Automatically generate cfit analysis definitions based on input intensity and
   ; ; wavelength arrays
 
-  version = 1 ; PLEASE increase this number when editing the code
+  version = 2 ; PLEASE increase this number when editing the code
 
   ptools.parcheck, data, 1, "data", 'NUMERIC', [2, 3, 4]
   ptools.parcheck, lam, 2, "lam", 'NUMERIC', [2, 3, 4]
@@ -163,7 +163,7 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
     ENDFOR
   ENDIF ; npeaks GT 0
 
-  bg = mk_comp_poly([0.5 * median(meanprofile)], max_arr = [30000], min_arr = [0], trans_a = [1], $
+  bg = mk_comp_poly([0.5 * median(meanprofile)], max_arr = [30000], min_arr = [-100], trans_a = [1], $
     trans_b = [0], const = [0b])
   bg.name = 'Background'
 

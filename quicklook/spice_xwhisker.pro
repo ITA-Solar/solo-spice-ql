@@ -52,7 +52,7 @@
 ;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
 ;
 ;-
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-23 13:07 CEST $
 
 ; save as postscript file
 PRO spice_xwhisker_ps, event
@@ -124,7 +124,7 @@ PRO spice_xwhisker_draw, event
     ypos = indgen(sz[2])
   ENDIF ELSE BEGIN
     IF sit_and_stare THEN ypos = *(*info).data.get_time_vector((*info).line) $
-    ELSE ypos = *(*info).data.get_instr_x_vector((*info).line)
+    ELSE ypos = *(*info).data.get_instr_x_vector((*info).line, /auto_diff_rot)
   ENDELSE
   yscale = ypos
   IF sz[0] EQ 1 THEN BEGIN
@@ -168,11 +168,11 @@ FUNCTION spice_xwhisker_gamma, event
   widget_control, event.top, get_uvalue = info
   (*info).gamma = event.value
   im_min = 0.0
-  (*info).imin = min(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
-  (*info).imax = max(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
+  (*info).imin = min(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
+  (*info).imax = max(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
   IF (*info).imax EQ im_min THEN BEGIN
-    (*info).imin = min(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
-    (*info).imax = max(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
+    (*info).imin = min(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
+    (*info).imax = max(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
     (*info).gamma = 1.0
     text = 'All data < im_min ' + strtrim(string(im_min, format = '(f4.2)'), 2) + ' gamma reset to 1.0'
     message, text, /info
@@ -190,11 +190,11 @@ FUNCTION spice_xwhisker_histoopt, event
   widget_control, event.top, get_uvalue = info
   (*info).histo_lim = 10.0 ^ (event.value)
   im_min = 0.0
-  (*info).imin = min(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
-  (*info).imax = max(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
+  (*info).imin = min(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
+  (*info).imax = max(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
   IF (*info).imax EQ im_min THEN BEGIN
-    (*info).imin = min(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
-    (*info).imax = max(iris_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
+    (*info).imin = min(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
+    (*info).imax = max(spice_histo_opt((*info).image, (*info).histo_lim, missing = (*info).missing))
   ENDIF
   ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
@@ -261,10 +261,10 @@ PRO spice_xwhisker_slitslider, event
   rot = round(*(*info).data.get_satellite_rotation())
   IF rot < 0 THEN rot = 360 + rot
   IF rot EQ 90 OR rot EQ 270 THEN BEGIN
-    pzty = *(*info).data.get_instr_x_vector((*info).line)
+    pzty = *(*info).data.get_instr_x_vector((*info).line, /auto_diff_rot)
     slittxt = 'X: '
   ENDIF ELSE BEGIN
-    pzty = *(*info).data.get_instr_y_vector((*info).line)
+    pzty = *(*info).data.get_instr_y_vector((*info).line, /auto_diff_rot)
     slittxt = 'Y: '
   ENDELSE
   widget_control, (*info).fmirrytext, $
@@ -419,7 +419,7 @@ PRO spice_xwhisker_anim, event
   ; ;     return
   ; ;   endif
   ; ; ; bytscale data to save time in animation tool
-  ; ; ;  wdb = bytscl(iris_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
+  ; ; ;  wdb = bytscl(spice_histo_opt(wd,1.e-2,missing=*(*info).data->missing()))
   ; ; ; write data to assoc file:
   ; ;   ct=0
   ; ;   repeat begin
@@ -575,8 +575,8 @@ PRO spice_xwhisker_mask, event
   image = reform(wd[*, (*info).slitpos, *, *])
   IF *(*info).data.get_missing_value() NE *(*info).data.get_missing_value() THEN missing = -99999l $
   ELSE missing = *(*info).data.get_missing_value()
-  wd = iris_histo_opt(wd, missing = missing)
-  image = iris_histo_opt(image)
+  wd = spice_histo_opt(wd, missing = missing)
+  image = spice_histo_opt(image)
   *(*info).wd = wd
   (*info).image = image
   ; idl-disable-next-line unknown-structure
@@ -649,10 +649,10 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
   ENDELSE
   IF data.get_missing_value() NE data.get_missing_value() THEN missing = -99999l $
   ELSE missing = data.get_missing_value()
-  wd = iris_histo_opt(wd, missing = missing)
+  wd = spice_histo_opt(wd, missing = missing)
   imin = min(wd)
   imax = max(wd)
-  image = iris_histo_opt(image)
+  image = spice_histo_opt(image)
   ; initialize size of draw window
   sz = size(wd)
   ndim = sz[0]
@@ -749,10 +749,10 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
   rot = round(rot)
   IF rot LT 0 THEN rot = 360 + rot
   IF rot EQ 90 OR rot EQ 270 THEN BEGIN
-    pzty = data.get_instr_x_vector(line)
+    pzty = data.get_instr_x_vector(line, /auto_diff_rot)
     slittxt = 'X: '
   ENDIF ELSE BEGIN
-    pzty = data.get_instr_y_vector(line)
+    pzty = data.get_instr_y_vector(line, /auto_diff_rot)
     slittxt = 'Y: '
   ENDELSE
   fmirrytext = widget_label(exposurebase, $
@@ -794,8 +794,7 @@ PRO spice_xwhisker, input_data, line, group_leader = group_leader, $
     event_pro = 'spice_xwhisker_destroy')
 
   ; realize main window:
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
   widget_control, tlb, tlb_get_size = tlb_sz
 
   ; define size of widget and the menu column

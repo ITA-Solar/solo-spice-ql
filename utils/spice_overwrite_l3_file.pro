@@ -33,7 +33,7 @@
 ; MODIFICATION HISTORY:
 ;     12-Sep-2022: First version by Martin Wiesmann
 ;
-; $Id: 2024-12-05 10:42 CET $
+; $Id: 2025-06-10 13:39 CEST $
 ;-
 ;
 ;
@@ -66,8 +66,7 @@ FUNCTION spice_overwrite_l3_file, file, group_leader, allow_xcontrol_l23 = allow
 
   ; Center the widget on display.
   widget_control, base, set_Uvalue = info, /No_Copy
-  wp = widget_positioner(base, parent = group_leader)
-  wp.position, /center
+  widget_position, base, parent = group_leader, /center
   xmanager, 'spice_overwrite_l3_file', base, event_handler = 'spice_overwrite_l3_file_event'
 
   res = *result

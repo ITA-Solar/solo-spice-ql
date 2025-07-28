@@ -1,0 +1,10 @@
+# Makefile.alpha
+
+CC          = cc
+F77         = f77
+
+# To make shareable objects:
+
+X_CFLAGS   = -pthread -O4
+X_LD_FLAGS = -expect_unresolved '*'  -shared -all
+SO_EXT = so

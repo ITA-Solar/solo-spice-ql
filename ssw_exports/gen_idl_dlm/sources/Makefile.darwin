@@ -1,0 +1,20 @@
+CC          = gcc
+F77         = f77
+LD	    = gcc
+
+# README:
+#
+# For modern Macs, SSW_COMPILE_TYPE must be architecture dependent, Makefile.darwin can't work
+#
+# So either:
+#
+#   setenv SSW_COMPILE_TYPE darwin.x86_64
+#
+# or:
+#
+#   setenv SSW_COMPILE_TYPE darwin.arm64
+#
+
+X_CFLAGS   = "ERROR: Read Makefile.darwin README comments"
+X_LD_FLAGS = "ERROR: Read Makefile.darwin README comments"
+SO_EXT = so

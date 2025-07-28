@@ -69,7 +69,7 @@
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;       28-May-2020: M. Wiesmann - First SPICE modified version.
 ;
-; $Id: 2024-12-19 13:56 CET $
+; $Id: 2025-06-23 13:07 CEST $
 ;-
 ;
 ; save as postscript file
@@ -115,13 +115,13 @@ FUNCTION spice_xmap_gamma, event
   widget_control, event.top, get_uvalue = info
   (*info).gamma = event.value
   im_min = 0.0
-  (*info).imin = min(iris_histo_opt(*(*info).drawimage, $
+  (*info).imin = min(spice_histo_opt(*(*info).drawimage, $
     (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
-  (*info).imax = max(iris_histo_opt(*(*info).drawimage, $
+  (*info).imax = max(spice_histo_opt(*(*info).drawimage, $
     (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
   IF (*info).imax EQ im_min THEN BEGIN
-    (*info).imin = min(iris_histo_opt((*info).drawimage, (*info).histo_lim, missing = (*info).missing))
-    (*info).imax = max(iris_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
+    (*info).imin = min(spice_histo_opt((*info).drawimage, (*info).histo_lim, missing = (*info).missing))
+    (*info).imax = max(spice_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
     (*info).gamma = 1.0
     text = 'All data < im_min ' + strtrim(string(im_min, format = '(f4.2)'), 2) + ' gamma reset to 1.0'
     message, text, /info
@@ -139,13 +139,13 @@ FUNCTION spice_xmap_histoopt, event
   widget_control, event.top, get_uvalue = info
   (*info).histo_lim = 10.0 ^ (event.value)
   im_min = 0.0
-  (*info).imin = min(iris_histo_opt(*(*info).drawimage, $
+  (*info).imin = min(spice_histo_opt(*(*info).drawimage, $
     (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
-  (*info).imax = max(iris_histo_opt(*(*info).drawimage, $
+  (*info).imax = max(spice_histo_opt(*(*info).drawimage, $
     (*info).histo_lim, missing = (*info).missing) > im_min) ^ (*info).gamma
   IF (*info).imax EQ im_min THEN BEGIN
-    (*info).imin = min(iris_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
-    (*info).imax = max(iris_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
+    (*info).imin = min(spice_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
+    (*info).imax = max(spice_histo_opt(*(*info).drawimage, (*info).histo_lim, missing = (*info).missing))
   ENDIF
   ; idl-disable-next-line unknown-structure
   pseudoevent = {widget_button, id: 0l, $
@@ -841,8 +841,8 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     ENDIF
     ; (data->getaux())->setwscale,'arcsec'
     ; (data->getaux())->setxytitle,sscale='arcsec'
-    xscale = data.get_instr_x_vector(line)
-    yscale = data.get_instr_y_vector(line)
+    xscale = data.get_instr_x_vector(line, /auto_diff_rot)
+    yscale = data.get_instr_y_vector(line, /auto_diff_rot)
     aspect = (max(xscale) - min(xscale)) / (max(yscale) - min(yscale))
     ; if sx.rot eq 3 or sx.rot eq 1 then begin
     xdim = 0
@@ -882,11 +882,11 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
     angle = round(data.get_satellite_rotation())
     IF angle LT 0 THEN angle = 360 + angle
     IF angle EQ 90 OR angle EQ 270 THEN BEGIN
-      yscale = data.get_instr_x_vector(line)
-    ENDIF ELSE yscale = data.get_instr_y_vector(line)
+      yscale = data.get_instr_x_vector(line, /auto_diff_rot)
+    ENDIF ELSE yscale = data.get_instr_y_vector(line, /auto_diff_rot)
   ENDIF ELSE BEGIN
-    xscale = data.get_instr_x_vector(line)
-    yscale = data.get_instr_y_vector(line)
+    xscale = data.get_instr_x_vector(line, /auto_diff_rot)
+    yscale = data.get_instr_y_vector(line, /auto_diff_rot)
   ENDELSE
   xscale_pixels = findgen(n_elements(xscale))
   xscale_physical = xscale
@@ -1065,8 +1065,8 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; dp_names = dp_names[where (dp_names ne '')]
   ; dp_menu = widget_droplist(dp_base, value = dp_names, title = dp_title, $
   ; event_pro = 'spice_xmap_dpselect')
-  ; imin = min(iris_histo_opt(wd[0, *, *],missing=missing),/nan)
-  ; imax = max(iris_histo_opt(wd[0, *, *],missing=missing),/nan)
+  ; imin = min(spice_histo_opt(wd[0, *, *],missing=missing),/nan)
+  ; imax = max(spice_histo_opt(wd[0, *, *],missing=missing),/nan)
   ; endif else begin
   ; lpx=(data->getwd_def())[line].line_px
   cpx = [0, 0] ; (data->getwd_def())[line].cont_px
@@ -1095,8 +1095,8 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; if nbad ne 0 then var[bad]=!values.f_nan
   ; endelse
   drawimage = rotate(total(var, 1, /nan) / sz[1] - cont, 0)
-  imin = min(iris_histo_opt(drawimage, missing = data.get_missing_value()), /nan)
-  imax = max(iris_histo_opt(drawimage, missing = data.get_missing_value()), /nan)
+  imin = min(spice_histo_opt(drawimage, missing = data.get_missing_value()), /nan)
+  imax = max(spice_histo_opt(drawimage, missing = data.get_missing_value()), /nan)
   ; endelse
   mommbase = widget_base(lcol, /row, /frame)
   mommintitle = 'Minimum plot value'
@@ -1132,8 +1132,7 @@ PRO spice_xmap, input_data, linelist = linelist, group_leader = group_leader, $
   ; ;                               frame       = 1)
 
   ; realize main window:
-  wp = widget_positioner(tlb, parent = group_leader)
-  wp.position
+  widget_position, tlb, parent = group_leader
   widget_control, tlb, tlb_get_size = tlb_sz
 
   ; define size of widget and the menu column

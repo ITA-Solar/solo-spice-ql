@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-05-15 11:08 CEST $
+; $Id: 2025-06-26 13:43 CEST $
 
 ;+
 ; Description:
@@ -207,9 +207,9 @@ FUNCTION spice_data::xcfit_block, window, no_masking = no_masking, approximated_
   ana = self.mk_analysis(window_index, no_masking = no_masking, approximated_slit = approximated_slit, position = position, velocity = velocity, $
     no_line_list = no_line_list, /init_all_cubes)
   IF size(ana, /type) EQ 8 THEN BEGIN
-    origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index))[0], (self.get_instr_y_vector(window_index))[0]]
-    scale = [self.get_resolution(/lambda), self.get_resolution(/x), self.get_resolution(/y)]
-    spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2]
+    origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
+    scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
+    xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2]
   ENDIF ELSE BEGIN
     print, 'Something went wrong when trying to produce an ANA structure.'
   ENDELSE
@@ -486,13 +486,13 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
           print, 'this may take a while'
           print, '====================='
         ENDIF
-        spice_cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
+        cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
       ENDIF
 
       IF ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) THEN BEGIN
-        origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index))[0], (self.get_instr_y_vector(window_index))[0]]
+        origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
         scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
-        spice_xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
+        xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
       ENDIF
 
       original_data = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
@@ -606,20 +606,23 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   ; Transforms data so that it can be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
-  version = 1 ; PLEASE increase this number when editing the code
+  version = 2 ; PLEASE increase this number when editing the code
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
-  ; ; Only do fit on the spectral part of the window!
-  LAMBDA = self.get_wcs_coord(window_index, /lambda)
+  ; Only do fit on the spectral part of the window!
+  LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
+  sigma = spice_calc_sigma(self, window_index)
+  WEIGHTS = 1.0 / sigma ^ 2
 
-  size_data = size(DATA)
+  ; size_data = size(DATA)
   IF self.get_sit_and_stare() THEN BEGIN
     LAMBDA = transpose(LAMBDA, [2, 0, 1, 3])
     DATA = transpose(DATA, [2, 0, 1, 3])
-    WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value = 1.0)
+    WEIGHTS = transpose(WEIGHTS, [2, 0, 1, 3])
+    ; WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], size_data[4], value = 1.0)
   ENDIF ELSE BEGIN
     naxis1 = self.get_header_keyword('naxis1', window_index)
     naxis2 = self.get_header_keyword('naxis2', window_index)
@@ -627,7 +630,8 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
     LAMBDA = reform(LAMBDA, [naxis1, naxis2, naxis3])
     LAMBDA = transpose(LAMBDA, [2, 0, 1])
     DATA = transpose(DATA, [2, 0, 1])
-    WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], value = 1.0)
+    WEIGHTS = transpose(WEIGHTS, [2, 0, 1])
+    ; WEIGHTS = make_array(size_data[3], size_data[1], size_data[2], value = 1.0)
   ENDELSE
   type_data = size(DATA, /type)
   LAMBDA = fix(LAMBDA, type = type_data)
@@ -2301,7 +2305,7 @@ END
 ;              If this keyword is set, then y, lambda and time provided must be within
 ;              the actual data volume.
 ;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
-;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;
 ; OUTPUT:
@@ -2350,7 +2354,7 @@ END
 ;              If this keyword is set, then x, lambda and time provided must be within
 ;              the actual data volume.
 ;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
-;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;     full_ccd : If set, a vector of size CCD-size[1] is returned with coordinate values
 ;              for the whole detector. The data is then debinned. This may give wrong results if
@@ -2439,7 +2443,7 @@ FUNCTION spice_data::get_lambda_vector, window, x = x, y = y, time = time, full_
   pixels[1, *] = y
   pixels[3, *] = time
 
-  return, self.get_wcs_coord(window_index, pixels, /lambda)
+  return, self.get_wcs_coord(window_index, pixels, /lambda, /auto_diff_rot)
 END
 
 ;+
@@ -2477,7 +2481,7 @@ FUNCTION spice_data::get_time_vector, window, x = x, y = y, lambda = lambda
   pixels[2, *] = lambda
   pixels[3, *] = self.get_sit_and_stare() ? indgen(npix) : 0
 
-  return, self.get_wcs_coord(window_index, pixels, /time)
+  return, self.get_wcs_coord(window_index, pixels, /time, /auto_diff_rot)
 END
 
 ;+
@@ -2527,16 +2531,23 @@ END
 ; OPTONAL INPUTS:
 ;     window : the index or name of the window
 ;
+; KEYWORDS:
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
+;              then the keyword DIFF_ROT is set.
+;
 ; OUTPUT:
 ;     float : fovx in arcseconds
 ;-
-FUNCTION spice_data::get_fovx, window
+FUNCTION spice_data::get_fovx, window, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot
   ; Returns FOV in solar x direction, in arcsec
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
-  x_coords = self.get_wcs_coord(window_index, /x)
+  x_coords = self.get_wcs_coord(window_index, /x, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
   minx = min(x_coords, max = maxx)
   return, maxx - minx
 END
@@ -2548,16 +2559,23 @@ END
 ; OPTONAL INPUTS:
 ;     window : the index or name of the window
 ;
+; KEYWORDS:
+;     diff_rot : If set, applies the differential rotation correction to the x- and y-coordinates
+;              using spice_diff_rot_coord.
+;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
+;              then the keyword DIFF_ROT is set.
+;
 ; OUTPUT:
 ;     float : fovy in arcseconds
 ;-
-FUNCTION spice_data::get_fovy, window
+FUNCTION spice_data::get_fovy, window, auto_diff_rot = auto_diff_rot
   ; Returns FOV in solar y direction, in arcsec
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
-  y_coords = self.get_wcs_coord(window_index, /y)
+  y_coords = self.get_wcs_coord(window_index, /y, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
   miny = min(y_coords, max = maxy)
   return, maxy - miny
 END
@@ -2587,7 +2605,7 @@ END
 ;              If this keyword is set, then all pixels provided in the pixels array must be within
 ;              the actual data volume. Floating point indices may give wrong results.
 ;              It is not recommended to set this keyword if ROT_COMP=1 in the header of this window.
-;     auto_diff_rot : If set, and the keyword ROT_COMP=1 in the header of this window,
+;     auto_diff_rot : If set, and the keyword ROT_COMP=0 in the header of this window,
 ;              then the keyword DIFF_ROT is set.
 ;
 ; OUTPUT:
@@ -2764,6 +2782,91 @@ END
 
 ;+
 ; Description:
+;     Returns the total binning factor, spectral * spatial direction.
+;     If window is not provided a vector with binning factors for all
+;     windows is returned.
+;
+; OPTIONAL INPUTS:
+;     window : the index or name of the window (can be a list of indices or names)
+;
+; OUTPUT:
+;     int array
+;-
+FUNCTION spice_data::get_total_binning, window
+  ; Returns the binning factor in the spectral direction (vector if window not provided)
+  COMPILE_OPT IDL2
+
+  IF n_elements(window) EQ 0 THEN window = indgen(self.get_number_windows())
+  bin = intarr(n_elements(window))
+  FOR i = 0, n_elements(window) - 1 DO BEGIN
+    window_index = self.return_extension_index(window[i], /check_window_index)
+    IF window_index GE 0 THEN $
+      bin[i] = self.get_header_keyword('NBIN', window_index, self.get_spatial_binning(window_index) * self.get_spectral_binning(window_index))
+  ENDFOR
+  IF n_elements(bin) EQ 1 THEN bin = bin[0]
+  return, bin
+END
+
+;+
+; Description:
+;     Returns the calibration factor for the specified window
+;
+; INPUTS:
+;     window : the index or name of the window to be checked
+;
+; OUTPUT:
+;     scalar number, the average calibration factor for the specified window.
+;
+; OPTIONAL OUTPUT:
+;     variable_values : array, contains the variable values for this keyword, if this keyword is present
+;                       in the binary table extension 'VARIABLE-KEYWORDS', otherwise !NULL.
+;-
+FUNCTION spice_data::get_calibration_factor, window, variable_values = variable_values
+  ; Returns the calibration factor for the specified window
+  COMPILE_OPT IDL2
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
+  calibration_factor = self.get_header_keyword('radcal', window_index, variable_values = variable_values, /values_only)
+  return, calibration_factor
+END
+
+;+
+; Description:
+;     Returns the noise factors for the specified window
+;
+; INPUTS:
+;     window : the index or name of the window to be checked
+;
+; OUTPUT:
+;     structure, the noise factors for the specified window.
+;     {noise_factor, gain, read_noise, i_dark}
+;-
+FUNCTION spice_data::get_noise_factors, window
+  ; Returns the noise factors for the specified window
+  COMPILE_OPT IDL2
+  window_index = self.return_extension_index(window, /check_window_index)
+  IF window_index LT 0 THEN return, !NULL
+  prstep_ind = where(self.get_header_keyword('PRSTEP*', window_index) EQ "DARK-SUBTRACTION", count)
+  IF count GT 1 THEN BEGIN
+    prref = (self.get_header_keyword('PRREF*', window_index, ''))[prstep_ind]
+    dark_subtraction_factor = total(prref.contains('combined_dark')) GT 0 ? 1 : 2
+  ENDIF ELSE BEGIN
+    dark_subtraction_factor = 2
+  ENDELSE
+  CASE trim(self.get_header_keyword('DETECTOR', window_index)) OF
+    'SW': noise_factors = {noise_factor: 1.0, gain: 3.58, read_noise: 6.9, i_dark: 0.89, dark_subtraction_factor: dark_subtraction_factor}
+    'LW': noise_factors = {noise_factor: 1.6, gain: 0.57, read_noise: 6.9, i_dark: 0.54, dark_subtraction_factor: dark_subtraction_factor}
+    ELSE: BEGIN
+      message, 'Unknown detector type in window ' + string(window_index) + ': ' + $
+        self.get_header_keyword('DETECTOR', window_index), /info
+      return, !NULL
+    END
+  ENDCASE
+  return, noise_factors
+END
+
+;+
+; Description:
 ;     Checks whether a given window index or name is valid
 ;
 ; INPUTS:
@@ -2772,7 +2875,7 @@ END
 ; OUTPUT:
 ;     boolean, True if input is a valid window index or name
 ;-
-FUNCTION spice_data::check_window_index, window
+FUNCTION SPICE_DATA::check_window_index, window
   ; Returns 1 if input is a valid window index or name
   COMPILE_OPT IDL2
 
@@ -3088,6 +3191,7 @@ FUNCTION spice_data::get_bintable_data, ttypes, values_only = values_only, exten
     ttypes = self.get_bintable_ttypes()
   ENDIF
   ttypes_use = self.expand_ttypes(ttypes, column_indices = column_indices, extension = extension)
+  IF n_elements(ttypes_use) EQ 0 THEN return, !NULL
 
   result = make_array(n_elements(ttypes_use), value = temp_column)
   file_open = 0
@@ -3208,7 +3312,7 @@ PRO spice_data::read_file, file
       hdr = headfits(file, exten = iwin)
     ENDIF
     headers_string[iwin] = ptr_new(hdr)
-    hdr = spice_fitshead2struct(hdr, /multivalue, /silent)
+    hdr = fitshead2struct(hdr, /multivalue, /silent)
     headers[iwin] = ptr_new(hdr)
     IF iwin LT self.nwin THEN BEGIN
       wcs[iwin] = ptr_new(fitshead2wcs(hdr, filename = file))

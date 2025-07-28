@@ -111,11 +111,14 @@
 ;              Version 17, TF, 17.04.2024. New method
 ;                          ::rsync_file_to_other_servers, rsyncs file to any
 ;                          server returned by spice_get_other_servers()
-;              VErsion 18, SH, 04.09.2024. Change keyword_info.json -> spice_keyword_info.json
+;              Version 18, SH, 04.09.2024. Change keyword_info.json ->
+;                          spice_keyword_info.json
+;              Version 19, SH, 10.05.2025
+;                          MANY changes, see Explanation above.
 ;
 ; Version    : Version 17, SH, 4 September 2024
 ;
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-06-23 13:07 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -174,7 +177,7 @@ PRO spice_gen_cat2::write_keyword_info_file, filename
   self.rsync_file_to_other_servers, filename
 END
 
-PRO spice_gen_cat2::write_plaintext, filename
+PRO spice_gen_cat2::write_plaintext_filtered, filename, filter
   print
   print, "Writing " + filename
   tmp_filename = filename + '.tmp'
@@ -184,13 +187,21 @@ PRO spice_gen_cat2::write_plaintext, filename
   printf, lun, comma_separated_keywords
   keys = self.d.file_hash.Keys()
   FOREACH key, keys, index DO BEGIN
-    printf, lun, self.d.file_hash[key], format = "(a)"
+    IF key.matches(filter) THEN $
+      printf, lun, self.d.file_hash[key], format = "(a)"
     IF NOT self.d.quiet THEN IF (index + 1) MOD 1000 EQ 0 THEN print, "Done " + trim(index + 1)
   END
 
   FREE_LUN, lun
   file_move, tmp_filename, filename, /overwrite
   self.rsync_file_to_other_servers, filename
+END
+
+PRO spice_gen_cat2::write_plaintext, filename_all
+  self.write_plaintext_filtered, filename_all, 'L'
+  self.write_plaintext_filtered, filename_all + '.l1', 'L1'
+  self.write_plaintext_filtered, filename_all + '.l2', 'L2'
+  self.write_plaintext_filtered, filename_all + '.l3', 'L3'
 END
 
 PRO spice_gen_cat2::write_csv, filename
@@ -358,7 +369,8 @@ END
 PRO spice_gen_cat2::write_hash_save_file
   print, 'Writing ' + self.d.catalog_hash_save_file
   file_hash = self.d.file_hash
-  save, file = self.d.catalog_hash_save_file, file_hash
+  save, file = self.d.catalog_hash_save_file + '.tmp', file_hash
+  file_move, self.d.catalog_hash_save_file + '.tmp', self.d.catalog_hash_save_file, /overwrite
   self.rsync_file_to_other_servers, self.d.catalog_hash_save_file
 END
 
@@ -482,6 +494,7 @@ PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old
   steinhh_paths = getenv("USER") EQ 'steinhh' || getenv("USE_STEINHH_PATHS") NE ''
   IF NOT steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
   ptools.default, spice_data_dir, "$HOME/spice_home/fits"
+  ptools.default, ignore_L0, 1
   IF ~file_test(spice_data_dir, /directory) THEN message, 'Directory does not exist: ' + spice_data_dir
   ON_ERROR, 0
   REPEAT BEGIN
