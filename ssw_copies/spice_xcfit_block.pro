@@ -256,7 +256,7 @@
 ;                       Changed all brackets to square brackets where necessary.
 ;
 ; Version     : 14
-; $Id: 2025-06-23 12:04 CEST $
+; $Id: 2025-07-29 14:44 CEST $
 ;-
 
 
@@ -1771,6 +1771,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                 analysis=ana, title=title, group_leader=group_leader, $
                 display_treshold=display_threshold, no_save_option=no_save_option,$
                 signal_id=signal_id, modal=modal, image_dim=image_dim
+
+  box_message, ['SPICE_XCFIT_BLOCK has been deprecated and will be removed in a future release.', 'Please use XCFIT_BLOCK instead.']
 
   ;on_error,2
 

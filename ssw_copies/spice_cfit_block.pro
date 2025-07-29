@@ -178,7 +178,7 @@
 ;                       Whenever variables are checked for 'missing' values, it uses now
 ;                       the procedures WHERE_MISSING, WHERE_NOT_MISSING, IS_MISSING or IS_NOT_MISSING
 ;
-; $Id: 2025-07-15 21:06 CEST $
+; $Id: 2025-07-29 14:44 CEST $
 ;-            
 
 PRO spice_cfit_block_point,lambda,data,weights,fit,missing,$
@@ -298,6 +298,8 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
                analysis=ana,$
                make_sigma=make_sigma,sigma=sigma,error_only=error_only,$
                fill_only=fill_only
+
+  box_message, ['SPICE_CFIT_BLOCK has been deprecated and will be removed in a future release.', 'Please use CFIT_BLOCK instead.']
   
   IF NOT exist(ana) THEN BEGIN 
      IF n_params() LT 7 THEN BEGIN

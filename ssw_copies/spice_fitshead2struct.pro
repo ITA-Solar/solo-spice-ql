@@ -66,6 +66,9 @@ function spice_fitshead2struct, head, template, DASH2UNDERSCORE=dash2underscore,
 ;      NEED TO RESOLVE DATE-OBS/DATE_OBS mapping
 ;      (scheduled for 28-feb-1997) (Done, CED 19-Jan-1998)
 ;-             
+
+box_message, ['SPICE_FITSHEAD2STRUCT has been deprecated and will be removed in a future release.', 'Please use FITSHEAD2STRUCT instead.']
+
 retval=''  
 if not data_chk(head,/string)  then begin
     message,/info,"Nead FITS header as input

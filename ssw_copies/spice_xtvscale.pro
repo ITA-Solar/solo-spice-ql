@@ -835,6 +835,8 @@ FUNCTION spice_xtvscale,SCALE_ID,DATA, title=title,$
                   $ ;; These only have defaults when creating the compound.
                   iconify=iconify,map=map,show=show 
   
+  box_message, ['SPICE_XTVSCALE has been deprecated and will be removed in a future release.', 'Please use XTVSCALE instead.']
+
   ON_ERROR,2
   IF !debug NE 0 THEN ON_ERROR,0
   
