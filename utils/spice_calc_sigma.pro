@@ -30,9 +30,9 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-07-29 15:40 CEST $
+; $Id: 2025-07-29 15:42 CEST $
 
-FUNCTION spice_calc_sigma, file, window_index
+FUNCTION spice_calc_sigma, file, window_index, no_masking = no_masking, approximated_slit = approximated_slit
   COMPILE_OPT IDL2
 
   obj = spice_object(file, is_spice = is_spice, object_created = object_created)

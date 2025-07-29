@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-06-26 13:43 CEST $
+; $Id: 2025-07-29 15:42 CEST $
 
 ;+
 ; Description:
@@ -614,7 +614,7 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
   ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
-  sigma = spice_calc_sigma(self, window_index)
+  sigma = spice_calc_sigma(self, window_index, no_masking = no_masking, approximated_slit = approximated_slit)
   WEIGHTS = 1.0 / sigma ^ 2
 
   ; size_data = size(DATA)
