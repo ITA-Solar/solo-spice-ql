@@ -30,7 +30,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-06-26 11:08 CEST $
+; $Id: 2025-07-29 15:40 CEST $
 
 FUNCTION spice_calc_sigma, file, window_index
   COMPILE_OPT IDL2
@@ -86,28 +86,4 @@ FUNCTION spice_calc_sigma, file, window_index
   ;    xposure = [s]
   ;    noise_factor = []
 
-  code = 'python' ; default code
-  missing_val = -100.
-  k = where(~finite(data) OR data LE 0., nk)
-  IF nk NE 0 THEN data[k] = missing_val
-  ind_good = where(data NE missing_val, n_good, complement = ind_miss, ncomplement = n_miss)
-  ; IF n_good GT 0 THEN err[ind_good] = sqrt(noise_factor ^ 2 * alpha * data[ind_good] * gain + nbin_total * sig_read ^ 2 + nbin_total * i_dark * t) / alpha
-  ; IF n_miss GT 0 THEN err[ind_miss] = missing_val
-  ; TODO: What to do with negative values?
-  IF code EQ 'IDL' THEN BEGIN
-    sigma = sqrt( $
-      noise_factor ^ 2 * calibration_factor * data * gain $ ; signal noise
-      + read_noise ^ 2 * nbin $ ; read noise
-      + i_dark * xposure * nbin) $ ; dark current noise
-      / calibration_factor
-  END ELSE IF code EQ 'Python' THEN BEGIN
-    sigma = sqrt( $
-      noise_factor ^ 2 * calibration_factor * data * gain $ ; signal noise
-      + read_noise ^ 2 * nbin * 2 $ ; read noise
-      + i_dark * xposure * nbin * 2) $ ; dark current noise
-      / calibration_factor
-  END ELSE BEGIN
-    print, 'Unknown code: ', code
-    return, -1
-  END
 END
