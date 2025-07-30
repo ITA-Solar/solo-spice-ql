@@ -299,7 +299,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
                make_sigma=make_sigma,sigma=sigma,error_only=error_only,$
                fill_only=fill_only
 
-  box_message, ['SPICE_CFIT_BLOCK has been deprecated and will be removed in a future release.', 'Please use CFIT_BLOCK instead.']
+  message, "SPICE_CFIT_BLOCK has been deprecated, please use CFIT_BLOCK instead."
   
   IF NOT exist(ana) THEN BEGIN 
      IF n_params() LT 7 THEN BEGIN
@@ -551,7 +551,7 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
         o = ix MOD dimen[6]
         IF jj NE ndo-1L THEN BEGIN
            restart = result[*,j,k,l,m,n,o]
-           result[*,j,k,l,m,n,o] = last_result
+           result[*,j,k,l,m,n,o] = last_result ; idl-disable-line var-use-before-def
         END
         spice_cfit_block_point,lambda,data,weights,fit,missing,$
            result,residual,include,const,$
