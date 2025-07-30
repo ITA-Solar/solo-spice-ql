@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-07-30 15:08 CEST $
+; $Id: 2025-07-30 16:01 CEST $
 
 ;+
 ; Description:
@@ -524,6 +524,8 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
 
         PROC_STEPS = list(proc_step_1, proc_step_2, /no_copy)
 
+        proj_keywords = self.get_noise_factors(window_index, /return_proj_keywords, sigmadat = sigmadat)
+
         file = (keyword_set(pipeline_dir)) ? pipeline_dir + '/' + filename_l3 : filepath(filename_l3, /tmp)
 
         spice_ingest, filename_l2, destination = destination, top_dir = top_dir, path_index = path_index, /force, /dry_run
@@ -538,8 +540,9 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         N_WINDOWS = n_elements(window), WINNO = iwindow, $
         DATA_EXT_PATH = relative_path, $
         IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', VERSION = number_version_l3, $
-        PROC_STEPS = PROC_STEPS, creator = creator, $
+        PROC_STEPS = PROC_STEPS, creator = creator, sigmadat = sigmadat, $
         PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = self.get_header(window_index), $
+        proj_keywords = proj_keywords, $
         SAVE_RESIDUALS = SAVE_RESIDUALS, PRINT_HEADERS = PRINT_HEADERS, $
         SAVE_NOT = save_not, $
         headers_results = headers_results, headers_data = headers_data
@@ -2841,7 +2844,7 @@ END
 ;     structure, the noise factors for the specified window.
 ;     {noise_factor, gain, read_noise, i_dark}
 ;-
-FUNCTION spice_data::get_noise_factors, window, return_proj_keywords = return_proj_keywords
+FUNCTION spice_data::get_noise_factors, window, return_proj_keywords = return_proj_keywords, sigmadat = sigmadat
   ; Returns the noise factors for the specified window
   COMPILE_OPT IDL2
   window_index = self.return_extension_index(window, /check_window_index)
@@ -2862,13 +2865,11 @@ FUNCTION spice_data::get_noise_factors, window, return_proj_keywords = return_pr
       return, !NULL
     END
   ENDCASE
+
+  sigmadat = 'sqrt(RADCAL*GAIN*NOISEFAC^2*(DATA>0) + DARKSUBF*NBIN*(READNOIS^2 + DARKCURR*XPOSURE) / RADCAL'
+
   IF keyword_set(return_proj_keywords) THEN BEGIN
     proj_keywords = []
-
-    keyword = hash('name', 'SIGMADAT', $
-      'value', 'sqrt(RADCAL*GAIN*NOISEFAC^2*(DATA>0) + DARKSUBF*NBIN*(READNOIS^2 + DARKCURR*XPOSURE) / RADCAL', $
-      'comment', 'The function used to calculate SIGMA of the data')
-    proj_keywords = [proj_keywords, keyword]
 
     keyword = hash('name', 'RADCAL', $
       'value', self.get_calibration_factor(window, variable_values = variable_values), $
