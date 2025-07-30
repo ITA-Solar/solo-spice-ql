@@ -41,14 +41,14 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-12 10:22 CEST $
+; $Id: 2025-07-30 11:30 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
   DATA_EXT_PATH = DATA_EXT_PATH, XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, $
   is_extension = is_extension, $
   header_input_data = header_input_data, wcs = wcs, $
-  level = level, version = version, creator = creator, $
+  level = level, version = version, creator = creator, SIGMADAT = SIGMADAT, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
   history = history, filename_ana = filename_ana, $
   datasource = datasource, definition = definition, missing = missing, label = label
@@ -228,6 +228,8 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'BTYPE', 'Fit Parameter', 'Type of data'
   fits_util.add, hdr, 'UCD', 'stat.fit.param', 'Unified Content Descriptors v1.23'
   fits_util.add, hdr, 'BUNIT', ' ', 'Units of the data'
+  IF keyword_set(SIGMADAT) THEN $
+    fits_util.add, hdr, 'SIGMADAT', SIGMADAT, 'Function to calculate sigma from data'
 
   ; Add additional project-related keywords to the header
   IF n_elements(proj_keywords) GT 0 THEN BEGIN

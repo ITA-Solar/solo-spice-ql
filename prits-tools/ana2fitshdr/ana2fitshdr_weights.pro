@@ -39,15 +39,15 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-30 11:30 CEST $
 
-FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs
+FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs, SIGMADAT = SIGMADAT
   ptools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
   ptools.parcheck, extension_names, 0, 'EXTENSION_NAMES', 'STRING', 1, valid_nelements = 6
   ptools.parcheck, weights, 0, 'WEIGHTS', 'NUMERIC', [2, 3, 4, 5, 6, 7], /optional
   ptools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
 
-  IF n_elements(weights) EQ 0 THEN return, ''
+  IF n_elements(weights) EQ 0 || keyword_set(SIGMADAT) THEN return, ''
   min_weights = min(weights, max = max_weights)
   IF min_weights EQ max_weights THEN return, ''
 

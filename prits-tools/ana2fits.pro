@@ -118,6 +118,13 @@
 ;      LEVEL: Number or string. The data level. If not provided this keyword will not be in the header.
 ;      VERSION: Number or string. The version number of this file. If not provided this keyword will not be in the header.
 ;      CREATOR: String. The name of the creator of this FITS file. If not provided this keyword will not be in the header.
+;      SIGMADAT: String. The function that is used to calculate sigma (= 1/sqrt(WEIGHT)). This function is also used when
+;              reading the level P FITS file with FITS2ANA. However, so far this has not been implemented and for
+;              SPICE we only check that the function is correct. Eventually, we may implement this.
+;              The function should use IDL syntax and use existing header keywords as variables. DATA is allowed to be used as a variable.
+;              The required header keywords can be added using the keyword PROJ_KEYWORDS.
+;              If this is provided, the WEIGHT cube will not be saved in the FITS file, even if the values are not identical.
+;              If not provided this keyword will not be in the header.
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
 ;              where, xxx2 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
@@ -202,14 +209,14 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-30 11:30 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $
   DATA_EXT_PATH = DATA_EXT_PATH, $
   XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, data_id = data_id, $
   is_extension = is_extension, n_windows = n_windows, winno = winno, $
-  level = level, version = version, creator = creator, $
+  level = level, version = version, creator = creator, SIGMADAT = SIGMADAT, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
   SAVE_RESIDUALS = SAVE_RESIDUALS, SAVE_DATA = SAVE_DATA, print_headers = print_headers, $
   save_not = save_not, $
@@ -230,6 +237,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
   ptools.parcheck, winno, 0, 'WINNO', 'INTEGERS', 0, default = 0
   ptools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   ptools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
+  ptools.parcheck, SIGMADAT, 0, 'SIGMADAT', 'STRING', 0, /optional
 
   result_ptr = 0
   fit_ptr = 0
@@ -366,7 +374,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
         data_id = data_id_use, XTYPE1 = XTYPE1_use, XDIMEN1 = XDIMEN1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
-        is_extension = extension, level = level, version = version, creator = creator, $
+        is_extension = extension, level = level, version = version, creator = creator, SIGMADAT = SIGMADAT, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
         xdim1 = xdim1_use, input_data = INPUT_DATA_use, fit = fit_use, $
         result = result_use, residual = residual_use, weights = weights_use, include = include_use, $
@@ -380,7 +388,7 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
         n_windows = n_windows_use, winno = winno + iwindow, $
         data_id = data_id_use, XTYPE1 = XTYPE1_use, XDIMEN1 = XDIMEN1_use, $
         DATA_EXT_PATH = DATA_EXT_PATH_use, $
-        is_extension = extension, level = level, version = version, creator = creator, $
+        is_extension = extension, level = level, version = version, creator = creator, SIGMADAT = SIGMADAT, $
         proc_steps = PROC_STEPS_use, proj_keywords = PROJ_KEYWORDS_use, $
         xdim1 = xdim1_use, input_data = INPUT_DATA_use, fit = fit_use, $
         result = result_use, residual = residual, weights = weights_use, include = include_use, $

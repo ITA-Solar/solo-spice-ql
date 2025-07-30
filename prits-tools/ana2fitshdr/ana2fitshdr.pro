@@ -42,13 +42,13 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-30 11:30 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
   data_id = data_id, XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, $
   DATA_EXT_PATH = DATA_EXT_PATH, $
-  is_extension = is_extension, level = level, version = version, creator = creator, $
+  is_extension = is_extension, level = level, version = version, creator = creator, SIGMADAT = SIGMADAT, $
   proc_steps = proc_steps, proj_keywords = proj_keywords, $
   xdim1 = xdim1, input_data = input_data, fit = fit, $
   result = result, residual = residual, weights = weights, include = include, $
@@ -191,7 +191,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     DATA_EXT_PATH = DATA_EXT_PATH, XTYPE1 = XTYPE1, XDIMEN1 = XDIMEN1, $
     extension_names = extension_names, is_extension = is_extension, $
     header_input_data = header_input_data, wcs = wcs, $
-    level = level, version = version, creator = creator, $
+    level = level, version = version, creator = creator, SIGMADAT = SIGMADAT, $
     proc_steps = proc_steps, proj_keywords = proj_keywords, $
     history = history, filename_ana = filename_ana, $
     datasource = datasource, definition = definition, missing = missing, label = label)
@@ -211,7 +211,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   ; Create weights header
   ; ------
 
-  hdr = ana2fitshdr_weights(datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs)
+  hdr = ana2fitshdr_weights(datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs, SIGMADAT = SIGMADAT)
   all_headers[2] = ptr_new(hdr)
   IF hdr[0] EQ '' THEN extension_names[2] = ''
 
