@@ -299,7 +299,8 @@ PRO spice_cfit_block,lambda,data,weights,fit,missing,result,residual,include,con
                make_sigma=make_sigma,sigma=sigma,error_only=error_only,$
                fill_only=fill_only
 
-  message, "SPICE_CFIT_BLOCK has been deprecated, please use CFIT_BLOCK instead."
+  message, "SPICE_CFIT_BLOCK has been deprecated, please use CFIT_BLOCK instead.",/continue
+  message, "after making sure your SSW installation is up to date"
   
   IF NOT exist(ana) THEN BEGIN 
      IF n_params() LT 7 THEN BEGIN

@@ -1772,7 +1772,8 @@ PRO spice_xcfit_block,lambda,data,weights,fit,missing,result,residual,include,co
                 display_treshold=display_threshold, no_save_option=no_save_option,$
                 signal_id=signal_id, modal=modal, image_dim=image_dim
 
-  message, "SPICE_XCFIT_BLOCK is deprecated, use XCFIT_BLOCK instead"
+  message, "SPICE_XCFIT_BLOCK is deprecated, use XCFIT_BLOCK instead",/continue
+  message, "after making sure your SSW installation is up to date"
 
   ;on_error,2
 
