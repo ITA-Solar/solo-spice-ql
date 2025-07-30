@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-07-29 15:42 CEST $
+; $Id: 2025-07-30 15:08 CEST $
 
 ;+
 ; Description:
@@ -2841,7 +2841,7 @@ END
 ;     structure, the noise factors for the specified window.
 ;     {noise_factor, gain, read_noise, i_dark}
 ;-
-FUNCTION spice_data::get_noise_factors, window
+FUNCTION spice_data::get_noise_factors, window, return_proj_keywords = return_proj_keywords
   ; Returns the noise factors for the specified window
   COMPILE_OPT IDL2
   window_index = self.return_extension_index(window, /check_window_index)
@@ -2862,7 +2862,48 @@ FUNCTION spice_data::get_noise_factors, window
       return, !NULL
     END
   ENDCASE
-  return, noise_factors
+  IF keyword_set(return_proj_keywords) THEN BEGIN
+    proj_keywords = []
+
+    keyword = hash('name', 'SIGMADAT', $
+      'value', 'sqrt(RADCAL*GAIN*NOISEFAC^2*(DATA>0) + DARKSUBF*NBIN*(READNOIS^2 + DARKCURR*XPOSURE) / RADCAL', $
+      'comment', 'The function used to calculate SIGMA of the data')
+    proj_keywords = [proj_keywords, keyword]
+
+    keyword = hash('name', 'RADCAL', $
+      'value', self.get_calibration_factor(window, variable_values = variable_values), $
+      'comment', '[DN/(W m-2 sr-1 nm-1)] Radiometric calibration factor')
+    proj_keywords = [proj_keywords, keyword]
+
+    keyword = hash('name', 'GAIN', $
+      'value', noise_factors.gain, $
+      'comment', '[DN/photon] Camera conversion gain')
+    proj_keywords = [proj_keywords, keyword]
+
+    keyword = hash('name', 'NOISEFAC', $
+      'value', noise_factors.noise_factor, $
+      'comment', '[] Intensifier noise factor')
+    proj_keywords = [proj_keywords, keyword]
+
+    keyword = hash('name', 'READNOIS', $
+      'value', noise_factors.read_noise, $
+      'comment', '[DN] Readout noise')
+    proj_keywords = [proj_keywords, keyword]
+
+    keyword = hash('name', 'DARKCURR', $
+      'value', noise_factors.i_dark, $
+      'comment', '[DN/s] Dark current')
+    proj_keywords = [proj_keywords, keyword]
+
+    keyword = hash('name', 'DARKSUBF', $
+      'value', noise_factors.dark_subtraction_factor, $
+      'comment', '[] Dark subtraction noise factor')
+    proj_keywords = [proj_keywords, keyword]
+
+    return, proj_keywords
+  ENDIF ELSE BEGIN
+    return, noise_factors
+  ENDELSE
 END
 
 ;+
