@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann
 ;-
-; $Id: 2025-06-19 11:11 CEST $
+; $Id: 2025-07-30 15:08 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -181,6 +181,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       result = readfits(fitsfile, hdr, ext = extension, silent = quiet)
     ENDELSE
     IF get_headers[0] THEN headers_results[iwin] = ptr_new(hdr)
+    hdr_result = hdr
     wcs_result = fitshead2wcs(hdr)
 
     ; extract info from header
@@ -277,6 +278,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
     INCLEXT = fxpar(hdr, 'INCLEXT', missing = '')
     CONSTEXT = fxpar(hdr, 'CONSTEXT', missing = '')
     RESIDEXT = fxpar(hdr, 'RESIDEXT', missing = '')
+    SIGMADAT = fxpar(hdr, 'SIGMADAT', missing = '')
 
     ; DATA extension
 
@@ -374,6 +376,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       ENDIF ; ~wcs_data_exists
     ENDIF ; ~headers_only
     IF get_headers[1] THEN headers_data[iwin] = ptr_new(hdr)
+    hdr_data = hdr
 
     IF debug THEN BEGIN
       print, ''
@@ -433,8 +436,14 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       IF headers_only THEN BEGIN
         weights = 0
       ENDIF ELSE BEGIN
-        IF loud THEN message, 'Creating weights cube with default values', /info
-        weights = make_array(wcs_data.naxis, value = 1.0)
+        IF keyword_set(SIGMADAT) THEN BEGIN
+          IF loud THEN message, 'Creating weights cube with the function given in SIGMADAT', /info
+          sigma = spice_calc_sigma(data, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data)
+          weights = 1.0 / sigma ^ 2
+        ENDIF ELSE BEGIN
+          IF loud THEN message, 'Creating weights cube with default values', /info
+          weights = make_array(wcs_data.naxis, value = 1.0)
+        ENDELSE
       ENDELSE
       hdr = ''
     ENDIF ELSE BEGIN
