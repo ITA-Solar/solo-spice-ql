@@ -121,7 +121,7 @@
 ;                       New keywords SIGRANGE and FRACTION, which are passed to spice_xtvscale.
 ;
 ; Version     : 9, 19 January 2024
-; $Id: 2024-08-02 14:00 CEST $
+; $Id: 2025-07-29 14:44 CEST $
 ;-
 
 ;;
@@ -581,6 +581,8 @@ FUNCTION spice_cw_cubeview,base,value=value,xsize=xsize,ysize=ysize,$
                      uvalue=uvalue,image_dim=image_dim,plot_dim=plot_dim,$
                      title=title,hvalue=hvalue,row=row,all_events=all_events
   
+  box_message, ['SPICE_CW_CUBEVIEW has been deprecated and will be removed in a future release.', 'Please use CW_CUBEVIEW instead.']
+
   value_hpass = 0
   
   IF n_elements(hvalue) EQ 1 THEN BEGIN
