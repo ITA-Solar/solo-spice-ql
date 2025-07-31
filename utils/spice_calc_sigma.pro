@@ -34,7 +34,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann
 ;-
-; $Id: 2025-07-30 15:07 CEST $
+; $Id: 2025-07-31 11:43 CEST $
 
 FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, $
   no_masking = no_masking, approximated_slit = approximated_slit
@@ -70,7 +70,6 @@ FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result 
     i_dark = noise_factors.i_dark
     dark_subtraction_factor = noise_factors.dark_subtraction_factor
   ENDELSE
-  stop
 
   sigma = sqrt( $
     noise_factor ^ 2 * calibration_factor * (data > 0) * gain $ ; signal noise
