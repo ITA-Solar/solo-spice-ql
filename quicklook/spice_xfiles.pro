@@ -61,9 +61,9 @@
 ;       2014-2016:   Martin Wiesmann, added new features, e.g. showing
 ;                    OBS and corresponding files separately, made it faster
 ;       Aug/Sep 2020:Martin Wiesmann, adapted it to SPICE and renamed it to
-;                    spice_xfiles
+;                    spice_xfiles (prits-group@astro.uio.no)
 ;
-; $Id: 2025-06-10 13:44 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 
 ; xfiles exit:

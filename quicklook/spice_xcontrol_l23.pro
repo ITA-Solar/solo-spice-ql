@@ -39,9 +39,9 @@
 ; RESTRICTIONS:
 ;
 ; MODIFICATION HISTORY:
-;     18-Aug-2022: First version by Martin Wiesmann
+;     18-Aug-2022: First version by Martin Wiesmann (prits-group@astro.uio.no)
 ;
-; $Id: 2025-06-11 15:34 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event

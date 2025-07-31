@@ -33,10 +33,10 @@
 ; RESTRICTIONS:
 ;
 ; HISTORY:
-;     15-Jun-2023: Martin Wiesmann
+;     15-Jun-2023: Martin Wiesmann (prits-group@astro.uio.no)
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2025-06-11 15:35 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 ;+
 ; Description:

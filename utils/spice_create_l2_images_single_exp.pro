@@ -30,10 +30,10 @@
 ;      ptools.parcheck, spice_object, spice_create_l3_images_single_exp
 ;
 ; HISTORY:
-;      Ver. 1,   10-Feb-2025, Martin Wiesmann
+;      Ver. 1,   10-Feb-2025, Martin Wiesmann (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time

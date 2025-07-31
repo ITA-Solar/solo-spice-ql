@@ -32,10 +32,10 @@
 ;      fxpar, fitshead2wcs, ptools.write_image_real_size
 ;
 ; HISTORY:
-;      Ver. 1,   10-Feb-2025, Martin Wiesmann
+;      Ver. 1,   10-Feb-2025, Martin Wiesmann (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot, filename = filename, $
   oJpg = oJpg

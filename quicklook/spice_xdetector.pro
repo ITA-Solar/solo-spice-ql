@@ -44,10 +44,10 @@
 ;       12-Sep-2002: Oivind Wikstol: First version - xdetector for EIS
 ;        2-Jan-2013: Viggo Hansteen: Rewritten for IRIS data
 ;       19-Aug-2015: Martin Wiesmann: Bugfixes
-;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data
+;       10-Feb-2020: Martin Wiesmann: Rewritten for SPICE data (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 ; save as postscript file
 PRO spice_xdetector_ps, event

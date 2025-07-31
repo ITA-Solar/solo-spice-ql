@@ -49,7 +49,7 @@
 ;      ptools.write_image_real_size
 ;
 ; HISTORY:
-;      Ver. 1,   23-Jun-2022, Martin Wiesmann
+;      Ver. 1,   23-Jun-2022, Martin Wiesmann (prits-group@astro.uio.no)
 ;      Ver. 1.1, 19-Jan-2024, Terje Fredvik - extract FITS keyword winno from
 ;                             header (instead of l2winno which no longer
 ;                             exists)
@@ -82,7 +82,7 @@
 ;
 ;
 ;-
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)

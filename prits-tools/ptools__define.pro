@@ -1,3 +1,7 @@
+; (prits-group@astro.uio.no)
+; -
+; $Id: 2025-07-31 13:25 CEST $
+
 FUNCTION ptools::init, quiet = quiet
   COMMON ptools, first_pt
   IF n_elements(first_pt) EQ 0 THEN first_pt = self

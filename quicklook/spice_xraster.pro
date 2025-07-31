@@ -60,9 +60,9 @@
 ;       14-Feb-2008: A. Gardini     - Set the xvs maximum to 2^15-1.
 ;       22-Apr-2008: A. Gardini     - Set margin parameters in panel.
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
-;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster
+;       19-May-2020: M. Wiesmann    - rewritten as spice_xraster (prits-group@astro.uio.no)
 ;
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 ;
 ; save as postscript file

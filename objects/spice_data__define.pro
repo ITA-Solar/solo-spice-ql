@@ -33,7 +33,7 @@
 ; RESTRICTIONS:
 ;
 ; HISTORY:
-;     26-Nov-2019: Martin Wiesmann (based on IRIS_uDATA__DEFINE)
+;     26-Nov-2019: Martin Wiesmann (based on IRIS_uDATA__DEFINE) (prits-group@astro.uio.no)
 ;     31-Jan-2022: Terje Fredvik - New method ::mask_region_outside_slit with
 ;                  a little army of help methods is now called when the
 ;                  SLIT_ONLY keyword is set when calling ::get_window_data.
@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-07-30 16:01 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 ;+
 ; Description:

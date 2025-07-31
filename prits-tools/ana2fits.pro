@@ -207,9 +207,9 @@
 ;     GEN library: writefits
 ;
 ; HISTORY:
-;      Ver. 1, 19-Jan-2022, Martin Wiesmann
+;      Ver. 1, 19-Jan-2022, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-07-30 11:30 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $

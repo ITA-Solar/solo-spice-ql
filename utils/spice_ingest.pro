@@ -70,10 +70,10 @@
 ;         keyword.
 ;      Ver. 4, 23-Feb-2015, Peter Young
 ;         added /HELP keyword.
-;      10-Jun-2020 : Martin Wiesmann : iris_ingest rewritten for SPICE
+;      10-Jun-2020 : Martin Wiesmann (prits-group@astro.uio.no) : iris_ingest rewritten for SPICE
 ;                 and renamed to spice_ingest
 ;-
-; $Id: 2024-11-29 14:53 CET $
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO spice_ingest, filename, path_index = path_index, force = force, nolevel = nolevel, $
   search_subdir = search_subdir, $

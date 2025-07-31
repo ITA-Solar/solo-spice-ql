@@ -44,10 +44,10 @@
 ;               Version 2, SVHH, 9 September 2020
 ;                          Rewritten from scratch
 ;
-; Version     : Version 2, SVHH, 9 September 2020
+; Version     : Version 2, SVHH, 9 September 2020 (prits-group@astro.uio.no)
 ;
 ;
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 ;
 PRO spice_cat::_____________UTILITY_FUNCTIONS

@@ -117,10 +117,10 @@
 ; CALLS:
 ;
 ; HISTORY:
-;      Ver. 1, 12-Oct-2022, Martin Wiesmann
+;      Ver. 1, 12-Oct-2022, Martin Wiesmann (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO spice_create_l3_driver, time_start, time_end = time_end, l2_files = l2_files, $
   top_dir = top_dir, path_index = path_index, count_file = count_file, count_seq = count_seq, $

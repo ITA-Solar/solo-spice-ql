@@ -93,9 +93,9 @@
 ;                          server returned by spice_get_other_servers()
 ;              VErsion 18, SH, 04.09.2024. Change keyword_info.json -> spice_keyword_info.json
 ;
-; Version    : Version 17, SH, 4 September 2024
+; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 
 FUNCTION spice_gen_cat::extract_filename, line

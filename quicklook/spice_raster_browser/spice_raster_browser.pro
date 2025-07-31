@@ -101,10 +101,10 @@
 ;     nxpos is computed automatically by the routine.
 ;
 ; HISTORY:
-;     Ver. 1, 22-Nov-2019, Martin Wiesmann
+;     Ver. 1, 22-Nov-2019, Martin Wiesmann (prits-group@astro.uio.no)
 ;       modified from iris_raster_browser.
 ;-
-; $Id: 2024-11-28 10:44 CET $
+; $Id: 2025-07-31 13:25 CEST $
 
 ; ---------------------
 PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $

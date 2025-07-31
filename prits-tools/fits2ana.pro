@@ -72,9 +72,9 @@
 ; RESTRICTIONS:
 ;
 ; HISTORY:
-;     23-Nov-2021: Martin Wiesmann
+;     23-Nov-2021: Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-07-30 15:08 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $

@@ -42,7 +42,7 @@
 ;      spice_gt_peaks, mk_comp_gauss, mk_comp_poly, box_message
 ;
 ; HISTORY:
-;      Ver. 1, 18-Oct-2021, Martin Wiesmann
+;      Ver. 1, 18-Oct-2021, Martin Wiesmann (prits-group@astro.uio.no)
 ;      Ver. 1.1, 17-Jan-2022, Terje Fredvik: minimum line width is determined
 ;                                            by the instrument optics and
 ;                                            should be the same for all lines.
@@ -56,7 +56,7 @@
 ;                                            velocities must be switched and
 ;                                            change sign.
 ;-
-; $Id: 2025-06-23 13:43 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks

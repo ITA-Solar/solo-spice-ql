@@ -32,9 +32,9 @@
 ;
 ; MODIFICATION HISTORY:
 ;      1-Jan-2013: First version started by Viggo Hansteen
-;     16-Sep-2020: First version for SPICE started by Martin Wiesmann
+;     16-Sep-2020: First version for SPICE started by Martin Wiesmann (prits-group@astro.uio.no)
 ;
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 ;
 ;

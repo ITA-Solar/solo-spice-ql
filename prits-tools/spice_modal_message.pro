@@ -1,5 +1,6 @@
 ; ; TODO: documentation & get better fonts
-; $Id: 2025-05-09 13:28 CEST $
+; (prits-group@astro.uio.no)
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO spice_modal_message__event_handler, event
   widget_control, event.top, /destroy

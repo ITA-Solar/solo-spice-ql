@@ -116,9 +116,9 @@
 ;              Version 19, SH, 10.05.2025
 ;                          MANY changes, see Explanation above.
 ;
-; Version    : Version 17, SH, 4 September 2024
+; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line

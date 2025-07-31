@@ -32,9 +32,9 @@
 ;       spice_object
 ;
 ; MODIFICATION HISTORY:
-;       Ver.1, 3-Feb-2020, Martin Wiesmann
+;       Ver.1, 3-Feb-2020, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-07-31 11:43 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, $
   no_masking = no_masking, approximated_slit = approximated_slit

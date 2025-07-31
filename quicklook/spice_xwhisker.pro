@@ -49,10 +49,10 @@
 ;                                     changes already made on Jun-2007.
 ;        3-Dec-2007: A. Gardini     - Freed pointers.
 ;       21-Jan-2013: V. Hansteen    - Rewritten for IRIS as iris_xwhisker
-;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker
+;       28-Jan-2020: M. Wiesmann    - Rewritten for SPICE as spice_xwhisker (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 
 ; save as postscript file
 PRO spice_xwhisker_ps, event

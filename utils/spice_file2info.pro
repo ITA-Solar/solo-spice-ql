@@ -34,9 +34,9 @@
 ;       }
 ;
 ; HISTORY:
-;      Ver. 1, 17-Jun-2020, Martin Wiesmann
+;      Ver. 1, 17-Jun-2020, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-07-31 13:25 CEST $
 
 FUNCTION spice_file2info, file
   ; examples

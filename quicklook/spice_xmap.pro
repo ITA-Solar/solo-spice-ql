@@ -67,9 +67,9 @@
 ;       19-Aug-2009: A. Gardini - Fixed bug in the xscale in
 ;                                 xmap_warcsec.
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
-;       28-May-2020: M. Wiesmann - First SPICE modified version.
+;       28-May-2020: M. Wiesmann - First SPICE modified version. (prits-group@astro.uio.no)
 ;
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 ;
 ; save as postscript file

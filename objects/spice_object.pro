@@ -32,9 +32,9 @@
 ;                0 otherwise.
 ;
 ; HISTORY:
-;      Ver. 1, 22-Oct-2020, Martin Wiesmann
+;      Ver. 1, 22-Oct-2020, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-07-31 13:25 CEST $
 
 FUNCTION spice_object, input, is_spice = is_spice, object_created = object_created, quiet = quiet
   is_spice = 0

@@ -35,14 +35,14 @@
 ;
 ; Category    : SPICE, Fitting
 ;
-; Written     : Martin Wiesmann, UIO, November 2022
+; Written     : Martin Wiesmann, UIO, November 2022 (prits-group@astro.uio.no)
 ;               Terje Fredvik, UiO, October 2024: Two possible line lists, a
 ;                                                 selection of the strongest
 ;                                                 lines is returned when
 ;                                                 STRONGEST_LINES is set
 ;
 ;
-; $Id: 2024-11-26 13:50 CET $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 ;
 ; ----------------------------------------------------------

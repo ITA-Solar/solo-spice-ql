@@ -85,9 +85,9 @@
 ; RESTRICTIONS:
 ;
 ; MODIFICATION HISTORY:
-;     18-Aug-2022: First version by Martin Wiesmann
+;     18-Aug-2022: First version by Martin Wiesmann (prits-group@astro.uio.no)
 ;
-; $Id: 2025-06-10 13:39 CEST $
+; $Id: 2025-07-31 13:25 CEST $
 ;-
 ;
 ;

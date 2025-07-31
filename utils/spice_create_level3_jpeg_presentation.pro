@@ -24,10 +24,10 @@
 ; CALLS:
 ;
 ; HISTORY:
-;      Ver. 1, 13-Jun-2022, Martin Wiesmann
+;      Ver. 1, 13-Jun-2022, Martin Wiesmann (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2024-11-29 14:19 CET $
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO spice_create_level3_jpeg_presentation, meta_data
   root_dir = '/mn/stornext/u3/mawiesma/spice/l3_images/'

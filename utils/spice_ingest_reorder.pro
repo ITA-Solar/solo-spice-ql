@@ -65,9 +65,9 @@
 ;           This would move all data from the first path given in $SPICE_DATA to the second path
 ;
 ; HISTORY:
-;      29-Oct-2020 : Martin Wiesmann
+;      29-Oct-2020 : Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2024-11-29 14:52 CET $
+; $Id: 2025-07-31 13:25 CEST $
 
 PRO spice_ingest_reorder, index_origin = index_origin, index_destination = index_destination, $
   force = force, nolevel = nolevel, $
