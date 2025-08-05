@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+
+"""
+This script checks the given commit message and edits the message according to what it finds.
+If the commit message starts with a star and a space ("* "), it removes the star and the space.
+If the commit message starts with a square bracket ("["), and there is a closing square bracket ("]")
+somewhere in the message, the message is left unchanged.
+If the commit message does not start with a star or a square bracket, it prefixes the commit message
+with a list of staged files if there are not more than three staged files.
+If there are more than three staged files, 2 filenames are added and a count of the remaining files is included.
+
+by Martin Wiesmann
+"""
+
+import sys, re
+from subprocess import check_output
+
+# Collect the parameters
+commit_msg_filepath = sys.argv[1]
+
+# Get filenames of staged files
+staged_files = check_output(['git', 'diff', '--cached', '--name-only']).strip().splitlines()
+staged_files = [f.decode('utf-8') for f in staged_files]
+staged_files = [(f.split('/'))[-1] for f in staged_files]
+n_staged_files = len(staged_files)
+print("Number of staged files: %d" % n_staged_files)
+print("Staged files: %s" % staged_files)
+
+with open(commit_msg_filepath, 'r+') as f: 
+    content = f.read()
+    f.seek(0, 0)
+    if re.search(r'^\* ', content) is not None:
+        f.write(content[2:]+'  ')
+    elif re.search(r'^\[.*\]', content) is None:
+        if n_staged_files > 0:
+            if n_staged_files <= 3:
+                new_prefix = "[ %s ]" % ', '.join(staged_files)
+            else:
+                new_prefix = "[ %s + %d files ]" % (', '.join(staged_files[:2]), n_staged_files-2)
+        else:
+            new_prefix = '[]'
+        f.write("%s %s" % (new_prefix, content))
