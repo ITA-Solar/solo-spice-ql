@@ -205,7 +205,7 @@ There are several useful tools to manage SPICE files:
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current 
 date and time. The line with this format will be edited:
 ```
-; $Id: 2024-11-26 11:40 CET $
+; $Id: 2025-08-05 12:06 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure 
 description at the beginning of the file. 
@@ -214,8 +214,13 @@ To make git aware of this hook, run this command after cloning the repository:
 ```
 cd path_of_repository
 git config --local core.hooksPath .githooks/
-chmod +x .githooks/*
 ```
 Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check 
 each modified and staged file whether there is a line with the above format, and if yes, updates date and time 
 and adds these changes to the commit.
+
+Git will also run the script ./githooks/commit-msg for every commit. This script checks the given commit message and edits the message according to what it finds.
+- If the commit message starts with a star and a space ("* "), it removes the star and the space.
+- If the commit message starts with a square bracket ("["), and there is a closing square bracket ("]") somewhere in the message, the message is left unchanged.
+- If the commit message does not start with a star or a square bracket, it prefixes the commit message with a list of staged files if there are not more than three staged files.
+- If there are more than three staged files, 2 filenames are added and a count of the remaining files is included.
