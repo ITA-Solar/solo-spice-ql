@@ -263,7 +263,7 @@
 ;                       Add call to xcfit_announce.pro
 ;
 ; Version     : 15
-; $Id: 2025-08-07 14:38 CEST $
+; $Id: 2025-08-07 14:41 CEST $
 ;-
 
 ; Getting/setting all data blocks
@@ -1491,7 +1491,7 @@ PRO xcfit_block_highlight_cw_cube, info, cube_name
   info.int.highlighted_cube_name = cube_name
   widget_control, info.int.residual_id, set_value = cube_name EQ "RESIDUAL" ? "HIGHLIGHT" : "UNHIGHLIGHT"
   widget_control, info.int.data_id, set_value = cube_name EQ "DATA" ? "HIGHLIGHT" : "UNHIGHLIGHT"
-  widget_control, info.int.result_id, set_value = cube_name EQ "RESULT" ? "HIGHLIGHT" : "UNHIGHLIGHT"
+  IF info.int.show_result THEN widget_control, info.int.result_id, set_value = cube_name EQ "RESULT" ? "HIGHLIGHT" : "UNHIGHLIGHT"
 END
 
 PRO xcfit_block_event, ev
