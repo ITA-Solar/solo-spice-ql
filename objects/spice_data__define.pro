@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-11 11:39 CEST $
 
 ;+
 ; Description:
@@ -2644,6 +2644,10 @@ FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambd
       1: box_message, ['ROT_COMP=1. I.e., feature tracking was probably on.', $
         'Differential rotation correction may give wrong results, it is therefore not recommended to set the keyword DIFF_ROT.', $
         'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+      2: box_message, ['ROT_COMP=2. I.e., feature tracking was probably on and differential rotation correction was already applied.', $
+        'It is therefore not recommended to set the keyword DIFF_ROT.', $
+        'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+      ELSE: box_message, ['ROT_COMP=' + strtrim(rot_comp, 2) + '. Unknown value.'], /info
     ENDCASE
     coords = wcs_get_coord(*(*self.window_wcs)[window_index])
     spice_diff_rot_coord, *(*self.window_wcs)[window_index], coords
@@ -2665,6 +2669,8 @@ FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambd
         'Differential rotation correction may give better results, you may want to set the keyword (AUTO_)DIFF_ROT.', $
         'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
       1:
+      2:
+      ELSE: box_message, ['ROT_COMP=' + strtrim(rot_comp, 2) + '. Unknown value.'], /info
     ENDCASE
     coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
   ENDELSE
