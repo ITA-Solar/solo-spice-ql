@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-07-30 11:30 CEST $
+; $Id: 2025-08-11 15:04 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -179,6 +179,9 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     XDIMEN1 = ind_xdim1
     IF XDIMEN1 GE 0 THEN XDIMEN1 += 1
   ENDIF
+
+  ; Set parameters to NAN if not included in fit
+  result = ana2fits_check_include(fit = fit, result = result, include = include)
 
   all_headers = ptrarr(6)
 
