@@ -41,7 +41,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-12 11:47 CEST $
+; $Id: 2025-08-12 13:09 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -63,6 +63,7 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   ptools.parcheck, XTYPE1, 0, 'XTYPE1', 'STRING', 0
   ptools.parcheck, XDIMEN1, 0, 'XDIMEN1', ['NUMERIC', 'STRING'], 0
   ptools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0
+  ptools.parcheck, SIGMADAT, 0, 'SIGMADAT', 'STRING', 0, default = ''
 
   ptools.parcheck, header_input_data, 0, 'HEADERS_INPUT_DATA', 'STRING', 1, optional = 1
   ptools.parcheck, wcs, 0, 'WCS', 8, 0, /optional
@@ -105,6 +106,7 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
   fits_util.add, hdr, 'CONSTEXT', extension_names[4], 'Extension name of constants'
   fits_util.add, hdr, 'RESIDEXT', extension_names[5], 'Extension name of residuals'
+  fits_util.add, hdr, 'SIGMADAT', SIGMADAT, 'Function to calculate sigma from data'
 
   fits_util.add, hdr, '', ' '
   fits_util.add, hdr, 'XTYPE1', XTYPE1, 'Type of 1st dim absorbed by analysis'
@@ -227,8 +229,6 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'BTYPE', 'Fit Parameter', 'Type of data'
   fits_util.add, hdr, 'UCD', 'stat.fit.param', 'Unified Content Descriptors v1.23'
   fits_util.add, hdr, 'BUNIT', ' ', 'Units of the data'
-  IF keyword_set(SIGMADAT) THEN $
-    fits_util.add, hdr, 'SIGMADAT', SIGMADAT, 'Function to calculate sigma from data'
 
   ; Add additional project-related keywords to the header
   IF n_elements(proj_keywords) GT 0 THEN BEGIN
