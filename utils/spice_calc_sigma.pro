@@ -34,7 +34,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-12 15:33 CEST $
+; $Id: 2025-08-12 15:53 CEST $
 
 FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, $
   no_masking = no_masking, approximated_slit = approximated_slit
@@ -81,13 +81,16 @@ FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result 
     dark_subtraction_factor = noise_factors.dark_subtraction_factor
   ENDELSE
 
-  ; TODO: use calibration_factor_var to get the calibration factor
+  sdata = size(data)
+  full_calibration_factor = data
+  FOR iwave = 0, sdata[3] - 1 DO full_calibration_factor[*, *, iwave, *] = calibration_factor_var[0, 0, iwave]
+
   sigma = sqrt( $
-    noise_factor ^ 2 * calibration_factor * (data > 0) * gain $ ; signal noise
+    noise_factor ^ 2 * full_calibration_factor * (data > 0) * gain $ ; signal noise
     + dark_subtraction_factor * nbin * $
     (read_noise ^ 2 $ ; read noise
       + i_dark * xposure)) $ ; dark current noise
-    / calibration_factor
+    / full_calibration_factor
 
   IF object_created THEN obj_destroy, obj
   return, sigma
