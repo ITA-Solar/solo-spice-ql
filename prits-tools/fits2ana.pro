@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-12 11:28 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -287,13 +287,13 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       DATA_EXT_PATH = ''
       DATA_EXTNAME = dataext_split[0]
     ENDIF ELSE IF count EQ 2 THEN BEGIN
-      DATA_EXT_PATH = dataext_split[0]
-      DATA_EXTNAME = dataext_split[1]
+      DATA_EXT_PATH = dataext_split[1]
+      DATA_EXTNAME = dataext_split[0]
     ENDIF ELSE BEGIN
       IF ~quiet THEN message, 'Unknown format of external extension: ' + DATAEXT, /info
       IF ~quiet THEN message, 'Only using first and last part', /info
-      DATA_EXT_PATH = dataext_split[0]
-      DATA_EXTNAME = dataext_split[-1]
+      DATA_EXT_PATH = dataext_split[-1]
+      DATA_EXTNAME = dataext_split[0]
     ENDELSE
 
     extension = where(fits_content.extname EQ DATAEXT, count)
