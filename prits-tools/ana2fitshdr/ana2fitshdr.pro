@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-12 11:28 CEST $
+; $Id: 2025-08-12 11:47 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -214,9 +214,12 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   ; Create weights header
   ; ------
 
-  hdr = ana2fitshdr_weights(datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs, SIGMADAT = SIGMADAT)
-  all_headers[2] = ptr_new(hdr)
-  IF hdr[0] EQ '' THEN extension_names[2] = ''
+  IF 0 THEN BEGIN
+    ; This function is not used and should be rewritten to use SIGMADAT instead of WEIGHTS.
+    hdr = ana2fitshdr_weights(datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs, SIGMADAT = SIGMADAT)
+    all_headers[2] = ptr_new(hdr)
+    IF hdr[0] EQ '' THEN extension_names[2] = ''
+  ENDIF
 
   ; ------
   ; Create include header

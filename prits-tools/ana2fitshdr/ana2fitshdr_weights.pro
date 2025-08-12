@@ -8,6 +8,10 @@
 ;      It will return an empty string if all values in the WEIGHTS cube are identical or if
 ;      WEIGHTS is not provided.
 ;
+;      NOT USED and TODO: This should eventually be rewritten to use SIGMADAT and the extension
+;      should then be called 'SIGMADAT' instead of 'WEIGHTS'. And use the sigma values, if
+;      this is not provided as a function.
+;
 ; CATEGORY:
 ;      FITS -- utility -- ANA2FITS -- ANA2FITSHDR
 ;
@@ -39,7 +43,7 @@
 ; HISTORY:
 ;      Ver. 1, 2-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-07-30 11:30 CEST $
+; $Id: 2025-08-12 11:47 CEST $
 
 FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs, SIGMADAT = SIGMADAT
   ptools.parcheck, datetime, 0, 'DATETIME', 'STRING', 0
@@ -50,6 +54,9 @@ FUNCTION ana2fitshdr_weights, datetime = datetime, extension_names = extension_n
   IF n_elements(weights) EQ 0 || keyword_set(SIGMADAT) THEN return, ''
   min_weights = min(weights, max = max_weights)
   IF min_weights EQ max_weights THEN return, ''
+
+  box_message, 'This function is not used and should be rewritten to use SIGMADAT instead of WEIGHTS.'
+  return, ''
 
   fits_util = obj_new('oslo_fits_util')
   mkhdr, hdr, weights, /image

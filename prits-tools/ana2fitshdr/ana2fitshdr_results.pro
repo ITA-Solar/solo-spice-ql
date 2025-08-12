@@ -41,7 +41,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-07-30 11:30 CEST $
+; $Id: 2025-08-12 11:47 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -102,7 +102,6 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
 
   fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
   fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of original data'
-  fits_util.add, hdr, 'WGTEXT', extension_names[2], 'Extension name of weights'
   fits_util.add, hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
   fits_util.add, hdr, 'CONSTEXT', extension_names[4], 'Extension name of constants'
   fits_util.add, hdr, 'RESIDEXT', extension_names[5], 'Extension name of residuals'
