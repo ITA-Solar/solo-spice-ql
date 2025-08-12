@@ -1,4 +1,4 @@
-; $Id: 2025-08-12 10:41 CEST $
+; $Id: 2025-08-12 10:44 CEST $
 
 PRO ANA2FITS_CHECK_INCLUDE_test
   x = 4
@@ -22,14 +22,15 @@ PRO ANA2FITS_CHECK_INCLUDE_test
 
   result = ana2fits_check_include(fit = fit, result = result, include = include)
 
-  ind = where(~finite(result), n_finite)
-  IF n_finite NE pixels_not_included THEN BEGIN
-    print, 'Test failed: Expected ', pixels_not_included, ' finite values, found ', n_finite
+  ind = where(~finite(result), n_infinite)
+  IF n_infinite NE pixels_not_included THEN BEGIN
+    print, 'Test failed: Expected ', pixels_not_included, ' infinite values, found ', n_infinite
   ENDIF
 
   ind = where(finite(result[0 : 2, 2, 3, 4]), n_finite)
   IF n_finite NE 0 THEN BEGIN
-    print, 'Test failed: Expected ', 1, ' finite values, found ', n_finite
+    print, 'Test failed'
+    stop
   ENDIF
 
   ind = where(finite(result[0 : 2, 2, 4, 4]), n_finite)
