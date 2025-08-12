@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-12 11:47 CEST $
+; $Id: 2025-08-12 12:02 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -217,9 +217,9 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   IF 0 THEN BEGIN
     ; This function is not used and should be rewritten to use SIGMADAT instead of WEIGHTS.
     hdr = ana2fitshdr_weights(datetime = datetime, extension_names = extension_names, weights = weights, wcs = wcs, SIGMADAT = SIGMADAT)
-    all_headers[2] = ptr_new(hdr)
-    IF hdr[0] EQ '' THEN extension_names[2] = ''
-  ENDIF
+  ENDIF ELSE hdr = ''
+  all_headers[2] = ptr_new(hdr)
+  IF hdr[0] EQ '' THEN extension_names[2] = ''
 
   ; ------
   ; Create include header
@@ -250,7 +250,6 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     hdr = all_headers[iext]
     IF (*hdr)[0] NE '' THEN BEGIN
       fxaddpar, *hdr, 'DATAEXT', extension_names[1], 'Extension name of data'
-      fxaddpar, *hdr, 'WGTEXT', extension_names[2], 'Extension name of weights'
       fxaddpar, *hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
       fxaddpar, *hdr, 'CONSTEXT', extension_names[4], 'Extension name of constants'
       fxaddpar, *hdr, 'RESIDEXT', extension_names[5], 'Extension name of residuals'
@@ -260,7 +259,7 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
       CASE iext OF
         0: print, '--- RESULTS ---'
         1: print, '--- DATA ---'
-        2: print, '--- WEIGHTS ---'
+        2: print, '--- WEIGHTS --- -> should be SIGMADAT'
         3: print, '--- INCLUDE ---'
         4: print, '--- CONST ---'
         5: print, '--- RESIDUAL ---'
