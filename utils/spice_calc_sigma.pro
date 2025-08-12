@@ -34,7 +34,7 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-12 15:53 CEST $
+; $Id: 2025-08-12 15:55 CEST $
 
 FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, $
   no_masking = no_masking, approximated_slit = approximated_slit
@@ -81,9 +81,13 @@ FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result 
     dark_subtraction_factor = noise_factors.dark_subtraction_factor
   ENDELSE
 
-  sdata = size(data)
-  full_calibration_factor = data
-  FOR iwave = 0, sdata[3] - 1 DO full_calibration_factor[*, *, iwave, *] = calibration_factor_var[0, 0, iwave]
+  IF is_spice THEN BEGIN
+    sdata = size(data)
+    full_calibration_factor = data
+    FOR iwave = 0, sdata[3] - 1 DO full_calibration_factor[*, *, iwave, *] = calibration_factor_var[0, 0, iwave]
+  ENDIF ELSE BEGIN
+    full_calibration_factor = calibration_factor
+  ENDELSE
 
   sigma = sqrt( $
     noise_factor ^ 2 * full_calibration_factor * (data > 0) * gain $ ; signal noise
