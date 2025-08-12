@@ -122,9 +122,12 @@
 ;              reading the level P FITS file with FITS2ANA. However, so far this has not been implemented and for
 ;              SPICE we only check that the function is correct. Eventually, we may implement this.
 ;              The function should use IDL syntax and use existing header keywords as variables. DATA is allowed to be used as a variable.
+;              DATA is the data cube that was used to create the P-level data.
 ;              The required header keywords can be added using the keyword PROJ_KEYWORDS.
 ;              If this is provided, the WEIGHT cube will not be saved in the FITS file, even if the values are not identical.
-;              If not provided this keyword will not be in the header.
+;              If not provided this keyword will be an empty string in the header.
+;              TODO: In the future, this keyword may also specify an extension that contains the sigma values.
+;              See also https://solarnet-metadata.readthedocs.io/en/latest/generated/appendix-9.html
 ;      PROJ_KEYWORDS: A list or array of hashes with entries ('name',xxx1, 'value',xxx2, 'comment',xxx3}
 ;              where, xxx2 can be a string or a number. These are additional project-related
 ;              keywords that should be added to the header.
@@ -209,7 +212,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-12 13:22 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $
