@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-08-11 11:39 CEST $
+; $Id: 2025-08-12 13:36 CEST $
 
 ;+
 ; Description:
@@ -2578,7 +2578,7 @@ FUNCTION spice_data::get_fovy, window, auto_diff_rot = auto_diff_rot
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
-  y_coords = self.get_wcs_coord(window_index, /y, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
+  y_coords = self.get_wcs_coord(window_index, /y, auto_diff_rot = auto_diff_rot)
   miny = min(y_coords, max = maxy)
   return, maxy - miny
 END
@@ -2878,7 +2878,7 @@ FUNCTION spice_data::get_noise_factors, window, return_proj_keywords = return_pr
     proj_keywords = []
 
     keyword = hash('name', 'RADCAL', $
-      'value', self.get_calibration_factor(window, variable_values = variable_values), $
+      'value', self.get_calibration_factor(window), $
       'comment', '[DN/(W m-2 sr-1 nm-1)] Radiometric calibration factor')
     proj_keywords = [proj_keywords, keyword]
 
