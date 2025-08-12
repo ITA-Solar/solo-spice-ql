@@ -34,27 +34,37 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-12 15:33 CEST $
 
 FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, $
   no_masking = no_masking, approximated_slit = approximated_slit
   COMPILE_OPT IDL2
 
   IF keyword_set(SIGMADAT) THEN BEGIN
+    ; Calculate sigma for a level P SPICE data cube.
     IF NOT keyword_set(hdr_result) THEN message, 'SIGMADAT is set but no header is provided'
     data = input
-    object_created = 0
 
     ; Set various calibration parameters:
+    file_l2 = fxpar(hdr_data, 'PARENT', missing = '')
+    obj = spice_object(file_l2, is_spice = is_spice, object_created = object_created)
+    IF is_spice THEN BEGIN
+      window_index = fxpar(hdr_data, 'WINNO', missing = -1)
+      calibration_factor = obj.get_calibration_factor(window_index, variable_values = calibration_factor_var)
+      nbin = obj.get_total_binning(window_index)
+      xposure = obj.get_exposure_time(window_index)
+    ENDIF ELSE BEGIN
+      nbin = fxpar(hdr_data, 'NBIN', missing = 1)
+      xposure = fxpar(hdr_data, 'XPOSURE', missing = 0.0)
+    ENDELSE
     calibration_factor = fxpar(hdr_result, 'RADCAL', missing = 0.0)
-    nbin = fxpar(hdr_data, 'NBIN', missing = 1)
-    xposure = fxpar(hdr_data, 'XPOSURE', missing = 0.0)
     noise_factor = fxpar(hdr_result, 'NOISEFAC', missing = 0.0)
     gain = fxpar(hdr_result, 'GAIN', missing = 0.0)
     read_noise = fxpar(hdr_result, 'READNOIS', missing = 0.0)
     i_dark = fxpar(hdr_result, 'DARKCURR', missing = 0.0)
     dark_subtraction_factor = fxpar(hdr_result, 'DARKSUBF', missing = 0.0)
   ENDIF ELSE BEGIN
+    ; Calculate sigma for a level 2 SPICE fits file or data object.
     obj = spice_object(input, is_spice = is_spice, object_created = object_created)
     IF ~is_spice THEN return, !NULL
     data = obj.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
@@ -71,6 +81,7 @@ FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result 
     dark_subtraction_factor = noise_factors.dark_subtraction_factor
   ENDELSE
 
+  ; TODO: use calibration_factor_var to get the calibration factor
   sigma = sqrt( $
     noise_factor ^ 2 * calibration_factor * (data > 0) * gain $ ; signal noise
     + dark_subtraction_factor * nbin * $
