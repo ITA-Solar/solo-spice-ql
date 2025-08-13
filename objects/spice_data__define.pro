@@ -69,7 +69,7 @@
 ;                                 PIXLISTS entries than SATPIXLIST
 ;-
 
-; $Id: 2025-08-12 13:36 CEST $
+; $Id: 2025-08-13 14:34 CEST $
 
 ;+
 ; Description:
@@ -490,9 +490,18 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ENDIF
 
       IF ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) THEN BEGIN
-        origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
-        scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
-        xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = [0, 1, 1], image_dim = [1, 2], group_leader = group_leader, /no_save_option
+        IF self.get_sit_and_stare() THEN BEGIN
+          origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], $
+            (self.get_instr_y_vector(window_index, /auto_diff_rot))[0], (self.get_time_vector(window_index))[0]]
+          scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), $
+            self.get_resolution(window_index, /y), self.get_resolution(window_index, /time)]
+          phys_scale = [0, 1, 1, 1]
+        ENDIF ELSE BEGIN
+          origin = [(self.get_lambda_vector(window_index))[0], (self.get_instr_x_vector(window_index, /auto_diff_rot))[0], (self.get_instr_y_vector(window_index, /auto_diff_rot))[0]]
+          scale = [self.get_resolution(window_index, /lambda), self.get_resolution(window_index, /x), self.get_resolution(window_index, /y)]
+          phys_scale = [0, 1, 1]
+        ENDELSE
+        xcfit_block, ana = ana, origin = origin, scale = scale, phys_scale = phys_scale, image_dim = [1, 2], group_leader = group_leader, /no_save_option
       ENDIF
 
       original_data = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
