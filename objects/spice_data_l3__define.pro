@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann (prits-group@astro.uio.no)
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-14 11:53 CEST $
 
 ;+
 ; Description:
@@ -251,12 +251,14 @@ END
 FUNCTION spice_data_l3::find_l2_file, user_dir = user_dir
   COMPILE_OPT IDL2
 
-  file_l2 = spice_find_file(self.datetime, remove_duplicates = 0, user_dir = user_dir)
-  filename_l2 = file_basename(file_l2)
-  pgfilena = self.get_l2_filename()
-  ind = where(filename_l2 EQ pgfilena, count)
-  IF count GT 0 THEN result = file_l2[ind[0]] ELSE result = ''
-  return, result
+  IF self.l2_file EQ 'xxx' THEN BEGIN
+    file_l2 = spice_find_file(self.datetime, remove_duplicates = 0, user_dir = user_dir)
+    filename_l2 = file_basename(file_l2)
+    pgfilena = self.get_l2_filename()
+    ind = where(filename_l2 EQ pgfilena, count)
+    IF count GT 0 THEN self.l2_file = file_l2[ind[0]] ELSE self.l2_file = ''
+  ENDIF
+  return, self.l2_file
 END
 
 ;+
@@ -402,6 +404,7 @@ PRO spice_data_l3__define
     rasterno: -1, $ ; raster repetition number
     nwin: -1, $ ; number of windows in this file
     l2_filename: '', $ ; filename of level 2 file
+    l2_file: 'xxx', $ ; level 2 file, including the path
     headers_results: ptr_new() $ ; A pointer array to the header strings of the results extensions
     }
 END
