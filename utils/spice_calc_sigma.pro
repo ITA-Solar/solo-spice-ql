@@ -34,9 +34,9 @@
 ; MODIFICATION HISTORY:
 ;       Ver.1, 3-Feb-2020, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-12 15:55 CEST $
+; $Id: 2025-08-18 13:36 CEST $
 
-FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, $
+FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, file_l2 = file_l2, $
   no_masking = no_masking, approximated_slit = approximated_slit
   COMPILE_OPT IDL2
 
@@ -46,7 +46,6 @@ FUNCTION spice_calc_sigma, input, window_index, SIGMADAT = SIGMADAT, hdr_result 
     data = input
 
     ; Set various calibration parameters:
-    file_l2 = fxpar(hdr_data, 'PARENT', missing = '')
     obj = spice_object(file_l2, is_spice = is_spice, object_created = object_created)
     IF is_spice THEN BEGIN
       window_index = fxpar(hdr_data, 'WINNO', missing = -1)

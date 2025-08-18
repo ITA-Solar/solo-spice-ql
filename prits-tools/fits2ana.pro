@@ -74,7 +74,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-12 11:28 CEST $
+; $Id: 2025-08-18 13:36 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -438,7 +438,7 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       ENDIF ELSE BEGIN
         IF keyword_set(SIGMADAT) THEN BEGIN
           IF loud THEN message, 'Creating weights cube with the function given in SIGMADAT', /info
-          sigma = spice_calc_sigma(data, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data)
+          sigma = spice_calc_sigma(data, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data, file_l2 = prg_file)
           weights = 1.0 / sigma ^ 2
         ENDIF ELSE BEGIN
           IF loud THEN message, 'Creating weights cube with default values', /info
