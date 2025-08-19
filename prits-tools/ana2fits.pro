@@ -110,6 +110,7 @@
 ;              'data_id'+' '+extension_type (='results', 'data', 'xdim1', 'weights', 'includes', 'constants').
 ;              The default is the value of the keyword 'EXTNAME' from HEADER_INPUT_DATA. If this header is provided, then the data extension
 ;              will have this EXTNAME (without 'data') as its extension name.
+;              Note that DATA_ID will be truncated to 58 characters.
 ;              If this is not provided, then the default is the window index.
 ;      PROGENITOR_DATA: A pointer array of Data Arrays or a data array. Up to 7-dimensional. Absorbed dimensions (e.g. spectra) does not have to be
 ;              along the first dimension. If these data arrays are provided, they will be saved into the DATA extensions instead of INPUT_DATA
@@ -212,7 +213,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-12 13:22 CEST $
+; $Id: 2025-08-19 11:46 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $
