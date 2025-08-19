@@ -281,7 +281,7 @@ IDL_VPTR FMEDIAN(int argc, IDL_VPTR argv[], char *argk)
 int IDL_Load(void)
 {
   static IDL_SYSFUN_DEF2 func_def[] =
-      {{{FMEDIAN}, "FMEDIAN", 3, 3, IDL_SYSFUN_DEF_F_KEYWORDS, 0}};
+      {{{FMEDIAN}, "FMEDIAN2_DLM", 3, 3, IDL_SYSFUN_DEF_F_KEYWORDS, 0}};
 
   return IDL_SysRtnAdd(func_def, TRUE, 1);
 }
