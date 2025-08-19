@@ -1,0 +1,12 @@
+CC          = gcc
+F77         = f77
+LD	    = gcc
+
+# To make shareable objects:
+
+# NOTE: "-arch x86_64" only for 64-bit IDL versions!
+# For Apple Silicon replace x86_64 with arm64
+
+X_CFLAGS   = -arch x86_64 -fPIC -dynamic -O3
+X_LD_FLAGS = -arch x86_64 -bundle -flat_namespace -undefined suppress
+SO_EXT = so

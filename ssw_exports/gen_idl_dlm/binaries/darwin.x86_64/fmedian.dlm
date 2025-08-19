@@ -1,0 +1,7 @@
+# $Id:$
+MODULE FMEDIAN
+DESCRIPTION DLM implementation of fmedian.pro
+VERSION 1.0
+BUILD_DATE $Date: 2008/01/09 $
+SOURCE S.V.H.HAUGAN prits-group@astro.uio.no
+FUNCTION FMEDIAN  3 3 KEYWORDS
