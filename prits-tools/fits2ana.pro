@@ -39,8 +39,10 @@
 ; OPTIONAL INPUTS:
 ;     windows : A scalar or array of indices of windows to be returned. If not provided all windows will
 ;               be returned.
-;               This can also be a scalar array of strings. Then it assumed that they are the DATA_ID of
+;               This can also be a scalar array of strings. Then it is assumed that they are the DATA_ID of
 ;               the windows, see documentation of ANA2FITS.
+;               Note that DATA_ID will be truncated to 58 characters, because ANA2FITS does the same,
+;               and thus you can use the original DATA_ID, even if it is longer than 58 characters.
 ;
 ; OUTPUT:
 ;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
@@ -74,7 +76,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-18 13:36 CEST $
+; $Id: 2025-08-19 11:46 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -103,7 +105,8 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
     IF size(windows, /type) EQ 7 THEN BEGIN
       windows_indices = []
       FOR i = 0, n_elements(windows) - 1 DO BEGIN
-        ind = where(data_ids EQ windows[i], count)
+        window = strmid(windows[i], 0, 58)
+        ind = where(data_ids EQ window, count)
         IF count GT 0 THEN BEGIN
           windows_indices = [windows_indices, ind[0]]
         ENDIF ELSE BEGIN
