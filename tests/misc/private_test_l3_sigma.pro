@@ -1,6 +1,7 @@
 PRO private_test_l3_sigma
   create_l3 = 0 ; create L3 files
   test_all = 1
+  chi2avg_overview = 1
 
   l2_files = ['/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-ras_20231028T001206_V22_218104189-001.fits', $ ; raster
     '/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-sit_20231028T032925_V22_218104192-000.fits', $ ; sit-and-stare
@@ -43,12 +44,12 @@ PRO private_test_l3_sigma
         hdr_result = *all_result_headers[0]
         hdr_data = *all_data_headers[0]
         SIGMADAT = fxpar(hdr_result, 'SIGMADAT', missing = '')
-        sigma_l3 = spice_calc_sigma(data, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data)
+        ; sigma_l3 = spice_calc_sigma(data, SIGMADAT = SIGMADAT, hdr_result = hdr_result, hdr_data = hdr_data)
 
-        sigma_diff = sigma_l2 - sigma_l3
-        mindiff = min(sigma_diff, max = maxdiff)
-        print, 'Minimum difference in sigma: %f', mindiff
-        print, 'Maximum difference in sigma: %f', maxdiff
+        ; sigma_diff = sigma_l2 - sigma_l3
+        ; mindiff = min(sigma_diff, max = maxdiff)
+        ; print, 'Minimum difference in sigma: %f', mindiff
+        ; print, 'Maximum difference in sigma: %f', maxdiff
 
         stop
       ENDFOREACH
@@ -59,17 +60,34 @@ PRO private_test_l3_sigma
       '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20230117T151432_V01_167772346-000.fits', $ ; single exposure, small window
       '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20240101T180040_V01_234881025-000.fits'] ; single exposure, whole detector
     ; ana = fits2ana(l3_files[0])
+
     FOREACH l3_file, l3_files, index DO BEGIN
-      ; ana = fits2ana(l3_file, headers_only = 1)
-      ; IF ana EQ 0 THEN message, 'Error reading L3 file: ' + l3_file
-      ; print, 'L3 file read successfully: ', l3_file
-      d = readfits(l3_file, h, ext = 0)
-      print, h
-      fitshead2wikitext, l3_file, extension = extension, output_file = '/Users/mawiesma/Documents/spice/tests/test_l3_files/fitshead2wikitext_l3.txt'
-      fitshead2wikitext, l2_files[index], extension = extension, output_file = '/Users/mawiesma/Documents/spice/tests/test_l3_files/fitshead2wikitext_l2.txt'
-      stop
-      spice_xcontrol_l23, l3_file
-      stop
+      IF chi2avg_overview THEN BEGIN
+        ana = fits2ana(l3_file, headers_results = headers_results, headers_data = headers_data, /headers_only)
+        nwin = n_elements(headers_results)
+        chisqavg = fltarr(nwin)
+        xposure = fltarr(nwin)
+        FOR iwin = 0, nwin - 1 DO BEGIN
+          h = headfits(l3_file, ext = iwin)
+          chisqavg[iwin] = fxpar(*headers_results[iwin], 'CHISQAVG', missing = -999)
+          xposure[iwin] = fxpar(*headers_data[iwin], 'XPOSURE', missing = -999)
+        ENDFOR
+        print, 'Average chi-squared value for L3 file: ', l3_file, ' is: '
+        FOR iwin = 0, nwin - 1 DO BEGIN
+          print, 'Window ', iwin, ': ', chisqavg[iwin], ' (Exposure time: ', xposure[iwin], ')'
+        ENDFOR
+      ENDIF ELSE BEGIN ; chi2avg_overview
+        ; ana = fits2ana(l3_file, headers_only = 1)
+        ; IF ana EQ 0 THEN message, 'Error reading L3 file: ' + l3_file
+        ; print, 'L3 file read successfully: ', l3_file
+        d = readfits(l3_file, h, ext = 0)
+        print, fxpar(h, 'CHISQAVG', missing = '-999')
+        fitshead2wikitext, l3_file, extension = extension, output_file = '/Users/mawiesma/Documents/spice/tests/test_l3_files/fitshead2wikitext_l3.txt'
+        fitshead2wikitext, l2_files[index], extension = extension, output_file = '/Users/mawiesma/Documents/spice/tests/test_l3_files/fitshead2wikitext_l2.txt'
+        stop
+        ; spice_xcontrol_l23, l3_file
+        ; stop
+      ENDELSE ; chi2avg_overview
     ENDFOREACH
     stop
   ENDELSE ; create_l3
