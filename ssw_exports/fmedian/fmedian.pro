@@ -1,4 +1,5 @@
-      FUNCTION FMEDIAN,ARRAY,NW1,NW2,MISSING=MISSING_IN,ONLY_MISSING=ONLY_MISSING
+      FUNCTION FMEDIAN,ARRAY,NW1,NW2,MISSING=MISSING_IN,ONLY_MISSING=ONLY_MISSING,$
+                       NO_DLM=NO_DLM
 ;+
 ; Project     : SOHO - CDS     
 ;                   
@@ -39,6 +40,8 @@
 ;                             the call_external version, but has been
 ;                             implemented in fmedian_slow and in the fmedian
 ;                             DLM.
+;                     
+;               NO_DLM: When set, the DLM version will never be used.
 ;
 ; Env. Vars.  :	SSW_EXTERNAL_F = Points to a sharable object file containing
 ;			       associated Fortran software callable by
@@ -56,7 +59,8 @@
 ;			       underscore character "_".  Otherwise, it doesn't
 ;			       need to be defined.
 ;
-; Calls       : FMEDIAN_SLOW, CALL_EXTERNAL("$SSW_EXTERNAL_F")
+; Calls       : FMEDIAN_SLOW, CALL_EXTERNAL("$SSW_EXTERNAL_F"), 
+;               FMEDIAN2_DLM
 ;
 ; Common      : None.
 ;               
@@ -94,7 +98,8 @@
 ;               Version 6, Stein Haugan (prits-group@astro.uio.no), 20 August 2025
 ;                       Always use IDL version for 1D input arrays
 ;                       Use CALL_FUNCTION for renamed DLM function fmedian2_dlm if
-;                       load_gen_dlms is successful, otherwise use IDL version
+;                       load_gen_dlms is successful, otherwise use IDL version.
+;                       Added /NO_DLM to always use IDL version, for testing
 ;-            
           
 ;       ON_ERROR,2
@@ -102,7 +107,7 @@
 
 ;       Only for 2D input try ONCE to get DLM version
         COMMON load_gen_dlms, gen_dlms_loaded
-        IF size(ARRAY,/n_dimensions) NE 1 THEN BEGIN
+        IF size(ARRAY,/n_dimensions) NE 1 AND NOT keyword_set(NO_DLM) THEN BEGIN
           IF n_elements(gen_dlms_loaded) EQ 0 THEN BEGIN
             box_message,["FMEDIAN.PRO is very slow - trying once to load the DLM version.",$
                          "This will take a few seconds, but will speed up subsequent calls.",$
