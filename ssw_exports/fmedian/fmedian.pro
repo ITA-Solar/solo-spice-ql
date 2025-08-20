@@ -88,10 +88,33 @@
 ;               Modified, 14-Feb-07, Zarro (ADNET) - commented out !DEBUG
 ;               Version 4, S.V.H.Haugan, UiO, 9 January 2008
 ;                       Added ONLY_MISSING keyword, passed on to fmedian_slow
+;               Version 5, Stein Haugan, ITA/UiO 7 July 2025
+;                       Calling LOAD_GEN_DLMS when appropriate to try to get
+;                       the DLM version (effective next invocation)
+;               Version 6, Stein Haugan (prits-group@astro.uio.no), 20 August 2025
+;                       Always use IDL version for 1D input arrays
+;                       Use CALL_FUNCTION for renamed DLM function fmedian2_dlm if
+;                       load_gen_dlms is successful, otherwise use IDL version
 ;-            
           
 ;       ON_ERROR,2
 ;       IF !DEBUG NE 0 THEN ON_ERROR,0
+
+;       Only for 2D input try ONCE to get DLM version
+        COMMON load_gen_dlms, gen_dlms_loaded
+        IF size(ARRAY,/n_dimensions) NE 1 THEN BEGIN
+          IF n_elements(gen_dlms_loaded) EQ 0 THEN BEGIN
+            box_message,["FMEDIAN.PRO is very slow - trying once to load the DLM version.",$
+                         "This will take a few seconds, but will speed up subsequent calls.",$
+                         "If the DLM version fails to load, see $SSW/gen/idl/dlm/sources/AAA-README.txt"]
+            load_gen_dlms
+          END
+          ; If load_gen_dlms failed we will fall through
+          IF gen_dlms_loaded EQ 1 THEN begin 
+            result = call_function("fmedian2_dlm", ARRAY, NW1, NW2, MISSING=MISSING_IN, ONLY_MISSING=ONLY_MISSING)
+            return, result
+          END
+        END
 ;
 ;  Check the number of dimensions.
 ;
