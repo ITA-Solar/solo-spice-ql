@@ -46,7 +46,7 @@
 ;
 ; Modified    :
 ;
-; $Id: 2025-08-19 18:58 CEST $
+; $Id: 2025-08-20 16:58 CEST $
 ;-
 
 FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
@@ -57,8 +57,10 @@ FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
   ; Check version:
   version_string = (out[1].toupper()).trim()
   match_against = "VERSION: " + version + ","
-  IF ~version_string.startsWith(match_against) THEN return, !false
-
+  IF ~version_string.startsWith(match_against) THEN BEGIN
+    box_message,"DLM " + dlm + " version mismatch: expected " + version + ", found " + version_string
+    return, !false
+  END
   ; DLM found, but is it loadable without errors? Could be architecture mismatch.
   catch, err
   IF err NE 0 THEN GOTO, CHECK_IDL_GEN_DLM_DISTRIBUTION
