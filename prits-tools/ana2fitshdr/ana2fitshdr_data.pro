@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-20 13:38 CEST $
+; $Id: 2025-08-20 13:50 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
@@ -92,6 +92,7 @@ FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_name
     extname = dataext_split[-1]
   ENDIF
   fits_util.add, hdr, 'EXTNAME', extname, 'Extension name'
+  fits_util.add, hdr, 'EXT_EXT', extension_names[1], 'Rel. path+filename; Extension name'
   fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
   fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of original data'
   fits_util.add, hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
