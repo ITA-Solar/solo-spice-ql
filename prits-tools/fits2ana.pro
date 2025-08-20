@@ -5,16 +5,17 @@
 ; PURPOSE:
 ;     FITS2ANA reads a FITS file and returns one or more ANA structure(s). The input FITS file should be
 ;     a product of ANA2FITS. It must contain at least one RESULTS extension per window.
-;     The DATA extension may be an external extension, else it should be present in the input file.
-;     The DATA is automatically transformed so that the absorbed dimension is the first dimension
+;     The DATA extension may be an external extension, or else it should be present in the input file.
+;     The DATA is automatically transformed, if necessary, so that the absorbed dimension is the first dimension
 ;     if this is not the case already.
 ;     XDIM1, WEIGHTS, INCLUDE and CONSTANTS extensions are optional.
 ;     If not present:
-;       - a dummy DATA cube will be created, but only if create_dummy_data keyword is set.
+;       - A dummy DATA cube will be created, but only if the create_dummy_data keyword is set.
 ;       - XDIM1 will be created using the WCS parameters given in the data header.
-;       - WEIGHTS, INCLUDE and CONSTANTS will be created with default values.
+;       - INCLUDE, and CONSTANTS will be created with default values.
+;       - WEIGHTS is created using the information given in SIGMADAT (for now, the only solution is SPICE-specific)
 ;       - RESIDUALS is created using the fits components and the DATA cube.
-;     An ANA structure is used by e.g. XCFIT_BLOCK, it is created by e.g. MK_ANALYSIS.
+;     An ANA structure is used by, e.g., XCFIT_BLOCK, it is created by, e.g., MK_ANALYSIS.
 ;
 ; CATEGORY:
 ;     FITS -- utility
@@ -31,23 +32,23 @@
 ;     fitsfile : name and path to a FITS file (e.g. SPICE level 3 file)
 ;
 ; KEYWORDS:
-;     headers_only: If set, then the data is not loaded, only the headers, the function returns a zero.
+;     headers_only: If set, then the data is not loaded, only the headers; the function returns a zero.
 ;     create_dummy_data: If set, then a dummy data cube will be created in case the original data is not found.
 ;     loud: If set, then the function will output messages about non-existing extensions.
 ;     quiet: If set, warnings will be suppressed.
 ;
 ; OPTIONAL INPUTS:
-;     windows : A scalar or array of indices of windows to be returned. If not provided all windows will
+;     windows : A scalar or an array of indices of windows to be returned. If not provided, all windows will
 ;               be returned.
 ;               This can also be a scalar array of strings. Then it is assumed that they are the DATA_ID of
-;               the windows, see documentation of ANA2FITS.
+;               the windows, see the documentation of ANA2FITS.
 ;               Note that DATA_ID will be truncated to 58 characters, because ANA2FITS does the same,
 ;               and thus you can use the original DATA_ID, even if it is longer than 58 characters.
 ;
 ; OUTPUT:
 ;     Array of ana structure, number of elements is the same as number of windows in the FITS file.
 ;     Output is scalar if there is only one window.
-;     Output is zero if an error occurred, or if keyword 'headers_only' is set.
+;     Output is zero if an error occurred, or if the keyword 'headers_only' is set.
 ;
 ; OPTIONAL OUTPUT:
 ;     headers_results: A pointer array, containing the headers of the results extensions as string arrays.
@@ -76,7 +77,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-19 11:46 CEST $
+; $Id: 2025-08-20 13:38 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -290,13 +291,13 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       DATA_EXT_PATH = ''
       DATA_EXTNAME = dataext_split[0]
     ENDIF ELSE IF count EQ 2 THEN BEGIN
-      DATA_EXT_PATH = dataext_split[1]
-      DATA_EXTNAME = dataext_split[0]
+      DATA_EXT_PATH = dataext_split[0]
+      DATA_EXTNAME = dataext_split[1]
     ENDIF ELSE BEGIN
       IF ~quiet THEN message, 'Unknown format of external extension: ' + DATAEXT, /info
       IF ~quiet THEN message, 'Only using first and last part', /info
-      DATA_EXT_PATH = dataext_split[-1]
-      DATA_EXTNAME = dataext_split[0]
+      DATA_EXT_PATH = dataext_split[0]
+      DATA_EXTNAME = dataext_split[-1]
     ENDELSE
 
     extension = where(fits_content.extname EQ DATAEXT, count)

@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-12 14:53 CEST $
+; $Id: 2025-08-20 13:38 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -79,13 +79,13 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
     data_id = 'Window ' + strtrim(winno, 2)
     IF n_elements(header_input_data) GT 0 THEN data_id = fxpar(header_input_data, 'EXTNAME', missing = data_id)
   ENDIF
-  data_id = strmid(data_id, 0, 58)
   ptools.parcheck, DATA_EXT_PATH, 0, 'DATA_EXT_PATH', 'STRING', 0, result = error
   IF error[0] NE '' THEN BEGIN
     DATA_EXT_PATH = ''
     IF n_elements(header_input_data) GT 0 THEN DATA_EXT_PATH = fxpar(header_input_data, 'FILENAME', missing = DATA_EXT_PATH)
   ENDIF
-  DATA_EXT_PATH = data_id + '; ' + DATA_EXT_PATH
+  DATA_EXT_PATH = DATA_EXT_PATH + '; ' + data_id
+  data_id = strmid(data_id, 0, 58)
   ptools.parcheck, level, 0, 'LEVEL', ['NUMERIC', 'STRING'], 0, /optional
   ptools.parcheck, version, 0, 'VERSION', ['NUMERIC', 'STRING'], 0, /optional
   ptools.parcheck, creator, 0, 'CREATOR', 'STRING', 0, /optional

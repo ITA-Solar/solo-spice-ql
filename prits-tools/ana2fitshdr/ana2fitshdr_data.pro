@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 1-Dec-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-12 11:47 CEST $
+; $Id: 2025-08-20 13:38 CEST $
 
 FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_names, input_data = input_data, $
   header_input_data = header_input_data, progenitor_data = progenitor_data, SAVE_DATA = SAVE_DATA, $
@@ -86,7 +86,12 @@ FUNCTION ana2fitshdr_data, datetime = datetime, extension_names = extension_name
   fits_util.add, hdr, 'DATE', fxpar(header_input_data, 'DATE', missing = ''), 'Date and time of parent FITS file creation'
   fits_util.add, hdr, '', ' '
 
-  fits_util.add, hdr, 'EXTNAME', extension_names[1], 'Extension name'
+  extname = fxpar(header_input_data, 'EXTNAME', missing = '')
+  IF extname EQ '' THEN BEGIN
+    dataext_split = strsplit(extension_names[1], ';', /extract)
+    extname = dataext_split[-1]
+  ENDIF
+  fits_util.add, hdr, 'EXTNAME', extname, 'Extension name'
   fits_util.add, hdr, 'RESEXT', extension_names[0], 'Extension name of results'
   fits_util.add, hdr, 'DATAEXT', extension_names[1], 'Extension name of original data'
   fits_util.add, hdr, 'INCLEXT', extension_names[3], 'Extension name of includes'
