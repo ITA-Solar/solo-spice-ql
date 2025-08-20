@@ -118,7 +118,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-20 11:57 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_filename, line
@@ -289,15 +289,15 @@ END
 PRO spice_gen_cat2::remove_nonexisting_files
   t = systime(1)
   print, "Removing files that are not on disk"
-  filelist_hash = hash()
+  ondisk_filelist_hash = hash()
   FOREACH file, self.d.filelist, index DO BEGIN
     key = self.extract_key(file_basename(file))
-    filelist_hash[key] = 1
+    ondisk_filelist_hash[key] = 1
   END
   print, "Converted filenames to keys", (t2 = systime(1)) - t
   keys = (self.d.file_hash.keys()).toArray()
   FOREACH key, keys DO BEGIN
-    is_on_disk = filelist_hash.hasKey(key)
+    is_on_disk = ondisk_filelist_hash.hasKey(key)
     IF ~is_on_disk THEN BEGIN
       line = self.d.file_hash[key]
       filename = self.extract_filename(line) + '.fits'
@@ -382,52 +382,6 @@ PRO spice_gen_cat2::restore_hash_save_file
   IF file_hash EQ !null THEN file_hash = old_hash ; Transition from old to new code
   print, 'Done restoring hash with ' + trim(n_elements(file_hash)) + ' keys'
   self.d.file_hash = file_hash ; idl-disable var-use-before-def
-END
-
-; Why? Is it as a double check when manually adding files, to also make sure
-; than any *other* new/deleted files have appeared/disappeared (by some other
-; process)
-FUNCTION spice_gen_cat2::filenames_match
-  print, 'Checking that FITS filenames in saved hash match FITS filenames on disk: '
-  keys = self.d.file_hash.keys()
-  n_keys = n_elements(keys)
-
-  files_in_hash = strarr(n_keys)
-  FOREACH key, keys, ix DO BEGIN
-    line = self.d.file_hash[key]
-    files_in_hash[ix] = self.extract_filename(line) + '.fits'
-  ENDFOREACH
-
-  files_in_hash = files_in_hash[sort(files_in_hash)]
-
-  files_on_disk = file_basename(self.d.filelist)
-  files_on_disk = files_on_disk[sort(files_on_disk)]
-
-  match = array_equal(files_on_disk, files_in_hash)
-
-  print, (match) ? 'Filenames match.' : 'Filenames do not match!'
-
-  IF ~match THEN BEGIN
-    n_files_on_disk = n_elements(files_on_disk)
-    n_files_in_hash = n_elements(files_in_hash)
-    equal_txt = (n_files_in_hash EQ n_files_on_disk) ? 'is the same.' : 'do not match! (' + trim(n_files_in_hash) + ' vs ' + trim(n_files_on_disk) + ')'
-    print, 'The number of files in hash and on disk ' + equal_txt
-    FOR i = 0, (n_files_on_disk - 1) < (n_files_in_hash - 1) DO IF files_in_hash[i] NE files_on_disk[i] THEN differs_ix = (differs_ix EQ !null) ? i : [differs_ix, i]
-
-    IF ~self.d.quiet THEN BEGIN
-      FOREACH diskfile, files_on_disk DO BEGIN
-        ix = where(files_in_hash EQ diskfile, /null)
-        IF ix EQ !null THEN print, file_basename(diskfile) + ' not found in hash!'
-      ENDFOREACH
-      print
-      FOREACH hashfile, files_in_hash DO BEGIN
-        ix = where(files_on_disk EQ hashfile, /null)
-        IF ix EQ !null THEN print, file_basename(hashfile) + ' not found on disk!'
-      ENDFOREACH
-    ENDIF
-  ENDIF
-
-  return, match
 END
 
 PRO spice_gen_cat2::execute
