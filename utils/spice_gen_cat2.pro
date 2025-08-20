@@ -118,17 +118,20 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-08-20 11:57 CEST $
+; $Id: 2025-08-20 13:17 CEST $
 ;-
 
-FUNCTION spice_gen_cat2::extract_filename, line
+FUNCTION spice_gen_cat2::extract_file_basename, line
+  ; NOTE: requires the actual file name to be first file name in line
+  ; (PARENT file name also occurs)
   pattern = "solo_L._spice[^.]+"
   filename = stregex(line, pattern, /extract)
   return, filename
 END
 
 FUNCTION spice_gen_cat2::extract_key, line
-  filename = self.extract_filename(line)
+  filename = self.extract_file_basename(line)
+  return, filename
   IF filename NE "" THEN BEGIN
     key = filename.extract('L.') + '_' + filename.extract('[0-9]+-[0-9]{3}')
     return, key
@@ -300,7 +303,7 @@ PRO spice_gen_cat2::remove_nonexisting_files
     is_on_disk = ondisk_filelist_hash.hasKey(key)
     IF ~is_on_disk THEN BEGIN
       line = self.d.file_hash[key]
-      filename = self.extract_filename(line) + '.fits'
+      filename = self.extract_file_basename(line) + '.fits'
       print, "Removing file: " + filename
       self.d.file_hash.remove, key
     END
