@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann (prits-group@astro.uio.no)
 ;
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-20 13:38 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -807,5 +807,5 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
   widget_position, tlb, parent = group_leader
 
   xmanager, 'spice_xcontrol_l23', tlb, /no_block, $
-    group_leader = group_leader, cleanup = 'spice_xcontrol_l23_cleanup'
+    group_leader = group_leader GE 0 ? group_leader : 0, cleanup = 'spice_xcontrol_l23_cleanup'
 END
