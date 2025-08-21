@@ -36,7 +36,7 @@
 ;     15-Jun-2023: Martin Wiesmann (prits-group@astro.uio.no)
 ;     18-Oct-2023: Terje Fredvik - PARAMETER-FITTING -> LINE-FITTING
 ;-
-; $Id: 2025-08-14 11:53 CEST $
+; $Id: 2025-08-21 15:13 CEST $
 
 ;+
 ; Description:
@@ -75,7 +75,9 @@ FUNCTION spice_data_l3::init, file, quiet = quiet
   self.rasterno = file_info.rasterno
   hdr = headfits(file, exten = 0)
   self.nwin = fxpar(hdr, 'NWIN', missing = 0)
-  self.l2_filename = fxpar(hdr, 'PGFILENA', missing = '')
+  self.l2_filename = fxpar(hdr, 'PARENT', missing = '')
+  IF self.l2_filename EQ '' THEN self.l2_filename = fxpar(hdr, 'PGFILENA', missing = '') ; PGFILENA was replaced by PARENT
+  self.l2_file = 'xxx' ; will be set later, when needed
   fits_open, file, fits_content
   fits_close, fits_content
   data_ids = fits2ana_get_data_id(fits_content)
@@ -404,7 +406,7 @@ PRO spice_data_l3__define
     rasterno: -1, $ ; raster repetition number
     nwin: -1, $ ; number of windows in this file
     l2_filename: '', $ ; filename of level 2 file
-    l2_file: 'xxx', $ ; level 2 file, including the path
+    l2_file: '', $ ; level 2 file, including the path
     headers_results: ptr_new() $ ; A pointer array to the header strings of the results extensions
     }
 END
