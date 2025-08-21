@@ -77,7 +77,7 @@
 ; HISTORY:
 ;     23-Nov-2021: Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-20 13:38 CEST $
+; $Id: 2025-08-21 11:55 CEST $
 
 FUNCTION fits2ana, fitsfile, windows = windows, $
   headers_results = headers_results, headers_data = headers_data, $
@@ -300,11 +300,11 @@ FUNCTION fits2ana, fitsfile, windows = windows, $
       DATA_EXTNAME = dataext_split[-1]
     ENDELSE
 
-    extension = where(fits_content.extname EQ DATAEXT, count)
+    extension = where(fits_content.extname EQ DATA_EXTNAME, count)
     IF count EQ 0 THEN $
-      extension = where(fits_content.extname EQ DATA_EXTNAME, count)
+      extension = where(fits_content.extname EQ DATAEXT, count)
     IF count EQ 0 THEN BEGIN
-      IF loud THEN message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATAEXT, /info
+      IF loud THEN message, 'Could not find data extension of window ' + strtrim(wind_ind, 2) + '. With EXTNAME: ' + DATA_EXTNAME, /info
       hdr = ''
       wcs_data_exists = 0
       data = 0
