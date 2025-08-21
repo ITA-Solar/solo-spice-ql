@@ -1,4 +1,4 @@
-DLMS = fmedian cfit
+DLMS = fmedian2_dlm cfit
 
 all:
 	@for i in $(DLMS) ; do make -C $$i ; done
