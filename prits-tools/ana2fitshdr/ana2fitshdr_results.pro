@@ -41,7 +41,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-20 15:30 CEST $
+; $Id: 2025-08-21 13:50 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -142,7 +142,7 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
     fits_util.add, hdr, 'CREATOR', creator, 'Name of creator'
 
   chisqavg = mean(result[-1, *, *, *], /nan)
-  fits_util.add, hdr, 'CHISQAVG', chisqavg, 'Average chi-squared value'
+  fits_util.add, hdr, 'CHISQAVG', chisqavg, 'Average value of chi-square'
 
   ; Add keywords valid for whole ANA
   fits_util.add_description, hdr, 'Keywords describing the whole ANA'
