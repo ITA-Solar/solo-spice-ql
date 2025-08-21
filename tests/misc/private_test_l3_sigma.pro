@@ -1,18 +1,43 @@
 PRO private_test_l3_sigma
-  create_l3 = 0 ; create L3 files
-  test_all = 1
+  ; switches for creating l3 files
+  create_l3 = 0 ; main switch
+  create_all = 1
+
+  ; switches for looking at l3 files
   chi2avg_overview = 1
 
-  l2_files = ['/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-ras_20231028T001206_V22_218104189-001.fits', $ ; raster
-    '/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-sit_20231028T032925_V22_218104192-000.fits', $ ; sit-and-stare
-    '/Users/mawiesma/data/spice/level2/2023/01/17/solo_L2_spice-n-exp_20230117T151432_V02_167772346-000.fits', $ ; single exposure, small window
-    '/Users/mawiesma/data/spice/level2/2024/01/01/solo_L2_spice-n-exp_20240101T180040_V02_234881025-000.fits' $ ; single exposure, whole detector
-    ] ; list of L2 files
+  ; switch for both creating and looking at L3 files
+  use_new_l3 = 1
+
+  IF use_new_l3 THEN BEGIN
+    l2_files = []
+    l2_files = [l2_files, "$SPICE_DATA/level2/2025/02/08/solo_L2_spice-n-ras_20250208T061921_V04_301990207-000.fits"]
+    l2_files = [l2_files, "$SPICE_DATA/level2/2025/03/14/solo_L2_spice-n-ras_20250314T140552_V06_318767164-003.fits"]
+    l2_files = [l2_files, "$SPICE_DATA/level2/2025/03/24/solo_L2_spice-n-ras_20250324T230647_V03_318767223-005.fits"]
+    l2_files = [l2_files, "$SPICE_DATA/level2/2025/03/30/solo_L2_spice-n-sit_20250330T113021_V08_318767276-000.fits"]
+    l2_files = [l2_files, "$SPICE_DATA/level2/2025/04/26/solo_L2_spice-n-ras_20250426T203032_V02_318767456-000.fits"]
+    l3_files = []
+    l3_files = [l3_files, "/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20250208T061921_V01_301990207-000.fits"]
+    l3_files = [l3_files, "/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20250314T140552_V01_318767164-003.fits"]
+    l3_files = [l3_files, "/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20250324T230647_V01_318767223-005.fits"]
+    l3_files = [l3_files, "/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-sit_20250330T113021_V01_318767276-000.fits"]
+    l3_files = [l3_files, "/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20250426T203032_V01_318767456-000.fits"]
+  ENDIF ELSE BEGIN
+    l2_files = ['/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-ras_20231028T001206_V22_218104189-001.fits', $ ; raster
+      '/Users/mawiesma/data/spice/level2/2023/10/28/solo_L2_spice-n-sit_20231028T032925_V22_218104192-000.fits', $ ; sit-and-stare
+      '/Users/mawiesma/data/spice/level2/2023/01/17/solo_L2_spice-n-exp_20230117T151432_V02_167772346-000.fits', $ ; single exposure, small window
+      '/Users/mawiesma/data/spice/level2/2024/01/01/solo_L2_spice-n-exp_20240101T180040_V02_234881025-000.fits' $ ; single exposure, whole detector
+      ] ; list of L2 files
+    l3_files = ['/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20231028T001206_V01_218104189-001.fits', $ ; raster
+      '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-sit_20231028T032925_V01_218104192-000.fits', $ ; sit-and-stare
+      '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20230117T151432_V01_167772346-000.fits', $ ; single exposure, small window
+      '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20240101T180040_V01_234881025-000.fits'] ; single exposure, whole detector
+  ENDELSE
+
+  out_dir = '/Users/mawiesma/Documents/spice/tests/test_l3_files/' ; output directory
 
   IF create_l3 THEN BEGIN
-    out_dir = '/Users/mawiesma/Documents/spice/tests/test_l3_files/' ; output directory
-
-    IF test_all THEN BEGIN
+    IF create_all THEN BEGIN
       no_xcfit_block = 1
       no_line_list = 0
       no_fitting = 0
@@ -24,7 +49,7 @@ PRO private_test_l3_sigma
         l3_file = o.create_l3_file(window_indices, pipeline_dir = out_dir, no_xcfit_block = no_xcfit_block, no_line_list = no_line_list, no_fitting = no_fitting, $
           all_result_headers = all_result_headers, all_data_headers = all_data_headers)
       ENDFOREACH
-    ENDIF ELSE BEGIN ; test_all
+    ENDIF ELSE BEGIN ; create_all
 
       no_xcfit_block = 0
       no_line_list = 0
@@ -53,12 +78,8 @@ PRO private_test_l3_sigma
 
         stop
       ENDFOREACH
-    ENDELSE ; test_all
+    ENDELSE ; create_all
   ENDIF ELSE BEGIN ; create_l3
-    l3_files = ['/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-ras_20231028T001206_V01_218104189-001.fits', $ ; raster
-      '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-sit_20231028T032925_V01_218104192-000.fits', $ ; sit-and-stare
-      '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20230117T151432_V01_167772346-000.fits', $ ; single exposure, small window
-      '/Users/mawiesma/Documents/spice/tests/test_l3_files/solo_L3_spice-n-exp_20240101T180040_V01_234881025-000.fits'] ; single exposure, whole detector
     ; ana = fits2ana(l3_files[0])
 
     FOREACH l3_file, l3_files, index DO BEGIN
