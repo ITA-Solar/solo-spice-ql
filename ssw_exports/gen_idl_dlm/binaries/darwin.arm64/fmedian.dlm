@@ -1,6 +1,0 @@
-MODULE FMEDIAN
-DESCRIPTION DLM implementation of fmedian.pro
-VERSION 2.0
-BUILD_DATE $Date: 2025/08/19 $
-SOURCE S.V.H.HAUGAN prits-group@astro.uio.no
-FUNCTION FMEDIAN2_DLM  3 3 KEYWORDS
