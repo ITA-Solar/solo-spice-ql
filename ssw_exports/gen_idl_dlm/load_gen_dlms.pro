@@ -46,7 +46,7 @@
 ;
 ; Modified    :
 ;
-; $Id: 2025-08-20 16:58 CEST $
+; $Id: 2025-08-21 15:40 CEST $
 ;-
 
 FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
@@ -187,7 +187,7 @@ PRO load_gen_dlms, success = success, redo = redo, retry = retry, test_failure =
   loaded = 0
   success = 0
 
-  dlms_to_check = ["cfit", "fmedian"]
+  dlms_to_check = ["cfit", "fmedian2_dlm"]
   dlms_to_do = dlms_to_check
   versions = ["1.0", "2.0"]
   IF ~keyword_set(test_failure) THEN BEGIN
@@ -207,7 +207,7 @@ END
 
 FUNCTION lgdlms_loaded
   help, /dlm, "cfit", out = out1
-  help, /dlm, "fmedian", out = out2
+  help, /dlm, "fmedian2_dlm", out = out2
   return, n_elements(out1) GT 1 AND n_elements(out2) GT 1
 END
 
@@ -251,10 +251,10 @@ PRO load_gen_dlms_test
   ; Try loading with /retry (should load)
   load_gen_dlms, /retry
   IF lgdlms_loaded() THEN BEGIN
-    box_message, "cfit.dlm and fmedian.dlm loaded with /retry - OK"
+    box_message, "cfit.dlm and fmedian2_dlm.dlm loaded with /retry - OK"
     print
   END ELSE BEGIN
-    message, "cfit.dlm and/or fmedian.dlm not loaded with /retry - NOT OK"
+    message, "cfit.dlm and/or fmedian2_dlm.dlm not loaded with /retry - NOT OK"
   END
 
   print
