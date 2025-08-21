@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann (prits-group@astro.uio.no)
 ;
-; $Id: 2025-08-20 13:38 CEST $
+; $Id: 2025-08-21 14:50 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -82,6 +82,20 @@ PRO spice_xcontrol_l23_cleanup, tlb
   !NULL = spice_object((*info).object_l2, is_spice = is_spice)
   IF is_spice THEN obj_destroy, (*info).object_l2
   ptr_free, info
+END
+
+FUNCTION spice_xcontrol_l23_get_pgextname, hdr
+  IF size(hdr, /type) EQ 7 THEN BEGIN
+    pgextnam = fxpar(hdr, 'PARENTXT', missing = '')
+    pgextnam = strsplit(pgextnam, ';', /extract)
+    pgextnam = pgextnam[-1]
+    IF pgextnam EQ '' THEN BEGIN
+      pgextnam = fxpar(*hdr, 'PGEXTNAM', missing = '') ; PGEXTNAM was replaced by PARENTXT
+    END
+    return, pgextnam
+  ENDIF ELSE BEGIN
+    return, ''
+  ENDELSE
 END
 
 PRO spice_xcontrol_l23_event, event
@@ -156,7 +170,7 @@ PRO spice_xcontrol_l23_save_file, event
       hdr_l3 = *(*info).hdr_l3_user
       PGEXTNAM = []
       FOR i = 0, count_read - 1 DO BEGIN
-        PGEXTNAM = [PGEXTNAM, fxpar(*hdr_l3[ind_read[i]], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')]
+        PGEXTNAM = [PGEXTNAM, spice_xcontrol_l23_get_pgextname(*hdr_l3[ind_read[i]])]
       ENDFOR
 
       ana = fits2ana(file_l3, windows = PGEXTNAM) ; , /quiet)
@@ -369,7 +383,7 @@ PRO spice_xcontrol_l23_update_state_display, info
       status = 'NOT CREATED'
       editable = 0
       IF state_l3[iwin].l3_winno GE 0 THEN BEGIN
-        title = fxpar(*hdr_l3[state_l3[iwin].l3_winno], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
+        title = spice_xcontrol_l23_get_pgextname(*hdr_l3[state_l3[iwin].l3_winno])
         status = 'CREATED'
         IF state_l3[iwin].edited THEN status = status + ' and EDITED'
         editable = 1
@@ -411,7 +425,7 @@ PRO spice_xcontrol_l23_open_l3, event
       ana_l3_read = (*(*info).ana_l3_official_read)[win_info.winno]
       hdr_l3 = (*(*info).hdr_l3_official)[win_info.winno]
       hdr_l3_data = (*(*info).hdr_l3_official_data)[win_info.winno]
-      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
+      PGEXTNAM = spice_xcontrol_l23_get_pgextname(*hdr_l3)
       title = 'L3 - official - ' + PGEXTNAM
     END
     2: BEGIN
@@ -420,7 +434,7 @@ PRO spice_xcontrol_l23_open_l3, event
       ana_l3_read = (*(*info).ana_l3_user_read)[win_info.winno]
       hdr_l3 = (*(*info).hdr_l3_user)[win_info.winno]
       hdr_l3_data = (*(*info).hdr_l3_user_data)[win_info.winno]
-      PGEXTNAM = fxpar(*hdr_l3, 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
+      PGEXTNAM = spice_xcontrol_l23_get_pgextname(*hdr_l3)
       title = 'L3 - user - ' + PGEXTNAM
     END
   ENDCASE
@@ -713,7 +727,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
       IF count GT 0 THEN BEGIN
         win_created = 1
         state_l3_official[iwin].l3_winno = ind[0]
-        title = fxpar(*hdr_l3_official[ind[0]], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
+        title = spice_xcontrol_l23_get_pgextname(*hdr_l3_official[ind[0]])
         status = 'CREATED'
       ENDIF
     ENDIF
@@ -748,7 +762,7 @@ PRO spice_xcontrol_l23, file, group_leader = group_leader
       IF count GT 0 THEN BEGIN
         win_created = 1
         state_l3_user[iwin].l3_winno = ind[0]
-        title = fxpar(*hdr_l3_user[ind[0]], 'PGEXTNAM', missing = 'PGEXTNAM keyword empty/missing')
+        title = spice_xcontrol_l23_get_pgextname(*hdr_l3_user[ind[0]])
         status = 'CREATED'
       ENDIF
     ENDIF
