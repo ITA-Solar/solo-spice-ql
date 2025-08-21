@@ -109,7 +109,7 @@
         COMMON load_gen_dlms, gen_dlms_loaded
         IF size(ARRAY,/n_dimensions) NE 1 AND NOT keyword_set(NO_DLM) THEN BEGIN
           IF n_elements(gen_dlms_loaded) EQ 0 THEN BEGIN
-            box_message,["FMEDIAN.PRO is very slow - trying once to load the DLM version.",$
+            box_message,["FMEDIAN.PRO is very slow - trying once to load the DLM version (fmedian2_dlm).",$
                          "This will take a few seconds, but will speed up subsequent calls.",$
                          "If the DLM version fails to load, see $SSW/gen/idl/dlm/sources/AAA-README.txt"]
             load_gen_dlms
