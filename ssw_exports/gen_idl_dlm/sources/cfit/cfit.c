@@ -19,7 +19,8 @@ void assert_numeric(const char *description, IDL_VPTR arg)
 {
   char msg[256];
   if (arg->type != IDL_TYP_DOUBLE && arg->type != IDL_TYP_FLOAT && arg->type != IDL_TYP_INT &&
-      arg->type != IDL_TYP_UINT && arg->type != IDL_TYP_LONG && arg->type != IDL_TYP_ULONG) {
+      arg->type != IDL_TYP_UINT && arg->type != IDL_TYP_LONG && arg->type != IDL_TYP_ULONG)
+  {
     snprintf(msg, sizeof(msg), "%s must be numeric", description);
     bailout(msg);
   }
@@ -29,7 +30,8 @@ void check_numeric_array_params(int argc, IDL_VPTR Argv[])
 {
   IDL_ENSURE_ARRAY(Argv[0]);
   IDL_ENSURE_ARRAY(Argv[1]);
-  if (Argv[1]->value.arr->n_dim != 1) {
+  if (Argv[1]->value.arr->n_dim != 1)
+  {
     bailout("A (coefficients) must be a 1-dimensional array");
   }
   assert_numeric("X (1st arg)", Argv[0]);
@@ -47,7 +49,8 @@ void make_arr_0_from_template(IDL_VPTR x_vptr, IDL_VPTR dest)
 void make_pder_array(IDL_VPTR x_vptr, IDL_VPTR a_vptr, IDL_VPTR pder)
 {
   IDL_MEMINT pder_dim[2];
-  if (pder) {
+  if (pder)
+  {
     pder_dim[0] = x_vptr->value.arr->n_elts;
     pder_dim[1] = a_vptr->value.arr->n_elts;
     IDL_VPTR tmp;
@@ -61,7 +64,7 @@ double *make_a_param_vector(IDL_VPTR vptr, IDL_LONG64 n_elts)
   IDL_VPTR tmp;
   IDL_MakeTempArray(IDL_TYP_DOUBLE, 1, &n_elts, IDL_ARR_INI_NOP, &tmp);
   IDL_VarCopy(tmp, vptr);
-  return (double *) vptr->value.arr->data;
+  return (double *)vptr->value.arr->data;
 }
 
 // ****************************************************************************************************
@@ -75,28 +78,32 @@ static void COMP_POLY(int argc, IDL_VPTR Argv[], char *argk)
   IDL_VPTR x_vptr = IDL_CvtDbl(1, Argv);
   IDL_VPTR a_vptr = IDL_CvtDbl(1, Argv + 1);
 
-  IDL_VPTR f_vptr = Argv[2]; /* Output array */
+  IDL_VPTR f_vptr = Argv[2];                      /* Output array */
   IDL_VPTR pder_vptr = argc > 3 ? Argv[3] : NULL; // Partial derivatives, optional
 
   make_arr_0_from_template(x_vptr, f_vptr);
 
   int degree = a_vptr->value.arr->n_elts - 1;
-  double *x = (void *) x_vptr->value.arr->data;
-  double *a = (void *) a_vptr->value.arr->data;
-  double *f = (void *) f_vptr->value.arr->data;
+  double *x = (void *)x_vptr->value.arr->data;
+  double *a = (void *)a_vptr->value.arr->data;
+  double *f = (void *)f_vptr->value.arr->data;
   double *pder = NULL;
 
-  if (pder_vptr) {
+  if (pder_vptr)
+  {
     make_pder_array(x_vptr, a_vptr, pder_vptr);
-    pder = (void *) pder_vptr->value.arr->data;
+    pder = (void *)pder_vptr->value.arr->data;
   }
 
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
-  for (IDL_MEMINT ix = 0; ix < x_vptr->value.arr->n_elts; ix++) {
+  for (IDL_MEMINT ix = 0; ix < x_vptr->value.arr->n_elts; ix++)
+  {
     f[ix] = 0.0;
-    for (IDL_MEMINT aix = 0; aix <= degree; aix++) {
+    for (IDL_MEMINT aix = 0; aix <= degree; aix++)
+    {
       f[ix] += a[aix] * pow(x[ix], aix);
-      if (pder_vptr) {
+      if (pder_vptr)
+      {
         // Partial derivative of f with respect to coefficient a[aix]:
         pder[ix + aix * Nx] = pow(x[ix], aix);
       }
@@ -104,10 +111,12 @@ static void COMP_POLY(int argc, IDL_VPTR Argv[], char *argk)
   }
 
   // These might be temp. due to type conversion
-  if (x_vptr != Argv[0]) {
+  if (x_vptr != Argv[0])
+  {
     IDL_DELTMP(x_vptr);
   }
-  if (a_vptr != Argv[1]) {
+  if (a_vptr != Argv[1])
+  {
     IDL_DELTMP(a_vptr);
   }
 }
@@ -124,40 +133,45 @@ static void COMP_GAUSS(int argc, IDL_VPTR Argv[], char *argk)
 
   IDL_VPTR x_vptr = IDL_CvtDbl(1, Argv);
   IDL_VPTR a_vptr = IDL_CvtDbl(1, Argv + 1);
-  IDL_VPTR f_vptr = Argv[2]; /* Output array */
+  IDL_VPTR f_vptr = Argv[2];                      /* Output array */
   IDL_VPTR pder_vptr = argc > 3 ? Argv[3] : NULL; // Partial derivatives, optional
 
   make_arr_0_from_template(x_vptr, f_vptr);
 
-  double *a = (void *) a_vptr->value.arr->data;
-  double *f = (void *) f_vptr->value.arr->data;
-  double *x = (void *) x_vptr->value.arr->data;
+  double *a = (void *)a_vptr->value.arr->data;
+  double *f = (void *)f_vptr->value.arr->data;
+  double *x = (void *)x_vptr->value.arr->data;
   double *pder = NULL;
 
-  if (pder_vptr) {
+  if (pder_vptr)
+  {
     make_pder_array(x_vptr, a_vptr, pder_vptr);
-    pder = (void *) pder_vptr->value.arr->data;
+    pder = (void *)pder_vptr->value.arr->data;
   }
 
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
-  for (IDL_MEMINT ix = 0; ix < x_vptr->value.arr->n_elts; ix++) {
+  for (IDL_MEMINT ix = 0; ix < x_vptr->value.arr->n_elts; ix++)
+  {
     double z = (x[ix] - a[1]) / a[2];
     double z2 = z * z;
     double kern = exp(-z2 * 0.5);
     kern = (z2 < 1000.0) ? kern : 0.0; // Avoid exp overflow
     f[ix] = a[0] * kern;
 
-    if (pder_vptr) {
+    if (pder_vptr)
+    {
       pder[ix + 0 * Nx] = kern;
       pder[ix + 1 * Nx] = f[ix] * z / a[2];
       pder[ix + 2 * Nx] = pder[ix + 1 * Nx] * z;
     }
   }
   // These might be temp. due to type conversion
-  if (x_vptr != Argv[0]) {
+  if (x_vptr != Argv[0])
+  {
     IDL_DELTMP(x_vptr);
   }
-  if (a_vptr != Argv[1]) {
+  if (a_vptr != Argv[1])
+  {
     IDL_DELTMP(a_vptr);
   }
 }
@@ -177,7 +191,7 @@ static void COMP_GAUSS(int argc, IDL_VPTR Argv[], char *argk)
 */
 
 /* Testing:
-x = [500.000, 500.200, 500.400, 500.600, 500.800, 501.000, 501.200, 501.400, 501.600, 501.800, 502.000, 502.200, 502.400, 502.600, 502.800, 503.000, 503.200, 503.400, 503.600, 503.800] 
+x = [500.000, 500.200, 500.400, 500.600, 500.800, 501.000, 501.200, 501.400, 501.600, 501.800, 502.000, 502.200, 502.400, 502.600, 502.800, 503.000, 503.200, 503.400, 503.600, 503.800]
 a = [45., 502., 0.4]
 comp_gauss,x,a,f,pder
 window,0
@@ -193,27 +207,28 @@ oplot,x,pder[*,2]/20.
 static void cf_gauss(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
 {
   int argc = pder ? 4 : 3; // 3 or 4 args to COMP_GAUSS
-  double *f = (void *) f_vptr->value.arr->data;
-  IDL_VPTR comp_f_vptr = IDL_Gettmp(); // For receiving result f from component
+  double *f = (void *)f_vptr->value.arr->data;
+  IDL_VPTR comp_f_vptr = IDL_Gettmp();                  // For receiving result f from component
   IDL_VPTR comp_pder_vptr = pder ? IDL_Gettmp() : NULL; // For receiving pder from component
-  IDL_VPTR comp_a_vptr = IDL_Gettmp(); // For gauss params
+  IDL_VPTR comp_a_vptr = IDL_Gettmp();                  // For gauss params
 
   double *comp_a = make_a_param_vector(comp_a_vptr, 3); // a0, a1, a2
-  comp_a[0] = a[0]; // a0 is the height
-  comp_a[1] = a[1]; // a1 is the center
-  comp_a[2] = a[2]; // a2 is the width
+  comp_a[0] = a[0];                                     // a0 is the height
+  comp_a[1] = a[1];                                     // a1 is the center
+  comp_a[2] = a[2];                                     // a2 is the width
 
-  IDL_VPTR comp_args[4]; // For sending args to component
-  comp_args[0] = x_vptr; // Input array
-  comp_args[1] = comp_a_vptr; // Coefficients
-  comp_args[2] = comp_f_vptr; // Output
-  comp_args[3] = comp_pder_vptr; // Partial derivatives, optional
+  IDL_VPTR comp_args[4];             // For sending args to component
+  comp_args[0] = x_vptr;             // Input array
+  comp_args[1] = comp_a_vptr;        // Coefficients
+  comp_args[2] = comp_f_vptr;        // Output
+  comp_args[3] = comp_pder_vptr;     // Partial derivatives, optional
   COMP_GAUSS(argc, comp_args, NULL); // Call COMP_GAUSS with 3 or 4 args
 
   // Copy component result:
-  double *comp_f = (void *) comp_f_vptr->value.arr->data;
+  double *comp_f = (void *)comp_f_vptr->value.arr->data;
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
-  for (int i = 0; i < Nx; i++) {
+  for (int i = 0; i < Nx; i++)
+  {
     f[i] += comp_f[i];
   }
 
@@ -221,10 +236,13 @@ static void cf_gauss(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
   // Our pder = array[Nx,  Na] and all pder[*,i] are consecutive,
   // i.e....
   //   comp_pder = array[Nx, cNa] and cNa = 3 (comp. has 3 parms)
-  if (pder) {
-    double *comp_pder = (void *) comp_pder_vptr->value.arr->data;
-    for (int param = 0; param < 3; param++) {
-      for (int ix = 0; ix < Nx; ix++) {
+  if (pder)
+  {
+    double *comp_pder = (void *)comp_pder_vptr->value.arr->data;
+    for (int param = 0; param < 3; param++)
+    {
+      for (int ix = 0; ix < Nx; ix++)
+      {
         pder[ix + param * Nx] = comp_pder[ix + param * Nx];
       }
     }
@@ -232,7 +250,8 @@ static void cf_gauss(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
 
   IDL_DELTMP(comp_a_vptr);
   IDL_DELTMP(comp_f_vptr);
-  if (comp_pder_vptr) {
+  if (comp_pder_vptr)
+  {
     IDL_DELTMP(comp_pder_vptr);
   }
 }
@@ -243,10 +262,10 @@ static void cf_gauss(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
 static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
 {
   int argc = pder ? 4 : 3; // 3 or 4 args to COMP_POLY
-  double *f = (void *) f_vptr->value.arr->data;
-  IDL_VPTR comp_f_vptr = IDL_Gettmp(); // For receiving result f from component
+  double *f = (void *)f_vptr->value.arr->data;
+  IDL_VPTR comp_f_vptr = IDL_Gettmp();                  // For receiving result f from component
   IDL_VPTR comp_pder_vptr = pder ? IDL_Gettmp() : NULL; // For receiving pder from component
-  IDL_VPTR comp_a_vptr = IDL_Gettmp(); // For gauss params
+  IDL_VPTR comp_a_vptr = IDL_Gettmp();                  // For gauss params
 
   double *comp_a = make_a_param_vector(comp_a_vptr, 1);
   // Only zero-order polynomials so far
@@ -254,17 +273,18 @@ static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
   //
   //
 
-  IDL_VPTR comp_args[4]; // For sending args to component
-  comp_args[0] = x_vptr; // Input array
-  comp_args[1] = comp_a_vptr; // Coefficients for polynomial
-  comp_args[2] = comp_f_vptr; // Output array for polynomial
-  comp_args[3] = comp_pder_vptr; // Partial derivatives for polynomial, optional
+  IDL_VPTR comp_args[4];            // For sending args to component
+  comp_args[0] = x_vptr;            // Input array
+  comp_args[1] = comp_a_vptr;       // Coefficients for polynomial
+  comp_args[2] = comp_f_vptr;       // Output array for polynomial
+  comp_args[3] = comp_pder_vptr;    // Partial derivatives for polynomial, optional
   COMP_POLY(argc, comp_args, NULL); // Call COMP_POLY with 3 or 4 args
 
   // Copy component result:
-  double *comp_f = (void *) comp_f_vptr->value.arr->data;
+  double *comp_f = (void *)comp_f_vptr->value.arr->data;
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
-  for (int i = 0; i < Nx; i++) {
+  for (int i = 0; i < Nx; i++)
+  {
     f[i] += comp_f[i];
   }
 
@@ -272,10 +292,13 @@ static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
   // Our pder = array[Nx,  Na] and all pder[*,i] are consecutive,
   // i.e....
   //   comp_pder = array[Nx, cNa] and cNa = 3 (comp. has 3 parms)
-  if (pder) {
-    double *comp_pder = (void *) comp_pder_vptr->value.arr->data;
-    for (int param = 0; param < 1; param++) {
-      for (int ix = 0; ix < Nx; ix++) {
+  if (pder)
+  {
+    double *comp_pder = (void *)comp_pder_vptr->value.arr->data;
+    for (int param = 0; param < 1; param++)
+    {
+      for (int ix = 0; ix < Nx; ix++)
+      {
         pder[ix + param * Nx] = comp_pder[ix + param * Nx];
       }
     }
@@ -283,7 +306,8 @@ static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
 
   IDL_DELTMP(comp_a_vptr);
   IDL_DELTMP(comp_f_vptr);
-  if (comp_pder_vptr) {
+  if (comp_pder_vptr)
+  {
     IDL_DELTMP(comp_pder_vptr);
   }
 }
@@ -293,29 +317,31 @@ static void cf_poly0(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder)
 // *pder points to first "row" of pders for for our params (offset has been applied)
 static void cf_polyN(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder, int degree)
 {
-  double *f = (void *) f_vptr->value.arr->data;
-  IDL_VPTR comp_f_vptr = IDL_Gettmp(); // For receiving result f from component
+  double *f = (void *)f_vptr->value.arr->data;
+  IDL_VPTR comp_f_vptr = IDL_Gettmp();                  // For receiving result f from component
   IDL_VPTR comp_pder_vptr = pder ? IDL_Gettmp() : NULL; // For receiving pder from component
-  IDL_VPTR comp_a_vptr = IDL_Gettmp(); // For gauss params
+  IDL_VPTR comp_a_vptr = IDL_Gettmp();                  // For gauss params
 
   double *comp_a = make_a_param_vector(comp_a_vptr, degree + 1);
 
-  for (int i = 0; i <= degree; i++) {
+  for (int i = 0; i <= degree; i++)
+  {
     comp_a[i] = a[i]; // Copy coefficients for polynomial
   }
 
-  IDL_VPTR comp_args[4]; // For sending args to component
-  comp_args[0] = x_vptr; // Input array
-  comp_args[1] = comp_a_vptr; // Coefficients for polynomial
-  comp_args[2] = comp_f_vptr; // Output array for polynomial
+  IDL_VPTR comp_args[4];         // For sending args to component
+  comp_args[0] = x_vptr;         // Input array
+  comp_args[1] = comp_a_vptr;    // Coefficients for polynomial
+  comp_args[2] = comp_f_vptr;    // Output array for polynomial
   comp_args[3] = comp_pder_vptr; // Partial derivatives for polynomial, NULL or undef. temp. var
-  int argc = pder ? 4 : 3; // 3 or 4 args to COMP_POLY
+  int argc = pder ? 4 : 3;       // 3 or 4 args to COMP_POLY
   COMP_POLY(argc, comp_args, NULL);
 
   // Copy component result:
-  double *comp_f = (void *) comp_f_vptr->value.arr->data;
+  double *comp_f = (void *)comp_f_vptr->value.arr->data;
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
-  for (int i = 0; i < Nx; i++) {
+  for (int i = 0; i < Nx; i++)
+  {
     f[i] += comp_f[i];
   }
 
@@ -323,10 +349,13 @@ static void cf_polyN(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder, 
   // Our pder = array[Nx,  Na] and all pder[*,i] are consecutive,
   // i.e....
   //   comp_pder = array[Nx, cNa] and cNa = 3 (comp. has 3 parms)
-  if (pder) {
-    double *comp_pder = (void *) comp_pder_vptr->value.arr->data;
-    for (int param = 0; param <= degree; param++) {
-      for (int ix = 0; ix < Nx; ix++) {
+  if (pder)
+  {
+    double *comp_pder = (void *)comp_pder_vptr->value.arr->data;
+    for (int param = 0; param <= degree; param++)
+    {
+      for (int ix = 0; ix < Nx; ix++)
+      {
         pder[ix + param * Nx] = comp_pder[ix + param * Nx];
       }
     }
@@ -334,7 +363,8 @@ static void cf_polyN(IDL_VPTR x_vptr, double *a, IDL_VPTR f_vptr, double *pder, 
 
   IDL_DELTMP(comp_a_vptr);
   IDL_DELTMP(comp_f_vptr);
-  if (comp_pder_vptr) {
+  if (comp_pder_vptr)
+  {
     IDL_DELTMP(comp_pder_vptr);
   }
 }
@@ -347,21 +377,23 @@ static void cf_Ng_pN(int argc, IDL_VPTR Argv[], int Ngauss, int degree)
 
   IDL_VPTR x_vptr = IDL_CvtDbl(1, Argv);
   IDL_VPTR a_vptr = IDL_CvtDbl(1, Argv + 1);
-  IDL_VPTR f_vptr = Argv[2]; /* Pointer to var to store output */
+  IDL_VPTR f_vptr = Argv[2];                      /* Pointer to var to store output */
   IDL_VPTR pder_vptr = argc > 3 ? Argv[3] : NULL; // Partial derivatives, optional
 
   make_arr_0_from_template(x_vptr, f_vptr); // Also permanent, we'll return it
 
-  double *a = (void *) a_vptr->value.arr->data;
+  double *a = (void *)a_vptr->value.arr->data;
   double *pder = NULL;
 
-  if (pder_vptr) {
+  if (pder_vptr)
+  {
     make_pder_array(x_vptr, a_vptr, pder_vptr);
-    pder = (void *) pder_vptr->value.arr->data;
+    pder = (void *)pder_vptr->value.arr->data;
   }
 
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
-  for (int i = 0; i < Ngauss; i++) {
+  for (int i = 0; i < Ngauss; i++)
+  {
     cf_gauss(x_vptr, a, f_vptr, pder);
     a += 3;
     pder = pder ? pder + 3 * Nx : NULL;
@@ -383,21 +415,23 @@ static void cf_Ng_p0(int argc, IDL_VPTR Argv[], int Ngauss)
 
   IDL_VPTR x_vptr = IDL_CvtDbl(1, Argv);
   IDL_VPTR a_vptr = IDL_CvtDbl(1, Argv + 1);
-  IDL_VPTR f_vptr = Argv[2]; /* Pointer to var to store output */
+  IDL_VPTR f_vptr = Argv[2];                      /* Pointer to var to store output */
   IDL_VPTR pder_vptr = argc > 3 ? Argv[3] : NULL; // Partial derivatives, optional
 
   make_arr_0_from_template(x_vptr, f_vptr); // Also permanent, we'll return it
 
-  double *a = (void *) a_vptr->value.arr->data;
+  double *a = (void *)a_vptr->value.arr->data;
   double *pder = NULL;
 
-  if (pder_vptr) {
+  if (pder_vptr)
+  {
     make_pder_array(x_vptr, a_vptr, pder_vptr);
-    pder = (void *) pder_vptr->value.arr->data;
+    pder = (void *)pder_vptr->value.arr->data;
   }
 
   IDL_MEMINT Nx = x_vptr->value.arr->n_elts;
-  for (int i = 0; i < Ngauss; i++) {
+  for (int i = 0; i < Ngauss; i++)
+  {
     cf_gauss(x_vptr, a, f_vptr, pder);
     a += 3;
     pder = pder ? pder + 3 * Nx : NULL;
@@ -411,10 +445,10 @@ static void cf_Ng_p0(int argc, IDL_VPTR Argv[], int Ngauss)
   IDL_DELTMP(a_vptr);
 }
 
-#define FUNC(name, Ng, degree)                                                                                         \
-  static void name(int argc, IDL_VPTR Argv[], char *argk)                                                              \
-  {                                                                                                                    \
-    cf_Ng_pN(argc, Argv, Ng, degree);                                                                                  \
+#define FUNC(name, Ng, degree)                            \
+  static void name(int argc, IDL_VPTR Argv[], char *argk) \
+  {                                                       \
+    cf_Ng_pN(argc, Argv, Ng, degree);                     \
   }
 
 FUNC(CF_G_, 1, -1);
@@ -482,8 +516,40 @@ FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 28, 1);
 FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 29, 1);
 FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 30, 1);
 FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_, 31, 1);
+FUNC(CF_P2_, 0, 2);
+FUNC(CF_G_P2_, 1, 2);
+FUNC(CF_G_G_P2_, 2, 2);
+FUNC(CF_G_G_G_P2_, 3, 2);
+FUNC(CF_G_G_G_G_P2_, 4, 2);
+FUNC(CF_G_G_G_G_G_P2_, 5, 2);
+FUNC(CF_G_G_G_G_G_G_P2_, 6, 2);
+FUNC(CF_G_G_G_G_G_G_G_P2_, 7, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_P2_, 8, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_P2_, 9, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_P2_, 10, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_P2_, 11, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 12, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 13, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 14, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 15, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 16, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 17, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 18, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 19, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 20, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 21, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 22, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 23, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 24, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 25, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 26, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 27, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 28, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 29, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 30, 2);
+FUNC(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_, 31, 2);
 
-#define ENTRY(name) {(IDL_SYSRTN_GENERIC) name, #name, 3, 4, 0, 0}
+#define ENTRY(name) {(IDL_SYSRTN_GENERIC)name, #name, 3, 4, 0, 0}
 
 int IDL_Load(void)
 {
@@ -555,6 +621,38 @@ int IDL_Load(void)
       ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
       ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
       ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P1_),
+      ENTRY(CF_P2_),
+      ENTRY(CF_G_P2_),
+      ENTRY(CF_G_G_P2_),
+      ENTRY(CF_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
+      ENTRY(CF_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_P2_),
   };
 
   return IDL_SysRtnAdd(pro_def, FALSE, sizeof(pro_def) / sizeof(IDL_SYSFUN_DEF2));
