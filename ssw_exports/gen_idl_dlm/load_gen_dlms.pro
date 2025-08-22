@@ -46,7 +46,7 @@
 ;
 ; Modified    :
 ;
-; $Id: 2025-08-21 15:40 CEST $
+; $Id: 2025-08-22 15:21 CEST $
 ;-
 
 FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
@@ -189,7 +189,7 @@ PRO load_gen_dlms, success = success, redo = redo, retry = retry, test_failure =
 
   dlms_to_check = ["cfit", "fmedian2_dlm"]
   dlms_to_do = dlms_to_check
-  versions = ["1.0", "2.0"]
+  versions = ["2.0", "2.0"]
   IF ~keyword_set(test_failure) THEN BEGIN
     dlms_to_do = lgdlms_find_dlms_to_do(dlms_to_check, versions)
 
