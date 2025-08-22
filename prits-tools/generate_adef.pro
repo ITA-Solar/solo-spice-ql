@@ -55,8 +55,12 @@
 ;                                            parameters corresponding to
 ;                                            velocities must be switched and
 ;                                            change sign.
+;      Ver. 1.5, 22-Aug-2025, Terje Fredvik: support up to 24 lines. Sort lines
+;                                            in decreasing order of intensity
+;                                            also when using a line list. Use
+;                                            linear background for full detector.
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-22 14:14 CEST $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
@@ -89,40 +93,49 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
   ENDWHILE
 
   IF use_list THEN BEGIN
-    lines = line_list.keys()
-    lines = lines.toArray()
-    min_lambda = min(lam, max = max_lambda)
-    ind_lines = where(lines GT min_lambda AND lines LT max_lambda, npeaks)
-
-    IF npeaks GT 0 THEN BEGIN
-      peakinds = intarr(npeaks)
-      FOR iline = 0, npeaks - 1 DO BEGIN
-        lambda_diff = abs(meanlambda - lines[ind_lines[iline]])
-        !NULL = min(lambda_diff, lambda_ind)
-        IF lambda_ind LT 3 || lambda_ind GE n_elements(meanlambda) - 3 THEN BEGIN
-          peakinds[iline] = 0
-        ENDIF ELSE BEGIN
-          peakinds[iline] = lambda_ind
-        ENDELSE
-      ENDFOR
-      ind = where(peakinds GT 0, npeaks)
-      IF npeaks GT 0 THEN BEGIN
-        peakinds = peakinds[ind]
-        fwhm = intarr(npeaks) ; TODO: Estimate FWHM in pixels for each peak
-        fwhm[*] = 3 ; for now
-      ENDIF
-    ENDIF ; npeaks GT 0
-  ENDIF ELSE BEGIN ; use_list
-    peakinds = spice_gt_peaks(meanprofile, fwhm = fwhm, minmedian = 4.5, /sort, plot = plot, version = version_gt_peaks)
-    npeaks = n_elements(peakinds)
-  ENDELSE ; use_list
-
+     lines = line_list.keys()
+     lines = lines.toArray()
+     min_lambda = min(lam, max = max_lambda)
+     ind_lines = where(lines GT min_lambda AND lines LT max_lambda, npeaks)
+     lam0 = lines[ind_lines]
+     
+     IF npeaks GT 0 THEN BEGIN
+        peakinds = intarr(npeaks)
+        lam0_peaks = fltarr(npeaks) ;xxx
+        FOR iline = 0, npeaks - 1 DO BEGIN
+           lambda_diff = abs(meanlambda - lam0[iline]) ;xxx
+           !NULL = min(lambda_diff, lambda_ind)
+           IF lambda_ind LT 3 || lambda_ind GE n_elements(meanlambda) - 3 THEN BEGIN
+              peakinds[iline] = 0
+              lam0_peaks[iline] = lam0[0]
+           ENDIF ELSE BEGIN
+              peakinds[iline] = lambda_ind
+              lam0_peaks[iline] = lam0[iline] ;xxx
+           ENDELSE
+        ENDFOR
+        ind = where(peakinds GT 0, npeaks)
+        IF npeaks GT 0 THEN BEGIN
+           peakinds = peakinds[ind]
+           lam0_peaks = lam0_peaks[ind] 
+           fwhm = intarr(npeaks)        ; TODO: Estimate FWHM in pixels for each peak
+           fwhm[*] = 3                  ; for now
+        ENDIF
+        sorted_by_decreasing_intensity_ix = reverse(sort(meanprofile[peakinds]))
+        peakinds = peakinds[sorted_by_decreasing_intensity_ix]
+        lam0_peaks = lam0_peaks[sorted_by_decreasing_intensity_ix] ;xxx
+     ENDIF                                                         ; npeaks GT 0
+  ENDIF ELSE BEGIN                                                 ; use_list
+     peakinds = spice_gt_peaks(meanprofile, fwhm = fwhm, minmedian = 4.5, /sort, plot = plot, version = version_gt_peaks)
+     npeaks = n_elements(peakinds)
+  ENDELSE                       ; use_list
+  
   IF npeaks GT 0 THEN BEGIN
     gaussians = replicate(spice_mk_comp_gauss([0, 0, 0]), npeaks)
 
     int0 = meanprofile[peakinds]
-    IF use_list THEN lam0 = lines[ind_lines] $
+    IF use_list THEN lam0 = lam0_peaks $; lam0 = lines[ind_lines] $
     ELSE lam0 = meanlambda[peakinds]
+ 
     wid0 = lam0 - meanlambda[peakinds - fwhm] > widmin
 
     v = 150. ; Max shift in km/s
@@ -162,9 +175,15 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
       gaussians[i] = gauss
     ENDFOR
   ENDIF ; npeaks GT 0
-
-  bg = mk_comp_poly([0.5 * median(meanprofile)], max_arr = [30000], min_arr = [-100], trans_a = [1], $
-    trans_b = [0], const = [0b])
+  
+  linear_background_when_full_detector = n_elements(meanlambda) EQ 1024
+  IF linear_background_when_full_detector THEN $
+     bg = mk_comp_poly(1, max_arr = [30000,100], min_arr = [-100,-50], trans_a = [1,1], $
+                       trans_b = [0,0], const = [0b,0b])$
+  ELSE $
+     bg = mk_comp_poly([0.5 * median(meanprofile)], max_arr = [30000], min_arr = [-100], trans_a = [1], $
+                       trans_b = [0], const = [0b])                    
+   
   bg.name = 'Background'
 
   IF npeaks EQ 0 THEN adef = {bg: bg}
@@ -194,9 +213,156 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
     igauss6: gaussians[4], igauss7: gaussians[5], $
     igauss8: gaussians[6], igauss9: gaussians[7], $
     igauss10: gaussians[8], bg: bg}
-
-  result_message = 'Found ' + trim(npeaks) + ' peaks.'
-  IF npeaks GT 9 THEN result_message += ' Fitting only the 9 highest.'
+  
+   IF npeaks GE 10 THEN adef = {igauss2:  gaussians[0], igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2], igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4], igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6], igauss9:  gaussians[7], $
+                                igauss10: gaussians[8], igauss11: gaussians[9], $
+                                bg: bg}
+   
+   IF npeaks GE 11 THEN adef = {igauss2:  gaussians[0], igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2], igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4], igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6], igauss9:  gaussians[7], $
+                                igauss10: gaussians[8], igauss11: gaussians[9], $
+                                igauss12: gaussians[10], $
+                                bg: bg}
+   
+   IF npeaks GE 12 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11], $
+                                bg: bg}
+   
+   IF npeaks GE 14 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], $
+                                bg: bg}
+   
+   IF npeaks GE 15 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                bg: bg}
+   
+   IF npeaks GE 16 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], $
+                                bg: bg}
+   
+   IF npeaks GE 17 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                bg: bg}
+   
+   IF npeaks GE 18 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                igauss18: gaussians[16], $
+                                bg: bg}
+   
+   IF npeaks GE 19 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                igauss18: gaussians[16], igauss19: gaussians[17],$
+                                bg: bg}
+   
+   IF npeaks GE 20 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                igauss18: gaussians[16], igauss19: gaussians[17],$
+                                igauss20: gaussians[18], $
+                                bg: bg}
+   
+   IF npeaks GE 21 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                igauss18: gaussians[16], igauss19: gaussians[17],$
+                                igauss20: gaussians[18], igauss21: gaussians[19],$
+                                bg: bg}
+   
+   IF npeaks GE 22 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                igauss18: gaussians[16], igauss19: gaussians[17],$
+                                igauss20: gaussians[18], igauss21: gaussians[19],$
+                                igauss22: gaussians[20], $
+                                bg: bg}
+   
+   IF npeaks GE 23 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                igauss18: gaussians[16], igauss19: gaussians[17],$
+                                igauss20: gaussians[18], igauss21: gaussians[19],$
+                                igauss22: gaussians[20], igauss23: gaussians[21],$
+                                bg: bg}
+   
+   IF npeaks GE 24 THEN adef = {igauss2:  gaussians[0],  igauss3:  gaussians[1], $
+                                igauss4:  gaussians[2],  igauss5:  gaussians[3], $
+                                igauss6:  gaussians[4],  igauss7:  gaussians[5], $
+                                igauss8:  gaussians[6],  igauss9:  gaussians[7], $
+                                igauss10: gaussians[8],  igauss11: gaussians[9], $
+                                igauss12: gaussians[10], igauss13: gaussians[11],$
+                                igauss14: gaussians[12], igauss15: gaussians[13],$
+                                igauss16: gaussians[14], igauss17: gaussians[15],$
+                                igauss18: gaussians[16], igauss19: gaussians[17],$
+                                igauss20: gaussians[18], igauss21: gaussians[19],$
+                                igauss22: gaussians[20], igauss23: gaussians[21],$
+                                igauss24: gaussians[22], $
+                                bg: bg}
+   
+  result_message = 'Found ' + trim(npeaks) + ' peaks '
+  IF npeaks GT 24 THEN result_message += ' Fitting only the 24 highest.'
   box_message, result_message
 
   return, adef
