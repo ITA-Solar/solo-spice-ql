@@ -42,7 +42,7 @@
 ;                                                 STRONGEST_LINES is set
 ;
 ;
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-22 14:10 CEST $
 ;-
 ;
 ; ----------------------------------------------------------
@@ -72,6 +72,8 @@ FUNCTION spice_get_lines_all, version = version
     78.23, 'Mg VIII', $
     78.65, 'S V', $
     78.77, 'O IV', $
+    79.01, 'O IV', $
+    79.02, 'O IV', $          
 
     ; Long Wavelength Channel
     97.25, 'H Ly gamma', $
