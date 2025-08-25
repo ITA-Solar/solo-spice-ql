@@ -5,7 +5,7 @@
 ; PURPOSE:
 ;      This procedure creates images from level 3 data. The filename is constructed with this formula:
 ;      filename = l3_filename(but replace 'spice' with 'spice-ql' and the l3 fileversionnumber with the new fileversionnumber) +
-;        '_' + fns('##',hdr.winno) + '_' + fns('##',icomp+1) + '_' + param.name + $
+;        '_' + trim(hdr.winno) + '_' + trim(icomp+1) + '_' + param.name + $
 ;        '_' + image_type(see list below) + file-suffix
 ;
 ;      It will create these images per fit parameter of each fit component for each window:
@@ -79,10 +79,13 @@
 ;      Ver. 10., 28-Oct-2024, TF - ensure that the same startrow/endrow values
 ;      are used for all RASTERNO of an SPIOOBSID by writing/reading the values
 ;      to file
+;      Ver. 11., 25-Aug-2025, TF - when createing the filename, use trim()
+;      instead of fns() when formatting winno and icomp. We want to support
+;      2-digit numbers and we don't want 0-padding
 ;
 ;
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-08-25 10:21 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -226,7 +229,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
         lam = lam.replace('.', 'nm')
         IF lam.strlen() EQ 6 THEN lam = '-' + lam
 
-        filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + param.name.substring(0, 2)) + fns('#', hdr.winno) + '-' + fns('#', icomp + 1) + '-' + param.name.substring(0, 2)
+        filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + param.name.substring(0, 2)) + trim(hdr.winno) + '-' + trim(icomp + 1) + '-' + param.name.substring(0, 2)
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal, *, startrow : endrow, *])
 
