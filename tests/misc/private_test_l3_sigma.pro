@@ -4,7 +4,7 @@ PRO private_test_l3_sigma
   create_all = 1
 
   ; switches for looking at l3 files
-  chi2avg_overview = 1
+  chi2avg_overview = 0
 
   ; switch for both creating and looking at L3 files
   use_new_l3 = 1
@@ -81,6 +81,12 @@ PRO private_test_l3_sigma
     ENDELSE ; create_all
   ENDIF ELSE BEGIN ; create_l3
     ; ana = fits2ana(l3_files[0])
+
+    spice_xcontrol_l23, l3_files[0]
+    stop
+    ana = fits2ana(l3_files[0], headers_data = headers_data)
+    print, fxpar(*headers_data[4], 'EXTNAME')
+    xcfit_block, ana = ana[4]
 
     FOREACH l3_file, l3_files, index DO BEGIN
       IF chi2avg_overview THEN BEGIN
