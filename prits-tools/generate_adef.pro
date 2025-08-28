@@ -60,7 +60,7 @@
 ;                                            also when using a line list. Use
 ;                                            linear background for full detector.
 ;-
-; $Id: 2025-08-22 14:14 CEST $
+; $Id: 2025-08-28 08:55 CEST $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
@@ -178,11 +178,14 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
   
   linear_background_when_full_detector = n_elements(meanlambda) EQ 1024
   IF linear_background_when_full_detector THEN $
-     bg = mk_comp_poly(1, max_arr = [30000,100], min_arr = [-100,-50], trans_a = [1,1], $
+     bg = mk_comp_poly(1, max_arr = [10,2], min_arr = [-10,-2], trans_a = [1,1], $
                        trans_b = [0,0], const = [0b,0b])$
   ELSE $
      bg = mk_comp_poly([0.5 * median(meanprofile)], max_arr = [30000], min_arr = [-100], trans_a = [1], $
                        trans_b = [0], const = [0b])                    
+  
+ ; bg = mk_comp_poly(2, max_arr = [60, 1, 0.02], min_arr = [-10, -2, -0.05], trans_a = [1,1,1], $
+ ;                   trans_b = [0,0,0], const = [0b,0b,0b])
    
   bg.name = 'Background'
 

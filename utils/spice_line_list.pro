@@ -42,13 +42,13 @@
 ;                                                 STRONGEST_LINES is set
 ;
 ;
-; $Id: 2025-08-22 14:10 CEST $
+; $Id: 2025-08-28 08:55 CEST $
 ;-
 ;
 ; ----------------------------------------------------------
 
 FUNCTION spice_get_lines_all, version = version
-  version = 3 ; PLEASE increase this number when editing the code
+  version = 4 ; PLEASE increase this number when editing the code
 
   line_list = hash( $
 
