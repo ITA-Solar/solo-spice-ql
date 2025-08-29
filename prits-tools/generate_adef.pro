@@ -60,7 +60,7 @@
 ;                                            also when using a line list. Use
 ;                                            linear background for full detector.
 ;-
-; $Id: 2025-08-28 08:55 CEST $
+; $Id: 2025-08-29 10:00 CEST $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
@@ -128,6 +128,16 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
      peakinds = spice_gt_peaks(meanprofile, fwhm = fwhm, minmedian = 4.5, /sort, plot = plot, version = version_gt_peaks)
      npeaks = n_elements(peakinds)
   ENDELSE                       ; use_list
+  
+  plot_spectrum_for_debugging_purposes = 0
+  IF plot_spectrum_for_debugging_purposes THEN BEGIN 
+     plot,meanlambda,meanprofile,yst=3,/xst
+     lam0_sorted=lam0[sorted_by_decreasing_intensity_ix]
+     FOR i=0,n_elements(peakinds)-1 DO xyouts,meanlambda[peakinds[i]]+0.02,(meanprofile[peakinds[i]]+0.04),line_list[lam0_sorted[i]]+' '+trim(lam0_sorted[i]),$
+                                              color=200,charsize=1.5,orientation=90
+     FOR i=0,n_elements(peakinds)-1 DO xyouts,meanlambda[peakinds[i]]-0.02,min(meanprofile),trim(i),color=180,charsize=1.5
+     FOR i=0,n_elements(peakinds)-1 DO plots,[meanlambda[peakinds[i]],meanlambda[peakinds[i]]],[0,meanprofile[peakinds[i]]],color=150,line=2
+  ENDIF
   
   IF npeaks GT 0 THEN BEGIN
     gaussians = replicate(spice_mk_comp_gauss([0, 0, 0]), npeaks)
