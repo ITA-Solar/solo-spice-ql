@@ -79,13 +79,15 @@
 ;      Ver. 10., 28-Oct-2024, TF - ensure that the same startrow/endrow values
 ;      are used for all RASTERNO of an SPIOOBSID by writing/reading the values
 ;      to file
-;      Ver. 11., 25-Aug-2025, TF - when createing the filename, use trim()
+;      Ver. 11., 25-Aug-2025, TF - when creating the filename, use trim()
 ;      instead of fns() when formatting winno and icomp. We want to support
 ;      2-digit numbers and we don't want 0-padding
+;      Ver. 12., 29-Aug-2025, TF - input keyowrd to spice_line_list renamed
+;      from stongest_lines to most_important_lines
 ;
 ;
 ;-
-; $Id: 2025-08-25 10:21 CEST $
+; $Id: 2025-08-29 09:57 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -156,7 +158,7 @@ END
 
 PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, interpolation = interpolation, $
   version = version, remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, fit_trend = fit_trend, $
-  value_max = value_max, value_min = value_min, no_background_images = no_background_images, strongest_lines = strongest_lines, $
+  value_max = value_max, value_min = value_min, no_background_images = no_background_images, most_important_lines = most_important_lines, $
   reverse_colortable = reverse_colortable, no_tree_struct = no_tree_struct, show_plot = show_plot, quiet = quiet
   ptools.parcheck, l3_file, 1, "l3_file", 'STRing', 0
   ptools.parcheck, out_dir, 2, "out_dir", 'STRing', 0
@@ -208,7 +210,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
 
     spice_get_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
 
-    IF keyword_set(strongest_lines) THEN lLines = spice_line_list(/strongest_lines)
+    IF keyword_set(most_important_lines) THEN lLines = spice_line_list(/most_important_lines)
 
     n_components = n_tags(fit)
     ipartotal = 0
@@ -219,7 +221,7 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
 
       lam = (fit_cur.name).extract('[0-9]+.[0-9]+')
 
-      IF keyword_set(strongest_lines) THEN include_component = lLines.hasKey(float(lam))
+      IF keyword_set(most_important_lines) THEN include_component = lLines.hasKey(float(lam))
 
       IF include_component THEN FOR ipar = 0, n_params - 1 DO BEGIN
         param = fit_cur.param[ipar]
