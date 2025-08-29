@@ -19,9 +19,9 @@
 ; checking with actual observations
 ;
 ;
-; The updated and much shorter line list (spice_get_lines_strongest) has been made
-; from a selection of lines based on actual fitted lines and Alessandra's line
-; list.
+; The updated and shorter line list (spice_get_lines_most_important) has been made
+; from a selection of lines formed in a wide temperature range based on actual
+; fitted lines and Alessandra's line list.
 ;
 ; Use         :
 ;       line_list = spice_line_list()
@@ -37,12 +37,12 @@
 ;
 ; Written     : Martin Wiesmann, UIO, November 2022 (prits-group@astro.uio.no)
 ;               Terje Fredvik, UiO, October 2024: Two possible line lists, a
-;                                                 selection of the strongest
+;                                                 selection of the most important
 ;                                                 lines is returned when
-;                                                 STRONGEST_LINES is set
+;                                                 MOST_IMPORTANT_LINES is set
 ;
 ;
-; $Id: 2025-08-28 08:55 CEST $
+; $Id: 2025-08-29 09:54 CEST $
 ;-
 ;
 ; ----------------------------------------------------------
@@ -51,85 +51,82 @@ FUNCTION spice_get_lines_all, version = version
   version = 4 ; PLEASE increase this number when editing the code
 
   line_list = hash( $
+              ;; Short Wavelength Channel
+              70.03, 'Ar VII + S III', $
+              70.28, 'O III', $ ; Giunta
+              70.38, 'O III', $
+              70.60, 'Mg IX', $
+              71.85, 'O II', $
+              74.84, 'S IV', $
+              75.02, 'S IV', $
+              75.87, 'O V', $
+              76.03, 'O V', $
+              76.20, 'O V', $   ; Giunta
+              76.51, 'N IV', $
+              77.04, 'Ne VIII', $
+              77.23, 'Mg VIII', $
+              77.45, 'O V', $
+              77.61, 'N II + S X', $
+              78.03, 'Ne VIII', $
+              78.23, 'Mg VIII', $
+              78.65, 'S V', $
+              78.77, 'O IV', $
+              79.01, 'O IV', $
+              79.02, 'O IV', $          
 
-    ; Short Wavelength Channel
-    70.03, 'Ar VII + S III', $
-    70.28, 'O III', $ ; Giunta
-    70.38, 'O III', $
-    70.60, 'Mg IX', $
-    71.85, 'O II', $
-    74.84, 'S IV', $
-    75.02, 'S IV', $
-    75.87, 'O V', $
-    76.03, 'O V', $
-    76.20, 'O V', $ ; Giunta
-    76.51, 'N IV', $
-    77.04, 'Ne VIII', $
-    77.23, 'Mg VIII', $
-    77.45, 'O V', $
-    77.61, 'N II + S X', $
-    78.03, 'Ne VIII', $
-    78.23, 'Mg VIII', $
-    78.65, 'S V', $
-    78.77, 'O IV', $
-    79.01, 'O IV', $
-    79.02, 'O IV', $          
-
-    ; Long Wavelength Channel
-    97.25, 'H Ly gamma', $
-    97.70, 'C III', $
-    98.87, 'O I + Na VI', $
-    98.98, 'N III', $
-    99.16, 'N III', $
-    ; ;99.48, 'Si III',       $ ; Chianti. Too weak to include, but it's there!
-    99.74, 'Si III', $
-    99.94, 'Fe III + O I', $
-    101.03, 'Ne VI', $
-    102.57, 'H Ly beta', $
-    102.74, 'O I', $
-    103.19, 'O VI', $
-    103.60, 'C II', $
-    103.70, 'C II', $
-    103.76, 'O VI', $
-    103.92, 'O I', $
-    104.09, 'O I' $
-    )
-
+              ;; Long Wavelength Channel
+              97.25, 'H Ly gamma', $
+              97.70, 'C III', $
+              98.87, 'O I + Na VI', $
+              98.98, 'N III', $
+              99.16, 'N III', $
+              ;;99.48, 'Si III',       $ ; Chianti. Too weak to include, but it's there!
+              99.74, 'Si III', $
+              99.94, 'Fe III + O I', $
+              101.03, 'Ne VI', $
+              102.57, 'H Ly beta', $
+              102.74, 'O I', $
+              103.19, 'O VI', $
+              103.60, 'C II', $
+              103.70, 'C II', $
+              103.76, 'O VI', $
+              103.92, 'O I', $
+              104.09, 'O I')
+  
   return, line_list
 END
 
-FUNCTION spice_get_lines_strongest, version = version
-  version = 20 ; PLEASE increase this number when editing the code
+FUNCTION spice_get_lines_most_important, version = version
+  version = 21 ; PLEASE increase this number when editing the code
 
   line_list = hash( $
-    ; Short Wavelength Channel
-    70.38, 'O III', $
-    70.60, 'Mg IX', $
-    75.02, 'S IV', $
-    76.04, 'O V', $
-    76.52, 'N IV', $
-    77.04, 'Ne VIII', $
-    78.65, 'S V', $
-    78.77, 'O IV', $
+              ;; Short Wavelength Channel
+              70.38, 'O III', $
+              70.60, 'Mg IX', $
+              75.02, 'S IV', $
+              76.03, 'O V', $
+              76.51, 'N IV', $
+              77.04, 'Ne VIII', $
+              78.65, 'S V', $
+              78.77, 'O IV', $
 
-    ; Long Wavelength Channel
-    97.25, 'H Ly gamma', $
-    97.70, 'C III', $
-    98.98, 'N III', $
-    101.03, 'Ne VI', $
-    102.57, 'H Ly beta', $
-    103.19, 'O VI', $
-    103.76, 'O VI', $
-    104.09, 'O I' $
-    )
+              ;; Long Wavelength Channel
+              97.25, 'H Ly gamma', $
+              97.70, 'C III', $
+              98.98, 'N III', $
+              101.03, 'Ne VI', $
+              102.57, 'H Ly beta', $
+              103.19, 'O VI', $
+              103.76, 'O VI', $
+              104.09, 'O I' )
 
   return, line_list
 END
 
-FUNCTION spice_line_list, version = version, strongest_lines = strongest_lines
-  default, strongest_lines, 0
+FUNCTION spice_line_list, version = version, most_important_lines = most_important_lines
+  default, most_important_lines, 0
 
-  line_list = (strongest_lines) ? spice_get_lines_strongest(version = version) : spice_get_lines_all(version = version)
+  line_list = (most_important_lines) ? spice_get_lines_most_important(version = version) : spice_get_lines_all(version = version)
 
   return, line_list
 END
