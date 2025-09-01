@@ -127,9 +127,11 @@
 ;     images
 ;     Ver. 7, 27-Sep-2024, Terje Fredvik - ensure that winsize[0] is at least
 ;     2 pixels to prevent crash
+;     Ver. 8. 1-Sep-2025, Terje Fredvik - fixed bug in Ver. 7 modification,
+;     made similar change in the calculation of win_position
 ;
 ;-
-; $Id: 2025-05-09 13:28 CEST $
+; $Id: 2025-09-01 11:07 CEST $
 
 PRO ptools::write_image_real_size, image_data, filename, $
   remove_horizontal_trend = remove_horizontal_trend, remove_vertical_trend = remove_vertical_trend, $
@@ -292,10 +294,11 @@ PRO ptools::write_image_real_size, image_data, filename, $
       ys = round(double(ys) * scale_factor)
       xs = width
     ENDIF
-  ENDELSE
-  WINsize = [xs + margin_left + margin_right > 2, ys + margin_top + margin_bottom]
+ ENDELSE
+
+  WINsize = [(xs + margin_left + margin_right) > 2, ys + margin_top + margin_bottom]
   Win_position = [double(margin_left) / WINsize[0], double(margin_bottom) / WINsize[1], $
-    (double(xs + margin_left)) / WINsize[0], (double(ys + margin_bottom)) / WINsize[1]]
+    (double((xs + margin_left) > 2)) / WINsize[0], (double(ys + margin_bottom)) / WINsize[1]]
 
   IF show_plot THEN BEGIN
     window, 16, xs = WINsize[0], ys = WINsize[1]
