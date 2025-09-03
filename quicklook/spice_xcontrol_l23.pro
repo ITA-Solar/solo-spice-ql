@@ -41,7 +41,7 @@
 ; MODIFICATION HISTORY:
 ;     18-Aug-2022: First version by Martin Wiesmann (prits-group@astro.uio.no)
 ;
-; $Id: 2025-08-21 14:50 CEST $
+; $Id: 2025-09-03 09:40 CEST $
 ;-
 
 PRO spice_xcontrol_l23_destroy, event
@@ -90,7 +90,7 @@ FUNCTION spice_xcontrol_l23_get_pgextname, hdr
     pgextnam = strsplit(pgextnam, ';', /extract)
     pgextnam = pgextnam[-1]
     IF pgextnam EQ '' THEN BEGIN
-      pgextnam = fxpar(*hdr, 'PGEXTNAM', missing = '') ; PGEXTNAM was replaced by PARENTXT
+      pgextnam = fxpar(hdr, 'PGEXTNAM', missing = '') ; PGEXTNAM was replaced by PARENTXT
     END
     return, pgextnam
   ENDIF ELSE BEGIN
