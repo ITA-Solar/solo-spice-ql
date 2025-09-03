@@ -118,7 +118,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-09-03 11:34 CEST $
+; $Id: 2025-09-03 11:43 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_file_basename, line
@@ -448,8 +448,8 @@ END
 ; ;    ----------------------
 
 PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old_catalog, ignore_L0 = ignore_L0, quiet=quiet
-  steinhh_paths = getenv("USER") EQ 'steinhh' || getenv("USE_STEINHH_PATHS") NE ''
-  IF NOT steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
+;  steinhh_paths = getenv("USER") EQ 'steinhh' || getenv("USE_STEINHH_PATHS") NE ''
+;  IF NOT steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
   ptools.default, spice_data_dir, "$HOME/spice_home/fits"
   ptools.default, ignore_L0, 1
   IF ~file_test(spice_data_dir, /directory) THEN message, 'Directory does not exist: ' + spice_data_dir
