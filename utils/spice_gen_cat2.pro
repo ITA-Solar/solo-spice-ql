@@ -118,7 +118,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-09-03 11:28 CEST $
+; $Id: 2025-09-03 11:34 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_file_basename, line
@@ -405,7 +405,7 @@ PRO spice_gen_cat2::execute
 END
 
 FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = use_old_catalog, $
-  new_files_manual = new_files_manual, ignore_L0 = ignore_L0, quiet=quiet
+  new_files_manual = new_files_manual, ignore_L0 = ignore_L0
   self.d = dictionary()
 
   ptools.default, spice_data_dir, getenv("SPICE_DATA")
