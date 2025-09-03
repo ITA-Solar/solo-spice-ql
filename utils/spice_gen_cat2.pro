@@ -118,7 +118,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-08-20 13:17 CEST $
+; $Id: 2025-09-03 11:28 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_file_basename, line
@@ -405,7 +405,7 @@ PRO spice_gen_cat2::execute
 END
 
 FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = use_old_catalog, $
-  new_files_manual = new_files_manual, ignore_L0 = ignore_L0
+  new_files_manual = new_files_manual, ignore_L0 = ignore_L0, quiet=quiet
   self.d = dictionary()
 
   ptools.default, spice_data_dir, getenv("SPICE_DATA")
@@ -447,7 +447,7 @@ END
 
 ; ;    ----------------------
 
-PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old_catalog, ignore_L0 = ignore_L0
+PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old_catalog, ignore_L0 = ignore_L0, quiet=quiet
   steinhh_paths = getenv("USER") EQ 'steinhh' || getenv("USE_STEINHH_PATHS") NE ''
   IF NOT steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
   ptools.default, spice_data_dir, "$HOME/spice_home/fits"
@@ -455,7 +455,7 @@ PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old
   IF ~file_test(spice_data_dir, /directory) THEN message, 'Directory does not exist: ' + spice_data_dir
   ON_ERROR, 0
   REPEAT BEGIN
-    o = obj_new('spice_gen_cat2', spice_data_dir, use_old_catalog = use_old_catalog, ignore_L0 = ignore_l0)
+    o = obj_new('spice_gen_cat2', spice_data_dir, use_old_catalog = use_old_catalog, ignore_L0 = ignore_l0, quiet=quiet)
     o.execute
     obj_destroy, o
     use_old_catalog = 1
