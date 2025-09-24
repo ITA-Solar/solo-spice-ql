@@ -75,7 +75,7 @@
 ;                                MAX_SATURATED_FRACTION is now 1 by default. 
 ;-
 
-; $Id: 2025-09-23 11:50 CEST $
+; $Id: 2025-09-24 13:57 CEST $
 
 ;+
 ; Description:
@@ -1152,9 +1152,7 @@ FUNCTION spice_data::get_spikes, window_index, spikpixlist_attributes = spikpixl
 
   spikpixlist_extno = self.get_extno(spikpixlist_extname)
   
-  tic
   spikes = self.read_pixlist(spikpixlist_extno)
-  toc
   
   (*self.window_spikes)[window_index] = ptr_new(spikes)
   
@@ -1171,7 +1169,7 @@ FUNCTION spice_data::fill_spike_pixels, data, window_index, max_spike_fraction, 
 
   ix = spikes[0 : 3, *] - 1
   IF keyword_set(restore_spikes) THEN original  = spikes[4, *]
-  IF keyword_set(fill_spikes)      THEN estimated = spikes[6, *]
+  IF keyword_set(fill_spikes)    THEN estimated = spikes[6, *]
   spike_fraction = spikes[5, *]
   
   n_rows = n_elements(spike_fraction)
@@ -1179,8 +1177,8 @@ FUNCTION spice_data::fill_spike_pixels, data, window_index, max_spike_fraction, 
   max_spike_fraction_orig = max_spike_fraction
   
   n_restored = 0L
-  FOR rowct = 0, n_rows - 1 DO IF spike_fraction[rowct] LT max_spike_fraction THEN BEGIN
-     IF keyword_set(fill_spikes) THEN data[ix[0, rowct], ix[1, rowct], ix[2, rowct], ix[3, rowct]] = estimated[rowct]
+  FOR rowct = 0, n_rows - 1 DO IF spike_fraction[rowct] LE max_spike_fraction THEN BEGIN
+     IF keyword_set(fill_spikes)    THEN data[ix[0, rowct], ix[1, rowct], ix[2, rowct], ix[3, rowct]] = estimated[rowct]
      IF keyword_set(restore_spikes) THEN data[ix[0, rowct], ix[1, rowct], ix[2, rowct], ix[3, rowct]] = original[rowct]
      n_restored++
   ENDIF
@@ -1306,26 +1304,14 @@ FUNCTION spice_data::fill_saturated_pixels, data, window_index, max_saturation_f
   ENDIF
   
   partially_saturated_txt = (n_restored GT 0) ? trim(n_restored) + ' partially saturated pixels filled in' : ''
-  
-  ;IF n_restored GT 0 THEN box_message, ['', trim(n_restored) + ' partially saturated pixels filled in', '']
 
   IF max_saturation_fraction_orig EQ 1 THEN BEGIN
      fully_saturated_ix = where(saturation_fraction EQ 1)
      data[ix[0, fully_saturated_ix], ix[1, fully_saturated_ix], ix[2, fully_saturated_ix], ix[3, fully_saturated_ix]] = max(data)
-;    box_message, ['', trim(n_elements(fully_saturated_ix)) + ' fully saturated pixels set to max(data)', '']
      fully_saturated_txt = trim(n_elements(fully_saturated_ix)) +' fully saturated pixels set to max(data)'
   ENDIF ELSE fully_saturated_txt = ''
   box_message, ['', partially_saturated_txt, fully_saturated_txt,'']
-  
-;  IF n_restored GT 0 THEN box_message, ['', trim(n_restored) + ' partially
-;  saturated pixels filled in', '']
-  
- ; IF max_saturation_fraction_orig EQ 1 THEN BEGIN
- ;   fully_saturated_ix = where(saturation_fraction EQ 1)
- ;   data[ix[0, fully_saturated_ix], ix[1, fully_saturated_ix], ix[2, fully_saturated_ix], ix[3, fully_saturated_ix]] = max(data)
- ;   box_message, ['', trim(n_elements(fully_saturated_ix)) + ' fully saturated pixels set to max(data)', '']
- ; ENDIF
-
+ 
   max_saturation_fraction = max_saturation_fraction_orig
 
   return, data
