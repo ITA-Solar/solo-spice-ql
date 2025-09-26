@@ -68,14 +68,18 @@
 ;                                 L2 files that incorrectly have other
 ;                                 PIXLISTS entries than SATPIXLIST
 ;    23-Sep-2025: Terje Fredvik:  ::get_window_data and several new help
-;                                methods: added support for pixel lists
-;                                containing spike pixels. New keywords FILL_SPIKES,
-;                                RESTORE_SPIKES and MAX_SPIKE_FRACTION. Also
-;                                new keyword FILL_SATURATED,
-;                                MAX_SATURATED_FRACTION is now 1 by default. 
+;                                 methods: added support for pixel lists
+;                                 containing spike pixels. New keywords FILL_SPIKES,
+;                                 RESTORE_SPIKES and MAX_SPIKE_FRACTION. Also
+;                                 new keyword FILL_SATURATED,
+;                                 MAX_SATURATED_FRACTION is now 1 by default. 
+;    26-Sep-2025: Terje Fredvik:  Replaced all methods that handle either
+;                                saturated or spike pixels with methods that
+;                                can handle both cases. Some renaming and
+;                                restructuring of saturation/spike methods.
 ;-
 
-; $Id: 2025-09-24 13:57 CEST $
+; $Id: 2025-09-26 10:54 CEST $
 
 ;+
 ; Description:
@@ -1088,33 +1092,12 @@ FUNCTION spice_data::get_extno, extname
   return, extno
 END
 
-FUNCTION spice_data::get_spikpixlist, window_index
-  pixlists = self.get_header_keyword('PIXLISTS', window_index)
-  IF ~pixlists.contains('SPIKPIXLIST') THEN return, !NULL
-  return, pixlists
-END
 
-PRO spice_data::print_info_on_spike_pixels, window_index, quiet = quiet
-  IF keyword_set(quiet) THEN return
+FUNCTION spice_data::get_pixlist_extno, window_index, satpixlist=satpixlist, spikpixlist=spikpixlist
+  IF ~keyword_set(satpixlist) AND ~keyword_set(spikpixlist) THEN $
+     message, "Either SATPIXLIST or SPIKPIXLIST must be set to indicate which pixel lists' info should be extracted from the PIXLISTS FITS keyword value"
   
-  nspikpix =  self->get_header_keyword('NSPIKPIX', window_index)
-  IF nspikpix EQ 0 THEN return 
-  
-  box_message, ['',"EXTNAME = '"+self->get_header_keyword('EXTNAME', window_index)+"'",$
-                trim(nspikpix) + ' pixels are set to NaN due to contribution from spike pixels.', $
-                '',$
-                '* Set keyword FILL_SPIKES to fill in selected spike pixels with estimated values. ', $
-                '* Set keyword RESTORE_SPIKES to restore selected spike pixels to their original values. ', $
-                'By default all spike-affected pixels are selected for the fill/restore operations. ', $
-                ' ', $
-                '* Set keyword MAX_SPIKE_FRACTION to a value between 0 and 1 to select only pixels having a', $
-                'fractional contribution from spike pixels below the keyword value. E.g. to fill only spikes',$
-                  'with a spike contribution of less than 50%, set MAX_SPIKE_FRACTION to 0.5.',$
-                '']
-END
-
-FUNCTION spice_data::get_pixlist, window_index, satpixlist=satpixlist, spikpixlist=spikpixlist
-    pixlists = self->get_header_keyword('PIXLISTS',window_index)
+  pixlists = self->get_header_keyword('PIXLISTS',window_index)
   
     IF pixlists EQ !NULL THEN return, !NULL
     
@@ -1132,190 +1115,150 @@ FUNCTION spice_data::get_pixlist, window_index, satpixlist=satpixlist, spikpixli
     IF keyword_set(satpixlist) OR keyword_set(spikpixlist) THEN BEGIN
        listname = (keyword_set(satpixlist)) ? 'SATPIXLIST' : 'SPIKPIXLIST'
        ix = where(aPixlists.contains(listname),/NULL)
-       aPixlists = (ix NE !NULL) ? aPixlists[ix] : !NULL
+       this_pixlist = (ix NE !NULL) ? aPixlists[ix] : !NULL
     ENDIF
     
-    return, aPixlists
+    IF this_pixlist EQ !NULL THEN return, !NULL
+    
+    pixlist_split = this_pixlist.split(';')
+    pixlist_extname = pixlist_split[0]
+    pixlist_extno = self.get_extno(pixlist_extname)
+    
+    return, pixlist_extno
  END
 
+FUNCTION spice_data::get_pixlist_hash, window_index, satpixlist=satpixlist, spikpixlist=spikpixlist
+  default, satpixlist,  0
+  default, spikpixlist, 0
+  
+  pixlist_extno = self.get_pixlist_extno(window_index,satpixlist = satpixlist, spikpixlist = spikpixlist)
+  IF pixlist_extno EQ !NULL THEN return, !NULL
+  
+  IF satpixlist  THEN IF ptr_valid((*self.window_saturated)[window_index]) THEN return, *(*self.window_saturated)[window_index]
+  IF spikpixlist THEN IF ptr_valid((*self.window_spikes)[window_index])    THEN return, *(*self.window_spikes)[window_index]
 
-FUNCTION spice_data::get_spikes, window_index, spikpixlist_attributes = spikpixlist_attributes
-  spikpixlist = self.get_pixlist(window_index,/spikpixlist)
-  IF spikpixlist EQ !NULL THEN return, !NULL
+  hPixlist = self.read_pixlist(pixlist_extno)
   
-  IF ptr_valid((*self.window_spikes)[window_index]) THEN return, *(*self.window_spikes)[window_index]
+  IF spikpixlist THEN (*self.window_spikes)[window_index]    = ptr_new(hPixlist)
+  IF satpixlist  THEN (*self.window_saturated)[window_index] = ptr_new(hPixlist)
   
-  spikpixlist_split = spikpixlist.split(';')
-
-  spikpixlist_extname = spikpixlist_split[0]
-  spikpixlist_attributes = (spikpixlist_split[1]).split(',')
-
-  spikpixlist_extno = self.get_extno(spikpixlist_extname)
+  return, hPixlist
   
-  spikes = self.read_pixlist(spikpixlist_extno)
-  
-  (*self.window_spikes)[window_index] = ptr_new(spikes)
-  
-  return, spikes
 END
 
-FUNCTION spice_data::fill_spike_pixels, data, window_index, max_spike_fraction, fill_spikes=fill_spikes, restore_spikes=restore_spikes
-  spikes = self.get_spikes(window_index)
+
+FUNCTION spice_data::fill_affected_pixels, data, window_index, max_contribution, $
+                                      satpixlist=satpixlist, $
+                                      spikpixlist=spikpixlist, fill_spikes=fill_spikes, restore_spikes=restore_spikes
+  default, satpixlist, 0
+  default, spikpixlist, 0
   
-  IF spikes EQ !NULL THEN BEGIN
-    box_message, ['', 'Data does not contain any spike pixels.', 'Returning untouched data array', '']
-    return, data
+  IF (~satpixlist AND ~spikpixlist) OR (satpixlist AND spikpixlist) THEN $
+     message, 'Either SATPIXLIST or SPIKPIXLIST must be set'
+  
+  pixtype = (satpixlist) ? 'saturated' : 'spike'
+  
+  hPixlist = self.get_pixlist_hash(window_index,satpixlist = satpixlist, spikpixlist = spikpixlist)
+  
+  IF hPixlist EQ !NULL THEN BEGIN
+     box_message, ['', 'Data does not contain any '+pixtype+' pixels.', 'Returning untouched data array', '']
+     return, data
   ENDIF
-
-  ix = spikes[0 : 3, *] - 1
-  IF keyword_set(restore_spikes) THEN original  = spikes[4, *]
-  IF keyword_set(fill_spikes)    THEN estimated = spikes[6, *]
-  spike_fraction = spikes[5, *]
   
-  n_rows = n_elements(spike_fraction)
-
-  max_spike_fraction_orig = max_spike_fraction
+  x   = hPixlist['DIMENSION1']-1
+  y   = hPixlist['DIMENSION2']-1
+  lam = hPixlist['DIMENSION3']-1
+  t   = hPixlist['DIMENSION4']-1
+  
+  contribution = (satpixlist) ? hPixlist['SATPIX_CONTRIBUTION'] : hPixlist['SPIKPIX_CONTRIBUTION']
+  n_rows = n_elements(contribution)
+  
+  new_values_type = 'ESTIMATED'
+  IF spikpixlist AND keyword_set(restore_spikes) THEN new_values_type = 'ORIGINAL'
+  new_values = hPixlist[new_values_type]
   
   n_restored = 0L
-  FOR rowct = 0, n_rows - 1 DO IF spike_fraction[rowct] LE max_spike_fraction THEN BEGIN
-     IF keyword_set(fill_spikes)    THEN data[ix[0, rowct], ix[1, rowct], ix[2, rowct], ix[3, rowct]] = estimated[rowct]
-     IF keyword_set(restore_spikes) THEN data[ix[0, rowct], ix[1, rowct], ix[2, rowct], ix[3, rowct]] = original[rowct]
-     n_restored++
+  n_fully_affected_restored = 0L
+  FOR rowct = 0, n_rows - 1 DO IF contribution[rowct] LE max_contribution THEN BEGIN
+     data[x[rowct],  y[rowct],  lam[rowct], t[rowct]] = new_values[rowct]
+     IF contribution[rowct] EQ max_contribution THEN n_fully_affected_restored++ ELSE n_restored++
   ENDIF
   
-
-  IF n_restored GT 0 THEN BEGIN
-     replaced_txt = (keyword_set(fill_spikes)) ? 'estimated values' : 'original spike values' 
-     box_message, ['', trim(n_restored) + ' partially spike pixels replaced by '+replaced_txt, '']
-  ENDIF
-
-  max_spike_fraction = max_spike_fraction_orig
-
+  partially_affected_txt = (n_restored GT 0) ? trim(n_restored) + ' partially '+pixtype+' pixels filled in with '+$
+                           new_values_type.toLower()+' values' : ''
+  IF n_fully_affected_restored GT 0 THEN BEGIN 
+     IF satpixlist THEN fully_affected_txt = trim(n_fully_affected_restored) + ' fully saturated pixels set to max(data)'
+     IF spikpixlist THEN fully_affected_Txt = trim(n_fully_affected_restored) + ' pixels with contribution only from '+$
+                                               'spike pixels filled in with '+new_values_type.toLower()+' values'
+  ENDIF ELSE fully_affected_txt = ''
+ 
+  box_message, ['', partially_affected_txt, fully_affected_txt,'']
+  
   return, data
 END
 
 FUNCTION spice_data::read_pixlist, extno
   fxbopen, lun, self.get_filename(), extno, pixlist_header
-
+  
+  ttypes    = fxpar(pixlist_header, 'TTYPE*')
   n_columns = fxpar(pixlist_header, 'TFIELDS')
-  n_rows = fxpar(pixlist_header, 'NAXIS2')
-  pixlist = fltarr(n_columns, n_rows)
+  n_rows    = fxpar(pixlist_header, 'NAXIS2')
 
-  FOR colct = 0, n_columns - 1 DO FOR rowct = 0, n_rows - 1 DO BEGIN
-    fxbread, lun, data, colct + 1, rowct + 1
-    pixlist[colct, rowct] = data
+  hPixlist = hash()
+  FOR colct = 0, n_columns - 1 DO BEGIN
+     fxbread, lun, data, colct+1
+     hPixlist[ttypes[colct]] = data
   ENDFOR
-
+  
   fxbclose, lun
 
-  return, pixlist
+  return, hPixlist
 END
 
-
-FUNCTION spice_data::get_satpixlist, window_index
-  pixlists = self.get_header_keyword('PIXLISTS', window_index)
-
-  IF pixlists EQ !NULL THEN return, !NULL
-
-  ; ; Temporary fix to prevent crash when reading faulty L2 files: due to a bug
-  ; ; in oslo_fits the PIXLISTS keyword may contain entries that should not be
-  ; ; present in L2 files. PIXLISTS should either not be present or contain
-  ; ; SATPIXLIST and/or SPIKPIXLIST. For HDUs without any saturated pixels or CR pixels,
-  ; ; but with missing telemetry packets, the PIXLISTS keyword may may contain 
-  ; ; e.g. LOSTPLNPIXLIST. The bug has been
-  ; ; fixed in oslo_fits but all L2 files have not yet been reprocessed. When the
-  ; ; reprosessing for DR6 is done, remove this lenghty comment and the following line:
-  IF ~pixlists.contains('SATPIXLIST') THEN return, !NULL
-
- ; n_entries = n_elements(pixlists.indexOf(';'))
- ; IF n_entries NE 1 THEN message, 'A L2 file may contain only a single entry in the PIXLISTS keyword, i.e. SATPIXLIST'
-
- ; IF ~pixlists.contains('SATPIXLIST') THEN message, 'No SATPIXLIST present in PIXLISTS'
-
-  return, pixlists
-END
-
-PRO spice_data::print_info_on_saturated_pixels, window_index, quiet = quiet
+PRO spice_data::print_info_on_affected_pixels, window_index, satpixlist=satpixlist, spikpixlist=spikpixlist, quiet=quiet
   IF keyword_set(quiet) THEN return
   
-  nsatpix =  self->get_header_keyword('NSATPIX', window_index)
-  IF nsatpix EQ 0 THEN return
-  
-  pluraltxt = (nsatpix GT 1) ? 's are' : ' is'
-  box_message, ['',"EXTNAME = '"+self->get_header_keyword('EXTNAME', window_index)+"'",$
-                trim(nsatpix) + ' pixel'+pluraltxt+' set to NaN due to contribution from saturated pixels.', $
-                '',$
-                '* Set keyword FILL_SATURATED to fill in selected saturated pixels with estimated values. ', $
-                'By default all saturation-affected pixels are selected for the fill operation. Fully ', $
-                'saturated pixels are set to max(data).',$
-                '',$
-                '* Set keyword MAX_SATURATION_FRACTION to a value between 0 and 1 to only select pixels', $
-                'having a fractional contribution from saturated pixels below the keyword value.', $
-                'E.g. to fill only saturated pixels with a saturation contribution less than 50%, set,',$
-                'MAX_SATURATION_FRACTION TO 0.5.',$
-                '',$
-                'The value of a filled-in pixel is corrected for the "filling factor" by ',$
-                'upscaling the pixel value to value=value/(1-fractional_contribution_from_saturated_pixels)', $
-                '']
-END
-
-FUNCTION spice_data::get_saturated, window_index, satpixlist_attributes = satpixlist_attributes
-  satpixlist = self.get_satpixlist(window_index)
-  IF satpixlist EQ !NULL THEN return, !NULL
-  
-  IF ptr_valid((*self.window_saturated)[window_index]) THEN return, *(*self.window_saturated)[window_index]
-  
-  satpixlist_split = satpixlist.split(';')
-
-  satpixlist_extname = satpixlist_split[0]
-  satpixlist_attributes = (satpixlist_split[1]).split(',')
-
-  satpixlist_extno = self.get_extno(satpixlist_extname)
-  
-  saturated = self.read_pixlist(satpixlist_extno)
-  
-  (*self.window_saturated)[window_index] = ptr_new(saturated)
-  
-  return, saturated
-END
-
-FUNCTION spice_data::fill_saturated_pixels, data, window_index, max_saturation_fraction
-  saturated = self.get_saturated(window_index)
-
-  IF saturated EQ !NULL THEN BEGIN
-    box_message, ['', 'Data does not contain any saturated pixels.', 'Returning untouched data array', '']
-    return, data
-  ENDIF
-  
-  (*self.window_saturated)[window_index] = ptr_new(saturated)
-  
-  ix = saturated[0 : 3, *] - 1
-  estimated = saturated[4, *]
-  saturation_fraction = saturated[5, *]
-
-  n_rows = n_elements(estimated)
-
-  max_saturation_fraction_orig = max_saturation_fraction
-
-  n_restored = 0
-  FOR rowct = 0, n_rows - 1 DO IF saturation_fraction[rowct] LT max_saturation_fraction THEN BEGIN
-    data[ix[0, rowct], ix[1, rowct], ix[2, rowct], ix[3, rowct]] = estimated[rowct]
-    n_restored++
-  ENDIF
-  
-  partially_saturated_txt = (n_restored GT 0) ? trim(n_restored) + ' partially saturated pixels filled in' : ''
-
-  IF max_saturation_fraction_orig EQ 1 THEN BEGIN
-     fully_saturated_ix = where(saturation_fraction EQ 1)
-     data[ix[0, fully_saturated_ix], ix[1, fully_saturated_ix], ix[2, fully_saturated_ix], ix[3, fully_saturated_ix]] = max(data)
-     fully_saturated_txt = trim(n_elements(fully_saturated_ix)) +' fully saturated pixels set to max(data)'
-  ENDIF ELSE fully_saturated_txt = ''
-  box_message, ['', partially_saturated_txt, fully_saturated_txt,'']
+  default, satpixlist,  0
+  default, spikpixlist, 0
  
-  max_saturation_fraction = max_saturation_fraction_orig
-
-  return, data
+  pixtype      = (satpixlist) ? 'saturated'  : 'spike'
+  pixtype_noun = (satpixlist) ? 'saturation' : 'spike'
+  
+  n_affected_keyword = (satpixlist) ? 'NSATPIX' : 'NSPIKPIX'
+  n_affected =  self->get_header_keyword(n_affected_keyword, window_index)
+  
+  IF n_affected EQ 0 THEN return
+  
+  pluraltxt = (n_affected GT 1) ? 's are' : ' is'
+  
+  info_header = $
+     ['',"EXTNAME = '"+self->get_header_keyword('EXTNAME', window_index)+"'",$
+      trim(n_affected) + ' pixel' + pluraltxt + ' set to NaN due to contribution from ' + pixtype + ' pixels.','']
+  
+  contribution_keyword = (satpixlist) ? 'MAX_SATURATION_FRACTION' : 'MAX_SPIKE_FRACTION'
+  info_max_fraction_pixtype_specific = ['','* Set keyword '+contribution_keyword+' to a value between 0 and 1 to only select', $
+                                        'pixels having a fractional contribution from '+pixtype+' pixels below the keyword', $
+                                        'value E.g. to fill only '+pixtype+ ' pixels with a '+pixtype_noun+' contribution less than ',$
+                                        '50%, set '+ contribution_keyword+' to 0.5.', '']
+  
+  IF satpixlist THEN info_pixtype_specific = $
+     ['* Set keyword FILL_SATURATED to fill in selected saturated pixels with estimated values. ', $
+      'By default all saturation-affected pixels are selected for the fill operation. Fully ', $
+      'saturated pixels are set to max(data).',$
+      info_max_fraction_pixtype_specific, $
+      'The value of a filled-in pixel is corrected for the "filling factor" by ',$
+      'upscaling the pixel value to value=value/(1-fractional_contribution_from_saturated_pixels)', $
+      '']
+  
+  IF spikpixlist THEN info_pixtype_specific = $
+     ['* Set keyword FILL_SPIKES to fill in selected spike pixels with estimated values. ', $
+      '* Set keyword RESTORE_SPIKES to restore selected spike pixels to their original values. ', $
+      'By default all spike-affected pixels are selected for the fill/restore operations. ', $
+      info_max_fraction_pixtype_specific]
+  
+  box_message, [info_header, info_pixtype_specific]
 END
+
 
 PRO spice_data::debin_y_dimension, data, nbin2
   sz = size(data)
@@ -1596,12 +1539,13 @@ FUNCTION spice_data::get_window_data, window, noscale = noscale, $
     data = readfits(self.get_filename(), noscale = noscale, ext = window_index, silent=quiet)
 
     IF fill_saturated THEN BEGIN
-      data = self.fill_saturated_pixels(data, window_index, max_saturation_fraction)
-    ENDIF ELSE self.print_info_on_saturated_pixels, window_index, quiet = quiet
+       data = self.fill_affected_pixels(data, window_index, max_saturation_fraction,/satpixlist)
+    ENDIF ELSE self.print_info_on_affected_pixels, window_index,/satpixlist, quiet = quiet
     
     IF fill_spikes OR restore_spikes THEN BEGIN
-       data = self.fill_spike_pixels(data, window_index, max_spike_fraction, fill_spikes=fill_spikes, restore_spikes=restore_spikes)
-    ENDIF ELSE self.print_info_on_spike_pixels, window_index, quiet = quiet
+       data = self.fill_affected_pixels(data, window_index, max_spike_fraction,/spikpixlist, $
+                                        fill_spikes=fill_spikes, restore_spikes=restore_spikes)
+    ENDIF ELSE self.print_info_on_affected_pixels,window_index,/spikpixlist, quiet = quiet
     
     IF ~keyword_set(no_masking) THEN BEGIN
       data = self.mask_regions_outside_slit(data, window_index, approximated_slit = approximated_slit, debug_plot = debug_plot)
@@ -3643,7 +3587,7 @@ PRO spice_data__define
     window_max_sat: ptr_new(), $ ; indicates for each window the max contribution from saturated pixels [0-1], 0 (default): set all to nan
     window_saturated:ptr_new(), $
     window_max_spike: ptr_new(), $ ; indicates for each window the max contribution from spike pixels [0-1], 0 (default): set all to nan
-    window_spikes:ptr_new(), $     ; spike pixels data array
+    window_spikes:ptr_new(), $ ; spike pixels data array
     window_fill_spikes: ptr_new(), $ ; indicates for each window if estimated values should replace spike pixels
     window_restore_spikes: ptr_new(), $ ; indicates for each window if the original data should be used, ignoring spike detection
     window_masked: ptr_new(), $  ; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
