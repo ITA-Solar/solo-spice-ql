@@ -111,7 +111,8 @@ END
 
 PRO runtest
   IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
-    spice_produce_single_exp_images, '$HOME/tmp/spice_data/fits/level2', '$HOME/tmp/spice_data/quicklook/level3qljpg_f', /force
+    spice_produce_single_exp_images, '$HOME/tmp/spice_data/level2', $
+      '$HOME/tmp/spice_data/quicklook/level3qljpg_f', '2025/03/14', /force
   END
 END
 
