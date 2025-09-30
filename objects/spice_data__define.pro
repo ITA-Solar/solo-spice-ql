@@ -77,9 +77,12 @@
 ;                                saturated or spike pixels with methods that
 ;                                can handle both cases. Some renaming and
 ;                                restructuring of saturation/spike methods.
+;    30-Sep-2025: Terje Fredvik: ::print_info_on_affected_pixels: take into
+;                                 account that self::get_header_keyword returns !NULL
+;                                 if FITS header keyword does not exist
 ;-
 
-; $Id: 2025-09-26 10:54 CEST $
+; $Id: 2025-09-30 08:07 CEST $
 
 ;+
 ; Description:
@@ -1227,7 +1230,7 @@ PRO spice_data::print_info_on_affected_pixels, window_index, satpixlist=satpixli
   n_affected_keyword = (satpixlist) ? 'NSATPIX' : 'NSPIKPIX'
   n_affected =  self->get_header_keyword(n_affected_keyword, window_index)
   
-  IF n_affected EQ 0 THEN return
+  IF n_affected EQ 0 OR n_affected EQ !NULL THEN return
   
   pluraltxt = (n_affected GT 1) ? 's are' : ' is'
   
