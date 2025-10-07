@@ -44,9 +44,10 @@
 ;
 ; Written     : S.V.H.Haugan (prits-group@astro.uio.no), 9. July 2025
 ;
-; Modified    :
+; Modified    : Version 2, SVHH
+;                 Bump version of CFIT dlm (includes 2nd order polynomials)
 ;
-; $Id: 2025-08-22 15:21 CEST $
+; $Id: 2025-10-07 18:05 CEST $
 ;-
 
 FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
