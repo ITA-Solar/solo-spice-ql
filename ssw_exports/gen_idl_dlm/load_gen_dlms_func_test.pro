@@ -1,6 +1,5 @@
 pro load_gen_dlms_func_test
   x=findgen(100)/20 - 2.5
-
   
   cf_g_p0_,x,[1,0,1,0.5],y
   window,0
@@ -26,5 +25,7 @@ pro load_gen_dlms_func_test
   plot,x,y, title='cf_g_g_g_g_g_p1_', xstyle=3, ystyle=3
 end
 message,/info,"Can't run test here, dlms must be loaded before compilation"
-message,/info,"or else cf_g_g_g_g_g_p1_ will not be defined, huh???"
+message,/info,"or else cf_g_g_g_g_g_p1_ will not be defined"
+message,/info,"comp_gauss, comp_poly, cf_g_p0_ should work fine b/c they"
+message,/info,"have a functional IDL distribution"
 end
