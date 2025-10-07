@@ -118,7 +118,7 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-10-07 08:40 CEST $
+; $Id: 2025-10-07 14:10 CEST $
 ;-
 
 FUNCTION spice_gen_cat2::extract_file_basename, line
@@ -395,16 +395,12 @@ PRO spice_gen_cat2::execute
     self.remove_manual_files_to_be_updated
   END
   print
-  stop
   self.set_filelist
   print
-  stop
   self.remove_nonexisting_files
   print
-  stop
   self.populate_hash
   print
-  stop
   self.write
 END
 
