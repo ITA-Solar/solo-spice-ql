@@ -82,12 +82,13 @@
 ;      Ver. 11., 25-Aug-2025, TF - when creating the filename, use trim()
 ;      instead of fns() when formatting winno and icomp. We want to support
 ;      2-digit numbers and we don't want 0-padding
-;      Ver. 12., 29-Aug-2025, TF - input keyowrd to spice_line_list renamed
+;      Ver. 12., 29-Aug-2025, TF - input keyword to spice_line_list renamed
 ;      from stongest_lines to most_important_lines
-;
+;      2025-10-07 - TF - spice_read_or_write_slit_region: simplified
+;      spice_lock calls due to new version of spice_lock
 ;
 ;-
-; $Id: 2025-08-29 09:57 CEST $
+; $Id: 2025-10-07 14:31 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -134,11 +135,12 @@ PRO spice_read_or_write_slit_region, l3_filename, result, startrow = startrow, e
     spice_lock, lock, /get, /try_once, lock_obtained = lock_obtained
     IF lock_obtained THEN BEGIN
       spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow = startrow, endrow = endrow
-      spice_lock, lock, /release
-    ENDIF ELSE BEGIN
-      spice_lock, lock, /get
-      spice_lock, lock, /release
+;      spice_lock, lock, /release 
       spice_lock, lock, /delete
+    ENDIF ELSE BEGIN
+;      spice_lock, lock, /get       ;; all this is not needed?
+;      spice_lock, lock, /release   ;; 
+;      spice_lock, lock, /delete    ;;
       write_file = 0
     ENDELSE
   ENDIF
