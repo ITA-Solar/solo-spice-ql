@@ -110,9 +110,10 @@ PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = for
 END
 
 PRO runtest
-  IF getenv("USER") EQ "steinhh" || getenv("USER") EQ "mawiesma" THEN BEGIN
-    spice_produce_single_exp_images, '$HOME/tmp/spice_data/level2', $
-      '$HOME/tmp/spice_data/quicklook/level3qljpg_f', '2025/03/14', /force
+  IF getenv("USER") EQ "steinhh" THEN BEGIN
+    setenv,"SPICE_DATA=/home/steinhh/tmp/spice_data/"
+    spice_produce_single_exp_images, '$SPICE_DATA/level2', $
+      '$SPICE_DATA/quicklook/level3qljpg_f', '2025/03/14', /force
   END
 END
 
