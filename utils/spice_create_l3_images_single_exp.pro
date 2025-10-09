@@ -35,7 +35,7 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-10-09 16:45 CEST $
 
 PRO spice_create_l3_images_single_exp, image_data, l2_header, filename_base, show_plot = show_plot, filename = filename, $
   oJpg = oJpg
@@ -62,6 +62,12 @@ PRO spice_create_l3_images_single_exp, image_data, l2_header, filename_base, sho
   ytitle1 = 'Solar Y [arcsec]'
 
   IF 1 THEN BEGIN
+    if getenv("USER") eq "steinhh" then begin
+      box_message,"Calling oJpg.update with:"
+      print, "FILENAME: " + filename
+      help,image_data,wcs,this_remove_horizontal_trend,this_remove_vertical_trend,fit_trend,value_max,$
+           value_min,colortable,reverse_colortable,xtitle1,ytitle1,startrow,endrow,l2_header,show_plot
+    end
     oJpg.update, filename, image_data, wcs, remove_horizontal_trend = this_remove_horizontal_trend, remove_vertical_trend = this_remove_vertical_trend, $
       fit_trend = fit_trend, value_max = value_max, value_min = value_min, colortable = colortable, reverse_colortable = reverse_colortable, $
       xtitle = xtitle1, ytitle = ytitle1, $
