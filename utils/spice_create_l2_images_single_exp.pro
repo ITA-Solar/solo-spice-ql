@@ -33,22 +33,22 @@
 ;      Ver. 1,   10-Feb-2025, Martin Wiesmann (prits-group@astro.uio.no)
 ;
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2025-10-09 16:41 CEST $
 
 PRO spcl2im_report_error, l2_file, force_email = force_email
   COMMON spcl2im_report_error, last_report_time
   ptools.default, last_report_time, 0
   error_reports_file = '/tmp/spcl2im_error_reports'
   ; spawn, "echo " + l2_file + " >> " + error_reports_file
-  box_message, ['', 'Error reading L2 file!', '', '     ' + l2_file, '', ''], /info
+  box_message, ['', 'Error processing L2 file!', '', '     ' + l2_file, '', ''], /info
   curr_time = systime(1)
-  IF curr_time - last_report_time GT 240 OR keyword_set(force_email) THEN BEGIN
-    subject = 'SPICE L2 image creation error: ' + l2_file + ' (' + error_reports_file + ')'
-    echo_email_contents = "echo 'See also " + error_reports_file + "'"
+  minutes_between_reports = 60
+  minutes_since_last_report = (curr_time - last_report_time) / 60.0
+  IF minutes_since_last_report GT minutes_between_reports OR keyword_set(force_email) THEN BEGIN
+    subject = 'SPICE L2 image creation error: ' + l2_file
     send_mail = "mail -s '" + subject + "' s.v.h.haugan@astro.uio.no < /dev/null"
-    cmd = send_mail
-    print, cmd
-    spawn, cmd
+    print, send_mail
+    spawn, send_mail
   END
   last_report_time = systime(1)
 END
