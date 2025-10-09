@@ -47,7 +47,7 @@
 ; Modified    : Version 2, SVHH
 ;                 Bump version of CFIT dlm (includes 2nd order polynomials)
 ;
-; $Id: 2025-10-07 18:05 CEST $
+; $Id: 2025-10-09 16:07 CEST $
 ;-
 
 FUNCTION lgdlms_check_if_ok, dlm, version, distribution_path
@@ -118,6 +118,16 @@ PRO lgdlms_try_single_compilation, dlm, cc = cc, o3_flag = o3_flag, $
   DLM_LOAD, !make_dll.compile_directory + "/" + dlm + ".dlm"
 END
 
+function lgdlms_find_include_option
+    include = STREGEX(!make_dll.cc, '-I[^ ]+', /EXTRACT)
+    if include NE "" then return, include
+    ; /I"C:\Program Files\NV5\IDL91\external\include"
+
+    include = STREGEX(!make_dll.cc, '/I"[^"]+"', /EXTRACT)
+    include = include.replace('/I', '-I')
+    return, include
+end
+
 PRO lgdlms_try_compilations, dlms_to_do, $
   success = success, redo = redo, test_failure = test_failure
   COMMON load_gen_dlms, loaded
@@ -152,7 +162,7 @@ PRO lgdlms_try_compilations, dlms_to_do, $
       return
     END
 
-    INCLUDE = STREGEX(!make_dll.cc, '-I[^ ]+', /EXTRACT)
+    INCLUDE = lgdlms_find_include_option()
     CC = "gcc -c -fPIC " + INCLUDE + " -O3 %C -o %O"
     tried_gcc = 1
     GOTO, TRY_WITH_GCC
