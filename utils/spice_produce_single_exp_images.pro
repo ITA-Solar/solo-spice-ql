@@ -94,6 +94,7 @@ PRO spice_produce_single_exp_images, l2_topdir, level3qljpg_f, date, force = for
 
   REPEAT BEGIN
     l2_files = file_search(l2_topdir, 'solo_L2*exp*.fits', count = nfiles)
+    l2_files = l2_files[sort(l2_files)] ; Oldest first
     l2_files = reverse(l2_files) ; Newest first
     IF nfiles EQ 0 THEN message, "No SPICE files found in " + l2_topdir
     FOREACH l2_file, l2_files DO BEGIN
