@@ -128,7 +128,13 @@
 ; Version     : $Revision: 1.10 $$Date: 2007-12-06 09:28:56 $
 ;-
 
-FUNCTION sdc_util::init, idl_pid = idl_pid, quiet = quiet
+FUNCTION sdc_util::get_pid, string=string
+  getpid_path = (getenv('OSTYPE') EQ 'linux') ? 'libc.so.6' : '/usr/lib/system/libsystem_kernel.dylib' 
+  pid = call_external(getpid_path, 'getpid')
+  return, (keyword_set(string)) ? trim(pid) : pid
+END
+
+FUNCTION sdc_util::init, quiet = quiet
   o = self ; Shorthand
   class = obj_class(o)
   stc = create_struct(name = class)
@@ -136,7 +142,7 @@ FUNCTION sdc_util::init, idl_pid = idl_pid, quiet = quiet
   o.sdc_util_tags = ptr_new(tags, /no_copy)
   IF NOT keyword_set(quiet) THEN print, "I am a " + o.classdef()
 
-  IF keyword_set(idl_pid) THEN self.idl_pid = idl_pid
+  self.idl_pid = self->get_pid(/string)
   return, 1
 END
 
