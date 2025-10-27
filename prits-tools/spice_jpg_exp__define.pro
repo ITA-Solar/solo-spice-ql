@@ -1,4 +1,4 @@
-; $Id: 2025-04-22 15:20 CEST $
+; $Id: 2025-10-27 16:23 CET $
 
 PRO spice_jpg_exp::_set_filename_related_parameters
   self.d.sit_and_stare = 1
@@ -139,7 +139,7 @@ END
 
 PRO spice_jpg_exp::plot, clock = clock
   self._plot_data
-  ; self._plot_coordinate_system
+  self._plot_coordinate_system
   self._plot_colorbar
   self._plot_texts
   self._plot_compass
