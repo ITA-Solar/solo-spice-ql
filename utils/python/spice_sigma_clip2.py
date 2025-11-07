@@ -47,7 +47,7 @@ def sigma_clip(
     output = np.copy(data)
     if isinstance(size, np.ndarray): # We may get an array of sizes from IDL, convert
         size = tuple(size)
-    if type(size) is not tuple:
+    if type(size) is int:
         size = (size,) * data.ndim
     sigma_lower = sigma_lower or sigma
     sigma_upper = sigma_upper or sigma
