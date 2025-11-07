@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.ndimage import generic_filter
 from numpy import ma
-from crtools import fmedian, fsigma
-
+from ftools import fmedian, fsigma
 
 def sigma_clip(
     data,
@@ -46,7 +45,9 @@ def sigma_clip(
         local intensity distribution (either median or mean).
     """
     output = np.copy(data)
-    if type(size) is int:
+    if isinstance(size, np.ndarray): # We may get an array of sizes from IDL, convert
+        size = tuple(size)
+    if type(size) is not tuple:
         size = (size,) * data.ndim
     sigma_lower = sigma_lower or sigma
     sigma_upper = sigma_upper or sigma
@@ -55,10 +56,10 @@ def sigma_clip(
     iteration = 0
     while nchanged != 0 and (iteration < maxiters):
         iteration += 1
-        center = fmedian(output, size, size, 0)
+        center = fmedian(output, size)
+        stddev = fsigma(output, size)
         if ret_center and iteration == maxiters:
             return center
-        stddev = fsigma(output, size, size, 0)
         if ret_stddev and iteration == maxiters:
             return stddev
         diff = output - center
