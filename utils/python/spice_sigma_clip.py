@@ -66,7 +66,9 @@ def sigma_clip(
         local intensity distribution (either median or mean).
     """
     output = np.copy(data)
-    if type(size) is int:
+    if isinstance(size, np.ndarray):
+        size = tuple(size.tolist())
+    if type(size) is not tuple:
         size = (size,) * data.ndim
     sigma_lower = sigma_lower or sigma
     sigma_upper = sigma_upper or sigma
