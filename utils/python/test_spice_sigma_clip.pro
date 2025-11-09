@@ -58,8 +58,8 @@ pro test_spice_sigma_clip,seed=seed, n=n, sigma=sigma, border=border, maxiters=m
   r2[nanix2] = 0.0
   print,max(abs(r1-r2))
   diff = r1-r2
-  if have_windows() then window,0,xsize=800,ysize=800
-  if have_windows() then plot_image, diff
+;  if have_windows() then window,0,xsize=800,ysize=800
+;  if have_windows() then plot_image, diff
   if nan_count1 ne nan_count2 then begin & print & print, '***Different number of NaNs: ', nan_count1, nan_count2 & print & end
   print,"Total NaNs in input data: " + trim(total(data ne data)),""
   print,"Total NaNs after clip1: " + trim(nan_count1),""
