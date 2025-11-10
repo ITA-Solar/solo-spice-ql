@@ -35,6 +35,7 @@ def sigma_clip(
     masked=True,
     ret_center=False,
     ret_stddev=False,
+    exclude_center=False,
 ):
     """
      Performs sigma-clipping of the input array.

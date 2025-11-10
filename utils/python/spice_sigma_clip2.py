@@ -14,6 +14,7 @@ def sigma_clip(
     masked=True,
     ret_center=False,
     ret_stddev=False,
+    exclude_center=False,
 ):
     """
      Performs sigma-clipping of the input array.
@@ -56,8 +57,8 @@ def sigma_clip(
     iteration = 0
     while nchanged != 0 and (iteration < maxiters):
         iteration += 1
-        center = fmedian(output, size)
-        stddev = fsigma(output, size)
+        center = fmedian(output, size, exclude_center=exclude_center)
+        stddev = fsigma(output, size, exclude_center=exclude_center)
         if ret_center and iteration == maxiters:
             return center
         if ret_stddev and iteration == maxiters:
