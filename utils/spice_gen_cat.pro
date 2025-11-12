@@ -16,7 +16,7 @@
 ;               ! as the previous version always rebuilt the catalog from
 ;               ! scratch when used independently of the pipeline.
 ;               !
-;               ! The base file name of the catalog is now "spice_catalog2",
+;               ! The base file name of the catalog is now "spice_catalog",
 ;               ! to be used by webspice until the regular spice_gen_cat
 ;               ! can be safely updated. Documentation may be off, and some
 ;               ! paths are hardcoded. Note, we've changed the location
@@ -24,8 +24,8 @@
 ;               ! as everything else!
 ;               !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ;
-;               This program creates files called spice_catalog2.csv and
-;               spice_catalog2.txt in the $SPICE_DATA/ directory (but other
+;               This program creates files called spice_catalog.csv and
+;               spice_catalog.txt in the $SPICE_DATA/ directory (but other
 ;               paths can be specified), with various information on the
 ;               content of the files found in the directory hierarchy below
 ;               that path.
@@ -117,10 +117,12 @@
 ;                          MANY changes, see Explanation above.
 ;              Version 20, TF, 12.11.2025
 ;                          Renamed from spice_gen_cat2 to spice_gen_cat
+;              Version 21, TF, 12.11.2025
+;                          Base file name renamed from spice_catalog2.csv to spice_catalog.csv
 ;
-; Version    : Version 20, TF, 12 November 2025 (prits-group@astro.uio.no)
+; Version    : Version 21, TF, 12 November 2025 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-11-12 09:58 CET $
+; $Id: 2025-11-12 10:07 CET $
 ;-
 
 FUNCTION spice_gen_cat::extract_file_basename, line
@@ -418,7 +420,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
   self.d.use_old_catalog = use_old_catalog
 
   self.d.spice_data_dir = expand_path(spice_data_dir) ; Must have explicit path to find relative paths
-  self.d.catalog_basename = concat_dir(spice_data_dir, 'spice_catalog2')
+  self.d.catalog_basename = concat_dir(spice_data_dir, 'spice_catalog')
   self.d.keyword_info_filename = concat_dir(spice_data_dir, 'spice_keyword_info.json')
   self.d.keyword_info = spice_keyword_info()
   self.d.keyword_array = (self.d.keyword_info.keys()).toarray()
@@ -427,7 +429,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
 
   self.d.n_modified_files = 0
 
-  self.d.catalog_hash_save_file = self.d.spice_data_dir + "/spice_catalog2_hash.save"
+  self.d.catalog_hash_save_file = self.d.spice_data_dir + "/spice_catalog_hash.save"
 
   self.d.new_files_manual = new_files_manual
 
