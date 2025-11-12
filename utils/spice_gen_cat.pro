@@ -122,7 +122,7 @@
 ;
 ; Version    : Version 21, TF, 12 November 2025 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-11-12 10:07 CET $
+; $Id: 2025-11-12 10:41 CET $
 ;-
 
 FUNCTION spice_gen_cat::extract_file_basename, line
@@ -437,7 +437,7 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
 
   self.d.running_as_pipeline = getenv('USER') EQ 'osdcapps'
 
-  self.d.other_servers = spice_get_other_servers(host = host)
+  self.d.other_servers = spice_util.GetServers(/exclude_host, host = host)
   self.d.host = host
 
   IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
