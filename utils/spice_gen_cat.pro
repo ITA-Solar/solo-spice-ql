@@ -115,10 +115,12 @@
 ;                          spice_keyword_info.json
 ;              Version 19, SH, 10.05.2025
 ;                          MANY changes, see Explanation above.
+;              Version 20, TF, 12.11.2025
+;                          Renamed from spice_gen_cat2 to spice_gen_cat
 ;
-; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
+; Version    : Version 20, TF, 12 November 2025 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-11-12 09:51 CET $
+; $Id: 2025-11-12 09:58 CET $
 ;-
 
 FUNCTION spice_gen_cat::extract_file_basename, line
