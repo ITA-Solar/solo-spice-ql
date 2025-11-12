@@ -1,7 +1,7 @@
 ;+
 ; Project     : SOLAR ORBITER - SPICE
 ;
-; Name        : SPICE_GEN_CAT2
+; Name        : SPICE_GEN_CAT
 ;
 ; Purpose     : Create/update the spice_catalog.csv file.
 ;
@@ -118,10 +118,10 @@
 ;
 ; Version    : Version 17, SH, 4 September 2024 (prits-group@astro.uio.no)
 ;
-; $Id: 2025-10-07 14:10 CEST $
+; $Id: 2025-11-12 09:48 CET $
 ;-
 
-FUNCTION spice_gen_cat2::extract_file_basename, line
+FUNCTION spice_gen_cat::extract_file_basename, line
   ; NOTE: requires the actual file name to be first file name in line
   ; (PARENT file name also occurs)
   pattern = "solo_L._spice[^.]+"
@@ -129,7 +129,7 @@ FUNCTION spice_gen_cat2::extract_file_basename, line
   return, filename
 END
 
-FUNCTION spice_gen_cat2::extract_key, line
+FUNCTION spice_gen_cat::extract_key, line
   filename = self.extract_file_basename(line)
   return, filename
   IF filename NE "" THEN BEGIN
@@ -140,7 +140,7 @@ FUNCTION spice_gen_cat2::extract_key, line
   message, "NO KEY!!"
 END
 
-FUNCTION spice_gen_cat2::get_header, filename
+FUNCTION spice_gen_cat::get_header, filename
   header = headfits(filename)
   IF typename(header) EQ 'LONG' THEN return, []
   IF filename.matches('_L3_') THEN BEGIN
@@ -156,7 +156,7 @@ END
 ; ; WRITING:
 ; ;
 
-PRO spice_gen_cat2::rsync_file_to_other_servers, filename
+PRO spice_gen_cat::rsync_file_to_other_servers, filename
   IF ~self.d.running_as_pipeline THEN return
 
   FOREACH other_server, self.d.other_servers, ix DO BEGIN
@@ -167,7 +167,7 @@ PRO spice_gen_cat2::rsync_file_to_other_servers, filename
   ENDFOREACH
 END
 
-PRO spice_gen_cat2::write_keyword_info_file, filename
+PRO spice_gen_cat::write_keyword_info_file, filename
   IF ~self.d.quiet THEN print
   IF ~self.d.quiet THEN print, "Converting keyword info to json"
   json = json_serialize(self.d.keyword_info, /lowercase)
@@ -180,7 +180,7 @@ PRO spice_gen_cat2::write_keyword_info_file, filename
   self.rsync_file_to_other_servers, filename
 END
 
-PRO spice_gen_cat2::write_plaintext_filtered, filename, filter
+PRO spice_gen_cat::write_plaintext_filtered, filename, filter
   print
   print, "Writing " + filename
   tmp_filename = filename + '.tmp'
@@ -200,14 +200,14 @@ PRO spice_gen_cat2::write_plaintext_filtered, filename, filter
   self.rsync_file_to_other_servers, filename
 END
 
-PRO spice_gen_cat2::write_plaintext, filename_all
+PRO spice_gen_cat::write_plaintext, filename_all
   self.write_plaintext_filtered, filename_all, 'L'
   self.write_plaintext_filtered, filename_all + '.l1', 'L1'
   self.write_plaintext_filtered, filename_all + '.l2', 'L2'
   self.write_plaintext_filtered, filename_all + '.l3', 'L3'
 END
 
-PRO spice_gen_cat2::write_csv, filename
+PRO spice_gen_cat::write_csv, filename
   lines = list()
 
   IF ~self.d.quiet THEN print
@@ -235,7 +235,7 @@ PRO spice_gen_cat2::write_csv, filename
   self.rsync_file_to_other_servers, filename
 END
 
-PRO spice_gen_cat2::write
+PRO spice_gen_cat::write
   self.write_keyword_info_file, self.d.keyword_info_filename
 
   self.write_plaintext, self.d.catalog_basename + '.txt'
@@ -246,7 +246,7 @@ END
 ; ;
 ; ; Generating catalog
 ; ;
-PRO spice_gen_cat2::create_catalog_from_scratch
+PRO spice_gen_cat::create_catalog_from_scratch
   print, 'Generating catalog from scratch. This will take a very long time.'
   self.d.use_old_catalog = 0
   self.d.file_hash = orderedhash()
@@ -254,7 +254,7 @@ PRO spice_gen_cat2::create_catalog_from_scratch
   self.populate_hash
 END
 
-FUNCTION spice_gen_cat2::line_from_header, header, relative_path
+FUNCTION spice_gen_cat::line_from_header, header, relative_path
   value_list = list()
   FOREACH keyword, self.d.keyword_array DO BEGIN
     keyword_type = self.d.keyword_info[keyword].type
@@ -269,7 +269,7 @@ FUNCTION spice_gen_cat2::line_from_header, header, relative_path
   RETURN, strjoin(value_array, string(9b)) ; Tab
 END
 
-FUNCTION spice_gen_cat2::add_file, fits_filename
+FUNCTION spice_gen_cat::add_file, fits_filename
   key = self.extract_key(fits_filename)
   IF self.d.file_hash.haskey(key) THEN BEGIN
     return, !null
@@ -289,7 +289,7 @@ FUNCTION spice_gen_cat2::add_file, fits_filename
   return, key
 END
 
-PRO spice_gen_cat2::remove_nonexisting_files
+PRO spice_gen_cat::remove_nonexisting_files
   t = systime(1)
   print, "Removing files that are not on disk"
   ondisk_filelist_hash = hash()
@@ -311,7 +311,7 @@ PRO spice_gen_cat2::remove_nonexisting_files
   print, "Removed non-existing files", (t3 = systime(1)) - t2
 END
 
-PRO spice_gen_cat2::populate_hash
+PRO spice_gen_cat::populate_hash
   print
   print, "Populating list of files to add or modify using names of files on disk"
 
@@ -338,7 +338,7 @@ PRO spice_gen_cat2::populate_hash
   print
 END
 
-PRO spice_gen_cat2::set_filelist
+PRO spice_gen_cat::set_filelist
   spice_search_dirs = self.d.spice_data_dir
   data_dir_is_top_level = ~self.d.spice_data_dir.contains('level')
   IF data_dir_is_top_level AND self.d.ignore_L0 THEN BEGIN
@@ -358,7 +358,7 @@ PRO spice_gen_cat2::set_filelist
   END
 END
 
-PRO spice_gen_cat2::remove_manual_files_to_be_updated
+PRO spice_gen_cat::remove_manual_files_to_be_updated
   print, 'Removing manually added files that are already in the catalog'
   FOREACH file, self.d.new_files_manual DO BEGIN
     this_key = self.extract_key(file_basename(file))
@@ -369,7 +369,7 @@ PRO spice_gen_cat2::remove_manual_files_to_be_updated
   ENDFOREACH
 END
 
-PRO spice_gen_cat2::write_hash_save_file
+PRO spice_gen_cat::write_hash_save_file
   print, 'Writing ' + self.d.catalog_hash_save_file
   file_hash = self.d.file_hash
   save, file = self.d.catalog_hash_save_file + '.tmp', file_hash
@@ -377,8 +377,8 @@ PRO spice_gen_cat2::write_hash_save_file
   self.rsync_file_to_other_servers, self.d.catalog_hash_save_file
 END
 
-PRO spice_gen_cat2::restore_hash_save_file
-  IF ~file_exist(self.d.catalog_hash_save_file) THEN message, 'Create hash save file by running spice_gen_cat2,dir,use_old_catalog=0'
+PRO spice_gen_cat::restore_hash_save_file
+  IF ~file_exist(self.d.catalog_hash_save_file) THEN message, 'Create hash save file by running spice_gen_cat,dir,use_old_catalog=0'
   print, 'Restoring ' + file_basename(self.d.catalog_hash_save_file)
   restore, self.d.catalog_hash_save_file
   ; idl-disable-next-line undefined-var
@@ -387,7 +387,7 @@ PRO spice_gen_cat2::restore_hash_save_file
   self.d.file_hash = file_hash ; idl-disable var-use-before-def
 END
 
-PRO spice_gen_cat2::execute
+PRO spice_gen_cat::execute
   print
   IF self.d.use_old_catalog THEN BEGIN
     self.restore_hash_save_file
@@ -404,7 +404,7 @@ PRO spice_gen_cat2::execute
   self.write
 END
 
-FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = use_old_catalog, $
+FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = use_old_catalog, $
   new_files_manual = new_files_manual, ignore_L0 = ignore_L0
   self.d = dictionary()
 
@@ -441,13 +441,13 @@ FUNCTION spice_gen_cat2::init, spice_data_dir, quiet = quiet, use_old_catalog = 
   return, 1
 END
 
-PRO spice_gen_cat2__define
-  !null = {spice_gen_cat2, d: dictionary()}
+PRO spice_gen_cat__define
+  !null = {spice_gen_cat, d: dictionary()}
 END
 
 ; ;    ----------------------
 
-PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old_catalog, ignore_L0 = ignore_L0, quiet=quiet
+PRO spice_gen_cat, spice_data_dir, forever = forever, use_old_catalog = use_old_catalog, ignore_L0 = ignore_L0, quiet=quiet
 ;  steinhh_paths = getenv("USER") EQ 'steinhh' || getenv("USE_STEINHH_PATHS") NE ''
 ;  IF NOT steinhh_paths THEN message, 'This program should only be run manually with steinhh paths'
   ptools.default, spice_data_dir, "$HOME/spice_home/fits"
@@ -455,7 +455,7 @@ PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old
   IF ~file_test(spice_data_dir, /directory) THEN message, 'Directory does not exist: ' + spice_data_dir
   ON_ERROR, 0
   REPEAT BEGIN
-    o = obj_new('spice_gen_cat2', spice_data_dir, use_old_catalog = use_old_catalog, ignore_L0 = ignore_l0, quiet=quiet)
+    o = obj_new('spice_gen_cat', spice_data_dir, use_old_catalog = use_old_catalog, ignore_L0 = ignore_l0, quiet=quiet)
     o.execute
     obj_destroy, o
     use_old_catalog = 1
@@ -463,6 +463,6 @@ PRO spice_gen_cat2, spice_data_dir, forever = forever, use_old_catalog = use_old
 END
 
 IF getenv("USER") EQ 'steinhh' THEN BEGIN
-  spice_gen_cat2, '$HOME/tmp/spice_data', /ignore_l0, /use_old_catalog
+  spice_gen_cat, '$HOME/tmp/spice_data', /ignore_l0, /use_old_catalog
 ENDIF
 END
