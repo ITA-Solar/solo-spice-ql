@@ -86,9 +86,10 @@
 ;      from stongest_lines to most_important_lines
 ;      2025-10-07 - TF - spice_read_or_write_slit_region: simplified
 ;      spice_lock calls due to new version of spice_lock
+;      2025-11-17 - TF - spice_lock keyword GET replaced by ACQUIRE
 ;
 ;-
-; $Id: 2025-10-07 14:31 CEST $
+; $Id: 2025-11-17 11:36 CET $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -132,15 +133,11 @@ PRO spice_read_or_write_slit_region, l3_filename, result, startrow = startrow, e
   lock = 'slit_region_' + trim(spiobsid)
 
   IF write_file THEN BEGIN
-    spice_lock, lock, /get, /try_once, lock_obtained = lock_obtained
+    spice_lock, lock, /acquire, /try_once, lock_obtained = lock_obtained
     IF lock_obtained THEN BEGIN
       spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow = startrow, endrow = endrow
-;      spice_lock, lock, /release 
       spice_lock, lock, /delete
     ENDIF ELSE BEGIN
-;      spice_lock, lock, /get       ;; all this is not needed?
-;      spice_lock, lock, /release   ;; 
-;      spice_lock, lock, /delete    ;;
       write_file = 0
     ENDELSE
   ENDIF
