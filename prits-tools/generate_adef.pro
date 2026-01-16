@@ -60,7 +60,7 @@
 ;                                            also when using a line list. Use
 ;                                            linear background for full detector.
 ;-
-; $Id: 2025-08-29 10:00 CEST $
+; $Id: 2026-01-16 09:08 CET $
 
 FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocity = velocity, $
   line_list = line_list, plot = plot, version = version, gt_peaks_version = version_gt_peaks
@@ -160,7 +160,7 @@ FUNCTION generate_adef, data, lam, widmin = widmin, position = position, velocit
 
     max_intens = abs(int0) * 100 ; 30000    ; Ensure that max value is greater than min value also for negative values
     max_lam = (lam0 + dlam) < max(lam) ; v0 + v
-    max_fwhm = wid0 + 0.07 ;
+    max_fwhm = wid0 + 0.1; 0.07 ;
 
     IF ~keyword_set(position) THEN BEGIN
       IF n_elements(velocity) EQ 0 THEN vel = 0.0 $
