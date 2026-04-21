@@ -80,9 +80,16 @@
 ;    30-Sep-2025: Terje Fredvik: ::print_info_on_affected_pixels: take into
 ;                                 account that self::get_header_keyword returns !NULL
 ;                                 if FITS header keyword does not exist
+;    21-Apr-2026: Terje Fredvik: - New method get_l2_keywords_for_l3 (with
+;                                helper_get_this_keyword_hash) creates a hash
+;                                containing a selection of L2 keywords that
+;                                IAS think is useful to have in the results
+;                                HDU. The keywords are added to the
+;                                proj_keywords hash. Quick and dirty. 
+;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2025-09-30 08:07 CEST $
+; $Id: 2026-04-21 10:29 CEST $
 
 ;+
 ; Description:
@@ -522,6 +529,8 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ENDIF
 
       original_data = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit)
+      raster = (self.get_header_keyword('STUDYTYP',window_index)).contains('Raster')
+      IF raster THEN original_data = reform(original_data, [(size(original_data))[1], (size(original_data))[2], (size(original_data))[3], 1])
       IF iwindow GT 0 THEN IS_EXTENSION = 1 ELSE BEGIN
         IS_EXTENSION = 0
         IF n_elements(velocity) EQ 0 THEN vel = -999 ELSE vel = velocity
@@ -551,7 +560,9 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         PROC_STEPS = list(proc_step_1, proc_step_2, /no_copy)
 
         proj_keywords = self.get_noise_factors(window_index, /return_proj_keywords, sigmadat = sigmadat)
-
+        l2_keywords = self.get_l2_keywords_for_l3()
+        proj_keywords = [proj_keywords,l2_keywords]
+        
         file = (keyword_set(pipeline_dir)) ? pipeline_dir + '/' + filename_l3 : filepath(filename_l3, /tmp)
 
         spice_ingest, filename_l2, destination = destination, top_dir = top_dir, path_index = path_index, /force, /dry_run
@@ -568,7 +579,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         IS_EXTENSION = IS_EXTENSION, LEVEL = 'L3', VERSION = number_version_l3, $
         PROC_STEPS = PROC_STEPS, creator = creator, sigmadat = sigmadat, $
         PROGENITOR_DATA = original_data, HEADER_INPUT_DATA = self.get_header(window_index), $
-        proj_keywords = proj_keywords, $
+        proj_keywords = proj_keywords,  $
         SAVE_RESIDUALS = SAVE_RESIDUALS, PRINT_HEADERS = PRINT_HEADERS, $
         SAVE_NOT = save_not, $
         headers_results = headers_results, headers_data = headers_data
@@ -2947,6 +2958,40 @@ FUNCTION spice_data::get_calibration_factor, window, variable_values = variable_
   return, calibration_factor
 END
 
+
+;+
+; Description:
+;     Returns a hash with a selection of L2 keywords that will be used in the
+;     even-numbered HDUs of L3 files. Helper method _get_this_keyword_hash
+;     makes a 
+;
+; INPUTS:
+;     none
+;
+; OUTPUT:
+;-
+FUNCTION spice_data::_get_this_keyword_hash, keyword
+  header = self.get_header(0)
+  value = fxpar(header,keyword,comment=comment)
+  return, hash('name',keyword, $
+               'value', value, $ 
+               'comment', comment)
+END
+
+FUNCTION spice_data::get_l2_keywords_for_l3
+  l2_keywords = ['CROTA','CRLN_OBS','CRLT_OBS','DATE-AVG','DATE-END','DSUN_AU','DSUN_OBS',$
+                 'HGLN_OBS','HGLT_OBS','LTP','SOOPNAME','STP','STUDY','STUDYDES','TELAPSE','XPOSURE']
+  l2_keywords_hash = []
+  
+  FOREACH l2_keyword, l2_keywords DO BEGIN 
+     this_keyword_hash = self._get_this_keyword_hash(l2_keyword)
+     l2_keywords_hash = [l2_keywords_hash, this_keyword_hash]
+  ENDFOREACH
+  return, l2_keywords_hash
+END
+
+  
+  
 ;+
 ; Description:
 ;     Returns the noise factors for the specified window
