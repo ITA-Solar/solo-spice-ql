@@ -213,7 +213,7 @@
 ; HISTORY:
 ;      Ver. 1, 19-Jan-2022, Martin Wiesmann (prits-group@astro.uio.no)
 ;-
-; $Id: 2025-08-19 11:46 CEST $
+; $Id: 2026-04-21 10:17 CEST $
 
 PRO ana2fits, ANA, filepath_out = filepath_out, $
   header_input_data = header_input_data, $
@@ -356,7 +356,11 @@ PRO ana2fits, ANA, filepath_out = filepath_out, $
     IF const_ptr THEN const_use = *const[iwindow] ELSE IF n_elements(const) GT 0 THEN const_use = const
     IF residual_ptr THEN residual_use = *residual[iwindow] ELSE IF n_elements(residual) GT 0 THEN residual_use = residual
 
-    IF prg_data_ptr THEN PROGENITOR_DATA_use = *progenitor_data[iwindow] ELSE IF n_elements(progenitor_data) GT 0 THEN PROGENITOR_DATA_use = progenitor_data
+    IF prg_data_ptr THEN PROGENITOR_DATA_use = *progenitor_data[iwindow] ELSE IF n_elements(progenitor_data) GT 0 THEN $
+       PROGENITOR_DATA_use = reform(progenitor_data,[(size(progenitor_data))[1], (size(progenitor_data))[2], $
+                                                     (size(progenitor_data))[3], (size(progenitor_data))[4]])
+
+    
     IF hdr_in_data_ptr THEN HEADER_INPUT_DATA_use = *header_input_data[iwindow] ELSE IF n_elements(header_input_data) GT 0 THEN HEADER_INPUT_DATA_use = header_input_data
     IF proc_st_ptr THEN PROC_STEPS_use = *proc_steps[iwindow] ELSE IF n_elements(proc_steps) GT 0 THEN PROC_STEPS_use = proc_steps
     IF proj_kwd_ptr THEN PROJ_KEYWORDS_use = *proj_keywords[iwindow] ELSE IF n_elements(proj_keywords) GT 0 THEN PROJ_KEYWORDS_use = proj_keywords
