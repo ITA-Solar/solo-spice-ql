@@ -42,7 +42,7 @@
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
 ;-
-; $Id: 2025-08-20 15:30 CEST $
+; $Id: 2026-04-21 10:18 CEST $
 
 FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
   n_windows = n_windows, winno = winno, $
@@ -183,7 +183,9 @@ FUNCTION ana2fitshdr, ana, filename_out = filename_out, $
 
   ; Set parameters to NAN if not included in fit
   result = ana2fits_check_include(fit = fit, result = result, include = include)
-
+  raster = (size(progenitor_data))[4] EQ 1
+  IF raster THEN result = reform(result,[(size(result))[1], (size(result))[2], (size(result))[3], 1])
+  
   all_headers = ptrarr(6)
 
   ; ------
