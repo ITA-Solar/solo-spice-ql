@@ -40,8 +40,10 @@
 ;
 ; HISTORY:
 ;      Ver. 1, 23-Nov-2021, Martin Wiesmann
+;      Ver. 2, 21-Apr-2026, Terje Fredvik: added additional L2 keywords in a
+;                                          new section in the header
 ;-
-; $Id: 2025-08-21 13:50 CEST $
+; $Id: 2026-04-21 10:33 CEST $
 
 FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   filename_out = filename_out, n_windows = n_windows, winno = winno, extension_names = extension_names, $
@@ -232,14 +234,18 @@ FUNCTION ana2fitshdr_results, result = result, fit = fit, datetime = datetime, $
   fits_util.add, hdr, 'BTYPE', 'Fit Parameter', 'Type of data'
   fits_util.add, hdr, 'UCD', 'stat.fit.param', 'Unified Content Descriptors v1.23'
   fits_util.add, hdr, 'BUNIT', ' ', 'Units of the data'
-
+  
   ; Add additional project-related keywords to the header
   IF n_elements(proj_keywords) GT 0 THEN BEGIN
+    first_l2_keyword = 'CROTA'
     fits_util.add_description, hdr, 'Project-related keywords'
     FOR ipr = 0, n_elements(proj_keywords) - 1 DO BEGIN
-      fits_util.add, hdr, (proj_keywords[ipr])['name'], (proj_keywords[ipr])['value'], (proj_keywords[ipr])['comment']
+      this_keyword = (proj_keywords[ipr])['name']
+      IF this_keyword EQ first_l2_keyword THEN fits_util.add_description, hdr, 'Additional keywords inherited from L2'
+      fits_util.add, hdr, this_keyword, (proj_keywords[ipr])['value'], (proj_keywords[ipr])['comment']
     ENDFOR ; ipr
     fits_util.add, hdr, '', ' ', after = after
+    fits_util.add, hdr, '', ' ', before = first_l2_keyword
   ENDIF
 
   ; Processing steps
