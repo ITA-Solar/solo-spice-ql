@@ -89,7 +89,7 @@
 ;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2026-04-21 10:29 CEST $
+; $Id: 2026-04-24 09:08 CEST $
 
 ;+
 ; Description:
@@ -355,7 +355,7 @@ END
 ;     The resulting file will by default contain only one extension per window, the RESULTS extension.
 ;     The DATA is linked to the level 2 file as an external extension. RESIDUALS and LAMBDA can be
 ;     reconstructed when reading the file, and WEIGHTS, INCLUDE and CONSTANT are only saved
-;     if they contain non-default values.
+;     if they contain non-default values. Add CHECKSUM keyword to every HDU
 ;
 ; OPTIONAL INPUTS:
 ;     window   : The index or name of the desired window(s), default is all windows.
@@ -590,7 +590,10 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ENDIF ELSE BEGIN
         delete_analysis, ana
       ENDELSE
-
+      
+      stop
+      oslo_fits_add_checksums, file, header, iwindow
+      
       IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
       IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
       IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
