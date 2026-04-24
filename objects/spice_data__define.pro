@@ -89,7 +89,7 @@
 ;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2026-04-24 09:08 CEST $
+; $Id: 2026-04-24 09:21 CEST $
 
 ;+
 ; Description:
@@ -592,7 +592,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ENDELSE
       
       stop
-      oslo_fits_add_checksums, file, header, iwindow
+      oslo_fits_add_checksums, file, header, iwindow, kill_header_dates=0
       
       IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
       IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
