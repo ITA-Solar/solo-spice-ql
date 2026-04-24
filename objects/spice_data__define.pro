@@ -89,7 +89,7 @@
 ;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2026-04-24 09:38 CEST $
+; $Id: 2026-04-24 13:26 CEST $
 
 ;+
 ; Description:
@@ -597,7 +597,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
     ENDIF ; ~dumbbell AND ~intensity_window
   ENDFOR ; iwindow=0,N_ELEMENTS(window)-1
   
-  n_ext = self.get_number_extensions()
+  n_ext = 2*n_elements(window)
   FOR ext_ct=0,n_ext-1 DO oslo_fits_add_checksums, file, header, ext_ct, kill_header_dates=0
   
   IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN
