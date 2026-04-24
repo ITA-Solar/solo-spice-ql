@@ -89,7 +89,7 @@
 ;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2026-04-24 09:21 CEST $
+; $Id: 2026-04-24 09:38 CEST $
 
 ;+
 ; Description:
@@ -591,15 +591,15 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
         delete_analysis, ana
       ENDELSE
       
-      stop
-      oslo_fits_add_checksums, file, header, iwindow, kill_header_dates=0
-      
       IF collect_hdr THEN all_result_headers[iwindow] = ptr_new(*headers_results[0])
       IF collect_hdr_data THEN all_data_headers[iwindow] = ptr_new(*headers_data[0])
       IF collect_proc_steps THEN all_proc_steps[iwindow] = ptr_new(PROC_STEPS)
     ENDIF ; ~dumbbell AND ~intensity_window
   ENDFOR ; iwindow=0,N_ELEMENTS(window)-1
-
+  
+  n_ext = self.get_number_extensions()
+  FOR ext_ct=0,n_ext-1 DO oslo_fits_add_checksums, file, header, ext_ct, kill_header_dates=0
+  
   IF keyword_set(pipeline_dir) THEN destination = file ELSE BEGIN
     spice_ingest, file, destination = destination, $
       /user_dir, top_dir = top_dir, path_index = path_index, /force, $
