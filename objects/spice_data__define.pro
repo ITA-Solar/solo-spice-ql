@@ -89,7 +89,7 @@
 ;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2026-04-27 13:50 CEST $
+; $Id: 2026-04-27 14:32 CEST $
 
 ;+
 ; Description:
@@ -465,7 +465,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   FOR iwindow = 0, n_elements(window) - 1 DO BEGIN
     window_index = self.return_extension_index(window[iwindow], /check_window_index)
     IF window_index LT 0 THEN BEGIN
-       print, 'Cancelling level 3 creation due to wrong window input: ' + window[iwindow]
+       print, 'Cancelling level 3 creation due to wrong window input: ' + trim(window[iwindow])
        stop
       return, 'Cancelled'
     ENDIF
@@ -3131,7 +3131,8 @@ FUNCTION spice_data::return_extension_index, extension, check_window_index = che
 
   ptools.parcheck, extension, 1, "extension", ['integers', 'string'], 0, result = result
   IF n_elements(result) GT 1 || result NE '' THEN BEGIN
-    message, result, /info
+     message, result, /info
+     stop
     print, 'Call comes from:'
     help, calls = calls
     history = ['']
@@ -3157,14 +3158,17 @@ FUNCTION spice_data::return_extension_index, extension, check_window_index = che
     extension_index = where(strcmp(*self.extnames, extension, /fold_case) EQ 1, count)
     extension_index = extension_index[0]
     IF count EQ 0 THEN BEGIN
-      message, 'No extension with name "' + extension + '" found.', /info
+       message, 'No extension with name "' + extension + '" found.', /info
+       stop
     ENDIF ELSE IF count GT 1 THEN BEGIN
-      message, 'More than one extension with name "' + extension + '" found. Returning the first one.', /info
+       message, 'More than one extension with name "' + extension + '" found. Returning the first one.', /info
+       stop
     ENDIF
   ENDIF ELSE BEGIN
     extension_index = extension
     IF ~keyword_set(check_window_index) && (extension_index LT 0 || extension_index GE self.next) THEN BEGIN
-      message, 'The given extension is not a valid index.', /info
+       message, 'The given extension is not a valid index.', /info
+       stop
       extension_index = -1
     ENDIF
   ENDELSE
