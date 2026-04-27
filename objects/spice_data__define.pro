@@ -89,7 +89,7 @@
 ;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2026-04-24 13:26 CEST $
+; $Id: 2026-04-27 13:50 CEST $
 
 ;+
 ; Description:
@@ -465,7 +465,8 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   FOR iwindow = 0, n_elements(window) - 1 DO BEGIN
     window_index = self.return_extension_index(window[iwindow], /check_window_index)
     IF window_index LT 0 THEN BEGIN
-      print, 'Cancelling level 3 creation due to wrong window input: ' + window[iwindow]
+       print, 'Cancelling level 3 creation due to wrong window input: ' + window[iwindow]
+       stop
       return, 'Cancelled'
     ENDIF
 
