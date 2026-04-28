@@ -89,7 +89,7 @@
 ;                               - Ensure that original_data array is 4D for rasters
 ;-
 
-; $Id: 2026-04-27 14:32 CEST $
+; $Id: 2026-04-28 12:00 CEST $
 
 ;+
 ; Description:
@@ -433,8 +433,10 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   ptools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name = 'spice_create_l3_progress', /optional
   IF n_elements(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget = spice_create_l3_progress(1, group_leader = group_leader)
   ptools.parcheck, force_version, 0, "force_version", 'integers', 0, minval = 0, maxval = 99, /optional
-
+  
+  stop
   IF n_elements(window) EQ 0 THEN window = indgen(self.get_number_windows())
+  stop
   IF arg_present(all_ana) THEN collect_ana = 1 ELSE collect_ana = 0
   IF arg_present(all_result_headers) THEN BEGIN
     all_result_headers = ptrarr(n_elements(window))
@@ -461,7 +463,7 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
 
   IF ~keyword_set(no_widget) THEN $
     progress_widget.next_file, n_elements(window), filename = filename_l2, halt = halt
-
+stop
   FOR iwindow = 0, n_elements(window) - 1 DO BEGIN
     window_index = self.return_extension_index(window[iwindow], /check_window_index)
     IF window_index LT 0 THEN BEGIN
