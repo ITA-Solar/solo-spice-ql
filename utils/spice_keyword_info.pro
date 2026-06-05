@@ -1,4 +1,4 @@
-; $Id: 2025-05-15 11:44 CEST $
+; $Id: 2026-06-05 13:50 CEST $
 FUNCTION spice_keyword_info_header
   text = inline_text('  ; - END')
   ; NAXIS1  =                    1 /
@@ -22,7 +22,7 @@ FUNCTION spice_keyword_info_header
   ; CDELT1  =              2.00000 /
   ; CUNIT1  = '            '       /
   ; CTYPE1  = '            '       /
-  ; /
+  ; 
   ; CNAME2  = '            '       /
   ; CRVAL2  =              3.00000 /
   ; CDELT2  =              4.00000 /
@@ -48,6 +48,7 @@ FUNCTION spice_keyword_info_header
   ; ROT_COMP=                    0 / Solar rotation compensation on (1) or off (0)   
   ; OBS_ID  = 'SSPI_XXXX_000_000_oooo_001' / SOC Observation ID
   ; READMODE= 'Destructive'        / Destructive or non-destructive
+  ; TRIGGERD= 'STIX (C5+ flare - IOR mask=96)' / Event that triggered observation  
   ; OBJECT  = 'Sun     '           / Type of object observed
   ; TARGET  = 'on disk, disc centre' / Course human interpretable pointing info
   ; SOOPNAME= 'None    '           / SOOP Campaign name(s)
@@ -80,6 +81,7 @@ FUNCTION spice_keyword_info_header
   ; VERS_SW = '2101    '           / UiO SVN revision number of L2 pipeline
   ; VERS_CAL= '2097    '           / UiO SVN revision number of calibration software
   ; VERSION = '01      '           / Incremental version number
+  ; SOAR_DR =                    6 / SOAR Data Release number 
   ; COMPLETE= 'C       '           / Complete data set
   ; PCT_CMPL=              100.000 / Completeness of data set, all windows combined
   ;
@@ -119,11 +121,13 @@ FUNCTION spice_keyword_info_header
   ; NTOTPIX =               970160 / Number of potentially usable pixels excl padded
   ; NDATAPIX=               970156 / Number of usable pixels excl padded/NaN/NSATPIX
   ; NSATPIX =                    4 / Number of pixels set to NaN due to saturation
+  ; NSPIKPIX=               302020 / Number of pixels set to NaN due to spikes 
   ; NLOSTPIX=                    0 / Number of NaN pix excl. padded and saturated
   ; NAPRXPIX=                    0 / Number of approx. pix. b.f. geo. corr., now NaN
   ;
   ; PCT_DATA=              99.9996 / NDATAPIX/NTOTPIX*100
   ; PCT_SATP=          0.000412303 / NSATPIX/ NTOTPIX*100
+  ; PCT_SPIK=              8.84447 / NSPIKPIX/NTOTPIX*100
   ; PCT_LOST=              0.00000 / NLOSTPIX/NTOTPIX*100
   ; PCT_APRX=              0.00000 / NAPRXPIX/NTOTPIX*100
   ;
