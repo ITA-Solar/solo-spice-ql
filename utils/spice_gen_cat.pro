@@ -118,11 +118,14 @@
 ;              Version 20, TF, 12.11.2025
 ;                          Renamed from spice_gen_cat2 to spice_gen_cat
 ;              Version 21, TF, 12.11.2025
-;                          Base file name renamed from spice_catalog2.csv to spice_catalog.csv
+;                          Base file name renamed from spice_catalog2.csv to
+;                          spice_catalog.csv
+;              Version 22, TF, 10.08.2026
+;                          Keywords of spice_util.GetServers have been renamed
+;                 
+; Version    : Version 22, TF, 10 August 2026 (prits-group@astro.uio.no)
 ;
-; Version    : Version 21, TF, 12 November 2025 (prits-group@astro.uio.no)
-;
-; $Id: 2025-11-12 10:41 CET $
+; $Id: 2026-08-10 10:19 CEST $
 ;-
 
 FUNCTION spice_gen_cat::extract_file_basename, line
@@ -164,7 +167,7 @@ PRO spice_gen_cat::rsync_file_to_other_servers, filename
   IF ~self.d.running_as_pipeline THEN return
 
   FOREACH other_server, self.d.other_servers, ix DO BEGIN
-    print, 'rsyncing ' + file_basename(filename) + ' on ' + self.d.host + ' to ' + other_server
+    print, 'rsyncing ' + file_basename(filename) + ' on ' + self.d.internal_use_fs + ' to ' + other_server
     rsync_command = 'rsync -av ' + filename + ' osdcapps@' + other_server + ':' + filename
     spawn, rsync_command, rsync_output
     print, rsync_output
@@ -437,8 +440,8 @@ FUNCTION spice_gen_cat::init, spice_data_dir, quiet = quiet, use_old_catalog = u
 
   self.d.running_as_pipeline = getenv('USER') EQ 'osdcapps'
 
-  self.d.other_servers = spice_util.GetServers(/exclude_host, host = host)
-  self.d.host = host
+  self.d.other_servers = spice_util.GetServers(/exclude_internal_use_fs, internal_use_fs = internal_use_fs)
+  self.d.internal_use_fs = internal_use_fs
 
   IF ~use_old_catalog THEN message, "It takes a very long time to regenerate from scratch - consider setting USE_OLD_CATALOG=1", /info
 
