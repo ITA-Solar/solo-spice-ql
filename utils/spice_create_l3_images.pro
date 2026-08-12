@@ -90,7 +90,7 @@
 ;      ACQUIRE and LOCK_ACQUIRED
 ;
 ;-
-; $Id: 2025-11-17 11:43 CET $
+; $Id: 2026-08-12 13:43 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -234,7 +234,8 @@ PRO spice_create_l3_images, l3_file, out_dir, smooth_width = smooth_width, inter
         filename_base2 = filename_base.replace('ql', 'ql-' + ion + lam + '-' + param.name.substring(0, 2)) + trim(hdr.winno) + '-' + trim(icomp + 1) + '-' + param.name.substring(0, 2)
         ; crop image so that lines with invalid data is not shown
         image_data = reform(result[ipartotal, *, startrow : endrow, *])
-
+        image_is_not_2D = (size(image_data))[0] NE 2  
+        IF image_is_not_2D THEN stop
         IF naxis4 GT 1 THEN BEGIN
           ; sit-and-stare
           xtitle1 = 'Time [s]'
