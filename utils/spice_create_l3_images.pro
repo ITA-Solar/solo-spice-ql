@@ -90,7 +90,7 @@
 ;      ACQUIRE and LOCK_ACQUIRED
 ;
 ;-
-; $Id: 2026-08-12 13:43 CEST $
+; $Id: 2026-08-12 14:34 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
@@ -101,6 +101,8 @@ PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endro
   ok_result_along_y = where(result_along_y EQ result_along_y)
   startrow = ok_result_along_y[0]
   endrow = ok_result_along_y[-1]
+  IF startrow EQ -1 THEN stop 
+  IF endrow EQ -1 THEN stop
 END
 
 PRO spice_read_slit_region, slit_region_file, startrow = startrow, endrow = endrow
