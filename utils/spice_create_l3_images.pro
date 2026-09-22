@@ -88,21 +88,32 @@
 ;      spice_lock calls due to new version of spice_lock
 ;      2025-11-17 - TF - spice_lock keyword GET and LOCK_OBTAINED replaced by
 ;      ACQUIRE and LOCK_ACQUIRED
+;      2026-09-22 - TF - To prevent crash if input results array is NaNs only, the startrow is
+;      set to 0, endrow is set to last y element. Let process that is to read
+;      a slit_region_file wait until another process is done writing the file
 ;
 ;-
-; $Id: 2026-08-12 14:34 CEST $
+; $Id: 2026-09-22 10:55 CEST $
 PRO spice_calculate_slit_region, l3_filename, result, startrow = startrow, endrow = endrow
   raster = l3_filename.contains('ras')
   sz = size(result)
   result_along_x = (raster) ? reform(result[0, *, sz[3] / 2.]) : reform(result[0, *, sz[3] / 2., *])
-  goodx = where(result_along_x EQ result_along_x)
+  goodx = where(finite(result_along_x))
 
   result_along_y = (raster) ? reform(result[0, goodx[0], *]) : reform(result[0, *, *, goodx[0]])
-  ok_result_along_y = where(result_along_y EQ result_along_y)
+  ok_result_along_y = where(finite(result_along_y))
   startrow = ok_result_along_y[0]
   endrow = ok_result_along_y[-1]
-  IF startrow EQ -1 THEN stop 
-  IF endrow EQ -1 THEN stop
+  IF startrow EQ -1 THEN BEGIN 
+     spice_util.Log,'startrow not found! Setting it to 0',/error,62
+     startrow = 0
+  ENDIF
+  
+  IF endrow EQ -1 THEN BEGIN 
+     endrow = n_elements(result_along_y)-1
+     spice_util.Log,'endrow not found! Setting it to '+trim(endrow),/error,62
+     startrow = 0
+  ENDIF
 END
 
 PRO spice_read_slit_region, slit_region_file, startrow = startrow, endrow = endrow
@@ -141,7 +152,13 @@ PRO spice_read_or_write_slit_region, l3_filename, result, startrow = startrow, e
       spice_write_slit_region, slit_region_dir, slit_region_file, l3_filename, result, startrow = startrow, endrow = endrow
       spice_lock, lock, /delete
     ENDIF ELSE BEGIN
-      write_file = 0
+       write_file = 0
+       other_process_done_writing_file = file_test(slit_region_file)
+       WHILE ~other_process_done_writing_file DO BEGIN 
+          spice_util.Log,'Waiting for '+file_basename(slit_region_file)+' to be written by another process...'
+          wait,5
+          other_process_done_writing_file = file_test(slit_region_file)
+       ENDWHILE
     ENDELSE
   ENDIF
 
