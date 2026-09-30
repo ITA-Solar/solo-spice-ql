@@ -157,8 +157,10 @@
 ;       Ver.5, 12-Nov-2024, Peter Young
 ;         Added hdr.date_end and hdr.tdetx to the output structure for
 ;         compatibility with EIS software.
+;       Ver.6, 29-Sep-2026, Peter Young
+;         Negative intensities are no longer treated as missing.
 ;-
-; $Id: 2025-06-23 13:07 CEST $
+; $Id: 2026-09-29 20:41 EDT $
 
 FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $ ; idl-disable-line unused-var
   clean = clean, wrange = wrange, verbose = verbose, $
@@ -248,10 +250,12 @@ FUNCTION spice_getwindata, input_file, input_iwin, keep_sat = keep_sat, $ ; idl-
   ;
   ; SPICE missing data are set to NaN in level 2, so these get set to the
   ; missing value. I also set any negative numbers to missing, too.
+  ; PRY, 29-Sep-2026: negative values were being incorrectly treated as missing.
   ;
   ; missing_val = d->get_missing_value()
   missing_val = -100.
-  k = where(~finite(wd) OR wd LE 0., nk)
+;  k = where(~finite(wd) OR wd LE 0., nk)
+  k = where(~finite(wd), nk)
   IF nk NE 0 THEN wd[k] = missing_val
 
   t1 = systime(1)
