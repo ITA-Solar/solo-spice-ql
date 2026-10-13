@@ -67,12 +67,14 @@ FUNCTION spice_mask_auto_fit, windata, mask_spec, template = template, wvl_selec
   ;       Made TEMPLATE into an optional keyword
   ;     Ver.3, 06-Mar-2025, Martin Wiesmann
   ;       Added keyword FUNCTION_NAME again.
+  ;     Ver.4, 13-Oct-2026, Peter Young
+  ;       Modified param check as only two parameters are required for input.
   ;
   ; $Id: 2024-11-06 10:25 EST $
   ;
   ;-
 
-  IF n_params() LT 3 THEN BEGIN
+  IF n_params() LT 2 THEN BEGIN
     print, 'Use:  IDL> result=spice_mask_auto_fit(windata,mask_spec [,template= ,wvl_select=, outfile= '
     print, '                                        function_name= ])'
     return, -1
