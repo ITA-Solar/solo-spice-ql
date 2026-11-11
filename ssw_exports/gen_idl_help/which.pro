@@ -235,7 +235,7 @@ cleanup__cache_result__return:
 if n_elements(outfile) gt 1 && outfile[0] eq '' then outfile = outfile[1:*]
 if n_elements(outfile) eq 1 then outfile=outfile[0]
 print,outfile,format='(a)'
-cache[cache_key] = outfile
+if outfile[0] ne '' then cache[cache_key] = outfile
 END
 ; Testing: uncomment print,"Retrieving from cache"
 ; which,'which'
