@@ -160,7 +160,7 @@ outfile = ''
    cache_key = strjoin([name,trim(all),trim(search),trim(n_internals),paths],', ')
    ; print,"Cache key:",cache_key
    if cache.hasKey(cache_key) then begin
-     print,"Retrieving from cache"
+     ; print,"Retrieving from cache"
      outfile = cache[cache_key]
      goto, cleanup__cache_result__return
    end
@@ -237,3 +237,18 @@ if n_elements(outfile) eq 1 then outfile=outfile[0]
 print,outfile,format='(a)'
 cache[cache_key] = outfile
 END
+; Testing: uncomment print,"Retrieving from cache"
+; which,'which'
+; which,'which'
+; which,'which',/all
+; which,'which',/all
+; which,'which',/search
+; which,'which',/search
+; which,'which',/search,/all
+; 
+; cd,'/tmp',current=cwd
+; which,'which' ; should not cache
+; which,'which'
+; cd,cwd
+; which,'which'
+;
