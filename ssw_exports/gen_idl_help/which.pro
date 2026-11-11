@@ -1,4 +1,3 @@
-; idl-disable
 PRO WHICH, name, all=all, search=search, outfile=outfile,quiet=quiet
 ;+
 ; PROJECT:
