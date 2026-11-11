@@ -81,17 +81,19 @@ PRO WHICH, name, all=all, search=search, outfile=outfile,quiet=quiet
 ;		Use OS_FAMILY() instead of !VERSION.OS
 ;	Version 9, 4-July-1998, Zarro (SAC/GSFC)
 ;               Returned scalar out variable for single element value
-;       Version 10, 28-Jun-1999, Zarro (SM&A/GSFC)
+; Version 10, 28-Jun-1999, Zarro (SM&A/GSFC)
 ;               Added /quiet 
-;       19-Feb-2016, Zarro (ADNET) 
+; Version 11, 19-Feb-2016, Zarro (ADNET) 
 ;        - replaced OPENR test by FILE_TEST
 ;        - changed () to []
-;       Version 12, 10-Jul-2025, Stein Haugan (prits-group@astro.uio.no)
-;          - Using documented routine_info(/system) instead of undocumented
-;            routine_names() to get internal routines
-;          - Look up internal routines each call, in case new DLMs have
-;            added new routines, and drop common block
-;               
+; Version 12, 10-Jul-2025, Stein Haugan (prits-group@astro.uio.no)
+;        - Using documented routine_info(/system) instead of undocumented
+;          routine_names() to get internal routines
+;        - Look up internal routines each call, in case new DLMs have
+;          added new routines, and drop common block
+; Version 13, 11-Nov-2026, Stein Haugan (prits-group@astro.uio.no)
+;        - Introduce caching with hash, taking ALL factors into account
+;        - Only printing at the end (yes, goto, but no hidden RETURNs)
 ;-
 
    ON_ERROR,2
@@ -137,31 +139,50 @@ outfile = ''
    pro_names = routine_info(/system)
    func_names = routine_info(/system, /functions)
    internal =  [pro_names, func_names]
-   IF KEYWORD_SET(search) THEN BEGIN
+
+;----------------------------------------------------------------------
+;  Caching: result is unchanged if ALL of the following are unchanged:
+;  * name
+;  * all
+;  * search
+;  * internal routines (can only be added, so just check count)
+;  * !path
+;  * current WD (since it's effectively part of path)
+;  We build a string containing all of the above and use as hash key
+;----------------------------------------------------------------------
+
+   COMMON which,cache
+   if n_elements(cache) eq 0 then cache = hash()
+   n_internals = n_elements(internal)
+   paths = cur_dir+path_sep+!path
+   all = keyword_set(all)
+   search = keyword_set(search)
+   cache_key = strjoin([name,trim(all),trim(search),trim(n_internals),paths],', ')
+   ; print,"Cache key:",cache_key
+   if cache.hasKey(cache_key) then begin
+     print,"Retrieving from cache"
+     outfile = cache[cache_key]
+     goto, cleanup__cache_result__return
+   end
+
+   IF search THEN BEGIN
       exact = 0
       all = 1
       ff = grep(name, internal)
       IF ff[0] NE '' THEN BEGIN
          temp = arr2str(ff,', ')
-         if loud then PRINT, 'IDL Built-in: ',temp
          outfile = [outfile,'IDL Built-in: '+temp]
       ENDIF
    ENDIF ELSE BEGIN
       exact = 1
       aa = WHERE(STRUPCASE(name) EQ internal, count)
       IF count NE 0 THEN BEGIN
-         if loud then PRINT, STRUPCASE(name)+' is an IDL built-in routine.'
          outfile = [outfile,STRUPCASE(name)+' is an IDL built-in routine.']
-         IF N_ELEMENTS(all) EQ 0 THEN begin
-            if n_elements(outfile) gt 1 && outfile[0] eq '' then $
-               outfile = outfile[1:*]
-            RETURN
-         ENDIF
+         IF NOT all THEN goto, cleanup__cache_result__return
       ENDIF
    ENDELSE
 
-   p = cur_dir+path_sep+!path
-   dirs = str_sep(p,path_sep)
+   dirs = str_sep(paths,path_sep)
 
    CASE (!version.os) OF
       'vms': BEGIN
@@ -171,10 +192,9 @@ outfile = ''
             IF (ff[0] NE '') THEN BEGIN
                FOR j = 0, N_ELEMENTS(ff)-1 DO BEGIN
                   filename = concat_dir(dirs[i],ff[j])
-                  if loud then PRINT, filename+'.PRO'
                   outfile = [outfile,filename+'.PRO']
                ENDFOR
-               IF N_ELEMENTS(all) EQ 0 THEN GOTO, cleanup
+               IF NOT all THEN GOTO, cleanup
             ENDIF
          ENDFOR
 cleanup:
@@ -191,35 +211,29 @@ cleanup:
       ELSE: BEGIN
          IF KEYWORD_SET(search) THEN BEGIN
             FOR i = 0, N_ELEMENTS(dirs)-1 DO BEGIN
-               filename = findfile(concat_dir(dirs[i],'*'+name+'*.pro'),$
+               filenames = findfile(concat_dir(dirs[i],'*'+name+'*.pro'),$
                            count = cnt)
-               IF cnt GT 0 THEN BEGIN
-                  FOR j = 0, cnt-1 DO begin
-                     if loud then PRINT, filename[j]
-                     outfile = [outfile,filename[j]]
-                  endfor
-               ENDIF
+               IF cnt GT 0 THEN outfile = [outfile,filenames]
             ENDFOR
          ENDIF ELSE BEGIN
             FOR i = 0,N_ELEMENTS(dirs)-1 DO BEGIN
                filename = concat_dir(dirs[i],name+'.pro')
                chk=file_test(filename,/regular)
                IF chk THEN BEGIN
-                  if loud then PRINT, filename
                   outfile = [outfile,filename]
-                  IF ~KEYWORD_SET(all) THEN BEGIN
-                     if n_elements(outfile) gt 1 && outfile[0] eq '' then $
-                          outfile = outfile[1:*]
-                     RETURN
-                  ENDIF
+                  IF NOT all THEN goto, cleanup__cache_result__return
                ENDIF 
             ENDFOR
          ENDELSE
       END
    ENDCASE
+
+cleanup__cache_result__return:
 ;
 ;  tidy up output variable
 ;
 if n_elements(outfile) gt 1 && outfile[0] eq '' then outfile = outfile[1:*]
 if n_elements(outfile) eq 1 then outfile=outfile[0]
+print,outfile,format='(a)'
+cache[cache_key] = outfile
 END
