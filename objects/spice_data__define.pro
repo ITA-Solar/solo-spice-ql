@@ -86,10 +86,24 @@
 ;                                IAS think is useful to have in the results
 ;                                HDU. The keywords are added to the
 ;                                proj_keywords hash. Quick and dirty. 
-;                               - Ensure that original_data array is 4D for rasters
+;                                - Ensure that original_data array is 4D for
+;                                rasters
+;    13-Nov-2026: Terje Fredvik: - New structure tags used for storing
+;                                coordinate information to prevent
+;                                recalcuation: window_coords, window_fovx,
+;                                              window_fovy, window_diff_rot,
+;                                              window_auto_diff_rot.
+;                                - New helper _same_diff_rot_keywords that
+;                                checks if the values of (auto_)diff_rot
+;                                matches the values these keywords had when
+;                                the coordinates where last calculated in
+;                                self.get_wcs_coord
+;                                - Placeholder keywords and methods that in a
+;                                future update will be used to control PSF correction
+;
 ;-
 
-; $Id: 2026-04-28 13:51 CEST $
+; $Id: 2026-11-13 11:19 CET $
 
 ;+
 ; Description:
@@ -135,6 +149,11 @@ PRO spice_data::close
     ptr_free, (*self.window_headers)[i]
     ptr_free, (*self.window_headers_string)[i]
     ptr_free, (*self.window_wcs)[i]
+    IF ptr_valid((*self.window_coords)[i]) THEN ptr_free, (*self.window_coords)[i]
+    IF ptr_valid((*self.window_fovx)[i]) THEN ptr_free, (*self.window_fovx)[i]
+    IF ptr_valid((*self.window_fovy)[i]) THEN ptr_free, (*self.window_fovy)[i]
+    IF ptr_valid((*self.window_diff_rot)[i]) THEN ptr_free, (*self.window_diff_rot)[i]
+    IF ptr_valid((*self.window_auto_diff_rot)[i]) THEN ptr_free, (*self.window_auto_diff_rot)[i]
     IF ptr_valid((*self.window_data)[i]) THEN ptr_free, (*self.window_data)[i]
     IF ptr_valid((*self.window_saturated)[i]) THEN ptr_free, (*self.window_saturated)[i]
     IF ptr_valid((*self.window_spikes)[i]) THEN ptr_free, (*self.window_spikes)[i]
@@ -142,6 +161,11 @@ PRO spice_data::close
   ptr_free, self.window_headers
   ptr_free, self.window_headers_string
   ptr_free, self.window_wcs
+  ptr_free, self.window_coords
+  ptr_free, self.window_fovx
+  ptr_free, self.window_fovy
+  ptr_free, self.window_diff_rot
+  ptr_free, self.window_auto_diff_rot
   ptr_free, self.window_descaled
   ptr_free, self.window_max_sat
   ptr_free, self.window_data
@@ -185,6 +209,12 @@ PRO spice_data::help, description = description, _extra = _extra
     obj_help, self, description = description, _extra = _extra $
   ELSE $
     obj_help, self, _extra = _extra
+END
+
+
+PRO spice_data::correct_psf_skew
+;; Run Joe Plowman's Python code to correct for the PSF asymmetry.   
+  
 END
 
 ;+
@@ -422,14 +452,17 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
   no_fitting = no_fitting, no_widget = no_widget, no_xcfit_block = no_xcfit_block, position = position, velocity = velocity, $
   force_version = force_version, top_dir = top_dir, path_index = path_index, save_not = save_not, $
   all_ana = all_ana, all_result_headers = all_result_headers, all_data_headers = all_data_headers, all_proc_steps = all_proc_steps, $
-  no_line_list = no_line_list, $
-  SAVE_RESIDUALS = SAVE_RESIDUALS, PRINT_HEADERS = PRINT_HEADERS, $
-  progress_widget = progress_widget, group_leader = group_leader, pipeline_dir = pipeline_dir, quiet = quiet
+  no_line_list = no_line_list, SAVE_RESIDUALS = SAVE_RESIDUALS, PRINT_HEADERS = PRINT_HEADERS, $
+  progress_widget = progress_widget, group_leader = group_leader, pipeline_dir = pipeline_dir, $
+  correct_psf_skew=correct_psf_skew, $
+  quiet = quiet
   ; Creates a level 3 file from the level 2
   COMPILE_OPT IDL2
 
   version = 6 ; PLEASE increase this number when editing the code
-
+  
+  default, correct_psf_skew, 0
+  
   ptools.parcheck, progress_widget, 0, "progress_widget", 11, 0, object_name = 'spice_create_l3_progress', /optional
   IF n_elements(progress_widget) EQ 0 && ~keyword_set(no_widget) THEN progress_widget = spice_create_l3_progress(1, group_leader = group_leader)
   ptools.parcheck, force_version, 0, "force_version", 'integers', 0, minval = 0, maxval = 99, /optional
@@ -483,7 +516,8 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
       ENDIF
       print, trim(n_elements(window) - iwindow) + ' windows remaining...'
       ana = self.mk_analysis(window_index, no_masking = no_masking, approximated_slit = approximated_slit, $
-        position = position, velocity = velocity, /init_all_cubes, no_line_list = no_line_list, version = version_add, proc_find_line = proc_find_line)
+                             position = position, velocity = velocity, /init_all_cubes, no_line_list = no_line_list, version = version_add, $
+                             proc_find_line = proc_find_line, correct_psf_skew = correct_psf_skew)
       IF iwindow EQ 0 THEN version += version_add
       IF size(ana, /type) NE 8 THEN CONTINUE
 
@@ -512,7 +546,8 @@ FUNCTION spice_data::create_l3_file, window, no_masking = no_masking, approximat
           print, 'this may take a while'
           print, '====================='
         ENDIF
-        cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1
+        cfit_block, analysis = ana, /quiet, /double, x_face = ~keyword_set(no_widget), smart = 1, $
+                    make_sigma=correct_psf_skew, sigma=sigma_fit_parameters
       ENDIF
 
       IF ~keyword_set(no_widget) && ~keyword_set(no_xcfit_block) THEN BEGIN
@@ -647,7 +682,7 @@ END
 ;-
 PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approximated_slit = approximated_slit, $
   debug_plot = debug_plot, $
-  DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version
+  DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version, correct_psf_skew=correct_psf_skew
   ; Transforms data so that it can be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
@@ -657,10 +692,16 @@ PRO spice_data::transform_data_for_ana, window, no_masking = no_masking, approxi
   IF window_index LT 0 THEN return
 
   DATA = self.get_window_data(window_index, no_masking = no_masking, approximated_slit = approximated_slit, debug_plot = debug_plot)
+  
+ ;; #####################################
+ ;; call python skew_correct
+ ;; #####################################
+  
+  
   ; Only do fit on the spectral part of the window!
   LAMBDA = self.get_wcs_coord(window_index, /lambda, /auto_diff_rot)
-  sigma = spice_calc_sigma(self, window_index, no_masking = no_masking, approximated_slit = approximated_slit)
-  WEIGHTS = 1.0 / sigma ^ 2
+  sigma_data = spice_calc_sigma(self, window_index, no_masking = no_masking, approximated_slit = approximated_slit)
+  WEIGHTS = 1.0 / sigma_data ^ 2
 
   ; size_data = size(DATA)
   IF self.get_sit_and_stare() THEN BEGIN
@@ -734,7 +775,7 @@ END
 ;-
 FUNCTION spice_data::mk_analysis, window, no_masking = no_masking, approximated_slit = approximated_slit, $
   init_all_cubes = init_all_cubes, debug_plot = debug_plot, position = position, velocity = velocity, $
-  no_line_list = no_line_list, version = version, proc_find_line = proc_find_line
+  no_line_list = no_line_list, version = version, proc_find_line = proc_find_line, correct_psf_skew=correct_psf_skew
   ; Creates an ANA (analysis structure) to be used with cfit_block and xcfit_block.
   COMPILE_OPT IDL2
 
@@ -745,7 +786,9 @@ FUNCTION spice_data::mk_analysis, window, no_masking = no_masking, approximated_
 
   self.transform_data_for_ana, window_index, no_masking = no_masking, approximated_slit = approximated_slit, $
     debug_plot = debug_plot, $
-    DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version_add
+     DATA = DATA, LAMBDA = LAMBDA, WEIGHTS = WEIGHTS, MISSING = MISSING, version = version_add, $
+     correct_psf_skew=correct_psf_skew
+  
   version += version_add
 
   ; ; Earlier: widmin_pixels_2_arcsec_slit = (detector EQ 'SW') ? 7.8 : 9.4 ;; Fludra et al., A&A Volume 656, 2021
@@ -2668,15 +2711,34 @@ END
 ; OUTPUT:
 ;     float : fovx in arcseconds
 ;-
+FUNCTION spice_data::_same_diff_rot_keywords, window_index, diff_rot=diff_rot, auto_diff_rot=auto_diff_rot
+  COMPILE_OPT IDL2
+  IF ~ptr_valid((*self.window_diff_rot)[window_index]) OR ~ptr_valid((*self.window_auto_diff_rot)[window_index]) THEN return, 0
+  
+  same_diff_rot = keyword_set(diff_rot)           EQ *((*self.window_diff_rot)[window_index])
+  same_auto_diff_rot = keyword_set(auto_diff_rot) EQ *((*self.window_auto_diff_rot)[window_index])
+  
+  return, same_diff_rot AND same_auto_diff_rot
+END
+
 FUNCTION spice_data::get_fovx, window, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot
   ; Returns FOV in solar x direction, in arcsec
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
+ 
+  IF ptr_valid((*self.window_fovx)[window_index]) $
+     AND self._same_diff_rot_keywords(window_index, diff_rot=diff_rot, auto_diff_rot=auto_diff_rot) $
+  THEN return, *((*self.window_fovx)[window_index])
+  
   x_coords = self.get_wcs_coord(window_index, /x, diff_rot = diff_rot, auto_diff_rot = auto_diff_rot)
   minx = min(x_coords, max = maxx)
-  return, maxx - minx
+  fovx =  maxx - minx
+  
+  (*self.window_fovx)[window_index] = ptr_new(fovx)
+
+  return, fovx
 END
 
 ;+
@@ -2696,15 +2758,24 @@ END
 ; OUTPUT:
 ;     float : fovy in arcseconds
 ;-
-FUNCTION spice_data::get_fovy, window, auto_diff_rot = auto_diff_rot
+FUNCTION spice_data::get_fovy, window, diff_rot=diff_rot, auto_diff_rot = auto_diff_rot
   ; Returns FOV in solar y direction, in arcsec
   COMPILE_OPT IDL2
 
   window_index = self.return_extension_index(window, /check_window_index)
   IF window_index LT 0 THEN return, -1
+  
+  IF ptr_valid((*self.window_fovy)[window_index]) $
+     AND self._same_diff_rot_keywords(window_index, diff_rot=diff_rot, auto_diff_rot=auto_diff_rot) $
+   THEN return, *((*self.window_fovy)[window_index])
+  
   y_coords = self.get_wcs_coord(window_index, /y, auto_diff_rot = auto_diff_rot)
   miny = min(y_coords, max = maxy)
-  return, maxy - miny
+  fovy =  maxy - miny
+  
+  (*self.window_fovy)[window_index] = ptr_new(fovy)
+   
+  return, fovy
 END
 
 ;+
@@ -2759,46 +2830,62 @@ FUNCTION spice_data::get_wcs_coord, window, pixels, x = x, y = y, lambda = lambd
 
   rot_comp = self.get_header_keyword('rot_comp', window_index, -1)
   IF keyword_set(diff_rot) || (keyword_set(auto_diff_rot) && rot_comp EQ 0) THEN BEGIN
-    CASE rot_comp OF
-      -1: box_message, ['ROT_COMP undefined. I.e., it is unknown whether feature tracking was on.', $
-        'Differential rotation correction may give wrong results.', $
-        'You may want to reconsider setting the keyword DIFF_ROT in call to', $
-        'spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
-      0:
-      1: box_message, ['ROT_COMP=1. I.e., feature tracking was probably on.', $
-        'Differential rotation correction may give wrong results, it is therefore not recommended to set the keyword DIFF_ROT.', $
-        'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
-      2: box_message, ['ROT_COMP=2. I.e., feature tracking was probably on and differential rotation correction was already applied.', $
-        'It is therefore not recommended to set the keyword DIFF_ROT.', $
-        'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
-      ELSE: box_message, ['ROT_COMP=' + strtrim(rot_comp, 2) + '. Unknown value.'], /info
-    ENDCASE
-    coords = wcs_get_coord(*(*self.window_wcs)[window_index])
-    spice_diff_rot_coord, *(*self.window_wcs)[window_index], coords
-    IF size_pixels[0] GT 0 THEN BEGIN
-      IF size_pixels[0] EQ 1 THEN BEGIN
-        coords = coords[*, pixels[0], pixels[1], pixels[2], pixels[3]]
-      ENDIF ELSE BEGIN
-        new_coords = dblarr(4, size_pixels[2])
-        FOR i = 0, size_pixels[2] - 1 DO BEGIN
-          new_coords[*, i] = coords[*, pixels[0, i], pixels[1, i], pixels[2, i], pixels[3, i]]
-        ENDFOR
-        coords = new_coords
-      ENDELSE
-    ENDIF
+     CASE rot_comp OF
+        -1: box_message, ['ROT_COMP undefined. I.e., it is unknown whether feature tracking was on.', $
+                          'Differential rotation correction may give wrong results.', $
+                          'You may want to reconsider setting the keyword DIFF_ROT in call to', $
+                          'spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+        0:
+        1: box_message, ['ROT_COMP=1. I.e., feature tracking was probably on.', $
+                         'Differential rotation correction may give wrong results, it is therefore not recommended to set the keyword DIFF_ROT.', $
+                         'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+        2: box_message, ['ROT_COMP=2. I.e., feature tracking was probably on and differential rotation correction was already applied.', $
+                         'It is therefore not recommended to set the keyword DIFF_ROT.', $
+                         'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+        ELSE: box_message, ['ROT_COMP=' + strtrim(rot_comp, 2) + '. Unknown value.'], /info
+     ENDCASE
+     IF ~ptr_valid((*self.window_coords)[window_index]) $
+        OR ~self._same_diff_rot_keywords(window_index, diff_rot=diff_rot, auto_diff_rot=auto_diff_rot) $
+     THEN BEGIN 
+        coords = wcs_get_coord(*(*self.window_wcs)[window_index])
+        spice_diff_rot_coord, *(*self.window_wcs)[window_index], coords
+        (*(self.window_coords))[window_index] = ptr_new(coords)
+        (*(self.window_diff_rot))[window_index] = ptr_new(keyword_set(diff_rot))
+        (*(self.window_auto_diff_rot))[window_index] = ptr_new(keyword_set(auto_diff_rot))
+     ENDIF ELSE coords = *((*self.window_coords)[window_index])
+     
+     IF size_pixels[0] GT 0 THEN BEGIN
+        IF size_pixels[0] EQ 1 THEN BEGIN
+           coords = coords[*, pixels[0], pixels[1], pixels[2], pixels[3]]
+        ENDIF ELSE BEGIN
+           new_coords = dblarr(4, size_pixels[2])
+           FOR i = 0, size_pixels[2] - 1 DO BEGIN
+              new_coords[*, i] = coords[*, pixels[0, i], pixels[1, i], pixels[2, i], pixels[3, i]]
+           ENDFOR
+           coords = new_coords
+        ENDELSE
+     ENDIF
   ENDIF ELSE BEGIN
-    CASE rot_comp OF
-      -1:
-      0: box_message, ['ROT_COMP=0. I.e., feature tracking was probably off.', $
-        'Differential rotation correction may give better results, you may want to set the keyword (AUTO_)DIFF_ROT.', $
-        'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
-      1:
-      2:
-      ELSE: box_message, ['ROT_COMP=' + strtrim(rot_comp, 2) + '. Unknown value.'], /info
-    ENDCASE
-    coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
+     CASE rot_comp OF
+        -1:
+        0: box_message, ['ROT_COMP=0. I.e., feature tracking was probably off.', $
+                         'Differential rotation correction may give better results, you may want to set the keyword (AUTO_)DIFF_ROT.', $
+                         'in call to spice_data::get_wcs_coord, spice_data::get_instr_x_vector or spice_data::get_instr_y_vector'], /info
+        1:
+        2:
+        ELSE: box_message, ['ROT_COMP=' + strtrim(rot_comp, 2) + '. Unknown value.'], /info
+     ENDCASE
+     IF ~ptr_valid((*self.window_coords)[window_index]) $
+        OR ~self._same_diff_rot_keywords(window_index, diff_rot=diff_rot, auto_diff_rot=auto_diff_rot) $
+     THEN BEGIN 
+        coords = wcs_get_coord(*(*self.window_wcs)[window_index], pixels)
+        (*(self.window_coords))[window_index] = ptr_new(coords)
+        (*(self.window_diff_rot))[window_index] = ptr_new(keyword_set(diff_rot))
+        (*(self.window_auto_diff_rot))[window_index] = ptr_new(keyword_set(diff_rot))
+     ENDIF ELSE coords = *((*self.window_coords)[window_index])
+     
   ENDELSE
-
+  
   CASE 1 OF
     keyword_set(x): axis_ind = 0
     keyword_set(y): axis_ind = 1
@@ -3542,6 +3629,11 @@ PRO spice_data::read_file, file
   self.window_headers = ptr_new(headers)
   self.window_headers_string = ptr_new(headers_string)
   self.window_wcs = ptr_new(wcs)
+  self.window_fovx = ptr_new(ptrarr(self.next))
+  self.window_fovy = ptr_new(ptrarr(self.next))
+  self.window_coords = ptr_new(ptrarr(self.next))
+  self.window_diff_rot = ptr_new(ptrarr(self.next))
+  self.window_auto_diff_rot = ptr_new(ptrarr(self.next))
   self.slit_y_range = ptr_new(/allocate)
 
   self.get_bintable_info
@@ -3649,7 +3741,12 @@ PRO spice_data__define
     window_masked: ptr_new(), $  ; indicates for each window, whether data was masked, 0:no, 1:yes, default, 2: yes, approximated (bytarr)
     window_headers: ptr_new(), $ ; a pointer array, each pointing to a header structure of one extension
     window_headers_string: ptr_new(), $ ; a pointer array, each pointing to a header string array of one extension
-    window_wcs: ptr_new(), $ ; pointers to wcs structure for each window
+    window_wcs: ptr_new(), $     ; pointers to wcs structure for each window
+    window_coords: ptr_new(), $    ; pointers to 
+    window_fovx: ptr_new(), $    ; pointers to float FOV X for each window
+    window_fovy: ptr_new(), $ ; pointers to float FOV Y for each window
+    window_diff_rot: ptr_new(), $
+    window_auto_diff_rot: ptr_new(), $
     dumbbells: [-1, -1], $ ; contains the index of the window with [lower, upper] dumbbell
     slit_y_range: ptr_new(), $ ; contains the (approximate) bottom/top pixel indices of the part of the window that stems from the slit
     bintable_columns: ptr_new(), $ ; Pointer to structure array which contains all columns in the binary extension table

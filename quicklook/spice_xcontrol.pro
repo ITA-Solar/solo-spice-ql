@@ -33,8 +33,12 @@
 ; MODIFICATION HISTORY:
 ;      1-Jan-2013: First version started by Viggo Hansteen
 ;     16-Sep-2020: First version for SPICE started by Martin Wiesmann (prits-group@astro.uio.no)
+;     13-Nov-2026: Terje Fredvik - spice_xcontrol_get_data_info;
+;                  call get_fovy when setting FOVY info (not get_fovx).
+;                  Calls to profiler included in case further profiling is
+;                  needed, but commented out for the time being
 ;
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2026-11-13 11:19 CET $
 ;-
 ;
 ;
@@ -77,7 +81,7 @@ PRO spice_xcontrol_get_data_info, info
   line[9] = 'XCEN    : ' + string(*(*info).d.get_xcen(0), format = '(F8.1)') + '   ' + $
     'YCEN    : ' + string(*(*info).d.get_ycen(0), format = '(F8.1)')
   line[10] = 'FOVX    : ' + string(*(*info).d.get_fovx(0, /auto_diff_rot), format = '(F8.1)') + '   ' + $
-    'FOVY    : ' + string(*(*info).d.get_fovx(0, /auto_diff_rot), format = '(F8.1)')
+    'FOVY    : ' + string(*(*info).d.get_fovy(0, /auto_diff_rot), format = '(F8.1)')
   line[11] = '========================================================'
   line[12] = 'Number of windows         : ' + strtrim(string(*(*info).d.get_number_windows()), 2)
   line[13] = 'Number of raster positions: ' + strtrim(string(*(*info).d.get_number_exposures()), 2)
@@ -411,8 +415,15 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     message, 'spice_xcontrol, data [, group_leader = group]', /cont
     return
   ENDIF
+  
+  ;;;;;;;;;;;;;;;;;;
+  ;PROFILER
+  ;PROFILER, /SYSTEM
+  ;;;;;;;;;;;;;;;;;;
 
   data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
+
+ 
   IF ~is_spice THEN return
 
   ; ; information about data set
@@ -494,10 +505,12 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     XSize = xsize, $
     YSize = ysize, $
     frame = 1, event_pro = 'spice_xcontrol_detfuv', /button_events)
-
-  ; Solar map showing pointing of raster
+  
+                                ; Solar map showing pointing of raster
   pointing_size = 200
   calc_xysize, pointing_size, pointing_size, nxchar = 4, nychar = 4
+
+       
   pointing_base = widget_base(lcol, /row)
   pointing_icon = widget_draw(pointing_base, $
     retain = 2, $
@@ -526,11 +539,13 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     event_pro = 'spice_xcontrol_printfilename')
   closebutton = widget_button(lsubcol3, value = '  Close   ', $ ; idl-disable-line unused-var
     event_pro = 'spice_xcontrol_destroy')
+  
 
   ; SPICE icon
   spice_icon_base = widget_base(rcol, /col)
   spice_icon = widget_draw(spice_icon_base, retain = 2, XSize = 120, YSize = 120, frame = 1)
-
+ 
+ 
   ; Define the info structure, used to send information around
   info_struct = {d: ptr_new(data), $
     object_created: object_created, $
@@ -547,13 +562,19 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     tlb: tlb}
   info = ptr_new(info_struct, /no_copy)
 
+
   ; Set the info ptr to be the user value of the tlb widget
   widget_control, tlb, set_uvalue = info
 
   ; realize the top level base widget
   widget_position, tlb, parent = group_leader
-
+  
+  ;box_message,'PROFILING spice_xcontrol [1]: spice_xcontrol_get_data_info'
+  ;profiler,/reset
   spice_xcontrol_get_data_info, info
+  ;profiler, /report, data=profiler_data
+  ;profiler_sort, profiler_data
+ 
   widget_control, data_info, set_value = (*info).data_textdump, /append
 
   ; get the initial color table
@@ -566,7 +587,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   deticon_min = min(spice_histo_opt(detector1, 0.005, missing = -999) > 1.e-4, max = deticon_max, /nan)
   loadct, 9
   tvscl, alog10(detector1 > deticon_min < deticon_max), /nan
-
+ 
   widget_control, detector2_icon, get_value = drawID2
   wset, drawID2
   bad = where(finite(detector2) EQ 0, nbad)
@@ -579,8 +600,10 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   tvlct, red, green, blue
 
   chars = 2.0
+  
   widget_control, spice_icon, get_value = drawID1
   wset, drawID1
+
   have_con = have_proc('spice_xfiles', out = fname)
   IF have_con THEN BEGIN
     fileName = concat_dir(file_dirname(file_dirname(fname)), 'ancillary/spice-logo---colour.jpg')
@@ -594,9 +617,9 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   ENDIF ELSE BEGIN
     xyouts, 0.5, 0.5, 'SPICE', chars = chars, /normal, alignment = 0.5
   ENDELSE
-
+  
   ; pointing icon
-
+     
   npt = 100
   phi = indgen(npt) / (npt - 1.) * 2. * !pi
   widget_control, pointing_icon, get_value = drawID2
@@ -613,6 +636,7 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
   ENDELSE
   ; check if we have a true color display, no SDO icon if not
   IF !d.n_colors GT 256 THEN showim = 1 * showim ELSE showim = 0
+  
   IF showim THEN BEGIN
     sdo = obj_new('sdo_icon', date_obs)
     IF (sdo.getim_4500())[0] NE -1 AND (sdo.getim())[0] NE -1 THEN BEGIN
@@ -633,12 +657,16 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
         [coord.y1, coord.y2, coord.y3, coord.y4, coord.y1], /data
       (*info).pointing_phase = 1
       (*info).sdo = ptr_new(sdo)
-    ENDIF ELSE showim = 0
+   ENDIF ELSE showim = 0
   ENDIF
   IF NOT showim THEN BEGIN
+    ;box_message,'PROFILING spice_xcontrol [2], not showim'
+    ;profiler,/reset
     widget_control, pointing_icon, sensitive = 0
+   
     xcen = data.get_xcen(0)
     ycen = data.get_ycen(0)
+    
     solar_radius = 960.
     dx = data.get_fovx(0, /auto_diff_rot)
     dy = data.get_fovy(0, /auto_diff_rot)
@@ -657,7 +685,10 @@ PRO spice_xcontrol, input_data, group_leader = group_leader
     y = solar_radius * cos(phi)
     plot, x, y, xstyle = 4, ystyle = 4, xmargin = [2, 2], ymargin = [2, 2]
     plots, [coord.x1, coord.x2, coord.x3, coord.x4, coord.x1], $
-      [coord.y1, coord.y2, coord.y3, coord.y4, coord.y1], /data
+           [coord.y1, coord.y2, coord.y3, coord.y4, coord.y1], /data
+    
+    ;profiler, /report, data=profiler_data
+    ;profiler_sort, profiler_data
   ENDIF
   (*info).pointing_wid = drawID2
 
