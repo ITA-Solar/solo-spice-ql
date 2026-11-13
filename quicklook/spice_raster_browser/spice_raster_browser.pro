@@ -103,13 +103,17 @@
 ; HISTORY:
 ;     Ver. 1, 22-Nov-2019, Martin Wiesmann (prits-group@astro.uio.no)
 ;       modified from iris_raster_browser.
+;     Ver. 2, 13-Nov-2026, Terje Fredvik: set no_goes to 1 since goes plotting
+;                          doesn't work but still takes a lot of time
 ;-
-; $Id: 2025-07-31 13:25 CEST $
+; $Id: 2026-11-13 11:30 CET $
 
 ; ---------------------
 PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
   chunk_size = chunk_size, retina = retina, no_goes = no_goes, group_leader = group_leader
   COMPILE_OPT IDL2
+  
+  no_goes = 1
 
   IF n_params() EQ 0 THEN BEGIN
     print, 'Use:  IDL> spice_raster_browser, obj'
@@ -119,10 +123,13 @@ PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
 
   ;
   ; Below I check if INPUT is a string (i.e., a filename) or an object.
-  ;
-  data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
-  IF ~is_spice THEN return
+                               ;
 
+    data = spice_object(input_data, is_spice = is_spice, object_created = object_created)
+ 
+     
+  IF ~is_spice THEN return
+ 
   ;
   ; Check if we have an internet connection.
   ;
@@ -160,8 +167,7 @@ PRO spice_raster_browser, input_data, quiet = quiet, yoffsets = yoffsets, $
 
   spice_browser_widget, data, yoffsets = yoffsets, chunk_size = chunk_size, $
     retina = retina, no_goes = no_goes, flare_data = flare_data, quiet = quiet, group_leader = group_leader
-
-  ;
+  
   ; Tidy up before exiting.
   ;
   IF object_created EQ 1 THEN BEGIN
