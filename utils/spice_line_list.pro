@@ -40,15 +40,16 @@
 ;                                                 selection of the most important
 ;                                                 lines is returned when
 ;                                                 MOST_IMPORTANT_LINES is set
+;               Peter Young, GSFC, November 2026: Added Fe XVIII & XX flare lines,
+;                                                 and two other lines.
 ;
-;
-; $Id: 2025-08-29 09:54 CEST $
+; $Id: 2026-11-16 11:20 EST $
 ;-
 ;
 ; ----------------------------------------------------------
 
 FUNCTION spice_get_lines_all, version = version
-  version = 4 ; PLEASE increase this number when editing the code
+  version = 5 ; PLEASE increase this number when editing the code
 
   line_list = hash( $
               ;; Short Wavelength Channel
@@ -57,7 +58,10 @@ FUNCTION spice_get_lines_all, version = version
               70.38, 'O III', $
               70.60, 'Mg IX', $
               71.85, 'O II', $
+              72.126, 'Fe VIII', $
+              72.156, 'Fe XX', $
               74.84, 'S IV', $
+              74.955, 'Mg IX', $
               75.02, 'S IV', $
               75.87, 'O V', $
               76.03, 'O V', $
@@ -76,6 +80,7 @@ FUNCTION spice_get_lines_all, version = version
 
               ;; Long Wavelength Channel
               97.25, 'H Ly gamma', $
+              97.486, 'Fe XVIII', $
               97.70, 'C III', $
               98.87, 'O I + Na VI', $
               98.98, 'N III', $
