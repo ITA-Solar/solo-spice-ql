@@ -1,4 +1,4 @@
-PRO WHICH, name, all=all, search=search, outfile=outfile,quiet=quiet
+PRO WHICH, name, all=all, search=search, outfile=outfile, quiet=quiet
 ;+
 ; PROJECT:
 ;       SOHO - CDS
@@ -39,6 +39,7 @@ PRO WHICH, name, all=all, search=search, outfile=outfile,quiet=quiet
 ;                automatically set if SEARCH is set.
 ;       SEARCH - Turn on the search mode, if set, that would match any
 ;                given string pattern found in the path.
+;       QUIET -  Do not print file if set
 ;
 ; CALLS:
 ;       CONCAT_DIR, STR_CHOP, GREP
@@ -93,10 +94,11 @@ PRO WHICH, name, all=all, search=search, outfile=outfile,quiet=quiet
 ; Version 13, 11-Nov-2026, Stein Haugan (prits-group@astro.uio.no)
 ;        - Introduce caching with hash, taking ALL factors into account
 ;        - Only printing at the end (yes, goto, but no hidden RETURNs)
+; Version 14 - 18-Nov-2026, Terje Fredvik (prits-group@astro.uio.no)
+;        - Do not print file if keyword QUIET is set  
 ;-
 
    ON_ERROR,2
-   loud=~keyword_set(quiet)
 
 ;----------------------------------------------------------------------
 ;  A list of IDL internal routine can be obtained by entering the "?"
@@ -233,7 +235,7 @@ cleanup__cache_result__return:
 ;
 if n_elements(outfile) gt 1 && outfile[0] eq '' then outfile = outfile[1:*]
 if n_elements(outfile) eq 1 then outfile=outfile[0]
-print,outfile,format='(a)'
+IF ~keyword_set(quiet) THEN print,outfile,format='(a)'
 if outfile[0] ne '' then cache[cache_key] = outfile
 END
 ; Testing: uncomment print,"Retrieving from cache"
